@@ -2,8 +2,9 @@
 
 Each user has one model-free main-agent configuration. Chats use that configuration
 and independently persist a selected model. Sub-agent definitions each bind exactly
-one model; projects explicitly select eligible owned definitions. General chats
-never delegate. Persona/profile defaults are a separate product invariant and do
+one model; projects explicitly select eligible owned definitions, and the main-agent
+configuration holds a separate General chat set that General chats delegate to
+([ADR-0059](../adr/0059-general-chat-delegation.md)). Persona/profile defaults are a separate product invariant and do
 not select or replace the main-agent configuration.
 
 ## Configuration and model identity
@@ -131,7 +132,20 @@ Agent events include `START`, `DELTA`, `TOOL_CALL`, `COMPLETE`, `ERROR`, and
 provider, configuration, prompt provenance, token usage, and context provenance.
 Provider-reported usage is authoritative; UI context estimates are advisory.
 
-## Project-selected delegation
+## Selected delegation: projects and the General set
+
+A chat's delegation scope comes from where it is, read live: a project chat uses
+its project's selections, any other chat uses the main agent's General chat set.
+`DelegationScope.project_id` is `None` for the General set, and
+`context_revision` is then the set's own revision. Both sources follow the same
+rules below; moving a chat between them refuses delegation until a new turn.
+
+`GET/PUT /settings/user/main-agent/general-sub-agents` reads or replaces the
+ordered General set under `expected_revision`. A new user's set is empty, saving
+the same list keeps the revision, and deleting a definition removes it and bumps
+the revision. Capability entries say which source granted a target
+(`project_selection` or `general_selection`), and sub-agent traces store
+`delegation_scope`.
 
 New projects select no targets. `/projects/{project_id}/sub-agent-candidates`
 lists owned candidates, and `/projects/{project_id}/sub-agents` reads/updates the
@@ -152,7 +166,8 @@ forwarded block is token-bounded. No sibling-chat history is fetched.
 
 The child uses `AllowlistApprovalPolicy`, so its authorized tools execute without
 nested interactive prompts. Live checks cancel/reject work after deselection,
-project revision/identity changes, configuration/model revocation, or cancellation;
+project or General set revision/identity changes, configuration/model revocation,
+or cancellation;
 an in-flight silent child is polled rather than allowed to complete unchecked.
 See [context isolation](context-isolation.md) for source ceilings and history limits.
 

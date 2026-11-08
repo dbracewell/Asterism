@@ -34,14 +34,14 @@ EPIC-64 and EPIC-65 are complete and archived in the [2026-11-07 checklist](docs
 
 ## User-requested epics (proposed 2026-11-08)
 
-Source: user request (2026-11-08). Suggested order: EPIC-74 → 67 → 70 → 68 → 69 → 73 → 71 → 72. EPIC-71 depends on EPIC-68. EPIC-73 should leave a place for canvas (EPIC-72). EPIC-74, EPIC-67 and EPIC-70 are complete and archived in the [2026-11-08 checklist](docs/archive/todo-completed-2026-11-08.md).
+Source: user request (2026-11-08). Suggested order: EPIC-74 → 67 → 70 → 68 → 69 → 73 → 71 → 72. EPIC-71 depends on EPIC-68. EPIC-73 should leave a place for canvas (EPIC-72). EPIC-74, EPIC-67 and EPIC-70 are complete and archived in the [2026-11-08 checklist](docs/archive/todo-completed-2026-11-08.md). EPIC-68 is in progress.
 
 ### [EPIC-68: Sub-agents in General chat](docs/epics/EPIC-68-SUB-AGENTS-IN-GENERAL-CHAT.md)
 
-- [ ] US-68.1: General delegation scope in the backend
-  - [ ] Write the ADR (amends the "General chats never delegate" rule) and update AGENTS.md and architecture docs.
-  - [ ] Add the General set to the main-agent configuration and resolve it in `resolve_delegation_scope`.
-  - [ ] Tests: no set → no `sub_agent` tool; set → delegation works; removing a target mid-turn is refused; child file scope is limited to the chat's attachments; owner isolation.
+- [x] US-68.1: General delegation scope in the backend (confirmed and merged)
+  - [x] Write the ADR (amends the "General chats never delegate" rule) and update AGENTS.md and architecture docs.
+  - [x] Add the General set to the main-agent configuration and resolve it in `resolve_delegation_scope`.
+  - [x] Tests: no set → no `sub_agent` tool; set → delegation works; removing a target mid-turn is refused; child file scope is limited to the chat's attachments; owner isolation.
 - [ ] US-68.2: Choose General chat sub-agents
   - [ ] Build the picker with generated client hooks; show availability.
   - [ ] Update help and glossary; unit tests and an E2E delegating from a General chat with a fake provider.

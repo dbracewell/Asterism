@@ -1,6 +1,6 @@
 # EPIC-68: Sub-agents in General chat
 
-Status: proposed. Source: user request (2026-11-08).
+Status: in progress (US-68.1 confirmed and merged). Source: user request (2026-11-08).
 
 ## Objective
 
@@ -36,9 +36,9 @@ works for both scopes and still refuses targets outside the live set. Deleting a
 sub-agent removes it from the set. Delegation records and run inspection show
 which scope (General or project) authorized each call.
 
-- [ ] Write the ADR (amends the "General chats never delegate" rule) and update AGENTS.md and architecture docs.
-- [ ] Add the General set to the main-agent configuration and resolve it in `resolve_delegation_scope`.
-- [ ] Tests: no set → no `sub_agent` tool; set → delegation works; removing a target mid-turn is refused; child file scope is limited to the chat's attachments; owner isolation.
+- [x] Write the ADR (amends the "General chats never delegate" rule) and update AGENTS.md and architecture docs.
+- [x] Add the General set to the main-agent configuration and resolve it in `resolve_delegation_scope`.
+- [x] Tests: no set → no `sub_agent` tool; set → delegation works; removing a target mid-turn is refused; child file scope is limited to the chat's attachments; owner isolation.
 
 ## US-68.2: Choose General chat sub-agents
 

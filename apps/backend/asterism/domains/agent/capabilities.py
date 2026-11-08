@@ -31,6 +31,8 @@ class CapabilityGrant(StrEnum):
     """The run's model supports tool calling."""
     PROJECT_SELECTION = "project_selection"
     """Selected in the chat's project (sub-agents and project files)."""
+    GENERAL_SELECTION = "general_selection"
+    """Chosen for General chats on the main-agent configuration (sub-agents, ADR-0059)."""
     CHAT_ATTACHMENT = "chat_attachment"
     """Attached to a message on the chat's active branch."""
     CHAT_SELECTION = "chat_selection"

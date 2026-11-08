@@ -30,6 +30,7 @@ export const grantLabel: Record<CapabilityGrant, string> = {
   admin_policy: "Enabled by the admin",
   model_support: "Model supports tools",
   project_selection: "Selected in the project",
+  general_selection: "Chosen for General chats",
   chat_attachment: "Attached in this chat",
   chat_selection: "Active in this chat",
   file_scope: "Files in scope",

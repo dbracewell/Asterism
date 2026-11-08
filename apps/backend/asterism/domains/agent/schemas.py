@@ -3,6 +3,7 @@ from __future__ import annotations
 import uuid
 from dataclasses import dataclass
 from enum import StrEnum, auto
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -144,6 +145,21 @@ class SubAgentDefinition(SubAgentCreate):
     managed_by_class: str | None = None
 
 
+class GeneralSubAgents(BaseModel):
+    """The ordered sub-agents the main agent may delegate to in General chats (ADR-0059)."""
+
+    revision: int = Field(ge=1)
+    agents: list[SubAgentDefinition]
+
+
+class GeneralSubAgentsUpdate(BaseModel):
+    """Replace the whole ordered set; ``expected_revision`` guards concurrent edits."""
+
+    model_config = ConfigDict(extra="forbid")
+    agent_ids: list[uuid.UUID] = Field(max_length=100)
+    expected_revision: int = Field(ge=1)
+
+
 class SubAgentInstructionsUpdate(BaseModel):
     """Explicitly save new instructions to a definition, e.g. from a fork (US-54.5)."""
 
@@ -177,6 +193,7 @@ class SubAgentTrace(BaseModel):
     step_count: int = 0
     total_tokens: int = 0
     elapsed_ms: int = 0
+    delegation_scope: Literal["general", "project"] | None = None
     depth: int = 0
 
 
@@ -195,6 +212,7 @@ class SubAgentTraceCreate(BaseModel):
     step_count: int = 0
     total_tokens: int = 0
     elapsed_ms: int = 0
+    delegation_scope: Literal["general", "project"] | None = None
     depth: int = 0
 
 

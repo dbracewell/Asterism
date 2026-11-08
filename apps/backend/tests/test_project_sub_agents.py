@@ -213,7 +213,9 @@ async def test_live_target_scope_general_moves_and_fixed_model(project_api, monk
     async with sessions() as db:
         await db.execute(update(ChatModel).where(ChatModel.id == chat_id).values(project_id=None))
         await db.commit()
-    assert await resolve_delegation_scope(user_id="a", chat_id=chat_id) is None
+    # Out of the project, the chat falls back to the (empty) General set (ADR-0059).
+    general = await resolve_delegation_scope(user_id="a", chat_id=chat_id)
+    assert general is not None and general.source == "general" and general.agent_ids == frozenset()
     assert (await client.delete(f"/agents/sub-agents/{a['id']}", headers=auth())).status_code == 200
     with pytest.raises(BadDataException):
         await require()
@@ -308,7 +310,8 @@ async def test_runtime_prompt_only_advertises_selected_targets_and_general_has_n
 
     monkeypatch.setattr(agent, "_get_client", AsyncMock(return_value=Client()))
     assert [e async for e in agent.run([LLMMessage.user("Hello")])][-1].content == "Done"
-    assert agent.delegation_scope is None
+    assert agent.delegation_scope is not None and agent.delegation_scope.source == "general"
+    assert agent.delegation_scope.agent_ids == frozenset()
 
 
 @pytest.mark.asyncio

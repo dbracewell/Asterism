@@ -372,6 +372,12 @@ import type {
   LearningModeGetManyData,
   LearningModeGetManyError,
   LearningModeGetManyResponse,
+  MainAgentGeneralSubAgentsGetData,
+  MainAgentGeneralSubAgentsGetError,
+  MainAgentGeneralSubAgentsGetResponse,
+  MainAgentGeneralSubAgentsUpdateData,
+  MainAgentGeneralSubAgentsUpdateError,
+  MainAgentGeneralSubAgentsUpdateResponse,
   MainAgentGetData,
   MainAgentGetError,
   MainAgentGetResponse,
@@ -7195,6 +7201,69 @@ export const mainAgentUpdateMutation = (
         ...fnOptions,
         throwOnError: true,
       });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const mainAgentGeneralSubAgentsGetQueryKey = (
+  options?: Options<MainAgentGeneralSubAgentsGetData>,
+) => createQueryKey("mainAgentGeneralSubAgentsGet", options);
+
+/**
+ * Read General Sub Agents
+ *
+ * The sub-agents the main agent may delegate to in General chats, in order.
+ */
+export const mainAgentGeneralSubAgentsGetOptions = (
+  options?: Options<MainAgentGeneralSubAgentsGetData>,
+) =>
+  queryOptions<
+    MainAgentGeneralSubAgentsGetResponse,
+    MainAgentGeneralSubAgentsGetError,
+    MainAgentGeneralSubAgentsGetResponse,
+    ReturnType<typeof mainAgentGeneralSubAgentsGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry
+        .get()
+        .mainAgentGeneralSubAgentsGet({
+          ...options,
+          ...queryKey[0],
+          signal,
+          throwOnError: true,
+        });
+      return data;
+    },
+    queryKey: mainAgentGeneralSubAgentsGetQueryKey(options),
+  });
+
+/**
+ * Write General Sub Agents
+ *
+ * Replace the General chat sub-agent set (ADR-0059). Project chats ignore it.
+ */
+export const mainAgentGeneralSubAgentsUpdateMutation = (
+  options?: Partial<Options<MainAgentGeneralSubAgentsUpdateData>>,
+): UseMutationOptions<
+  MainAgentGeneralSubAgentsUpdateResponse,
+  MainAgentGeneralSubAgentsUpdateError,
+  Options<MainAgentGeneralSubAgentsUpdateData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    MainAgentGeneralSubAgentsUpdateResponse,
+    MainAgentGeneralSubAgentsUpdateError,
+    Options<MainAgentGeneralSubAgentsUpdateData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry
+        .get()
+        .mainAgentGeneralSubAgentsUpdate({
+          ...options,
+          ...fnOptions,
+          throwOnError: true,
+        });
       return data;
     },
   };

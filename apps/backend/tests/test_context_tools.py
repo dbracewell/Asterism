@@ -355,7 +355,10 @@ async def test_general_attachment_retrieval_no_delegation_and_unavailable_servic
     names, scope = await resolve_effective_tools(
         user_id="a", chat_id=general.info.id, profile=r.profile, model_id=uuid.UUID(int=2)
     )
-    assert names == ["search_knowledge"] and scope.delegation is None
+    # A General chat's scope is the main agent's General set (ADR-0059), empty by default.
+    assert names == ["search_knowledge"]
+    assert scope.delegation is not None and scope.delegation.source == "general"
+    assert scope.delegation.agent_ids == frozenset()
     r.chat = general
     embed = AsyncMock(side_effect=RuntimeError("service unavailable"))
     monkeypatch.setattr("asterism.domains.chat.retrieval.embedding_provider.embed_text", embed)

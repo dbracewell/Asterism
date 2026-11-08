@@ -2,7 +2,17 @@ import uuid
 from typing import Optional
 
 from pydantic import TypeAdapter
-from sqlalchemy import CheckConstraint, ForeignKey, Index, Integer, Text, UniqueConstraint, text
+from sqlalchemy import (
+    CheckConstraint,
+    ForeignKey,
+    ForeignKeyConstraint,
+    Index,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+    text,
+)
 from sqlalchemy.orm import Mapped, mapped_column
 
 from asterism.db.base_model import Base
@@ -60,6 +70,8 @@ class AgentProfileModel(Base, UuidPrimaryKeyMixin):
         default="",
     )
     config_revision: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    # Revision of the General chat sub-agent set (ADR-0059); used on the main row only.
+    general_sub_agents_revision: Mapped[int] = mapped_column(Integer, nullable=False, default=1, server_default="1")
     max_steps: Mapped[int] = mapped_column(
         Integer,
         nullable=False,
@@ -74,6 +86,34 @@ class AgentProfileModel(Base, UuidPrimaryKeyMixin):
         jsonb_type(TypeAdapter(list[str])),
         nullable=False,
         default=list,
+    )
+
+
+class GeneralSubAgentModel(Base, TimestampMixin):
+    """One sub-agent the main agent may delegate to in General chats (ADR-0059).
+
+    Owner and role are DB-enforced like project selections: the composite key
+    admits only the owner's sub-agent definitions, and deleting one removes it.
+    """
+
+    __tablename__ = "general_sub_agents"
+
+    user_id: Mapped[str] = mapped_column(String, primary_key=True)
+    agent_id: Mapped[uuid.UUID] = mapped_column(primary_key=True)
+    position: Mapped[int] = mapped_column(Integer, nullable=False)
+    # Constant-true role flag carried into the composite FK (see ProjectSubAgentModel).
+    sub_agent: Mapped[bool] = mapped_column(nullable=False, default=True, server_default="1")
+
+    __table_args__ = (
+        CheckConstraint("sub_agent = true", name="ck_general_sub_agent_role"),
+        CheckConstraint("position >= 0", name="ck_general_sub_agent_position"),
+        ForeignKeyConstraint(
+            ["agent_id", "user_id", "sub_agent"],
+            ["agent_profiles.id", "agent_profiles.user_id", "agent_profiles.sub_agent"],
+            ondelete="CASCADE",
+            name="fk_general_sub_agents_agent_owner_role",
+        ),
+        UniqueConstraint("user_id", "position", name="uq_general_sub_agents_position"),
     )
 
 
@@ -139,6 +179,8 @@ class SubAgentTraceModel(Base, TimestampMixin, UuidPrimaryKeyMixin):
         nullable=False,
         default=0,
     )
+    # Which allowlist authorized the delegation (ADR-0059): "general" or "project".
+    delegation_scope: Mapped[str | None] = mapped_column(String(16), nullable=True)
     depth: Mapped[int] = mapped_column(
         Integer,
         nullable=False,

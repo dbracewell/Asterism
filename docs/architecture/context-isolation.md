@@ -7,8 +7,9 @@ chat's files, history, prompts, or derived context.
 ## Content-free provenance
 
 `ContextProvenance` records user/profile, chat/project, root execution/request,
-project revision, the main/delegated configuration chain, the selected project
-target set, selected model, and actual executing model/provider. `scope_revision`
+project revision, the main/delegated configuration chain, the selected target set
+(project or General, see [ADR-0059](../adr/0059-general-chat-delegation.md)),
+selected model, and actual executing model/provider. `scope_revision`
 is a deterministic SHA-256 identity over those source identifiers, active branch,
 file membership/provenance, and effective internal tools. It contains no file
 bodies, instruction text, tool arguments, excerpts, or generated answers.
@@ -23,6 +24,9 @@ child's actual fixed model/provider at client binding. Retrieval responses carry
 the same typed provenance alongside their authorized, bounded citations; their
 existing `scope.context_revision` describes the live project revision at release.
 The execution source revision and live retrieval revision can differ after edits.
+
+A General chat has no project files: its children receive the chat's own
+attachments on the active branch, or fewer, never project files.
 
 Delegated audit records store task/context/result digests, message roles, timing,
 step/token counts, prompt source digests, and context provenance. They no longer

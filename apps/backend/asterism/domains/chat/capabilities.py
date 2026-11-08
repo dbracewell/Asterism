@@ -103,12 +103,17 @@ async def sub_agent_entries(
     session: AsyncSession,
 ) -> list[CapabilityEntry]:
     targets = await eligible_delegation_targets(user_id=user_id, chat_id=chat_id, scope=delegation, session=session)
+    grant = (
+        CapabilityGrant.GENERAL_SELECTION
+        if delegation is not None and delegation.source == "general"
+        else CapabilityGrant.PROJECT_SELECTION
+    )
     return [
         CapabilityEntry(
             kind=CapabilityKind.SUB_AGENT,
             id=str(target.id),
             name=target.name,
-            grants=[CapabilityGrant.PROJECT_SELECTION],
+            grants=[grant],
             revision=target.config_revision,
         )
         for target in sorted(targets, key=lambda target: (target.name.casefold(), str(target.id)))

@@ -72,6 +72,7 @@ export const zCapabilityGrant = z.enum([
   "admin_policy",
   "model_support",
   "project_selection",
+  "general_selection",
   "chat_attachment",
   "chat_selection",
   "file_scope",
@@ -1040,6 +1041,16 @@ export const zForkInstructions = z.object({
 export const zFunction = z.object({
   name: z.string(),
   arguments: z.string(),
+});
+
+/**
+ * GeneralSubAgentsUpdate
+ *
+ * Replace the whole ordered set; ``expected_revision`` guards concurrent edits.
+ */
+export const zGeneralSubAgentsUpdate = z.object({
+  agent_ids: z.array(z.uuid()).max(100),
+  expected_revision: z.int().gte(1),
 });
 
 /**
@@ -3847,6 +3858,16 @@ export const zSubAgentDefinition = z.object({
 });
 
 /**
+ * GeneralSubAgents
+ *
+ * The ordered sub-agents the main agent may delegate to in General chats (ADR-0059).
+ */
+export const zGeneralSubAgents = z.object({
+  revision: z.int().gte(1),
+  agents: z.array(zSubAgentDefinition),
+});
+
+/**
  * ProjectSubAgentList
  *
  * One page of selected (or candidate) sub-agent definitions for a project.
@@ -3901,6 +3922,7 @@ export const zSubAgentTrace = z.object({
   step_count: z.int().optional().default(0),
   total_tokens: z.int().optional().default(0),
   elapsed_ms: z.int().optional().default(0),
+  delegation_scope: z.enum(["general", "project"]).nullish(),
   depth: z.int().optional().default(0),
 });
 
@@ -6509,6 +6531,18 @@ export const zMainAgentUpdateBody = zMainAgentUpdate;
  * Successful Response
  */
 export const zMainAgentUpdateResponse = zMainAgentConfiguration;
+
+/**
+ * Successful Response
+ */
+export const zMainAgentGeneralSubAgentsGetResponse = zGeneralSubAgents;
+
+export const zMainAgentGeneralSubAgentsUpdateBody = zGeneralSubAgentsUpdate;
+
+/**
+ * Successful Response
+ */
+export const zMainAgentGeneralSubAgentsUpdateResponse = zGeneralSubAgents;
 
 /**
  * Successful Response

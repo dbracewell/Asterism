@@ -19,10 +19,12 @@ from asterism.domains.settings.models import LLMModel
 from asterism.domains.tools.catalog import INTERNAL_TOOL_NAMES, configurable_tools
 from asterism.domains.user.models import UserModel
 
+from .general_sub_agents import read_general_set, replace_general_set, revoke_general_target
 from .models import AgentProfileModel, SubAgentTraceModel
 from .queries import select_owned_agent_profiles
 from .schemas import (
     AgentProfile,
+    GeneralSubAgents,
     MainAgentConfiguration,
     MainAgentUpdate,
     SubAgentCreate,
@@ -312,6 +314,7 @@ async def delete_agent_profile(
         from asterism.domains.projects.revocation import revoke_agent_projects
 
         await revoke_agent_projects(user_id=user_id, agent_id=agent_id, session=session)
+        await revoke_general_target(user_id=user_id, agent_id=agent_id, session=session)
         await session.delete(row)
         await session.commit()
         return definition
@@ -337,6 +340,7 @@ async def create_sub_agent_trace(
             total_tokens=trace.total_tokens,
             elapsed_ms=trace.elapsed_ms,
             depth=trace.depth,
+            delegation_scope=trace.delegation_scope,
         )
         session.add(model)
         await session.commit()
@@ -360,3 +364,22 @@ async def get_sub_agent_traces_by_parent_message(
         )
         results = await session.scalars(stmt)
         return [SubAgentTrace.model_validate(r) for r in results]
+
+
+async def get_general_sub_agents(user_id: str, session: AsyncSession) -> GeneralSubAgents:
+    """The General chat set (ADR-0059) with each definition's live model availability."""
+    current = await read_general_set(user_id, session)
+    agents = [
+        await _sub_definition(user_id, await get_agent_profile(user_id, agent_id, session), session)
+        for agent_id in current.agent_ids
+    ]
+    return GeneralSubAgents(revision=current.revision, agents=agents)
+
+
+async def set_general_sub_agents(
+    *, user_id: str, agent_ids: list[uuid.UUID], expected_revision: int, session: AsyncSession
+) -> GeneralSubAgents:
+    await replace_general_set(
+        user_id=user_id, agent_ids=agent_ids, expected_revision=expected_revision, session=session
+    )
+    return await get_general_sub_agents(user_id, session)
