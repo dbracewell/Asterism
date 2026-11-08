@@ -11,6 +11,7 @@ from sqlalchemy import Select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from asterism.db.queries import paginate_select
+from asterism.domains.courses.locks import managed_records
 from asterism.domains.knowledge.artifacts import reported_artifacts
 from asterism.domains.knowledge.schemas import FileKnowledgeArtifact
 
@@ -56,11 +57,13 @@ async def describe_files(*, user_id: str, files: list[UserFileModel], session: A
     file_ids = [file.id for file in files]
     summaries = await file_project_summaries(user_id=user_id, file_ids=file_ids, session=session)
     knowledge_map = await file_knowledge_summaries(file_ids=file_ids, session=session)
+    managed = await managed_records(user_id, file_ids, session)
     return [
         UserFile.model_validate(file).model_copy(
             update={
                 "projects": summaries.get(file.id, []),
                 "knowledge": knowledge_map.get(file.id),
+                "managed_by_class": managed.get(file.id),
             }
         )
         for file in files

@@ -368,7 +368,7 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
       },
     ],
     tasks: [
-      "Add your class's course to get its instructions, sub-agents and files as your own project.",
+      "Add your class's course to get its instructions, sub-agents and files as a project. Only course updates change them; you chat in it.",
       "Turn on sharing to let your educator see class totals. They never see your chats or your own results.",
     ],
     terms: [

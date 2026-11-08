@@ -1,6 +1,6 @@
 # EPIC-67: Read-only course projects
 
-Status: in progress (US-67.1 complete). Source: user request (2026-11-08).
+Status: in progress (US-67.1 complete, US-67.2 implemented, awaiting confirmation). Source: user request (2026-11-08).
 
 ## Objective
 
@@ -58,6 +58,6 @@ explanation instead of failing on save. The sub-agent settings list marks course
 sub-agents the same way. Leaving the course (deleting the project) is offered
 with a confirmation. Help and glossary describe the lock.
 
-- [ ] Expose a `course_managed` flag (and class name) on project, sub-agent and file responses; regenerate the client.
-- [ ] Disable and explain the locked controls; add the leave-course action.
-- [ ] Update help; add unit tests and an E2E: student adds a course, can chat, cannot edit it.
+- [x] Expose a `course_managed` flag (and class name) on project, sub-agent and file responses; regenerate the client.
+- [x] Disable and explain the locked controls; add the leave-course action.
+- [x] Update help; add unit tests and an E2E: student adds a course, can chat, cannot edit it.

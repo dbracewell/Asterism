@@ -3,7 +3,7 @@ import {
   QueryClient,
   QueryClientProvider,
 } from "@tanstack/react-query";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, expect, it, vi } from "vitest";
 import { ProjectList } from "./project-list";
@@ -401,4 +401,50 @@ it("explains detachment, supports cancel, and deletes only after confirmation", 
     }),
   );
   expect(mocks.push).toHaveBeenCalledWith("/general");
+});
+it("shows a course project as managed, read-only, and offers to leave the course", async () => {
+  mocks.search = "tab=settings";
+  mocks.get.mockResolvedValue({ ...project, managed_by_class: "Biology 101" });
+  mocks.remove.mockResolvedValue(project);
+  setup(<ProjectWorkspace projectId="p" />);
+  expect(await screen.findByText("Managed by Biology 101")).toBeInTheDocument();
+  expect(
+    screen.getByText(/Biology 101's course manages this/),
+  ).toBeInTheDocument();
+  expect(screen.getByLabelText("Name")).toBeDisabled();
+  expect(screen.getByLabelText("Project instructions")).toBeDisabled();
+  expect(screen.getByRole("button", { name: "Save settings" })).toBeDisabled();
+  expect(
+    screen.queryByRole("button", { name: "Delete project" }),
+  ).not.toBeInTheDocument();
+  await userEvent.click(screen.getByRole("button", { name: "Leave course" }));
+  expect(screen.getByRole("alertdialog")).toHaveTextContent(
+    "Leave the Biology 101 course?",
+  );
+  await userEvent.click(
+    within(screen.getByRole("alertdialog")).getByRole("button", {
+      name: "Leave course",
+    }),
+  );
+  await waitFor(() =>
+    expect(mocks.remove.mock.calls[0][0]).toEqual({
+      path: { project_id: "p" },
+      query: { expected_context_revision: 3 },
+    }),
+  );
+  expect(mocks.update).not.toHaveBeenCalled();
+});
+it("locks a course project's sub-agent selection", async () => {
+  mocks.search = "tab=sub-agents";
+  mocks.get.mockResolvedValue({ ...project, managed_by_class: "Biology 101" });
+  setup(<ProjectWorkspace projectId="p" />);
+  const panel = await screen.findByRole("region", {
+    name: "Project sub-agents",
+  });
+  expect(
+    within(panel).getByText(/Biology 101's course manages this/),
+  ).toBeInTheDocument();
+  expect(
+    screen.queryByRole("region", { name: "Available sub-agents" }),
+  ).not.toBeInTheDocument();
 });

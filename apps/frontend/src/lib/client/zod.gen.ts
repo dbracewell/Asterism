@@ -2058,6 +2058,7 @@ export const zProject = z.object({
   context_revision: z.int().gte(1),
   created_at: z.int(),
   updated_at: z.int(),
+  managed_by_class: z.string().nullish(),
 });
 
 /**
@@ -3756,6 +3757,7 @@ export const zSubAgentDefinition = z.object({
   model_available: z.boolean(),
   model_unavailable_reason: z.string().nullish(),
   config_revision: z.int().gte(1).optional().default(1),
+  managed_by_class: z.string().nullish(),
 });
 
 /**
@@ -4297,6 +4299,7 @@ export const zDelegationRecord = z.object({
  * origin: Whether the user uploaded the file or an agent tool produced it.
  * projects: Projects that currently attach this file.
  * knowledge: Latest knowledge artifact for this file, if one exists.
+ * managed_by_class: Class whose course manages this file, if any.
  */
 export const zUserFile = z.object({
   id: z.uuid(),
@@ -4313,6 +4316,7 @@ export const zUserFile = z.object({
   origin: zFileOrigin,
   projects: z.array(zFileProjectSummary).optional(),
   knowledge: zFileKnowledgeArtifact.nullish(),
+  managed_by_class: z.string().nullish(),
 });
 
 /**

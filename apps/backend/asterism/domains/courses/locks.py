@@ -47,6 +47,44 @@ async def managing_class(user_id: str, record_ids: Iterable[uuid.UUID], session:
     )
 
 
+async def managed_records(user_id: str, record_ids: Iterable[uuid.UUID], session: AsyncSession) -> dict[uuid.UUID, str]:
+    """Map each course-managed record among ``record_ids`` to its class name; others are absent.
+
+    Read models use this to show the lock (US-67.2); the writes still check it themselves.
+    """
+    ids = list(dict.fromkeys(record_ids))
+    if not ids:
+        return {}
+    live = (
+        select(CourseCopyModel.class_id, CourseCopyModel.user_id, CourseCopyModel.project_id, ClassModel.name)
+        .join(ClassModel, ClassModel.id == CourseCopyModel.class_id)
+        .join(
+            ClassMemberModel,
+            (ClassMemberModel.class_id == ClassModel.id) & (ClassMemberModel.user_id == CourseCopyModel.user_id),
+        )
+        .where(
+            CourseCopyModel.user_id == user_id,
+            CourseCopyModel.project_id.is_not(None),
+            ClassMemberModel.removed_at.is_(None),
+        )
+        .subquery()
+    )
+    projects = await session.execute(select(live.c.project_id, live.c.name).where(live.c.project_id.in_(ids)))
+    items = await session.execute(
+        select(CourseCopyItemModel.record_id, live.c.name)
+        .join(
+            live,
+            (CourseCopyItemModel.class_id == live.c.class_id) & (CourseCopyItemModel.user_id == live.c.user_id),
+        )
+        .where(CourseCopyItemModel.record_id.in_(ids))
+    )
+    managed: dict[uuid.UUID, str] = {}
+    for record_id, name in sorted([*projects.all(), *items.all()], key=lambda row: row[1], reverse=True):
+        if record_id is not None:
+            managed[record_id] = name
+    return managed
+
+
 async def require_not_course_managed(*, user_id: str, record_ids: Iterable[uuid.UUID], session: AsyncSession) -> None:
     """Refuse a student's own change to a course-managed project, sub-agent or file.
 

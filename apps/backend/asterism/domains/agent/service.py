@@ -13,7 +13,7 @@ from asterism.core.exceptions import (
 )
 from asterism.db.database import get_async_db_session
 from asterism.db.queries import paginate_select
-from asterism.domains.courses.locks import require_not_course_managed
+from asterism.domains.courses.locks import managing_class, require_not_course_managed
 from asterism.domains.llm.schemas import ChatCompletionParams
 from asterism.domains.settings.models import LLMModel
 from asterism.domains.tools.catalog import INTERNAL_TOOL_NAMES, configurable_tools
@@ -173,6 +173,7 @@ async def _sub_definition(user_id: str, profile: AgentProfile, session: AsyncSes
             **profile.model_dump(exclude={"sub_agent"}),
             "model_available": reason is None,
             "model_unavailable_reason": reason,
+            "managed_by_class": await managing_class(user_id, [profile.id], session),
         },
     )
 

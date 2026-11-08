@@ -140,6 +140,8 @@ class SubAgentDefinition(SubAgentCreate):
     model_available: bool
     model_unavailable_reason: str | None = None
     config_revision: int = Field(default=1, ge=1)
+    # Class whose course manages this record, so the student cannot change it (US-67.2).
+    managed_by_class: str | None = None
 
 
 class SubAgentInstructionsUpdate(BaseModel):

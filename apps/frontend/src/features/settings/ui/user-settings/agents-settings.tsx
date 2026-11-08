@@ -19,6 +19,7 @@ import { Hint } from "@/components/ui/hint";
 import { client } from "@/lib/api";
 import { modelLabel } from "@/components/settings/model-identity";
 import { SubAgentDefinition } from "@/lib/client";
+import { CourseManagedBadge } from "@/components/course-managed-badge";
 import {
   chatModelsListOptions,
   mainAgentGetOptions,
@@ -230,33 +231,44 @@ function SubAgentCard({
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-1 flex-col gap-2 overflow-auto">
+        {agent.managed_by_class && (
+          <CourseManagedBadge managedBy={agent.managed_by_class} />
+        )}
         {agent.description || "No Description"}
       </CardContent>
-      <CardFooter className="flex flex-wrap justify-end gap-2">
-        <Hint hint={`Edit ${agent.name}`} asChild>
-          <Button
-            variant="outline"
-            aria-label={`Edit ${agent.name}`}
-            disabled={mutation.isPending}
-            onClick={edit}
-          >
-            <PencilIcon />
-          </Button>
-        </Hint>
-        <Hint hint={`Delete ${agent.name}`} asChild>
-          <Button
-            variant="destructive"
-            aria-label={`Delete ${agent.name}`}
-            disabled={mutation.isPending}
-            onClick={async () => {
-              if (await confirm())
-                mutation.mutate({ path: { agent_id: agent.id } });
-            }}
-          >
-            <Trash2Icon />
-          </Button>
-        </Hint>
-      </CardFooter>
+      {agent.managed_by_class ? (
+        <CardFooter>
+          <p className="text-muted-foreground text-xs">
+            Part of a course, so only course updates can change it.
+          </p>
+        </CardFooter>
+      ) : (
+        <CardFooter className="flex flex-wrap justify-end gap-2">
+          <Hint hint={`Edit ${agent.name}`} asChild>
+            <Button
+              variant="outline"
+              aria-label={`Edit ${agent.name}`}
+              disabled={mutation.isPending}
+              onClick={edit}
+            >
+              <PencilIcon />
+            </Button>
+          </Hint>
+          <Hint hint={`Delete ${agent.name}`} asChild>
+            <Button
+              variant="destructive"
+              aria-label={`Delete ${agent.name}`}
+              disabled={mutation.isPending}
+              onClick={async () => {
+                if (await confirm())
+                  mutation.mutate({ path: { agent_id: agent.id } });
+              }}
+            >
+              <Trash2Icon />
+            </Button>
+          </Hint>
+        </CardFooter>
+      )}
     </Card>
   );
 }

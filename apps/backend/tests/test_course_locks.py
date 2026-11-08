@@ -187,3 +187,33 @@ async def test_another_students_copy_does_not_lock_anything_for_this_one(course)
         client, "PATCH", f"/projects/{project.id}", {"expected_context_revision": 1, "name": "x"}, user="s2"
     )
     assert response.status_code == 404
+
+
+async def test_reads_mark_course_records_with_their_class(course):
+    client = course["client"]
+    project, agent, file = await added(course)
+    own_project, own_agent, own_file = await own_records(course)
+
+    async def get(url):
+        response = await client.get(url, headers=auth("s1"))
+        assert response.status_code == 200, response.text
+        return response.json()
+
+    assert (await get(f"/projects/{project.id}"))["managed_by_class"] == "Biology 101"
+    assert (await get(f"/projects/{own_project['id']}")).get("managed_by_class") is None
+    listed = {item["id"]: item["managed_by_class"] for item in (await get("/projects/"))["projects"]}
+    assert listed == {str(project.id): "Biology 101", own_project["id"]: None}
+
+    sub_agents = {item["id"]: item["managed_by_class"] for item in (await get("/agents/sub-agents"))["items"]}
+    assert sub_agents == {str(agent.id): "Biology 101", own_agent["id"]: None}
+    [selected] = (await get(f"/projects/{project.id}/sub-agents"))["agents"]
+    assert selected["managed_by_class"] == "Biology 101"
+
+    files = {item["id"]: item["managed_by_class"] for item in (await get("/files/"))["files"]}
+    assert files == {str(file.id): "Biology 101", own_file["id"]: None}
+    [attached] = (await get(f"/projects/{project.id}/files"))["files"]
+    assert attached["managed_by_class"] == "Biology 101"
+
+    # The mark is live: leaving the class clears it.
+    assert (await client.delete(f"/classes/joined/{course['class']['id']}", headers=auth("s1"))).status_code == 204
+    assert (await get(f"/projects/{project.id}"))["managed_by_class"] is None

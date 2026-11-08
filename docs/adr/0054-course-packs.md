@@ -3,7 +3,7 @@
 Status: accepted and implemented for US-60.3 on 2026-11-07
 ([EPIC-60](../epics/EPIC-60-EDUCATOR-AND-CLASS-POLICY.md)). Amended for US-67.1
 on 2026-11-08 ([EPIC-67](../epics/EPIC-67-READ-ONLY-COURSE-PROJECTS.md)): course
-records are read-only to the student. Builds on
+records are read-only to the student, and US-67.2 shows the lock in the UI. Builds on
 [ADR-0051](0051-team-pack-format.md) (team packs) and
 [ADR-0053](0053-classes-and-educators.md) (classes).
 
@@ -109,6 +109,13 @@ the user chose copies, student-applied updates and one-click adding.
   student keeps their copy. Deleting records a student may rely on was rejected.
 - Chats in the project stay the student's: messages, branches, forks, chat
   attachments, learning modes within class policy, and study tools.
+- **Showing the lock (US-67.2).** Project, sub-agent and file read models carry
+  `managed_by_class`, the managing class's name or null, computed live by the
+  same rule (`courses.locks.managed_records`, one batch per page). It only
+  informs the UI: a "Managed by" badge, disabled settings, no file or sub-agent
+  membership controls, no edit/delete for course sub-agents in Settings, no
+  bulk delete with a course file selected, and "Leave course" in place of
+  "Delete project". The services still refuse on their own.
 
 ## Consequences
 
