@@ -40,6 +40,7 @@ import {
   chatModelsListOptions,
   projectGetOneOptions,
 } from "@/lib/client/@tanstack/react-query.gen";
+import { GeneralDelegationStatus } from "@/features/chat/components/general-delegation-status";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -150,6 +151,7 @@ export default function AppPage() {
               user.settings.prompt_coach_enabled ? { modelId } : undefined
             }
             requestScope={`${main.id}:${modelId || "none"}:${personaId ?? "default"}:${learningMode}:${searchParams.get("project_id") ?? "general"}:${compareModels.join(",")}:${sentRubric ? `${sentRubric.source}:${sentRubric.id}` : "none"}:${includeGoal ? "goal" : ""}`}
+            status={!projectId && <GeneralDelegationStatus modelId={modelId} />}
             modelSelector={
               <>
                 <ChatModelPicker value={modelId} onChange={setChosenModelId} />

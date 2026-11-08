@@ -11,6 +11,9 @@ vi.mock("./agent-profile-form", () => ({
   AgentProfileForm: () => <button>Create sub-agent</button>,
   MainAgentForm: () => <button>Edit main configuration</button>,
 }));
+vi.mock("./general-sub-agents", () => ({
+  GeneralSubAgents: () => <section aria-label="General chat sub-agents" />,
+}));
 vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
   mainAgentGetOptions: () => ({
     queryKey: ["main"],

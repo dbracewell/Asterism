@@ -368,12 +368,15 @@ async def get_sub_agent_traces_by_parent_message(
 
 async def get_general_sub_agents(user_id: str, session: AsyncSession) -> GeneralSubAgents:
     """The General chat set (ADR-0059) with each definition's live model availability."""
+    from asterism.domains.settings.tool_settings import get_tool_settings
+
     current = await read_general_set(user_id, session)
     agents = [
         await _sub_definition(user_id, await get_agent_profile(user_id, agent_id, session), session)
         for agent_id in current.agent_ids
     ]
-    return GeneralSubAgents(revision=current.revision, agents=agents)
+    allowed = "sub_agent" in (await get_tool_settings(session)).active_tools
+    return GeneralSubAgents(revision=current.revision, agents=agents, delegation_allowed=allowed)
 
 
 async def set_general_sub_agents(

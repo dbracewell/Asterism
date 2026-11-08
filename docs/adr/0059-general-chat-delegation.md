@@ -1,6 +1,7 @@
 # ADR-0059 — Sub-agents in General chats
 
-Status: accepted and implemented for US-68.1 on 2026-11-08
+Status: accepted; backend implemented in US-68.1 and the settings picker and
+composer indicator in US-68.2, both on 2026-11-08
 ([EPIC-68](../epics/EPIC-68-SUB-AGENTS-IN-GENERAL-CHAT.md)). Amends the rule
 "General chats never delegate" in AGENTS.md §2.3 and the delegation sections of
 the [agent runtime](../architecture/agent-runtime.md) and
@@ -33,6 +34,8 @@ on the main row only). A new user starts with an empty set and revision 1.
 - Deleting a sub-agent bumps the revision when it was in the set, and the row
   goes with the definition (cascade). Editing the main configuration does not
   touch the set's revision; the two are independent.
+- `GET` and `PUT` also return `delegation_allowed`: whether admin policy
+  currently enables `sub_agent`. It is display-only and grants nothing.
 
 The set lives with the main agent, not with chats, so it is one choice per user
 that applies to every General chat, and a project chat ignores it.
@@ -72,8 +75,16 @@ sub-agent capability entries carry `general_selection` instead of
 
 ## Consequences
 
-- General chats can delegate once the user picks a General set (US-68.2 adds
-  the picker); with an empty set nothing changes.
+- General chats can delegate once the user picks a General set; with an empty
+  set nothing changes.
+- User Settings → Agents → Main agent shows the set with each fixed model and
+  its availability, and a dialog replaces it under the revision guard. A newly
+  chosen target needs an available model; an already chosen unavailable one
+  stays removable.
+- In a General chat the composer shows a robot icon when the set is non-empty:
+  available when policy allows, the chat model has `supports_tools=True` and a
+  chosen fixed model is available; otherwise it names the block. It mirrors
+  the server checks for display only; each turn still re-derives the scope.
 - The architecture docs and AGENTS.md describe two allowlists instead of one.
 - Future memory partitions are unaffected: a General chat's derived context is
   still keyed by user, profile and chat.

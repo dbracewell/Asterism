@@ -1,6 +1,6 @@
 # EPIC-68: Sub-agents in General chat
 
-Status: in progress (US-68.1 confirmed and merged). Source: user request (2026-11-08).
+Status: in progress (US-68.1 confirmed and merged; US-68.2 implemented, awaiting confirmation). Source: user request (2026-11-08).
 
 ## Objective
 
@@ -51,5 +51,5 @@ showing each sub-agent's model and whether it's currently available. The
 composer shows when delegation is available in a General chat. Help explains the
 difference between General and project sub-agents.
 
-- [ ] Build the picker with generated client hooks; show availability.
-- [ ] Update help and glossary; unit tests and an E2E delegating from a General chat with a fake provider.
+- [x] Build the picker with generated client hooks; show availability.
+- [x] Update help and glossary; unit tests and an E2E delegating from a General chat with a fake provider.

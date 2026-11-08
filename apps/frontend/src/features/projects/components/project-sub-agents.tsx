@@ -100,7 +100,8 @@ export function ProjectSubAgents({
       <p className="text-muted-foreground text-sm">
         Only selected sub-agents can receive delegated work from chats in this
         project. Each uses its fixed model. New projects start with no
-        selections; General chats never delegate.
+        selections. General chats use the General chat sub-agents chosen in
+        agent settings instead.
       </p>
       <Button variant="outline" asChild className="w-fit">
         <Link href="/settings?t=user&setting=agents">

@@ -777,7 +777,7 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
   "settings.agents": {
     title: "Agents",
     purpose:
-      "Configure your main agent, and create sub-agents that projects can use.",
+      "Configure your main agent, and create sub-agents it can hand work to in General chats and projects.",
     areas: [
       {
         name: "Main agent",
@@ -785,14 +785,19 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
           "Its instructions, the tools and skills it may use, and its step limit. Every chat uses it with the model you choose there.",
       },
       {
+        name: "General chat sub-agents",
+        description:
+          "The sub-agents the main agent may use in chats outside projects, with each one's fixed model and whether it's available. You start with none. Project chats use their project's selection instead.",
+      },
+      {
         name: "Sub-agents",
         description:
-          "Helpers with their own instructions and a fixed model. A project must select a sub-agent before its chats can use it.",
+          "Helpers with their own instructions and a fixed model. Choose a sub-agent for General chats, or select it in a project, before chats can use it.",
       },
     ],
     tasks: [
       "Assign your skills to the main agent so they appear in chats.",
-      "Create a sub-agent, then select it in a project's Sub-agents tab.",
+      "Create a sub-agent, then choose it under General chat sub-agents or select it in a project's Sub-agents tab.",
     ],
     terms: [
       "concept.main-agent",

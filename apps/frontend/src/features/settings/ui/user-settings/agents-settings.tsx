@@ -41,6 +41,7 @@ import {
   SettingsSection,
 } from "@/features/settings/ui/settings-section";
 import { AgentProfileForm, MainAgentForm } from "./agent-profile-form";
+import { GeneralSubAgents } from "./general-sub-agents";
 
 export const AgentsSettings = () => {
   const user = useUser();
@@ -90,10 +91,11 @@ export const AgentsSettings = () => {
             isRetrying={main.isRefetching}
           />
         )}
+        {main.data && <GeneralSubAgents />}
       </SettingsSection>
       <SettingsSection
         title="Sub-agents"
-        description="Create sub-agents by assigning a model, instructions, and tools. Then select them in a project. General chats do not have access to sub-agents."
+        description="Create sub-agents by assigning a model, instructions, and tools. Then choose them for General chats above, or select them in a project."
         actions={
           <AgentProfileForm
             profile={editingAgent}
@@ -115,7 +117,7 @@ export const AgentsSettings = () => {
         {agents.data?.total === 0 && (
           <EmptyState
             title="No sub-agents yet"
-            description="Use Create sub-agent to give a model its own instructions and tools for project chats."
+            description="Use Create sub-agent to give a model its own instructions and tools for the main agent to hand work to."
             help={<HelpTopic id="concept.sub-agent" />}
           />
         )}
@@ -206,7 +208,7 @@ function SubAgentCard({
   const { confirm, dialog } = useConfirmationDialog({
     title: `Delete ${agent.name}`,
     description:
-      "Delete this sub-agent definition and remove it from all projects? Active delegations will lose access. Chat history and files are retained.",
+      "Delete this sub-agent definition and remove it from all projects and General chats? Active delegations will lose access. Chat history and files are retained.",
     confirmVariant: "destructive",
   });
   return (

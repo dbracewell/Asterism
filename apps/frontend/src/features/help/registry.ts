@@ -87,7 +87,8 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
       "Chats that don't belong to a project. Use them for quick questions that don't need shared files.",
     details: [
       "A General chat can only use files you attach to that chat. It cannot see project files.",
-      "Sub-agents are not available in General chats. Move a chat into a project to use them.",
+      "The main agent can hand work to the sub-agents you choose under General chat sub-agents in User Settings → Agents. You start with none, so a General chat doesn't delegate until you choose some.",
+      "A sub-agent in a General chat sees only the files attached to that chat. Moving a chat into a project switches it to the project's sub-agents.",
     ],
     related: ["concept.project", "concept.file-scope", "concept.sub-agent"],
     audience: "everyone",
@@ -144,10 +145,17 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
     summary:
       "A helper you define with its own instructions and its own fixed model. The main agent can hand parts of a task to it.",
     details: [
-      "Sub-agents only work in projects that select them in their Sub-agents tab, and only when the chat's model supports tools.",
+      "The main agent can only use sub-agents you've allowed. General chats use the General chat sub-agents you choose in User Settings → Agents. Project chats use the sub-agents selected in that project's Sub-agents tab, and ignore your General choices.",
+      "Delegation also needs the chat's model to support tools, the sub-agent's fixed model to be available and an administrator to allow sub-agents. In a General chat, a robot icon beside the send button shows whether delegation is available.",
+      "If you change your choices while a reply is running, the next hand-off in that reply is refused; send a new message to use the new choices.",
       "A sub-agent can use the same files as the chat or fewer, never more. Its work appears in the chat so you can see what it did.",
     ],
-    related: ["concept.main-agent", "concept.project", "concept.model"],
+    related: [
+      "concept.main-agent",
+      "concept.general-chat",
+      "concept.project",
+      "concept.model",
+    ],
     audience: "everyone",
   },
   "concept.skill": {
@@ -613,6 +621,7 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
       "Persona: choose which description of you the assistant should keep in mind.",
       "Learning mode: choose between direct answers and modes that help you work it out yourself.",
       "Type / in the message box to add a skill.",
+      "Robot icon (General chats only): shows whether the main agent can hand work to your General chat sub-agents with this model. Select it to manage them.",
     ],
     related: [
       "concept.attachment",
@@ -624,6 +633,7 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
       "concept.persona",
       "concept.learning-mode",
       "concept.skill",
+      "concept.sub-agent",
       "concept.mode-lock",
     ],
     audience: "everyone",

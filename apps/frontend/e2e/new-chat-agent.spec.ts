@@ -72,13 +72,22 @@ test("edits the sole model-free main configuration and exposes unavailable worke
       ],
     }),
   );
+  await page.route(
+    "**/api/py/settings/user/main-agent/general-sub-agents",
+    (route) =>
+      route.fulfill({
+        json: { revision: 1, agents: [], delegation_allowed: true },
+      }),
+  );
   await page.goto("/e2e/new-chat-agent");
   await expect(
     page.getByRole("button", { name: "Edit main configuration" }),
   ).toHaveCount(1);
   await expect(page.getByRole("button", { name: /default/i })).toHaveCount(0);
   await expect(
-    page.getByRole("region", { name: "Sub-agents" }).getByRole("status"),
+    page
+      .getByRole("region", { name: "Sub-agents", exact: true })
+      .getByRole("status"),
   ).toContainText("Fixed model unavailable");
   await page.getByRole("button", { name: "Edit main configuration" }).click();
   await expect(page.getByLabel("Model", { exact: true })).toHaveCount(0);
