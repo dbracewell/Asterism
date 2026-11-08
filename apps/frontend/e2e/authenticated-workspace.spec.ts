@@ -247,10 +247,11 @@ test("authenticated project and General chats preserve scope, provenance, and ow
       file_ids: [file.id],
       expected_context_revision: project.context_revision,
     });
-    await page.reload();
+    await page.goto(`/projects/${projectId}?tab=files`);
     await expect(
       page.getByText("project-evidence.txt", { exact: true }).first(),
     ).toBeVisible();
+    await page.getByRole("tab", { name: "Overview" }).click();
     await page
       .getByRole("link", { name: "New chat", exact: true })
       .last()

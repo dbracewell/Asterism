@@ -68,7 +68,7 @@ test("chooses items and downloads a team pack from project settings", async ({
       },
     });
   });
-  await page.goto(`/e2e/projects?view=settings&projectId=${P}`);
+  await page.goto(`/e2e/projects?view=project&tab=settings&projectId=${P}`);
   await page.getByRole("button", { name: "Export team pack" }).click();
   const dialog = page.getByRole("dialog", { name: "Export team pack" });
   await dialog.getByRole("checkbox", { name: "Critic" }).click();

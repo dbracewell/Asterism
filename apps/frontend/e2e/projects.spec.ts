@@ -104,7 +104,7 @@ test("browses Projects and General, searches, paginates, and offers scoped new c
   await expect(
     page.getByRole("button", { name: "Previous projects" }),
   ).toBeDisabled();
-  await page.goto("/e2e/projects?view=overview");
+  await page.goto("/e2e/projects?view=project");
   await expect(
     page.getByRole("heading", { name: "Research", exact: true }),
   ).toBeVisible();
@@ -112,10 +112,31 @@ test("browses Projects and General, searches, paginates, and offers scoped new c
     "href",
     `/?project_id=${P}`,
   );
-  await expect(
-    page.getByRole("link", { name: "Project settings" }),
-  ).toHaveAttribute("href", `/projects/${P}/settings`);
   await expect(page.getByText("No chats yet")).toBeVisible();
+  // US-65.1: sections are tabs; arrow keys move between them and the URL follows.
+  const sections = page.getByRole("tablist", { name: "Project sections" });
+  const overview = sections.getByRole("tab", { name: "Overview" });
+  await expect(overview).toHaveAttribute("aria-selected", "true");
+  await overview.focus();
+  for (const [name, tab] of [
+    ["Chats", "chats"],
+    ["Files", "files"],
+    ["Study", "study"],
+  ]) {
+    await page.keyboard.press("ArrowRight");
+    const next = sections.getByRole("tab", { name });
+    await expect(next).toBeFocused();
+    await expect(next).toHaveAttribute("aria-selected", "true");
+    await expect(page).toHaveURL(new RegExp(`[?&]tab=${tab}(&|$)`));
+  }
+  await expect(page.getByText("No decks yet")).toBeVisible();
+  await page.goBack();
+  await expect(page).toHaveURL(/[?&]tab=files(&|$)/);
+  await expect(sections.getByRole("tab", { name: "Files" })).toHaveAttribute(
+    "aria-selected",
+    "true",
+  );
+  await page.goto("/e2e/projects?view=project&tab=study");
   await expect(page.getByText("No decks yet")).toBeVisible();
   await page.screenshot({
     path: "test-results/projects-desktop.png",
@@ -126,6 +147,19 @@ test("browses Projects and General, searches, paginates, and offers scoped new c
     path: "test-results/projects-mobile.png",
     fullPage: true,
   });
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= window.innerWidth,
+    ),
+  ).toBe(true);
+  // At 320px the tab row scrolls inside itself and every tab stays reachable.
+  await page.setViewportSize({ width: 320, height: 640 });
+  await sections.getByRole("tab", { name: "Study" }).focus();
+  await page.keyboard.press("End");
+  const settingsTab = sections.getByRole("tab", { name: "Settings" });
+  await expect(settingsTab).toBeFocused();
+  await expect(settingsTab).toBeInViewport();
+  await expect(page.getByLabel("Project instructions")).toBeVisible();
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= window.innerWidth,
@@ -169,7 +203,7 @@ test("edits project instructions with a revision guard and explains deletion", a
       return route.fulfill({ json: current });
     },
   );
-  await page.goto("/e2e/projects?view=settings");
+  await page.goto("/e2e/projects?view=project&tab=settings");
   await expect(page.getByLabel("Project instructions")).toHaveValue(
     "Cite evidence",
   );

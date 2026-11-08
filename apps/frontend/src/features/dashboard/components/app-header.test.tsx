@@ -165,12 +165,7 @@ describe("headerRoute", () => {
     ["/c/c/files/f", null, { kind: "chat", chatId: "c", file: true }],
     ["/", null, { kind: "new-chat", projectId: null }],
     ["/", "p", { kind: "new-chat", projectId: "p" }],
-    ["/projects/p", null, { kind: "project", projectId: "p", settings: false }],
-    [
-      "/projects/p/settings",
-      null,
-      { kind: "project", projectId: "p", settings: true },
-    ],
+    ["/projects/p", null, { kind: "project", projectId: "p" }],
     ["/general", null, { kind: "page", trail: [{ label: "General" }] }],
     [
       "/files/report%20v2.pdf",
@@ -195,7 +190,7 @@ describe("app header breadcrumbs", () => {
     ["/", "", ["General", "New chat"]],
     ["/", "project_id=p", ["Research", "New chat"]],
     ["/projects/p", "", ["Projects", "Research"]],
-    ["/projects/p/settings", "", ["Projects", "Research", "Settings"]],
+    ["/projects/p", "tab=settings", ["Projects", "Research"]],
   ])("shows %s?%s", async (pathname, search, expected) => {
     route.pathname = pathname;
     route.search = search;

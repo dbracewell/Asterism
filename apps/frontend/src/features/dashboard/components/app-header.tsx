@@ -32,7 +32,7 @@ import { Fragment, type ReactNode } from "react";
 export type HeaderRoute =
   | { kind: "chat"; chatId: string; file: boolean }
   | { kind: "new-chat"; projectId: string | null }
-  | { kind: "project"; projectId: string; settings: boolean }
+  | { kind: "project"; projectId: string }
   | { kind: "page"; trail: { label: string; href?: string }[] };
 
 const PAGE_TITLES: Record<string, string> = {
@@ -54,9 +54,8 @@ export function headerRoute(
   const chat = pathname.match(/^\/c\/([^/]+)(\/files\/[^/]+)?/);
   if (chat) return { kind: "chat", chatId: chat[1], file: !!chat[2] };
   if (pathname === "/") return { kind: "new-chat", projectId: projectParam };
-  const project = pathname.match(/^\/projects\/([^/]+)(\/settings)?/);
-  if (project)
-    return { kind: "project", projectId: project[1], settings: !!project[2] };
+  const project = pathname.match(/^\/projects\/([^/]+)/);
+  if (project) return { kind: "project", projectId: project[1] };
   const file = pathname.match(/^\/files\/([^/]+)/);
   if (file)
     return {
@@ -96,13 +95,7 @@ export const AppHeader = () => {
               : route.kind === "project"
                 ? [
                     { label: "Projects", href: "/projects" },
-                    {
-                      label: <ProjectName projectId={route.projectId} />,
-                      href: route.settings
-                        ? `/projects/${route.projectId}`
-                        : undefined,
-                    },
-                    ...(route.settings ? [{ label: "Settings" }] : []),
+                    { label: <ProjectName projectId={route.projectId} /> },
                   ]
                 : route.trail
           }

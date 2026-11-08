@@ -11,19 +11,33 @@ import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useState } from "react";
 
-export function WorkspaceChats({ projectId }: { projectId: string | null }) {
+/**
+ * A workspace's chats, newest first. With ``recent`` it shows only the first
+ * few and links to the full list instead of paging.
+ */
+export function WorkspaceChats({
+  projectId,
+  recent,
+}: {
+  projectId: string | null;
+  recent?: { limit: number; showAll: () => void };
+}) {
   const [page, setPage] = useState(1);
+  const pageSize = recent?.limit ?? 20;
   const chats = useQuery({
     ...chatSessionGetManyOptions({
       client,
-      query: { project_id: projectId, page, page_size: 20 },
+      query: { project_id: projectId, page, page_size: pageSize },
     }),
     retry: false,
   });
   return (
-    <section className="flex flex-col gap-4" aria-label="Workspace chats">
+    <section
+      className="flex flex-col gap-4"
+      aria-label={recent ? "Recent chats" : "Workspace chats"}
+    >
       <div className="flex items-center justify-between">
-        <h2 className="text-heading">Chats</h2>
+        <h2 className="text-heading">{recent ? "Recent chats" : "Chats"}</h2>
         <Button asChild>
           <Link href={projectId ? `/?project_id=${projectId}` : "/"}>
             New chat
@@ -77,23 +91,37 @@ export function WorkspaceChats({ projectId }: { projectId: string | null }) {
               ))}
             </ul>
           )}
-          <div className="flex justify-between gap-2">
-            <Button
-              variant="outline"
-              disabled={page === 1 || chats.isFetching}
-              onClick={() => setPage(page - 1)}
-            >
-              Previous chats
-            </Button>
-            <span className="text-muted-foreground text-sm">Page {page}</span>
-            <Button
-              variant="outline"
-              disabled={page * 20 >= chats.data.total || chats.isFetching}
-              onClick={() => setPage(page + 1)}
-            >
-              Next chats
-            </Button>
-          </div>
+          {recent ? (
+            chats.data.total > recent.limit && (
+              <Button
+                variant="outline"
+                className="self-start"
+                onClick={recent.showAll}
+              >
+                All {chats.data.total} chats
+              </Button>
+            )
+          ) : (
+            <div className="flex justify-between gap-2">
+              <Button
+                variant="outline"
+                disabled={page === 1 || chats.isFetching}
+                onClick={() => setPage(page - 1)}
+              >
+                Previous chats
+              </Button>
+              <span className="text-muted-foreground text-sm">Page {page}</span>
+              <Button
+                variant="outline"
+                disabled={
+                  page * pageSize >= chats.data.total || chats.isFetching
+                }
+                onClick={() => setPage(page + 1)}
+              >
+                Next chats
+              </Button>
+            </div>
+          )}
         </>
       )}
     </section>
