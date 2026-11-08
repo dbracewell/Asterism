@@ -10,6 +10,7 @@ const project = (description: string): Project => ({
   accent: null,
   goal: "",
   goal_target_date: null,
+  areas: { study: true, reflections: true, goal: true, sub_agents: true },
   context_revision: 1,
   created_at: 0,
   updated_at: 0,

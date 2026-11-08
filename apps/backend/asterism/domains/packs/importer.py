@@ -139,6 +139,7 @@ def _build_project(user_id: str, manifest: PackManifest, payload: PackImportRequ
         system_prompt=project.system_prompt,
         accent=project.accent,
         goal=project.goal,
+        areas=project.areas,
     )
     return ProjectModel(user_id=user_id, **values.model_dump())
 

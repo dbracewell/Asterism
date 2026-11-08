@@ -7,7 +7,7 @@ import { QueryError } from "@/components/query-error";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { client } from "@/lib/api";
-import type { Project, ProjectCreate } from "@/lib/client";
+import type { Project, ProjectAreas, ProjectCreate } from "@/lib/client";
 import {
   projectDeleteMutation,
   projectGetOneOptions,
@@ -25,23 +25,34 @@ import { ProjectGoal } from "./project-goal";
 import { ReflectionList } from "@/features/reflections/components/reflection-list";
 import { AiUseLogDialog } from "@/features/chat/components/ai-use-log/ai-use-log-dialog";
 import { ExportPackDialog } from "./export-pack-dialog";
+import { ProjectAreaSwitches } from "./project-areas";
 import { ProjectStudyDecks } from "@/features/study/components/project-study-decks";
 import { ProjectStudyQuizzes } from "@/features/study/components/project-study-quizzes";
 import { ProjectStudyNotes } from "@/features/study/components/project-study-notes";
 import { ProjectWeakSpots } from "@/features/study/components/project-weak-spots";
 import { ProjectTopicMastery } from "@/features/study/components/project-topic-mastery";
 
+// `area` names the feature area that can hide a tab (US-65.2); others always show.
 export const PROJECT_TABS = [
   { value: "overview", label: "Overview" },
   { value: "chats", label: "Chats" },
   { value: "files", label: "Files" },
-  { value: "study", label: "Study" },
-  { value: "reflections", label: "Reflections" },
-  { value: "sub-agents", label: "Sub-agents" },
+  { value: "study", label: "Study", area: "study" },
+  { value: "reflections", label: "Reflections", area: "reflections" },
+  { value: "sub-agents", label: "Sub-agents", area: "sub_agents" },
   { value: "settings", label: "Settings" },
-] as const;
+] as const satisfies readonly {
+  value: string;
+  label: string;
+  area?: keyof ProjectAreas;
+}[];
 
 export type ProjectTab = (typeof PROJECT_TABS)[number]["value"];
+
+/** Tabs the project shows; a tab whose area is off is hidden. */
+export function visibleTabs(areas: ProjectAreas) {
+  return PROJECT_TABS.filter((tab) => !("area" in tab) || areas[tab.area]);
+}
 
 export function projectTab(value: string | null): ProjectTab {
   return PROJECT_TABS.find((tab) => tab.value === value)?.value ?? "overview";
@@ -86,6 +97,11 @@ export function ProjectWorkspace({ projectId }: { projectId: string }) {
     retry: false,
   });
   const disabled = project.isFetching || !!project.error;
+  const tabs = project.data ? visibleTabs(project.data.areas) : PROJECT_TABS;
+  // A link to a hidden area's tab opens Overview instead.
+  const active = tabs.some((item) => item.value === tab) ? tab : "overview";
+  const shown = (value: ProjectTab) =>
+    tabs.some((item) => item.value === value);
   return (
     <PageLayout>
       <Link
@@ -130,12 +146,12 @@ export function ProjectWorkspace({ projectId }: { projectId: string }) {
               </Button>
             }
           />
-          <Tabs value={tab} onValueChange={selectTab} className="min-w-0">
+          <Tabs value={active} onValueChange={selectTab} className="min-w-0">
             <TabsList
               aria-label="Project sections"
               className="max-w-full justify-start overflow-x-auto"
             >
-              {PROJECT_TABS.map((item) => (
+              {tabs.map((item) => (
                 <TabsTrigger
                   key={item.value}
                   value={item.value}
@@ -152,10 +168,12 @@ export function ProjectWorkspace({ projectId }: { projectId: string }) {
               ))}
             </TabsList>
             <TabsContent value="overview" className={PANEL}>
-              <ProjectGoal
-                goal={project.data.goal}
-                targetDate={project.data.goal_target_date}
-              />
+              {project.data.areas.goal && (
+                <ProjectGoal
+                  goal={project.data.goal}
+                  targetDate={project.data.goal_target_date}
+                />
+              )}
               <WorkspaceChats
                 key={projectId}
                 projectId={projectId}
@@ -168,46 +186,52 @@ export function ProjectWorkspace({ projectId }: { projectId: string }) {
             <TabsContent value="files" className={PANEL}>
               <ProjectFiles key={`files-${projectId}`} projectId={projectId} />
             </TabsContent>
-            <TabsContent value="study" className={PANEL}>
-              <ProjectStudyDecks
-                key={`study-${projectId}`}
-                projectId={projectId}
-              />
-              <ProjectTopicMastery
-                key={`mastery-${projectId}`}
-                projectId={projectId}
-              />
-              <ProjectWeakSpots
-                key={`weak-${projectId}`}
-                projectId={projectId}
-              />
-              <ProjectStudyQuizzes
-                key={`quizzes-${projectId}`}
-                projectId={projectId}
-              />
-              <ProjectStudyNotes
-                key={`notes-${projectId}`}
-                projectId={projectId}
-              />
-            </TabsContent>
-            <TabsContent value="reflections" className={PANEL}>
-              <ReflectionList
-                key={`reflections-${projectId}`}
-                projectId={projectId}
-              />
-            </TabsContent>
-            <TabsContent value="sub-agents" className={PANEL}>
-              <ProjectSubAgents
-                key={`agents-${projectId}`}
-                projectId={projectId}
-                disabled={disabled}
-              />
-            </TabsContent>
+            {shown("study") && (
+              <TabsContent value="study" className={PANEL}>
+                <ProjectStudyDecks
+                  key={`study-${projectId}`}
+                  projectId={projectId}
+                />
+                <ProjectTopicMastery
+                  key={`mastery-${projectId}`}
+                  projectId={projectId}
+                />
+                <ProjectWeakSpots
+                  key={`weak-${projectId}`}
+                  projectId={projectId}
+                />
+                <ProjectStudyQuizzes
+                  key={`quizzes-${projectId}`}
+                  projectId={projectId}
+                />
+                <ProjectStudyNotes
+                  key={`notes-${projectId}`}
+                  projectId={projectId}
+                />
+              </TabsContent>
+            )}
+            {shown("reflections") && (
+              <TabsContent value="reflections" className={PANEL}>
+                <ReflectionList
+                  key={`reflections-${projectId}`}
+                  projectId={projectId}
+                />
+              </TabsContent>
+            )}
+            {shown("sub-agents") && (
+              <TabsContent value="sub-agents" className={PANEL}>
+                <ProjectSubAgents
+                  key={`agents-${projectId}`}
+                  projectId={projectId}
+                  disabled={disabled}
+                />
+              </TabsContent>
+            )}
             {/* Kept mounted so unsaved edits survive switching tabs. */}
             <TabsContent
               value="settings"
               forceMount
-              hidden={tab !== "settings"}
+              hidden={active !== "settings"}
               className={PANEL}
             >
               <ProjectSettings
@@ -283,6 +307,7 @@ function ProjectSettings({
     accent: draft.accent,
     goal: draft.goal,
     goal_target_date: draft.goal_target_date,
+    areas: draft.areas,
   };
   return (
     <>
@@ -307,6 +332,15 @@ function ProjectSettings({
           onChange={(next) => {
             setSaved(false);
             setDraft({ ...draft, ...next });
+          }}
+        />
+        <ProjectAreaSwitches
+          projectId={project.id}
+          value={draft.areas}
+          disabled={pending}
+          onChange={(areas) => {
+            setSaved(false);
+            setDraft({ ...draft, areas });
           }}
         />
         {update.error && (

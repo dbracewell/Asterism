@@ -343,3 +343,27 @@ async def test_versions_are_listed_for_the_educator(course):
         (2, "two", ["Tutor"]),
         (1, "one", ["Tutor"]),
     ]
+
+
+async def test_course_projects_carry_the_feature_areas(course):
+    areas = {"study": True, "reflections": False, "goal": True, "sub_agents": False}
+    path = f"/projects/{course['project']}"
+    revision = (await course["client"].get(path, headers=auth("teach"))).json()["context_revision"]
+    edited = await course["client"].patch(
+        path, headers=auth("teach"), json={"expected_context_revision": revision, "areas": areas}
+    )
+    assert edited.status_code == 200, edited.text
+    await publish(course)
+    await apply(course, 1)
+    [project], *_ = await student_records(course)
+    assert project.areas.model_dump() == areas
+
+    revision = (await course["client"].get(path, headers=auth("teach"))).json()["context_revision"]
+    await course["client"].patch(
+        path, headers=auth("teach"), json={"expected_context_revision": revision, "areas": areas | {"goal": False}}
+    )
+    await publish(course)
+    assert ("changed", "settings") in {(c["kind"], c["item"]) for c in (await offer(course)).json()["changes"]}
+    await apply(course, 2)
+    [project], *_ = await student_records(course)
+    assert project.areas.goal is False

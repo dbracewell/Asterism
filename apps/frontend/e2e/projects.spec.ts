@@ -10,6 +10,7 @@ const base = {
   context_revision: 3,
   goal: "",
   goal_target_date: null,
+  areas: { study: true, reflections: true, goal: true, sub_agents: true },
   created_at: 1,
   updated_at: 1,
 };
@@ -221,6 +222,7 @@ test("edits project instructions with a revision guard and explains deletion", a
       system_prompt: "Use concise citations",
       goal: "Publish a currents report",
       goal_target_date: "2026-12-01",
+      areas: { study: true, reflections: true, goal: true, sub_agents: true },
       expected_context_revision: 3,
     },
   ]);
@@ -243,6 +245,63 @@ test("edits project instructions with a revision guard and explains deletion", a
     timeout: 30_000,
   });
   await expect(page.getByRole("heading", { name: "ASTERISM" })).toBeVisible();
+});
+
+test("turns feature areas off from Settings and hides their tabs", async ({
+  page,
+}) => {
+  let current = { ...base, goal: "Map the gyres" };
+  const updates: { areas?: unknown }[] = [];
+  await page.route("**/api/py/projects/?**", (route) =>
+    route.fulfill({
+      json: { projects: [current], total: 1, page: 1, page_size: 5 },
+    }),
+  );
+  await page.route(
+    (url) => url.pathname === `/api/py/projects/${P}`,
+    (route) => {
+      if (route.request().method() === "PATCH") {
+        const body = route.request().postDataJSON();
+        updates.push(body);
+        current = { ...current, ...body, context_revision: 3 };
+      }
+      return route.fulfill({ json: current });
+    },
+  );
+  await page.goto("/e2e/projects?view=project&tab=settings");
+  const tabs = page.getByRole("tablist", { name: "Project sections" });
+  await expect(tabs.getByRole("tab")).toHaveCount(7);
+
+  // Switches work from the keyboard.
+  const study = page.getByRole("switch", { name: "Study" });
+  await study.focus();
+  await page.keyboard.press("Space");
+  await expect(study).not.toBeChecked();
+  await page.getByRole("switch", { name: "Goal" }).click();
+  await expect(page.getByLabel("Learning goal")).toHaveCount(0);
+  await page.getByRole("button", { name: "Save settings" }).click();
+  await expect(
+    page.getByRole("status").filter({ hasText: "Project settings saved" }),
+  ).toBeVisible();
+  expect(updates.map((update) => update.areas)).toEqual([
+    { study: false, reflections: true, goal: false, sub_agents: true },
+  ]);
+  await expect(tabs.getByRole("tab")).toHaveText([
+    "Overview",
+    "Chats",
+    "Files",
+    "Reflections",
+    "Sub-agents",
+    "Settings",
+  ]);
+
+  // A link to the hidden tab opens Overview, without the hidden goal.
+  await page.goto("/e2e/projects?view=project&tab=study");
+  await expect(tabs.getByRole("tab", { name: "Overview" })).toHaveAttribute(
+    "aria-selected",
+    "true",
+  );
+  await expect(page.getByText("Map the gyres")).toHaveCount(0);
 });
 
 test("moves a chat to General with explicit history transfer and updates its identity", async ({

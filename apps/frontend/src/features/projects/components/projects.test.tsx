@@ -19,6 +19,7 @@ const mocks = vi.hoisted(() => ({
   chats: vi.fn(),
   push: vi.fn(),
   search: "",
+  selectedAgents: 0,
 }));
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: mocks.push }),
@@ -39,7 +40,7 @@ vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
     queryKey: ["selected-agents"],
     queryFn: async () => ({
       agents: [],
-      total: 0,
+      total: mocks.selectedAgents,
       page: 1,
       page_size: 10,
       context_revision: 3,
@@ -77,6 +78,7 @@ const project = {
   accent: "teal" as const,
   goal: "",
   goal_target_date: null,
+  areas: { study: true, reflections: true, goal: true, sub_agents: true },
   context_revision: 3,
   created_at: 0,
   updated_at: 0,
@@ -108,6 +110,7 @@ beforeEach(() => {
   mocks.get.mockResolvedValue(project);
   mocks.chats.mockResolvedValue({ chats: [], total: 0 });
   mocks.search = "";
+  mocks.selectedAgents = 0;
   vi.spyOn(window.history, "pushState").mockImplementation(() => {});
 });
 it("shows loading, retry, empty, and searchable paginated project results", async () => {
@@ -264,6 +267,68 @@ it("falls back to Overview, which shows the latest chats and links to all", asyn
     null,
     "",
     "/projects/p?tab=chats",
+  );
+});
+it("hides the tabs and Overview goal of areas that are off", async () => {
+  mocks.search = "tab=study";
+  mocks.get.mockResolvedValue({
+    ...project,
+    goal: "Pass the exam",
+    areas: { study: false, reflections: false, goal: false, sub_agents: true },
+  });
+  setup(<ProjectWorkspace projectId="p" />);
+  // A link to a hidden tab opens Overview.
+  expect(await screen.findByRole("tab", { name: "Overview" })).toHaveAttribute(
+    "aria-selected",
+    "true",
+  );
+  expect(screen.getAllByRole("tab").map((tab) => tab.textContent)).toEqual([
+    "Overview",
+    "Chats",
+    "Files",
+    "Sub-agents",
+    "Settings",
+  ]);
+  await screen.findByRole("heading", { name: "Recent chats" });
+  expect(screen.queryByText("Pass the exam")).not.toBeInTheDocument();
+});
+it("saves feature areas from Settings and says selected sub-agents stay in use", async () => {
+  mocks.search = "tab=settings";
+  mocks.selectedAgents = 2;
+  mocks.update.mockImplementation(async ({ body }) => {
+    const updated = { ...project, areas: body.areas };
+    mocks.get.mockResolvedValue(updated);
+    return updated;
+  });
+  setup(<ProjectWorkspace projectId="p" />);
+  const goal = await screen.findByRole("switch", { name: "Goal" });
+  expect(goal).toBeChecked();
+  expect(screen.getByLabelText("Learning goal")).toBeVisible();
+  expect(
+    await screen.findByText(/2 sub-agents are selected\. Hiding this tab/),
+  ).toBeVisible();
+  await userEvent.click(goal);
+  // A hidden goal keeps its text but is no longer edited here.
+  expect(screen.queryByLabelText("Learning goal")).not.toBeInTheDocument();
+  await userEvent.click(screen.getByRole("switch", { name: "Sub-agents" }));
+  await userEvent.click(screen.getByRole("button", { name: "Save settings" }));
+  expect(await screen.findByRole("status")).toHaveTextContent("settings saved");
+  expect(mocks.update.mock.calls[0][0].body).toEqual(
+    expect.objectContaining({
+      goal: "",
+      areas: { study: true, reflections: true, goal: false, sub_agents: false },
+      expected_context_revision: 3,
+    }),
+  );
+  await waitFor(() =>
+    expect(screen.getAllByRole("tab").map((tab) => tab.textContent)).toEqual([
+      "Overview",
+      "Chats",
+      "Files",
+      "Study",
+      "Reflections",
+      "Settings",
+    ]),
   );
 });
 it("keeps unsaved settings when switching away and back", async () => {

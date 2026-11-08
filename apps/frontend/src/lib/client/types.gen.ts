@@ -4266,6 +4266,7 @@ export type PackProject = {
    * Goal
    */
   goal?: string;
+  areas?: ProjectAreas;
   /**
    * Sub Agents
    */
@@ -4319,6 +4320,7 @@ export type PackProjectReview = {
    * Goal
    */
   goal?: string;
+  areas?: ProjectAreas;
   /**
    * Sub Agents
    */
@@ -4778,6 +4780,7 @@ export type Project = {
    * Goal Target Date
    */
   goal_target_date: string | null;
+  areas: ProjectAreas;
   /**
    * Context Revision
    */
@@ -4790,6 +4793,30 @@ export type Project = {
    * Updated At
    */
   updated_at: number;
+};
+
+/**
+ * ProjectAreas
+ *
+ * On/off switch for each optional area. Overview, Chats, Files and Settings are always shown.
+ */
+export type ProjectAreas = {
+  /**
+   * Study
+   */
+  study: boolean;
+  /**
+   * Reflections
+   */
+  reflections: boolean;
+  /**
+   * Goal
+   */
+  goal: boolean;
+  /**
+   * Sub Agents
+   */
+  sub_agents: boolean;
 };
 
 /**
@@ -4831,6 +4858,7 @@ export type ProjectCreate = {
    * Goal Target Date
    */
   goal_target_date?: string | null;
+  areas?: ProjectAreas;
 };
 
 /**
@@ -5011,6 +5039,10 @@ export type ProjectUpdate = {
    * Goal Target Date
    */
   goal_target_date?: string | null;
+  /**
+   * Areas
+   */
+  areas?: ProjectAreas;
 };
 
 /**

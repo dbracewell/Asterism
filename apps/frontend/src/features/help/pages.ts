@@ -205,6 +205,11 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
         description:
           "The name, description, instructions and goal; exporting a team pack; and deleting the project, which moves its chats to General and keeps your library files. Instructions shape answers but don't grant tools or files.",
       },
+      {
+        name: "Feature areas",
+        description:
+          "Switches in Settings for Study, Reflections, Goal and Sub-agents. Turning one off hides its tab or card and keeps its data, so you can turn it back on later. It changes nothing about what chats can do: selected sub-agents stay selected and can still be used.",
+      },
     ],
     tasks: [
       "Add your course notes or readings in Files, then ask about them in any chat here.",

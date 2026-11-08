@@ -89,7 +89,7 @@ def _agent_fingerprint(agent: PackSubAgent, model_id: uuid.UUID | None) -> str:
 
 def _settings(manifest: PackManifest) -> tuple:
     project = manifest.project
-    return (project.description, project.system_prompt, project.goal, project.accent) if project else ()
+    return (project.description, project.system_prompt, project.goal, project.accent, project.areas) if project else ()
 
 
 def course_changes(
@@ -219,6 +219,7 @@ class _Sync:
             "system_prompt": source.system_prompt,
             "goal": source.goal,
             "accent": source.accent,
+            "areas": source.areas,
         }
         existing = await _owned_project(self.user_id, copy.project_id if copy else None, self.session)
         if existing is not None:

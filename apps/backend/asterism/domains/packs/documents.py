@@ -16,6 +16,7 @@ from pydantic import BaseModel, ConfigDict, Field, StrictBool, ValidationError, 
 
 from asterism.core.exceptions import BadDataException
 from asterism.domains.agent.schemas import GenerationDefaults
+from asterism.domains.projects.areas import ALL_AREAS, ProjectAreas
 from asterism.domains.projects.schemas import MAX_GOAL_CHARS, ProjectAccent, ProjectName
 from asterism.domains.prompt_templates.documents import TemplateDocument, parse_document
 from asterism.domains.prompt_templates.rubrics import RubricDocument, parse_rubric
@@ -157,6 +158,7 @@ class PackProject(_PackModel):
     system_prompt: str = Field(default="", max_length=100_000)
     accent: ProjectAccent | None = None
     goal: str = Field(default="", max_length=MAX_GOAL_CHARS)
+    areas: ProjectAreas = ALL_AREAS
     sub_agents: tuple[ItemKey, ...] = Field(default=(), max_length=MAX_SUB_AGENTS)
 
 

@@ -329,6 +329,7 @@ test("new project chat forwards ordered skill IDs and stripped prompt through th
         context_revision: 1,
         goal: "",
         goal_target_date: null,
+        areas: { study: true, reflections: true, goal: true, sub_agents: true },
       },
     }),
   );

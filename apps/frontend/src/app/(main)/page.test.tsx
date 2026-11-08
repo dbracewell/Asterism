@@ -18,6 +18,7 @@ const mocks = vi.hoisted(() => ({
     description: "",
     goal: "",
     goal_target_date: null,
+    areas: { study: true, reflections: true, goal: true, sub_agents: true },
   })),
   skills: [] as { id: string; name: string; description: string }[],
   search: "project_id=project",
@@ -219,6 +220,7 @@ it("includes the project's learning goal only when the learner turns it on", asy
     description: "",
     goal: "Publish a reef survey",
     goal_target_date: null,
+    areas: { study: true, reflections: true, goal: true, sub_agents: true },
   });
   renderPage();
   const toggle = await screen.findByRole("button", {
@@ -299,6 +301,7 @@ it("suggests prompts from the project description and assigned skills and fills 
     description: "Survey reef health. Publish quarterly.",
     goal: "",
     goal_target_date: null,
+    areas: { study: true, reflections: true, goal: true, sub_agents: true },
   });
   mocks.skills = [
     { id: "s1", name: "summarize", description: "Condense long sources" },

@@ -52,6 +52,20 @@ tab and the page never remounts. Only the active tab's content is mounted,
 except Settings, which stays mounted (hidden) so an unsaved draft survives
 switching tabs. Study pages link back to the Study tab.
 
+Each project stores its feature areas (US-65.2) in `projects.areas`, a JSON
+object with four required booleans: `study`, `reflections`, `goal` and
+`sub_agents`. New projects, and team packs without `areas`, start with all four
+on. Settings shows a switch for each, saved with the other settings. An area
+that is off hides its tab (a `tab` link to it opens Overview), and Goal also
+hides the Overview goal card and the goal fields in Settings. Areas are display
+only: no server code reads them, editing them never advances the context
+revision, and hidden data (goal text, selections, study records, reflections)
+is kept. In particular, hiding Sub-agents leaves the selections in place and
+chats can still delegate to them; Settings states how many are selected. Tests
+compare delegation scope, effective tools and file scope before and after
+turning every area off. Team-pack export/import and course copies carry
+`areas`; a change to them is listed as a course settings change.
+
 Project search results link to their overview. Project new-chat links pass the
 project ID to the existing receipt-based create API. The composer verifies project
 metadata before allowing a send; an unavailable project is never silently replaced

@@ -1795,50 +1795,11 @@ export const zPackModelOption = z.object({
 });
 
 /**
- * PackProject
- *
- * Project settings; ``sub_agents`` are keys of this pack's sub-agents.
- */
-export const zPackProject = z.object({
-  name: z.string().min(1).max(255),
-  description: z.string().max(10000).optional().default(""),
-  system_prompt: z.string().max(100000).optional().default(""),
-  accent: z
-    .enum(["red", "orange", "amber", "green", "teal", "sky", "violet", "pink"])
-    .nullish(),
-  goal: z.string().max(1000).optional().default(""),
-  sub_agents: z
-    .array(z.string().regex(/^[a-z][a-z0-9_-]{0,63}$/))
-    .max(16)
-    .optional()
-    .default([]),
-});
-
-/**
  * PackProjectDecision
  */
 export const zPackProjectDecision = z.object({
   include: z.boolean(),
   name: z.string().min(1).max(255).nullish(),
-});
-
-/**
- * PackProjectReview
- */
-export const zPackProjectReview = z.object({
-  name: z.string().min(1).max(255),
-  description: z.string().max(10000).optional().default(""),
-  system_prompt: z.string().max(100000).optional().default(""),
-  accent: z
-    .enum(["red", "orange", "amber", "green", "teal", "sky", "violet", "pink"])
-    .nullish(),
-  goal: z.string().max(1000).optional().default(""),
-  sub_agents: z
-    .array(z.string().regex(/^[a-z][a-z0-9_-]{0,63}$/))
-    .max(16)
-    .optional()
-    .default([]),
-  name_conflict: z.boolean(),
 });
 
 /**
@@ -2012,6 +1973,69 @@ export const zPersonaUpdate = z.object({
 });
 
 /**
+ * ProjectAreas
+ *
+ * On/off switch for each optional area. Overview, Chats, Files and Settings are always shown.
+ */
+export const zProjectAreas = z.object({
+  study: z.boolean(),
+  reflections: z.boolean(),
+  goal: z.boolean(),
+  sub_agents: z.boolean(),
+});
+
+/**
+ * PackProject
+ *
+ * Project settings; ``sub_agents`` are keys of this pack's sub-agents.
+ */
+export const zPackProject = z.object({
+  name: z.string().min(1).max(255),
+  description: z.string().max(10000).optional().default(""),
+  system_prompt: z.string().max(100000).optional().default(""),
+  accent: z
+    .enum(["red", "orange", "amber", "green", "teal", "sky", "violet", "pink"])
+    .nullish(),
+  goal: z.string().max(1000).optional().default(""),
+  areas: zProjectAreas.optional().default({
+    study: true,
+    reflections: true,
+    goal: true,
+    sub_agents: true,
+  }),
+  sub_agents: z
+    .array(z.string().regex(/^[a-z][a-z0-9_-]{0,63}$/))
+    .max(16)
+    .optional()
+    .default([]),
+});
+
+/**
+ * PackProjectReview
+ */
+export const zPackProjectReview = z.object({
+  name: z.string().min(1).max(255),
+  description: z.string().max(10000).optional().default(""),
+  system_prompt: z.string().max(100000).optional().default(""),
+  accent: z
+    .enum(["red", "orange", "amber", "green", "teal", "sky", "violet", "pink"])
+    .nullish(),
+  goal: z.string().max(1000).optional().default(""),
+  areas: zProjectAreas.optional().default({
+    study: true,
+    reflections: true,
+    goal: true,
+    sub_agents: true,
+  }),
+  sub_agents: z
+    .array(z.string().regex(/^[a-z][a-z0-9_-]{0,63}$/))
+    .max(16)
+    .optional()
+    .default([]),
+  name_conflict: z.boolean(),
+});
+
+/**
  * Project
  *
  * Read model for a project, including its current context revision.
@@ -2026,6 +2050,7 @@ export const zProject = z.object({
     .nullable(),
   goal: z.string(),
   goal_target_date: z.iso.date().nullable(),
+  areas: zProjectAreas,
   context_revision: z.int().gte(1),
   created_at: z.int(),
   updated_at: z.int(),
@@ -2045,6 +2070,12 @@ export const zProjectCreate = z.object({
     .nullish(),
   goal: z.string().max(1000).optional().default(""),
   goal_target_date: z.iso.date().nullish(),
+  areas: zProjectAreas.optional().default({
+    study: true,
+    reflections: true,
+    goal: true,
+    sub_agents: true,
+  }),
 });
 
 /**
@@ -2124,6 +2155,7 @@ export const zProjectUpdate = z.object({
     .nullish(),
   goal: z.string().max(1000).optional(),
   goal_target_date: z.iso.date().nullish(),
+  areas: zProjectAreas.optional(),
 });
 
 /**

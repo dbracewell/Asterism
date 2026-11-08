@@ -176,7 +176,8 @@ async def update_project(
     description edits never do). A stale revision or a name collision yields 409.
     """
     current = await _owned_project(user_id=user_id, project_id=project_id, session=session)
-    changes = payload.model_dump(exclude_unset=True, exclude={"expected_context_revision"})
+    # Read attributes rather than dumping, so nested models (areas) compare as models.
+    changes = {key: getattr(payload, key) for key in payload.model_fields_set - {"expected_context_revision"}}
     # Drop no-op fields so the UPDATE (and updated_at) only reflect real edits.
     changes = {key: value for key, value in changes.items() if value != getattr(current, key)}
     prompt_changed = "system_prompt" in changes
