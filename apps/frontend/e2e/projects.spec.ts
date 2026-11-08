@@ -166,6 +166,20 @@ test("browses Projects and General, searches, paginates, and offers scoped new c
       () => document.documentElement.scrollWidth <= window.innerWidth,
     ),
   ).toBe(true);
+  // The row scrolls sideways only, at normal and enlarged text sizes.
+  // Not scrollable vertically, and every tab fits inside the row unclipped.
+  const scrollsVertically = () =>
+    sections.evaluate((node) => {
+      const row = node.getBoundingClientRect();
+      const clipped = [...node.children].some((tab) => {
+        const box = tab.getBoundingClientRect();
+        return box.top < row.top || box.bottom > row.bottom;
+      });
+      return getComputedStyle(node).overflowY !== "hidden" || clipped;
+    });
+  expect(await scrollsVertically()).toBe(false);
+  await page.addStyleTag({ content: "html { font-size: 200% !important; }" });
+  expect(await scrollsVertically()).toBe(false);
   await page.goto("/e2e/projects?view=general");
   await expect(page.getByRole("link", { name: "New chat" })).toHaveAttribute(
     "href",

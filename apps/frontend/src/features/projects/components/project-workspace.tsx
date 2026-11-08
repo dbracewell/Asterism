@@ -149,7 +149,9 @@ export function ProjectWorkspace({ projectId }: { projectId: string }) {
           <Tabs value={active} onValueChange={selectTab} className="min-w-0">
             <TabsList
               aria-label="Project sections"
-              className="max-w-full justify-start overflow-x-auto"
+              // Grow with the text and scroll sideways only: overflow-x-auto
+              // alone also turns on vertical scrolling in a fixed-height row.
+              className="max-w-full justify-start overflow-x-auto overflow-y-hidden data-horizontal:h-auto"
             >
               {tabs.map((item) => (
                 <TabsTrigger
