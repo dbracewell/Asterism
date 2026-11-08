@@ -97,9 +97,10 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
       "A workspace that groups related chats. Files you add to a project are shared with every chat in it.",
     details: [
       "Use a project for a course, an assignment or any topic you'll come back to.",
-      "In a project's settings you can choose which of your sub-agents its chats may use. New projects start with none selected.",
+      "A project's page has tabs for Overview, Chats, Files, Study, Reflections, Sub-agents and Settings. In Settings you can hide the optional areas you don't use; hidden areas keep their data.",
+      "In the Sub-agents tab you choose which of your sub-agents its chats may use. New projects start with none selected.",
       "Export team pack in a project's Settings tab shares its setup as a file. Import team pack on the Projects page shows everything a pack asks for before anything is created.",
-      "You can also set a learning goal and a target date. The goal shows on the project page, and a chat only sees it when you turn on Goal in the message box for a message.",
+      "You can also set a learning goal and a target date. The goal shows on the project's Overview, and a chat only sees it when you turn on Goal in the message box for a message.",
     ],
     related: [
       "concept.file-scope",
@@ -142,7 +143,7 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
     summary:
       "A helper you define with its own instructions and its own fixed model. The main agent can hand parts of a task to it.",
     details: [
-      "Sub-agents only work in projects that select them, and only when the chat's model supports tools.",
+      "Sub-agents only work in projects that select them in their Sub-agents tab, and only when the chat's model supports tools.",
       "A sub-agent can use the same files as the chat or fewer, never more. Its work appears in the chat so you can see what it did.",
     ],
     related: ["concept.main-agent", "concept.project", "concept.model"],
@@ -167,6 +168,7 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
     details: [
       "The mode belongs to the chat, and each message records the mode it was sent in.",
       "Modes are instructions to the model. Most models follow them well, but a model can still slip and give away more than it should.",
+      "In a class's course project, your educator may limit which modes you can use. The message box shows the limits.",
     ],
     related: [
       "concept.mode-standard",
@@ -176,6 +178,7 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
       "concept.mode-draft-feedback",
       "concept.mode-research",
       "concept.mode-lock",
+      "concept.class-mode-policy",
     ],
     audience: "everyone",
   },
@@ -256,7 +259,7 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
     summary:
       "How well you know each topic, from your latest review rating or quiz answer on each card and question tagged with it.",
     details: [
-      "Add topics to a deck or quiz when you create or edit it. The project page then shows each topic's level (Not started, Needs work, Developing or Mastered), how many items you've practiced, and how it changed over the last 8 weeks.",
+      "Add topics to a deck or quiz when you create or edit it. The project's Study tab then shows each topic's level (Not started, Needs work, Developing or Mastered), how many items you've practiced, and how it changed over the last 8 weeks.",
       "Mastered needs at least 80% and at least 80% of the topic's items practiced. Practice builds a quiz from the topic's weakest and unpracticed items. Mastery comes only from your study results, never from chats.",
     ],
     related: ["concept.flashcard", "concept.quiz", "concept.weak-spot"],
@@ -265,7 +268,7 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
   "concept.reflection": {
     title: "Reflection",
     summary:
-      "A short note at the end of a session about what you learned and what's still unclear. Reflections are listed on the project page, or the General page for General chats.",
+      "A short note at the end of a session about what you learned and what's still unclear. They're listed in the project's Reflections tab, or on the General page for General chats.",
     details: [
       "Choose Reflect on this session in a chat's menu. Suggest a draft fills both answers from the chat; edit it so it says what you think before saving.",
       "Reflections are yours only. Each is filed under the chat's project and persona, and the assistant doesn't read them automatically.",
@@ -279,7 +282,7 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
     summary:
       "A record you can share with a teacher of how you used AI: your prompts, modes, models, templates, files and verification results, with times.",
     details: [
-      "Open it from a chat's actions menu or with Export AI-use log on a project. Choose the chats, untick any prompts you want to leave out, then download Markdown or save a PDF.",
+      "Open it from a chat's actions menu or with Export AI-use log on a project's page. Choose the chats, untick any prompts you want to leave out, then download Markdown or save a PDF.",
       "The log only documents what Asterism recorded. It can't detect AI use, and it doesn't include the assistant's answers. Spot-the-error answers are labelled as exercises.",
     ],
     related: ["concept.learning-mode", "concept.template"],
@@ -314,8 +317,13 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
     details: [
       "Try the hints first. Working through the problem yourself is how the learning sticks.",
       "If the chat's mode is locked, you'll wait a few seconds before you can confirm.",
+      "In a class's course project, your educator may turn answer reveals off.",
     ],
-    related: ["concept.hint-levels", "concept.mode-lock"],
+    related: [
+      "concept.hint-levels",
+      "concept.mode-lock",
+      "concept.class-mode-policy",
+    ],
     audience: "everyone",
   },
   "concept.mode-lock": {
@@ -400,7 +408,7 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
     summary:
       "Some tool actions, such as searching the web or writing a file, wait for you to approve or deny them before they run.",
     details: [
-      "Check what the assistant wants to do before approving. If you deny an action, or don't answer in time, it doesn't run and the assistant is told it was rejected.",
+      "Check what the assistant wants to do before approving. If you deny an action, or don't answer within a minute, it doesn't run and the assistant is told it was rejected.",
     ],
     related: ["concept.main-agent"],
     audience: "everyone",

@@ -100,7 +100,7 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
       {
         name: "Header",
         description:
-          "Shows where the chat lives, its model and persona, the mode lock in a learning mode, and a menu to rename, move or delete the chat.",
+          "Shows where the chat lives, its model and persona, the mode lock in a learning mode, and a menu to rename or move the chat, reflect on the session, export an AI-use log or delete the chat.",
       },
       {
         name: "Conversation",
@@ -135,15 +135,24 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
   },
   file: {
     title: "File",
-    purpose: "A view of one file and its contents.",
+    purpose:
+      "One file from your library: what was read from it, similar files, and the projects that share it.",
     areas: [
       {
-        name: "Preview",
+        name: "Caption and extracted content",
         description:
-          "Shows the file as text, Markdown or an image, depending on its type.",
+          "The text read from the file when it was processed, and an image's caption. This is what the assistant searches; it isn't available until processing is ready.",
+      },
+      {
+        name: "Similar files",
+        description: "The five most similar files in your library.",
+      },
+      {
+        name: "Projects",
+        description: "The projects this file is shared with.",
       },
     ],
-    tasks: ["Go back to the chat or file library with the link in the header."],
+    tasks: ["Use Back to return to the page you came from."],
     terms: ["concept.file-scope", "concept.citation"],
     audience: "everyone",
   },
@@ -156,12 +165,22 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
         name: "Chat list",
         description: "Your General chats. Open one to continue it.",
       },
+      {
+        name: "Reflections",
+        description:
+          "Your reflections on General chats. Only you can see them.",
+      },
     ],
     tasks: [
       "Start a chat for a quick question that doesn't need shared files.",
       "Move a chat into a project from its menu when it grows into a bigger topic.",
     ],
-    terms: ["concept.general-chat", "concept.project", "concept.chat"],
+    terms: [
+      "concept.general-chat",
+      "concept.project",
+      "concept.chat",
+      "concept.reflection",
+    ],
     audience: "everyone",
   },
   projects: {
@@ -650,16 +669,22 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
   "settings.general": {
     title: "General settings",
     purpose:
-      "Your appearance and chat defaults: theme, text size, the model new chats start with, and chat preferences.",
+      "Your appearance and chat defaults: theme, text size, the model new chats start with, and the chat tour.",
     areas: [
       {
         name: "Appearance",
-        description: "Choose a theme and text size.",
+        description:
+          "Choose a theme and text size, and whether to show the model's thinking.",
       },
       {
         name: "Chat",
         description:
-          "Choose the default model for new chats, whether to show the model's thinking, and whether to offer the prompt coach.",
+          "Choose the model new chats start with, and whether to offer the prompt coach. Each chat keeps its own model.",
+      },
+      {
+        name: "Guided tour",
+        description:
+          "Restart the short tour of the message box and the controls around it.",
       },
     ],
     tasks: [
@@ -761,7 +786,7 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
     ],
     tasks: [
       "Assign your skills to the main agent so they appear in chats.",
-      "Create a sub-agent, then select it in a project's settings.",
+      "Create a sub-agent, then select it in a project's Sub-agents tab.",
     ],
     terms: [
       "concept.main-agent",
