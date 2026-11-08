@@ -23,3 +23,18 @@ complete and merged with `--no-ff`.
 - [x] US-74.1: Tighten Markdown rhythm (confirmed and merged 2026-11-08)
   - [x] Rework the `prose` margin rules (heading top/bottom, `li > p`, list after heading).
   - [x] Add a visual/E2E check with a fixture like the screenshot.
+
+The user confirmed US-67.2 completion on 2026-11-08. EPIC-67 (US-67.1 and
+US-67.2) is complete; each story was confirmed and merged with `--no-ff` before
+the next began. See ADR-0054 (course packs, course-managed records).
+
+### [EPIC-67: Read-only course projects](../epics/EPIC-67-READ-ONLY-COURSE-PROJECTS.md)
+
+- [x] US-67.1: Lock course-managed records in the backend (confirmed and merged 2026-11-08)
+  - [x] Amend ADR-0054 with the lock rule, the list of guarded write paths and the leave/delete behavior.
+  - [x] Add a single `require_not_course_managed` check in the courses domain and call it from each guarded service.
+  - [x] Tests: every guarded path refuses for course records, allows for the student's own records, and the update path still works.
+- [x] US-67.2: Show course projects as read-only (confirmed and merged 2026-11-08)
+  - [x] Expose a `course_managed` flag (and class name) on project, sub-agent and file responses; regenerate the client.
+  - [x] Disable and explain the locked controls; add the leave-course action.
+  - [x] Update help; add unit tests and an E2E: student adds a course, can chat, cannot edit it.

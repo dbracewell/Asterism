@@ -1,6 +1,6 @@
 # EPIC-67: Read-only course projects
 
-Status: in progress (US-67.1 complete, US-67.2 implemented, awaiting confirmation). Source: user request (2026-11-08).
+Status: complete (US-67.1 and US-67.2 confirmed and merged 2026-11-08). Source: user request (2026-11-08).
 
 ## Objective
 
