@@ -43,6 +43,7 @@ from .schemas import (
     FIRST_CHAT_TOUR_SETTING,
     ApplicationSettings,
     BulkUpdateSettingRequest,
+    CompactionSettings,
     ComponentProviderParameters,
     FirstChatTourState,
     Llm,
@@ -796,6 +797,12 @@ def _validate_non_provider_app_setting(
         if type(value) is not bool:
             raise BadDataException("Skills policy must be a boolean")
         return value, None
+
+    if key == "compaction":
+        try:
+            return CompactionSettings.model_validate(value).model_dump(mode="json"), None
+        except ValidationError as exc:
+            raise BadDataException("Invalid compaction settings") from exc
 
     if key == "chatgpt_plan_enabled":
         if type(value) is not bool:

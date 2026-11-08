@@ -17,6 +17,7 @@ DB_COMPOSITION_ROOTS = {
         "asterism.domains.agent.models",
         "asterism.domains.chat.models",
         "asterism.domains.chat.execution_models",
+        "asterism.domains.chat.compaction_models",
         "asterism.domains.chat.draft_models",
         "asterism.domains.chatgpt.models",
         "asterism.domains.classes.models",

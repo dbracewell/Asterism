@@ -11,10 +11,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from asterism.core.exceptions import NotFoundException
 
+from .compaction import read_compaction_summary
 from .execution_models import ChatExecutionModel
 from .models import MessageModel
 from .queries import select_owned_executions, select_owned_messages
-from .schemas import ContextLayerText, ContextLayerTexts
+from .schemas import ContextCompactionText, ContextLayerText, ContextLayerTexts
 
 
 async def read_context_layers(
@@ -30,9 +31,20 @@ async def read_context_layers(
     )
     if record is None:
         raise NotFoundException("Recorded context not found")
+    compaction = None
+    recorded = message.context.compaction if message.context is not None else None
+    if recorded is not None:
+        summary = await read_compaction_summary(
+            user_id=user_id, chat_id=chat_id, compaction_id=recorded.compaction_id, session=session
+        )
+        if summary is not None:
+            compaction = ContextCompactionText(
+                compaction_id=recorded.compaction_id, replaced_messages=recorded.replaced_messages, summary=summary
+            )
     return ContextLayerTexts(
         layers=[
             ContextLayerText(kind=layer.kind, source_id=layer.source_id, revision=layer.revision, text=layer.text)
             for layer in record.prompt.layers
-        ]
+        ],
+        compaction=compaction,
     )

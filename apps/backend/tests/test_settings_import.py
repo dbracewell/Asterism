@@ -13,6 +13,7 @@ from asterism.domains.settings.secrets import decrypt_component_provider_dict
 from asterism.domains.settings_transfer import documents, importer
 from asterism.domains.settings_transfer.documents import (
     ExportedCaptioning,
+    ExportedCompaction,
     ExportedComponent,
     ExportedModel,
     ExportedProvider,
@@ -199,6 +200,32 @@ async def test_settings_overwrite_and_keys_are_reencrypted(api):
     assert settings["draft_model_id"] == str(imported.id)
     assert "img-key" not in json.dumps(settings["image_search_provider"])
     assert decrypt_component_provider_dict(settings["image_search_provider"])["parameters"]["api_key"] == "img-key"
+
+
+async def test_compaction_policy_is_applied_with_its_model_by_name(api):
+    client, sessions = api
+    item = bundle(
+        compaction=ExportedCompaction(
+            threshold=0.6,
+            tail_turns=4,
+            fallback_context_window=8192,
+            model=ModelReference(provider="Imported", model="m1"),
+        )
+    )
+    assert (await post(client, IMPORT, request(item))).status_code == 200
+    async with sessions() as session:
+        stored = (await session.get(ApplicationSettingsModel, "compaction")).value
+        imported = await session.scalar(select(LLMModel).where(LLMModel.name == "m1"))
+    assert stored == {"threshold": 0.6, "tail_turns": 4, "fallback_context_window": 8192, "model_id": str(imported.id)}
+
+    # An inactive summarizer model is not selected; the chat's own model is used instead.
+    inactive = bundle(
+        providers=(provider(models=(model(is_active=False),)),),
+        compaction=ExportedCompaction(model=ModelReference(provider="Imported", model="m1")),
+    )
+    assert (await post(client, IMPORT, request(inactive))).status_code == 200
+    async with sessions() as session:
+        assert (await session.get(ApplicationSettingsModel, "compaction")).value["model_id"] is None
 
 
 async def test_values_the_file_lacks_are_left_alone(api):

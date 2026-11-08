@@ -13,6 +13,7 @@ from pydantic import ValidationError
 
 from asterism.domains.agent.context_manifest import (
     ContextChunk,
+    ContextCompaction,
     ContextFile,
     ContextManifest,
     ContextOmission,
@@ -61,10 +62,12 @@ def turn_context(
     template: TemplateProvenance | None = None,
     files: list[ContextFile] | None = None,
     omissions: Iterable[ContextOmission] = (),
+    compaction: ContextCompaction | None = None,
 ) -> ContextManifest:
-    """What every step of a run shares: layers, template, files and fixed omissions."""
+    """What every step of a run shares: layers, summary, template, files and fixed omissions."""
     return ContextManifest(
         layers=layer_references(snapshot) if snapshot else [],
+        compaction=compaction,
         template=template,
         files=files or [],
         omissions=[*(runtime_omissions(snapshot) if snapshot else []), *omissions],

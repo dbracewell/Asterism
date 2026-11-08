@@ -623,5 +623,17 @@ class ContextLayerText(BaseModel):
     text: str
 
 
+class ContextCompactionText(BaseModel):
+    """The summary that replaced earlier messages in a recorded run (ADR-0060).
+
+    Untrusted model output; returned only to the chat owner.
+    """
+
+    compaction_id: uuid.UUID
+    replaced_messages: int
+    summary: str
+
+
 class ContextLayerTexts(BaseModel):
     layers: list[ContextLayerText]
+    compaction: ContextCompactionText | None = None

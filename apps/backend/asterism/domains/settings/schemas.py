@@ -215,10 +215,25 @@ class UserSettings(BaseModel):
     group: GroupRef | None = Field(default=None)
 
 
+class CompactionSettings(BaseModel):
+    """Automatic context compaction policy (ADR-0060), stored under one key."""
+
+    model_config = ConfigDict(extra="forbid")
+    # Compact before a run whose estimated request exceeds this share of the window.
+    threshold: float = Field(default=0.8, ge=0.5, le=0.95)
+    # Most recent user turns (with their runs) always sent verbatim.
+    tail_turns: int = Field(default=3, ge=1, le=20)
+    # Window assumed for models whose context window is unknown.
+    fallback_context_window: int = Field(default=32_768, ge=2_048, le=10_000_000)
+    # A dedicated summarizer model; None uses the chat's own run model.
+    model_id: uuid.UUID | None = None
+
+
 class ApplicationSettings(BaseModel):
     """Aggregate of global application settings (admin view)."""
 
     skills_enabled: StrictBool = False
+    compaction: CompactionSettings = Field(default_factory=CompactionSettings)
     chatgpt_plan_enabled: StrictBool = False
     llm_providers: list[Provider] = Field(default_factory=list)
     draft_model_id: uuid.UUID | None = None

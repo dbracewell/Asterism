@@ -73,9 +73,20 @@ class ContextOmission(BaseModel):
     reason: str = Field(max_length=500)
 
 
+class ContextCompaction(BaseModel):
+    """A stored summary replaced the branch prefix through ``through_message_id`` (ADR-0060)."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+    compaction_id: uuid.UUID
+    through_message_id: uuid.UUID
+    replaced_messages: int = Field(ge=1)
+    summary_characters: int = Field(ge=0)
+
+
 class ContextManifest(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
     layers: list[ContextLayer] = Field(default_factory=list)
+    compaction: ContextCompaction | None = None
     template: TemplateProvenance | None = None
     files: list[ContextFile] = Field(default_factory=list)
     chunks: list[ContextChunk] = Field(default_factory=list)

@@ -159,6 +159,11 @@ async def test_orchestrator_attaches_step_delegations_to_the_persisted_message()
     with (
         patch.object(orchestrator.agent, "run", side_effect=run),
         patch("asterism.domains.chat.service.add_message", new=saved),
+        # No database here: no stored compaction, and the request fits.
+        patch("asterism.domains.chat.orchestrator.applicable_compaction", new=AsyncMock(return_value=None)),
+        patch.object(
+            orchestrator, "_fit_context", new=AsyncMock(side_effect=lambda messages, files: (messages, files))
+        ),
     ):
         await orchestrator.run_agent()
 

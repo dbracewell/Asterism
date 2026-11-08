@@ -503,6 +503,7 @@ async def test_uploaded_image_and_document_build_vision_gated_model_input(file_s
         "chat.tool_policy",
         "chat.delegation",
         "chat.runtime_files",
+        "chat.compaction",
         "files.runtime_access",
     ]:
         monkeypatch.setattr(f"asterism.domains.{module}.get_async_db_session", session_context)

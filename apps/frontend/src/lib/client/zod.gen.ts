@@ -390,6 +390,23 @@ export const zCoachCriterion = z.enum([
 ]);
 
 /**
+ * CompactionSettings
+ *
+ * Automatic context compaction policy (ADR-0060), stored under one key.
+ */
+export const zCompactionSettings = z.object({
+  threshold: z.number().gte(0.5).lte(0.95).optional().default(0.8),
+  tail_turns: z.int().gte(1).lte(20).optional().default(3),
+  fallback_context_window: z
+    .int()
+    .gte(2048)
+    .lte(10000000)
+    .optional()
+    .default(32768),
+  model_id: z.uuid().nullish(),
+});
+
+/**
  * ComparisonActivate
  */
 export const zComparisonActivate = z.object({
@@ -472,6 +489,31 @@ export const zContextChunk = z.object({
 });
 
 /**
+ * ContextCompaction
+ *
+ * A stored summary replaced the branch prefix through ``through_message_id`` (ADR-0060).
+ */
+export const zContextCompaction = z.object({
+  compaction_id: z.uuid(),
+  through_message_id: z.uuid(),
+  replaced_messages: z.int().gte(1),
+  summary_characters: z.int().gte(0),
+});
+
+/**
+ * ContextCompactionText
+ *
+ * The summary that replaced earlier messages in a recorded run (ADR-0060).
+ *
+ * Untrusted model output; returned only to the chat owner.
+ */
+export const zContextCompactionText = z.object({
+  compaction_id: z.uuid(),
+  replaced_messages: z.int(),
+  summary: z.string(),
+});
+
+/**
  * ContextLayer
  */
 export const zContextLayer = z.object({
@@ -515,6 +557,7 @@ export const zContextLayerText = z.object({
  */
 export const zContextLayerTexts = z.object({
   layers: z.array(zContextLayerText),
+  compaction: zContextCompactionText.nullish(),
 });
 
 /**
@@ -2480,6 +2523,7 @@ export const zProvider = z.object({
  */
 export const zApplicationSettings = z.object({
   skills_enabled: z.boolean().optional().default(false),
+  compaction: zCompactionSettings.optional(),
   chatgpt_plan_enabled: z.boolean().optional().default(false),
   llm_providers: z.array(zProvider).optional(),
   draft_model_id: z.uuid().nullish(),
@@ -4120,6 +4164,7 @@ export const zTemplateProvenance = z.object({
  */
 export const zContextManifest = z.object({
   layers: z.array(zContextLayer).optional(),
+  compaction: zContextCompaction.nullish(),
   template: zTemplateProvenance.nullish(),
   files: z.array(zContextFile).optional(),
   chunks: z.array(zContextChunk).optional(),
@@ -4690,6 +4735,7 @@ export const zProviderWritable = z.object({
  */
 export const zApplicationSettingsWritable = z.object({
   skills_enabled: z.boolean().optional().default(false),
+  compaction: zCompactionSettings.optional(),
   chatgpt_plan_enabled: z.boolean().optional().default(false),
   llm_providers: z.array(zProviderWritable).optional(),
   draft_model_id: z.uuid().nullish(),

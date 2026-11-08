@@ -14,6 +14,7 @@ from asterism.domains.agent.models import (  # noqa: F401
     GeneralSubAgentModel,
     SubAgentTraceModel,
 )
+from asterism.domains.chat.compaction_models import ChatCompactionModel  # noqa: F401
 from asterism.domains.chat.draft_models import ChatDraftFileModel, ChatDraftModel, ChatSendReceiptModel  # noqa: F401
 from asterism.domains.chat.execution_models import ChatExecutionModel  # noqa: F401
 from asterism.domains.chat.models import ChatFileModel, ChatModel, MessageModel  # noqa: F401

@@ -259,6 +259,8 @@ and reasons only, never content:
 - **Layers:** kind, source id, revision, digest and length of each prompt layer
   (platform, agent, persona, learning mode, project, skills, runtime), taken
   from the run's prompt snapshot.
+- **Compaction:** the stored summary that replaced the start of the branch, if
+  any: record id, anchor message, replaced message count and summary length.
 - **Template:** the provenance of the template that built the user turn, if any.
 - **Files:** each attached file on the branch and whether it was included as
   text, as an image, or not at all, with the reason.
@@ -279,13 +281,39 @@ envelope, and `DelegationCollector` adds the child's chunks as its steps
 complete.
 
 Layer text stays in the immutable execution record. Only the chat owner can read
-it, through `GET /chat/{chat_id}/messages/{message_id}/context/layers`. Any other
+it, through `GET /chat/{chat_id}/messages/{message_id}/context/layers`, which
+also returns the text of the step's compaction summary, if any. Any other
 user, and any user turn, gets a 404. Sub-agent layer text is not stored, so the
 inspector shows only which layers a sub-agent used.
 
 The chat footer's "Context" dialog fetches the layer text only when opened.
 Retrieved excerpts come from the step's persisted tool results and render as
 untrusted plain text. File names come from the scope-checked file-info query.
+
+### Context compaction (US-69.1)
+
+Before each main-agent run, after prompt assembly, the orchestrator estimates
+the request (system prompt, history, tool schemas, image allowance, reserved
+output). If it exceeds `compaction.threshold` (default 0.8) of the run model's
+context window, or of `compaction.fallback_context_window` when the window is
+unknown, it compacts first (`chat/compaction.py`). See
+[ADR-0060](../adr/0060-context-compaction.md).
+
+- A `chat_compactions` record summarizes the branch from the root through an
+  anchor message. It applies to any branch containing the anchor, so siblings,
+  forks and regenerations from before the anchor never see it. Assembly uses
+  the deepest applicable record: a labelled user-role summary message, then the
+  messages after the anchor.
+- Anchors sit before a user turn. The last `compaction.tail_turns` user turns
+  (default 3) stay verbatim; if the request still exceeds the threshold, only
+  the current turn is kept.
+- The summarizer is the run's model unless the admin sets `compaction.model_id`.
+  Large transcripts are folded in chunks. Usage is stored on the record.
+- The summary is untrusted and grants nothing. Prompt layers come from the
+  snapshot as before. Messages are never deleted.
+- If compaction fails, or the request still exceeds the full window, the run
+  emits an error and sends no model request; the turn stays pending.
+- Sub-agent runs are not compacted.
 
 ### Fork from a step (US-54.5)
 
