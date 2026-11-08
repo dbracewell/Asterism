@@ -378,13 +378,25 @@ test("creates a project with independent task instructions", async ({
       json: { projects: [], total: 0, page: 1, page_size: 20 },
     });
   });
+  // The wizard works on the narrowest supported screen.
+  await page.setViewportSize({ width: 320, height: 640 });
   await page.goto("/e2e/projects");
   await page.getByRole("button", { name: "New project" }).click();
+  const dialog = page.getByRole("dialog", { name: "New project" });
+  await dialog.getByRole("radio", { name: "Blank" }).click();
+  await dialog.getByRole("button", { name: "Next" }).click();
   await page.getByLabel("Name", { exact: true }).fill("Research");
   await page
     .getByLabel("Description", { exact: true })
     .fill("Study ocean currents");
+  await dialog.getByRole("button", { name: "Next" }).click();
   await page.getByLabel("Project instructions").fill("Cite evidence");
+  await dialog.getByRole("button", { name: "Next" }).click();
+  await dialog.getByRole("button", { name: "Next" }).click();
+  await expect(dialog).toContainText("Step 5 of 5: Review");
+  expect(
+    await dialog.evaluate((node) => node.scrollWidth <= node.clientWidth),
+  ).toBe(true);
   const created = page.waitForRequest(
     (request) =>
       request.method() === "POST" && request.url().includes("/projects/"),
@@ -396,6 +408,11 @@ test("creates a project with independent task instructions", async ({
     name: "Research",
     description: "Study ocean currents",
     system_prompt: "Cite evidence",
+    accent: null,
+    goal: "",
+    goal_target_date: null,
+    areas: { study: true, reflections: true, goal: true, sub_agents: true },
+    file_ids: [],
   });
   await expect(page).toHaveURL(/sign-in\?redirect=%2Fprojects%2F/);
   await expect(page.getByRole("heading", { name: "ASTERISM" })).toBeVisible();

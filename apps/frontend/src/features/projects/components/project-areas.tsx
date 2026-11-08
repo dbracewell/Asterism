@@ -59,7 +59,8 @@ export function ProjectAreaSwitches({
   onChange,
   disabled,
 }: {
-  projectId: string;
+  /** Absent before the project exists, when nothing can be selected yet. */
+  projectId?: string;
   value: ProjectAreas;
   onChange: (value: ProjectAreas) => void;
   disabled: boolean;
@@ -70,7 +71,8 @@ export function ProjectAreaSwitches({
       <FieldDescription>
         Turn off the parts of this project you don&apos;t use. Overview, Chats,
         Files and Settings are always shown. Turning an area off hides it but
-        keeps its data, and changes nothing about what chats can do.
+        keeps its data, and changes nothing about what chats can do. You can
+        change these later in Settings.
       </FieldDescription>
       <FieldGroup>
         {AREAS.map((area) => (
@@ -88,7 +90,7 @@ export function ProjectAreaSwitches({
                 {area.label}
               </FieldLabel>
               <FieldDescription>{area.description}</FieldDescription>
-              {area.key === "sub_agents" && (
+              {area.key === "sub_agents" && projectId && (
                 <SelectedSubAgents projectId={projectId} />
               )}
             </FieldContent>

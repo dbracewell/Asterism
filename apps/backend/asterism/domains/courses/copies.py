@@ -39,7 +39,7 @@ from asterism.domains.packs.documents import (
 from asterism.domains.packs.review import available_tools, existing_names
 from asterism.domains.projects.models import ProjectFileModel, ProjectModel, ProjectSubAgentModel
 from asterism.domains.projects.revocation import revoke_agent_projects
-from asterism.domains.projects.schemas import ProjectCreate
+from asterism.domains.projects.schemas import ProjectSettings
 from asterism.domains.settings.models import LLMModel
 
 from .models import CourseCopyItemModel, CourseCopyModel, CourseFileModel, CourseItemType, CourseVersionModel
@@ -219,7 +219,8 @@ class _Sync:
             "system_prompt": source.system_prompt,
             "goal": source.goal,
             "accent": source.accent,
-            "areas": source.areas,
+            # A course is for studying, so its project always shows Study (US-65.3).
+            "areas": source.areas.model_copy(update={"study": True}),
         }
         existing = await _owned_project(self.user_id, copy.project_id if copy else None, self.session)
         if existing is not None:
@@ -231,7 +232,7 @@ class _Sync:
             return existing
         taken = set((await existing_names(self.user_id, self.session)).projects)
         name = _unique_name(self.klass.name, taken, "course", MAX_PROJECT_NAME_LENGTH)
-        project = ProjectModel(user_id=self.user_id, **ProjectCreate(name=name, **settings).model_dump())
+        project = ProjectModel(user_id=self.user_id, **ProjectSettings(name=name, **settings).model_dump())
         self.session.add(project)
         await self.session.flush()
         # A new project starts empty, so earlier records are re-linked or re-made below.

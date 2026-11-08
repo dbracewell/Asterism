@@ -346,7 +346,8 @@ async def test_versions_are_listed_for_the_educator(course):
 
 
 async def test_course_projects_carry_the_feature_areas(course):
-    areas = {"study": True, "reflections": False, "goal": True, "sub_agents": False}
+    # The educator hides Study, but a course project always shows it.
+    areas = {"study": False, "reflections": False, "goal": True, "sub_agents": False}
     path = f"/projects/{course['project']}"
     revision = (await course["client"].get(path, headers=auth("teach"))).json()["context_revision"]
     edited = await course["client"].patch(
@@ -356,7 +357,7 @@ async def test_course_projects_carry_the_feature_areas(course):
     await publish(course)
     await apply(course, 1)
     [project], *_ = await student_records(course)
-    assert project.areas.model_dump() == areas
+    assert project.areas.model_dump() == areas | {"study": True}
 
     revision = (await course["client"].get(path, headers=auth("teach"))).json()["context_revision"]
     await course["client"].patch(

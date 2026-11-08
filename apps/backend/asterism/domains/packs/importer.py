@@ -20,7 +20,7 @@ from asterism.domains.agent.schemas import SubAgentCreate
 from asterism.domains.agent.service import new_sub_agent
 from asterism.domains.chatgpt.availability import available_user_model
 from asterism.domains.projects.models import ProjectModel, ProjectSubAgentModel
-from asterism.domains.projects.schemas import ProjectCreate
+from asterism.domains.projects.schemas import ProjectSettings
 from asterism.domains.prompt_templates.documents import parse_document as parse_template
 from asterism.domains.prompt_templates.documents import serialize_document
 from asterism.domains.prompt_templates.models import PromptTemplateModel
@@ -133,7 +133,7 @@ def _build_project(user_id: str, manifest: PackManifest, payload: PackImportRequ
         return None
     name = decision.name or project.name
     _final_name("project", name, set(names.projects))
-    values = ProjectCreate(
+    values = ProjectSettings(
         name=name,
         description=project.description,
         system_prompt=project.system_prompt,

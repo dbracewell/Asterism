@@ -40,9 +40,9 @@ Order: EPIC-65 → EPIC-66 (EPIC-64 is complete and archived), then a multi-user
 - [x] US-65.2: Per-project feature areas
   - [x] Add the field, API and Settings switches; hide tabs and Overview parts.
   - [x] Test data retention and capability neutrality; carry areas through packs and courses.
-- [ ] US-65.3: New-project wizard
-  - [ ] Build the wizard steps and starting points; create the project atomically.
-  - [ ] Add help for each step; unit-test steps and a real-backend E2E for one path.
+- [ ] US-65.3: New-project wizard (implemented on `feat/us-65.3-new-project-wizard`; awaiting confirmation)
+  - [x] Build the wizard steps and starting points; create the project atomically.
+  - [x] Add help for each step; unit-test steps and a real-backend E2E for one path.
 
 ### [EPIC-66: Help coverage](docs/epics/EPIC-66-HELP-COVERAGE.md)
 

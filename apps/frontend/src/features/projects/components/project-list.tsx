@@ -6,27 +6,14 @@ import { ListSkeleton } from "@/components/loading-skeletons";
 import { PageHeader, PageLayout } from "@/components/page-layout";
 import { QueryError } from "@/components/query-error";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { client } from "@/lib/api";
-import type { ProjectCreate } from "@/lib/client";
-import {
-  projectCreateMutation,
-  projectGetManyOptions,
-} from "@/lib/client/@tanstack/react-query.gen";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { projectGetManyOptions } from "@/lib/client/@tanstack/react-query.gen";
+import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { ProjectAccentDot } from "@/features/projects/project-accent";
-import { ProjectFields } from "./project-fields";
+import { NewProjectWizard } from "./new-project-wizard";
 
 export function ProjectList() {
   const [query, setQuery] = useState("");
@@ -48,7 +35,7 @@ export function ProjectList() {
             <Button asChild variant="outline">
               <Link href="/team-packs">Import team pack</Link>
             </Button>
-            <CreateProjectDialog />
+            <NewProjectWizard />
           </>
         }
       />
@@ -146,71 +133,5 @@ export function ProjectList() {
         </>
       )}
     </PageLayout>
-  );
-}
-
-function CreateProjectDialog() {
-  const router = useRouter();
-  const [open, setOpen] = useState(false);
-  const [value, setValue] = useState<ProjectCreate>({
-    name: "",
-    description: "",
-    system_prompt: "",
-  });
-  const create = useMutation({
-    ...projectCreateMutation({ client }),
-    onSuccess: (project) => {
-      setOpen(false);
-      router.push(`/projects/${project.id}`);
-    },
-  });
-  return (
-    <Dialog
-      open={open}
-      onOpenChange={(next) => {
-        if (!create.isPending) {
-          setOpen(next);
-          create.reset();
-          if (next) setValue({ name: "", description: "", system_prompt: "" });
-        }
-      }}
-    >
-      <DialogTrigger asChild>
-        <Button>New project</Button>
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>New project</DialogTitle>
-          <DialogDescription>
-            Give related chats a shared purpose and instructions.
-          </DialogDescription>
-        </DialogHeader>
-        <form
-          className="flex flex-col gap-5"
-          onSubmit={(event) => {
-            event.preventDefault();
-            if (value.name.trim())
-              create.mutate({ body: { ...value, name: value.name.trim() } });
-          }}
-        >
-          <ProjectFields
-            value={value}
-            onChange={setValue}
-            disabled={create.isPending}
-          />
-          {create.error && (
-            <p role="alert">
-              {create.error.detail ?? "Could not create project."}
-            </p>
-          )}
-          <Button
-            type="submit"
-            disabled={create.isPending || !value.name.trim()}
-          >
-            {create.isPending ? "Creating…" : "Create project"}
-          </Button>
-        </form>
-      </DialogContent>
-    </Dialog>
   );
 }
