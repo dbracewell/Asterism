@@ -159,18 +159,83 @@
 }
 
 @utility prose {
-  &
-    :where(p, ul, ol, h1, h2, h3, h4, h5, h6, pre, code):not(
-      :where([class~="not-prose"], [class~="not-prose"] *)
-    ) {
-    @apply mt-0 mb-5;
-  }
+  /* US-74.1: vertical rhythm. The typography plugin emits its own equally
+     specific rules after this utility, so the doubled class outranks them.
+     Margins are bottom-first; sibling margins collapse, so a heading's larger
+     top margin wins over the gap below the block before it. */
+  &.prose {
+    &
+      :where(p, ul, ol, h1, h2, h3, h4, h5, h6, pre):not(
+        :where([class~="not-prose"], [class~="not-prose"] *)
+      ) {
+      @apply mt-0 mb-4;
+    }
 
-  &
-    :where(p, ul, ol, h1, h2, h3, h4, h5, h6, pre, code):not(
-      :where([class~="not-prose"], [class~="not-prose"] *)
-    ):last-child {
-    @apply mb-0;
+    /* Headings sit close to their content, with more space above than below. */
+    & :where(h1, h2):not(:where([class~="not-prose"], [class~="not-prose"] *)) {
+      @apply mt-7 mb-3;
+    }
+
+    &
+      :where(h3, h4, h5, h6):not(
+        :where([class~="not-prose"], [class~="not-prose"] *)
+      ) {
+      @apply mt-6 mb-2;
+    }
+
+    /* A subheading directly under a heading uses the heading's bottom gap. */
+    &
+      :where(:is(h1, h2, h3, h4, h5) + :is(h2, h3, h4, h5, h6)):not(
+        :where([class~="not-prose"], [class~="not-prose"] *)
+      ) {
+      @apply mt-0;
+    }
+
+    /* A list introduced by a paragraph keeps only a small gap below it. */
+    &
+      :where(p:has(+ :where(ul, ol))):not(
+        :where([class~="not-prose"], [class~="not-prose"] *)
+      ) {
+      @apply mb-2;
+    }
+
+    &
+      :where(p, ul, ol, h1, h2, h3, h4, h5, h6, pre):not(
+        :where([class~="not-prose"], [class~="not-prose"] *)
+      ):first-child {
+      @apply mt-0;
+    }
+
+    &
+      :where(p, ul, ol, h1, h2, h3, h4, h5, h6, pre):not(
+        :where([class~="not-prose"], [class~="not-prose"] *)
+      ):last-child {
+      @apply mb-0;
+    }
+
+    /* Loose lists (blank lines between items) wrap each item in a paragraph;
+       drop those margins so loose and tight lists read the same. */
+    & :where(li):not(:where([class~="not-prose"], [class~="not-prose"] *)) {
+      @apply mt-0 mb-1;
+    }
+
+    & :where(li > p):not(:where([class~="not-prose"], [class~="not-prose"] *)) {
+      @apply my-0;
+    }
+
+    &
+      :where(li > p + p):not(
+        :where([class~="not-prose"], [class~="not-prose"] *)
+      ) {
+      @apply mt-2;
+    }
+
+    &
+      :where(li > :where(ul, ol)):not(
+        :where([class~="not-prose"], [class~="not-prose"] *)
+      ) {
+      @apply mt-1 mb-0;
+    }
   }
 
   /* Neutral tables: a muted header and subtle zebra rows from theme tokens, so
@@ -208,11 +273,6 @@
   blockquote p:first-of-type::before,
   blockquote p:last-of-type::after {
     content: none;
-  }
-
-  /* Target list items specifically */
-  & :where(li) {
-    @apply mt-0 mb-0.5;
   }
 }
 
