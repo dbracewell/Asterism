@@ -1,6 +1,6 @@
 # EPIC-66: Help coverage
 
-Status: proposed. Source: user request (2026-11-07).
+Status: in progress (US-66.1 awaiting confirmation). Source: user request (2026-11-07).
 
 ## Objective
 
@@ -39,8 +39,8 @@ guide written for it, with no fallback to an unrelated guide. A test walks the
 app's route list and settings sections and fails if any lacks a guide, so new
 pages must add one.
 
-- [ ] Write the missing guides and mappings.
-- [ ] Add the coverage test over routes and settings sections.
+- [x] Write the missing guides and mappings.
+- [x] Add the coverage test over routes and settings sections.
 
 ## US-66.2: Glossary and inline help for newer features
 

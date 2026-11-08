@@ -14,20 +14,36 @@ export type PageGuideId =
   | "project"
   | "files"
   | "search"
+  | "help"
+  | "classes"
+  | "class"
+  | "team-packs"
+  | "study.deck"
+  | "study.drafts"
+  | "study.review"
+  | "study.quiz-new"
+  | "study.quiz"
+  | "study.quiz-take"
+  | "study.quiz-attempt"
+  | "study.summary-new"
+  | "study.guide-new"
+  | "study.note"
   | "settings.general"
   | "settings.personas"
   | "settings.skills"
   | "settings.templates"
+  | "settings.rubrics"
   | "settings.agents"
   | "settings.chatgpt"
-  | "admin.overview"
   | "admin.providers"
   | "admin.theme-editor"
   | "admin.tools"
   | "admin.skills"
   | "admin.chatgpt"
   | "admin.image-captioning"
-  | "admin.users";
+  | "admin.users"
+  | "admin.educators"
+  | "admin.export";
 
 export interface PageGuide {
   title: string;
@@ -281,6 +297,338 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
     terms: ["concept.chat", "concept.project"],
     audience: "everyone",
   },
+  help: {
+    title: "Help center",
+    purpose:
+      "Every explanation in Asterism in one place: what each term means and what each page is for.",
+    areas: [
+      {
+        name: "Search",
+        description: "Find help by any word in a title or explanation.",
+      },
+      {
+        name: "Sections",
+        description:
+          "Glossary terms, controls and settings, and a guide for each page. Admin-only topics appear only for administrators.",
+      },
+    ],
+    tasks: [
+      "Press ? on most pages to open that page's guide without leaving it.",
+    ],
+    terms: [],
+    audience: "everyone",
+  },
+  classes: {
+    title: "Classes",
+    purpose:
+      "Join a class with a code from your educator, or run classes yourself once you're an educator.",
+    areas: [
+      {
+        name: "Join a class",
+        description:
+          "Enter the class code your educator gave you. An invite link fills it in for you.",
+      },
+      {
+        name: "Your classes",
+        description:
+          "Classes you've joined. Add or update the class's course project, choose whether to share your practice results in class totals, or leave the class.",
+      },
+      {
+        name: "Teaching",
+        description:
+          "Ask to become an educator, which sends your name and email to your administrator. Once approved, create classes here and open them to manage them.",
+      },
+    ],
+    tasks: [
+      "Add your class's course to get its instructions, sub-agents and files as your own project.",
+      "Turn on sharing to let your educator see class totals. They never see your chats or your own results.",
+    ],
+    terms: ["concept.project", "concept.sub-agent"],
+    audience: "everyone",
+  },
+  class: {
+    title: "Class",
+    purpose:
+      "Run one class you teach: let students in, publish its course, set its rules and see where the class struggles.",
+    areas: [
+      {
+        name: "Class code",
+        description:
+          "Students with an account join with this code or its link. Replacing it stops the old code working; current students stay.",
+      },
+      {
+        name: "Invites for new students",
+        description:
+          "Each link creates one account and joins this class, then stops working. Copy links when they're made; they aren't shown again.",
+      },
+      {
+        name: "Students",
+        description:
+          "Who has joined, by name. You never see their chats. Remove a student, or allow a removed one back.",
+      },
+      {
+        name: "Course",
+        description:
+          "Publish one of your projects as a new course version. Students get their own copy of its instructions, selected sub-agents and files, and choose when to update. Its chats and goal date stay private.",
+      },
+      {
+        name: "Learning mode policy",
+        description:
+          "Which learning modes students may use in the course project, and whether they can reveal answers. It only limits; their other chats are unaffected.",
+      },
+      {
+        name: "Where the class struggles",
+        description:
+          "Practice totals by course file from students who chose to share, shown only once enough of them do. Never chats, answers or one student's results.",
+      },
+      {
+        name: "Delete class",
+        description:
+          "Students lose the class and its code stops working. Their own chats and files are not affected. This can't be undone.",
+      },
+    ],
+    tasks: [
+      "Publish a new version with a short note so students know what changed.",
+    ],
+    terms: [
+      "concept.project",
+      "concept.learning-mode",
+      "concept.answer-reveal",
+    ],
+    audience: "everyone",
+  },
+  "team-packs": {
+    title: "Import team pack",
+    purpose:
+      "Add sub-agents, skills, templates, rubrics and a project from a team pack file, after seeing exactly what it asks for.",
+    areas: [
+      {
+        name: "Pack file and starter packs",
+        description:
+          "Choose a pack file (up to 1 MiB) or review one of the starter packs. Starters are checked the same way as files.",
+      },
+      {
+        name: "Review",
+        description:
+          "Everything in the pack, written by its author. Choose what to include, rename items and pick a model for each sub-agent. Nothing is created until you confirm.",
+      },
+    ],
+    tasks: [
+      "Read a pack's instructions before importing: they shape how your agents behave.",
+      "Export your own project's setup from its Settings tab to share it.",
+    ],
+    terms: [
+      "concept.sub-agent",
+      "concept.skill",
+      "concept.template",
+      "concept.rubric",
+    ],
+    audience: "everyone",
+  },
+  "study.deck": {
+    title: "Flashcard deck",
+    purpose:
+      "One deck of flashcards in this project. Add and edit cards, draft them from files and review the ones that are due.",
+    areas: [
+      {
+        name: "Deck actions",
+        description:
+          "Review (N due) starts a review session. Draft from files suggests cards from the project's files. Edit deck changes its name, description and topics; Delete deck removes it and its cards.",
+      },
+      {
+        name: "Cards",
+        description:
+          "Each card's front, back, sources and next review date. Add card, or edit and delete existing cards.",
+      },
+    ],
+    tasks: [
+      "Tag the deck with topics to see your progress under Topic mastery.",
+    ],
+    terms: ["concept.topic-mastery", "concept.citation"],
+    audience: "everyone",
+  },
+  "study.drafts": {
+    title: "Draft cards",
+    purpose:
+      "Have a model suggest flashcards from this project's files. Nothing is saved until you accept a draft.",
+    areas: [
+      {
+        name: "Settings",
+        description:
+          "Use all project files or choose up to 10, set the number of cards and pick a model.",
+      },
+      {
+        name: "Drafts",
+        description:
+          "Accept, edit or discard each suggested card, or Accept all. Each draft cites where it came from.",
+      },
+      {
+        name: "Files",
+        description: "Which files were used, and why any could not be.",
+      },
+    ],
+    tasks: ["Edit a draft before accepting it if the wording is off."],
+    terms: ["concept.model", "concept.citation"],
+    audience: "everyone",
+  },
+  "study.review": {
+    title: "Review session",
+    purpose:
+      "Go through the cards that are due. How well you recall each one decides when you see it next.",
+    areas: [
+      {
+        name: "Card",
+        description:
+          "Recall the answer, then Show answer (Space or Enter) and rate it: Again, Hard, Good or Easy (1–4). Each button shows when you'll see the card next.",
+      },
+      {
+        name: "Summary",
+        description:
+          "Shows how the session went. Review more due cards starts another session if more are due.",
+      },
+    ],
+    tasks: [
+      "Rate honestly: Again brings the card back soon and marks it as a weak spot.",
+    ],
+    terms: ["concept.topic-mastery"],
+    audience: "everyone",
+  },
+  "study.quiz-new": {
+    title: "New practice quiz",
+    purpose:
+      "Generate a quiz from this project's files. Each question cites the file it came from.",
+    areas: [
+      {
+        name: "Quiz settings",
+        description:
+          "Choose files, the number of questions (1–20), question types, a model and an optional title.",
+      },
+      {
+        name: "Result",
+        description:
+          "The saved quiz, ready to start, and which files were used.",
+      },
+    ],
+    tasks: [],
+    terms: ["concept.model", "concept.citation"],
+    audience: "everyone",
+  },
+  "study.quiz": {
+    title: "Practice quiz",
+    purpose: "One saved quiz: your scores and every attempt.",
+    areas: [
+      {
+        name: "Quiz actions",
+        description:
+          "Take or retake the quiz. Edit quiz changes its title and topics; Delete quiz removes it and its attempts.",
+      },
+      {
+        name: "Attempts",
+        description:
+          "Your best and last scores, and each attempt. Open one to see its answers.",
+      },
+    ],
+    tasks: [
+      "Tag the quiz with topics to see your progress under Topic mastery.",
+    ],
+    terms: ["concept.topic-mastery"],
+    audience: "everyone",
+  },
+  "study.quiz-take": {
+    title: "Take quiz",
+    purpose: "Answer the quiz's questions, then submit to see your results.",
+    areas: [
+      {
+        name: "Questions",
+        description:
+          "Choose an option, or write a short answer. You can leave questions blank.",
+      },
+      {
+        name: "Grading model",
+        description:
+          "Shown when the quiz has short answers. It grades them against each question's rubric.",
+      },
+    ],
+    tasks: [],
+    terms: ["concept.model"],
+    audience: "everyone",
+  },
+  "study.quiz-attempt": {
+    title: "Quiz results",
+    purpose: "How one attempt went: your score and feedback on every answer.",
+    areas: [
+      {
+        name: "Score",
+        description:
+          "Multiple-choice answers are marked exactly. A partly correct short answer earns half a point. An answer that couldn't be graded earns no points and is marked as ungraded.",
+      },
+      {
+        name: "Answers",
+        description:
+          "Each answer's verdict, the correct option or rubric, an explanation and the source. Missed questions become weak spots.",
+      },
+    ],
+    tasks: ["Retake the quiz, or practice weak spots from the Study tab."],
+    terms: ["concept.citation"],
+    audience: "everyone",
+  },
+  "study.summary-new": {
+    title: "Summarize files",
+    purpose:
+      "Summarize this project's files at the depth you need. Nothing is saved until you save it as a note.",
+    areas: [
+      {
+        name: "Settings",
+        description:
+          "Choose files, a depth (simple, standard or expert) and a model.",
+      },
+      {
+        name: "Summary",
+        description:
+          "The draft, with each section citing its sources, and which files were used. Save as note keeps it.",
+      },
+    ],
+    tasks: [],
+    terms: ["concept.model", "concept.citation"],
+    audience: "everyone",
+  },
+  "study.guide-new": {
+    title: "Plan for an exam",
+    purpose:
+      "Get a day-by-day study plan up to your exam, linked to this project's decks and quizzes. Nothing is saved until you save it as a note.",
+    areas: [
+      {
+        name: "Settings",
+        description:
+          "Start date, exam date (up to 60 days), minutes per day (10–480) and a model. The model sees deck and quiz names and your scores, not your files.",
+      },
+      {
+        name: "Study plan",
+        description:
+          "Each day's focus, with links to the decks and quizzes to use. Save as note keeps it.",
+      },
+    ],
+    tasks: [],
+    terms: ["concept.model"],
+    audience: "everyone",
+  },
+  "study.note": {
+    title: "Study note",
+    purpose: "A saved summary or study plan from this project.",
+    areas: [
+      {
+        name: "Note",
+        description: "The note's text and the files it draws on.",
+      },
+      {
+        name: "Edit and delete",
+        description: "Edit note changes its title and Markdown body.",
+      },
+    ],
+    tasks: [],
+    terms: ["concept.citation"],
+    audience: "everyone",
+  },
   "settings.general": {
     title: "General settings",
     purpose:
@@ -355,6 +703,28 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
     terms: ["concept.template", "concept.prompt-coach"],
     audience: "everyone",
   },
+  "settings.rubrics": {
+    title: "Rubrics",
+    purpose:
+      "Assessment rubrics for Draft feedback mode. Choose one in the composer and feedback is organized by its criteria.",
+    areas: [
+      {
+        name: "Bundled rubrics",
+        description:
+          "Read-only rubrics that come with Asterism. Duplicate one to adapt it.",
+      },
+      {
+        name: "Your rubrics",
+        description:
+          "Rubrics you created or duplicated. Search, edit or delete them here.",
+      },
+    ],
+    tasks: [
+      "Duplicate a bundled rubric and change its criteria to match your assignment.",
+    ],
+    terms: ["concept.rubric", "concept.mode-draft-feedback"],
+    audience: "everyone",
+  },
   "settings.agents": {
     title: "Agents",
     purpose:
@@ -397,21 +767,6 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
     tasks: [],
     terms: ["concept.model"],
     audience: "everyone",
-  },
-  "admin.overview": {
-    title: "Admin settings",
-    purpose:
-      "Platform-wide settings that apply to every user. Sections marked Planned are not available yet.",
-    areas: [
-      {
-        name: "Sections",
-        description:
-          "Providers, themes, users, tools, skills, ChatGPT plans, image captioning and educators.",
-      },
-    ],
-    tasks: [],
-    terms: ["admin.providers", "admin.tools", "admin.skills-policy"],
-    audience: "admin",
   },
   "admin.providers": {
     title: "Providers",
@@ -521,6 +876,40 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
     terms: [],
     audience: "admin",
   },
+  "admin.educators": {
+    title: "Educators",
+    purpose: "Decide who may run classes. Educators are not administrators.",
+    areas: [
+      {
+        name: "Requests and educators",
+        description:
+          "Users ask from the Classes page. Approve or deny a request, or revoke an educator. Revoking stops them managing their classes; students stay in them.",
+      },
+    ],
+    tasks: [],
+    terms: [],
+    audience: "admin",
+  },
+  "admin.export": {
+    title: "Export and import settings",
+    purpose:
+      "Move every application setting between installations in one file. Users, chats and files are not included.",
+    areas: [
+      {
+        name: "Export settings",
+        description:
+          "Saves providers, models, tools and policies. API keys in the file are encrypted with a passphrase you choose; without it the file can't be opened.",
+      },
+      {
+        name: "Import settings",
+        description:
+          "Providers in the file are added, or updated when the name matches. Settings in the file replace current values. Nothing is removed.",
+      },
+    ],
+    tasks: [],
+    terms: ["admin.providers"],
+    audience: "admin",
+  },
 };
 
 const userSettingsGuides: Record<string, PageGuideId> = {
@@ -528,11 +917,13 @@ const userSettingsGuides: Record<string, PageGuideId> = {
   personas: "settings.personas",
   skills: "settings.skills",
   templates: "settings.templates",
+  rubrics: "settings.rubrics",
   agents: "settings.agents",
   chatgpt: "settings.chatgpt",
 };
 
-const adminSettingsGuides: Record<string, PageGuideId> = {
+// Planned sections get no guide until they ship (ADR-0032), so no Help button.
+const adminSettingsGuides: Record<string, PageGuideId | null> = {
   providers: "admin.providers",
   theme_editor: "admin.theme-editor",
   tools: "admin.tools",
@@ -540,12 +931,32 @@ const adminSettingsGuides: Record<string, PageGuideId> = {
   chatgpt: "admin.chatgpt",
   "image-captioning": "admin.image-captioning",
   "user-permissions": "admin.users",
+  educators: "admin.educators",
+  export: "admin.export",
+  "group-settings": null,
+  "image-generation": null,
+  "code-execution": null,
 };
+
+/** Study pages, most specific first; each is under /projects/{id}/study. */
+const studyGuides: [RegExp, PageGuideId][] = [
+  [/^quizzes\/new$/, "study.quiz-new"],
+  [/^quizzes\/[^/]+\/take$/, "study.quiz-take"],
+  [/^quizzes\/[^/]+\/attempts\/[^/]+$/, "study.quiz-attempt"],
+  [/^quizzes\/[^/]+$/, "study.quiz"],
+  [/^summaries\/new$/, "study.summary-new"],
+  [/^guides\/new$/, "study.guide-new"],
+  [/^notes\/[^/]+$/, "study.note"],
+  [/^[^/]+\/drafts$/, "study.drafts"],
+  [/^[^/]+\/review$/, "study.review"],
+  [/^[^/]+$/, "study.deck"],
+];
 
 /**
  * The guide for a dashboard location, or null when the page has none.
  * Settings follow the same tab rules as the settings page: the admin tab is
  * only for admins, and an unknown section falls back to its tab's default.
+ * Every page and section has its own guide; a test enforces this.
  */
 export function pageGuideFor(
   pathname: string,
@@ -556,15 +967,22 @@ export function pageGuideFor(
   if (/^\/c\/[^/]+\/files\/[^/]+/.test(pathname)) return "file";
   if (/^\/c\/[^/]+\/?$/.test(pathname)) return "chat";
   if (/^\/projects\/[^/]+\/?$/.test(pathname)) return "project";
+  const study = /^\/projects\/[^/]+\/study\/(.+?)\/?$/.exec(pathname);
+  if (study)
+    return studyGuides.find(([pattern]) => pattern.test(study[1]))?.[1] ?? null;
+  if (/^\/classes\/[^/]+\/?$/.test(pathname)) return "class";
   if (/^\/files\/[^/]+/.test(pathname)) return "file";
   switch (pathname) {
     case "/general":
       return "general";
     case "/projects":
+      return "projects";
     case "/team-packs":
-      return "projects";
+      return "team-packs";
     case "/classes":
-      return "projects";
+      return "classes";
+    case "/help":
+      return "help";
     case "/files":
       return "files";
     case "/search":
@@ -572,9 +990,13 @@ export function pageGuideFor(
     case "/settings":
       if (params.t === "admin" && isAdmin) {
         const setting = params.setting ?? "providers";
-        return adminSettingsGuides[setting] ?? "admin.overview";
+        return Object.hasOwn(adminSettingsGuides, setting)
+          ? adminSettingsGuides[setting]
+          : "admin.providers";
       }
-      return userSettingsGuides[params.setting ?? ""] ?? "settings.general";
+      return params.setting && Object.hasOwn(userSettingsGuides, params.setting)
+        ? userSettingsGuides[params.setting]
+        : "settings.general";
   }
   return null;
 }

@@ -34,6 +34,15 @@ example `settings.*` or `admin.*`) for help about one control. Page guides
 (US-61.3) and tour steps (US-61.4) reference these IDs rather than repeating
 the text.
 
+**Page guide coverage (US-66.1).** Every route under `app/(main)` and every
+settings section has a guide written for it; no page borrows another page's
+guide. Unknown settings sections follow the settings page and show their
+tab's default section and guide. Planned admin sections have no guide, so no
+Help button, until they ship. `pages.test.ts` reads the route folders and the
+real settings section lists, so a new page or section without a guide fails
+the test. The `(auth)` pages (sign-in, setup, invite) have no app header and
+so no Help button; their forms explain themselves.
+
 **Accuracy rules.** Help describes only implemented behavior. In particular:
 
 - Persona, skill, learning-mode and template text never grants tools, files,
