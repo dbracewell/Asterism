@@ -20,6 +20,7 @@ from asterism.domains.settings.service import get_all_providers, get_app_setting
 
 from .documents import (
     ExportedCaptioning,
+    ExportedCompaction,
     ExportedComponent,
     ExportedGroup,
     ExportedModel,
@@ -102,6 +103,10 @@ async def collect_settings(session: AsyncSession) -> SettingsBundle:
         draft_model=_reference(settings.draft_model_id, providers),
         active_tools=tuple(settings.active_tools),
         skills_enabled=settings.skills_enabled,
+        compaction=ExportedCompaction(
+            **settings.compaction.model_dump(exclude={"model_id"}),
+            model=_reference(settings.compaction.model_id, providers),
+        ),
         chatgpt_plan_enabled=settings.chatgpt_plan_enabled,
         web_search_provider=_component(settings.web_search_provider),
         image_search_provider=_component(settings.image_search_provider),

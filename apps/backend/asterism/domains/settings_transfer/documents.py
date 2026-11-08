@@ -78,6 +78,15 @@ class ExportedCaptioning(_Document):
     model: ModelReference | None = None
 
 
+class ExportedCompaction(_Document):
+    """Context compaction policy (ADR-0060); the summarizer model travels by name."""
+
+    threshold: float = Field(default=0.8, ge=0.5, le=0.95)
+    tail_turns: int = Field(default=3, ge=1, le=20)
+    fallback_context_window: int = Field(default=32_768, ge=2_048, le=10_000_000)
+    model: ModelReference | None = None
+
+
 class ExportedGroup(_Document):
     """A group's access lists (ADR-0058). Membership is never exported.
 
@@ -103,6 +112,7 @@ class SettingsBundle(_Document):
     web_search_provider: ExportedComponent | None = None
     image_search_provider: ExportedComponent | None = None
     captioning: ExportedCaptioning = Field(default_factory=ExportedCaptioning)
+    compaction: ExportedCompaction = Field(default_factory=ExportedCompaction)
     groups: tuple[ExportedGroup, ...] = Field(default=(), max_length=200)
 
 

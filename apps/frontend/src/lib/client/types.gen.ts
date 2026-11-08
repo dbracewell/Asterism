@@ -84,6 +84,7 @@ export type ApplicationSettings = {
    * Skills Enabled
    */
   skills_enabled?: boolean;
+  compaction?: CompactionSettings;
   /**
    * Chatgpt Plan Enabled
    */
@@ -1149,6 +1150,30 @@ export type CoachCriterion =
   | "examples";
 
 /**
+ * CompactionSettings
+ *
+ * Automatic context compaction policy (ADR-0060), stored under one key.
+ */
+export type CompactionSettings = {
+  /**
+   * Threshold
+   */
+  threshold?: number;
+  /**
+   * Tail Turns
+   */
+  tail_turns?: number;
+  /**
+   * Fallback Context Window
+   */
+  fallback_context_window?: number;
+  /**
+   * Model Id
+   */
+  model_id?: string | null;
+};
+
+/**
  * ComparisonActivate
  */
 export type ComparisonActivate = {
@@ -1326,6 +1351,52 @@ export type ContextChunk = {
 };
 
 /**
+ * ContextCompaction
+ *
+ * A stored summary replaced the branch prefix through ``through_message_id`` (ADR-0060).
+ */
+export type ContextCompaction = {
+  /**
+   * Compaction Id
+   */
+  compaction_id: string;
+  /**
+   * Through Message Id
+   */
+  through_message_id: string;
+  /**
+   * Replaced Messages
+   */
+  replaced_messages: number;
+  /**
+   * Summary Characters
+   */
+  summary_characters: number;
+};
+
+/**
+ * ContextCompactionText
+ *
+ * The summary that replaced earlier messages in a recorded run (ADR-0060).
+ *
+ * Untrusted model output; returned only to the chat owner.
+ */
+export type ContextCompactionText = {
+  /**
+   * Compaction Id
+   */
+  compaction_id: string;
+  /**
+   * Replaced Messages
+   */
+  replaced_messages: number;
+  /**
+   * Summary
+   */
+  summary: string;
+};
+
+/**
  * ContextFile
  *
  * A file attached on the active branch and what the model received of it.
@@ -1418,6 +1489,7 @@ export type ContextLayerTexts = {
    * Layers
    */
   layers: Array<ContextLayerText>;
+  compaction?: ContextCompactionText | null;
 };
 
 /**
@@ -1428,6 +1500,7 @@ export type ContextManifest = {
    * Layers
    */
   layers?: Array<ContextLayer>;
+  compaction?: ContextCompaction | null;
   template?: TemplateProvenance | null;
   /**
    * Files
@@ -9123,6 +9196,7 @@ export type ApplicationSettingsWritable = {
    * Skills Enabled
    */
   skills_enabled?: boolean;
+  compaction?: CompactionSettings;
   /**
    * Chatgpt Plan Enabled
    */

@@ -230,7 +230,11 @@ async def test_empty_model_completion_is_not_persisted_as_a_blank_message(monkey
     async def should_not_persist(**_kwargs):
         raise AssertionError("empty completion must not create an assistant message")
 
+    async def fits(messages, files):
+        return messages, files
+
     monkeypatch.setattr(orchestrator, "_assemble_agent_messages", assembled_messages)
+    monkeypatch.setattr(orchestrator, "_fit_context", fits)
     monkeypatch.setattr(
         "asterism.domains.chat.orchestrator.chat_service.add_message",
         should_not_persist,

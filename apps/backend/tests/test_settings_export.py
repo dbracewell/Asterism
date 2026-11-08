@@ -69,6 +69,15 @@ async def api(project_api, monkeypatch):
                 ApplicationSettingsModel(key="skills_enabled", value=True),
                 ApplicationSettingsModel(key="chatgpt_plan_enabled", value=True),
                 ApplicationSettingsModel(
+                    key="compaction",
+                    value={
+                        "threshold": 0.7,
+                        "tail_turns": 2,
+                        "fallback_context_window": 4096,
+                        "model_id": str(draft.id),
+                    },
+                ),
+                ApplicationSettingsModel(
                     key="web_search_provider",
                     value=encrypt_component_provider_dict(
                         {"name": "search", "parameters": {"api_key": SEARCH_KEY, "region": "uk"}}
@@ -105,6 +114,13 @@ async def test_file_holds_every_setting_with_keys_intact(api):
     assert bundle.image_search_provider is None
     assert bundle.captioning.mode == "provider"
     assert bundle.captioning.model.model_dump() == {"provider": "Local", "model": "vision"}
+    # The compaction model travels by name, never by record id.
+    assert bundle.compaction.model_dump() == {
+        "threshold": 0.7,
+        "tail_turns": 2,
+        "fallback_context_window": 4096,
+        "model": {"provider": "Local", "model": "draft"},
+    }
 
 
 async def test_nothing_is_readable_without_the_passphrase(api):

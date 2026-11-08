@@ -15,6 +15,14 @@ from asterism.domains.agent.agent import Agent
 from asterism.domains.agent.approval import InteractiveApprovalPolicy
 from asterism.domains.agent.context_manifest import ContextFile, ContextManifest
 from asterism.domains.agent.schemas import AgentEvent, AgentEventType
+from asterism.domains.chat.compaction import (
+    AppliedCompaction,
+    ContextTooLarge,
+    applicable_compaction,
+    choose_anchor,
+    compact_branch,
+    read_compaction_settings,
+)
 from asterism.domains.chat.context_manifest import file_context, step_context, turn_context
 from asterism.domains.chat.delegations import DelegationCollector
 from asterism.domains.chat.exercises import HISTORY_NOTE, is_exercise_run, streamed_text
@@ -41,6 +49,7 @@ from asterism.domains.llm.schemas import (
     ToolCall,
     ToolResult,
 )
+from asterism.domains.llm.selection import SelectedModel, resolve_usable_model
 from asterism.domains.llm.token_counting import estimate_text_tokens
 from asterism.domains.projects.goals import render_goal
 from asterism.domains.prompt_templates.provenance import TemplateProvenance
@@ -75,6 +84,8 @@ class ChatOrchestrator:
         self._comparison: dict[str, str] | None = None
         # US-54.5: the pending fork step being replayed, until it is recorded.
         self._fork_step: Message | None = None
+        # ADR-0060: the summary that replaced the start of the branch, if any.
+        self._compaction: AppliedCompaction | None = None
 
         # Inject interactive approval into the agent so tool
         # authorization flows through the WebSocket UI.
@@ -392,8 +403,17 @@ class ChatOrchestrator:
         return messages
 
     async def _assemble_agent_messages(self) -> tuple[list[LLMMessage], list[ContextFile]]:
-        """The provider messages, plus how each attached file was included (US-54.3)."""
+        """The provider messages, plus how each attached file was included (US-54.3).
+
+        The newest compaction on the branch replaces the messages through its
+        anchor with one labelled summary message (ADR-0060).
+        """
+        self._compaction = await applicable_compaction(
+            user_id=self.user_id, chat_id=self.chat_id, branch=self.chat.messages
+        )
+        history = self.chat.messages[self._compaction.anchor_index + 1 :] if self._compaction else self.chat.messages
         ids = {file.file_id for message in self.chat.messages for file in message.files}
+        wanted = {file.file_id for message in history for file in message.files}
         payloads = {}
         self.agent.file_input_authorization = None
         if ids:
@@ -413,7 +433,7 @@ class ChatOrchestrator:
             allowed = execution_scope.allowed_file_ids
             self.agent.user_files = [str(file_id) for file_id in sorted(allowed, key=str)]
             loaded: set[uuid.UUID] = set()
-            for file_id in sorted(ids & allowed, key=str):
+            for file_id in sorted(wanted & allowed, key=str):
                 payload = await reader.read_for_model(
                     execution_scope, file_id, supports_vision=model.supports_vision is True
                 )
@@ -430,8 +450,8 @@ class ChatOrchestrator:
             await authorize_payload()
             self.agent.file_input_authorization = authorize_payload
 
-        messages: list[LLMMessage] = []
-        for message in self.chat.messages:
+        messages: list[LLMMessage] = [self._compaction.message()] if self._compaction else []
+        for message in history:
             if message.role == "assistant" and message.exercise is not None:
                 # Later turns, in any mode, must not rely on an exercise answer.
                 messages.append(LLMMessage(**{**message.model_dump(), "content": message.content + HISTORY_NOTE}))
@@ -472,9 +492,7 @@ class ChatOrchestrator:
                 messages.append(LLMMessage(role="user", content=parts))
             for result in message.tool_call_results or []:
                 messages.append(LLMMessage.tool_call_result(result))
-        references = [
-            reference for message in self.chat.messages if message.role == "user" for reference in message.files
-        ]
+        references = [reference for message in history if message.role == "user" for reference in message.files]
         return messages, file_context(references, payloads)
 
     def _turn_template(self, index: int) -> TemplateProvenance | None:
@@ -491,7 +509,11 @@ class ChatOrchestrator:
         Character-based tokenization is intentionally labelled estimated; binary
         image payloads use a conservative fixed vision-token allowance instead.
         """
-        messages = await self._build_agent_messages()
+        return await self._estimate_request(await self._build_agent_messages())
+
+    async def _estimate_request(self, history: list[LLMMessage]) -> ChatContextUsage:
+        """Estimate the first provider request for already assembled history."""
+        messages = list(history)
         system_prompt = await self.agent._build_system_prompt()
         if system_prompt:
             messages.insert(0, LLMMessage.system(system_prompt))
@@ -523,6 +545,68 @@ class ChatOrchestrator:
             reserved_output_tokens=reserved_output,
             total_tokens=input_tokens + (reserved_output or 0),
         )
+
+    def _context_window(self) -> int | None:
+        if self._execution is not None:
+            return self._execution.model.context_window
+        model = self.chat.info.context_model
+        return model.context_window if model is not None else None
+
+    async def _summarizer(self, model_id: uuid.UUID | None, window: int) -> tuple[SelectedModel, int]:
+        """The admin's compaction model if set, else this run's own model, with its window."""
+        if model_id is None:
+            name = self._execution.model.name if self._execution is not None else str(self.agent.model_id)
+            client = await self.agent._get_client()
+            return SelectedModel(id=self.agent.model_id, name=name, client=client), window  # type: ignore[arg-type]
+        from asterism.db.database import get_async_db_session
+
+        async with get_async_db_session() as session:
+            model = await resolve_usable_model(user_id=self.user_id, model_id=model_id, session=session)
+            info = await settings_service.get_model_and_provider(
+                model_id=model_id, user_id=self.user_id, session=session
+            )
+        return model, info.context_window or window
+
+    async def _fit_context(
+        self, messages: list[LLMMessage], files: list[ContextFile]
+    ) -> tuple[list[LLMMessage], list[ContextFile]]:
+        """Compact the branch first when the request would exceed the threshold (ADR-0060).
+
+        Tries the configured verbatim tail, then only the current turn. Raises
+        rather than sending a request larger than the context window.
+        """
+        settings = await read_compaction_settings()
+        window = self._context_window() or settings.fallback_context_window
+        limit = int(window * settings.threshold)
+        estimated = (await self._estimate_request(messages)).total_tokens
+        if estimated <= limit:
+            return messages, files
+        summarizer: tuple[SelectedModel, int] | None = None
+        for tail in dict.fromkeys((settings.tail_turns, 1)):
+            current = self._compaction
+            anchor = choose_anchor(
+                self.chat.messages, tail_turns=tail, after_index=current.anchor_index if current else -1
+            )
+            if anchor is None:
+                continue
+            summarizer = summarizer or await self._summarizer(settings.model_id, window)
+            await compact_branch(
+                user_id=self.user_id,
+                chat_id=self.chat_id,
+                branch=self.chat.messages,
+                current=current,
+                anchor_index=anchor,
+                model=summarizer[0],
+                window=summarizer[1],
+                estimated_tokens_before=estimated,
+            )
+            messages, files = await self._assemble_agent_messages()
+            estimated = (await self._estimate_request(messages)).total_tokens
+            if estimated <= limit:
+                return messages, files
+        if estimated > window:
+            raise ContextTooLarge(estimated, window)
+        return messages, files
 
     async def run_agent(self) -> None:
         try:
@@ -566,10 +650,12 @@ class ChatOrchestrator:
                 self._fork_step = parent_message
                 self.chat.messages = self.chat.messages[:parent_message_index]
             messages, files = await self._assemble_agent_messages()
+            messages, files = await self._fit_context(messages, files)
             self._context = turn_context(
                 self.agent.prompt_snapshot,
                 template=self._turn_template(last_user_message_index),
                 files=files,
+                compaction=self._compaction.manifest() if self._compaction else None,
             )
             async for event in self.agent.run(messages=messages, replay=replay):
                 match event:

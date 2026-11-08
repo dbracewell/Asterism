@@ -31,6 +31,7 @@ from asterism.domains.settings.captioning_guard import get_captioning_selection_
 from asterism.domains.settings.models import ApplicationSettingsModel, LLMModel, ProviderModel
 from asterism.domains.settings.provider_types import ProviderType, normalize_provider_base_url
 from asterism.domains.settings.queries import is_global_provider
+from asterism.domains.settings.schemas import CompactionSettings
 from asterism.domains.settings.secrets import REDACTED_SECRET, encrypt_component_provider_dict
 from asterism.domains.settings.service import get_all_providers
 from asterism.domains.tools.catalog import INTERNAL_TOOL_NAMES
@@ -53,7 +54,7 @@ logger = get_logger("SettingsImport")
 def _check_references(bundle: SettingsBundle) -> None:
     known = {(provider.name, model.name) for provider in bundle.providers for model in provider.models}
     group_models = (reference for group in bundle.groups for reference in group.models or ())
-    for reference in (bundle.draft_model, bundle.captioning.model, *group_models):
+    for reference in (bundle.draft_model, bundle.captioning.model, bundle.compaction.model, *group_models):
         if reference is not None and (reference.provider, reference.model) not in known:
             raise BadDataException("Settings file refers to a model it does not contain")
 
@@ -117,6 +118,7 @@ def _changed_settings(bundle: SettingsBundle, current: SettingsBundle) -> list[s
         "Image search provider": bundle.image_search_provider is not None
         and bundle.image_search_provider != current.image_search_provider,
         "Image captioning": bundle.captioning != current.captioning,
+        "Context compaction": bundle.compaction != current.compaction,
         "Groups": bundle.groups != current.groups,
     }
     return [label for label, changed in changes.items() if changed]
@@ -210,6 +212,17 @@ async def _apply_draft(reference: ModelReference | None, session: AsyncSession) 
         await session.execute(delete(ApplicationSettingsModel).where(ApplicationSettingsModel.key == "draft_model_id"))
 
 
+async def _apply_compaction(bundle: SettingsBundle, session: AsyncSession) -> None:
+    """Set the policy; a summarizer model that is missing or inactive here is left unset."""
+    exported = bundle.compaction
+    model = await _find_model(exported.model, session)
+    value = CompactionSettings(
+        **exported.model_dump(exclude={"model"}),
+        model_id=model.id if model is not None and model.is_active else None,
+    )
+    await _put_setting("compaction", value.model_dump(mode="json"), session)
+
+
 async def _apply_groups(bundle: SettingsBundle, session: AsyncSession) -> None:
     """Add missing custom groups and set every listed group's access. Groups not in the file stay."""
     rows = list(await session.scalars(select(GroupModel)))
@@ -265,6 +278,7 @@ async def import_settings(
         await _apply_draft(bundle.draft_model, session)
         await _apply_groups(bundle, session)
         await _apply_captioning(bundle, session)
+        await _apply_compaction(bundle, session)
         await session.commit()
     except IntegrityError as exc:
         await session.rollback()

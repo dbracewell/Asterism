@@ -510,6 +510,11 @@ class TestSubAgentStreaming:
                 "asterism.domains.chat.service.add_message",
                 new=AsyncMock(return_value=user_msg),
             ),
+            # No database here: no stored compaction, and the request fits.
+            patch("asterism.domains.chat.orchestrator.applicable_compaction", new=AsyncMock(return_value=None)),
+            patch.object(
+                orchestrator, "_fit_context", new=AsyncMock(side_effect=lambda messages, files: (messages, files))
+            ),
         ):
             await orchestrator.run_agent()
 

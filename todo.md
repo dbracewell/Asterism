@@ -38,10 +38,10 @@ Source: user request (2026-11-08). Suggested order: EPIC-74 → 67 → 70 → 68
 
 ### [EPIC-69: Automatic context compaction](docs/epics/EPIC-69-AUTO-COMPACTION.md)
 
-- [ ] US-69.1: Compaction records and prompt assembly
-  - [ ] Write the ADR (record shape, branch/fork rules, trust rules, thresholds).
-  - [ ] Implement the record, the summarizer prompt and assembly changes.
-  - [ ] Tests: threshold trigger, branch isolation, fork before/after the point, replay, unknown context window, failure path.
+- [x] US-69.1: Compaction records and prompt assembly (merged 2026-11-08)
+  - [x] Write the ADR (record shape, branch/fork rules, trust rules, thresholds). ([ADR-0060](docs/adr/0060-context-compaction.md))
+  - [x] Implement the record, the summarizer prompt and assembly changes.
+  - [x] Tests: threshold trigger, branch isolation, fork before/after the point, replay, unknown context window, failure path.
 - [ ] US-69.2: Compaction in the chat UI and settings
   - [ ] Stream compaction events; add the divider, meter action and admin settings; regenerate the client.
   - [ ] Help and glossary; unit tests and an E2E with a small fake context window.

@@ -1,6 +1,6 @@
 # EPIC-69: Automatic context compaction
 
-Status: proposed. Source: user request (2026-11-08).
+Status: in progress; US-69.1 complete (2026-11-08), US-69.2 next. Source: user request (2026-11-08). Decision: [ADR-0060](../adr/0060-context-compaction.md).
 
 ## Objective
 
@@ -41,9 +41,9 @@ and run inspection show that a summary replaced N messages. A turn that would
 exceed the threshold compacts first and then runs. If compaction itself fails the
 turn reports a clear error rather than sending an oversized request.
 
-- [ ] Write the ADR (record shape, branch/fork rules, trust rules, thresholds).
-- [ ] Implement the record, the summarizer prompt and assembly changes.
-- [ ] Tests: threshold trigger, branch isolation, fork before/after the point, replay, unknown context window, failure path.
+- [x] Write the ADR (record shape, branch/fork rules, trust rules, thresholds).
+- [x] Implement the record, the summarizer prompt and assembly changes.
+- [x] Tests: threshold trigger, branch isolation, fork before/after the point, replay, unknown context window, failure path.
 
 ## US-69.2: Compaction in the chat UI and settings
 
