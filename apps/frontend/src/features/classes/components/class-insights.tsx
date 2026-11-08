@@ -5,6 +5,7 @@ import { QueryError } from "@/components/query-error";
 import { client } from "@/lib/api";
 import { classInsightsGetOptions } from "@/lib/client/@tanstack/react-query.gen";
 import { useQuery } from "@tanstack/react-query";
+import { HelpHeading } from "@/features/help/components/help-heading";
 
 const percent = (value: number) => `${Math.round(value * 100)}%`;
 
@@ -16,7 +17,12 @@ export function ClassInsights({ classId }: { classId: string }) {
   });
   return (
     <section aria-label="Class insights" className="grid gap-3">
-      <h2 className="text-lg font-medium">Where the class struggles</h2>
+      <HelpHeading
+        help="concept.class-insights"
+        className="text-lg font-medium"
+      >
+        Where the class struggles
+      </HelpHeading>
       <p className="text-sm">
         Totals from students who chose to share their flashcard and quiz
         results, grouped by the course file the practice came from. You never

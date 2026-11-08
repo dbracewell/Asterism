@@ -91,6 +91,9 @@ it("lists weak spots with links to their quiz or deck", async () => {
   setup();
   const section = await screen.findByRole("region", { name: "Weak spots" });
   expect(within(section).getByText("12 items to practice")).toBeInTheDocument();
+  expect(
+    within(section).getByRole("button", { name: "Help: Weak spots" }),
+  ).toBeInTheDocument();
   expect(within(section).getByText("Missed")).toBeInTheDocument();
   expect(within(section).getByText("Rated Again")).toBeInTheDocument();
   expect(within(section).getByText("Partly correct")).toBeInTheDocument();

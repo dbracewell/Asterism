@@ -143,3 +143,23 @@ it("does not reveal another educator's class", async () => {
     await screen.findByText("This class isn't available."),
   ).toBeInTheDocument();
 });
+
+// US-66.2: each section has a "what is this?" button beside its heading.
+it("offers help beside every section", async () => {
+  setup();
+  for (const [heading, help] of [
+    ["Class code", "Class code"],
+    ["Invites for new students", "Invite links"],
+    ["Students", "Class"],
+    ["Course", "Course"],
+    ["Learning mode policy", "Learning mode policy"],
+    ["Where the class struggles", "Class insights"],
+  ]) {
+    expect(
+      await screen.findByRole("heading", { name: heading }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: `Help: ${help}` }),
+    ).toBeInTheDocument();
+  }
+});

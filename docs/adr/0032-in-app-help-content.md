@@ -43,6 +43,18 @@ real settings section lists, so a new page or section without a guide fails
 the test. The `(auth)` pages (sign-in, setup, invite) have no app header and
 so no Help button; their forms explain themselves.
 
+**Inline help on newer surfaces (US-66.2).** The glossary covers study
+tools (flashcards and decks, quizzes and attempts, weak spots, study notes),
+classes (class, educator, course, class code, invite links, learning mode
+policy, class insights), team packs and the admin-only settings file. Section
+headings take their trigger through `HelpHeading`, and page titles through
+`PageHeader`'s `help` slot; both keep the button outside the heading so its
+accessible name stays the section's name. Entries state the limits learners
+rely on, and `registry.test.ts` checks them: insights are totals shown only
+once five students share, sharing is off until a student turns it on, the
+class policy can only limit, and packs carry no files or keys and grant no
+tools.
+
 **Accuracy rules.** Help describes only implemented behavior. In particular:
 
 - Persona, skill, learning-mode and template text never grants tools, files,

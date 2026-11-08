@@ -38,11 +38,24 @@ export type HelpId =
   | "concept.comparison"
   | "concept.tool-approval"
   | "concept.citation"
+  | "concept.flashcard"
+  | "concept.quiz"
+  | "concept.weak-spot"
+  | "concept.study-note"
+  | "concept.class"
+  | "concept.educator"
+  | "concept.course"
+  | "concept.class-code"
+  | "concept.class-invite"
+  | "concept.class-mode-policy"
+  | "concept.class-insights"
+  | "concept.team-pack"
   | "composer.controls"
   | "settings.max-steps"
   | "admin.providers"
   | "admin.tools"
-  | "admin.skills-policy";
+  | "admin.skills-policy"
+  | "admin.settings-file";
 
 export interface HelpEntry {
   /** The term as the UI shows it. */
@@ -85,13 +98,14 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
     details: [
       "Use a project for a course, an assignment or any topic you'll come back to.",
       "In a project's settings you can choose which of your sub-agents its chats may use. New projects start with none selected.",
-      "Export team pack in a project's settings saves the sub-agents, skills, templates, rubrics and settings you choose to one file you can share. Models are saved as requirements, and files and keys are never included. Import team pack on the Projects page shows everything a pack asks for first: you choose a model for each sub-agent, approve each tool, and nothing is created until you confirm. Starter packs for research, writing and study are there too, and go through the same review.",
+      "Export team pack in a project's Settings tab shares its setup as a file. Import team pack on the Projects page shows everything a pack asks for before anything is created.",
       "You can also set a learning goal and a target date. The goal shows on the project page, and a chat only sees it when you turn on Goal in the message box for a message.",
     ],
     related: [
       "concept.file-scope",
       "concept.sub-agent",
       "concept.general-chat",
+      "concept.team-pack",
     ],
     audience: "everyone",
   },
@@ -245,7 +259,7 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
       "Add topics to a deck or quiz when you create or edit it. The project page then shows each topic's level (Not started, Needs work, Developing or Mastered), how many items you've practiced, and how it changed over the last 8 weeks.",
       "Mastered needs at least 80% and at least 80% of the topic's items practiced. Practice builds a quiz from the topic's weakest and unpracticed items. Mastery comes only from your study results, never from chats.",
     ],
-    related: ["concept.project"],
+    related: ["concept.flashcard", "concept.quiz", "concept.weak-spot"],
     audience: "everyone",
   },
   "concept.reflection": {
@@ -257,7 +271,7 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
       "Reflections are yours only. Each is filed under the chat's project and persona, and the assistant doesn't read them automatically.",
       "In a project, Practice unclear items turns what's still unclear into flashcards, one at a time. You write each answer and confirm each card, and it can also appear in your weak spots until you recall it.",
     ],
-    related: ["concept.project", "concept.persona"],
+    related: ["concept.project", "concept.persona", "concept.weak-spot"],
     audience: "everyone",
   },
   "concept.ai-use-log": {
@@ -401,6 +415,171 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
     related: ["concept.file-scope", "concept.attachment"],
     audience: "everyone",
   },
+  "concept.flashcard": {
+    title: "Flashcards and decks",
+    summary:
+      "A flashcard has a question on the front and the answer on the back. A deck groups a project's cards, and cards come back for review when they're due.",
+    details: [
+      "In a review you recall the answer, show it, then rate how it went: Again, Hard, Good or Easy. Your rating decides when the card is due next, so cards you know well come back less often.",
+      "Write cards yourself, or use Draft from files to have a model suggest cards from the project's files. Nothing is saved until you accept a draft.",
+      "Tag a deck with topics to follow your progress under Topic mastery.",
+    ],
+    related: ["concept.weak-spot", "concept.topic-mastery", "concept.quiz"],
+    audience: "everyone",
+  },
+  "concept.quiz": {
+    title: "Practice quizzes and attempts",
+    summary:
+      "A quiz is a saved set of questions generated from a project's files. Each time you take it is an attempt, with its own score and feedback.",
+    details: [
+      "Questions are multiple choice or short answer, and each cites the file it came from. Multiple-choice answers are marked exactly. A model grades short answers against each question's rubric: a partly correct answer earns half a point, and one it couldn't grade earns none.",
+      "The quiz page shows your best and last scores. Retake a quiz as often as you like; every attempt is kept.",
+      "Practice quizzes are for your own practice. Scores are only shared with an educator as class totals, and only if you choose to share.",
+    ],
+    related: [
+      "concept.weak-spot",
+      "concept.topic-mastery",
+      "concept.flashcard",
+      "concept.class-insights",
+    ],
+    audience: "everyone",
+  },
+  "concept.weak-spot": {
+    title: "Weak spots",
+    summary:
+      "Quiz questions you missed or got partly right, and cards you rated Again. They're listed on the Study tab, most recent first.",
+    details: [
+      "Practice weak spots builds a quiz of up to 10 of them. Answering an item correctly there, in another quiz or in a review clears it.",
+      "Cards made from a reflection's unclear points also count until you recall them.",
+    ],
+    related: [
+      "concept.quiz",
+      "concept.flashcard",
+      "concept.reflection",
+      "concept.topic-mastery",
+    ],
+    audience: "everyone",
+  },
+  "concept.study-note": {
+    title: "Study notes",
+    summary:
+      "Saved summaries of a project's files, and day-by-day study plans for an exam. Both are drafted by a model and only saved when you choose Save as note.",
+    details: [
+      "Summarize files writes a summary at the depth you choose, with each section citing its sources. Plan for an exam lays out each day up to your exam, linked to the project's decks and quizzes; the model sees their names and your scores, not your files.",
+      "A note is Markdown you can edit or delete at any time. Check a draft against its sources before you rely on it.",
+    ],
+    related: ["concept.citation", "concept.flashcard", "concept.quiz"],
+    audience: "everyone",
+  },
+  "concept.class": {
+    title: "Class",
+    summary:
+      "A group of students run by an educator. Students join with a class code or an invite link, and can add the class's course as a project.",
+    details: [
+      "Your educator sees your name and whether you've joined. They never see your chats, files or answers.",
+      "You can leave a class from the Classes page. Leaving doesn't delete your course project or your chats.",
+    ],
+    related: [
+      "concept.class-code",
+      "concept.course",
+      "concept.educator",
+      "concept.class-insights",
+    ],
+    audience: "everyone",
+  },
+  "concept.educator": {
+    title: "Educator",
+    summary:
+      "Someone who may create and run classes. Ask for educator access on the Classes page; an administrator approves it.",
+    details: [
+      "Asking sends your name and email to your administrator. Educators are not administrators and get no extra access to other people's chats or files.",
+      "If educator access is revoked, the educator can no longer manage their classes, and students stay in them.",
+    ],
+    related: ["concept.class", "concept.course", "concept.class-mode-policy"],
+    audience: "everyone",
+  },
+  "concept.course": {
+    title: "Course",
+    summary:
+      "A project an educator publishes to a class. Each student who adds it gets their own copy of its instructions, selected sub-agents and files.",
+    details: [
+      "Educators publish numbered versions with a short note. Students see what changed and choose when to update. Updating replaces the course's instructions, sub-agents and files with the new version, and keeps the student's chats.",
+      "The educator's own chats and goal date are never published, and the educator can't see students' course chats.",
+      "If a course needs a model you can't use, adding it is blocked until your educator or an administrator fixes it.",
+    ],
+    related: [
+      "concept.class",
+      "concept.project",
+      "concept.sub-agent",
+      "concept.class-mode-policy",
+    ],
+    audience: "everyone",
+  },
+  "concept.class-code": {
+    title: "Class code",
+    summary:
+      "A short code students with an account enter on the Classes page to join a class. The educator's join link fills it in.",
+    details: [
+      "Replace code stops the old code and links working. Students who already joined stay in the class.",
+      "Students without an account need an invite link instead.",
+    ],
+    related: ["concept.class", "concept.class-invite"],
+    audience: "everyone",
+  },
+  "concept.class-invite": {
+    title: "Invite links",
+    summary:
+      "Links an educator creates for new students. Each one creates one account and joins the class.",
+    details: [
+      "Each link works once and expires after 14 days. Copy the links when they're made: they aren't shown again.",
+      "Students who already have an account join with the class code instead.",
+    ],
+    related: ["concept.class-code", "concept.class"],
+    audience: "everyone",
+  },
+  "concept.class-mode-policy": {
+    title: "Learning mode policy",
+    summary:
+      "An educator's limits on which learning modes students may use in the course project, and whether they can reveal answers.",
+    details: [
+      "The policy can only limit. It never adds tools, files or modes, and students' other chats are unaffected.",
+      "Students see the limits and that their educator set them. A change applies from the next message.",
+    ],
+    related: [
+      "concept.learning-mode",
+      "concept.answer-reveal",
+      "concept.course",
+    ],
+    audience: "everyone",
+  },
+  "concept.class-insights": {
+    title: "Class insights",
+    summary:
+      "Totals that show an educator which course files the class finds hard. Sharing is off until each student turns it on.",
+    details: [
+      "Only flashcard and quiz results from students who chose to share count, grouped by the course file the practice came from. Nothing shows until at least five students share, and a file shows only once five of them have practiced it.",
+      "Educators never see chats, answers or any one student's results. Students can stop sharing at any time on the Classes page.",
+    ],
+    related: ["concept.class", "concept.quiz", "concept.flashcard"],
+    audience: "everyone",
+  },
+  "concept.team-pack": {
+    title: "Team pack",
+    summary:
+      "A file that shares a setup: sub-agents, skills, templates, rubrics and project settings. It never holds files, keys or provider details.",
+    details: [
+      "Export team pack is in a project's Settings tab. Models are saved as requirements, and instructions are included as written, so read them before you share.",
+      "Import team pack on the Projects page shows everything a pack asks for first. You choose what to include and a model for each sub-agent, approve each tool, and nothing is created until you confirm. Starter packs go through the same review.",
+      "A pack's instructions shape how your agents behave, but they can't grant tools: you approve those yourself.",
+    ],
+    related: [
+      "concept.sub-agent",
+      "concept.skill",
+      "concept.template",
+      "concept.rubric",
+    ],
+    audience: "everyone",
+  },
   "composer.controls": {
     title: "Chat controls",
     summary:
@@ -465,6 +644,17 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
       "When skills are on, users can still only use skills they've assigned to their main agent. Skills add instructions only and never grant tools or files.",
     ],
     related: ["concept.skill"],
+    audience: "admin",
+  },
+  "admin.settings-file": {
+    title: "Settings file",
+    summary:
+      "One file that moves every application setting between installations: providers, models, tools and policies. Users, chats and files are not included.",
+    details: [
+      "API keys in the file are encrypted with the passphrase you choose when exporting. Without it the file can't be opened, and nobody can recover it.",
+      "Importing shows what will change before anything is applied. Providers are added, or updated when the name matches; settings in the file replace current values; nothing is removed.",
+    ],
+    related: ["admin.providers", "admin.tools"],
     audience: "admin",
   },
 };

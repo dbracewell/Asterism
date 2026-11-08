@@ -15,6 +15,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { studyErrorDetail } from "../lib/error-detail";
 import { questionCountLabel } from "../lib/quiz";
+import { HelpHeading } from "@/features/help/components/help-heading";
 
 const SHOWN = 5;
 export const PRACTICE_QUESTIONS = 10;
@@ -65,7 +66,9 @@ export function ProjectWeakSpots({ projectId }: { projectId: string }) {
     <section aria-label="Weak spots" className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap items-baseline gap-x-3">
-          <h2 className="text-heading">Weak spots</h2>
+          <HelpHeading help="concept.weak-spot" className="text-heading">
+            Weak spots
+          </HelpHeading>
           <span className="text-muted-foreground text-sm">
             {total === 1 ? "1 item to practice" : `${total} items to practice`}
           </span>

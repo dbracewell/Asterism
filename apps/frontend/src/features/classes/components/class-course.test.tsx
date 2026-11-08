@@ -58,6 +58,9 @@ it("summarises the course and adds the reviewed version", async () => {
     within(section).getByText("Tutor — Chat A, can use web_search"),
   ).toBeInTheDocument();
   expect(within(section).getByText("notes.txt")).toBeInTheDocument();
+  expect(
+    within(section).getByRole("button", { name: "Help: Course" }),
+  ).toBeInTheDocument();
   expect(within(section).getByText(/Week two/)).toBeInTheDocument();
   await user.click(screen.getByRole("button", { name: "Add course" }));
   await waitFor(() =>

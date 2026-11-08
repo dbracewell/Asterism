@@ -21,6 +21,7 @@ import {
 } from "@/lib/client/@tanstack/react-query.gen";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useId, useState } from "react";
+import { HelpHeading } from "@/features/help/components/help-heading";
 
 export const MAX_INVITES = 50;
 export const MAX_LABEL_LENGTH = 80;
@@ -213,7 +214,9 @@ export function StudentInvites({ classId }: { classId: string }) {
 
   return (
     <section aria-label="Invites for new students" className="grid gap-3">
-      <h2 className="text-lg font-medium">Invites for new students</h2>
+      <HelpHeading help="concept.class-invite" className="text-lg font-medium">
+        Invites for new students
+      </HelpHeading>
       <p className="text-sm">
         Each invite link creates one account and joins this class. It works once
         and expires after 14 days.

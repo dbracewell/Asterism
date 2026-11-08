@@ -10,6 +10,7 @@ import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useState } from "react";
 import { noteDescription } from "./note-page";
+import { HelpHeading } from "@/features/help/components/help-heading";
 
 const PAGE_SIZE = 20;
 
@@ -40,7 +41,9 @@ export function ProjectStudyNotes({ projectId }: { projectId: string }) {
   return (
     <section className="flex flex-col gap-4" aria-label="Study notes">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-heading">Study notes</h2>
+        <HelpHeading help="concept.study-note" className="text-heading">
+          Study notes
+        </HelpHeading>
         {notes.data && notes.data.total > 0 && actions}
       </div>
       {notes.isPending && <ListSkeleton label="Loading notes" rows={2} />}

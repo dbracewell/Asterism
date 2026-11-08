@@ -73,7 +73,9 @@ test("an admin approves an educator, who runs a class a student joins", async ({
       educator.getByRole("heading", { name: "Biology 101" }),
     ).toBeVisible();
     const classUrl = educator.url();
-    const code = (await educator.getByLabel("Class code").textContent())!;
+    const code = (await educator
+      .getByLabel("Class code", { exact: true })
+      .textContent())!;
 
     // The student joins through a link, and sees who runs the class.
     await student.goto(`/classes?join=${code}`);
@@ -93,7 +95,7 @@ test("an admin approves an educator, who runs a class a student joins", async ({
     await expect(educator.getByText("Student Sam (removed)")).toBeVisible();
     await student.goto("/classes");
     await expect(student.getByText("No classes yet")).toBeVisible();
-    await student.getByLabel("Class code").fill(code);
+    await student.getByLabel("Class code", { exact: true }).fill(code);
     await student.getByRole("button", { name: "Join class" }).click();
     await expect(student.getByText(/class code isn't valid/)).toBeVisible();
 

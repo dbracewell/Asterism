@@ -17,6 +17,7 @@ import {
 } from "@/lib/client/@tanstack/react-query.gen";
 import { formatFileSize } from "@/lib/formatters";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { HelpTopic } from "@/features/help/components/help-topic";
 import Link from "next/link";
 
 const CHANGE_VERB: Record<CourseChange["kind"], string> = {
@@ -157,13 +158,16 @@ export function ClassCourse({
         </div>
       ) : (
         <>
-          <p className="text-sm font-medium">
-            {!current
-              ? `Course available (version ${offer.version_number})`
-              : !current.project_id
-                ? "You deleted the course project. You can add it again."
-                : `Version ${offer.version_number} is available. You have version ${current.version_number}.`}
-          </p>
+          <div className="flex items-center gap-1">
+            <p className="text-sm font-medium">
+              {!current
+                ? `Course available (version ${offer.version_number})`
+                : !current.project_id
+                  ? "You deleted the course project. You can add it again."
+                  : `Version ${offer.version_number} is available. You have version ${current.version_number}.`}
+            </p>
+            <HelpTopic id="concept.course" />
+          </div>
           {offer.changes.length > 0 && (
             <ul aria-label="What changed" className="grid gap-1 text-sm">
               {offer.changes.map((change) => (

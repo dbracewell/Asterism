@@ -22,6 +22,7 @@ import { SparklesIcon } from "lucide-react";
 import { useId, useState } from "react";
 import { toast } from "sonner";
 import { reflectionMutationInvalidates } from "../queries";
+import { HelpTopic } from "@/features/help/components/help-topic";
 
 export const LEARNED_PROMPT = "What did I learn?";
 export const UNCLEAR_PROMPT = "What's still unclear?";
@@ -108,7 +109,10 @@ function ReflectForm({
     >
       {replace.dialog}
       <DialogHeader>
-        <DialogTitle>Reflect on this session</DialogTitle>
+        <div className="flex items-center gap-1">
+          <DialogTitle>Reflect on this session</DialogTitle>
+          <HelpTopic id="concept.reflection" />
+        </div>
         <DialogDescription>
           A few sentences are enough. Your reflection is saved with this
           chat&apos;s project and persona, and only you can see it.

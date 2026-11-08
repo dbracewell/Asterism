@@ -67,6 +67,9 @@ it("starts with nothing chosen and cannot download an empty pack", async () => {
   setup();
   const agent = await screen.findByRole("checkbox", { name: "Critic" });
   expect(agent).not.toBeChecked();
+  expect(
+    screen.getByRole("button", { name: "Help: Team pack" }),
+  ).toBeInTheDocument();
   expect(screen.getByRole("button", { name: "Download pack" })).toBeDisabled();
 });
 

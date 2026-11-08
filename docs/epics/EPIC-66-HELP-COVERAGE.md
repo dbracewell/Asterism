@@ -1,6 +1,6 @@
 # EPIC-66: Help coverage
 
-Status: in progress (US-66.1 complete). Source: user request (2026-11-07).
+Status: in progress (US-66.1 and US-66.2 complete). Source: user request (2026-11-07).
 
 ## Objective
 
@@ -55,8 +55,8 @@ by default, class policy only narrows). Inline help triggers sit next to the
 main controls on each listed surface, and admin-only entries stay admin-only.
 Keyboard, touch and contrast checks pass as in EPIC-61.
 
-- [ ] Add glossary entries and inline triggers; review wording for accuracy.
-- [ ] Extend help tests and the help E2E for the new surfaces.
+- [x] Add glossary entries and inline triggers; review wording for accuracy.
+- [x] Extend help tests and the help E2E for the new surfaces.
 
 ## US-66.3: Help consistency pass
 

@@ -34,6 +34,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type ChangeEvent, type ReactNode, useId, useState } from "react";
+import { HelpTopic } from "@/features/help/components/help-topic";
 
 // Mirrors the pack format limit (ADR-0051).
 const MAX_PACK_BYTES = 1_048_576;
@@ -695,6 +696,7 @@ export function ImportPack() {
     <PageLayout>
       <PageHeader
         title="Import team pack"
+        help={<HelpTopic id="concept.team-pack" />}
         description="See exactly what a pack asks for before anything is added."
       />
       <StarterPacks onReview={review} disabled={reviewPack.isPending} />

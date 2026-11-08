@@ -9,6 +9,7 @@ import { appSettingsExportMutation } from "@/lib/client/@tanstack/react-query.ge
 import { useMutation } from "@tanstack/react-query";
 import { type FormEvent, useId, useState } from "react";
 import { ImportSettings } from "./import-settings";
+import { HelpHeading } from "@/features/help/components/help-heading";
 
 // Mirrors the server's passphrase limit (ADR-0052).
 const MIN_PASSPHRASE_LENGTH = 12;
@@ -123,11 +124,15 @@ const ExportForm = () => {
 export const ExportSettings = () => (
   <div className="grid gap-8">
     <section aria-label="Export settings" className="grid gap-3">
-      <h3 className="font-medium">Export settings</h3>
+      <HelpHeading as="h3" help="admin.settings-file" className="font-medium">
+        Export settings
+      </HelpHeading>
       <ExportForm />
     </section>
     <section aria-label="Import settings" className="grid gap-3">
-      <h3 className="font-medium">Import settings</h3>
+      <HelpHeading as="h3" help="admin.settings-file" className="font-medium">
+        Import settings
+      </HelpHeading>
       <p className="max-w-xl text-sm">
         Providers in the file are added, or updated when the name matches.
         Settings in the file replace current values. Nothing is removed.

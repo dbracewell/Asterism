@@ -101,6 +101,10 @@ it("sends the file for review and creates nothing before confirmation", async ()
   await open(review());
   await screen.findByText("Researcher");
   expect(mocks.review.mock.calls[0][0]).toEqual({ body: { source: SOURCE } });
+
+  expect(
+    screen.getByRole("button", { name: "Help: Team pack" }),
+  ).toBeInTheDocument();
   expect(mocks.importPack).not.toHaveBeenCalled();
 });
 

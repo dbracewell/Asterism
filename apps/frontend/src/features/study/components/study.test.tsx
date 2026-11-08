@@ -187,6 +187,9 @@ it("lists decks with card counts and links", async () => {
   );
   expect(screen.getByText("1 card")).toBeInTheDocument();
   expect(screen.getByText("3 cards")).toBeInTheDocument();
+  expect(
+    screen.getByRole("button", { name: "Help: Flashcards and decks" }),
+  ).toBeInTheDocument();
 });
 
 it("renders cards through MarkdownViewer with live citation state", async () => {

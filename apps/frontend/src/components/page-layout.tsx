@@ -30,11 +30,14 @@ export function PageLayout({
  */
 export function PageHeader({
   title,
+  help,
   description,
   actions,
   className,
 }: {
   title: ReactNode;
+  /** A "what is this?" button shown beside the title, outside the `h1`. */
+  help?: ReactNode;
   description?: ReactNode;
   actions?: ReactNode;
   className?: string;
@@ -48,7 +51,14 @@ export function PageHeader({
       )}
     >
       <div className="flex min-w-0 flex-1 basis-64 flex-col gap-1">
-        <h1 className="text-title text-balance">{title}</h1>
+        {help ? (
+          <div className="flex items-center gap-1">
+            <h1 className="text-title text-balance">{title}</h1>
+            {help}
+          </div>
+        ) : (
+          <h1 className="text-title text-balance">{title}</h1>
+        )}
         {description && (
           <p className="text-muted-foreground text-sm text-pretty">
             {description}

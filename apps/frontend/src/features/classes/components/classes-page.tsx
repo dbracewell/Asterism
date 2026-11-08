@@ -26,6 +26,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useId, useState } from "react";
+import { HelpHeading } from "@/features/help/components/help-heading";
 
 function JoinClass({ initialCode }: { initialCode: string }) {
   const id = useId();
@@ -301,15 +302,21 @@ export function ClassesPage({ initialCode }: { initialCode: string }) {
         description="Join a class, or run one for your students."
       />
       <section aria-label="Join a class" className="grid gap-3">
-        <h2 className="text-lg font-medium">Join a class</h2>
+        <HelpHeading help="concept.class-code" className="text-lg font-medium">
+          Join a class
+        </HelpHeading>
         <JoinClass initialCode={initialCode} />
       </section>
       <section aria-label="Your classes" className="grid gap-3">
-        <h2 className="text-lg font-medium">Your classes</h2>
+        <HelpHeading help="concept.class" className="text-lg font-medium">
+          Your classes
+        </HelpHeading>
         <JoinedClasses />
       </section>
       <section aria-label="Teaching" className="grid gap-3">
-        <h2 className="text-lg font-medium">Teaching</h2>
+        <HelpHeading help="concept.educator" className="text-lg font-medium">
+          Teaching
+        </HelpHeading>
         <Teaching />
       </section>
     </PageLayout>
