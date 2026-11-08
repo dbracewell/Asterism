@@ -3,7 +3,8 @@
 Status: accepted and implemented for US-70.1 on 2026-11-08
 ([EPIC-70](../epics/EPIC-70-USER-GROUPS-AND-ACCESS.md)). Replaces the educator
 grant in [ADR-0053](0053-classes-and-educators.md); the request flow, class
-scope and student privacy rules there are unchanged.
+scope and student privacy rules there are unchanged. Group model and tool access
+added for US-70.2 on 2026-11-08.
 
 ## Context
 
@@ -71,16 +72,41 @@ the same as approve and revoke). Names are unique, case-insensitively, and 1 to
 moving people silently to `student` could change what they can use without the
 administrator noticing. Membership is read live, never cached.
 
+### Model and tool access (US-70.2)
+
+Each group stores a model list and a tool list, each either null ("every enabled
+one", which follows models and tools the administrator enables later) or an
+explicit list (`groups.model_access`, `groups.tool_access`, JSON). Access is
+effective only where admin policy, the group list and the agent's own assignment
+all allow it: a group list never enables anything. Lists are replaced whole with
+`PUT /groups/{id}/access`; they may name only shared models and user-configurable
+tools. Entries for deleted models are ignored.
+
+- **Models.** `ModelAvailability` reads the group once per check, live. A shared
+  model outside the list is unavailable with the reason "Not available to your
+  group", so every path that already uses it refuses: chat sends and retries,
+  compare, drafts, delegation, sub-agent saves, course adds, pack imports, study
+  tools and verification. Model pickers leave such models out; existing chat
+  selections and sub-agent bindings keep their model and show the reason.
+  Nothing is retargeted. A user's own ChatGPT plan models are governed by the
+  ChatGPT plan policy and are not group-limited.
+- **Tools.** `user_active_tools` is the admin's active tools narrowed by the
+  group. It decides the tools offered to a turn, the capability picker
+  (`/tools/active`) and agent saves, and the tool registry rechecks the group at
+  every call. The internal tools `sub_agent` and `search_knowledge` are decided by
+  live context as before and can't be listed. MCP servers and image generation
+  are not implemented yet; when they are, they join the same list.
+
 ### Background models
 
-Group access (US-70.2) will only narrow what a user may choose. Models the
-administrator picks for background work (titles, captioning, verification) are
-not checked against any group.
+Models the administrator picks for background work (the draft model that writes
+chat titles, and image captioning) are not checked against any group. Answer
+verification and study tools run on a model the user chooses, so they are.
 
 ## Consequences
 
 - Every user row needs a group; there is no migration (reset data if needed).
 - The admin user list shows each user's group. The educator status shown there
   and on the Classes page is derived from the group and a pending request.
-- US-70.2 attaches model and tool access to groups; US-70.3 adds the Admin
-  Settings page.
+- Model and tool access is per group and only narrows admin policy. Until
+  US-70.3 adds the Admin Settings page, the lists are set through the API.

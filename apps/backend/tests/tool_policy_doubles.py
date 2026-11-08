@@ -72,3 +72,8 @@ def isolated_tool_policy(monkeypatch):
 
     monkeypatch.setattr("asterism.domains.agent.agent.Agent.resolve_tools", resolve)
     monkeypatch.setattr("asterism.domains.chat.tool_policy.require_internal_tool", require)
+
+    async def group_allows_tool(user_id, name):
+        return True
+
+    monkeypatch.setattr("asterism.domains.tools.registry._group_allows_tool", group_allows_tool)

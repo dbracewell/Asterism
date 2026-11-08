@@ -4,10 +4,12 @@ from fastapi import APIRouter, status
 
 from asterism.core.schemas import ErrorDetail
 from asterism.db.dependencies import DBSessionDep
+from asterism.domains.tools.catalog import ToolPolicy, tool_policy
+from asterism.domains.tools.registry import tool_registry
 from asterism.domains.user.dependencies import AdminUserDep
 
 from . import service
-from .schemas import Group, GroupCreate, GroupMembershipUpdate, GroupRef, GroupUpdate
+from .schemas import Group, GroupAccessUpdate, GroupCreate, GroupMembershipUpdate, GroupRef, GroupUpdate
 
 ERRORS = {
     400: {"model": ErrorDetail},
@@ -34,6 +36,20 @@ async def create_group(payload: GroupCreate, user: AdminUserDep, db: DBSessionDe
 async def rename_group(group_id: str, payload: GroupUpdate, user: AdminUserDep, db: DBSessionDep) -> Group:
     """Rename a custom group; built-in groups keep their names."""
     return await service.rename_group(group_id=group_id, name=payload.name, admin_id=user.id, session=db)
+
+
+@groups_router.put("/{group_id}/access", response_model=Group, operation_id="groupAccessUpdate")
+async def update_access(group_id: str, payload: GroupAccessUpdate, user: AdminUserDep, db: DBSessionDep) -> Group:
+    """Set which shared models and tools members may use. It only narrows what the administrator enabled."""
+    configurable = {name for name in tool_registry.registry if tool_policy(name) == ToolPolicy.USER_CONFIGURABLE}
+    return await service.set_access(
+        group_id=group_id,
+        models=payload.models,
+        tools=payload.tools,
+        configurable_tools=configurable,
+        admin_id=user.id,
+        session=db,
+    )
 
 
 @groups_router.delete("/{group_id}", status_code=status.HTTP_204_NO_CONTENT, operation_id="groupDelete")

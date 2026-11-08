@@ -6,7 +6,7 @@ so code refers to them directly. They can't be renamed or deleted.
 
 import uuid
 
-from sqlalchemy import DDL, CheckConstraint, Index, String, event, func
+from sqlalchemy import DDL, JSON, CheckConstraint, Index, String, event, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from asterism.db.base_model import Base
@@ -31,6 +31,10 @@ class GroupModel(Base, TimestampMixin):
     id: Mapped[str] = mapped_column(String(32), primary_key=True, default=new_group_id)
     name: Mapped[str] = mapped_column(String(MAX_GROUP_NAME_LENGTH), nullable=False)
     built_in: Mapped[bool] = mapped_column(nullable=False, default=False, server_default="0")
+    # US-70.2: None allows every model or tool the administrator enabled, now and
+    # later; a list allows only those ids or tool names. Stale entries are ignored.
+    model_access: Mapped[list[str] | None] = mapped_column(JSON, nullable=True)
+    tool_access: Mapped[list[str] | None] = mapped_column(JSON, nullable=True)
 
     __table_args__ = (
         CheckConstraint(f"length(trim(name)) BETWEEN 1 AND {MAX_GROUP_NAME_LENGTH}", name="ck_groups_name"),

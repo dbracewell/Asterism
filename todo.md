@@ -62,9 +62,9 @@ Source: user request (2026-11-08). Suggested order: EPIC-74 → 67 → 70 → 68
   - [x] Write the ADR (replaces the educator grant in ADR-0053; admin-role mirroring).
   - [x] Implement groups, seeding, membership and the educator flow change; update AGENTS.md §2.1.
   - [x] Tests: defaults, educator approve/revoke, admin mirroring, owner isolation, built-ins protected.
-- [ ] US-70.2: Group model and tool access, enforced
-  - [ ] Extend `ModelAvailability` and tool policy with group access; add the unavailable reason.
-  - [ ] Tests across every entry point (chat, compare, delegation, sub-agent save, course add, study tools, title model exemption).
+- [x] US-70.2: Group model and tool access, enforced (confirmed and merged)
+  - [x] Extend `ModelAvailability` and tool policy with group access; add the unavailable reason.
+  - [x] Tests across every entry point (chat, compare, delegation, sub-agent save, course add, study tools, title model exemption).
 - [ ] US-70.3: Admin Settings → Groups
   - [ ] Build the page and user-list group control; regenerate the client.
   - [ ] Extend settings export/import; help, glossary, unit tests and an E2E restricting a student's models.

@@ -348,6 +348,9 @@ import type {
   FileUploadData,
   FileUploadError,
   FileUploadResponse,
+  GroupAccessUpdateData,
+  GroupAccessUpdateError,
+  GroupAccessUpdateResponse,
   GroupCreateData,
   GroupCreateError,
   GroupCreateResponse,
@@ -8044,6 +8047,35 @@ export const groupRenameMutation = (
 };
 
 /**
+ * Update Access
+ *
+ * Set which shared models and tools members may use. It only narrows what the administrator enabled.
+ */
+export const groupAccessUpdateMutation = (
+  options?: Partial<Options<GroupAccessUpdateData>>,
+): UseMutationOptions<
+  GroupAccessUpdateResponse,
+  GroupAccessUpdateError,
+  Options<GroupAccessUpdateData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    GroupAccessUpdateResponse,
+    GroupAccessUpdateError,
+    Options<GroupAccessUpdateData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().groupAccessUpdate({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
  * Move Member
  *
  * Move a user into another group. The admin group follows the sign-in role and can't be set here.
@@ -8239,7 +8271,7 @@ export const toolsGetActiveQueryKey = (options?: Options<ToolsGetActiveData>) =>
 /**
  * Get all active tools
  *
- * Return the user-configurable tools currently enabled by admin policy.
+ * Return the user-configurable tools enabled by admin policy that the caller's group allows.
  */
 export const toolsGetActiveOptions = (options?: Options<ToolsGetActiveData>) =>
   queryOptions<

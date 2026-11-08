@@ -2850,6 +2850,34 @@ export type Group = {
    * Member Count
    */
   member_count: number;
+  /**
+   * Models
+   *
+   * Shared models members may use; null allows every enabled model, including future ones
+   */
+  models: Array<string> | null;
+  /**
+   * Tools
+   *
+   * Tools members may use; null allows every enabled tool, including future ones
+   */
+  tools: Array<string> | null;
+};
+
+/**
+ * GroupAccessUpdate
+ *
+ * Replace a group's model and tool access. Null means every enabled one.
+ */
+export type GroupAccessUpdate = {
+  /**
+   * Models
+   */
+  models: Array<string> | null;
+  /**
+   * Tools
+   */
+  tools: Array<string> | null;
 };
 
 /**
@@ -18218,6 +18246,54 @@ export type GroupRenameResponses = {
 
 export type GroupRenameResponse =
   GroupRenameResponses[keyof GroupRenameResponses];
+
+export type GroupAccessUpdateData = {
+  body: GroupAccessUpdate;
+  path: {
+    /**
+     * Group Id
+     */
+    group_id: string;
+  };
+  query?: never;
+  url: "/groups/{group_id}/access";
+};
+
+export type GroupAccessUpdateErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type GroupAccessUpdateError =
+  GroupAccessUpdateErrors[keyof GroupAccessUpdateErrors];
+
+export type GroupAccessUpdateResponses = {
+  /**
+   * Successful Response
+   */
+  200: Group;
+};
+
+export type GroupAccessUpdateResponse =
+  GroupAccessUpdateResponses[keyof GroupAccessUpdateResponses];
 
 export type GroupMemberMoveData = {
   body: GroupMembershipUpdate;

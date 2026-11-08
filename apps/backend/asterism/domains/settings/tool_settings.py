@@ -31,3 +31,17 @@ async def get_tool_settings(
             for row in (await session.scalars(stmt)).all()
         }
         return ToolSettings.model_validate(settings)
+
+
+async def user_active_tools(user_id: str, session: AsyncSession) -> set[str]:
+    """Admin-enabled tools the user's group allows, read live (ADR-0058).
+
+    Internal context-managed tools are not limited by group; their own live
+    checks decide them.
+    """
+    from asterism.domains.groups.service import read_access
+    from asterism.domains.tools.catalog import INTERNAL_TOOL_NAMES
+
+    access = await read_access(user_id, session)
+    active = (await get_tool_settings(session)).active_tools
+    return {name for name in active if name in INTERNAL_TOOL_NAMES or access.allows_tool(name)}

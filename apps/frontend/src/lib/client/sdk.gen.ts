@@ -348,6 +348,9 @@ import type {
   FileUploadData,
   FileUploadErrors,
   FileUploadResponses,
+  GroupAccessUpdateData,
+  GroupAccessUpdateErrors,
+  GroupAccessUpdateResponses,
   GroupCreateData,
   GroupCreateErrors,
   GroupCreateResponses,
@@ -5656,6 +5659,33 @@ export class ApiClient extends HeyApiClient {
   }
 
   /**
+   * Update Access
+   *
+   * Set which shared models and tools members may use. It only narrows what the administrator enabled.
+   */
+  public groupAccessUpdate<ThrowOnError extends boolean = false>(
+    options: Options<GroupAccessUpdateData, ThrowOnError>,
+  ): RequestResult<
+    GroupAccessUpdateResponses,
+    GroupAccessUpdateErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).put<
+      GroupAccessUpdateResponses,
+      GroupAccessUpdateErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/groups/{group_id}/access",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+  }
+
+  /**
    * Move Member
    *
    * Move a user into another group. The admin group follows the sign-in role and can't be set here.
@@ -5823,7 +5853,7 @@ export class ApiClient extends HeyApiClient {
   /**
    * Get all active tools
    *
-   * Return the user-configurable tools currently enabled by admin policy.
+   * Return the user-configurable tools enabled by admin policy that the caller's group allows.
    */
   public toolsGetActive<ThrowOnError extends boolean = false>(
     options?: Options<ToolsGetActiveData, ThrowOnError>,

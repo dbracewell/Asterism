@@ -40,10 +40,10 @@ def model_choice(model: LLMModel, availability: ModelAvailability) -> ChatModelC
 
 
 async def list_chat_models(user_id: str, session: AsyncSession) -> list[ChatModelChoice]:
-    """Global provider models plus the caller's own ChatGPT plan models."""
+    """Global provider models the caller's group allows, plus their own ChatGPT plan models."""
     availability = await ModelAvailability.load(user_id, session)
     rows = await session.scalars(select_visible_models(user_id).order_by(LLMModel.name, LLMModel.id))
-    return [model_choice(row, availability) for row in rows]
+    return [model_choice(row, availability) for row in rows if availability.offered(row)]
 
 
 async def require_chat_model(model_id: uuid.UUID, user_id: str, session: AsyncSession) -> ChatModelChoice:
