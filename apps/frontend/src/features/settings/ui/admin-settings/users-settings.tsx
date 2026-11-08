@@ -7,9 +7,21 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { client } from "@/lib/api";
-import type { UserSummary } from "@/lib/client";
-import { userGetManyOptions } from "@/lib/client/@tanstack/react-query.gen";
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { errorDetail } from "@/features/classes/error-detail";
+import type { Group, UserSummary } from "@/lib/client";
+import {
+  groupGetManyOptions,
+  groupMemberMoveMutation,
+  userGetManyOptions,
+} from "@/lib/client/@tanstack/react-query.gen";
+import { keepPreviousData, useMutation, useQuery } from "@tanstack/react-query";
 import { useDeferredValue, useState } from "react";
 
 const PAGE_SIZE = 50;
@@ -20,7 +32,51 @@ function firstSeen(seconds: number) {
   });
 }
 
-function Row({ user }: { user: UserSummary }) {
+function GroupControl({
+  user,
+  groups,
+}: {
+  user: UserSummary;
+  groups: Group[] | undefined;
+}) {
+  const move = useMutation(groupMemberMoveMutation({ client }));
+  const label = `Group for ${user.name ?? user.email ?? user.id}`;
+  // The admin group follows the sign-in role (ADR-0058), so it isn't chosen here.
+  if (user.group.id === "admin" || !groups) {
+    return <Badge variant="outline">{user.group.name}</Badge>;
+  }
+  return (
+    <span className="grid gap-1">
+      <Select
+        value={user.group.id}
+        disabled={move.isPending}
+        onValueChange={(group_id) =>
+          move.mutate({ path: { user_id: user.id }, body: { group_id } })
+        }
+      >
+        <SelectTrigger aria-label={label} size="sm" className="w-40">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {groups
+            .filter((group) => group.id !== "admin")
+            .map((group) => (
+              <SelectItem key={group.id} value={group.id}>
+                {group.name}
+              </SelectItem>
+            ))}
+        </SelectContent>
+      </Select>
+      {move.error && (
+        <span role="alert" className="text-destructive text-xs">
+          {errorDetail(move.error, "Could not move this user.")}
+        </span>
+      )}
+    </span>
+  );
+}
+
+function Row({ user, groups }: { user: UserSummary; groups?: Group[] }) {
   return (
     <li className="flex flex-wrap items-center justify-between gap-3 border-b py-2 text-sm">
       <span className="grid min-w-0 gap-0.5">
@@ -30,12 +86,9 @@ function Row({ user }: { user: UserSummary }) {
         </span>
       </span>
       <span className="flex flex-wrap items-center gap-2">
-        {user.educator && (
-          <Badge
-            variant={user.educator === "approved" ? "default" : "secondary"}
-          >
-            {user.educator === "approved" ? "Educator" : "Educator request"}
-          </Badge>
+        <GroupControl user={user} groups={groups} />
+        {user.educator === "pending" && (
+          <Badge variant="secondary">Educator request</Badge>
         )}
         <span className="text-muted-foreground">
           First seen {firstSeen(user.created_at)}
@@ -45,8 +98,9 @@ function Row({ user }: { user: UserSummary }) {
   );
 }
 
-/** Who has an account (US-64.3). Read-only; nothing here changes an account. */
+/** Who has an account (US-64.3) and which group they are in (US-70.3). */
 export function UsersSettings() {
+  const groups = useQuery({ ...groupGetManyOptions({ client }), retry: false });
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const query = useDeferredValue(search.trim());
@@ -61,9 +115,9 @@ export function UsersSettings() {
   return (
     <div className="grid max-w-2xl gap-3">
       <p className="text-sm">
-        Everyone with an account. Names and emails come from sign-in and update
-        the next time each person uses Asterism. Admin roles are managed in
-        sign-in and aren&apos;t shown here.
+        Everyone with an account and their group. Names and emails come from
+        sign-in and update the next time each person uses Asterism. The admin
+        role is managed in sign-in, and administrators are always in Admin.
       </p>
       <Input
         type="search"
@@ -103,7 +157,7 @@ export function UsersSettings() {
         <>
           <ul>
             {users.data.items.map((user) => (
-              <Row key={user.id} user={user} />
+              <Row key={user.id} user={user} groups={groups.data} />
             ))}
           </ul>
           <div className="flex flex-wrap items-center justify-between gap-3">

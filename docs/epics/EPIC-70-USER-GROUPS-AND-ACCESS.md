@@ -1,6 +1,6 @@
 # EPIC-70: User groups and model/tool access
 
-Status: in progress (US-70.1 and US-70.2 complete). Source: user request (2026-11-08).
+Status: in progress (US-70.1 and US-70.2 complete, US-70.3 implemented, awaiting confirmation). Source: user request (2026-11-08).
 
 ## Objective
 
@@ -79,5 +79,5 @@ Settings export/import ([EPIC-63](EPIC-63-ADMIN-SETTINGS-EXPORT-AND-IMPORT.md))
 includes custom groups and access lists (not membership). Users see their group
 on their profile. Help covers groups.
 
-- [ ] Build the page and user-list group control; regenerate the client.
-- [ ] Extend settings export/import; help, glossary, unit tests and an E2E restricting a student's models.
+- [x] Build the page and user-list group control; regenerate the client.
+- [x] Extend settings export/import; help, glossary, unit tests and an E2E restricting a student's models.

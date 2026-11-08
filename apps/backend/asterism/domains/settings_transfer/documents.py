@@ -78,6 +78,19 @@ class ExportedCaptioning(_Document):
     model: ModelReference | None = None
 
 
+class ExportedGroup(_Document):
+    """A group's access lists (ADR-0058). Membership is never exported.
+
+    Built-in groups are matched by ``built_in`` key and custom ones by name.
+    None allows every enabled model or tool.
+    """
+
+    name: str = Field(min_length=1, max_length=80)
+    built_in: Literal["admin", "educator", "student"] | None = None
+    models: tuple[ModelReference, ...] | None = None
+    tools: tuple[str, ...] | None = None
+
+
 class SettingsBundle(_Document):
     """Every application setting. A test keeps this in step with the settings."""
 
@@ -90,6 +103,7 @@ class SettingsBundle(_Document):
     web_search_provider: ExportedComponent | None = None
     image_search_provider: ExportedComponent | None = None
     captioning: ExportedCaptioning = Field(default_factory=ExportedCaptioning)
+    groups: tuple[ExportedGroup, ...] = Field(default=(), max_length=200)
 
 
 class SettingsEnvelope(_Document):

@@ -7,10 +7,12 @@ logged, and its result exists only inside the sealed envelope.
 import asyncio
 import uuid
 
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from asterism.common.log import get_logger
 from asterism.db.mixins import get_unix_timestamp
+from asterism.domains.groups.models import GroupModel
 from asterism.domains.knowledge.policy import load_processing_configuration
 from asterism.domains.settings.models import ProviderModel
 from asterism.domains.settings.schemas import ComponentProviderParameters
@@ -19,6 +21,7 @@ from asterism.domains.settings.service import get_all_providers, get_app_setting
 from .documents import (
     ExportedCaptioning,
     ExportedComponent,
+    ExportedGroup,
     ExportedModel,
     ExportedProvider,
     ModelReference,
@@ -67,6 +70,28 @@ def _reference(model_id: uuid.UUID | None, providers: list[ProviderModel]) -> Mo
     return None
 
 
+async def _groups(providers: list[ProviderModel], session: AsyncSession) -> tuple[ExportedGroup, ...]:
+    """Every group's access lists; a deleted model drops out of its list."""
+    rows = await session.scalars(
+        select(GroupModel).order_by(GroupModel.built_in.desc(), func.lower(GroupModel.name), GroupModel.id)
+    )
+    groups = []
+    for row in rows:
+        models = None
+        if row.model_access is not None:
+            references = (_reference(uuid.UUID(value), providers) for value in row.model_access)
+            models = tuple(reference for reference in references if reference is not None)
+        groups.append(
+            ExportedGroup(
+                name=row.name,
+                built_in=row.id if row.built_in else None,  # type: ignore[arg-type]
+                models=models,
+                tools=None if row.tool_access is None else tuple(row.tool_access),
+            )
+        )
+    return tuple(groups)
+
+
 async def collect_settings(session: AsyncSession) -> SettingsBundle:
     settings = await get_app_settings(session)
     providers = await get_all_providers(session)
@@ -84,6 +109,7 @@ async def collect_settings(session: AsyncSession) -> SettingsBundle:
             mode=processing.captioning.mode,
             model=_reference(processing.captioning.provider_model_id, providers),
         ),
+        groups=await _groups(providers, session),
     )
 
 

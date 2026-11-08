@@ -140,6 +140,9 @@ async def get_user_settings(
         combined["sub_agents"] = {agent.id: agent for agent in await agent_service.get_sub_agents(user_id, session)}
         user_settings = UserSettings.model_validate(combined)
         user_settings.models = await get_user_models(user_id, session=session)
+        from asterism.domains.groups.service import read_group_refs
+
+        user_settings.group = (await read_group_refs([user_id], session)).get(user_id)
 
     # settings_cache.set_user_settings(user_id, user_settings)
     return user_settings

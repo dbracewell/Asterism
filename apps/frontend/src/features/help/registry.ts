@@ -44,6 +44,7 @@ export type HelpId =
   | "concept.study-note"
   | "concept.class"
   | "concept.educator"
+  | "concept.group"
   | "concept.course"
   | "concept.class-code"
   | "concept.class-invite"
@@ -504,6 +505,17 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
       "If educator access is revoked, the educator can no longer manage their classes, and students stay in them.",
     ],
     related: ["concept.class", "concept.course", "concept.class-mode-policy"],
+    audience: "everyone",
+  },
+  "concept.group": {
+    title: "Group",
+    summary:
+      "Everyone is in exactly one group, which decides the models and tools they may use. You can see yours in Settings → General.",
+    details: [
+      "New users join Student. Administrators are in Admin, and people approved as educators are in Educator. Administrators can create other groups and move people between them.",
+      'A group can be limited to some models and tools. A model your group can\'t use shows as "Not available to your group"; chats and sub-agents that use it keep it, and nothing is switched for you.',
+    ],
+    related: ["concept.educator", "concept.model"],
     audience: "everyone",
   },
   "concept.course": {

@@ -348,6 +348,9 @@ import type {
   FileUploadData,
   FileUploadErrors,
   FileUploadResponses,
+  GroupAccessOptionsData,
+  GroupAccessOptionsErrors,
+  GroupAccessOptionsResponses,
   GroupAccessUpdateData,
   GroupAccessUpdateErrors,
   GroupAccessUpdateResponses,
@@ -5613,6 +5616,29 @@ export class ApiClient extends HeyApiClient {
         "Content-Type": "application/json",
         ...options.headers,
       },
+    });
+  }
+
+  /**
+   * Access Options
+   *
+   * Every shared model and configurable tool a group's lists can name.
+   */
+  public groupAccessOptions<ThrowOnError extends boolean = false>(
+    options?: Options<GroupAccessOptionsData, ThrowOnError>,
+  ): RequestResult<
+    GroupAccessOptionsResponses,
+    GroupAccessOptionsErrors,
+    ThrowOnError
+  > {
+    return (options?.client ?? this.client).get<
+      GroupAccessOptionsResponses,
+      GroupAccessOptionsErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/groups/access-options",
+      ...options,
     });
   }
 

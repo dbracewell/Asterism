@@ -145,3 +145,15 @@ async def test_background_models_chosen_by_the_administrator_ignore_groups(api):
     await restrict(client, models=[MODEL])
     async with sessions() as session:
         assert (await get_draft_model(session)).id == OTHER_MODEL
+
+
+async def test_admins_get_the_models_and_tools_a_group_list_can_name(api):
+    client, sessions = api
+    await enable_tools(sessions)
+    response = await client.get("/groups/access-options", headers=auth("admin"))
+    assert response.status_code == 200, response.text
+    options = response.json()
+    assert [model["id"] for model in options["models"]] == [str(MODEL), str(OTHER_MODEL)]
+    tools = {tool["name"]: tool["enabled"] for tool in options["tools"]}
+    assert tools["web_fetch"] is True and "sub_agent" not in tools and "search_knowledge" not in tools
+    assert (await client.get("/groups/access-options", headers=auth("s1"))).status_code == 401

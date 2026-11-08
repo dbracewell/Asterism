@@ -4,7 +4,8 @@ Status: accepted and implemented for US-70.1 on 2026-11-08
 ([EPIC-70](../epics/EPIC-70-USER-GROUPS-AND-ACCESS.md)). Replaces the educator
 grant in [ADR-0053](0053-classes-and-educators.md); the request flow, class
 scope and student privacy rules there are unchanged. Group model and tool access
-added for US-70.2 on 2026-11-08.
+added for US-70.2, and the admin page, export and import for US-70.3, on
+2026-11-08.
 
 ## Context
 
@@ -97,6 +98,25 @@ tools. Entries for deleted models are ignored.
   live context as before and can't be listed. MCP servers and image generation
   are not implemented yet; when they are, they join the same list.
 
+### Managing groups (US-70.3)
+
+Admin Settings → Groups lists groups with member counts and edits each group's
+access as "every enabled" or a checklist, from `GET /groups/access-options`
+(shared models and user-configurable tools, each marked if the administrator
+turned it off). Admin Settings → Users moves non-admin users between non-admin
+groups; admin-role users show Admin and have no control. Users see their own
+group in Settings → General (`UserSettings.group`); only administrators change
+it.
+
+Settings export carries every group's name and access lists, with models by
+provider and model name like other model references, but never membership.
+Import matches built-in groups by key (keeping their names) and custom groups by
+name, case-insensitively; it adds missing custom groups, replaces the access
+lists of the groups it names, and never deletes a group or moves anyone. A file
+whose custom group takes a built-in group's name, repeats a name, lists an
+internal tool or names a model it doesn't contain is refused, and nothing
+changes.
+
 ### Background models
 
 Models the administrator picks for background work (the draft model that writes
@@ -108,5 +128,6 @@ verification and study tools run on a model the user chooses, so they are.
 - Every user row needs a group; there is no migration (reset data if needed).
 - The admin user list shows each user's group. The educator status shown there
   and on the Classes page is derived from the group and a pending request.
-- Model and tool access is per group and only narrows admin policy. Until
-  US-70.3 adds the Admin Settings page, the lists are set through the API.
+- Model and tool access is per group and only narrows admin policy, and is
+  managed in Admin Settings → Groups. Settings files carry it; membership stays
+  with each installation.

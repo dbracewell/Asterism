@@ -1,6 +1,7 @@
 """Admin endpoints for groups and membership (ADR-0058)."""
 
 from fastapi import APIRouter, status
+from sqlalchemy import func, select
 
 from asterism.core.schemas import ErrorDetail
 from asterism.db.dependencies import DBSessionDep
@@ -9,7 +10,17 @@ from asterism.domains.tools.registry import tool_registry
 from asterism.domains.user.dependencies import AdminUserDep
 
 from . import service
-from .schemas import Group, GroupAccessUpdate, GroupCreate, GroupMembershipUpdate, GroupRef, GroupUpdate
+from .schemas import (
+    Group,
+    GroupAccessOptions,
+    GroupAccessUpdate,
+    GroupCreate,
+    GroupMembershipUpdate,
+    GroupModelOption,
+    GroupRef,
+    GroupToolOption,
+    GroupUpdate,
+)
 
 ERRORS = {
     400: {"model": ErrorDetail},
@@ -25,6 +36,34 @@ groups_router = APIRouter(prefix="/groups", tags=["settings"], responses=ERRORS)
 async def list_groups(user: AdminUserDep, db: DBSessionDep) -> list[Group]:
     """Every group with its member count; built-in groups first."""
     return await service.list_groups(db)
+
+
+@groups_router.get("/access-options", response_model=GroupAccessOptions, operation_id="groupAccessOptions")
+async def access_options(user: AdminUserDep, db: DBSessionDep) -> GroupAccessOptions:
+    """Every shared model and configurable tool a group's lists can name."""
+    from asterism.domains.settings.models import LLMModel, ProviderModel
+    from asterism.domains.settings.tool_settings import get_tool_settings
+
+    rows = await db.execute(
+        select(LLMModel, ProviderModel.name)
+        .join(ProviderModel, ProviderModel.id == LLMModel.provider_id)
+        .where(ProviderModel.owner_user_id.is_(None))
+        .order_by(func.lower(ProviderModel.name), func.lower(func.coalesce(LLMModel.display_name, LLMModel.name)))
+    )
+    active = set((await get_tool_settings(db)).active_tools)
+    return GroupAccessOptions(
+        models=[
+            GroupModelOption(
+                id=model.id, name=model.display_name or model.name, provider_name=provider, enabled=model.is_active
+            )
+            for model, provider in rows
+        ],
+        tools=[
+            GroupToolOption(name=tool.name, description=tool.description, enabled=tool.name in active)
+            for tool in tool_registry.tools().items
+            if tool_policy(tool.name) == ToolPolicy.USER_CONFIGURABLE
+        ],
+    )
 
 
 @groups_router.post("", response_model=Group, status_code=status.HTTP_201_CREATED, operation_id="groupCreate")
