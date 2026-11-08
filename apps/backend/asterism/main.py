@@ -23,6 +23,7 @@ from asterism.domains.classes.router import class_invites_router, classes_router
 from asterism.domains.components.router import components_router
 from asterism.domains.courses.router import course_policy_router, courses_router
 from asterism.domains.files.router import file_router
+from asterism.domains.groups.router import groups_router
 from asterism.domains.knowledge.router import knowledge_router
 from asterism.domains.learning.router import learning_router
 from asterism.domains.packs.router import packs_router, team_packs_router
@@ -163,6 +164,7 @@ app.include_router(reflections_router)
 app.include_router(chatgpt_router)
 app.include_router(settings_router)
 app.include_router(user_router)
+app.include_router(groups_router)
 app.include_router(persona_router)
 app.include_router(tools_router)
 app.include_router(components_router)

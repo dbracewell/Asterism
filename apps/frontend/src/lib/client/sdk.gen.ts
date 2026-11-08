@@ -348,6 +348,21 @@ import type {
   FileUploadData,
   FileUploadErrors,
   FileUploadResponses,
+  GroupCreateData,
+  GroupCreateErrors,
+  GroupCreateResponses,
+  GroupDeleteData,
+  GroupDeleteErrors,
+  GroupDeleteResponses,
+  GroupGetManyData,
+  GroupGetManyErrors,
+  GroupGetManyResponses,
+  GroupMemberMoveData,
+  GroupMemberMoveErrors,
+  GroupMemberMoveResponses,
+  GroupRenameData,
+  GroupRenameErrors,
+  GroupRenameResponses,
   LearningModeGetManyData,
   LearningModeGetManyErrors,
   LearningModeGetManyResponses,
@@ -5555,6 +5570,115 @@ export class ApiClient extends HeyApiClient {
       security: [{ scheme: "bearer", type: "http" }],
       url: "/users/{user_id}",
       ...options,
+    });
+  }
+
+  /**
+   * List Groups
+   *
+   * Every group with its member count; built-in groups first.
+   */
+  public groupGetMany<ThrowOnError extends boolean = false>(
+    options?: Options<GroupGetManyData, ThrowOnError>,
+  ): RequestResult<GroupGetManyResponses, GroupGetManyErrors, ThrowOnError> {
+    return (options?.client ?? this.client).get<
+      GroupGetManyResponses,
+      GroupGetManyErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/groups",
+      ...options,
+    });
+  }
+
+  /**
+   * Create Group
+   */
+  public groupCreate<ThrowOnError extends boolean = false>(
+    options: Options<GroupCreateData, ThrowOnError>,
+  ): RequestResult<GroupCreateResponses, GroupCreateErrors, ThrowOnError> {
+    return (options.client ?? this.client).post<
+      GroupCreateResponses,
+      GroupCreateErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/groups",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+  }
+
+  /**
+   * Delete Group
+   *
+   * Delete an empty custom group.
+   */
+  public groupDelete<ThrowOnError extends boolean = false>(
+    options: Options<GroupDeleteData, ThrowOnError>,
+  ): RequestResult<GroupDeleteResponses, GroupDeleteErrors, ThrowOnError> {
+    return (options.client ?? this.client).delete<
+      GroupDeleteResponses,
+      GroupDeleteErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/groups/{group_id}",
+      ...options,
+    });
+  }
+
+  /**
+   * Rename Group
+   *
+   * Rename a custom group; built-in groups keep their names.
+   */
+  public groupRename<ThrowOnError extends boolean = false>(
+    options: Options<GroupRenameData, ThrowOnError>,
+  ): RequestResult<GroupRenameResponses, GroupRenameErrors, ThrowOnError> {
+    return (options.client ?? this.client).patch<
+      GroupRenameResponses,
+      GroupRenameErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/groups/{group_id}",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+  }
+
+  /**
+   * Move Member
+   *
+   * Move a user into another group. The admin group follows the sign-in role and can't be set here.
+   */
+  public groupMemberMove<ThrowOnError extends boolean = false>(
+    options: Options<GroupMemberMoveData, ThrowOnError>,
+  ): RequestResult<
+    GroupMemberMoveResponses,
+    GroupMemberMoveErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).put<
+      GroupMemberMoveResponses,
+      GroupMemberMoveErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/groups/members/{user_id}",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
     });
   }
 

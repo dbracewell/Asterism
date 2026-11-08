@@ -1,16 +1,14 @@
-"""Educator access, classes and membership (ADR-0053).
+"""Educator requests, classes and membership (ADR-0053, ADR-0058).
 
-Being an educator is a grant recorded here, not a platform role, and it reaches
-only the classes that educator created. Nothing here links to a student's chats.
+Being an educator is membership of the educator group, not a platform role, and
+it reaches only the classes that educator created. Nothing here links to a student's chats.
 """
 
 import uuid
-from enum import StrEnum
 
-from sqlalchemy import JSON, CheckConstraint, Enum, ForeignKey, Index, String, Text, UniqueConstraint
+from sqlalchemy import JSON, CheckConstraint, ForeignKey, Index, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
-from asterism.common.enums import enum_values
 from asterism.db.base_model import Base
 from asterism.db.mixins import TimestampMixin, UuidPrimaryKeyMixin
 
@@ -19,28 +17,16 @@ MAX_CLASS_DESCRIPTION_LENGTH = 2_000
 MAX_INVITE_LABEL_LENGTH = 80
 
 
-class EducatorStatus(StrEnum):
-    PENDING = "pending"
-    APPROVED = "approved"
+class EducatorRequestModel(Base, TimestampMixin):
+    """A pending request for educator access (ADR-0058).
 
-
-class EducatorModel(Base, TimestampMixin):
-    """A request for, or grant of, educator access.
-
-    The requester's name and email are read live from ``users`` (ADR-0057).
-    Denying or revoking deletes the row.
+    Access itself is membership of the educator group. Approving or denying
+    deletes the row. The requester's name and email are read live from ``users``.
     """
 
-    __tablename__ = "educators"
+    __tablename__ = "educator_requests"
 
     user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
-    status: Mapped[EducatorStatus] = mapped_column(
-        Enum(EducatorStatus, values_callable=enum_values, native_enum=False, create_constraint=True),
-        nullable=False,
-    )
-    decided_by: Mapped[str | None] = mapped_column(String, nullable=True)
-
-    __table_args__ = (Index("idx_educators_status_created", "status", "created_at"),)
 
 
 class ClassModel(Base, UuidPrimaryKeyMixin, TimestampMixin):

@@ -6,7 +6,7 @@ import pytest
 import pytest_asyncio
 from asterism.core.exceptions import UnauthorizedException
 from asterism.core.schemas import AuthedUser
-from asterism.domains.classes.models import ClassMemberModel, ClassModel, EducatorModel, EducatorStatus
+from asterism.domains.classes.models import ClassMemberModel, ClassModel
 from asterism.domains.classes.service import JOIN_CODE_ALPHABET, JOIN_CODE_LENGTH, new_join_code, normalize_join_code
 from asterism.domains.user.models import UserModel
 from sqlalchemy import delete, func, select
@@ -31,9 +31,14 @@ async def api(project_api, monkeypatch):
 
     monkeypatch.setattr("asterism.core.security.verify_jwks_token", verify_token)
     async with sessions() as session:
-        session.add_all([UserModel(id=user, name=NAMES.get(user)) for user in ROLES])
-        await session.flush()
-        session.add_all([EducatorModel(user_id=user, status=EducatorStatus.APPROVED) for user in ("teach", "other")])
+        session.add_all(
+            [
+                UserModel(
+                    id=user, name=NAMES.get(user), group_id="educator" if user in ("teach", "other") else "student"
+                )
+                for user in ROLES
+            ]
+        )
         await session.commit()
     return client, sessions
 
@@ -78,9 +83,11 @@ async def test_only_admins_decide(api):
     assert (await client.get("/educator-access", headers=auth("s1"))).json() == {"status": "pending"}
 
 
-async def test_the_platform_admin_role_is_not_an_educator_grant(api):
+async def test_the_admin_group_may_run_classes(api):
+    # ADR-0058: one group per user, so admins can teach without the educator group.
     client, _ = api
-    assert (await client.post("/classes", headers=auth("admin"), json={"name": "Mine"})).status_code == 403
+    assert (await client.get("/educator-access", headers=auth("admin"))).json() == {"status": "approved"}
+    assert (await client.post("/classes", headers=auth("admin"), json={"name": "Mine"})).status_code == 201
 
 
 async def test_revoking_stops_management_at_once_and_keeps_the_class(api):

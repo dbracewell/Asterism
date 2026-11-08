@@ -21,7 +21,12 @@ from asterism.domains.chatgpt.models import (  # noqa: F401
     ChatGPTConnectionModel,
     ChatGPTHostModel,
 )
-from asterism.domains.classes.models import ClassInviteModel, ClassMemberModel, ClassModel, EducatorModel  # noqa: F401
+from asterism.domains.classes.models import (  # noqa: F401
+    ClassInviteModel,
+    ClassMemberModel,
+    ClassModel,
+    EducatorRequestModel,
+)
 from asterism.domains.courses.models import (  # noqa: F401
     CourseCopyItemModel,
     CourseCopyModel,
@@ -29,6 +34,7 @@ from asterism.domains.courses.models import (  # noqa: F401
     CourseVersionModel,
 )
 from asterism.domains.files.models import UserFileModel  # noqa: F401
+from asterism.domains.groups.models import GroupModel  # noqa: F401
 from asterism.domains.knowledge.models import (  # noqa: F401
     FileKnowledgeArtifactModel,
     FileKnowledgeExtractionModel,

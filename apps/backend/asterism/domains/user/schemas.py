@@ -4,6 +4,8 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, Field, StringConstraints
 
+from asterism.domains.groups.schemas import GroupRef
+
 
 class CreateUserRequest(BaseModel):
     """Request model for creating a new user.
@@ -34,8 +36,9 @@ class UserSummary(BaseModel):
     name: str | None = Field(description="The current name from sign-in, or null if not yet known")
     email: str | None = Field(description="The current email from sign-in, or null if not yet known")
     educator: Literal["pending", "approved"] | None = Field(
-        description="Educator status, if they have asked. Admin roles live in sign-in and are not shown"
+        description="Pending if they asked for educator access, approved if they are in the Educator group"
     )
+    group: GroupRef = Field(description="The one group the user is in")
     created_at: int = Field(description="When the account was first seen, in Unix seconds")
 
 

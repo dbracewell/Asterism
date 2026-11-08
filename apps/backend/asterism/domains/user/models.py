@@ -26,6 +26,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from asterism.db.base_model import Base
 from asterism.db.mixins import TimestampMixin, UuidPrimaryKeyMixin, get_unix_timestamp
+from asterism.domains.groups.models import STUDENT_GROUP
 
 
 class UserModel(Base):
@@ -68,6 +69,14 @@ class UserModel(Base):
     email: Mapped[str | None] = mapped_column(String(320), nullable=True)
     created_at: Mapped[int] = mapped_column(
         Integer, default=get_unix_timestamp, server_default=text("(unixepoch())"), nullable=False
+    )
+    # Exactly one group per user (ADR-0058); new users join Student.
+    group_id: Mapped[str] = mapped_column(
+        ForeignKey("groups.id", ondelete="RESTRICT"),
+        default=STUDENT_GROUP,
+        server_default=STUDENT_GROUP,
+        nullable=False,
+        index=True,
     )
 
 
