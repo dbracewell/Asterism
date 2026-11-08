@@ -13,6 +13,7 @@ from asterism.core.exceptions import (
 )
 from asterism.db.database import get_async_db_session
 from asterism.db.queries import paginate_select
+from asterism.domains.courses.locks import require_not_course_managed
 from asterism.domains.llm.schemas import ChatCompletionParams
 from asterism.domains.settings.models import LLMModel
 from asterism.domains.tools.catalog import INTERNAL_TOOL_NAMES, configurable_tools
@@ -252,6 +253,7 @@ async def save_sub_agent(
             profile = await get_agent_profile(user_id, agent_id, session)
             if not profile.sub_agent:
                 raise BadDataException("Main configuration cannot become a sub-agent")
+            await require_not_course_managed(user_id=user_id, record_ids=[agent_id], session=session)
             row = await session.get(AgentProfileModel, agent_id)
             assert row is not None
         if agent_id is not None:
@@ -270,6 +272,7 @@ async def save_sub_agent_instructions(
 ) -> SubAgentDefinition:
     """Replace only a definition's instructions, if it is still at ``expected_revision``."""
     async with get_async_db_session(session) as session:
+        await require_not_course_managed(user_id=user_id, record_ids=[agent_id], session=session)
         row = await session.scalar(
             update(AgentProfileModel)
             .where(
@@ -303,6 +306,7 @@ async def delete_agent_profile(
         profile = await get_agent_profile(user_id, agent_id, session)
         if not profile.sub_agent:
             raise BadDataException("The main configuration cannot be deleted")
+        await require_not_course_managed(user_id=user_id, record_ids=[agent_id], session=session)
         row = await session.get(AgentProfileModel, agent_id)
         assert row is not None
         definition = await _sub_definition(user_id, profile, session)

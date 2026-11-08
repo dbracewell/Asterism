@@ -2363,6 +2363,9 @@ export type EmbeddingPayload = {
  * ErrorDetail
  *
  * Standard error response body: a message plus its HTTP status code.
+ *
+ * ``reason`` is a stable machine-readable cause for errors a client must tell
+ * apart (for example ``course_managed``); most errors omit it.
  */
 export type ErrorDetail = {
   /**
@@ -2373,6 +2376,10 @@ export type ErrorDetail = {
    * Code
    */
   code: number;
+  /**
+   * Reason
+   */
+  reason?: string | null;
 };
 
 /**

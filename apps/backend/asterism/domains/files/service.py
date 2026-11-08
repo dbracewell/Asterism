@@ -31,6 +31,7 @@ from asterism.common.log import get_logger
 from asterism.core import config
 from asterism.core.exceptions import BadDataException, NotFoundException
 from asterism.db.database import get_async_db_session
+from asterism.domains.courses.locks import require_not_course_managed
 from asterism.domains.knowledge.artifacts import (
     ArtifactSummary,
     cancel_processing,
@@ -687,6 +688,7 @@ async def delete_user_file(*, user_id: str, filename: str, session: AsyncSession
     )
     if file is None:
         raise NotFoundException("File not found")
+    await require_not_course_managed(user_id=user_id, record_ids=[file.id], session=session)
     response = (await describe_files(user_id=user_id, files=[file], session=session))[0]
     await _remove_file_knowledge_records(file_id=file.id, session=session)
     file_id = file.id
@@ -752,6 +754,15 @@ async def delete_user_files(
 
     try:
         async with get_async_db_session(session) as session:
+            await require_not_course_managed(
+                user_id=user_id,
+                record_ids=await session.scalars(
+                    select(UserFileModel.id).where(
+                        UserFileModel.user_id == user_id, UserFileModel.filename.in_(filenames)
+                    )
+                ),
+                session=session,
+            )
             for filename in filenames:
                 file = await session.scalar(
                     select(UserFileModel).where(
