@@ -252,3 +252,63 @@ async def add_version(
         await session.rollback()
         raise ConflictException("The canvas item changed; read it again before updating") from exc
     return VisibleItem(item=entry.item, versions=[*entry.versions, version])
+
+
+def _user_anchor(branch: Branch) -> Anchor:
+    if branch.leaf_id is None:
+        raise BadDataException("Send a message before editing the canvas")
+    return Anchor(author="user", message_id=branch.leaf_id, execution_id=None)
+
+
+async def _require_base(
+    user_id: str, chat_id: uuid.UUID, item_id: uuid.UUID, branch: Branch, base_version: int, session: AsyncSession
+) -> VisibleItem:
+    entry = await visible_item(user_id, chat_id, item_id, branch, session)
+    if entry.current.number != base_version:
+        raise ConflictException(f"The canvas item is now at version {entry.current.number}; reload it before saving")
+    return entry
+
+
+async def save_user_version(
+    user_id: str,
+    chat_id: uuid.UUID,
+    item_id: uuid.UUID,
+    branch: Branch,
+    *,
+    base_version: int,
+    title: str | None,
+    content: str,
+    session: AsyncSession,
+) -> VisibleItem:
+    """The user's edit, anchored to the branch's last message (ADR-0063)."""
+    await _require_base(user_id, chat_id, item_id, branch, base_version, session)
+    return await add_version(
+        user_id, chat_id, item_id, branch, _user_anchor(branch), title=title, content=content, session=session
+    )
+
+
+async def restore_version(
+    user_id: str,
+    chat_id: uuid.UUID,
+    item_id: uuid.UUID,
+    branch: Branch,
+    *,
+    number: int,
+    base_version: int,
+    session: AsyncSession,
+) -> VisibleItem:
+    """A new user version copying an earlier visible version's title and content."""
+    entry = await _require_base(user_id, chat_id, item_id, branch, base_version, session)
+    source = next((version for version in entry.versions if version.number == number), None)
+    if source is None:
+        raise NotFoundException("Canvas version not found in this conversation")
+    return await add_version(
+        user_id,
+        chat_id,
+        item_id,
+        branch,
+        _user_anchor(branch),
+        title=source.title,
+        content=source.content,
+        session=session,
+    )

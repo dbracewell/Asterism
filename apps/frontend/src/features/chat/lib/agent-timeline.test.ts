@@ -1,6 +1,7 @@
 import type { Message, ToolResult } from "@/lib/client";
 import { describe, expect, it } from "vitest";
 import {
+  canvasToolLabel,
   formatDuration,
   formatPayload,
   messageTimelineSteps,
@@ -166,5 +167,21 @@ describe("messageTimelineSteps", () => {
     expect(
       messageTimelineSteps(message({ thinking: "  " }), { showThinking: true }),
     ).toEqual([]);
+  });
+});
+
+describe("canvasToolLabel", () => {
+  it("names the canvas item from the result, then the arguments", () => {
+    const result = JSON.stringify({ item_id: "i", version: 2, title: "Plan" });
+    expect(
+      canvasToolLabel("canvas_update", '{"item_id":"i"}', "succeeded", result),
+    ).toBe("Updated canvas Plan");
+    expect(
+      canvasToolLabel("canvas_create", '{"title":"Draft"}', "running"),
+    ).toBe("Creating canvas Draft");
+    expect(canvasToolLabel("canvas_read", "{}", "failed")).toBe(
+      "Could not read the canvas",
+    );
+    expect(canvasToolLabel("web_search", "{}", "succeeded")).toBeUndefined();
   });
 });

@@ -99,9 +99,15 @@ import type {
   CanvasPolicyUpdateData,
   CanvasPolicyUpdateError,
   CanvasPolicyUpdateResponse,
+  CanvasVersionCreateData,
+  CanvasVersionCreateError,
+  CanvasVersionCreateResponse,
   CanvasVersionGetOneData,
   CanvasVersionGetOneError,
   CanvasVersionGetOneResponse,
+  CanvasVersionRestoreData,
+  CanvasVersionRestoreError,
+  CanvasVersionRestoreResponse,
   ChatAiUseLogCreateData,
   ChatAiUseLogCreateError,
   ChatAiUseLogCreateResponse,
@@ -6457,6 +6463,64 @@ export const canvasVersionGetOneOptions = (
     },
     queryKey: canvasVersionGetOneQueryKey(options),
   });
+
+/**
+ * Create Version
+ *
+ * Save the user's edit as a new version; the agent sees it on its next turn.
+ */
+export const canvasVersionCreateMutation = (
+  options?: Partial<Options<CanvasVersionCreateData>>,
+): UseMutationOptions<
+  CanvasVersionCreateResponse,
+  CanvasVersionCreateError,
+  Options<CanvasVersionCreateData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    CanvasVersionCreateResponse,
+    CanvasVersionCreateError,
+    Options<CanvasVersionCreateData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().canvasVersionCreate({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Restore Version
+ *
+ * Copy an earlier version into a new one; history is never rewritten.
+ */
+export const canvasVersionRestoreMutation = (
+  options?: Partial<Options<CanvasVersionRestoreData>>,
+): UseMutationOptions<
+  CanvasVersionRestoreResponse,
+  CanvasVersionRestoreError,
+  Options<CanvasVersionRestoreData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    CanvasVersionRestoreResponse,
+    CanvasVersionRestoreError,
+    Options<CanvasVersionRestoreData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().canvasVersionRestore({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
 
 export const learningModeGetManyQueryKey = (
   options?: Options<LearningModeGetManyData>,

@@ -1,7 +1,7 @@
 # ADR-0063 — Canvas items are versioned, branch-aware chat records
 
-Status: accepted; domain and agent tools in US-72.1 on 2026-11-09
-([EPIC-72](../epics/EPIC-72-CANVAS.md)).
+Status: accepted; domain and agent tools in US-72.1, panel and user edits in
+US-72.2 on 2026-11-09 ([EPIC-72](../epics/EPIC-72-CANVAS.md)).
 
 ## Context
 
@@ -84,7 +84,22 @@ data: it can't grant tools, files or delegation, and the platform rules say so.
 `GET /chat/{chat_id}/canvas/{item_id}` returns the visible versions' metadata
 and `GET …/versions/{number}` one version's content. Reads are owner-scoped and
 work while canvas is switched off, so existing content stays reachable; only
-writing is gated. User edits and restores arrive with the panel (US-72.2).
+writing is gated.
+
+### User edits and restores (US-72.2)
+
+`POST /chat/{chat_id}/canvas/{item_id}/versions` (`{base_version, content,
+title?}`) saves the user's edit as a new `user` version, and
+`POST …/versions/{number}/restore` (`{base_version}`) copies an earlier visible
+version's title and content into a new one; history is never rewritten. Both
+need canvas on (both switches) and anchor to the last message on the active
+branch, so the agent's next turn, a child of that message, sees them.
+`base_version` must be the item's current version on that branch, else 409: an
+edit never silently overwrites a version the agent wrote meanwhile.
+
+"Ask about selection" is a client feature: it sends an ordinary chat message
+that quotes the selected text with the item's id and version and asks for a
+targeted `canvas_update`. It grants nothing a typed message couldn't.
 
 ### Settings
 
@@ -96,8 +111,13 @@ admin endpoints `GET/PUT /settings/app/canvas`. Each user has a boolean
 ### Sandboxing and exports (later stories)
 
 HTML is never inlined into the app DOM. The panel (US-72.2) previews it in an
-`iframe` with `sandbox="allow-scripts"` (no `allow-same-origin`), `srcdoc`
-content and a CSP that blocks network access. Exports (US-72.3) are produced on
+`iframe` with `sandbox="allow-scripts"` (no `allow-same-origin`, popups, forms
+or top navigation) and `srcdoc` content, prefixed with a CSP `<meta>` that
+allows only inline script and style and `data:`/`blob:` media
+(`default-src 'none'`), so the page can't fetch anything. Links target a new
+window, which the sandbox refuses. A script can still navigate its own frame;
+that page also loads in the opaque, sandboxed origin with no access to the
+app. Exports (US-72.3) are produced on
 the server: `.md`, `.txt`, the source extension for code, `.html`, then DOCX
 and PDF for documents and a ZIP per chat.
 

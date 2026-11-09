@@ -56,6 +56,8 @@ export function ChatModelSessionHarness({
             },
             default_model_id: "11111111-1111-4111-8111-111111111111",
             show_thinking: showThinking,
+            canvas_enabled: true,
+            canvas_allowed: true,
             first_chat_tour: newLearner ? null : "completed",
           },
         }}

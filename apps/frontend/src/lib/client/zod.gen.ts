@@ -81,6 +81,13 @@ export const zCanvasPolicy = z.object({
 });
 
 /**
+ * CanvasRestore
+ */
+export const zCanvasRestore = z.object({
+  base_version: z.int().gte(1),
+});
+
+/**
  * CanvasVersion
  */
 export const zCanvasVersion = z.object({
@@ -93,6 +100,17 @@ export const zCanvasVersion = z.object({
   item_id: z.uuid(),
   kind: z.enum(["document", "code", "html"]),
   language: z.string(),
+  content: z.string(),
+});
+
+/**
+ * CanvasVersionCreate
+ *
+ * A user's edit, saved on top of ``base_version``, the version being edited.
+ */
+export const zCanvasVersionCreate = z.object({
+  base_version: z.int().gte(1),
+  title: z.string().min(1).max(200).nullish(),
   content: z.string(),
 });
 
@@ -6558,6 +6576,31 @@ export const zCanvasVersionGetOnePath = z.object({
  * Successful Response
  */
 export const zCanvasVersionGetOneResponse = zCanvasVersion;
+
+export const zCanvasVersionCreateBody = zCanvasVersionCreate;
+
+export const zCanvasVersionCreatePath = z.object({
+  chat_id: z.uuid(),
+  item_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zCanvasVersionCreateResponse = zCanvasVersion;
+
+export const zCanvasVersionRestoreBody = zCanvasRestore;
+
+export const zCanvasVersionRestorePath = z.object({
+  chat_id: z.uuid(),
+  item_id: z.uuid(),
+  number: z.int(),
+});
+
+/**
+ * Successful Response
+ */
+export const zCanvasVersionRestoreResponse = zCanvasVersion;
 
 /**
  * Successful Response
