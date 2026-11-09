@@ -42,7 +42,7 @@ Source: user request (2026-11-08). Suggested order: EPIC-74 → 67 → 70 → 68
   - [x] Write the ADR (data model, tool contracts, branch rules, sandboxing, exports).
   - [x] Implement storage, tools and settings; regenerate the client.
   - [x] Tests: gating, owner isolation, versions, branch visibility, deletion.
-- [ ] US-72.2: Canvas panel (implemented; awaiting confirmation)
+- [x] US-72.2: Canvas panel
   - [x] Build the panel, editors, history and "ask about selection".
   - [x] Unit tests, keyboard/contrast checks and an E2E with a fake provider.
 - [ ] US-72.3: Downloads and settings
