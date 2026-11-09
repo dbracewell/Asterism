@@ -39,6 +39,7 @@ export type PageGuideId =
   | "admin.theme-editor"
   | "admin.tools"
   | "admin.skills"
+  | "admin.canvas"
   | "admin.chatgpt"
   | "admin.context-compaction"
   | "admin.image-captioning"
@@ -134,6 +135,7 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
       "concept.mode-lock",
       "concept.citation",
       "concept.tool-approval",
+      "concept.canvas",
     ],
     audience: "everyone",
   },
@@ -688,7 +690,7 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
       {
         name: "Chat",
         description:
-          "Choose the model new chats start with, and whether to offer the prompt coach. Each chat keeps its own model.",
+          "Choose the model new chats start with, and whether to offer the prompt coach and the canvas. Each chat keeps its own model.",
       },
       {
         name: "Guided tour",
@@ -699,7 +701,12 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
     tasks: [
       "Turn on Prompt Coach to get feedback on your prompts before you send them.",
     ],
-    terms: ["concept.model", "concept.prompt-coach", "concept.group"],
+    terms: [
+      "concept.model",
+      "concept.prompt-coach",
+      "concept.canvas",
+      "concept.group",
+    ],
     audience: "everyone",
   },
   "settings.personas": {
@@ -889,6 +896,21 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
     terms: ["admin.skills-policy", "concept.skill"],
     audience: "admin",
   },
+  "admin.canvas": {
+    title: "Canvas policy",
+    purpose:
+      "Turn the canvas, the panel where the main agent writes documents and code, on or off for every user.",
+    areas: [
+      {
+        name: "Availability",
+        description:
+          "The canvas is off until enabled. Users also turn it on in their own settings. Turning it off stops writes at once; existing items stay readable.",
+      },
+    ],
+    tasks: [],
+    terms: ["admin.canvas-policy", "concept.canvas"],
+    audience: "admin",
+  },
   "admin.chatgpt": {
     title: "ChatGPT plans",
     purpose:
@@ -1042,6 +1064,7 @@ const adminSettingsGuides: Record<string, PageGuideId | null> = {
   theme_editor: "admin.theme-editor",
   tools: "admin.tools",
   skills: "admin.skills",
+  canvas: "admin.canvas",
   chatgpt: "admin.chatgpt",
   "context-compaction": "admin.context-compaction",
   "image-captioning": "admin.image-captioning",

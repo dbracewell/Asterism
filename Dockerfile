@@ -42,7 +42,7 @@ COPY --from=node:22-slim /usr/local/lib/node_modules /usr/local/lib/node_modules
 RUN python --version && node --version && npm --version
 
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends nginx tini libstdc++6 libgomp1 \
+  && apt-get install -y --no-install-recommends nginx tini libstdc++6 libgomp1 fonts-dejavu-core \
   && rm -rf /var/lib/apt/lists/* \
   && useradd --uid 10001 --create-home asterism \
   && mkdir -p /storage && chown asterism:asterism /storage

@@ -1,7 +1,8 @@
 # ADR-0063 — Canvas items are versioned, branch-aware chat records
 
 Status: accepted; domain and agent tools in US-72.1, panel and user edits in
-US-72.2 on 2026-11-09 ([EPIC-72](../epics/EPIC-72-CANVAS.md)).
+US-72.2, downloads and settings in US-72.3 on 2026-11-09
+([EPIC-72](../epics/EPIC-72-CANVAS.md)).
 
 ## Context
 
@@ -108,7 +109,37 @@ admin endpoints `GET/PUT /settings/app/canvas`. Each user has a boolean
 `canvas_enabled` setting (default off), and `GET /settings/user` reports
 `canvas_allowed` (the admin policy) so the UI can explain why it's off.
 
-### Sandboxing and exports (later stories)
+### Downloads and the file library (US-72.3)
+
+Exports are made on the server from one stored version visible on the active
+branch, and work while canvas is switched off:
+
+- `GET …/versions/{number}/export?format=` with `md`, `txt`, `docx` or `pdf`
+  for documents, `source` (the extension for the item's language, else `.txt`)
+  or `txt` for code, and `html` or `txt` for HTML pages. Other combinations
+  return 400.
+- `GET /chat/{chat_id}/canvas/export` is a ZIP of every visible item at its
+  current version in its natural type, with repeated names numbered.
+- `POST …/versions/{number}/library` (`{format}`) adds the export to the
+  user's file library through the files domain (sanitized, deduplicated name,
+  upload size limit, knowledge processing queued after commit).
+
+Downloads carry `Content-Disposition: attachment` with a UTF-8 name, and the
+file-store response headers (`nosniff`, `sandbox` CSP), so an HTML export
+opened from the API origin stays inert.
+
+DOCX (python-docx) and PDF (fpdf2) are rendered from Markdown parsed with
+markdown-it with raw HTML **and images disabled**, so no export embeds markup
+or fetches a URL from canvas content. PDF uses DejaVu Sans
+(`fonts-dejavu-core` in the image) for Unicode text; without a Unicode font it
+falls back to the Latin-1 core fonts and replaces other characters. Layout
+runs in a worker thread.
+
+The user's `canvas_enabled` toggle is in User Settings → General (disabled,
+with an explanation, when the admin policy is off); Admin Settings → Canvas
+holds the policy.
+
+### Sandboxing
 
 HTML is never inlined into the app DOM. The panel (US-72.2) previews it in an
 `iframe` with `sandbox="allow-scripts"` (no `allow-same-origin`, popups, forms
@@ -117,9 +148,7 @@ allows only inline script and style and `data:`/`blob:` media
 (`default-src 'none'`), so the page can't fetch anything. Links target a new
 window, which the sandbox refuses. A script can still navigate its own frame;
 that page also loads in the opaque, sandboxed origin with no access to the
-app. Exports (US-72.3) are produced on
-the server: `.md`, `.txt`, the source extension for code, `.html`, then DOCX
-and PDF for documents and a ZIP per chat.
+app.
 
 ## Consequences
 

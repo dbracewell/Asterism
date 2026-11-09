@@ -70,3 +70,8 @@ class CanvasVersionCreate(BaseModel):
 class CanvasRestore(BaseModel):
     model_config = ConfigDict(extra="forbid")
     base_version: int = Field(ge=1)
+
+
+class CanvasLibrarySave(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    format: Literal["md", "txt", "source", "html", "docx", "pdf"]

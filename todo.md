@@ -45,6 +45,6 @@ Source: user request (2026-11-08). Suggested order: EPIC-74 → 67 → 70 → 68
 - [x] US-72.2: Canvas panel
   - [x] Build the panel, editors, history and "ask about selection".
   - [x] Unit tests, keyboard/contrast checks and an E2E with a fake provider.
-- [ ] US-72.3: Downloads and settings
-  - [ ] Implement exports (server-side) and save-to-library.
-  - [ ] Settings toggles, help and glossary; tests for each export type.
+- [ ] US-72.3: Downloads and settings (implemented; awaiting confirmation)
+  - [x] Implement exports (server-side) and save-to-library.
+  - [x] Settings toggles, help and glossary; tests for each export type.

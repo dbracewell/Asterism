@@ -33,6 +33,7 @@ export type HelpId =
   | "concept.mode-lock"
   | "concept.template"
   | "concept.prompt-coach"
+  | "concept.canvas"
   | "concept.model"
   | "concept.context-compaction"
   | "concept.attachment"
@@ -58,6 +59,7 @@ export type HelpId =
   | "admin.providers"
   | "admin.tools"
   | "admin.skills-policy"
+  | "admin.canvas-policy"
   | "admin.context-compaction"
   | "admin.settings-file";
 
@@ -160,6 +162,19 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
       "concept.project",
       "concept.model",
     ],
+    audience: "everyone",
+  },
+  "concept.canvas": {
+    title: "Canvas",
+    summary:
+      "A panel beside the chat where your main agent puts long documents, code and web pages, so you can read, edit and download them.",
+    details: [
+      "A message that wrote to the canvas shows a card; select Open to show the item beside the chat (full screen on a phone). Documents have Edit and Preview tabs, code opens in an editor, and web pages show a preview that can't reach the internet or the app.",
+      "Save version keeps your edits as a new version, and the agent reads the latest version on its next turn. Pick an older version to view it or restore it as a new one; versions are never overwritten. Select text and choose Ask about selection to ask the agent to change just that part.",
+      "The download menu saves a version as Markdown, plain text, a source file, a web page, Word or PDF, adds it to your files, or downloads every item in the chat as a ZIP.",
+      "Canvas items follow the branch you're viewing: regenerating a reply hides what the replaced reply wrote. Turn the canvas on in User Settings → General; an administrator has to allow it, and the chat's model must support tools. Canvas text is treated as data and grants no tools or files.",
+    ],
+    related: ["concept.main-agent", "concept.model"],
     audience: "everyone",
   },
   "concept.skill": {
@@ -709,6 +724,16 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
       "When skills are on, users can still only use skills they've assigned to their main agent. Skills add instructions only and never grant tools or files.",
     ],
     related: ["concept.skill"],
+    audience: "admin",
+  },
+  "admin.canvas-policy": {
+    title: "Canvas policy",
+    summary:
+      "Turns the canvas on or off for everyone. It's off until an administrator enables it.",
+    details: [
+      "When it's on, each user still turns the canvas on in their own settings, and the chat's model must support tools. Turning it off stops new writes at once; existing items stay readable and downloadable.",
+    ],
+    related: ["concept.canvas"],
     audience: "admin",
   },
   "admin.context-compaction": {

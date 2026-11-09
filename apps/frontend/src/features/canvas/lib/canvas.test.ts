@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   PREVIEW_CSP,
   canvasRefs,
+  downloadName,
   previewDocument,
   selectionRequest,
 } from "./canvas";
@@ -55,5 +56,18 @@ describe("previewDocument", () => {
     expect(html.indexOf(PREVIEW_CSP)).toBeLessThan(html.indexOf("<script>"));
     expect(PREVIEW_CSP).toContain("default-src 'none'");
     expect(PREVIEW_CSP).not.toMatch(/connect-src|https?:/);
+  });
+});
+
+describe("downloadName", () => {
+  it("prefers the UTF-8 name, then the plain one, then the fallback", () => {
+    expect(
+      downloadName(
+        "attachment; filename=\"Plan_.md\"; filename*=UTF-8''Plan%20%E6%97%A5.md",
+        "x",
+      ),
+    ).toBe("Plan 日.md");
+    expect(downloadName('attachment; filename="Plan.md"', "x")).toBe("Plan.md");
+    expect(downloadName(null, "canvas.md")).toBe("canvas.md");
   });
 });

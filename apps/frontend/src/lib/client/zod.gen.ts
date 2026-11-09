@@ -74,6 +74,13 @@ export const zCanvasItemSummary = z.object({
 });
 
 /**
+ * CanvasLibrarySave
+ */
+export const zCanvasLibrarySave = z.object({
+  format: z.enum(["md", "txt", "source", "html", "docx", "pdf"]),
+});
+
+/**
  * CanvasPolicy
  */
 export const zCanvasPolicy = z.object({
@@ -6556,6 +6563,15 @@ export const zCanvasItemGetManyPath = z.object({
  */
 export const zCanvasItemGetManyResponse = z.array(zCanvasItemSummary);
 
+export const zCanvasExportZipPath = z.object({
+  chat_id: z.uuid(),
+});
+
+/**
+ * The exported file
+ */
+export const zCanvasExportZipResponse = z.string();
+
 export const zCanvasItemGetOnePath = z.object({
   chat_id: z.uuid(),
   item_id: z.uuid(),
@@ -6601,6 +6617,34 @@ export const zCanvasVersionRestorePath = z.object({
  * Successful Response
  */
 export const zCanvasVersionRestoreResponse = zCanvasVersion;
+
+export const zCanvasVersionExportPath = z.object({
+  chat_id: z.uuid(),
+  item_id: z.uuid(),
+  number: z.int(),
+});
+
+export const zCanvasVersionExportQuery = z.object({
+  format: z.enum(["md", "txt", "source", "html", "docx", "pdf"]),
+});
+
+/**
+ * The exported file
+ */
+export const zCanvasVersionExportResponse = z.string();
+
+export const zCanvasVersionSaveToLibraryBody = zCanvasLibrarySave;
+
+export const zCanvasVersionSaveToLibraryPath = z.object({
+  chat_id: z.uuid(),
+  item_id: z.uuid(),
+  number: z.int(),
+});
+
+/**
+ * Successful Response
+ */
+export const zCanvasVersionSaveToLibraryResponse = zUserFile;
 
 /**
  * Successful Response

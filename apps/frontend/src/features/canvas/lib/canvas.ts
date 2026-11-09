@@ -110,3 +110,66 @@ export function kindLabel(kind: CanvasKindName, language: string): string {
   if (kind === "code") return language || "Code";
   return kind === "html" ? "HTML page" : "Document";
 }
+
+export type CanvasExportFormat =
+  | "md"
+  | "txt"
+  | "source"
+  | "html"
+  | "docx"
+  | "pdf";
+
+/** What each kind downloads as, natural type first (mirrors the server). */
+export const EXPORT_FORMATS: Record<CanvasKindName, CanvasExportFormat[]> = {
+  document: ["md", "txt", "docx", "pdf"],
+  code: ["source", "txt"],
+  html: ["html", "txt"],
+};
+
+export function formatLabel(format: CanvasExportFormat, language = ""): string {
+  switch (format) {
+    case "md":
+      return "Markdown (.md)";
+    case "txt":
+      return "Plain text (.txt)";
+    case "source":
+      return language ? `Source file (${language})` : "Source file";
+    case "html":
+      return "Web page (.html)";
+    case "docx":
+      return "Word document (.docx)";
+    case "pdf":
+      return "PDF (.pdf)";
+  }
+}
+
+/** The name a download response gives, from its Content-Disposition. */
+export function downloadName(
+  disposition: string | null | undefined,
+  fallback: string,
+): string {
+  const encoded = disposition?.match(/filename\*=UTF-8''([^;]+)/i)?.[1];
+  if (encoded) {
+    try {
+      return decodeURIComponent(encoded);
+    } catch {
+      // Fall through to the plain name.
+    }
+  }
+  return disposition?.match(/filename="([^"]+)"/i)?.[1] ?? fallback;
+}
+
+/** Hands a downloaded blob to the browser as a file. */
+export function saveBlob(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob);
+  try {
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
