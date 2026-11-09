@@ -112,6 +112,7 @@ def _changed_settings(bundle: SettingsBundle, current: SettingsBundle) -> list[s
         "Draft model": bundle.draft_model is not None and bundle.draft_model != current.draft_model,
         "Active tools": set(bundle.active_tools) != set(current.active_tools),
         "Skills policy": bundle.skills_enabled != current.skills_enabled,
+        "Canvas policy": bundle.canvas_enabled != current.canvas_enabled,
         "ChatGPT plan policy": bundle.chatgpt_plan_enabled != current.chatgpt_plan_enabled,
         "Web search provider": bundle.web_search_provider is not None
         and bundle.web_search_provider != current.web_search_provider,
@@ -272,6 +273,7 @@ async def import_settings(
         await session.flush()
         await _put_setting("active_tools", list(bundle.active_tools), session)
         await _put_setting("skills_enabled", bundle.skills_enabled, session)
+        await _put_setting("canvas_enabled", bundle.canvas_enabled, session)
         await _put_setting("chatgpt_plan_enabled", bundle.chatgpt_plan_enabled, session)
         await _put_component("web_search_provider", bundle.web_search_provider, session)
         await _put_component("image_search_provider", bundle.image_search_provider, session)

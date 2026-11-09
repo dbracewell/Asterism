@@ -108,6 +108,7 @@ class SettingsBundle(_Document):
     draft_model: ModelReference | None = None
     active_tools: tuple[str, ...] = ()
     skills_enabled: bool = False
+    canvas_enabled: bool = False
     chatgpt_plan_enabled: bool = False
     web_search_provider: ExportedComponent | None = None
     image_search_provider: ExportedComponent | None = None

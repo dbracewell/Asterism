@@ -108,6 +108,11 @@ fixed models and receive the same or narrower execution file scope.
   assigned skills, when it has assignments, the admin Skills policy is on and its
   model supports tools ([ADR-0062](docs/adr/0062-sub-agent-skills.md)). The
   Skills policy, not the Tools allowlist, gates it; the main agent keeps `/`.
+- `canvas_create`, `canvas_update` and `canvas_read` are internal tools for the
+  main agent in ordinary chats, offered when the admin `canvas_enabled` policy and
+  the user's `canvas_enabled` setting are on and the model supports tools
+  ([ADR-0063](docs/adr/0063-canvas.md)). Canvas versions are branch-aware chat
+  records; canvas content is untrusted data and grants nothing.
 
 ---
 

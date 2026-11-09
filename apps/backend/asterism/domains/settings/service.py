@@ -144,6 +144,8 @@ async def get_user_settings(
         from asterism.domains.groups.service import read_group_refs
 
         user_settings.group = (await read_group_refs([user_id], session)).get(user_id)
+        canvas_policy = await session.get(ApplicationSettingsModel, "canvas_enabled")
+        user_settings.canvas_allowed = canvas_policy is not None and canvas_policy.value is True
 
     # settings_cache.set_user_settings(user_id, user_settings)
     return user_settings
@@ -272,6 +274,7 @@ async def _validate_user_setting(user_id: str, key: str, value: Any, session: As
         "default_model_id",
         "show_thinking",
         "prompt_coach_enabled",
+        "canvas_enabled",
         FIRST_CHAT_TOUR_SETTING,
     }:
         raise BadDataException("Unsupported user setting")
@@ -284,7 +287,11 @@ async def _validate_user_setting(user_id: str, key: str, value: Any, session: As
 
         if await available_user_model(user_id, model_id, session) is None:
             raise BadDataException("Default model must be available and active")
-    if value is not None and key in {"show_thinking", "prompt_coach_enabled"} and not isinstance(value, bool):
+    if (
+        value is not None
+        and key in {"show_thinking", "prompt_coach_enabled", "canvas_enabled"}
+        and not isinstance(value, bool)
+    ):
         raise BadDataException(f"{key} must be boolean")
     if value is not None and key in {"theme", "font_size"} and not isinstance(value, str):
         raise BadDataException(f"{key} must be text")
@@ -796,6 +803,11 @@ def _validate_non_provider_app_setting(
     if key == "skills_enabled":
         if type(value) is not bool:
             raise BadDataException("Skills policy must be a boolean")
+        return value, None
+
+    if key == "canvas_enabled":
+        if type(value) is not bool:
+            raise BadDataException("Canvas policy must be a boolean")
         return value, None
 
     if key == "compaction":

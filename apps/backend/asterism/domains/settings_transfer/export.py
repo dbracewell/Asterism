@@ -103,6 +103,7 @@ async def collect_settings(session: AsyncSession) -> SettingsBundle:
         draft_model=_reference(settings.draft_model_id, providers),
         active_tools=tuple(settings.active_tools),
         skills_enabled=settings.skills_enabled,
+        canvas_enabled=settings.canvas_enabled,
         compaction=ExportedCompaction(
             **settings.compaction.model_dump(exclude={"model_id"}),
             model=_reference(settings.compaction.model_id, providers),
