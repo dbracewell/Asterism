@@ -1,6 +1,6 @@
 # EPIC-72: Canvas
 
-Status: proposed. Source: user request (2026-11-08).
+Status: in progress (US-72.1; [ADR-0063](../adr/0063-canvas.md)). Source: user request (2026-11-08).
 
 ## Objective
 
@@ -39,9 +39,9 @@ agent tools create, read and update them; messages link to the version they
 produced; admin policy and the user setting gate the tools live. Deleting the
 chat deletes its canvas content.
 
-- [ ] Write the ADR (data model, tool contracts, branch rules, sandboxing, exports).
-- [ ] Implement storage, tools and settings; regenerate the client.
-- [ ] Tests: gating, owner isolation, versions, branch visibility, deletion.
+- [x] Write the ADR (data model, tool contracts, branch rules, sandboxing, exports).
+- [x] Implement storage, tools and settings; regenerate the client.
+- [x] Tests: gating, owner isolation, versions, branch visibility, deletion.
 
 ## US-72.2: Canvas panel
 

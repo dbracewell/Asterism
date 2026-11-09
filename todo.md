@@ -38,10 +38,10 @@ Source: user request (2026-11-08). Suggested order: EPIC-74 → 67 → 70 → 68
 
 ### [EPIC-72: Canvas](docs/epics/EPIC-72-CANVAS.md)
 
-- [ ] US-72.1: Canvas domain and agent tools
-  - [ ] Write the ADR (data model, tool contracts, branch rules, sandboxing, exports).
-  - [ ] Implement storage, tools and settings; regenerate the client.
-  - [ ] Tests: gating, owner isolation, versions, branch visibility, deletion.
+- [ ] US-72.1: Canvas domain and agent tools (implemented; awaiting confirmation)
+  - [x] Write the ADR (data model, tool contracts, branch rules, sandboxing, exports).
+  - [x] Implement storage, tools and settings; regenerate the client.
+  - [x] Tests: gating, owner isolation, versions, branch visibility, deletion.
 - [ ] US-72.2: Canvas panel
   - [ ] Build the panel, editors, history and "ask about selection".
   - [ ] Unit tests, keyboard/contrast checks and an E2E with a fake provider.

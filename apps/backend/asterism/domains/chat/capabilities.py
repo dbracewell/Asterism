@@ -24,7 +24,7 @@ from asterism.domains.agent.schemas import AgentProfile
 from asterism.domains.agent.skill_inputs import SkillCatalogEntry, SkillIdentity
 from asterism.domains.files.models import UserFileModel
 from asterism.domains.files.queries import select_owned_files
-from asterism.domains.tools.catalog import INTERNAL_TOOL_NAMES, SKILL_TOOL_NAME
+from asterism.domains.tools.catalog import CANVAS_TOOL_NAMES, INTERNAL_TOOL_NAMES, SKILL_TOOL_NAME
 
 from .delegation import eligible_delegation_targets
 
@@ -32,6 +32,10 @@ _TOOL_GRANTS = {
     "sub_agent": [CapabilityGrant.ADMIN_POLICY, CapabilityGrant.MODEL_SUPPORT, CapabilityGrant.PROJECT_SELECTION],
     "search_knowledge": [CapabilityGrant.ADMIN_POLICY, CapabilityGrant.MODEL_SUPPORT, CapabilityGrant.FILE_SCOPE],
     SKILL_TOOL_NAME: [CapabilityGrant.AGENT_ASSIGNMENT, CapabilityGrant.ADMIN_POLICY, CapabilityGrant.MODEL_SUPPORT],
+    **{
+        name: [CapabilityGrant.ADMIN_POLICY, CapabilityGrant.USER_SETTING, CapabilityGrant.MODEL_SUPPORT]
+        for name in CANVAS_TOOL_NAMES
+    },
 }
 _ORDINARY_TOOL_GRANTS = [
     CapabilityGrant.AGENT_ASSIGNMENT,

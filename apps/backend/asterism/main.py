@@ -17,6 +17,7 @@ from asterism.core.exceptions import CodedException
 from asterism.core.lifespan import lifespan
 from asterism.core.schemas import ErrorDetail
 from asterism.domains.agent.router import agents_router
+from asterism.domains.canvas.router import canvas_router
 from asterism.domains.chat.router import chat_router
 from asterism.domains.chatgpt.router import chatgpt_router
 from asterism.domains.classes.router import class_invites_router, classes_router, educator_access_router
@@ -157,6 +158,7 @@ app.include_router(study_router)
 # generic /settings/app/{key} routes.
 app.include_router(knowledge_router)
 app.include_router(skills_router)
+app.include_router(canvas_router)
 app.include_router(learning_router)
 app.include_router(prompt_templates_router)
 app.include_router(rubrics_router)

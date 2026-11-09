@@ -84,6 +84,10 @@ export type ApplicationSettings = {
    * Skills Enabled
    */
   skills_enabled?: boolean;
+  /**
+   * Canvas Enabled
+   */
+  canvas_enabled?: boolean;
   compaction?: CompactionSettings;
   /**
    * Chatgpt Plan Enabled
@@ -187,6 +191,158 @@ export type BundledRubricView = {
 };
 
 /**
+ * CanvasItemHistory
+ *
+ * An item and its versions visible on the chat's active branch, oldest first.
+ */
+export type CanvasItemHistory = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Kind
+   */
+  kind: "document" | "code" | "html";
+  /**
+   * Language
+   */
+  language: string;
+  /**
+   * Versions
+   */
+  versions: Array<CanvasVersionSummary>;
+};
+
+/**
+ * CanvasItemSummary
+ *
+ * An item as it stands on one branch: its current visible version.
+ */
+export type CanvasItemSummary = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Kind
+   */
+  kind: "document" | "code" | "html";
+  /**
+   * Language
+   */
+  language: string;
+  /**
+   * Title
+   */
+  title: string;
+  /**
+   * Version
+   */
+  version: number;
+  /**
+   * Author
+   */
+  author: "agent" | "user";
+  /**
+   * Size
+   *
+   * Current content size in UTF-8 bytes
+   */
+  size: number;
+  /**
+   * Updated At
+   */
+  updated_at: number;
+};
+
+/**
+ * CanvasPolicy
+ */
+export type CanvasPolicy = {
+  /**
+   * Enabled
+   */
+  enabled?: boolean;
+};
+
+/**
+ * CanvasVersion
+ */
+export type CanvasVersion = {
+  /**
+   * Number
+   */
+  number: number;
+  /**
+   * Title
+   */
+  title: string;
+  /**
+   * Author
+   */
+  author: "agent" | "user";
+  /**
+   * Message Id
+   */
+  message_id: string;
+  /**
+   * Size
+   */
+  size: number;
+  /**
+   * Created At
+   */
+  created_at: number;
+  /**
+   * Item Id
+   */
+  item_id: string;
+  /**
+   * Kind
+   */
+  kind: "document" | "code" | "html";
+  /**
+   * Language
+   */
+  language: string;
+  /**
+   * Content
+   */
+  content: string;
+};
+
+/**
+ * CanvasVersionSummary
+ */
+export type CanvasVersionSummary = {
+  /**
+   * Number
+   */
+  number: number;
+  /**
+   * Title
+   */
+  title: string;
+  /**
+   * Author
+   */
+  author: "agent" | "user";
+  /**
+   * Message Id
+   */
+  message_id: string;
+  /**
+   * Size
+   */
+  size: number;
+  /**
+   * Created At
+   */
+  created_at: number;
+};
+
+/**
  * CapabilityApproval
  */
 export type CapabilityApproval = "automatic" | "ask";
@@ -228,7 +384,8 @@ export type CapabilityGrant =
   | "general_selection"
   | "chat_attachment"
   | "chat_selection"
-  | "file_scope";
+  | "file_scope"
+  | "user_setting";
 
 /**
  * CapabilityKind
@@ -9187,6 +9344,14 @@ export type UserSettings = {
    */
   prompt_coach_enabled?: boolean;
   /**
+   * Canvas Enabled
+   */
+  canvas_enabled?: boolean;
+  /**
+   * Canvas Allowed
+   */
+  canvas_allowed?: boolean;
+  /**
    * First Chat Tour
    */
   first_chat_tour?: "completed" | "dismissed" | null;
@@ -9361,6 +9526,10 @@ export type ApplicationSettingsWritable = {
    * Skills Enabled
    */
   skills_enabled?: boolean;
+  /**
+   * Canvas Enabled
+   */
+  canvas_enabled?: boolean;
   compaction?: CompactionSettings;
   /**
    * Chatgpt Plan Enabled
@@ -16582,6 +16751,246 @@ export type SkillUpdateResponses = {
 
 export type SkillUpdateResponse =
   SkillUpdateResponses[keyof SkillUpdateResponses];
+
+export type CanvasPolicyGetData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/settings/app/canvas";
+};
+
+export type CanvasPolicyGetErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Forbidden
+   */
+  403: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+};
+
+export type CanvasPolicyGetError =
+  CanvasPolicyGetErrors[keyof CanvasPolicyGetErrors];
+
+export type CanvasPolicyGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: CanvasPolicy;
+};
+
+export type CanvasPolicyGetResponse =
+  CanvasPolicyGetResponses[keyof CanvasPolicyGetResponses];
+
+export type CanvasPolicyUpdateData = {
+  body: CanvasPolicy;
+  path?: never;
+  query?: never;
+  url: "/settings/app/canvas";
+};
+
+export type CanvasPolicyUpdateErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Forbidden
+   */
+  403: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type CanvasPolicyUpdateError =
+  CanvasPolicyUpdateErrors[keyof CanvasPolicyUpdateErrors];
+
+export type CanvasPolicyUpdateResponses = {
+  /**
+   * Successful Response
+   */
+  200: CanvasPolicy;
+};
+
+export type CanvasPolicyUpdateResponse =
+  CanvasPolicyUpdateResponses[keyof CanvasPolicyUpdateResponses];
+
+export type CanvasItemGetManyData = {
+  body?: never;
+  path: {
+    /**
+     * Chat Id
+     */
+    chat_id: string;
+  };
+  query?: never;
+  url: "/chat/{chat_id}/canvas";
+};
+
+export type CanvasItemGetManyErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Forbidden
+   */
+  403: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type CanvasItemGetManyError =
+  CanvasItemGetManyErrors[keyof CanvasItemGetManyErrors];
+
+export type CanvasItemGetManyResponses = {
+  /**
+   * Response Canvasitemgetmany
+   *
+   * Successful Response
+   */
+  200: Array<CanvasItemSummary>;
+};
+
+export type CanvasItemGetManyResponse =
+  CanvasItemGetManyResponses[keyof CanvasItemGetManyResponses];
+
+export type CanvasItemGetOneData = {
+  body?: never;
+  path: {
+    /**
+     * Chat Id
+     */
+    chat_id: string;
+    /**
+     * Item Id
+     */
+    item_id: string;
+  };
+  query?: never;
+  url: "/chat/{chat_id}/canvas/{item_id}";
+};
+
+export type CanvasItemGetOneErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Forbidden
+   */
+  403: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type CanvasItemGetOneError =
+  CanvasItemGetOneErrors[keyof CanvasItemGetOneErrors];
+
+export type CanvasItemGetOneResponses = {
+  /**
+   * Successful Response
+   */
+  200: CanvasItemHistory;
+};
+
+export type CanvasItemGetOneResponse =
+  CanvasItemGetOneResponses[keyof CanvasItemGetOneResponses];
+
+export type CanvasVersionGetOneData = {
+  body?: never;
+  path: {
+    /**
+     * Chat Id
+     */
+    chat_id: string;
+    /**
+     * Item Id
+     */
+    item_id: string;
+    /**
+     * Number
+     */
+    number: number;
+  };
+  query?: never;
+  url: "/chat/{chat_id}/canvas/{item_id}/versions/{number}";
+};
+
+export type CanvasVersionGetOneErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Forbidden
+   */
+  403: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type CanvasVersionGetOneError =
+  CanvasVersionGetOneErrors[keyof CanvasVersionGetOneErrors];
+
+export type CanvasVersionGetOneResponses = {
+  /**
+   * Successful Response
+   */
+  200: CanvasVersion;
+};
+
+export type CanvasVersionGetOneResponse =
+  CanvasVersionGetOneResponses[keyof CanvasVersionGetOneResponses];
 
 export type LearningModeGetManyData = {
   body?: never;

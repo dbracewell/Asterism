@@ -34,6 +34,7 @@ export const grantLabel: Record<CapabilityGrant, string> = {
   chat_attachment: "Attached in this chat",
   chat_selection: "Active in this chat",
   file_scope: "Files in scope",
+  user_setting: "Turned on in your settings",
 };
 
 export const capabilityGroups: { kind: CapabilityKind; title: string }[] = [

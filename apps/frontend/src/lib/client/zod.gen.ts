@@ -58,6 +58,69 @@ export const zBulkDeleteChatResponse = z.object({
 });
 
 /**
+ * CanvasItemSummary
+ *
+ * An item as it stands on one branch: its current visible version.
+ */
+export const zCanvasItemSummary = z.object({
+  id: z.uuid(),
+  kind: z.enum(["document", "code", "html"]),
+  language: z.string(),
+  title: z.string(),
+  version: z.int(),
+  author: z.enum(["agent", "user"]),
+  size: z.int(),
+  updated_at: z.int(),
+});
+
+/**
+ * CanvasPolicy
+ */
+export const zCanvasPolicy = z.object({
+  enabled: z.boolean().optional().default(false),
+});
+
+/**
+ * CanvasVersion
+ */
+export const zCanvasVersion = z.object({
+  number: z.int(),
+  title: z.string(),
+  author: z.enum(["agent", "user"]),
+  message_id: z.uuid(),
+  size: z.int(),
+  created_at: z.int(),
+  item_id: z.uuid(),
+  kind: z.enum(["document", "code", "html"]),
+  language: z.string(),
+  content: z.string(),
+});
+
+/**
+ * CanvasVersionSummary
+ */
+export const zCanvasVersionSummary = z.object({
+  number: z.int(),
+  title: z.string(),
+  author: z.enum(["agent", "user"]),
+  message_id: z.uuid(),
+  size: z.int(),
+  created_at: z.int(),
+});
+
+/**
+ * CanvasItemHistory
+ *
+ * An item and its versions visible on the chat's active branch, oldest first.
+ */
+export const zCanvasItemHistory = z.object({
+  id: z.uuid(),
+  kind: z.enum(["document", "code", "html"]),
+  language: z.string(),
+  versions: z.array(zCanvasVersionSummary),
+});
+
+/**
  * CapabilityApproval
  */
 export const zCapabilityApproval = z.enum(["automatic", "ask"]);
@@ -76,6 +139,7 @@ export const zCapabilityGrant = z.enum([
   "chat_attachment",
   "chat_selection",
   "file_scope",
+  "user_setting",
 ]);
 
 /**
@@ -2563,6 +2627,7 @@ export const zProvider = z.object({
  */
 export const zApplicationSettings = z.object({
   skills_enabled: z.boolean().optional().default(false),
+  canvas_enabled: z.boolean().optional().default(false),
   compaction: zCompactionSettings.optional(),
   chatgpt_plan_enabled: z.boolean().optional().default(false),
   llm_providers: z.array(zProvider).optional(),
@@ -4619,6 +4684,8 @@ export const zUserSettings = z.object({
   sub_agents: z.record(z.string(), zSubAgentDefinition).optional(),
   show_thinking: z.boolean().optional().default(true),
   prompt_coach_enabled: z.boolean().optional().default(false),
+  canvas_enabled: z.boolean().optional().default(false),
+  canvas_allowed: z.boolean().optional().default(false),
   first_chat_tour: z.enum(["completed", "dismissed"]).nullish(),
   group: zGroupRef.nullish(),
 });
@@ -4820,6 +4887,7 @@ export const zProviderWritable = z.object({
  */
 export const zApplicationSettingsWritable = z.object({
   skills_enabled: z.boolean().optional().default(false),
+  canvas_enabled: z.boolean().optional().default(false),
   compaction: zCompactionSettings.optional(),
   chatgpt_plan_enabled: z.boolean().optional().default(false),
   llm_providers: z.array(zProviderWritable).optional(),
@@ -6446,6 +6514,50 @@ export const zSkillUpdatePath = z.object({
  * Successful Response
  */
 export const zSkillUpdateResponse = zSkill;
+
+/**
+ * Successful Response
+ */
+export const zCanvasPolicyGetResponse = zCanvasPolicy;
+
+export const zCanvasPolicyUpdateBody = zCanvasPolicy;
+
+/**
+ * Successful Response
+ */
+export const zCanvasPolicyUpdateResponse = zCanvasPolicy;
+
+export const zCanvasItemGetManyPath = z.object({
+  chat_id: z.uuid(),
+});
+
+/**
+ * Response Canvasitemgetmany
+ *
+ * Successful Response
+ */
+export const zCanvasItemGetManyResponse = z.array(zCanvasItemSummary);
+
+export const zCanvasItemGetOnePath = z.object({
+  chat_id: z.uuid(),
+  item_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zCanvasItemGetOneResponse = zCanvasItemHistory;
+
+export const zCanvasVersionGetOnePath = z.object({
+  chat_id: z.uuid(),
+  item_id: z.uuid(),
+  number: z.int(),
+});
+
+/**
+ * Successful Response
+ */
+export const zCanvasVersionGetOneResponse = zCanvasVersion;
 
 /**
  * Successful Response

@@ -27,11 +27,18 @@ SKILL_TOOL_NAME = "load_skill"
 #: delegation selections).
 SCOPED_TOOL_NAMES = frozenset({"sub_agent", "search_knowledge"})
 
+#: The main agent's canvas tools (ADR-0063).
+CANVAS_TOOL_NAMES = frozenset({"canvas_create", "canvas_update", "canvas_read"})
+
+#: Internal tools gated by their own admin policy (Skills, Canvas) instead of
+#: the Tools allowlist; they are not listed among admin tools.
+POLICY_GATED_TOOL_NAMES = frozenset({SKILL_TOOL_NAME}) | CANVAS_TOOL_NAMES
+
 #: Internal, context-managed tools. Availability is derived server-side from
 #: live context and admin policy; user payloads cannot grant them.
 #: ``load_skill`` belongs to the calling agent (its assigned skills) and is
 #: gated by the Skills policy instead of the Tools allowlist.
-INTERNAL_TOOL_NAMES = SCOPED_TOOL_NAMES | {SKILL_TOOL_NAME}
+INTERNAL_TOOL_NAMES = SCOPED_TOOL_NAMES | POLICY_GATED_TOOL_NAMES
 
 
 def tool_policy(name: str) -> ToolPolicy:

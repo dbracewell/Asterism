@@ -210,6 +210,9 @@ class UserSettings(BaseModel):
     show_thinking: bool = Field(default=True)
     # US-51.6: the composer's "Review prompt" action is opt-in.
     prompt_coach_enabled: bool = Field(default=False)
+    # Canvas (ADR-0063): the user's opt-in, and whether an admin allows it (read-only).
+    canvas_enabled: bool = Field(default=False)
+    canvas_allowed: bool = Field(default=False)
     first_chat_tour: FirstChatTourState | None = Field(default=None)
     # The user's group (ADR-0058); read-only here, set by administrators.
     group: GroupRef | None = Field(default=None)
@@ -233,6 +236,8 @@ class ApplicationSettings(BaseModel):
     """Aggregate of global application settings (admin view)."""
 
     skills_enabled: StrictBool = False
+    # Canvas writing for everyone (ADR-0063); each user also opts in.
+    canvas_enabled: StrictBool = False
     compaction: CompactionSettings = Field(default_factory=CompactionSettings)
     chatgpt_plan_enabled: StrictBool = False
     llm_providers: list[Provider] = Field(default_factory=list)

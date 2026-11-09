@@ -11,7 +11,13 @@ from asterism.domains.agent.schemas import AgentProfile
 from asterism.domains.agent.service import get_agent_profile
 from asterism.domains.chatgpt.availability import available_user_model
 from asterism.domains.settings.tool_settings import get_tool_settings, user_active_tools
-from asterism.domains.tools.catalog import INTERNAL_TOOL_NAMES, SKILL_TOOL_NAME, configurable_tools
+from asterism.domains.tools.catalog import (
+    CANVAS_TOOL_NAMES,
+    INTERNAL_TOOL_NAMES,
+    POLICY_GATED_TOOL_NAMES,
+    SKILL_TOOL_NAME,
+    configurable_tools,
+)
 from asterism.domains.tools.context import ContextToolScope
 
 from .delegation import eligible_delegation_targets, require_delegation_target, resolve_delegation_scope
@@ -75,6 +81,8 @@ async def resolve_effective_tools(
             raise BadDataException("Invalid tool execution context")
         if model.supports_tools is not True:
             return [], ceiling
+        if not profile.sub_agent and await _offers_canvas(user_id, chat_id, db):
+            names |= CANVAS_TOOL_NAMES
         if files.project_id != ceiling.project_id:
             return sorted(names), ceiling
         if profile.sub_agent:
@@ -99,6 +107,13 @@ async def resolve_effective_tools(
     return sorted(names), ceiling
 
 
+async def _offers_canvas(user_id: str, chat_id: uuid.UUID, session: AsyncSession) -> bool:
+    """The main agent gets canvas tools when the admin and the user both turned canvas on (ADR-0063)."""
+    from asterism.domains.canvas.policy import canvas_available
+
+    return await canvas_available(user_id, chat_id, session)
+
+
 async def _offers_skills(user_id: str, agent_id: uuid.UUID, session: AsyncSession) -> bool:
     """A sub-agent gets load_skill while skills are on and it has an assigned skill (ADR-0062)."""
     from asterism.domains.skills.loading import read_skill_catalog
@@ -118,7 +133,7 @@ async def require_internal_tool(
             model is None
             or not model.is_active
             or model.supports_tools is not True
-            or (name != SKILL_TOOL_NAME and name not in settings.active_tools)
+            or (name not in POLICY_GATED_TOOL_NAMES and name not in settings.active_tools)
         ):
             raise BadDataException("Internal tool authorization was revoked or its context is empty")
         profile = await get_agent_profile(user_id, scope.caller_agent_id, db)
@@ -128,7 +143,11 @@ async def require_internal_tool(
             await require_delegation_target(
                 user_id=user_id, chat_id=chat_id, scope=scope.delegation, target_id=profile.id, session=db
             )
-        if name == SKILL_TOOL_NAME:
+        if name in CANVAS_TOOL_NAMES:
+            # Both switches, the chat's purpose and ownership, read live.
+            if profile.sub_agent or not await _offers_canvas(user_id, chat_id, db):
+                raise BadDataException("Canvas is unavailable in this execution context")
+        elif name == SKILL_TOOL_NAME:
             # The tool rechecks the named skill's assignment; this checks the gate.
             from asterism.domains.skills.policy import read_policy
 

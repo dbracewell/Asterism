@@ -87,6 +87,21 @@ import type {
   AppToolSettingsUpdateData,
   AppToolSettingsUpdateError,
   AppToolSettingsUpdateResponse,
+  CanvasItemGetManyData,
+  CanvasItemGetManyError,
+  CanvasItemGetManyResponse,
+  CanvasItemGetOneData,
+  CanvasItemGetOneError,
+  CanvasItemGetOneResponse,
+  CanvasPolicyGetData,
+  CanvasPolicyGetError,
+  CanvasPolicyGetResponse,
+  CanvasPolicyUpdateData,
+  CanvasPolicyUpdateError,
+  CanvasPolicyUpdateResponse,
+  CanvasVersionGetOneData,
+  CanvasVersionGetOneError,
+  CanvasVersionGetOneResponse,
   ChatAiUseLogCreateData,
   ChatAiUseLogCreateError,
   ChatAiUseLogCreateResponse,
@@ -6299,6 +6314,149 @@ export const skillUpdateMutation = (
   };
   return mutationOptions;
 };
+
+export const canvasPolicyGetQueryKey = (
+  options?: Options<CanvasPolicyGetData>,
+) => createQueryKey("canvasPolicyGet", options);
+
+/**
+ * Get Policy
+ */
+export const canvasPolicyGetOptions = (
+  options?: Options<CanvasPolicyGetData>,
+) =>
+  queryOptions<
+    CanvasPolicyGetResponse,
+    CanvasPolicyGetError,
+    CanvasPolicyGetResponse,
+    ReturnType<typeof canvasPolicyGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry.get().canvasPolicyGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: canvasPolicyGetQueryKey(options),
+  });
+
+/**
+ * Put Policy
+ */
+export const canvasPolicyUpdateMutation = (
+  options?: Partial<Options<CanvasPolicyUpdateData>>,
+): UseMutationOptions<
+  CanvasPolicyUpdateResponse,
+  CanvasPolicyUpdateError,
+  Options<CanvasPolicyUpdateData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    CanvasPolicyUpdateResponse,
+    CanvasPolicyUpdateError,
+    Options<CanvasPolicyUpdateData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().canvasPolicyUpdate({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const canvasItemGetManyQueryKey = (
+  options: Options<CanvasItemGetManyData>,
+) => createQueryKey("canvasItemGetMany", options);
+
+/**
+ * List Items
+ *
+ * Items visible on the chat's active branch, with their current versions.
+ */
+export const canvasItemGetManyOptions = (
+  options: Options<CanvasItemGetManyData>,
+) =>
+  queryOptions<
+    CanvasItemGetManyResponse,
+    CanvasItemGetManyError,
+    CanvasItemGetManyResponse,
+    ReturnType<typeof canvasItemGetManyQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry.get().canvasItemGetMany({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: canvasItemGetManyQueryKey(options),
+  });
+
+export const canvasItemGetOneQueryKey = (
+  options: Options<CanvasItemGetOneData>,
+) => createQueryKey("canvasItemGetOne", options);
+
+/**
+ * Get Item
+ *
+ * The item's versions visible on the chat's active branch.
+ */
+export const canvasItemGetOneOptions = (
+  options: Options<CanvasItemGetOneData>,
+) =>
+  queryOptions<
+    CanvasItemGetOneResponse,
+    CanvasItemGetOneError,
+    CanvasItemGetOneResponse,
+    ReturnType<typeof canvasItemGetOneQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry.get().canvasItemGetOne({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: canvasItemGetOneQueryKey(options),
+  });
+
+export const canvasVersionGetOneQueryKey = (
+  options: Options<CanvasVersionGetOneData>,
+) => createQueryKey("canvasVersionGetOne", options);
+
+/**
+ * Get Version
+ */
+export const canvasVersionGetOneOptions = (
+  options: Options<CanvasVersionGetOneData>,
+) =>
+  queryOptions<
+    CanvasVersionGetOneResponse,
+    CanvasVersionGetOneError,
+    CanvasVersionGetOneResponse,
+    ReturnType<typeof canvasVersionGetOneQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry.get().canvasVersionGetOne({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: canvasVersionGetOneQueryKey(options),
+  });
 
 export const learningModeGetManyQueryKey = (
   options?: Options<LearningModeGetManyData>,

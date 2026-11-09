@@ -87,6 +87,21 @@ import type {
   AppToolSettingsUpdateData,
   AppToolSettingsUpdateErrors,
   AppToolSettingsUpdateResponses,
+  CanvasItemGetManyData,
+  CanvasItemGetManyErrors,
+  CanvasItemGetManyResponses,
+  CanvasItemGetOneData,
+  CanvasItemGetOneErrors,
+  CanvasItemGetOneResponses,
+  CanvasPolicyGetData,
+  CanvasPolicyGetErrors,
+  CanvasPolicyGetResponses,
+  CanvasPolicyUpdateData,
+  CanvasPolicyUpdateErrors,
+  CanvasPolicyUpdateResponses,
+  CanvasVersionGetOneData,
+  CanvasVersionGetOneErrors,
+  CanvasVersionGetOneResponses,
   ChatAiUseLogCreateData,
   ChatAiUseLogCreateErrors,
   ChatAiUseLogCreateResponses,
@@ -4468,6 +4483,119 @@ export class ApiClient extends HeyApiClient {
         "Content-Type": "application/json",
         ...options.headers,
       },
+    });
+  }
+
+  /**
+   * Get Policy
+   */
+  public canvasPolicyGet<ThrowOnError extends boolean = false>(
+    options?: Options<CanvasPolicyGetData, ThrowOnError>,
+  ): RequestResult<
+    CanvasPolicyGetResponses,
+    CanvasPolicyGetErrors,
+    ThrowOnError
+  > {
+    return (options?.client ?? this.client).get<
+      CanvasPolicyGetResponses,
+      CanvasPolicyGetErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/settings/app/canvas",
+      ...options,
+    });
+  }
+
+  /**
+   * Put Policy
+   */
+  public canvasPolicyUpdate<ThrowOnError extends boolean = false>(
+    options: Options<CanvasPolicyUpdateData, ThrowOnError>,
+  ): RequestResult<
+    CanvasPolicyUpdateResponses,
+    CanvasPolicyUpdateErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).put<
+      CanvasPolicyUpdateResponses,
+      CanvasPolicyUpdateErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/settings/app/canvas",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+  }
+
+  /**
+   * List Items
+   *
+   * Items visible on the chat's active branch, with their current versions.
+   */
+  public canvasItemGetMany<ThrowOnError extends boolean = false>(
+    options: Options<CanvasItemGetManyData, ThrowOnError>,
+  ): RequestResult<
+    CanvasItemGetManyResponses,
+    CanvasItemGetManyErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).get<
+      CanvasItemGetManyResponses,
+      CanvasItemGetManyErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/chat/{chat_id}/canvas",
+      ...options,
+    });
+  }
+
+  /**
+   * Get Item
+   *
+   * The item's versions visible on the chat's active branch.
+   */
+  public canvasItemGetOne<ThrowOnError extends boolean = false>(
+    options: Options<CanvasItemGetOneData, ThrowOnError>,
+  ): RequestResult<
+    CanvasItemGetOneResponses,
+    CanvasItemGetOneErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).get<
+      CanvasItemGetOneResponses,
+      CanvasItemGetOneErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/chat/{chat_id}/canvas/{item_id}",
+      ...options,
+    });
+  }
+
+  /**
+   * Get Version
+   */
+  public canvasVersionGetOne<ThrowOnError extends boolean = false>(
+    options: Options<CanvasVersionGetOneData, ThrowOnError>,
+  ): RequestResult<
+    CanvasVersionGetOneResponses,
+    CanvasVersionGetOneErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).get<
+      CanvasVersionGetOneResponses,
+      CanvasVersionGetOneErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/chat/{chat_id}/canvas/{item_id}/versions/{number}",
+      ...options,
     });
   }
 

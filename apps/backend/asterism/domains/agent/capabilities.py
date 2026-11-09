@@ -39,6 +39,8 @@ class CapabilityGrant(StrEnum):
     """Activated for the chat in the composer."""
     FILE_SCOPE = "file_scope"
     """At least one file was in scope for the run."""
+    USER_SETTING = "user_setting"
+    """Turned on in the user's own settings (canvas, ADR-0063)."""
 
 
 class CapabilityApproval(StrEnum):
