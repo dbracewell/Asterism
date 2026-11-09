@@ -38,7 +38,7 @@ Source: user request (2026-11-08). Suggested order: EPIC-74 → 67 → 70 → 68
 
 ### [EPIC-72: Canvas](docs/epics/EPIC-72-CANVAS.md)
 
-- [ ] US-72.1: Canvas domain and agent tools (done)
+- [x] US-72.1: Canvas domain and agent tools
   - [x] Write the ADR (data model, tool contracts, branch rules, sandboxing, exports).
   - [x] Implement storage, tools and settings; regenerate the client.
   - [x] Tests: gating, owner isolation, versions, branch visibility, deletion.
