@@ -1,6 +1,6 @@
 # EPIC-71: Model-written skills
 
-Status: in progress (US-71.1). Source: user request (2026-11-08).
+Status: in progress (US-71.1 done; US-71.2 next). Source: user request (2026-11-08).
 
 ## Objective
 
