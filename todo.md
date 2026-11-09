@@ -49,9 +49,9 @@ Source: user request (2026-11-09). Comes before EPIC-72.
 - [x] US-75.3: Skills for sub-agents (backend)
   - [x] ADR (catalog layer, `load_skill`, recording, main-agent decision); schema and assignment API for sub-agents.
   - [x] Catalog layer and `load_skill` tool; tests for scope, live eligibility, policy, recording and capability isolation.
-- [ ] US-75.4: Skills for sub-agents (UI)
-  - [ ] Sub-agent skills picker; skill loads in run graph and delegation details; approving requested sub-agent skills in pack import review.
-  - [ ] Help; unit tests; E2E from assigning a skill to a sub-agent to seeing its load in a delegated run.
+- [ ] US-75.4: Skills for sub-agents (UI) (implemented; awaiting confirmation)
+  - [x] Sub-agent skills picker; skill loads in run graph and delegation details; approving requested sub-agent skills in pack import review.
+  - [x] Help; unit tests; E2E from assigning a skill to a sub-agent to seeing its load in a delegated run.
 
 ### [EPIC-72: Canvas](docs/epics/EPIC-72-CANVAS.md)
 

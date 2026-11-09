@@ -9,6 +9,10 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { useDelegationAnnouncements } from "@/features/chat/hooks/use-delegation-announcements";
+import {
+  skillLoadLabel,
+  toolResultStatus,
+} from "@/features/chat/lib/agent-timeline";
 import { SubAgentActivity } from "@/features/chat/types";
 import { cn } from "@/lib/utils";
 import {
@@ -102,19 +106,35 @@ export const SubAgentActivityPanel = ({
 
             {activity.toolCalls.length > 0 && (
               <div className="mt-2" aria-label="Sub-agent tools">
-                {activity.toolCalls.map((toolCall) => (
-                  <div
-                    key={toolCall.id}
-                    className="text-muted-foreground flex items-start gap-1"
-                  >
-                    <WrenchIcon className="mt-0.5 size-3 shrink-0" />
-                    <span>
-                      {toolCall.function.name}
-                      {toolCall.function.arguments !== "{}" &&
-                        ` ${toolCall.function.arguments}`}
-                    </span>
-                  </div>
-                ))}
+                {activity.toolCalls.map((toolCall) => {
+                  const result = activity.toolResults.find(
+                    (item) => item.tool_call.id === toolCall.id,
+                  );
+                  const label = skillLoadLabel(
+                    toolCall.function.name,
+                    toolCall.function.arguments,
+                    result
+                      ? toolResultStatus(result)
+                      : activity.status === "running"
+                        ? "running"
+                        : "empty",
+                    result?.content,
+                  );
+                  return (
+                    <div
+                      key={toolCall.id}
+                      className="text-muted-foreground flex items-start gap-1"
+                    >
+                      <WrenchIcon className="mt-0.5 size-3 shrink-0" />
+                      <span className="min-w-0 [overflow-wrap:anywhere]">
+                        {label ?? toolCall.function.name}
+                        {!label &&
+                          toolCall.function.arguments !== "{}" &&
+                          ` ${toolCall.function.arguments}`}
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
             )}
 

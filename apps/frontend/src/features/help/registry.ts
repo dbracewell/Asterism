@@ -152,6 +152,7 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
       "Delegation also needs the chat's model to support tools, the sub-agent's fixed model to be available and an administrator to allow sub-agents. In a General chat, the status ring beside the send button shows whether delegation is available.",
       "If you change your choices while a reply is running, the next hand-off in that reply is refused; send a new message to use the new choices.",
       "A sub-agent can use the same files as the chat or fewer, never more. Its work appears in the chat so you can see what it did.",
+      "A sub-agent can have its own skills. It loads one when it fits the task, without /, and never gets your main agent's skills or the chat's active skills.",
     ],
     related: [
       "concept.main-agent",
@@ -168,6 +169,7 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
     details: [
       "Type / in the message box to find a skill. Active skills appear as chips above the box, where you can reorder or remove them.",
       "You create skills in User Settings → Skills, either by writing one or by describing it to your main agent. A skill must be assigned to your main agent before you can use it: turn on Assigned to main agent beside the skill on that page, or use Manage main-agent skills under Agents. An administrator also has to turn skills on.",
+      "Sub-agents use skills differently: you choose a sub-agent's skills in its editor, and it sees their names and descriptions and loads one on its own when it fits the task. It doesn't use /. The run graph shows each load as \"Loaded skill\" and the skill's name.",
       "A skill only adds instructions. It doesn't give the assistant tools or access to files.",
     ],
     related: [
@@ -633,7 +635,7 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
       "A file that shares a setup: sub-agents, skills, templates, rubrics and project settings. It never holds files, keys or provider details.",
     details: [
       "Export team pack is in a project's Settings tab. Models are saved as requirements, and instructions are included as written, so read them before you share.",
-      "Import team pack on the Projects page shows everything a pack asks for first. You choose what to include and a model for each sub-agent, approve each tool, and nothing is created until you confirm. Starter packs go through the same review.",
+      "Import team pack on the Projects page shows everything a pack asks for first. You choose what to include and a model for each sub-agent, approve each tool and each skill a sub-agent asks to load, and nothing is created until you confirm. Starter packs go through the same review.",
       "A pack's instructions shape how your agents behave, but they can't grant tools: you approve those yourself.",
     ],
     related: [

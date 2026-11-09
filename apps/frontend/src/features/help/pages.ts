@@ -801,12 +801,13 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
       {
         name: "Sub-agents",
         description:
-          "Helpers with their own instructions and a fixed model. Choose a sub-agent for General chats, or select it in a project, before chats can use it.",
+          "Helpers with their own instructions, a fixed model, tools and skills. Choose a sub-agent for General chats, or select it in a project, before chats can use it. A sub-agent loads its skills on its own when one fits its task.",
       },
     ],
     tasks: [
       "Assign your skills to the main agent so they appear in chats.",
       "Create a sub-agent, then choose it under General chat sub-agents or select it in a project's Sub-agents tab.",
+      "Give a sub-agent skills in its editor, under Skills. Its model needs to support tools to load them.",
     ],
     terms: [
       "concept.main-agent",

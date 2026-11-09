@@ -123,7 +123,8 @@ const ThinkingStepItem = ({
 };
 
 const ToolStepItem = ({ step }: { step: ToolStep }) => {
-  const summary = summarizeArguments(step.arguments);
+  // A labelled step already says what its arguments were.
+  const summary = step.label ? "" : summarizeArguments(step.arguments);
   const status = STATUS_LABEL[step.status];
   return (
     <Collapsible className="group/step min-w-0" data-status={step.status}>
@@ -134,7 +135,7 @@ const ToolStepItem = ({ step }: { step: ToolStep }) => {
         />
         <StatusIcon status={step.status} />
         <span className="text-foreground min-w-0 font-medium [overflow-wrap:anywhere]">
-          {step.name}
+          {step.label ?? step.name}
         </span>
         {summary && (
           <span className="min-w-0 flex-1 basis-24 truncate font-mono text-xs">
@@ -169,7 +170,7 @@ const ToolStepItem = ({ step }: { step: ToolStep }) => {
 export function timelineSummary(steps: AgentTimelineStep[]): string {
   const tools = steps.filter((step) => step.kind === "tool");
   const running = tools.find((step) => step.status === "running");
-  if (running) return `Running ${running.name}`;
+  if (running) return running.label ?? `Running ${running.name}`;
   const failed = tools.filter((step) => step.status === "failed").length;
   return [
     steps.some((step) => step.kind === "thinking") && "Thinking",

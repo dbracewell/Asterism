@@ -46,7 +46,12 @@ const REQUIREMENT_LABELS = {
 };
 
 type ItemChoice = { include: boolean; name: string };
-type AgentChoice = ItemChoice & { modelId: string; tools: string[] };
+type AgentChoice = ItemChoice & {
+  modelId: string;
+  tools: string[];
+  /** Keys of requested pack skills this sub-agent may load (US-75.4). */
+  skills: string[];
+};
 type SkillChoice = ItemChoice & { assign: boolean };
 type Choices<T> = Record<string, T>;
 
@@ -246,9 +251,72 @@ function ToolApprovals({
   );
 }
 
-function needsToolModel(agent: PackSubAgentReview, choice: AgentChoice) {
+function SkillApprovals({
+  agent,
+  choice,
+  skills,
+  included,
+  allowed,
+  onChange,
+}: {
+  agent: PackSubAgentReview;
+  choice: AgentChoice;
+  /** Pack skill names by key. */
+  skills: Map<string, string>;
+  /** Whether each pack skill is being imported. */
+  included: (key: string) => boolean;
+  /** The Skills policy is on here. */
+  allowed: boolean;
+  onChange: (change: Partial<AgentChoice>) => void;
+}) {
+  const prefix = useId();
+  const requested = agent.requested_skills ?? [];
+  if (requested.length === 0) return null;
   return (
-    choice.tools.length > 0 &&
+    <FieldGroup className="gap-2">
+      <p className="text-sm font-medium">Requested skills</p>
+      <p className="text-muted-foreground text-sm">
+        {agent.name} would see each skill&apos;s name and description and load
+        one when it fits the task.
+      </p>
+      {requested.map((key) => {
+        const name = skills.get(key) ?? key;
+        const importing = included(key);
+        return (
+          <div key={key} className="flex items-center gap-2 text-sm">
+            <Checkbox
+              id={`${prefix}-${key}`}
+              disabled={!allowed || !importing}
+              checked={importing && choice.skills.includes(key)}
+              onCheckedChange={(checked) =>
+                onChange({
+                  skills:
+                    checked === true
+                      ? [...choice.skills, key]
+                      : choice.skills.filter((item) => item !== key),
+                })
+              }
+            />
+            <label htmlFor={`${prefix}-${key}`} className="wrap-anywhere">
+              Let it load {name}
+              {!allowed
+                ? " (skills are turned off by your administrator)"
+                : !importing && " (import this skill to allow it)"}
+            </label>
+          </div>
+        );
+      })}
+    </FieldGroup>
+  );
+}
+
+function needsToolModel(
+  agent: PackSubAgentReview,
+  choice: AgentChoice,
+  approvedSkills: string[],
+) {
+  return (
+    (choice.tools.length > 0 || approvedSkills.length > 0) &&
     agent.model_options
       .find((option) => option.id === choice.modelId)
       ?.unmet_requirements.includes("tools") === true
@@ -277,6 +345,7 @@ function PackReviewForm({
     initialChoices(review.sub_agents, {
       modelId: "",
       tools: [] as string[],
+      skills: [] as string[],
     }),
   );
   const [skills, setSkills] = useState<Choices<SkillChoice>>(() =>
@@ -297,6 +366,17 @@ function PackReviewForm({
     onSuccess: onImported,
   });
 
+  const skillsAllowed = review.skills.every(
+    (skill) => skill.assignment_allowed,
+  );
+  const skillNames = new Map(
+    review.skills.map((skill) => [skill.key, skill.name]),
+  );
+  // Only skills that are imported too, while skills are on, can be approved.
+  const approvedSkills = (key: string) =>
+    skillsAllowed
+      ? agents[key].skills.filter((skill) => skills[skill]?.include)
+      : [];
   const count =
     [agents, skills, templates, rubrics]
       .flatMap((choices) => Object.values(choices))
@@ -320,7 +400,7 @@ function PackReviewForm({
       const choice = agents[agent.key];
       if (!choice.include) return [];
       if (!choice.modelId) return [`Choose a model for ${agent.name}`];
-      return needsToolModel(agent, choice)
+      return needsToolModel(agent, choice, approvedSkills(agent.key))
         ? [`Choose a tool-capable model for ${agent.name}`]
         : [];
     }),
@@ -346,6 +426,7 @@ function PackReviewForm({
         ...decision(key, agents[key]),
         model_id: agents[key].include ? agents[key].modelId : null,
         approved_tools: agents[key].include ? agents[key].tools : [],
+        approved_skills: agents[key].include ? approvedSkills(key) : [],
       })),
       skills: review.skills.map(({ key }) => ({
         ...decision(key, skills[key]),
@@ -433,10 +514,22 @@ function PackReviewForm({
                 choice={agents[agent.key]}
                 onChange={(change) => updateAgent(agent.key, change)}
               />
-              {needsToolModel(agent, agents[agent.key]) && (
+              <SkillApprovals
+                agent={agent}
+                choice={agents[agent.key]}
+                skills={skillNames}
+                included={(key) => !!skills[key]?.include}
+                allowed={skillsAllowed}
+                onChange={(change) => updateAgent(agent.key, change)}
+              />
+              {needsToolModel(
+                agent,
+                agents[agent.key],
+                approvedSkills(agent.key),
+              ) && (
                 <p role="alert" className="text-destructive text-sm">
-                  Choose a model that supports tools, or remove the tools you
-                  allowed.
+                  Choose a model that supports tools, or remove the tools and
+                  skills you allowed.
                 </p>
               )}
             </ItemCard>

@@ -37,9 +37,13 @@ import {
   chatModelsListOptions,
   mainAgentUpdateMutation,
   subAgentCreateMutation,
+  subAgentSkillsUpdateMutation,
   subAgentUpdateMutation,
   toolsGetActiveOptions,
 } from "@/lib/client/@tanstack/react-query.gen";
+import { useUser } from "@/features/auth/components/user-context";
+import { SubAgentSkillsPicker } from "@/features/skills/components/sub-agent-skills-picker";
+import { subAgentSkillsOptions } from "@/features/skills/queries";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { PencilIcon, PlusIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -166,10 +170,18 @@ function ConfigurationForm({
   const mainMutation = useMutation(mainAgentUpdateMutation({ client }));
   const createMutation = useMutation(subAgentCreateMutation({ client }));
   const updateMutation = useMutation(subAgentUpdateMutation({ client }));
+  const skillsMutation = useMutation(subAgentSkillsUpdateMutation({ client }));
+  const owner = useUser().id;
+  // US-75.4: a sub-agent's own skills, saved after its definition.
+  const editedId = subAgent && configuration ? configuration.id : null;
+  const assignedSkills = useQuery(subAgentSkillsOptions(owner, editedId));
+  const [skillDraft, setSkillDraft] = useState<string[] | null>(null);
+  const skillIds = skillDraft ?? assignedSkills.data?.skill_ids ?? [];
   const pending =
     mainMutation.isPending ||
     createMutation.isPending ||
-    updateMutation.isPending;
+    updateMutation.isPending ||
+    skillsMutation.isPending;
   const modelQuery = useQuery({
     ...chatModelsListOptions({ client }),
     enabled: subAgent,
@@ -242,12 +254,31 @@ function ConfigurationForm({
           description,
           model_id: modelId,
         };
-        if (configuration)
-          await updateMutation.mutateAsync({
-            path: { agent_id: configuration.id },
-            body: subBody,
-          });
-        else await createMutation.mutateAsync({ body: subBody });
+        const saved = configuration
+          ? await updateMutation.mutateAsync({
+              path: { agent_id: configuration.id },
+              body: subBody,
+            })
+          : await createMutation.mutateAsync({ body: subBody });
+        if (skillDraft !== null) {
+          try {
+            // Saving the definition moved its revision; the skills follow it.
+            await skillsMutation.mutateAsync({
+              path: { agent_id: saved.id },
+              body: {
+                skill_ids: skillDraft,
+                expected_revision: saved.config_revision ?? 1,
+              },
+            });
+          } catch {
+            toast.error(
+              "The sub-agent was saved, but its skills were not. Open it again to choose them.",
+            );
+            router.refresh();
+            complete();
+            return;
+          }
+        }
       } else await mainMutation.mutateAsync({ body });
       toast.success("Configuration saved");
       router.refresh();
@@ -476,6 +507,21 @@ function ConfigurationForm({
                   </Label>
                 ))}
             </FieldSet>
+            {subAgent && (
+              <SubAgentSkillsPicker
+                owner={owner}
+                selected={skillIds}
+                onChange={setSkillDraft}
+                loading={editedId !== null && assignedSkills.isPending}
+                error={assignedSkills.error}
+                retry={() => void assignedSkills.refetch()}
+                retrying={assignedSkills.isFetching}
+                modelSupportsTools={
+                  available.find((model) => model.id === modelId)
+                    ?.supports_tools ?? undefined
+                }
+              />
+            )}
           </FieldGroup>
         </FieldSet>
         {saveError && (

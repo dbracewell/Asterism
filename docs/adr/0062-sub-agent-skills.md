@@ -1,6 +1,6 @@
 # ADR-0062 — Sub-agents load their own skills with `load_skill`
 
-Status: accepted; backend in US-75.3 on 2026-11-09
+Status: accepted; backend in US-75.3 and UI in US-75.4 on 2026-11-09
 ([EPIC-75](../epics/EPIC-75-SKILLS-FOLLOW-UPS.md)).
 
 ## Context
