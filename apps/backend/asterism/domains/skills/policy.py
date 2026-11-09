@@ -2,6 +2,7 @@
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from asterism.core.exceptions import ForbiddenException
 from asterism.domains.settings.models import ApplicationSettingsModel
 from asterism.domains.settings.service import upsert_app_setting
 
@@ -17,3 +18,9 @@ async def read_policy(session: AsyncSession) -> SkillPolicy:
 async def write_policy(payload: SkillPolicy, session: AsyncSession) -> SkillPolicy:
     await upsert_app_setting("skills_enabled", payload.enabled, session=session)
     return await read_policy(session)
+
+
+async def require_drafting_enabled(session: AsyncSession) -> None:
+    """Skill drafting (ADR-0061) follows the same policy as skill activation."""
+    if not (await read_policy(session)).enabled:
+        raise ForbiddenException("Skills are turned off by an administrator")

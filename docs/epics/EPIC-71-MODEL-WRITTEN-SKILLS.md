@@ -1,6 +1,6 @@
 # EPIC-71: Model-written skills
 
-Status: proposed. Source: user request (2026-11-08).
+Status: in progress (US-71.1). Source: user request (2026-11-08).
 
 ## Objective
 
@@ -38,8 +38,8 @@ name, description and body that pass skill validation. The user can send
 follow-up instructions to revise the draft. Cancelling stops the run. Nothing
 is persisted as a skill until saved.
 
-- [ ] Decide in an ADR whether drafting reuses a hidden chat (for streaming, replay and inspection) or a new run type; prefer reuse.
-- [ ] Implement the writing prompt, output schema and validation; tests for validation, revisions, delegation scope and policy gating.
+- [x] Decide in an ADR whether drafting reuses a hidden chat (for streaming, replay and inspection) or a new run type; prefer reuse.
+- [x] Implement the writing prompt, output schema and validation; tests for validation, revisions, delegation scope and policy gating.
 
 ## US-71.2: "Describe it" in the skill editor
 

@@ -1,6 +1,7 @@
 """Editing and discovery contracts; client payloads never supply derived metadata."""
 
 import uuid
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, StrictBool
 
@@ -59,3 +60,29 @@ class SkillPolicy(BaseModel):
 class EligibleSkillsPage(SkillPage):
     policy_enabled: bool
     agent_revision: int
+
+
+class SkillDraftStart(BaseModel):
+    """Starts a drafting run (ADR-0061); streaming and revisions use the chat API."""
+
+    model_config = ConfigDict(extra="forbid")
+    request_id: uuid.UUID
+    model_id: uuid.UUID
+    persona_id: uuid.UUID | None = None
+    description: str = Field(min_length=1, max_length=4000)
+    examples: str | None = Field(default=None, max_length=8000)
+
+
+SkillDraftStatus = Literal["none", "pending", "ready", "invalid"]
+
+
+class SkillDraft(BaseModel):
+    """The draft in a drafting chat's latest reply. Never a saved skill."""
+
+    chat_id: uuid.UUID
+    status: SkillDraftStatus
+    message_id: uuid.UUID | None = None
+    content: str | None = None
+    name: str | None = None
+    description: str | None = None
+    error: str | None = None

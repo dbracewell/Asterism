@@ -90,6 +90,9 @@ fixed models and receive the same or narrower execution file scope.
   eligibility on execution/replay. The chat composer provides explicit slash
   discovery, persistent active chips, removal/reorder/refresh and message provenance.
   Admin Settings → Skills manages the global activation policy.
+  A user can have their main agent draft a SKILL.md in a hidden drafting chat
+  ([ADR-0061](docs/adr/0061-skill-drafting-runs.md)); the draft is only a
+  suggestion until saved through normal skill create.
 - **Admin** can add, update, enable/disable:
   - Tools
   - MCP servers

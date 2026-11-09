@@ -720,6 +720,10 @@ export type ChatInfo = {
    * Learning Mode Locked
    */
   learning_mode_locked?: boolean;
+  /**
+   * Purpose
+   */
+  purpose?: "conversation" | "skill_draft";
   hint_level?: HintLevel;
   /**
    * Selected Model Id
@@ -1484,6 +1488,7 @@ export type ContextLayer = {
     | "agent"
     | "profile"
     | "mode"
+    | "task"
     | "project"
     | "skills"
     | "runtime";
@@ -1519,6 +1524,7 @@ export type ContextLayerText = {
     | "agent"
     | "profile"
     | "mode"
+    | "task"
     | "project"
     | "skills"
     | "runtime";
@@ -5498,6 +5504,7 @@ export type PromptSource = {
     | "agent"
     | "profile"
     | "mode"
+    | "task"
     | "project"
     | "skills"
     | "runtime";
@@ -6585,6 +6592,70 @@ export type SkillCreate = {
    * Content
    */
   content: string;
+};
+
+/**
+ * SkillDraft
+ *
+ * The draft in a drafting chat's latest reply. Never a saved skill.
+ */
+export type SkillDraft = {
+  /**
+   * Chat Id
+   */
+  chat_id: string;
+  /**
+   * Status
+   */
+  status: "none" | "pending" | "ready" | "invalid";
+  /**
+   * Message Id
+   */
+  message_id?: string | null;
+  /**
+   * Content
+   */
+  content?: string | null;
+  /**
+   * Name
+   */
+  name?: string | null;
+  /**
+   * Description
+   */
+  description?: string | null;
+  /**
+   * Error
+   */
+  error?: string | null;
+};
+
+/**
+ * SkillDraftStart
+ *
+ * Starts a drafting run (ADR-0061); streaming and revisions use the chat API.
+ */
+export type SkillDraftStart = {
+  /**
+   * Request Id
+   */
+  request_id: string;
+  /**
+   * Model Id
+   */
+  model_id: string;
+  /**
+   * Persona Id
+   */
+  persona_id?: string | null;
+  /**
+   * Description
+   */
+  description: string;
+  /**
+   * Examples
+   */
+  examples?: string | null;
 };
 
 /**
@@ -15784,6 +15855,10 @@ export type SkillsPolicyGetErrors = {
    */
   401: ErrorDetail;
   /**
+   * Forbidden
+   */
+  403: ErrorDetail;
+  /**
    * Not Found
    */
   404: ErrorDetail;
@@ -15822,6 +15897,10 @@ export type SkillsPolicyUpdateErrors = {
    * Unauthorized
    */
   401: ErrorDetail;
+  /**
+   * Forbidden
+   */
+  403: ErrorDetail;
   /**
    * Not Found
    */
@@ -15866,6 +15945,10 @@ export type MainAgentSkillsGetErrors = {
    */
   401: ErrorDetail;
   /**
+   * Forbidden
+   */
+  403: ErrorDetail;
+  /**
    * Not Found
    */
   404: ErrorDetail;
@@ -15904,6 +15987,10 @@ export type MainAgentSkillsUpdateErrors = {
    * Unauthorized
    */
   401: ErrorDetail;
+  /**
+   * Forbidden
+   */
+  403: ErrorDetail;
   /**
    * Not Found
    */
@@ -15961,6 +16048,10 @@ export type SkillEligibleGetManyErrors = {
    */
   401: ErrorDetail;
   /**
+   * Forbidden
+   */
+  403: ErrorDetail;
+  /**
    * Not Found
    */
   404: ErrorDetail;
@@ -15986,6 +16077,105 @@ export type SkillEligibleGetManyResponses = {
 
 export type SkillEligibleGetManyResponse =
   SkillEligibleGetManyResponses[keyof SkillEligibleGetManyResponses];
+
+export type SkillDraftCreateData = {
+  body: SkillDraftStart;
+  path?: never;
+  query?: never;
+  url: "/skills/drafts";
+};
+
+export type SkillDraftCreateErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Forbidden
+   */
+  403: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type SkillDraftCreateError =
+  SkillDraftCreateErrors[keyof SkillDraftCreateErrors];
+
+export type SkillDraftCreateResponses = {
+  /**
+   * Successful Response
+   */
+  201: Chat;
+};
+
+export type SkillDraftCreateResponse =
+  SkillDraftCreateResponses[keyof SkillDraftCreateResponses];
+
+export type SkillDraftGetOneData = {
+  body?: never;
+  path: {
+    /**
+     * Chat Id
+     */
+    chat_id: string;
+  };
+  query?: never;
+  url: "/skills/drafts/{chat_id}";
+};
+
+export type SkillDraftGetOneErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Forbidden
+   */
+  403: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type SkillDraftGetOneError =
+  SkillDraftGetOneErrors[keyof SkillDraftGetOneErrors];
+
+export type SkillDraftGetOneResponses = {
+  /**
+   * Successful Response
+   */
+  200: SkillDraft;
+};
+
+export type SkillDraftGetOneResponse =
+  SkillDraftGetOneResponses[keyof SkillDraftGetOneResponses];
 
 export type SkillGetManyData = {
   body?: never;
@@ -16016,6 +16206,10 @@ export type SkillGetManyErrors = {
    * Unauthorized
    */
   401: ErrorDetail;
+  /**
+   * Forbidden
+   */
+  403: ErrorDetail;
   /**
    * Not Found
    */
@@ -16058,6 +16252,10 @@ export type SkillCreateErrors = {
    * Unauthorized
    */
   401: ErrorDetail;
+  /**
+   * Forbidden
+   */
+  403: ErrorDetail;
   /**
    * Not Found
    */
@@ -16111,6 +16309,10 @@ export type SkillDeleteErrors = {
    */
   401: ErrorDetail;
   /**
+   * Forbidden
+   */
+  403: ErrorDetail;
+  /**
    * Not Found
    */
   404: ErrorDetail;
@@ -16158,6 +16360,10 @@ export type SkillGetOneErrors = {
    */
   401: ErrorDetail;
   /**
+   * Forbidden
+   */
+  403: ErrorDetail;
+  /**
    * Not Found
    */
   404: ErrorDetail;
@@ -16204,6 +16410,10 @@ export type SkillUpdateErrors = {
    * Unauthorized
    */
   401: ErrorDetail;
+  /**
+   * Forbidden
+   */
+  403: ErrorDetail;
   /**
    * Not Found
    */

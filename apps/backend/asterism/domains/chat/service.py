@@ -21,7 +21,7 @@ from .models import (
     ChatModel,
     MessageModel,
 )
-from .queries import select_owned_chats, select_owned_messages
+from .queries import select_conversations, select_owned_chats, select_owned_messages
 from .schemas import (
     BulkDeleteChatResponse,
     Chat,
@@ -329,7 +329,7 @@ async def get_many(
             from asterism.domains.projects.scope import require_owned_project
 
             await require_owned_project(user_id=user_id, project_id=project_id, session=session)
-        statement = select_owned_chats(user_id=user_id).where(ChatModel.project_id == project_id)
+        statement = select_conversations(user_id=user_id).where(ChatModel.project_id == project_id)
         result = await paginate_select(statement=statement, session=session, page=page, page_size=page_size)
         return ChatInfoList(
             chats=[ChatInfo.model_validate(chat) for chat in result.records],

@@ -156,7 +156,9 @@ expanding capabilities. No memory store is activated. See
 A chat stores its current learning-mode selection and revision. Each accepted user
 turn pins a snapshot of the selected server-owned mode: ID, name, version and
 instruction text. Composition order is
-`platform → agent → profile → mode → project → skills → runtime`. A first run uses
+`platform → agent → profile → mode → task → project → skills → runtime`. The
+`task` layer is server-owned text for a special-purpose chat, today only skill
+drafting ([ADR-0061](../adr/0061-skill-drafting-runs.md)). A first run uses
 the pinned snapshot; resume reuses the recorded prompt; regeneration captures the
 current selection. The mode ID must still be in the catalog when a run starts or
 resumes. Execution provenance records the mode's ID, name and version, never its

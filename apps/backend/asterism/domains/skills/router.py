@@ -7,9 +7,10 @@ from fastapi import APIRouter, Query, Response
 from asterism.common.log import get_logger
 from asterism.core.schemas import ErrorDetail
 from asterism.db.dependencies import DBSessionDep
+from asterism.domains.chat.schemas import Chat
 from asterism.domains.user.dependencies import AdminUserDep, AuthedUserDep
 
-from . import assignments, policy, service
+from . import assignments, drafting, policy, service
 from .schemas import (
     MAX_REVISION,
     EligibleSkillsPage,
@@ -17,6 +18,8 @@ from .schemas import (
     SkillAssignments,
     SkillAssignmentUpdate,
     SkillCreate,
+    SkillDraft,
+    SkillDraftStart,
     SkillPage,
     SkillPolicy,
     SkillUpdate,
@@ -27,6 +30,7 @@ skills_router = APIRouter(
     responses={
         400: {"model": ErrorDetail},
         401: {"model": ErrorDetail},
+        403: {"model": ErrorDetail},
         404: {"model": ErrorDetail},
         409: {"model": ErrorDetail},
     },
@@ -68,6 +72,18 @@ async def eligible(
     page_size: int = Query(default=10, ge=1, le=100),
 ) -> EligibleSkillsPage:
     return await assignments.list_eligible_skills(user.id, session, query=query, page=page, page_size=page_size)
+
+
+@skills_router.post("/skills/drafts", operation_id="skillDraftCreate", response_model=Chat, status_code=201)
+async def start_draft(payload: SkillDraftStart, user: AuthedUserDep, session: DBSessionDep) -> Chat:
+    """Start a drafting run (ADR-0061). Stream, cancel and revise it through the chat API."""
+    return await drafting.start_draft(user.id, payload, session)
+
+
+@skills_router.get("/skills/drafts/{chat_id}", operation_id="skillDraftGetOne")
+async def read_draft(chat_id: uuid.UUID, user: AuthedUserDep, session: DBSessionDep) -> SkillDraft:
+    """The validated draft in the run's latest reply. Saving uses skillCreate."""
+    return await drafting.read_draft(user.id, chat_id, session)
 
 
 @skills_router.get("/skills/", operation_id="skillGetMany")
