@@ -83,3 +83,15 @@ the next began. See ADR-0060 (automatic context compaction).
 - [x] US-69.2: Compaction in the chat UI and settings (confirmed and merged 2026-11-08)
   - [x] Stream compaction events; add the divider, meter action and admin settings; regenerate the client.
   - [x] Help and glossary; unit tests and an E2E with a small fake context window.
+
+The user confirmed US-73.2 completion on 2026-11-08. EPIC-73 (US-73.1 and
+US-73.2) is complete; each story was confirmed and merged with `--no-ff` before
+the next began. See the [approved layout](../plans/us-73.1-composer-layout.md).
+
+### [EPIC-73: Composer cleanup](../epics/EPIC-73-COMPOSER-CLEANUP.md)
+
+- [x] US-73.1: Layout proposal (confirmed and merged 2026-11-08)
+  - [x] Inventory every composer control and when it shows; produce the mockup; get approval.
+- [x] US-73.2: Rebuild the composer (confirmed and merged 2026-11-08)
+  - [x] Implement the layout; update help.
+  - [x] Update unit tests and the composer-related E2E specs.

@@ -34,7 +34,7 @@ EPIC-64 and EPIC-65 are complete and archived in the [2026-11-07 checklist](docs
 
 ## User-requested epics (proposed 2026-11-08)
 
-Source: user request (2026-11-08). Suggested order: EPIC-74 → 67 → 70 → 68 → 69 → 73 → 71 → 72. EPIC-71 depends on EPIC-68. EPIC-73 should leave a place for canvas (EPIC-72). EPIC-74, EPIC-67, EPIC-70, EPIC-68 and EPIC-69 are complete and archived in the [2026-11-08 checklist](docs/archive/todo-completed-2026-11-08.md).
+Source: user request (2026-11-08). Suggested order: EPIC-74 → 67 → 70 → 68 → 69 → 73 → 71 → 72. EPIC-71 depends on EPIC-68. EPIC-73 should leave a place for canvas (EPIC-72). EPIC-74, EPIC-67, EPIC-70, EPIC-68, EPIC-69 and EPIC-73 are complete and archived in the [2026-11-08 checklist](docs/archive/todo-completed-2026-11-08.md).
 
 ### [EPIC-71: Model-written skills](docs/epics/EPIC-71-MODEL-WRITTEN-SKILLS.md)
 
@@ -57,11 +57,3 @@ Source: user request (2026-11-08). Suggested order: EPIC-74 → 67 → 70 → 68
 - [ ] US-72.3: Downloads and settings
   - [ ] Implement exports (server-side) and save-to-library.
   - [ ] Settings toggles, help and glossary; tests for each export type.
-
-### [EPIC-73: Composer cleanup](docs/epics/EPIC-73-COMPOSER-CLEANUP.md)
-
-- [x] US-73.1: Layout proposal ([approved proposal](docs/plans/us-73.1-composer-layout.md), 2026-11-08)
-  - [x] Inventory every composer control and when it shows; produce the mockup; get approval.
-- [ ] US-73.2: Rebuild the composer (implemented; awaiting confirmation)
-  - [x] Implement the layout; update help.
-  - [x] Update unit tests and the composer-related E2E specs.

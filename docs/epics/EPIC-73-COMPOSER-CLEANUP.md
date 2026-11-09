@@ -1,6 +1,6 @@
 # EPIC-73: Composer cleanup
 
-Status: in progress (US-73.1). Source: user request (2026-11-08).
+Status: complete (2026-11-08). Source: user request (2026-11-08).
 
 ## Objective
 
@@ -48,5 +48,5 @@ Acceptance: the approved layout using shadcn/ui components (DropdownMenu,
 Popover, Badge). All existing pickers work from their new places. Keyboard, touch,
 contrast and the 320px checks pass. Help (`composer.controls` and the chat guide) is updated.
 
-- [ ] Implement the layout; update help.
-- [ ] Update unit tests and the composer-related E2E specs (chat reachability, mobile shell, prompt coach, templates, comparison, slash skills).
+- [x] Implement the layout; update help.
+- [x] Update unit tests and the composer-related E2E specs (chat reachability, mobile shell, prompt coach, templates, comparison, slash skills).
