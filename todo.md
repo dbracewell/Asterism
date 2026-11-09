@@ -46,7 +46,7 @@ Source: user request (2026-11-09). Comes before EPIC-72.
 - [x] US-75.2: Skills page layout and assignment
   - [x] Banner; per-row assignment state and control; pagination with count and URL state.
   - [x] Help updates; unit tests; E2E covering assignment from the list, paging and narrow widths.
-- [ ] US-75.3: Skills for sub-agents (backend) (implemented; awaiting confirmation)
+- [x] US-75.3: Skills for sub-agents (backend)
   - [x] ADR (catalog layer, `load_skill`, recording, main-agent decision); schema and assignment API for sub-agents.
   - [x] Catalog layer and `load_skill` tool; tests for scope, live eligibility, policy, recording and capability isolation.
 - [ ] US-75.4: Skills for sub-agents (UI)
