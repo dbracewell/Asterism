@@ -335,3 +335,76 @@ for (const viewport of [
     expect(errors).toEqual([]);
   });
 }
+
+// US-75.1: a long model name ends in an ellipsis and never widens the page.
+for (const width of [1280, 320]) {
+  test(`long model names fit sub-agent cards at ${width}px`, async ({
+    page,
+  }) => {
+    const longName = "unsloth/Qwen3.8-27B-GGUF:UD-Q4_K_M-with-a-very-long-tag";
+    const model = {
+      id: modelId,
+      name: longName,
+      provider_name: "LocalProvider",
+      available: true,
+      supports_tools: true,
+    };
+    const agent = {
+      id: workerId,
+      name: "Test",
+      description: "",
+      model_id: modelId,
+      model_available: true,
+    };
+    await page.setViewportSize({ width, height: 700 });
+    await page.route("**/api/py/settings/user/main-agent", (route) =>
+      route.fulfill({
+        json: {
+          id: "44444444-4444-4444-8444-444444444444",
+          name: "Main",
+          description: "",
+        },
+      }),
+    );
+    await page.route(
+      "**/api/py/settings/user/main-agent/general-sub-agents",
+      (route) =>
+        route.fulfill({
+          json: { revision: 1, agents: [agent], delegation_allowed: true },
+        }),
+    );
+    await page.route("**/api/py/chat/models", (route) =>
+      route.fulfill({ json: [model] }),
+    );
+    await page.route("**/api/py/tools/active", (route) =>
+      route.fulfill({ json: { items: [] } }),
+    );
+    await page.route("**/api/py/agents/sub-agents**", (route) =>
+      route.fulfill({
+        json: { items: [agent], total: 1, page: 1, page_size: 10 },
+      }),
+    );
+    await page.goto("/e2e/agent-settings");
+    const label = page.getByTitle(`${longName} (LocalProvider)`);
+    await expect(label).toBeVisible();
+    // Truncated in place: the text is clipped, and the availability icon stays inside the card.
+    expect(
+      await label.evaluate((node) => node.scrollWidth > node.clientWidth),
+    ).toBe(true);
+    await expect(label).toHaveText(`${longName} (LocalProvider)`);
+    const status = page
+      .getByRole("status")
+      .filter({ hasText: "Fixed model available" });
+    await status.scrollIntoViewIfNeeded();
+    const icon = (await status.boundingBox())!;
+    const card = (await label
+      .locator("xpath=ancestor::*[@data-slot='card'][1]")
+      .boundingBox())!;
+    expect(icon.x + icon.width).toBeLessThanOrEqual(card.x + card.width);
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth + 1,
+      ),
+    ).toBe(true);
+  });
+}

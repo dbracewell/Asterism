@@ -1,6 +1,6 @@
 # EPIC-75: Skills follow-ups
 
-Status: proposed. Source: user request (2026-11-09), after using skill drafting
+Status: in progress (US-75.1). Source: user request (2026-11-09), after using skill drafting
 (EPIC-71). Comes before EPIC-72 (Canvas).
 
 ## Objective
@@ -46,8 +46,8 @@ on hover/focus and to screen readers. Other places that show a model name in a
 narrow space (project sub-agents, General chat set, run graph, model chips) get
 the same check. No horizontal overflow at 320px.
 
-- [ ] Fix the card header (`min-w-0` on the label, full name in a tooltip/title); audit other model-name spots.
-- [ ] Unit test for the accessible full name; E2E overflow check with a long model name at 1280 and 320px.
+- [x] Fix the card header (`min-w-0` on the label, full name in a tooltip/title); audit other model-name spots.
+- [x] Unit test for the accessible full name; E2E overflow check with a long model name at 1280 and 320px.
 
 ## US-75.2: Skills page layout and assignment
 
