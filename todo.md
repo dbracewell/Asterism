@@ -34,24 +34,7 @@ EPIC-64 and EPIC-65 are complete and archived in the [2026-11-07 checklist](docs
 
 ## User-requested epics (proposed 2026-11-08)
 
-Source: user request (2026-11-08). Suggested order: EPIC-74 → 67 → 70 → 68 → 69 → 73 → 71 → 72. EPIC-71 depends on EPIC-68. EPIC-73 should leave a place for canvas (EPIC-72). EPIC-74, EPIC-67, EPIC-70, EPIC-68, EPIC-69, EPIC-73 and EPIC-71 are complete and archived in the [2026-11-08 checklist](docs/archive/todo-completed-2026-11-08.md).
-
-### [EPIC-75: Skills follow-ups](docs/epics/EPIC-75-SKILLS-FOLLOW-UPS.md)
-
-Source: user request (2026-11-09). Comes before EPIC-72.
-
-- [x] US-75.1: Truncate long model names
-  - [x] Fix the card header (`min-w-0` on the label, full name in a tooltip/title); audit other model-name spots.
-  - [x] Unit test for the accessible full name; E2E overflow check with a long model name at 1280 and 320px.
-- [x] US-75.2: Skills page layout and assignment
-  - [x] Banner; per-row assignment state and control; pagination with count and URL state.
-  - [x] Help updates; unit tests; E2E covering assignment from the list, paging and narrow widths.
-- [x] US-75.3: Skills for sub-agents (backend)
-  - [x] ADR (catalog layer, `load_skill`, recording, main-agent decision); schema and assignment API for sub-agents.
-  - [x] Catalog layer and `load_skill` tool; tests for scope, live eligibility, policy, recording and capability isolation.
-- [ ] US-75.4: Skills for sub-agents (UI) (implemented; awaiting confirmation)
-  - [x] Sub-agent skills picker; skill loads in run graph and delegation details; approving requested sub-agent skills in pack import review.
-  - [x] Help; unit tests; E2E from assigning a skill to a sub-agent to seeing its load in a delegated run.
+Source: user request (2026-11-08). Suggested order: EPIC-74 → 67 → 70 → 68 → 69 → 73 → 71 → 72. EPIC-71 depends on EPIC-68. EPIC-73 should leave a place for canvas (EPIC-72). EPIC-74, EPIC-67, EPIC-70, EPIC-68, EPIC-69, EPIC-73, EPIC-71 and EPIC-75 (skills follow-ups, added 2026-11-09) are complete and archived in the [2026-11-08 checklist](docs/archive/todo-completed-2026-11-08.md).
 
 ### [EPIC-72: Canvas](docs/epics/EPIC-72-CANVAS.md)
 

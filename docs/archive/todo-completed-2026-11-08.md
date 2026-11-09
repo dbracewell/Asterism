@@ -107,3 +107,21 @@ complete; see ADR-0061 (skill drafting runs reuse a hidden chat).
 - [x] US-71.2: "Describe it" in the skill editor (confirmed and merged 2026-11-09)
   - [x] Build the flow with generated client hooks; reuse the skill editor and preview.
   - [x] Help; unit tests and an E2E with a fake provider from description to saved skill.
+
+The user confirmed US-75.4 on 2026-11-09. EPIC-75 (US-75.1 through US-75.4)
+is complete; see ADR-0062 (sub-agents load their own assigned skills).
+
+### [EPIC-75: Skills follow-ups](../epics/EPIC-75-SKILLS-FOLLOW-UPS.md)
+
+- [x] US-75.1: Truncate long model names (confirmed and merged 2026-11-09)
+  - [x] Fix the card header (`min-w-0` on the label, full name in a tooltip/title); audit other model-name spots.
+  - [x] Unit test for the accessible full name; E2E overflow check with a long model name at 1280 and 320px.
+- [x] US-75.2: Skills page layout and assignment (confirmed and merged 2026-11-09)
+  - [x] Banner; per-row assignment state and control; pagination with count and URL state.
+  - [x] Help updates; unit tests; E2E covering assignment from the list, paging and narrow widths.
+- [x] US-75.3: Skills for sub-agents (backend) (confirmed and merged 2026-11-09)
+  - [x] ADR (catalog layer, `load_skill`, recording, main-agent decision; [ADR-0062](../adr/0062-sub-agent-skills.md)); schema and assignment API for sub-agents.
+  - [x] Catalog layer and `load_skill` tool; tests for scope, live eligibility, policy, recording and capability isolation.
+- [x] US-75.4: Skills for sub-agents (UI) (confirmed and merged 2026-11-09)
+  - [x] Sub-agent skills picker; skill loads in run graph and delegation details; approving requested sub-agent skills in pack import review.
+  - [x] Help; unit tests; E2E from assigning a skill to a sub-agent to seeing its load in a delegated run.
