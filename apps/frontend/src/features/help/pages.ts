@@ -727,7 +727,7 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
       {
         name: "Skill list",
         description:
-          "Your private skills. Each is a SKILL.md document with a name, a description and instructions.",
+          "Your private skills. Each is a SKILL.md document with a name, a description and instructions. The switch on each skill assigns it to your main agent, which is what makes it appear in chats. Page through long lists, or search by name or description.",
       },
       {
         name: "New skill",
@@ -736,7 +736,7 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
       },
     ],
     tasks: [
-      "Create a skill, then assign it to your main agent under Agents so it appears in chats.",
+      "Create a skill, then turn on Assigned to main agent beside it so it appears in chats.",
       "Describe a skill in plain words, review the draft, ask for changes, then save it.",
     ],
     terms: ["concept.skill", "concept.skill-draft", "concept.main-agent"],

@@ -312,6 +312,101 @@ test("assignments retain off-page selections and URL parameters without saving o
   ).not.toBeChecked();
 });
 
+for (const width of [1280, 390, 320]) {
+  test(`assign from the skill list, page through skills and keep the page in the URL at ${width}px (US-75.2)`, async ({
+    page,
+  }, info) => {
+    await page.setViewportSize({ width, height: 800 });
+    const state = await mockSkills(page, 34);
+    await page.goto("/e2e/skills?t=user&setting=skills");
+    const banner = page.getByRole("note").filter({
+      hasText: "Skill activation disabled by administrator",
+    });
+    await expect(banner).toBeVisible();
+    // The banner spans the pane instead of a centred box.
+    const list = page.getByRole("list", { name: "Your skills" });
+    const [bannerBox, listBox] = await Promise.all([
+      banner.boundingBox(),
+      list.boundingBox(),
+    ]);
+    expect(Math.abs(bannerBox!.width - listBox!.width)).toBeLessThan(2);
+
+    await expect(page.getByText("1–10 of 34", { exact: true })).toBeVisible();
+    await expect(page.getByText("1 of 100 assigned")).toBeVisible();
+    const first = page.getByRole("switch", {
+      name: "skill-01 assigned to main agent",
+    });
+    await expect(first).toBeChecked();
+    const second = page.getByRole("switch", {
+      name: "skill-02 assigned to main agent",
+    });
+    await second.click();
+    await expect(second).toBeChecked();
+    await expect(page.getByText("2 of 100 assigned")).toBeVisible();
+    expect(state.ids).toEqual([makeSkill(1).id, makeSkill(2).id]);
+
+    // A conflicting change reloads the live assignments.
+    state.assignmentConflict = true;
+    await first.click();
+    await expect(
+      page.getByText("Main agent changed; reload before assigning skills"),
+    ).toBeVisible();
+    await expect(first).toBeChecked();
+    await first.click();
+    await expect(first).not.toBeChecked();
+    expect(state.ids).toEqual([makeSkill(2).id]);
+
+    await page
+      .getByRole("button", { name: "Next skills", exact: true })
+      .click();
+    await expect(page.getByText("11–20 of 34", { exact: true })).toBeVisible();
+    await page.getByRole("combobox", { name: "Per page" }).click();
+    await page.getByRole("option", { name: "25" }).click();
+    await expect(page.getByText("1–25 of 34", { exact: true })).toBeVisible();
+    await page
+      .getByRole("button", { name: "Next skills", exact: true })
+      .click();
+    await expect(page.getByText("26–34 of 34", { exact: true })).toBeVisible();
+    await page.getByRole("textbox", { name: "Search skills" }).fill("skill-3");
+    await expect(page.getByText("1–5 of 5", { exact: true })).toBeVisible();
+    await page.getByRole("textbox", { name: "Search skills" }).fill("skill-");
+    await page
+      .getByRole("button", { name: "Next skills", exact: true })
+      .click();
+    const params = new URL(page.url()).searchParams;
+    expect(params.get("skills_q")).toBe("skill-");
+    expect(params.get("skills_page")).toBe("2");
+    expect(params.get("skills_size")).toBe("25");
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth + 1,
+      ),
+    ).toBeTruthy();
+    await page.screenshot({
+      path: info.outputPath(`skills-list-${width}.png`),
+      fullPage: true,
+    });
+
+    // A reload reopens the same page; the Agents dialog shows the change.
+    await page.reload();
+    await expect(page.getByText("26–34 of 34", { exact: true })).toBeVisible();
+    await expect(
+      page.getByRole("textbox", { name: "Search skills" }),
+    ).toHaveValue("skill-");
+    await page.getByRole("tab", { name: "Agents", exact: true }).click();
+    await page
+      .getByRole("button", { name: "Manage main-agent skills" })
+      .click();
+    const dialog = page.getByRole("dialog");
+    await expect(
+      dialog.getByRole("checkbox", { name: /skill-02/ }),
+    ).toBeChecked();
+    await expect(
+      dialog.getByRole("checkbox", { name: /skill-01/ }),
+    ).not.toBeChecked();
+  });
+}
+
 test("deleting the only skill on a later page returns to a valid page", async ({
   page,
 }) => {

@@ -1,6 +1,6 @@
 # EPIC-75: Skills follow-ups
 
-Status: in progress (US-75.1). Source: user request (2026-11-09), after using skill drafting
+Status: in progress (US-75.1 done; US-75.2). Source: user request (2026-11-09), after using skill drafting
 (EPIC-71). Comes before EPIC-72 (Canvas).
 
 ## Objective
@@ -64,8 +64,8 @@ visible count (for example "11–20 of 34") and a page-size choice, keeps search
 and the page in the URL, and stays usable at 320px. The Agents dialog keeps
 working and both places stay in sync.
 
-- [ ] Banner; per-row assignment state and control; pagination with count and URL state.
-- [ ] Help updates; unit tests; E2E covering assignment from the list, paging and narrow widths.
+- [x] Banner; per-row assignment state and control; pagination with count and URL state.
+- [x] Help updates; unit tests; E2E covering assignment from the list, paging and narrow widths.
 
 ## US-75.3: Skills for sub-agents (backend)
 

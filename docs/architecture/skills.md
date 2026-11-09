@@ -146,7 +146,18 @@ for detail refresh to finish; deletion is confirmed and uses the loaded revision
 Closing a dirty editor asks before discarding source. Deletion restores focus to
 New skill, and removing the last row of a later page returns to a valid page.
 
-Agents settings exposes a separate main-agent skill dialog with a bottom-right
+A full-width notice above the list says whether the admin policy is on and that
+a skill needs a main-agent assignment before chats can use it. Each row has an
+"Assigned to main agent" switch (US-75.2). A switch change submits the loaded
+assigned IDs with that one skill added or removed, plus the loaded
+configuration revision, and it disables the other switches until it finishes.
+A conflict shows the server message and reloads the assignments, so the
+switches show the live state. The list shows its range ("11–20 of 34") and
+offers 10, 25 or 50 per page. Search, page and page size are stored in the
+`skills_q`, `skills_page` and `skills_size` URL parameters with
+`history.replaceState`, so a reload or shared link opens the same page.
+
+Agents settings also has a main-agent skill dialog with a bottom-right
 Save assignments action. Selection persists across result pages and search,
 including IDs outside the visible page. It submits only skill IDs plus the
 captured configuration revision; it never overwrites other main settings. Dirty
