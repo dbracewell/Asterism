@@ -99,9 +99,15 @@ import type {
   CanvasPolicyUpdateData,
   CanvasPolicyUpdateErrors,
   CanvasPolicyUpdateResponses,
+  CanvasVersionCreateData,
+  CanvasVersionCreateErrors,
+  CanvasVersionCreateResponses,
   CanvasVersionGetOneData,
   CanvasVersionGetOneErrors,
   CanvasVersionGetOneResponses,
+  CanvasVersionRestoreData,
+  CanvasVersionRestoreErrors,
+  CanvasVersionRestoreResponses,
   ChatAiUseLogCreateData,
   ChatAiUseLogCreateErrors,
   ChatAiUseLogCreateResponses,
@@ -4596,6 +4602,60 @@ export class ApiClient extends HeyApiClient {
       security: [{ scheme: "bearer", type: "http" }],
       url: "/chat/{chat_id}/canvas/{item_id}/versions/{number}",
       ...options,
+    });
+  }
+
+  /**
+   * Create Version
+   *
+   * Save the user's edit as a new version; the agent sees it on its next turn.
+   */
+  public canvasVersionCreate<ThrowOnError extends boolean = false>(
+    options: Options<CanvasVersionCreateData, ThrowOnError>,
+  ): RequestResult<
+    CanvasVersionCreateResponses,
+    CanvasVersionCreateErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).post<
+      CanvasVersionCreateResponses,
+      CanvasVersionCreateErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/chat/{chat_id}/canvas/{item_id}/versions",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+  }
+
+  /**
+   * Restore Version
+   *
+   * Copy an earlier version into a new one; history is never rewritten.
+   */
+  public canvasVersionRestore<ThrowOnError extends boolean = false>(
+    options: Options<CanvasVersionRestoreData, ThrowOnError>,
+  ): RequestResult<
+    CanvasVersionRestoreResponses,
+    CanvasVersionRestoreErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).post<
+      CanvasVersionRestoreResponses,
+      CanvasVersionRestoreErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/chat/{chat_id}/canvas/{item_id}/versions/{number}/restore",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
     });
   }
 

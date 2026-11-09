@@ -14,6 +14,12 @@ import {
   ChatInputContainer,
 } from "@/features/chat/components/chat-input";
 import { MessageItem } from "@/features/chat/components/message/message-item";
+import {
+  CanvasProvider,
+  type CanvasContextValue,
+} from "@/features/canvas/components/canvas-context";
+import { CanvasLayout } from "@/features/canvas/components/canvas-layout";
+import { canvasRefs } from "@/features/canvas/lib/canvas";
 import { StreamingIndicator } from "@/features/chat/components/message/streaming-indicator";
 import { SubAgentActivityPanel } from "@/features/chat/components/sub-agent-activity";
 import { useChatWebSocket } from "@/features/chat/hooks/use-chat-websocket";
@@ -154,6 +160,9 @@ export const ChatSession = ({
   } | null>(null);
   // US-54.5: the delegation being forked, with the step that ran it.
   const [forkSource, setForkSource] = React.useState<ForkSource | null>(null);
+  const [openCanvasItem, setOpenCanvasItem] = React.useState<string | null>(
+    null,
+  );
   const [subAgentActivities, setSubAgentActivities] = React.useState<
     SubAgentActivity[]
   >([]);
@@ -533,426 +542,467 @@ export const ChatSession = ({
     )?.context_window ??
     null;
 
+  const canAsk =
+    !interactionBusy &&
+    connectionStatus === "Connected" &&
+    selectedModelAvailable &&
+    hasPersona &&
+    !pendingRequestId;
+  const canvas: CanvasContextValue = {
+    openItemId: openCanvasItem,
+    open: setOpenCanvasItem,
+    close: () => setOpenCanvasItem(null),
+    // Refetch canvas reads as the branch changes or a run writes a version.
+    transcriptKey: `${session.messages.map((message) => `${message.id}:${message.status}`).join()}|${canvasRefs(
+      incomingMessage?.tool_call_results,
+    )
+      .map((ref) => `${ref.itemId}:${ref.version}`)
+      .join()}`,
+    ask: canAsk
+      ? (prompt) =>
+          addUserMessage({ prompt, files: [], requestId: crypto.randomUUID() })
+      : null,
+    canEdit: !!(user.settings.canvas_enabled && user.settings.canvas_allowed),
+  };
+
   return (
-    <div
-      className="relative flex h-full min-h-0 min-w-0 flex-1 flex-col"
-      data-slot="chat-session"
-    >
-      <section
-        aria-label="Conversation history"
-        className={cn(
-          "bg-background relative mx-auto flex min-h-0 w-full min-w-0 flex-1 scroll-p-3 flex-col overflow-y-auto px-3 py-4 wrap-anywhere *:shrink-0",
-          // Keep scrolled-to and focused content clear of the floating pill.
-          showJump && "scroll-pb-14",
-        )}
-        style={{ overflowAnchor: "auto" }}
-        onScroll={(e) => {
-          const { scrollTop } = e.currentTarget;
-          const scrollPosition =
-            e.currentTarget.scrollHeight -
-            (scrollTop + e.currentTarget.clientHeight);
-
-          // Only scrolling up locks: content growing below is not a choice to
-          // stop following, even when this event lands after it.
-          const scrolledUp = scrollTop < lastScrollTopRef.current;
-          lastScrollTopRef.current = scrollTop;
-          const isLocked =
-            scrollPosition > AUTO_SCROLL_LOCK_THRESHOLD &&
-            (scrolledUp || preventAutoScrollRef.current);
-          preventAutoScrollRef.current = isLocked;
-          if (isLocked !== isScrolledAway) setIsScrolledAway(isLocked);
-
-          const isNowScrollable = scrollPosition > SCROLL_BOTTOM_THRESHOLD;
-          if (isNowScrollable !== isScrollable) {
-            setIsScrollable(isNowScrollable);
-          }
-        }}
-      >
-        {error && (
-          <QueryError
-            error={error}
-            message="Could not refresh conversation. Showing saved messages."
-            retry={refetch}
-            isRetrying={isFetching}
-          />
-        )}
-        {!session.messages.length && (
-          <EmptyState
-            role="status"
-            className="flex-none"
-            title="No messages yet"
-            description="Write a message below to begin."
-          />
-        )}
-        {session.info.pending_persona && (
-          <p
-            className="text-muted-foreground text-sm"
-            aria-label="Saved turn persona"
-          >
-            This response uses {session.info.pending_persona.name} (persona
-            revision {session.info.pending_persona.revision}).
-          </p>
-        )}
-        {session.info.resume_error && (
-          <div className="flex flex-wrap items-center gap-2">
-            <p role="alert">{session.info.resume_error}</p>
-            {pendingRequestId && (
-              <Button
-                type="button"
-                variant="outline"
-                disabled={
-                  interactionBusy ||
-                  !hasPersona ||
-                  !selectedModelAvailable ||
-                  connectionStatus !== "Connected"
-                }
-                onClick={() => requestRegeneration(pendingRequestId)}
-              >
-                Regenerate with current settings
-              </Button>
+    <CanvasProvider value={canvas}>
+      <CanvasLayout chatId={chatId}>
+        <div
+          className="relative flex h-full min-h-0 min-w-0 flex-1 flex-col"
+          data-slot="chat-session"
+        >
+          <section
+            aria-label="Conversation history"
+            className={cn(
+              "bg-background relative mx-auto flex min-h-0 w-full min-w-0 flex-1 scroll-p-3 flex-col overflow-y-auto px-3 py-4 wrap-anywhere *:shrink-0",
+              // Keep scrolled-to and focused content clear of the floating pill.
+              showJump && "scroll-pb-14",
             )}
-          </div>
-        )}
-        {models.data && !models.error && !selectedModelAvailable && (
-          <p role="alert">
-            Choose an available model to continue. Historical messages keep
-            their original model.
-          </p>
-        )}
-        <div className="mx-auto w-full max-w-5xl">
-          {groupTranscript(session.messages).map((item) =>
-            item.kind === "comparison" ? (
-              <ComparisonBlock
-                key={item.comparisonId}
-                chatId={chatId}
-                comparisonId={item.comparisonId}
-                stream={comparisonStream}
-                isProcessing={interactionBusy}
-                canRegenerate={
-                  selectedModelAvailable && connectionStatus === "Connected"
-                }
-                onRegenerate={requestRegeneration}
-                toolTimings={toolTimings}
-                sendJsonMessage={sendJsonMessage}
+            style={{ overflowAnchor: "auto" }}
+            onScroll={(e) => {
+              const { scrollTop } = e.currentTarget;
+              const scrollPosition =
+                e.currentTarget.scrollHeight -
+                (scrollTop + e.currentTarget.clientHeight);
+
+              // Only scrolling up locks: content growing below is not a choice to
+              // stop following, even when this event lands after it.
+              const scrolledUp = scrollTop < lastScrollTopRef.current;
+              lastScrollTopRef.current = scrollTop;
+              const isLocked =
+                scrollPosition > AUTO_SCROLL_LOCK_THRESHOLD &&
+                (scrolledUp || preventAutoScrollRef.current);
+              preventAutoScrollRef.current = isLocked;
+              if (isLocked !== isScrolledAway) setIsScrolledAway(isLocked);
+
+              const isNowScrollable = scrollPosition > SCROLL_BOTTOM_THRESHOLD;
+              if (isNowScrollable !== isScrollable) {
+                setIsScrollable(isNowScrollable);
+              }
+            }}
+          >
+            {error && (
+              <QueryError
+                error={error}
+                message="Could not refresh conversation. Showing saved messages."
+                retry={refetch}
+                isRetrying={isFetching}
               />
-            ) : (
-              <React.Fragment key={item.message.id}>
+            )}
+            {!session.messages.length && (
+              <EmptyState
+                role="status"
+                className="flex-none"
+                title="No messages yet"
+                description="Write a message below to begin."
+              />
+            )}
+            {session.info.pending_persona && (
+              <p
+                className="text-muted-foreground text-sm"
+                aria-label="Saved turn persona"
+              >
+                This response uses {session.info.pending_persona.name} (persona
+                revision {session.info.pending_persona.revision}).
+              </p>
+            )}
+            {session.info.resume_error && (
+              <div className="flex flex-wrap items-center gap-2">
+                <p role="alert">{session.info.resume_error}</p>
+                {pendingRequestId && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={
+                      interactionBusy ||
+                      !hasPersona ||
+                      !selectedModelAvailable ||
+                      connectionStatus !== "Connected"
+                    }
+                    onClick={() => requestRegeneration(pendingRequestId)}
+                  >
+                    Regenerate with current settings
+                  </Button>
+                )}
+              </div>
+            )}
+            {models.data && !models.error && !selectedModelAvailable && (
+              <p role="alert">
+                Choose an available model to continue. Historical messages keep
+                their original model.
+              </p>
+            )}
+            <div className="mx-auto w-full max-w-5xl">
+              {groupTranscript(session.messages).map((item) =>
+                item.kind === "comparison" ? (
+                  <ComparisonBlock
+                    key={item.comparisonId}
+                    chatId={chatId}
+                    comparisonId={item.comparisonId}
+                    stream={comparisonStream}
+                    isProcessing={interactionBusy}
+                    canRegenerate={
+                      selectedModelAvailable && connectionStatus === "Connected"
+                    }
+                    onRegenerate={requestRegeneration}
+                    toolTimings={toolTimings}
+                    sendJsonMessage={sendJsonMessage}
+                  />
+                ) : (
+                  <React.Fragment key={item.message.id}>
+                    <MessageItem
+                      chatId={chatId}
+                      message={item.message}
+                      startsTurn={
+                        session.messages[item.index - 1]?.role !== "assistant"
+                      }
+                      isProcessing={interactionBusy}
+                      canRegenerate={
+                        selectedModelAvailable &&
+                        connectionStatus === "Connected"
+                      }
+                      onRegenerate={requestRegeneration}
+                      onCompare={compareAction(item.index)}
+                      onFork={forkAction(item.index)}
+                      toolTimings={toolTimings}
+                      turnSteps={turnSteps[item.index]}
+                      turnRequest={
+                        turnSteps[item.index]
+                          ? session.messages[
+                              item.index - (turnSteps[item.index]?.length ?? 0)
+                            ]
+                          : null
+                      }
+                      sendJsonMessage={sendJsonMessage}
+                    />
+                    {compactionsByAnchor
+                      .get(item.message.id)
+                      ?.map((compaction) => (
+                        <CompactionDivider
+                          key={compaction.id}
+                          compaction={compaction}
+                        />
+                      ))}
+                  </React.Fragment>
+                ),
+              )}
+
+              {isCompacting ? (
+                <StreamingIndicator
+                  variant="turn"
+                  label="Compacting conversation…"
+                />
+              ) : (
+                awaitingReply &&
+                (lastMessage?.role === "assistant" ? (
+                  // Between agent steps: trail the turn under its existing marker.
+                  <div className="mb-5 pl-10">
+                    <StreamingIndicator />
+                  </div>
+                ) : (
+                  <StreamingIndicator variant="turn" />
+                ))
+              )}
+              <SubAgentActivityPanel
+                activities={subAgentActivities}
+                mainModel={session.info.selected_model?.name}
+              />
+              {incomingMessage && (
                 <MessageItem
                   chatId={chatId}
-                  message={item.message}
-                  startsTurn={
-                    session.messages[item.index - 1]?.role !== "assistant"
-                  }
+                  message={incomingMessage}
+                  startsTurn={session.messages.at(-1)?.role !== "assistant"}
                   isProcessing={interactionBusy}
-                  canRegenerate={
-                    selectedModelAvailable && connectionStatus === "Connected"
-                  }
+                  canRegenerate={false}
                   onRegenerate={requestRegeneration}
-                  onCompare={compareAction(item.index)}
-                  onFork={forkAction(item.index)}
+                  streaming
                   toolTimings={toolTimings}
-                  turnSteps={turnSteps[item.index]}
-                  turnRequest={
-                    turnSteps[item.index]
-                      ? session.messages[
-                          item.index - (turnSteps[item.index]?.length ?? 0)
-                        ]
-                      : null
-                  }
                   sendJsonMessage={sendJsonMessage}
                 />
-                {compactionsByAnchor.get(item.message.id)?.map((compaction) => (
-                  <CompactionDivider
-                    key={compaction.id}
-                    compaction={compaction}
-                  />
-                ))}
-              </React.Fragment>
-            ),
-          )}
-
-          {isCompacting ? (
-            <StreamingIndicator
-              variant="turn"
-              label="Compacting conversation…"
-            />
-          ) : (
-            awaitingReply &&
-            (lastMessage?.role === "assistant" ? (
-              // Between agent steps: trail the turn under its existing marker.
-              <div className="mb-5 pl-10">
-                <StreamingIndicator />
-              </div>
-            ) : (
-              <StreamingIndicator variant="turn" />
-            ))
-          )}
-          <SubAgentActivityPanel
-            activities={subAgentActivities}
-            mainModel={session.info.selected_model?.name}
-          />
-          {incomingMessage && (
-            <MessageItem
-              chatId={chatId}
-              message={incomingMessage}
-              startsTurn={session.messages.at(-1)?.role !== "assistant"}
-              isProcessing={interactionBusy}
-              canRegenerate={false}
-              onRegenerate={requestRegeneration}
-              streaming
-              toolTimings={toolTimings}
-              sendJsonMessage={sendJsonMessage}
-            />
-          )}
-        </div>
-        <div
-          ref={messageListRef}
-          className="shrink-0"
-          style={{
-            overflowAnchor: "auto",
-            width: "100%",
-            height: "1px",
-          }}
-        />
-      </section>
-      <div
-        data-slot="chat-composer"
-        className="relative flex max-h-[60%] min-h-0 shrink-0 flex-col gap-2 bg-transparent p-2"
-      >
-        {showJump && (
-          <Button
-            variant="outline"
-            size="sm"
-            data-slot="jump-to-latest"
-            className="rounded-dot shadow-overlay bg-background absolute bottom-full left-1/2 z-10 mb-2 -translate-x-1/2"
-            aria-label="Jump to latest message"
-            onClick={() => {
-              preventAutoScrollRef.current = false;
-              setIsScrollable(false);
-              setIsScrolledAway(false);
-              messageListRef.current?.scrollIntoView({ behavior: "instant" });
-            }}
-          >
-            {generating ? (
-              <span
-                aria-hidden="true"
-                className="bg-primary rounded-dot size-1.5 animate-pulse motion-reduce:animate-none"
-              />
-            ) : (
-              <ArrowDownIcon />
-            )}
-            Jump to latest
-          </Button>
-        )}
-        {socketError && isPlanErrorCode(socketError.code) && (
-          <PlanRecoveryNotice
-            code={socketError.code}
-            message={socketError.message}
-            onDismiss={() => setSocketError(null)}
-            className="mx-auto mb-2 max-w-5xl"
-          />
-        )}
-        {socketError && !isPlanErrorCode(socketError.code) && (
-          <div
-            role="alert"
-            className="bg-destructive/10 border-destructive text-destructive rounded-surface mx-auto mb-2 flex w-full max-w-5xl items-center justify-between gap-2 border px-3 py-2 text-sm"
-          >
-            <p className="min-w-0 flex-1">{socketError.message}</p>
-            <Button
-              variant="ghost"
-              size="icon-xs"
-              onClick={() => setSocketError(null)}
-              aria-label="Dismiss error"
-              className="text-destructive hover:bg-destructive/20 h-6 w-6 shrink-0"
-            >
-              <XIcon className="size-4" />
-            </Button>
-          </div>
-        )}
-        <ChatInputContainer className="max-w-5xl scroll-p-2 overflow-y-auto overscroll-contain">
-          {session.messages.length > 0 && (
-            <ChatHintControls
-              info={session.info}
-              disabled={
-                interactionBusy ||
-                connectionStatus !== "Connected" ||
-                !selectedModelAvailable ||
-                !hasPersona ||
-                !!pendingRequestId
-              }
-              resetPending={resetHints}
-              onResetChange={setResetHints}
-              onRaise={(hint, prompt) => {
-                addUserMessage({
-                  prompt,
-                  files: [],
-                  requestId: crypto.randomUUID(),
-                  hint,
-                }).catch((error: unknown) =>
-                  setSocketError({
-                    message: isErrorDetail(error)
-                      ? String(error.detail)
-                      : "Could not request help. Reload the chat and retry.",
-                  }),
-                );
+              )}
+            </div>
+            <div
+              ref={messageListRef}
+              className="shrink-0"
+              style={{
+                overflowAnchor: "auto",
+                width: "100%",
+                height: "1px",
               }}
             />
-          )}
-          <ChatInput
-            key={`${user.id}:${chatId}:${session.messages.at(-1)?.id ?? "root"}`}
-            skillOwner={user.id}
-            skillScope={`${chatId}:${session.messages.at(-1)?.id ?? "root"}`}
-            activeSkills={session.info.active_skills}
-            chatId={chatId}
-            projectId={session.info.project_id}
-            savedFileIds={
-              fileScope.isFetching || fileScope.error
-                ? []
-                : fileScope.data?.allowed_file_ids
-            }
-            disabled={
-              interactionBusy ||
-              connectionStatus !== "Connected" ||
-              !selectedModelAvailable ||
-              !hasPersona
-            }
-            isProcessing={isProcessing}
-            onStop={() => sendJsonMessage({ type: "cancel" })}
-            requestScope={`${session.info.id}:${session.info.model_revision ?? 1}:${session.info.persona_revision ?? 1}:${session.info.learning_mode_revision ?? 1}:${compareModels.join(",")}:${sentRubric ? `${sentRubric.source}:${sentRubric.id}` : "none"}:${includeGoal ? "goal" : ""}`}
-            scopeKey={`${session.info.model_revision}:${session.info.persona_revision}:${session.info.learning_mode_revision}:${promptPersona?.id}:${promptPersona?.revision}:${session.info.project_id}:${session.messages.map((message) => message.id).join()}`}
-            scopeLocked={isProcessing || sendMessage.isPending}
-            onSubmit={addUserMessage}
-            promptCoach={
-              user.settings.prompt_coach_enabled
-                ? { modelId: session.info.selected_model_id }
-                : undefined
-            }
-            compare={{
-              value: compareModels,
-              onChange: setCompareModels,
-              disabled: interactionBusy,
-            }}
-            chips={
-              <>
-                <ExistingChatModelPicker
-                  info={session.info}
-                  disabled={interactionBusy}
-                  onPendingChange={setIsChangingModel}
-                  onSelected={(info) =>
-                    queryClient.setQueryData(queryKey, (previous?: Chat) =>
-                      previous
-                        ? { ...previous, info: { ...previous.info, ...info } }
-                        : previous,
-                    )
-                  }
-                />
-                <ExistingChatPersonaPicker
-                  info={session.info}
-                  disabled={interactionBusy}
-                  onPendingChange={setIsChangingPersona}
-                  onSelected={(info) =>
-                    queryClient.setQueryData(queryKey, (previous?: Chat) =>
-                      previous
-                        ? { ...previous, info: { ...previous.info, ...info } }
-                        : previous,
-                    )
-                  }
-                />
-                <ExistingChatLearningModePicker
-                  info={session.info}
-                  disabled={interactionBusy}
-                  onPendingChange={setIsChangingMode}
-                  onSelected={(info) =>
-                    queryClient.setQueryData(queryKey, (previous?: Chat) =>
-                      previous
-                        ? { ...previous, info: { ...previous.info, ...info } }
-                        : previous,
-                    )
-                  }
-                />
-                {projectGoal && (
-                  <ChatGoalToggle
-                    goal={projectGoal}
-                    value={includeGoal}
-                    onChange={setGoalChoice}
-                    disabled={interactionBusy}
+          </section>
+          <div
+            data-slot="chat-composer"
+            className="relative flex max-h-[60%] min-h-0 shrink-0 flex-col gap-2 bg-transparent p-2"
+          >
+            {showJump && (
+              <Button
+                variant="outline"
+                size="sm"
+                data-slot="jump-to-latest"
+                className="rounded-dot shadow-overlay bg-background absolute bottom-full left-1/2 z-10 mb-2 -translate-x-1/2"
+                aria-label="Jump to latest message"
+                onClick={() => {
+                  preventAutoScrollRef.current = false;
+                  setIsScrollable(false);
+                  setIsScrolledAway(false);
+                  messageListRef.current?.scrollIntoView({
+                    behavior: "instant",
+                  });
+                }}
+              >
+                {generating ? (
+                  <span
+                    aria-hidden="true"
+                    className="bg-primary rounded-dot size-1.5 animate-pulse motion-reduce:animate-none"
                   />
+                ) : (
+                  <ArrowDownIcon />
                 )}
-                {takesRubric && (
-                  <ChatRubricPicker
-                    owner={user.id}
-                    value={rubric}
-                    onChange={setRubricChoice}
-                    disabled={interactionBusy}
-                  />
-                )}
-              </>
-            }
-            status={
-              <ComposerStatus
-                usage={isFetching ? null : session.context_usage}
-                contextWindow={contextWindow}
-                onCompact={requestCompaction}
-                canCompact={
-                  !interactionBusy &&
-                  connectionStatus === "Connected" &&
-                  selectedModelAvailable &&
-                  !session.info.resume_error
-                }
-                compacting={isCompacting}
-                connection={connectionStatus}
-                modelId={session.info.selected_model_id}
-                general={!session.info.project_id}
+                Jump to latest
+              </Button>
+            )}
+            {socketError && isPlanErrorCode(socketError.code) && (
+              <PlanRecoveryNotice
+                code={socketError.code}
+                message={socketError.message}
+                onDismiss={() => setSocketError(null)}
+                className="mx-auto mb-2 max-w-5xl"
               />
-            }
-          />
-        </ChatInputContainer>
-        <ForkStepDialog
-          chatId={chatId}
-          source={forkSource}
-          onOpenChange={(open) => {
-            if (!open) setForkSource(null);
-          }}
-          onForked={async () => {
-            setSocketError(null);
-            await queryClient.fetchQuery({
-              ...chatSessionGetOneOptions({
-                client,
-                path: { chat_id: chatId },
-              }),
-              staleTime: 0,
-            });
-            setSubAgentActivities([]);
-            setIsProcessing(true);
-            // The fork step is pending; resuming replays it on the new branch.
-            sendJsonMessage({ type: "resume" });
-          }}
-        />
-        <CompareMessageDialog
-          chatId={chatId}
-          messageId={compareSource?.messageId ?? null}
-          currentModelId={compareSource?.modelId}
-          currentModelName={compareSource?.modelName}
-          onOpenChange={(open) => {
-            if (!open) setCompareSource(null);
-          }}
-          onCompared={async () => {
-            setSocketError(null);
-            await queryClient.fetchQuery({
-              ...chatSessionGetOneOptions({
-                client,
-                path: { chat_id: chatId },
-              }),
-              staleTime: 0,
-            });
-            setSubAgentActivities([]);
-            setIsProcessing(true);
-            // The new columns are pending; the job answers them one after another.
-            sendJsonMessage({ type: "resume" });
-          }}
-        />
-      </div>
-    </div>
+            )}
+            {socketError && !isPlanErrorCode(socketError.code) && (
+              <div
+                role="alert"
+                className="bg-destructive/10 border-destructive text-destructive rounded-surface mx-auto mb-2 flex w-full max-w-5xl items-center justify-between gap-2 border px-3 py-2 text-sm"
+              >
+                <p className="min-w-0 flex-1">{socketError.message}</p>
+                <Button
+                  variant="ghost"
+                  size="icon-xs"
+                  onClick={() => setSocketError(null)}
+                  aria-label="Dismiss error"
+                  className="text-destructive hover:bg-destructive/20 h-6 w-6 shrink-0"
+                >
+                  <XIcon className="size-4" />
+                </Button>
+              </div>
+            )}
+            <ChatInputContainer className="max-w-5xl scroll-p-2 overflow-y-auto overscroll-contain">
+              {session.messages.length > 0 && (
+                <ChatHintControls
+                  info={session.info}
+                  disabled={
+                    interactionBusy ||
+                    connectionStatus !== "Connected" ||
+                    !selectedModelAvailable ||
+                    !hasPersona ||
+                    !!pendingRequestId
+                  }
+                  resetPending={resetHints}
+                  onResetChange={setResetHints}
+                  onRaise={(hint, prompt) => {
+                    addUserMessage({
+                      prompt,
+                      files: [],
+                      requestId: crypto.randomUUID(),
+                      hint,
+                    }).catch((error: unknown) =>
+                      setSocketError({
+                        message: isErrorDetail(error)
+                          ? String(error.detail)
+                          : "Could not request help. Reload the chat and retry.",
+                      }),
+                    );
+                  }}
+                />
+              )}
+              <ChatInput
+                key={`${user.id}:${chatId}:${session.messages.at(-1)?.id ?? "root"}`}
+                skillOwner={user.id}
+                skillScope={`${chatId}:${session.messages.at(-1)?.id ?? "root"}`}
+                activeSkills={session.info.active_skills}
+                chatId={chatId}
+                projectId={session.info.project_id}
+                savedFileIds={
+                  fileScope.isFetching || fileScope.error
+                    ? []
+                    : fileScope.data?.allowed_file_ids
+                }
+                disabled={
+                  interactionBusy ||
+                  connectionStatus !== "Connected" ||
+                  !selectedModelAvailable ||
+                  !hasPersona
+                }
+                isProcessing={isProcessing}
+                onStop={() => sendJsonMessage({ type: "cancel" })}
+                requestScope={`${session.info.id}:${session.info.model_revision ?? 1}:${session.info.persona_revision ?? 1}:${session.info.learning_mode_revision ?? 1}:${compareModels.join(",")}:${sentRubric ? `${sentRubric.source}:${sentRubric.id}` : "none"}:${includeGoal ? "goal" : ""}`}
+                scopeKey={`${session.info.model_revision}:${session.info.persona_revision}:${session.info.learning_mode_revision}:${promptPersona?.id}:${promptPersona?.revision}:${session.info.project_id}:${session.messages.map((message) => message.id).join()}`}
+                scopeLocked={isProcessing || sendMessage.isPending}
+                onSubmit={addUserMessage}
+                promptCoach={
+                  user.settings.prompt_coach_enabled
+                    ? { modelId: session.info.selected_model_id }
+                    : undefined
+                }
+                compare={{
+                  value: compareModels,
+                  onChange: setCompareModels,
+                  disabled: interactionBusy,
+                }}
+                chips={
+                  <>
+                    <ExistingChatModelPicker
+                      info={session.info}
+                      disabled={interactionBusy}
+                      onPendingChange={setIsChangingModel}
+                      onSelected={(info) =>
+                        queryClient.setQueryData(queryKey, (previous?: Chat) =>
+                          previous
+                            ? {
+                                ...previous,
+                                info: { ...previous.info, ...info },
+                              }
+                            : previous,
+                        )
+                      }
+                    />
+                    <ExistingChatPersonaPicker
+                      info={session.info}
+                      disabled={interactionBusy}
+                      onPendingChange={setIsChangingPersona}
+                      onSelected={(info) =>
+                        queryClient.setQueryData(queryKey, (previous?: Chat) =>
+                          previous
+                            ? {
+                                ...previous,
+                                info: { ...previous.info, ...info },
+                              }
+                            : previous,
+                        )
+                      }
+                    />
+                    <ExistingChatLearningModePicker
+                      info={session.info}
+                      disabled={interactionBusy}
+                      onPendingChange={setIsChangingMode}
+                      onSelected={(info) =>
+                        queryClient.setQueryData(queryKey, (previous?: Chat) =>
+                          previous
+                            ? {
+                                ...previous,
+                                info: { ...previous.info, ...info },
+                              }
+                            : previous,
+                        )
+                      }
+                    />
+                    {projectGoal && (
+                      <ChatGoalToggle
+                        goal={projectGoal}
+                        value={includeGoal}
+                        onChange={setGoalChoice}
+                        disabled={interactionBusy}
+                      />
+                    )}
+                    {takesRubric && (
+                      <ChatRubricPicker
+                        owner={user.id}
+                        value={rubric}
+                        onChange={setRubricChoice}
+                        disabled={interactionBusy}
+                      />
+                    )}
+                  </>
+                }
+                status={
+                  <ComposerStatus
+                    usage={isFetching ? null : session.context_usage}
+                    contextWindow={contextWindow}
+                    onCompact={requestCompaction}
+                    canCompact={
+                      !interactionBusy &&
+                      connectionStatus === "Connected" &&
+                      selectedModelAvailable &&
+                      !session.info.resume_error
+                    }
+                    compacting={isCompacting}
+                    connection={connectionStatus}
+                    modelId={session.info.selected_model_id}
+                    general={!session.info.project_id}
+                  />
+                }
+              />
+            </ChatInputContainer>
+            <ForkStepDialog
+              chatId={chatId}
+              source={forkSource}
+              onOpenChange={(open) => {
+                if (!open) setForkSource(null);
+              }}
+              onForked={async () => {
+                setSocketError(null);
+                await queryClient.fetchQuery({
+                  ...chatSessionGetOneOptions({
+                    client,
+                    path: { chat_id: chatId },
+                  }),
+                  staleTime: 0,
+                });
+                setSubAgentActivities([]);
+                setIsProcessing(true);
+                // The fork step is pending; resuming replays it on the new branch.
+                sendJsonMessage({ type: "resume" });
+              }}
+            />
+            <CompareMessageDialog
+              chatId={chatId}
+              messageId={compareSource?.messageId ?? null}
+              currentModelId={compareSource?.modelId}
+              currentModelName={compareSource?.modelName}
+              onOpenChange={(open) => {
+                if (!open) setCompareSource(null);
+              }}
+              onCompared={async () => {
+                setSocketError(null);
+                await queryClient.fetchQuery({
+                  ...chatSessionGetOneOptions({
+                    client,
+                    path: { chat_id: chatId },
+                  }),
+                  staleTime: 0,
+                });
+                setSubAgentActivities([]);
+                setIsProcessing(true);
+                // The new columns are pending; the job answers them one after another.
+                sendJsonMessage({ type: "resume" });
+              }}
+            />
+          </div>
+        </div>
+      </CanvasLayout>
+    </CanvasProvider>
   );
 };
 

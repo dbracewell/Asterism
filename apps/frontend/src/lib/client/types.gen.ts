@@ -267,6 +267,16 @@ export type CanvasPolicy = {
 };
 
 /**
+ * CanvasRestore
+ */
+export type CanvasRestore = {
+  /**
+   * Base Version
+   */
+  base_version: number;
+};
+
+/**
  * CanvasVersion
  */
 export type CanvasVersion = {
@@ -306,6 +316,26 @@ export type CanvasVersion = {
    * Language
    */
   language: string;
+  /**
+   * Content
+   */
+  content: string;
+};
+
+/**
+ * CanvasVersionCreate
+ *
+ * A user's edit, saved on top of ``base_version``, the version being edited.
+ */
+export type CanvasVersionCreate = {
+  /**
+   * Base Version
+   */
+  base_version: number;
+  /**
+   * Title
+   */
+  title?: string | null;
   /**
    * Content
    */
@@ -16776,6 +16806,10 @@ export type CanvasPolicyGetErrors = {
    * Not Found
    */
   404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
 };
 
 export type CanvasPolicyGetError =
@@ -16815,6 +16849,10 @@ export type CanvasPolicyUpdateErrors = {
    * Not Found
    */
   404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
   /**
    * Validation Error
    */
@@ -16863,6 +16901,10 @@ export type CanvasItemGetManyErrors = {
    * Not Found
    */
   404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
   /**
    * Validation Error
    */
@@ -16917,6 +16959,10 @@ export type CanvasItemGetOneErrors = {
    * Not Found
    */
   404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
   /**
    * Validation Error
    */
@@ -16974,6 +17020,10 @@ export type CanvasVersionGetOneErrors = {
    */
   404: ErrorDetail;
   /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
    * Validation Error
    */
   422: ErrorDetail;
@@ -16991,6 +17041,122 @@ export type CanvasVersionGetOneResponses = {
 
 export type CanvasVersionGetOneResponse =
   CanvasVersionGetOneResponses[keyof CanvasVersionGetOneResponses];
+
+export type CanvasVersionCreateData = {
+  body: CanvasVersionCreate;
+  path: {
+    /**
+     * Chat Id
+     */
+    chat_id: string;
+    /**
+     * Item Id
+     */
+    item_id: string;
+  };
+  query?: never;
+  url: "/chat/{chat_id}/canvas/{item_id}/versions";
+};
+
+export type CanvasVersionCreateErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Forbidden
+   */
+  403: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type CanvasVersionCreateError =
+  CanvasVersionCreateErrors[keyof CanvasVersionCreateErrors];
+
+export type CanvasVersionCreateResponses = {
+  /**
+   * Successful Response
+   */
+  200: CanvasVersion;
+};
+
+export type CanvasVersionCreateResponse =
+  CanvasVersionCreateResponses[keyof CanvasVersionCreateResponses];
+
+export type CanvasVersionRestoreData = {
+  body: CanvasRestore;
+  path: {
+    /**
+     * Chat Id
+     */
+    chat_id: string;
+    /**
+     * Item Id
+     */
+    item_id: string;
+    /**
+     * Number
+     */
+    number: number;
+  };
+  query?: never;
+  url: "/chat/{chat_id}/canvas/{item_id}/versions/{number}/restore";
+};
+
+export type CanvasVersionRestoreErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Forbidden
+   */
+  403: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type CanvasVersionRestoreError =
+  CanvasVersionRestoreErrors[keyof CanvasVersionRestoreErrors];
+
+export type CanvasVersionRestoreResponses = {
+  /**
+   * Successful Response
+   */
+  200: CanvasVersion;
+};
+
+export type CanvasVersionRestoreResponse =
+  CanvasVersionRestoreResponses[keyof CanvasVersionRestoreResponses];
 
 export type LearningModeGetManyData = {
   body?: never;

@@ -11,7 +11,14 @@ from asterism.domains.user.dependencies import AdminUserDep, AuthedUserDep
 
 from . import policy, service
 from .branches import active_branch
-from .schemas import CanvasItemHistory, CanvasItemSummary, CanvasPolicy, CanvasVersion
+from .schemas import (
+    CanvasItemHistory,
+    CanvasItemSummary,
+    CanvasPolicy,
+    CanvasRestore,
+    CanvasVersion,
+    CanvasVersionCreate,
+)
 
 canvas_router = APIRouter(
     tags=["canvas"],
@@ -20,9 +27,10 @@ canvas_router = APIRouter(
         401: {"model": ErrorDetail},
         403: {"model": ErrorDetail},
         404: {"model": ErrorDetail},
+        409: {"model": ErrorDetail},
     },
 )
-logger = get_logger("CanvasPolicy")
+logger = get_logger("Canvas")
 
 
 @canvas_router.get("/settings/app/canvas", operation_id="canvasPolicyGet")
@@ -59,3 +67,43 @@ async def get_version(
 ) -> CanvasVersion:
     branch = await active_branch(user.id, chat_id, session)
     return service.full_version(await service.visible_item(user.id, chat_id, item_id, branch, session), number)
+
+
+@canvas_router.post("/chat/{chat_id}/canvas/{item_id}/versions", operation_id="canvasVersionCreate")
+async def create_version(
+    chat_id: uuid.UUID, item_id: uuid.UUID, payload: CanvasVersionCreate, user: AuthedUserDep, session: DBSessionDep
+) -> CanvasVersion:
+    """Save the user's edit as a new version; the agent sees it on its next turn."""
+    branch = await active_branch(user.id, chat_id, session)
+    await policy.require_canvas(user.id, chat_id, session)
+    entry = await service.save_user_version(
+        user.id,
+        chat_id,
+        item_id,
+        branch,
+        base_version=payload.base_version,
+        title=payload.title,
+        content=payload.content,
+        session=session,
+    )
+    logger.info(f"User {user.id} saved canvas item {item_id} version {entry.current.number}")
+    return service.full_version(entry)
+
+
+@canvas_router.post("/chat/{chat_id}/canvas/{item_id}/versions/{number}/restore", operation_id="canvasVersionRestore")
+async def restore_version(
+    chat_id: uuid.UUID,
+    item_id: uuid.UUID,
+    number: int,
+    payload: CanvasRestore,
+    user: AuthedUserDep,
+    session: DBSessionDep,
+) -> CanvasVersion:
+    """Copy an earlier version into a new one; history is never rewritten."""
+    branch = await active_branch(user.id, chat_id, session)
+    await policy.require_canvas(user.id, chat_id, session)
+    entry = await service.restore_version(
+        user.id, chat_id, item_id, branch, number=number, base_version=payload.base_version, session=session
+    )
+    logger.info(f"User {user.id} restored canvas item {item_id} version {number} as {entry.current.number}")
+    return service.full_version(entry)

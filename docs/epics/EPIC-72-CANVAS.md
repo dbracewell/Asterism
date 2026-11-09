@@ -1,6 +1,6 @@
 # EPIC-72: Canvas
 
-Status: in progress (US-72.1; [ADR-0063](../adr/0063-canvas.md)). Source: user request (2026-11-08).
+Status: in progress (US-72.1 done, US-72.2; [ADR-0063](../adr/0063-canvas.md)). Source: user request (2026-11-08).
 
 ## Objective
 
@@ -56,8 +56,8 @@ User edits save as new versions; the agent sees the latest version next turn.
 Version history allows viewing and restoring. Selecting text and asking the agent
 to change it sends a targeted request.
 
-- [ ] Build the panel, editors, history and "ask about selection".
-- [ ] Unit tests, keyboard/contrast checks and an E2E with a fake provider.
+- [x] Build the panel, editors, history and "ask about selection".
+- [x] Unit tests, keyboard/contrast checks and an E2E with a fake provider.
 
 ## US-72.3: Downloads and settings
 

@@ -56,3 +56,17 @@ class CanvasVersion(CanvasVersionSummary):
     kind: CanvasKind
     language: str
     content: str
+
+
+class CanvasVersionCreate(BaseModel):
+    """A user's edit, saved on top of ``base_version``, the version being edited."""
+
+    model_config = ConfigDict(extra="forbid")
+    base_version: int = Field(ge=1)
+    title: str | None = Field(default=None, min_length=1, max_length=MAX_TITLE_LENGTH)
+    content: str
+
+
+class CanvasRestore(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    base_version: int = Field(ge=1)

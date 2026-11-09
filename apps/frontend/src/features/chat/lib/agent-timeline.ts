@@ -61,6 +61,36 @@ export function skillLoadLabel(
   return `Load skill ${skill}`;
 }
 
+const CANVAS_VERBS: Record<string, [string, string, string]> = {
+  canvas_create: ["Created", "Creating", "create"],
+  canvas_update: ["Updated", "Updating", "update"],
+  canvas_read: ["Read", "Reading", "read"],
+};
+
+/**
+ * "Created canvas Notes" for a canvas tool call: the title the result or the
+ * arguments give, else "canvas". Undefined for other tools.
+ */
+export function canvasToolLabel(
+  name: string,
+  args: string,
+  status: ToolStepStatus,
+  resultContent?: string,
+): string | undefined {
+  const verbs = CANVAS_VERBS[name];
+  if (!verbs) return undefined;
+  const [done, doing, verb] = verbs;
+  const title =
+    (status === "succeeded" ? textField(resultContent, "title") : null) ??
+    textField(args, "title");
+  const what = title ? `canvas ${title}` : "the canvas";
+  if (status === "succeeded") return `${done} ${what}`;
+  if (status === "running") return `${doing} ${what}`;
+  if (status === "failed" || status === "denied")
+    return `Could not ${verb} ${what}`;
+  return `${verb[0].toUpperCase()}${verb.slice(1)} ${what}`;
+}
+
 /** Client-observed tool timing; the backend does not persist durations. */
 export type ToolTiming = { startedAt: number; endedAt?: number };
 export type ToolTimings = Record<string, ToolTiming>;
@@ -158,12 +188,19 @@ export function messageTimelineSteps(
       name: call.function.name,
       arguments: call.function.arguments,
       status,
-      label: skillLoadLabel(
-        call.function.name,
-        call.function.arguments,
-        status,
-        result?.content,
-      ),
+      label:
+        skillLoadLabel(
+          call.function.name,
+          call.function.arguments,
+          status,
+          result?.content,
+        ) ??
+        canvasToolLabel(
+          call.function.name,
+          call.function.arguments,
+          status,
+          result?.content,
+        ),
       result: result
         ? (errorOf(result.raw_result) ?? result.content)
         : undefined,

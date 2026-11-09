@@ -551,3 +551,53 @@ async def test_policy_endpoints_and_user_setting(canvas_api):
     assert (await client.put("/settings/user/canvas_enabled", headers=auth(), json={"value": "on"})).status_code == 400
     # The read-only flag can't be written.
     assert (await client.put("/settings/user/canvas_allowed", headers=auth(), json={"value": True})).status_code == 400
+
+
+async def test_user_edits_and_restores_are_new_versions_the_next_turn_sees(canvas_api):
+    client, sessions = canvas_api
+    chat_id, request, run = await started_chat(client, sessions)
+    await switches(sessions)
+    created = await canvas_create(
+        tool_ctx(
+            chat_id, scope_for(chat_id, request, run), CanvasCreateArgs(kind="document", title="Notes", content="one")
+        )
+    )
+    reply = await finish(sessions, chat_id, request, run)
+    item = created["item_id"]
+    base = f"/chat/{chat_id}/canvas/{item}"
+
+    saved = await client.post(f"{base}/versions", headers=auth(), json={"base_version": 1, "content": "two"})
+    assert saved.status_code == 200, saved.text
+    body = saved.json()
+    assert (body["number"], body["author"], body["title"], body["message_id"]) == (2, "user", "Notes", str(reply))
+    # A stale base is a conflict, not a silent overwrite.
+    stale = await client.post(f"{base}/versions", headers=auth(), json={"base_version": 1, "content": "lost"})
+    assert stale.status_code == 409
+    restored = await client.post(f"{base}/versions/1/restore", headers=auth(), json={"base_version": 2})
+    assert restored.status_code == 200, restored.text
+    assert (restored.json()["number"], restored.json()["content"]) == (3, "one")
+    assert [v["author"] for v in (await client.get(base, headers=auth())).json()["versions"]] == [
+        "agent",
+        "user",
+        "user",
+    ]
+
+    # The next turn, a child of the edited branch, reads the user's latest version.
+    async with sessions() as db:
+        follow = MessageModel(user_id="a", chat_id=chat_id, role="user", content="More", parent_message_id=reply)
+        db.add(follow)
+        await db.flush()
+        await db.execute(update(MessageModel).where(MessageModel.id == reply).values(active_child_id=follow.id))
+        await db.commit()
+        follow_id = follow.id
+    next_run = scope_for(chat_id, follow_id, uuid.uuid4())
+    read = await canvas_read(tool_ctx(chat_id, next_run, CanvasReadArgs(item_id=item)))
+    assert (read["version"], read["author"], read["content"]) == (3, "user", "one")
+
+    # Others can't write; writing needs canvas on.
+    assert (
+        await client.post(f"{base}/versions", headers=auth("b"), json={"base_version": 3, "content": "x"})
+    ).status_code == 404
+    await switches(sessions, user=False)
+    off = await client.post(f"{base}/versions", headers=auth(), json={"base_version": 3, "content": "x"})
+    assert off.status_code == 400
