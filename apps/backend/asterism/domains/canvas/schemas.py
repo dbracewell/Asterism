@@ -75,3 +75,13 @@ class CanvasRestore(BaseModel):
 class CanvasLibrarySave(BaseModel):
     model_config = ConfigDict(extra="forbid")
     format: Literal["md", "txt", "source", "html", "docx", "pdf"]
+
+
+class CanvasItemCreate(BaseModel):
+    """An item the user starts themselves; ``content`` may begin empty."""
+
+    model_config = ConfigDict(extra="forbid")
+    kind: CanvasKind
+    title: str = Field(min_length=1, max_length=MAX_TITLE_LENGTH)
+    language: str | None = Field(default=None, max_length=32)
+    content: str = ""

@@ -48,3 +48,6 @@ Source: user request (2026-11-08). Suggested order: EPIC-74 → 67 → 70 → 68
 - [ ] US-72.3: Downloads and settings (implemented; awaiting confirmation)
   - [x] Implement exports (server-side) and save-to-library.
   - [x] Settings toggles, help and glossary; tests for each export type.
+- [ ] US-72.4: Start a canvas item yourself (implemented; awaiting confirmation)
+  - [x] Endpoint, chip, dialog and help.
+  - [x] Backend, unit and E2E tests.

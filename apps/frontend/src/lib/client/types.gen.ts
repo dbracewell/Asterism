@@ -191,6 +191,30 @@ export type BundledRubricView = {
 };
 
 /**
+ * CanvasItemCreate
+ *
+ * An item the user starts themselves; ``content`` may begin empty.
+ */
+export type CanvasItemCreate = {
+  /**
+   * Kind
+   */
+  kind: "document" | "code" | "html";
+  /**
+   * Title
+   */
+  title: string;
+  /**
+   * Language
+   */
+  language?: string | null;
+  /**
+   * Content
+   */
+  content?: string;
+};
+
+/**
  * CanvasItemHistory
  *
  * An item and its versions visible on the chat's active branch, oldest first.
@@ -16935,6 +16959,58 @@ export type CanvasItemGetManyResponses = {
 
 export type CanvasItemGetManyResponse =
   CanvasItemGetManyResponses[keyof CanvasItemGetManyResponses];
+
+export type CanvasItemCreateData = {
+  body: CanvasItemCreate;
+  path: {
+    /**
+     * Chat Id
+     */
+    chat_id: string;
+  };
+  query?: never;
+  url: "/chat/{chat_id}/canvas";
+};
+
+export type CanvasItemCreateErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Forbidden
+   */
+  403: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type CanvasItemCreateError =
+  CanvasItemCreateErrors[keyof CanvasItemCreateErrors];
+
+export type CanvasItemCreateResponses = {
+  /**
+   * Successful Response
+   */
+  200: CanvasVersion;
+};
+
+export type CanvasItemCreateResponse =
+  CanvasItemCreateResponses[keyof CanvasItemCreateResponses];
 
 export type CanvasExportZipData = {
   body?: never;

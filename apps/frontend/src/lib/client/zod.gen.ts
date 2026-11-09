@@ -58,6 +58,18 @@ export const zBulkDeleteChatResponse = z.object({
 });
 
 /**
+ * CanvasItemCreate
+ *
+ * An item the user starts themselves; ``content`` may begin empty.
+ */
+export const zCanvasItemCreate = z.object({
+  kind: z.enum(["document", "code", "html"]),
+  title: z.string().min(1).max(200),
+  language: z.string().max(32).nullish(),
+  content: z.string().optional().default(""),
+});
+
+/**
  * CanvasItemSummary
  *
  * An item as it stands on one branch: its current visible version.
@@ -6562,6 +6574,17 @@ export const zCanvasItemGetManyPath = z.object({
  * Successful Response
  */
 export const zCanvasItemGetManyResponse = z.array(zCanvasItemSummary);
+
+export const zCanvasItemCreateBody = zCanvasItemCreate;
+
+export const zCanvasItemCreatePath = z.object({
+  chat_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zCanvasItemCreateResponse = zCanvasVersion;
 
 export const zCanvasExportZipPath = z.object({
   chat_id: z.uuid(),

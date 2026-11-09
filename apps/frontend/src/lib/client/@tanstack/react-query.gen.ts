@@ -90,6 +90,9 @@ import type {
   CanvasExportZipData,
   CanvasExportZipError,
   CanvasExportZipResponse,
+  CanvasItemCreateData,
+  CanvasItemCreateError,
+  CanvasItemCreateResponse,
   CanvasItemGetManyData,
   CanvasItemGetManyError,
   CanvasItemGetManyResponse,
@@ -6414,6 +6417,35 @@ export const canvasItemGetManyOptions = (
     },
     queryKey: canvasItemGetManyQueryKey(options),
   });
+
+/**
+ * Create Item
+ *
+ * Start a canvas item yourself; the agent sees it on its next turn.
+ */
+export const canvasItemCreateMutation = (
+  options?: Partial<Options<CanvasItemCreateData>>,
+): UseMutationOptions<
+  CanvasItemCreateResponse,
+  CanvasItemCreateError,
+  Options<CanvasItemCreateData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    CanvasItemCreateResponse,
+    CanvasItemCreateError,
+    Options<CanvasItemCreateData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().canvasItemCreate({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
 
 export const canvasExportZipQueryKey = (
   options: Options<CanvasExportZipData>,

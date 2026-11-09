@@ -169,7 +169,7 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
     summary:
       "A panel beside the chat where your main agent puts long documents, code and web pages, so you can read, edit and download them.",
     details: [
-      "A message that wrote to the canvas shows a card; select Open to show the item beside the chat (full screen on a phone). Documents have Edit and Preview tabs, code opens in an editor, and web pages show a preview that can't reach the internet or the app.",
+      "A message that wrote to the canvas shows a card; select Open to show the item beside the chat (full screen on a phone). The Canvas chip above the message box lists every item on the branch you're viewing and has New canvas item, to start a document, code or web page yourself. Documents have Edit and Preview tabs, code opens in an editor, and web pages show a preview that can't reach the internet or the app.",
       "Save version keeps your edits as a new version, and the agent reads the latest version on its next turn. Pick an older version to view it or restore it as a new one; versions are never overwritten. Select text and choose Ask about selection to ask the agent to change just that part.",
       "The download menu saves a version as Markdown, plain text, a source file, a web page, Word or PDF, adds it to your files, or downloads every item in the chat as a ZIP.",
       "Canvas items follow the branch you're viewing: regenerating a reply hides what the replaced reply wrote. Turn the canvas on in User Settings → General; an administrator has to allow it, and the chat's model must support tools. Canvas text is treated as data and grants no tools or files.",

@@ -710,3 +710,52 @@ async def test_saving_a_version_to_the_library(canvas_api, monkeypatch, tmp_path
     assert again.json()["filename"] == "Plan v1 final(2).docx"
     assert (await client.post(path, headers=auth("b"), json={"format": "md"})).status_code == 404
     assert (await client.post(path, headers=auth(), json={"format": "source"})).status_code == 400
+
+
+async def test_users_start_items_the_next_turn_sees(canvas_api):
+    from asterism.domains.canvas.branches import Branch
+    from asterism.domains.canvas.service import create_user_item
+
+    client, sessions = canvas_api
+    chat_id, request, run = await started_chat(client, sessions)
+    await switches(sessions)
+    reply = await finish(sessions, chat_id, request, run)
+    base = f"/chat/{chat_id}/canvas"
+    created = await client.post(base, headers=auth(), json={"kind": "code", "title": "Script", "language": "Python"})
+    assert created.status_code == 200, created.text
+    body = created.json()
+    assert (body["number"], body["author"], body["language"], body["content"], body["message_id"]) == (
+        1,
+        "user",
+        "python",
+        "",
+        str(reply),
+    )
+    assert [item["title"] for item in (await client.get(base, headers=auth())).json()] == ["Script"]
+
+    # The next turn, a child of the reply, lists it.
+    async with sessions() as db:
+        follow = MessageModel(user_id="a", chat_id=chat_id, role="user", content="Fill it in", parent_message_id=reply)
+        db.add(follow)
+        await db.commit()
+        follow_id = follow.id
+    read = await canvas_read(tool_ctx(chat_id, scope_for(chat_id, follow_id, uuid.uuid4()), CanvasReadArgs()))
+    assert [item["title"] for item in read["items"]] == ["Script"]
+
+    assert (await client.post(base, headers=auth(), json={"kind": "code", "title": "No language"})).status_code == 400
+    assert (await client.post(base, headers=auth("b"), json={"kind": "document", "title": "x"})).status_code == 404
+    await switches(sessions, admin=False)
+    assert (await client.post(base, headers=auth(), json={"kind": "document", "title": "x"})).status_code == 400
+    # A chat without messages has nothing to anchor an item to.
+    async with sessions() as db:
+        with pytest.raises(BadDataException, match="Send a message"):
+            await create_user_item(
+                "a",
+                chat_id,
+                Branch(frozenset(), frozenset(), None),
+                kind="document",
+                title="x",
+                language=None,
+                content="",
+                session=db,
+            )
