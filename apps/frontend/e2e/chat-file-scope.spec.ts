@@ -209,7 +209,7 @@ test("keeps General isolated and shows two project chats with different local at
   const chooseFromMenu = async (item: string, dialog: Locator) => {
     await expect(async () => {
       if (!(await dialog.isVisible())) {
-        await page.getByRole("button", { name: "Add attachments" }).click();
+        await page.getByRole("button", { name: "More options" }).click();
         await page
           .getByRole("menuitem", { name: item })
           .click({ timeout: 2000 });

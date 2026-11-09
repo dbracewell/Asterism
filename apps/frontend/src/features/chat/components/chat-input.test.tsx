@@ -4,6 +4,7 @@ import {
   render as rtlRender,
   screen,
   waitFor,
+  within,
 } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
@@ -41,12 +42,20 @@ vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
     queryFn: async () => ({ status: "ready", extractions: {} }),
   }),
   fileKnowledgeRegenerateMutation: () => ({ mutationFn: vi.fn() }),
+  chatModelsListOptions: () => ({
+    queryKey: ["models"],
+    queryFn: async () => [
+      { id: "a", name: "Alpha", available: true },
+      { id: "b", name: "Beta", available: true },
+    ],
+  }),
   projectFileGetManyOptions: () => ({
     queryKey: ["project-files"],
     queryFn: async () => ({ files: [], total: 0 }),
   }),
 }));
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { ComposerNotice } from "./composer-notice";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 const render = (component: React.ReactNode) =>
@@ -220,7 +229,7 @@ it("cleans queued preview resources on removal and abandonment without uploading
 it("offers upload, library, paste, screenshot and files in context from the add menu", async () => {
   const user = userEvent.setup();
   render(<ChatInput onSubmit={vi.fn()} />);
-  await user.click(screen.getByRole("button", { name: "Add attachments" }));
+  await user.click(screen.getByRole("button", { name: "More options" }));
   for (const name of [
     "Upload files",
     "From library",
@@ -240,7 +249,7 @@ it("opens the file chooser from the upload menu item", async () => {
   const user = userEvent.setup();
   render(<ChatInput onSubmit={vi.fn()} />);
   const click = vi.spyOn(HTMLInputElement.prototype, "click");
-  await user.click(screen.getByRole("button", { name: "Add attachments" }));
+  await user.click(screen.getByRole("button", { name: "More options" }));
   await user.click(
     await screen.findByRole("menuitem", { name: "Upload files" }),
   );
@@ -258,4 +267,78 @@ it("attaches pasted images with distinct names and leaves pasted text alone", ()
     clipboardData: { files: [image], getData: () => "copied text" },
   });
   expect(screen.getAllByLabelText(/^Remove /)).toHaveLength(1);
+});
+
+it("puts chips in the top row and their notices below it", () => {
+  render(
+    <ChatInput
+      onSubmit={vi.fn()}
+      chips={
+        <>
+          <button type="button">Chat model</button>
+          <ComposerNotice role="alert">Could not load models.</ComposerNotice>
+        </>
+      }
+    />,
+  );
+  const row = screen.getByRole("group", { name: "Message options" });
+  expect(row).toContainElement(
+    screen.getByRole("button", { name: "Chat model" }),
+  );
+  const alert = screen.getByRole("alert");
+  expect(alert).toHaveTextContent("Could not load models.");
+  expect(row).not.toContainElement(alert);
+});
+
+it("opens comparison from the menu and shows a chip while models are chosen", async () => {
+  const user = userEvent.setup();
+  const onChange = vi.fn();
+  const { rerender } = render(
+    <ChatInput onSubmit={vi.fn()} compare={{ value: [], onChange }} />,
+  );
+  expect(
+    screen.queryByRole("button", { name: /^Compare models/ }),
+  ).not.toBeInTheDocument();
+  await user.click(screen.getByRole("button", { name: "More options" }));
+  await user.click(
+    await screen.findByRole("menuitem", { name: "Compare models" }),
+  );
+  const popover = await screen.findByRole("dialog", { name: "Compare models" });
+  await user.click(
+    await within(popover).findByRole("checkbox", { name: "Alpha" }),
+  );
+  expect(onChange).toHaveBeenCalledWith(["a"]);
+  await user.keyboard("{Escape}");
+  expect(screen.getByRole("button", { name: "More options" })).toHaveFocus();
+  rerender(
+    <QueryClientProvider client={new QueryClient()}>
+      <TooltipProvider>
+        <ChatInput
+          onSubmit={vi.fn()}
+          compare={{ value: ["a", "b"], onChange }}
+        />
+      </TooltipProvider>
+    </QueryClientProvider>,
+  );
+  expect(
+    screen.getByRole("button", { name: "Compare models (2 selected)" }),
+  ).toBeVisible();
+});
+
+it("opens chat controls help from the menu and returns focus to it", async () => {
+  const user = userEvent.setup();
+  render(<ChatInput onSubmit={vi.fn()} />);
+  expect(
+    screen.queryByRole("button", { name: "Help: Chat controls" }),
+  ).not.toBeInTheDocument();
+  await user.click(screen.getByRole("button", { name: "More options" }));
+  await user.click(
+    await screen.findByRole("menuitem", { name: "Help: chat controls" }),
+  );
+  expect(
+    await screen.findByRole("dialog", { name: "Help: Chat controls" }),
+  ).toBeVisible();
+  await user.keyboard("{Escape}");
+  expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "More options" })).toHaveFocus();
 });

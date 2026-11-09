@@ -97,6 +97,14 @@ async function ratio(
   return (await measure(page, id)).ratio;
 }
 
+/** Opens the composer's status popover. */
+async function openStatus(page: Page) {
+  await page
+    .getByRole("button", { name: /^(Chat status|Context usage)/ })
+    .click();
+  await expect(page.getByRole("dialog")).toBeVisible();
+}
+
 for (const theme of themes) {
   test(`${theme}: plan label and usage-limit recovery stay readable and keyboard reachable`, async ({
     page,
@@ -112,6 +120,8 @@ for (const theme of themes) {
     await page.setViewportSize({ width: 1280, height: 900 });
     const socket = await openPlanChat(page, { model: plan });
 
+    // Plan usage lives in the composer's status popover (US-73.2).
+    await openStatus(page);
     const label = page
       .getByRole("note")
       .filter({ hasText: "Using ChatGPT plan" });
@@ -123,6 +133,7 @@ for (const theme of themes) {
     expect(
       await ratio(page, label.getByText("Using ChatGPT plan"), "plan-label"),
     ).toBeGreaterThanOrEqual(4.5);
+    await page.keyboard.press("Escape");
 
     // The plan stream fails with a usage limit after the request starts.
     socket.send(JSON.stringify({ type: "status", is_processing: true }));
@@ -179,17 +190,24 @@ test("a paused plan resumes only on the user's explicit retry", async ({
 
   const notice = page.getByRole("alert", { name: "Usage limit reached" });
   await expect(notice).toBeVisible();
+  await openStatus(page);
   await expect(
     page.getByRole("note").filter({ hasText: "Using ChatGPT plan" }),
   ).toHaveCount(0);
+  await page.keyboard.press("Escape");
   expect(resumes).toEqual([]);
 
   await notice.getByRole("button", { name: "Try my plan again" }).click();
 
   await expect.poll(() => resumes).toEqual(["POST"]);
   await expect(
+    page.getByRole("alert", { name: "Usage limit reached" }),
+  ).toHaveCount(0);
+  await openStatus(page);
+  await expect(
     page.getByRole("note").filter({ hasText: "Using ChatGPT plan" }),
   ).toBeVisible();
+  await page.keyboard.press("Escape");
   await expect(
     page.getByRole("alert", { name: "Usage limit reached" }),
   ).toHaveCount(0);

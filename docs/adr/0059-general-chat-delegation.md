@@ -81,7 +81,8 @@ sub-agent capability entries carry `general_selection` instead of
   its availability, and a dialog replaces it under the revision guard. A newly
   chosen target needs an available model; an already chosen unavailable one
   stays removable.
-- In a General chat the composer shows a robot icon when the set is non-empty:
+- In a General chat the composer's status popover (a robot icon before
+  US-73.2) shows the set when it is non-empty:
   available when policy allows, the chat model has `supports_tools=True` and a
   chosen fixed model is available; otherwise it names the block. It mirrors
   the server checks for display only; each turn still re-derives the scope.

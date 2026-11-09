@@ -166,7 +166,7 @@ it("labels historical output from its recorded snapshot", () => {
   );
 });
 
-it("shows explicit capabilities without inferring support from the model name", async () => {
+it("names explicit capabilities on the chip without inferring support from the model name", async () => {
   mocks.list.mockResolvedValue([
     {
       ...choices[0],
@@ -178,8 +178,15 @@ it("shows explicit capabilities without inferring support from the model name", 
   render(<ChatModelPicker value="a" onChange={vi.fn()} />, {
     wrapper: wrapper(),
   });
-  expect(await screen.findByText("Images supported")).toBeVisible();
-  expect(screen.getByText("Tools unsupported")).toBeVisible();
+  const chip = await screen.findByRole("combobox", { name: "Chat model" });
+  await waitFor(() =>
+    expect(chip).toHaveAttribute(
+      "title",
+      expect.stringContaining("Images supported"),
+    ),
+  );
+  expect(chip.getAttribute("title")).toContain("Tools unsupported");
+  expect(chip).toHaveAttribute("aria-description", chip.getAttribute("title"));
 });
 
 it("shows provider and capability identity on each listed model", async () => {
@@ -263,17 +270,6 @@ const plan = {
   provider_type: "chatgpt",
   available: true,
 };
-
-it("labels a selected ChatGPT plan model with Using ChatGPT plan and Manage usage", async () => {
-  mocks.list.mockResolvedValue([...choices, plan]);
-  render(<ChatModelPicker value="plan" onChange={vi.fn()} />, {
-    wrapper: wrapper(),
-  });
-  expect(await screen.findByText("Using ChatGPT plan")).toBeInTheDocument();
-  const link = screen.getByRole("link", { name: /Manage usage/ });
-  expect(link).toHaveAttribute("href", "https://chatgpt.com/settings/usage");
-  expect(link).toHaveAttribute("target", "_blank");
-});
 
 it("does not label models that are not on a ChatGPT plan", async () => {
   render(<ChatModelPicker value="a" onChange={vi.fn()} />, {

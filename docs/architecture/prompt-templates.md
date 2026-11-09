@@ -158,7 +158,7 @@ optional fields in sections.
 
 ## Prompt coach (US-51.6)
 
-An optional **Review prompt** button in the composer toolbar critiques the
+An optional **Review prompt** item in the composer's **+** menu critiques the
 current draft against a fixed rubric: goal, audience, context, constraints,
 output format and examples. It is off by default; each user turns it on with
 **User Settings → General → Prompt Coach** (user setting `prompt_coach_enabled`,

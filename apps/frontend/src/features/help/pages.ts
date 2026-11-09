@@ -76,13 +76,13 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
       {
         name: "Message box",
         description:
-          "Write your message here. The buttons below it choose the model, persona and learning mode, and add files, templates or skills.",
+          "Write your message here. The chips above it choose the model, persona and learning mode. The + menu adds files, templates, skills and model comparison.",
       },
     ],
     tasks: [
       "To practice rather than get answers, set the learning mode to Tutor before you send.",
       "Type / in the message box to add a skill or a prompt template.",
-      "Use the paperclip to attach your notes or work.",
+      "Use the + menu to attach your notes or work.",
     ],
     terms: [
       "composer.controls",
@@ -117,14 +117,14 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
       {
         name: "Message box",
         description:
-          "Write your next message. Changes to the model, persona or mode apply from your next message.",
+          "Write your next message. Select a chip above the box to change the model, persona or mode; changes apply from your next message.",
       },
     ],
     tasks: [
       "Regenerate a reply to get another version, then use the arrows to switch between versions.",
       "Use Compare with other models under a reply to see how different models answer.",
       "Lock the learning mode from the header to stop yourself skipping ahead.",
-      "Open the context meter beside the message box and choose Compact now to summarize earlier turns of a long chat.",
+      "Open the status ring beside the send button and choose Compact now to summarize earlier turns of a long chat.",
     ],
     terms: [
       "concept.chat",

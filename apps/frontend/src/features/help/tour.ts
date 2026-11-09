@@ -13,7 +13,7 @@ export type TourStepId =
   | "skills"
   | "learning-mode"
   | "model"
-  | "attachments";
+  | "options";
 
 export interface TourStep {
   id: TourStepId;
@@ -30,7 +30,7 @@ export const firstChatTourSteps: readonly TourStep[] = [
     id: "composer",
     target: "composer",
     title: "Write your message",
-    body: "Type your question or task here. Press Enter to send, or Shift+Enter for a new line. The buttons below the box change how the assistant answers.",
+    body: "Type your question or task here. Press Enter to send, or Shift+Enter for a new line. The chips above the box and the + menu change how the assistant answers.",
   },
   {
     id: "persona",
@@ -58,10 +58,10 @@ export const firstChatTourSteps: readonly TourStep[] = [
     body: "Choose the AI model that writes the replies. Models differ in speed, cost and abilities, such as reading images.",
   },
   {
-    id: "attachments",
-    target: "attachments",
-    title: "Attachments",
-    body: "Add files such as notes, code or images so the assistant can read them. Select the ? button in this toolbar any time to learn what each control does.",
+    id: "options",
+    target: "options",
+    title: "More options",
+    body: "Attach files such as notes, code or images, use prompt templates, add skills or compare models. Choose Help in this menu any time to learn what each control does.",
   },
 ];
 

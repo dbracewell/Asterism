@@ -41,7 +41,7 @@ for (const theme of ["atlas", "night-atlas", "dracula"]) {
       ).toBeVisible();
       await expect(
         page.getByRole("combobox", { name: "Chat model", exact: true }),
-      ).toHaveText("Palette chat model (Synthetic provider)");
+      ).toHaveText("Palette chat model");
 
       // Tiers stay ordered: control < surface < overlay (composer).
       const radius = (selector: string) =>

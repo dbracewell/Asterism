@@ -53,9 +53,7 @@ for (const theme of themes) {
       name: "Chat model",
       exact: true,
     });
-    await expect(chatSelect).toHaveText(
-      "Palette chat model (Synthetic provider)",
-    );
+    await expect(chatSelect).toHaveText("Palette chat model");
     await chatSelect.evaluate((el) =>
       el.setAttribute("data-contrast", "chat-select"),
     );
@@ -232,9 +230,7 @@ for (const theme of themes) {
     await page.waitForTimeout(250);
     await check("chat-option", "highlighted option");
     await alternative.click();
-    await expect(chatSelect).toHaveText(
-      "Alternative chat model (Synthetic provider)",
-    );
+    await expect(chatSelect).toHaveText("Alternative chat model");
     await page.mouse.move(0, 0);
     await page.waitForTimeout(250);
     await check("chat-select", "changed selection in primary panel");

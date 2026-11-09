@@ -36,7 +36,7 @@ const allTargets = [
   "persona",
   "learning-mode",
   "model",
-  "attachments",
+  "options",
 ];
 
 function Composer({ targets }: { targets: string[] }) {
@@ -44,9 +44,9 @@ function Composer({ targets }: { targets: string[] }) {
   return (
     <div data-tour={has("composer") ? "composer" : undefined}>
       <textarea aria-label="Message" data-tour="message" />
-      {has("attachments") && (
-        <button type="button" data-tour="attachments">
-          Add attachments
+      {has("options") && (
+        <button type="button" data-tour="options">
+          More options
         </button>
       )}
       {has("model") && (

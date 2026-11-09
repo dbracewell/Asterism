@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button";
 import {
   Popover,
+  PopoverAnchor,
   PopoverContent,
   PopoverDescription,
   PopoverHeader,
@@ -31,14 +32,27 @@ export function HelpTopic({
   className,
   side = "top",
   align = "center",
+  anchor,
 }: {
   id: HelpId;
   className?: string;
   side?: "top" | "right" | "bottom" | "left";
   align?: "start" | "center" | "end";
+  /**
+   * Opens from another control, such as a menu item, instead of its own "?"
+   * button. The popover anchors to an invisible marker and returns focus with
+   * `returnFocus` when it closes.
+   */
+  anchor?: {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    returnFocus: () => void;
+  };
 }) {
   const { isAdmin } = useHelpAudience();
-  const [open, setOpen] = React.useState(false);
+  const [ownOpen, setOwnOpen] = React.useState(false);
+  const open = anchor ? anchor.open : ownOpen;
+  const setOpen = anchor ? anchor.onOpenChange : setOwnOpen;
   // Related links push onto this stack; Back pops it.
   const [trail, setTrail] = React.useState<HelpId[]>([id]);
   const [expanded, setExpanded] = React.useState(false);
@@ -74,23 +88,33 @@ export function HelpTopic({
         }
       }}
     >
-      <PopoverTrigger asChild>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-xs"
-          aria-label={`Help: ${entry.title}`}
-          className={cn("text-muted-foreground", className)}
-        >
-          <CircleQuestionMarkIcon aria-hidden="true" />
-        </Button>
-      </PopoverTrigger>
+      {anchor ? (
+        <PopoverAnchor asChild>
+          <span
+            aria-hidden="true"
+            className={cn("w-0 self-stretch", className)}
+          />
+        </PopoverAnchor>
+      ) : (
+        <PopoverTrigger asChild>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-xs"
+            aria-label={`Help: ${entry.title}`}
+            className={cn("text-muted-foreground", className)}
+          >
+            <CircleQuestionMarkIcon aria-hidden="true" />
+          </Button>
+        </PopoverTrigger>
+      )}
       <PopoverContent
         side={side}
         align={align}
         aria-label={`Help: ${current.title}`}
         onCloseAutoFocus={(event) => {
-          if (leaving.current) event.preventDefault();
+          if (leaving.current || anchor) event.preventDefault();
+          if (anchor && !leaving.current) anchor.returnFocus();
           leaving.current = false;
         }}
         className="w-80 max-w-[calc(100vw-1rem)] gap-3"

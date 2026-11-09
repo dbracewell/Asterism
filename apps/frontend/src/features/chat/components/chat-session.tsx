@@ -16,7 +16,6 @@ import {
 import { MessageItem } from "@/features/chat/components/message/message-item";
 import { StreamingIndicator } from "@/features/chat/components/message/streaming-indicator";
 import { SubAgentActivityPanel } from "@/features/chat/components/sub-agent-activity";
-import { GeneralDelegationStatus } from "@/features/chat/components/general-delegation-status";
 import { useChatWebSocket } from "@/features/chat/hooks/use-chat-websocket";
 import {
   connectionStatusMap,
@@ -46,14 +45,10 @@ import { ArrowDownIcon, XIcon } from "lucide-react";
 import React from "react";
 import { ExistingChatModelPicker } from "./chat-model-picker";
 import { CompactionDivider } from "./compaction-divider";
-import { ContextUsageProgress } from "./context-usage";
+import { ComposerStatus } from "./composer-status";
 import { ComparisonBlock, invalidateComparisons } from "./comparison-block";
 import { ForkStepDialog, type ForkSource } from "./fork-step-dialog";
-import {
-  CompareMessageDialog,
-  CompareModelsPicker,
-  comparePayload,
-} from "./compare-targets";
+import { CompareMessageDialog, comparePayload } from "./compare-targets";
 import { groupTranscript } from "../lib/comparison";
 import { turnStepsEndingAt } from "../lib/run-usage";
 import { ExistingChatLearningModePicker } from "./chat-learning-mode-picker";
@@ -832,7 +827,12 @@ export const ChatSession = ({
                 ? { modelId: session.info.selected_model_id }
                 : undefined
             }
-            modelSelector={
+            compare={{
+              value: compareModels,
+              onChange: setCompareModels,
+              disabled: interactionBusy,
+            }}
+            chips={
               <>
                 <ExistingChatModelPicker
                   info={session.info}
@@ -845,11 +845,6 @@ export const ChatSession = ({
                         : previous,
                     )
                   }
-                />
-                <CompareModelsPicker
-                  value={compareModels}
-                  onChange={setCompareModels}
-                  disabled={interactionBusy}
                 />
                 <ExistingChatPersonaPicker
                   info={session.info}
@@ -894,26 +889,21 @@ export const ChatSession = ({
               </>
             }
             status={
-              <>
-                {!session.info.project_id && (
-                  <GeneralDelegationStatus
-                    modelId={session.info.selected_model_id}
-                  />
-                )}
-                <ContextUsageProgress
-                  usage={isFetching ? null : session.context_usage}
-                  contextWindow={contextWindow}
-                  onCompact={requestCompaction}
-                  canCompact={
-                    !interactionBusy &&
-                    connectionStatus === "Connected" &&
-                    selectedModelAvailable &&
-                    !session.info.resume_error
-                  }
-                  compacting={isCompacting}
-                />
-                <ConnectionIndicator status={connectionStatus} />
-              </>
+              <ComposerStatus
+                usage={isFetching ? null : session.context_usage}
+                contextWindow={contextWindow}
+                onCompact={requestCompaction}
+                canCompact={
+                  !interactionBusy &&
+                  connectionStatus === "Connected" &&
+                  selectedModelAvailable &&
+                  !session.info.resume_error
+                }
+                compacting={isCompacting}
+                connection={connectionStatus}
+                modelId={session.info.selected_model_id}
+                general={!session.info.project_id}
+              />
             }
           />
         </ChatInputContainer>
@@ -962,29 +952,6 @@ export const ChatSession = ({
           }}
         />
       </div>
-    </div>
-  );
-};
-
-const ConnectionIndicator = ({ status }: { status?: string }) => {
-  if (!status) return null;
-  const connected = status === "Connected";
-  return (
-    <div
-      role="status"
-      title={status}
-      className="flex items-center gap-1.5 text-xs"
-    >
-      <span
-        aria-hidden="true"
-        className={cn(
-          "rounded-dot size-2",
-          connected ? "bg-primary" : "bg-destructive",
-        )}
-      />
-      <span className={connected ? "sr-only" : "text-muted-foreground"}>
-        {status}
-      </span>
     </div>
   );
 };

@@ -66,6 +66,12 @@ async function mockSettings(page: Page) {
   );
 }
 
+async function openStatus(page: Page) {
+  await page
+    .getByRole("button", { name: /^(Chat status|Context usage)/ })
+    .click({ timeout: 15_000 });
+}
+
 test("chooses General chat sub-agents with their fixed models and recovers a conflict", async ({
   page,
 }) => {
@@ -252,14 +258,17 @@ test("delegates from a General chat when the composer shows sub-agents available
     agents: [research],
     delegation_allowed: true,
   });
+  // The composer's status popover lists the General set (US-73.2).
+  await openStatus(page);
   const indicator = page.getByRole("link", {
-    name: "Sub-agents available: Researcher",
+    name: /^Sub-agents available: Researcher/,
   });
   await expect(indicator).toBeVisible({ timeout: 15_000 });
   await expect(indicator).toHaveAttribute(
     "href",
     "/settings?t=user&setting=agents",
   );
+  await page.keyboard.press("Escape");
 
   await page
     .getByLabel("Message", { exact: true })
@@ -278,6 +287,7 @@ test("explains when a chosen General set can't delegate", async ({ page }) => {
     agents: [research],
     delegation_allowed: false,
   });
+  await openStatus(page);
   await expect(
     page.getByRole("link", { name: /^Sub-agents unavailable\./ }),
   ).toHaveAccessibleName(/administrator has turned sub-agents off/, {

@@ -18,6 +18,7 @@ import {
   ProviderIcon,
 } from "@/components/settings/model-identity";
 import type { ChatModelChoice, LlmDisplayInfo } from "@/lib/client";
+import { COMPOSER_CHIP } from "@/features/chat/lib/composer-chip";
 import { cn } from "@/lib/utils";
 import { useId, useRef, useState } from "react";
 
@@ -31,8 +32,8 @@ type ModelSelectorProps = {
   className?: string;
   align?: "center" | "start" | "end" | undefined;
   disabled?: boolean;
-  /** `inline` is a borderless pill for toolbars such as the chat composer. */
-  variant?: "field" | "inline";
+  /** `chip` is the compact outlined pill in the chat composer's top row. */
+  variant?: "field" | "chip";
   /** Append the provider name to each model. */
   showProvider?: boolean;
   /** Show supported-capability icons on each listed model. */
@@ -68,9 +69,12 @@ const ModelLabel = ({
       />
     )}
     <span className="truncate">
-      {modelLabel(model)}{" "}
+      {modelLabel(model)}
       {showProvider && (
-        <span className="text-muted-foreground">({model.provider_name})</span>
+        <>
+          {" "}
+          <span className="text-muted-foreground">({model.provider_name})</span>
+        </>
       )}
     </span>
   </span>
@@ -144,7 +148,12 @@ export const ModelSelector = ({
   const selectable = (availableModels ?? []).filter(isAvailable);
   const selected = selectable.find((model) => model.id === value) ?? null;
   const known = availableModels?.find((model) => model.id === value);
-  const inline = variant === "inline";
+  const chip = variant === "chip";
+  // The chip has no room for icons; its tooltip and description name them.
+  const capabilities =
+    chip && showCapabilities && selected
+      ? capabilityLabels(selected).join(". ")
+      : undefined;
 
   return (
     <Combobox
@@ -174,15 +183,17 @@ export const ModelSelector = ({
         aria-label={ariaLabel}
         aria-invalid={ariaInvalid}
         data-tour={tourTarget}
+        title={capabilities}
+        aria-description={capabilities}
         render={
           <Button
             type="button"
-            variant={inline ? "ghost" : "outline"}
+            variant="outline"
             className={cn(
-              "rounded-control min-w-0 justify-between gap-1.5 font-normal",
-              inline
-                ? "data-popup-open:bg-muted h-8 max-w-full px-3 font-medium"
-                : "w-full",
+              "min-w-0 justify-between gap-1.5 font-normal",
+              chip
+                ? cn(COMPOSER_CHIP, "data-popup-open:bg-muted")
+                : "rounded-control w-full",
               className,
             )}
           />
@@ -190,7 +201,8 @@ export const ModelSelector = ({
       >
         <span className="min-w-0 truncate text-left">
           {selected ? (
-            <ModelLabel model={selected} showProvider={showProvider} />
+            // The chip stays compact; the list still names each provider.
+            <ModelLabel model={selected} showProvider={showProvider && !chip} />
           ) : value ? (
             `${savedLabel ?? (known ? modelLabel(known) : value)} (unavailable)`
           ) : (
@@ -201,7 +213,7 @@ export const ModelSelector = ({
       <ComboboxContent
         portalContainer={portalContainer}
         collisionBoundary={portalContainer ?? undefined}
-        side={inline ? "top" : "bottom"}
+        side={chip ? "top" : "bottom"}
         align={align === "center" ? "center" : align}
         className="w-80 max-w-[calc(100vw-2rem)]"
       >

@@ -1,5 +1,7 @@
 "use client";
 
+import { COMPOSER_CHIP } from "../lib/composer-chip";
+import { ComposerNotice } from "./composer-notice";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -73,10 +75,7 @@ export function ChatRubricPicker({
         onValueChange={(next) => onChange(decode(next))}
         disabled={disabled || !loaded}
       >
-        <SelectTrigger
-          aria-label="Rubric"
-          className="max-w-full min-w-0 border-0! bg-transparent"
-        >
+        <SelectTrigger aria-label="Rubric" className={COMPOSER_CHIP}>
           <ClipboardCheckIcon className="text-muted-foreground" />
           <SelectValue placeholder="Rubric" />
         </SelectTrigger>
@@ -126,10 +125,7 @@ export function ChatRubricPicker({
         </SelectContent>
       </Select>
       {error && (
-        <p
-          role="alert"
-          className="text-destructive order-last w-full basis-full px-2 text-xs"
-        >
+        <ComposerNotice role="alert" className="text-destructive">
           Could not load rubrics.
           <Button
             type="button"
@@ -143,7 +139,7 @@ export function ChatRubricPicker({
           >
             Retry rubrics
           </Button>
-        </p>
+        </ComposerNotice>
       )}
     </>
   );

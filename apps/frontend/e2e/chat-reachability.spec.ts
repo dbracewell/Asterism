@@ -247,7 +247,7 @@ for (const { width, height, pane, enlarged } of [
         (node) => node.scrollWidth <= node.clientWidth + 1,
       ),
     ).toBe(true);
-    await page.getByRole("button", { name: "Add attachments" }).click();
+    await page.getByRole("button", { name: "More options" }).click();
     await page.getByRole("menuitem", { name: "Files in context" }).click();
     const context = page.getByRole("dialog", { name: "Files in context" });
     await expect(
@@ -278,13 +278,15 @@ for (const { width, height, pane, enlarged } of [
     await reachable(
       page.getByRole("button", { name: "Send message", exact: true }),
     );
-    // US-61.2: composer help stays reachable and its popover fits the screen.
-    const help = page.getByRole("button", {
-      name: "Help: Chat controls",
+    // US-61.2 / US-73.2: composer help opens from the "+" menu and its
+    // popover fits the screen.
+    const options = page.getByRole("button", {
+      name: "More options",
       exact: true,
     });
-    await reachable(help);
+    await reachable(options);
     await page.keyboard.press("Enter");
+    await page.getByRole("menuitem", { name: "Help: chat controls" }).click();
     const helpDialog = page.getByRole("dialog", {
       name: "Help: Chat controls",
     });
@@ -295,7 +297,7 @@ for (const { width, height, pane, enlarged } of [
     expect(helpBox!.x + helpBox!.width).toBeLessThanOrEqual(width + 1);
     await page.keyboard.press("Escape");
     await expect(helpDialog).toHaveCount(0);
-    await expect(help).toBeFocused();
+    await expect(options).toBeFocused();
     const regenerate = page
       .getByRole("button", { name: "Regenerate response", exact: true })
       .last();
@@ -491,7 +493,7 @@ test("file context loading, failure and cached-refresh failure keep scope links 
   await page.goto("/e2e/chat-reachability");
   const context = page.getByRole("dialog", { name: "Files in context" });
   const openContext = async () => {
-    await page.getByRole("button", { name: "Add attachments" }).click();
+    await page.getByRole("button", { name: "More options" }).click();
     await page.getByRole("menuitem", { name: "Files in context" }).click();
   };
   await openContext();

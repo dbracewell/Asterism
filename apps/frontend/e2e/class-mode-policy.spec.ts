@@ -54,15 +54,20 @@ test("a class policy narrows learning modes in the course project", async ({
     const projectId = new URL(student.url()).pathname.split("/").pop();
 
     // A new chat in the course project starts in an allowed mode and says why.
+    // The policy heads the mode list (US-73.2).
     await student.goto(`/?project_id=${projectId}`);
+    const picker = student.getByRole("combobox", { name: "Learning mode" });
+    await expect(picker).toHaveText(/Tutor/);
+    await expect(picker).toHaveAttribute(
+      "aria-description",
+      "Limited by your class's policy",
+    );
+    await picker.click();
     await expect(student.getByLabel("Course policy")).toHaveText(
       new RegExp(
         `Chemistry: Tutor, Explain-back, Draft feedback or Research assistant modes only, answers can't be revealed\\. Set by ${educatorName}\\.`,
       ),
     );
-    const picker = student.getByRole("combobox", { name: "Learning mode" });
-    await expect(picker).toHaveText(/Tutor/);
-    await picker.click();
     await expect(
       student.getByRole("option", { name: /Standard/ }),
     ).toHaveAttribute("aria-disabled", "true");

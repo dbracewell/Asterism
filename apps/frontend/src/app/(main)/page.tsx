@@ -7,15 +7,10 @@ import {
   type ChatInputHandle,
 } from "@/features/chat/components/chat-input";
 import { ChatModelPicker } from "@/features/chat/components/chat-model-picker";
-import {
-  CompareModelsPicker,
-  comparePayload,
-} from "@/features/chat/components/compare-targets";
+import { comparePayload } from "@/features/chat/components/compare-targets";
+import { ComposerStatus } from "@/features/chat/components/composer-status";
 import { LearningModePicker } from "@/features/chat/components/chat-learning-mode-picker";
-import {
-  CoursePolicyNotice,
-  useCourseModePolicy,
-} from "@/features/chat/components/course-mode-policy";
+import { useCourseModePolicy } from "@/features/chat/components/course-mode-policy";
 import { ChatGoalToggle } from "@/features/chat/components/chat-goal-toggle";
 import {
   ChatRubricPicker,
@@ -40,7 +35,6 @@ import {
   chatModelsListOptions,
   projectGetOneOptions,
 } from "@/lib/client/@tanstack/react-query.gen";
-import { GeneralDelegationStatus } from "@/features/chat/components/general-delegation-status";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -151,22 +145,21 @@ export default function AppPage() {
               user.settings.prompt_coach_enabled ? { modelId } : undefined
             }
             requestScope={`${main.id}:${modelId || "none"}:${personaId ?? "default"}:${learningMode}:${searchParams.get("project_id") ?? "general"}:${compareModels.join(",")}:${sentRubric ? `${sentRubric.source}:${sentRubric.id}` : "none"}:${includeGoal ? "goal" : ""}`}
-            status={!projectId && <GeneralDelegationStatus modelId={modelId} />}
-            modelSelector={
+            status={<ComposerStatus modelId={modelId} general={!projectId} />}
+            compare={{
+              value: compareModels,
+              onChange: setCompareModels,
+              disabled: sendBlocked,
+            }}
+            chips={
               <>
                 <ChatModelPicker value={modelId} onChange={setChosenModelId} />
-                <CompareModelsPicker
-                  value={compareModels}
-                  onChange={setCompareModels}
-                  disabled={sendBlocked}
-                />
                 <ChatPersonaPicker value={personaId} onChange={setPersonaId} />
                 <LearningModePicker
                   value={learningMode}
                   onChange={setLearningMode}
-                  allowedModes={policy?.allowed_modes}
+                  policy={policy}
                 />
-                <CoursePolicyNotice policy={policy} />
                 {projectGoal && (
                   <ChatGoalToggle
                     goal={projectGoal}
