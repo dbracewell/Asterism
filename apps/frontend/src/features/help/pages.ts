@@ -729,11 +729,17 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
         description:
           "Your private skills. Each is a SKILL.md document with a name, a description and instructions.",
       },
+      {
+        name: "New skill",
+        description:
+          "Write it yourself from a template, or describe it and have your main agent write a draft for you to review.",
+      },
     ],
     tasks: [
       "Create a skill, then assign it to your main agent under Agents so it appears in chats.",
+      "Describe a skill in plain words, review the draft, ask for changes, then save it.",
     ],
-    terms: ["concept.skill", "concept.main-agent"],
+    terms: ["concept.skill", "concept.skill-draft", "concept.main-agent"],
     audience: "everyone",
   },
   "settings.templates": {

@@ -236,3 +236,45 @@ async def test_the_start_payload_is_bounded(runtime):
     assert (await start(r, unknown=True)).status_code == 422
     chat = await started(r, examples="Input: an essay. Output: three comments.")
     assert "Examples of how it should work:\n\nInput: an essay." in chat.messages[0].content
+
+
+async def test_a_cancelled_turn_keeps_the_previous_draft(runtime):
+    r = runtime
+    await set_policy(r, True)
+    chat = await started(r)
+    first = chat.messages[0].id
+    async with r.sessions() as db:
+        await db.execute(update(MessageModel).where(MessageModel.id == first).values(status=MessageStatus.CANCELLED))
+        await db.commit()
+    # Cancelling the opening run leaves nothing to review.
+    assert (await draft(r, chat.info.id)).json()["status"] == "none"
+
+    good = await answer(r, chat, reply(GOOD), first)
+    sent = await r.client.post(
+        f"/chat/{chat.info.id}/message",
+        headers=auth(),
+        json={
+            "request_id": str(uuid.uuid4()),
+            "user_prompt": "Make it longer",
+            "parent_message_id": str(good),
+            "expected_model_revision": 1,
+        },
+    )
+    turn = uuid.UUID(sent.json()["id"])
+    async with r.sessions() as db:
+        await add_message(
+            "a",
+            chat.info.id,
+            NewMessageRequest(
+                model_id=uuid.UUID(MODEL),
+                role="assistant",
+                content="Here is a longer ver",
+                parent_message_id=turn,
+                status=MessageStatus.CANCELLED,
+            ),
+            session=db,
+        )
+        await db.execute(update(MessageModel).where(MessageModel.id == turn).values(status=MessageStatus.CANCELLED))
+        await db.commit()
+    body = (await draft(r, chat.info.id)).json()
+    assert body["status"] == "ready" and body["message_id"] == str(good)

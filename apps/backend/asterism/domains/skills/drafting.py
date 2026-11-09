@@ -59,13 +59,15 @@ async def read_draft(user_id: str, chat_id: uuid.UUID, session: AsyncSession) ->
     branch = active_branch(
         list(await session.scalars(select_owned_messages(user_id=user_id, chat_id=chat_id))), chat.active_root_id
     )
-    reply = next((message for message in reversed(branch) if message.role == "assistant"), None)
-    if branch and branch[-1].role == "user" and branch[-1].status == MessageStatus.PENDING:
+    if branch and branch[-1].status == MessageStatus.PENDING:
         return SkillDraft(chat_id=chat_id, status="pending")
+    # A cancelled turn (and its partial reply) leaves the previous draft in place.
+    reply = next(
+        (m for m in reversed(branch) if m.role == "assistant" and m.status == MessageStatus.COMPLETED),
+        None,
+    )
     if reply is None:
         return SkillDraft(chat_id=chat_id, status="none")
-    if reply.status == MessageStatus.PENDING:
-        return SkillDraft(chat_id=chat_id, status="pending", message_id=reply.id)
     content = extract_skill_block(reply.content)
     if content is None:
         return SkillDraft(

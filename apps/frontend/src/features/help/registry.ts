@@ -16,6 +16,7 @@ export type HelpId =
   | "concept.main-agent"
   | "concept.sub-agent"
   | "concept.skill"
+  | "concept.skill-draft"
   | "concept.learning-mode"
   | "concept.mode-standard"
   | "concept.mode-tutor"
@@ -166,10 +167,28 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
       'A reusable set of instructions you write once and switch on in a chat, for example "explain like a lab partner" or "cite page numbers".',
     details: [
       "Type / in the message box to find a skill. Active skills appear as chips above the box, where you can reorder or remove them.",
-      "You create skills in User Settings → Skills, and a skill must be assigned to your main agent before you can use it. An administrator also has to turn skills on.",
+      "You create skills in User Settings → Skills, either by writing one or by describing it to your main agent. A skill must be assigned to your main agent before you can use it. An administrator also has to turn skills on.",
       "A skill only adds instructions. It doesn't give the assistant tools or access to files.",
     ],
-    related: ["concept.persona", "concept.template", "concept.main-agent"],
+    related: [
+      "concept.skill-draft",
+      "concept.persona",
+      "concept.template",
+      "concept.main-agent",
+    ],
+    audience: "everyone",
+  },
+  "concept.skill-draft": {
+    title: "Skill draft",
+    summary:
+      "When you describe a skill, your main agent writes a draft for you. A draft is only a suggestion: review it, edit it or ask for changes before you save it.",
+    details: [
+      "Your agent may ask your General chat sub-agents for help, for example to research a topic. You see their progress while the draft is written.",
+      "The draft opens in the editor with a preview. Ask for changes to have the agent revise it; any edits you made go with the request.",
+      "Nothing is saved until you select Save skill, and the skill still needs to be assigned to your main agent before chats can use it. Discarding deletes the draft.",
+      "Describing needs skills to be turned on by an administrator. A skill only adds instructions; it never grants tools or file access.",
+    ],
+    related: ["concept.skill", "concept.main-agent", "concept.sub-agent"],
     audience: "everyone",
   },
   "concept.learning-mode": {

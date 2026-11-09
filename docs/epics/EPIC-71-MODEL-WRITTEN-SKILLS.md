@@ -1,6 +1,6 @@
 # EPIC-71: Model-written skills
 
-Status: in progress (US-71.1 done; US-71.2 next). Source: user request (2026-11-08).
+Status: in progress (US-71.1 done; US-71.2 implemented, awaiting confirmation). Source: user request (2026-11-08).
 
 ## Objective
 
@@ -53,5 +53,5 @@ the draft in the existing editor with preview, where the user can edit, ask for
 changes or discard. Saving creates the skill; assignment stays a separate control.
 Help explains that drafts are suggestions to review.
 
-- [ ] Build the flow with generated client hooks; reuse the skill editor and preview.
-- [ ] Help; unit tests and an E2E with a fake provider from description to saved skill.
+- [x] Build the flow with generated client hooks; reuse the skill editor and preview.
+- [x] Help; unit tests and an E2E with a fake provider from description to saved skill.

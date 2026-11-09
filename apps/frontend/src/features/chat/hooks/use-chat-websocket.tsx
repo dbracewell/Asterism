@@ -13,7 +13,8 @@ import React, { useMemo } from "react";
 import useWebSocket from "react-use-websocket";
 
 type UseChatWebSocketProps = {
-  chatId: string;
+  /** No connection is opened while this is null. */
+  chatId: string | null;
   jwtToken: string;
   onStreamStart?: (message: StreamingMessage) => void;
   onStreamUpdate?: (message: StreamingMessage) => void;
@@ -125,7 +126,7 @@ export const useChatWebSocket = ({
   }, []);
 
   const wsEndpoint = useMemo(() => {
-    if (typeof window === "undefined") return null;
+    if (typeof window === "undefined" || chatId === null) return null;
     return chatWebSocketUrl(window.location.origin, chatId, activeToken);
   }, [activeToken, chatId]);
 

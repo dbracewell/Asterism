@@ -75,8 +75,20 @@ learning mode and no active skills, and delegates only through the General chat
 sub-agent set. Each reply ends with one ` ```skill ` block; `GET
 /skills/drafts/{chat_id}` validates it with `parse_document` and returns
 `ready` (content, name, description), `invalid` (with the error), `pending` or
-`none`. Starting, reading and every turn require the `skills_enabled` policy
+`none`. It reads the latest completed reply, so a cancelled turn (and any partial
+reply) leaves the previous draft in place. Starting, reading and every turn require the `skills_enabled` policy
 (403 when off). A draft is never stored as a skill; saving uses `POST /skills/`.
+
+In User Settings → Skills, New skill offers **Write it** (the SKILL.md editor)
+and **Describe it** (US-71.2). Describe it takes a description, optional examples
+and a writer model, starts the draft, and follows the chat WebSocket with the
+chat's `resume` and `cancel` commands (`useSkillDraft`), showing the streamed
+text and sub-agent activity. A `ready` draft opens in the editor with its
+preview; **Ask for changes** sends a follow-up whose prompt carries any edits
+the user made. An `invalid` draft offers "Ask the writer to fix it" (a follow-up
+with the validation error) or "Fix it myself". Saving creates the skill and
+then deletes the hidden chat; **Discard draft** (after confirmation) stops the
+run and deletes it.
 
 ## Assignments and policy
 

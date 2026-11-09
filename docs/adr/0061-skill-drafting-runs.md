@@ -1,7 +1,7 @@
 # ADR-0061 — Skill drafting runs reuse a hidden chat
 
-Status: accepted; backend implemented in US-71.1 on 2026-11-08
-([EPIC-71](../epics/EPIC-71-MODEL-WRITTEN-SKILLS.md)).
+Status: accepted; backend implemented in US-71.1 on 2026-11-08, editor flow
+in US-71.2 on 2026-11-09 ([EPIC-71](../epics/EPIC-71-MODEL-WRITTEN-SKILLS.md)).
 
 ## Context
 
@@ -53,8 +53,9 @@ The writer ends each reply with exactly one fenced block whose info string is
 reads the latest completed assistant message on the active branch, extracts the
 last `skill` block and validates it with `parse_document`, the same check skill
 create uses. It returns `ready` with the content, name and description, or
-`invalid` with the validation error, or `pending` / `none`. The client turns an
-invalid draft into a follow-up asking the writer to fix it (US-71.2). The draft
+`invalid` with the validation error, or `pending` / `none`. Only completed
+replies count, so cancelling a revision keeps the previous draft. The client
+turns an invalid draft into a follow-up asking the writer to fix it (US-71.2). The draft
 is never stored as a skill; saving goes through `skillCreate`.
 
 ### Policy is checked live

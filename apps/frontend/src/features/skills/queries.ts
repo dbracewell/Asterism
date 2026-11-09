@@ -2,6 +2,7 @@ import { client } from "@/lib/api";
 import {
   skillGetManyOptions,
   skillGetOneOptions,
+  skillDraftGetOneOptions,
   skillEligibleGetManyOptions,
   mainAgentSkillsGetOptions,
   skillGetManyQueryKey,
@@ -83,6 +84,29 @@ export function eligibleSkillOptions(owner: string, query = "", page = 1) {
   return queryOptions({
     ...options,
     queryKey: [ownerKey],
+    staleTime: 0,
+    retry: false,
+  });
+}
+
+/**
+ * The draft in a drafting chat's latest reply (ADR-0061). `turn` changes when
+ * a run ends, so each finished run reads the draft afresh.
+ */
+export function skillDraftOptions(
+  owner: string,
+  chatId: string | null,
+  turn: number,
+) {
+  const options = skillDraftGetOneOptions({
+    client,
+    path: { chat_id: chatId ?? "none" },
+  });
+  const ownerKey = { ...options.queryKey[0], owner, turn };
+  return queryOptions({
+    ...options,
+    queryKey: [ownerKey],
+    enabled: chatId !== null,
     staleTime: 0,
     retry: false,
   });
