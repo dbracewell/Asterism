@@ -34,6 +34,12 @@ async def build_prompt_snapshot(
 ) -> PromptSnapshot:
     async with get_async_db_session(session) as db:
         chat = chat_snapshot or await read_chat_scope_snapshot(user_id=user_id, chat_id=chat_id, session=db)
+        drafting = chat.purpose == "skill_draft"
+        if drafting:
+            from asterism.domains.skills.policy import require_drafting_enabled
+
+            # Live policy (ADR-0061): turning skills off stops every drafting turn.
+            await require_drafting_enabled(db)
         project = (
             project_snapshot
             if project_snapshot is not None
@@ -70,7 +76,7 @@ async def build_prompt_snapshot(
             branch_ids=chat.active_branch_message_ids,
             session=db,
         )
-        if learning_mode is None and not profile.sub_agent:
+        if learning_mode is None and not profile.sub_agent and not drafting:
             from .learning_modes import read_pending_or_current_mode
 
             learning_mode = await read_pending_or_current_mode(
@@ -81,13 +87,17 @@ async def build_prompt_snapshot(
 
             from .skills import branch_skills
 
-            skills = () if profile.sub_agent else (await branch_skills(user_id, chat_id, db)).snapshots
+            skills = () if profile.sub_agent or drafting else (await branch_skills(user_id, chat_id, db)).snapshots
             await validate_snapshots(user_id, skills, db)
         return PromptComposer().snapshot(
             skills=skills,
             profile_layer=persona.layer,
             # Delegated agents never inherit the learner-facing mode layer.
-            mode_layer=learning_mode.layer if learning_mode is not None and not profile.sub_agent else None,
+            mode_layer=(
+                learning_mode.layer if learning_mode is not None and not profile.sub_agent and not drafting else None
+            ),
+            # Only the writer gets the skill-writing task; its sub-agents just help.
+            task_layer=_skill_writer_layer() if drafting and not profile.sub_agent else None,
             agent_id=profile.id,
             agent_revision=profile.config_revision,
             agent_instructions=profile.system_prompt or "",
@@ -96,6 +106,12 @@ async def build_prompt_snapshot(
             project_instructions=instructions,
             runtime_context=runtime,
         )
+
+
+def _skill_writer_layer():
+    from asterism.domains.skills.writer import SKILL_WRITER_LAYER
+
+    return SKILL_WRITER_LAYER
 
 
 FILE_REFERENCE_GUIDANCE = (

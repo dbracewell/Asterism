@@ -14,7 +14,7 @@ from asterism.domains.projects.queries import select_owned_projects
 from asterism.domains.projects.scope import require_owned_project
 
 from .models import ChatModel
-from .queries import select_owned_chats, select_owned_message_snippets
+from .queries import select_conversations, select_owned_chats, select_owned_message_snippets
 from .schemas import SearchMatchSource, SearchResult, SearchResultKind, SearchResultList
 from .search_index import ChatSearchIndex, search_index_for
 
@@ -82,7 +82,7 @@ def _select_matches(
     project_id: uuid.UUID | None,
 ):
     chats = (
-        select_owned_chats(user_id=user_id)
+        select_conversations(user_id=user_id)
         .order_by(None)
         .where(
             ChatModel.id.in_(index.matching_chats(user_id, terms)),

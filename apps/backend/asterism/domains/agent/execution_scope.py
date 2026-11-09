@@ -14,6 +14,9 @@ from asterism.domains.settings.provider_types import ProviderType
 from .instruction_overrides import InstructionOverride
 from .prompts import PromptLayer
 
+ChatPurpose = Literal["conversation", "skill_draft"]
+"""Why a chat exists (ADR-0061). Only conversations are listed or searched."""
+
 
 class ConfigurationProvenance(BaseModel):
     model_config = ConfigDict(frozen=True)
@@ -48,6 +51,7 @@ class ChatScopeSnapshot:
     active_branch_message_ids: tuple[uuid.UUID, ...]
     files: tuple[FileProvenance, ...]
     referenced_file_ids: frozenset[uuid.UUID] = frozenset()
+    purpose: ChatPurpose = "conversation"
 
 
 @dataclass(frozen=True)

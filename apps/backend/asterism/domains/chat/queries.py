@@ -20,6 +20,11 @@ def select_owned_chats(*, user_id: str):
     )
 
 
+def select_conversations(*, user_id: str):
+    """Owned chats the user sees in lists and search; hides drafting runs (ADR-0061)."""
+    return select_owned_chats(user_id=user_id).where(ChatModel.purpose == "conversation")
+
+
 def select_owned_messages(*, user_id: str, chat_id):
     return select(MessageModel).where(MessageModel.user_id == user_id, MessageModel.chat_id == chat_id)
 

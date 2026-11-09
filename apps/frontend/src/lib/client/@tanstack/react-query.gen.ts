@@ -507,6 +507,12 @@ import type {
   SkillDeleteData,
   SkillDeleteError,
   SkillDeleteResponse,
+  SkillDraftCreateData,
+  SkillDraftCreateError,
+  SkillDraftCreateResponse,
+  SkillDraftGetOneData,
+  SkillDraftGetOneError,
+  SkillDraftGetOneResponse,
   SkillEligibleGetManyData,
   SkillEligibleGetManyError,
   SkillEligibleGetManyResponse,
@@ -5988,6 +5994,65 @@ export const skillEligibleGetManyInfiniteOptions = (
       queryKey: skillEligibleGetManyInfiniteQueryKey(options),
     },
   );
+
+/**
+ * Start Draft
+ *
+ * Start a drafting run (ADR-0061). Stream, cancel and revise it through the chat API.
+ */
+export const skillDraftCreateMutation = (
+  options?: Partial<Options<SkillDraftCreateData>>,
+): UseMutationOptions<
+  SkillDraftCreateResponse,
+  SkillDraftCreateError,
+  Options<SkillDraftCreateData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    SkillDraftCreateResponse,
+    SkillDraftCreateError,
+    Options<SkillDraftCreateData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().skillDraftCreate({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const skillDraftGetOneQueryKey = (
+  options: Options<SkillDraftGetOneData>,
+) => createQueryKey("skillDraftGetOne", options);
+
+/**
+ * Read Draft
+ *
+ * The validated draft in the run's latest reply. Saving uses skillCreate.
+ */
+export const skillDraftGetOneOptions = (
+  options: Options<SkillDraftGetOneData>,
+) =>
+  queryOptions<
+    SkillDraftGetOneResponse,
+    SkillDraftGetOneError,
+    SkillDraftGetOneResponse,
+    ReturnType<typeof skillDraftGetOneQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry.get().skillDraftGetOne({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: skillDraftGetOneQueryKey(options),
+  });
 
 export const skillGetManyQueryKey = (options?: Options<SkillGetManyData>) =>
   createQueryKey("skillGetMany", options);

@@ -539,6 +539,7 @@ export const zContextLayer = z.object({
     "agent",
     "profile",
     "mode",
+    "task",
     "project",
     "skills",
     "runtime",
@@ -560,6 +561,7 @@ export const zContextLayerText = z.object({
     "agent",
     "profile",
     "mode",
+    "task",
     "project",
     "skills",
     "runtime",
@@ -2354,6 +2356,7 @@ export const zPromptSource = z.object({
     "agent",
     "profile",
     "mode",
+    "task",
     "project",
     "skills",
     "runtime",
@@ -3018,6 +3021,34 @@ export const zSkillCreate = z.object({
 });
 
 /**
+ * SkillDraft
+ *
+ * The draft in a drafting chat's latest reply. Never a saved skill.
+ */
+export const zSkillDraft = z.object({
+  chat_id: z.uuid(),
+  status: z.enum(["none", "pending", "ready", "invalid"]),
+  message_id: z.uuid().nullish(),
+  content: z.string().nullish(),
+  name: z.string().nullish(),
+  description: z.string().nullish(),
+  error: z.string().nullish(),
+});
+
+/**
+ * SkillDraftStart
+ *
+ * Starts a drafting run (ADR-0061); streaming and revisions use the chat API.
+ */
+export const zSkillDraftStart = z.object({
+  request_id: z.uuid(),
+  model_id: z.uuid(),
+  persona_id: z.uuid().nullish(),
+  description: z.string().min(1).max(4000),
+  examples: z.string().max(8000).nullish(),
+});
+
+/**
  * SkillIdentity
  */
 export const zSkillIdentity = z.object({
@@ -3067,6 +3098,10 @@ export const zChatInfo = z.object({
   learning_mode: zLearningModeId.optional().default("standard"),
   learning_mode_revision: z.int().gte(1).optional().default(1),
   learning_mode_locked: z.boolean().optional().default(false),
+  purpose: z
+    .enum(["conversation", "skill_draft"])
+    .optional()
+    .default("conversation"),
   hint_level: zHintLevel.optional().default("none"),
   selected_model_id: z.uuid().nullish(),
   model_revision: z.int().gte(1).optional().default(1),
@@ -6302,6 +6337,22 @@ export const zSkillEligibleGetManyQuery = z.object({
  * Successful Response
  */
 export const zSkillEligibleGetManyResponse = zEligibleSkillsPage;
+
+export const zSkillDraftCreateBody = zSkillDraftStart;
+
+/**
+ * Successful Response
+ */
+export const zSkillDraftCreateResponse = zChat;
+
+export const zSkillDraftGetOnePath = z.object({
+  chat_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zSkillDraftGetOneResponse = zSkillDraft;
 
 export const zSkillGetManyQuery = z.object({
   query: z.string().max(200).optional().default(""),

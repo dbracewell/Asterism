@@ -46,6 +46,9 @@ async def move_chat(
                 )
                 if chat is None:
                     raise NotFoundException("Chat not found")
+                if chat.purpose != "conversation" and payload.project_id is not None:
+                    # Drafting runs delegate only through the General set (ADR-0061).
+                    raise CodedException(409, "A skill draft can't be moved into a project")
                 if payload.project_id is not None:
                     await require_owned_project(user_id=user_id, project_id=payload.project_id, session=session)
                 if chat.project_id != payload.project_id:

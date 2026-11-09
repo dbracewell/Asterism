@@ -434,3 +434,16 @@ async def test_real_index_mixed_ties_have_repeatable_nonoverlapping_pages(search
         assert all(page.total == 6 for page in pages)
         assert [item.id for page in pages for item in page.results] == expected
         assert pages[-1].results == []
+
+
+@pytest.mark.asyncio
+async def test_search_hides_skill_drafting_chats(search_session):
+    """ADR-0061: drafting runs are reachable by id but never searched."""
+    draft = ChatModel(user_id="user-a", title="Ocean skill", purpose="skill_draft")
+    chat = ChatModel(user_id="user-a", title="Ocean chat")
+    search_session.add_all([draft, chat])
+    await search_session.commit()
+
+    result = await search("user-a", "ocean", session=search_session)
+
+    assert [item.id for item in result.results] == [chat.id]

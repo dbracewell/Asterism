@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from asterism.core.exceptions import BadDataException, CodedException, NotFoundException
 from asterism.db.database import get_async_db_session
+from asterism.domains.agent.execution_scope import ChatPurpose
 from asterism.domains.projects.goals import resolve_goal
 from asterism.domains.projects.scope import require_owned_project
 from asterism.domains.prompt_templates.provenance import resolve_template_use
@@ -192,7 +193,13 @@ async def persist_user_send(
     return result
 
 
-async def create_chat(user_id: str, payload: NewChatRequest, session: AsyncSession | None = None) -> Chat:
+async def create_chat(
+    user_id: str,
+    payload: NewChatRequest,
+    session: AsyncSession | None = None,
+    *,
+    purpose: ChatPurpose = "conversation",
+) -> Chat:
     if not payload.user_prompt.strip() and not (payload.skills and payload.skills.skill_ids):
         raise BadDataException("User prompt cannot be empty")
     expected = fingerprint(payload)
@@ -239,6 +246,7 @@ async def create_chat(user_id: str, payload: NewChatRequest, session: AsyncSessi
                 learning_mode=payload.learning_mode,
                 selected_model_id=payload.model_id,
                 selected_model_snapshot=choice,
+                purpose=purpose,
             )
             session.add(chat)
             await session.flush()
@@ -267,6 +275,17 @@ async def create_chat(user_id: str, payload: NewChatRequest, session: AsyncSessi
         except (Exception, asyncio.CancelledError):
             await session.rollback()
             raise
+
+
+async def require_drafting_turn(payload: ChatSendRequest, session: AsyncSession) -> None:
+    """A drafting run writes skills; it doesn't run them or compare (ADR-0061)."""
+    from asterism.domains.skills.policy import require_drafting_enabled
+
+    await require_drafting_enabled(session)
+    if payload.skills and (payload.skills.skill_ids or payload.skills.refresh_ids):
+        raise BadDataException("A skill draft can't activate skills")
+    if payload.compare:
+        raise BadDataException("A skill draft can't compare models")
 
 
 async def send_message(*, user_id: str, chat_id: uuid.UUID, payload: ChatSendRequest, session: AsyncSession) -> Message:
@@ -300,6 +319,8 @@ async def send_message(*, user_id: str, chat_id: uuid.UUID, payload: ChatSendReq
                 raise CodedException(409, "Chat model selection changed; reload before sending")
             if chat.selected_model_id is None:
                 raise CodedException(409, "Choose a chat model before sending")
+            if chat.purpose == "skill_draft":
+                await require_drafting_turn(payload, session)
             await require_chat_model(chat.selected_model_id, user_id, session)
             records = list(await session.scalars(select_owned_messages(user_id=user_id, chat_id=chat_id)))
             branch = active_branch(records, chat.active_root_id)

@@ -131,6 +131,7 @@ async def read_chat_scope_snapshot(
             for file_id in sorted(local_ids.intersection(provenance), key=str)
         ),
         referenced_file_ids=referenced,
+        purpose=chat.purpose,
     )
 
 

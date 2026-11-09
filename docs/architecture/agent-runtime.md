@@ -257,7 +257,7 @@ Each persisted assistant step records a `ContextManifest`
 and reasons only, never content:
 
 - **Layers:** kind, source id, revision, digest and length of each prompt layer
-  (platform, agent, persona, learning mode, project, skills, runtime), taken
+  (platform, agent, persona, learning mode, task, project, skills, runtime), taken
   from the run's prompt snapshot.
 - **Compaction:** the stored summary that replaced the start of the branch, if
   any: record id, anchor message, replaced message count and summary length.

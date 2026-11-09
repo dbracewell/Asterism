@@ -22,6 +22,7 @@ from asterism.db.base_model import Base
 from asterism.db.columns import jsonb_type
 from asterism.db.mixins import TimestampMixin, UuidPrimaryKeyMixin
 from asterism.domains.agent.context_manifest import ContextManifest
+from asterism.domains.agent.execution_scope import ChatPurpose
 from asterism.domains.agent.learning_inputs import (
     HintLevel,
     LearningModeId,
@@ -105,8 +106,13 @@ class ChatModel(Base, TimestampMixin, UuidPrimaryKeyMixin):
         nullable=False,
         default=default_allowed_tools,
     )
+    # Set once by the server (ADR-0061); hidden chats are never listed.
+    purpose: Mapped[ChatPurpose] = mapped_column(
+        String(20), nullable=False, default="conversation", server_default="conversation"
+    )
 
     __table_args__ = (
+        CheckConstraint("purpose IN ('conversation', 'skill_draft')", name="chat_purpose_known"),
         CheckConstraint("skill_revision >= 0", name="chat_skill_revision_nonnegative"),
         CheckConstraint("model_revision >= 1", name="chat_model_revision_positive"),
         CheckConstraint("persona_revision >= 1", name="chat_persona_revision_positive"),

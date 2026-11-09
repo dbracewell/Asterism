@@ -9,6 +9,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from asterism.domains.agent.capabilities import CapabilityManifest
 from asterism.domains.agent.context_manifest import ContextManifest
 from asterism.domains.agent.context_provenance import ContextProvenance
+from asterism.domains.agent.execution_scope import ChatPurpose
 from asterism.domains.agent.instruction_overrides import MAX_OVERRIDE_CHARS, InstructionOverrideProvenance
 from asterism.domains.agent.learning_inputs import HintLevel, LearningModeId, LearningModeProvenance
 from asterism.domains.agent.prompts import LayerKind, PersonaProvenance, PromptProvenance
@@ -357,6 +358,7 @@ class ChatInfo(BaseModel):
     learning_mode_revision: int = Field(default=1, ge=1)
     # Self-imposed lock (US-52.5); never set while the mode is Standard.
     learning_mode_locked: bool = False
+    purpose: ChatPurpose = "conversation"
     # The active branch's hint level, carried by its latest user turn.
     hint_level: HintLevel = HintLevel.NONE
     selected_model_id: uuid.UUID | None = None

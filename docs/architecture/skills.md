@@ -46,6 +46,8 @@ return the same 404. Owning CRUD remains available when activation policy is off
 | `GET /skills/eligible`                    | Eligible metadata page, `policy_enabled` and `agent_revision` |
 | `GET /settings/app/skills`                | Admin-only `{enabled}` activation policy                      |
 | `PUT /settings/app/skills`                | Admin-only strict-boolean `{enabled}` replacement             |
+| `POST /skills/drafts`                     | Start a drafting run; returns the hidden drafting chat (201)  |
+| `GET /skills/drafts/{chat_id}`            | The validated draft in the run's latest reply                 |
 
 Skill IDs are UUIDs. Search is bounded to 200 characters and treats SQL wildcard
 characters literally. Page is at least 1; page size is 1–100. Owner filters,
@@ -60,6 +62,21 @@ requests with 409. Per-owner name uniqueness is enforced in the database;
 duplicate creates/renames return 409 without changing the existing document.
 The owner ID comes from verified authentication. Mutation audit logs contain IDs
 and owner information, not instruction content.
+
+## Model-written drafts
+
+A user can describe a skill and have their main agent write the SKILL.md
+([ADR-0061](../adr/0061-skill-drafting-runs.md)). `POST /skills/drafts` takes
+`{request_id, model_id, persona_id?, description, examples?}` and starts a chat
+with `purpose = "skill_draft"`. It is hidden from the chat list and search but
+streams, cancels, revises (ordinary follow-up messages) and records runs through
+the normal chat API. The writer runs under a fixed `task` prompt layer, with no
+learning mode and no active skills, and delegates only through the General chat
+sub-agent set. Each reply ends with one ` ```skill ` block; `GET
+/skills/drafts/{chat_id}` validates it with `parse_document` and returns
+`ready` (content, name, description), `invalid` (with the error), `pending` or
+`none`. Starting, reading and every turn require the `skills_enabled` policy
+(403 when off). A draft is never stored as a skill; saving uses `POST /skills/`.
 
 ## Assignments and policy
 

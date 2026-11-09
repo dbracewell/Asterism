@@ -507,6 +507,12 @@ import type {
   SkillDeleteData,
   SkillDeleteErrors,
   SkillDeleteResponses,
+  SkillDraftCreateData,
+  SkillDraftCreateErrors,
+  SkillDraftCreateResponses,
+  SkillDraftGetOneData,
+  SkillDraftGetOneErrors,
+  SkillDraftGetOneResponses,
   SkillEligibleGetManyData,
   SkillEligibleGetManyErrors,
   SkillEligibleGetManyResponses,
@@ -4262,6 +4268,56 @@ export class ApiClient extends HeyApiClient {
     >({
       security: [{ scheme: "bearer", type: "http" }],
       url: "/skills/eligible",
+      ...options,
+    });
+  }
+
+  /**
+   * Start Draft
+   *
+   * Start a drafting run (ADR-0061). Stream, cancel and revise it through the chat API.
+   */
+  public skillDraftCreate<ThrowOnError extends boolean = false>(
+    options: Options<SkillDraftCreateData, ThrowOnError>,
+  ): RequestResult<
+    SkillDraftCreateResponses,
+    SkillDraftCreateErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).post<
+      SkillDraftCreateResponses,
+      SkillDraftCreateErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/skills/drafts",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+  }
+
+  /**
+   * Read Draft
+   *
+   * The validated draft in the run's latest reply. Saving uses skillCreate.
+   */
+  public skillDraftGetOne<ThrowOnError extends boolean = false>(
+    options: Options<SkillDraftGetOneData, ThrowOnError>,
+  ): RequestResult<
+    SkillDraftGetOneResponses,
+    SkillDraftGetOneErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).get<
+      SkillDraftGetOneResponses,
+      SkillDraftGetOneErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/skills/drafts/{chat_id}",
       ...options,
     });
   }
