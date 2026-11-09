@@ -1,7 +1,11 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
-import type { AgentTimelineStep } from "../lib/agent-timeline";
+import type { Message } from "@/lib/client";
+import {
+  type AgentTimelineStep,
+  messageTimelineSteps,
+} from "../lib/agent-timeline";
 import { AgentTimeline, timelineSummary } from "./agent-timeline";
 
 const longToken = "unbrokentext".repeat(60);
@@ -109,5 +113,63 @@ describe("AgentTimeline", () => {
     expect(row).toHaveFocus();
     await user.keyboard("{Enter}");
     expect(row).toHaveAttribute("aria-expanded", "true");
+  });
+});
+
+describe("skill loads (US-75.4)", () => {
+  const call = (id: string, name: string) => ({
+    id,
+    type: "function" as const,
+    function: { name: "load_skill", arguments: JSON.stringify({ name }) },
+  });
+  const message = (results: Message["tool_call_results"]) =>
+    ({
+      id: "m",
+      role: "assistant",
+      content: "",
+      created_at: 0,
+      status: "completed",
+      tool_calls: [call("ok", "review-code"), call("bad", "missing")],
+      tool_call_results: results,
+    }) as Message;
+
+  it("names each load_skill call by the skill it loaded", () => {
+    const steps = messageTimelineSteps(
+      message([
+        {
+          tool_call: call("ok", "review-code"),
+          content: JSON.stringify({
+            skill_id: "s1",
+            name: "review-code",
+            revision: 2,
+            instructions: "Check edge cases.",
+          }),
+          raw_result: null,
+          is_empty: false,
+        },
+        {
+          tool_call: call("bad", "missing"),
+          content: '{"error":"not assigned"}',
+          raw_result: { error: "No skill named 'missing' is assigned to you" },
+          is_empty: false,
+        },
+      ]),
+      { showThinking: false },
+    );
+    render(<AgentTimeline steps={steps} defaultOpen />);
+    expect(
+      screen.getByRole("button", { name: /^Loaded skill review-code/ }),
+    ).toBeVisible();
+    expect(
+      screen.getByRole("button", { name: /^Could not load skill missing/ }),
+    ).toBeVisible();
+  });
+
+  it("says which skill is loading while the call runs", () => {
+    const steps = messageTimelineSteps(
+      { ...message([]), status: "pending" },
+      { showThinking: false },
+    );
+    expect(timelineSummary(steps)).toBe("Loading skill review-code");
   });
 });

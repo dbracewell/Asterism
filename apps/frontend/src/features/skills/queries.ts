@@ -5,6 +5,7 @@ import {
   skillDraftGetOneOptions,
   skillEligibleGetManyOptions,
   mainAgentSkillsGetOptions,
+  subAgentSkillsGetOptions,
   skillGetManyQueryKey,
   mainAgentSkillsGetQueryKey,
   mainAgentGetQueryKey,
@@ -54,6 +55,22 @@ export function skillAssignmentsOptions(owner: string) {
   return queryOptions({
     ...options,
     queryKey: [ownerKey],
+    staleTime: 0,
+    retry: false,
+  });
+}
+
+/** The skills one sub-agent may load with load_skill (ADR-0062). */
+export function subAgentSkillsOptions(owner: string, agentId: string | null) {
+  const options = subAgentSkillsGetOptions({
+    client,
+    path: { agent_id: agentId ?? "none" },
+  });
+  const ownerKey = { ...options.queryKey[0], owner };
+  return queryOptions({
+    ...options,
+    queryKey: [ownerKey],
+    enabled: agentId !== null,
     staleTime: 0,
     retry: false,
   });

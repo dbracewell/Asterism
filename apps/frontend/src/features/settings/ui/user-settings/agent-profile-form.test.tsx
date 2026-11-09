@@ -18,9 +18,26 @@ const mocks = vi.hoisted(() => ({
     },
   ]),
   tools: vi.fn().mockResolvedValue({ items: [] }),
+  skills: vi.fn().mockResolvedValue({
+    items: [],
+    total: 0,
+    page: 1,
+    page_size: 10,
+  }),
+  assigned: vi.fn().mockResolvedValue({ skill_ids: [], revision: 1 }),
+  saveSkills: vi.fn(),
+  policy: vi.fn().mockResolvedValue({
+    items: [],
+    total: 0,
+    page: 1,
+    page_size: 1,
+    policy_enabled: true,
+    agent_revision: 1,
+  }),
 }));
 vi.mock("@/features/auth/components/user-context", () => ({
   useUser: () => ({
+    id: "owner",
     settings: {
       models: [{ id: "model", name: "Available", provider_name: "Test" }],
       default_model_id: "model",
@@ -39,6 +56,20 @@ vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
     queryKey: ["tools"],
     queryFn: mocks.tools,
   }),
+  // US-75.4: the sub-agent skills picker.
+  skillGetManyOptions: ({ query }: { query: object }) => ({
+    queryKey: [{ _id: "skills", query }],
+    queryFn: () => mocks.skills(query),
+  }),
+  skillEligibleGetManyOptions: () => ({
+    queryKey: [{ _id: "policy" }],
+    queryFn: mocks.policy,
+  }),
+  subAgentSkillsGetOptions: ({ path }: { path: object }) => ({
+    queryKey: [{ _id: "assigned", path }],
+    queryFn: mocks.assigned,
+  }),
+  subAgentSkillsUpdateMutation: () => ({ mutationFn: mocks.saveSkills }),
 }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
 function Wrapper({ children }: { children: ReactNode }) {
@@ -315,4 +346,97 @@ it("saves edited fixed-model workers and validates numeric limits", async () => 
     }),
     expect.anything(),
   );
+});
+
+it("saves a sub-agent's skills after its definition, against the new revision (US-75.4)", async () => {
+  const skill = (id: string, name: string) => ({
+    id,
+    name,
+    description: `${name} description`,
+    revision: 1,
+    created_at: 1,
+    updated_at: 1,
+  });
+  mocks.skills.mockResolvedValue({
+    items: [skill("s1", "review-code"), skill("s2", "write-tests")],
+    total: 2,
+    page: 1,
+    page_size: 10,
+  });
+  mocks.assigned.mockResolvedValue({ skill_ids: ["s1"], revision: 3 });
+  mocks.update.mockResolvedValue({ id: "worker", config_revision: 4 });
+  mocks.saveSkills.mockResolvedValue({ skill_ids: ["s1", "s2"], revision: 5 });
+  mocks.models.mockResolvedValueOnce([
+    {
+      id: "model",
+      name: "Available",
+      provider_name: "Test",
+      available: true,
+      supports_tools: false,
+    },
+  ]);
+  render(
+    <AgentProfileForm
+      profile={{
+        id: "worker",
+        name: "Worker",
+        model_id: "model",
+        model_available: true,
+        config_revision: 3,
+      }}
+      completeEditing={vi.fn()}
+    />,
+    { wrapper: Wrapper },
+  );
+  const reviewCode = await screen.findByRole("checkbox", {
+    name: /review-code/,
+  });
+  await waitFor(() => expect(reviewCode).toBeChecked());
+  expect(screen.getByText(/1 selected/)).toBeVisible();
+  await userEvent.click(screen.getByRole("checkbox", { name: /write-tests/ }));
+  expect(screen.getByText(/2 selected/)).toBeVisible();
+  // The chosen model has no tool support, so the picker warns.
+  expect(screen.getByRole("alert")).toHaveTextContent("can't load its skills");
+  await userEvent.click(
+    screen.getByRole("button", { name: "Save configuration" }),
+  );
+  await waitFor(() =>
+    expect(mocks.saveSkills).toHaveBeenCalledWith(
+      {
+        path: { agent_id: "worker" },
+        body: { skill_ids: ["s1", "s2"], expected_revision: 4 },
+      },
+      expect.anything(),
+    ),
+  );
+  expect(mocks.update.mock.invocationCallOrder[0]).toBeLessThan(
+    mocks.saveSkills.mock.invocationCallOrder[0],
+  );
+});
+
+it("leaves a sub-agent's skills alone when they were not changed (US-75.4)", async () => {
+  mocks.assigned.mockResolvedValue({ skill_ids: [], revision: 1 });
+  mocks.saveSkills.mockClear();
+  mocks.update.mockResolvedValue({ id: "worker", config_revision: 2 });
+  render(
+    <AgentProfileForm
+      profile={{
+        id: "worker",
+        name: "Worker",
+        model_id: "model",
+        model_available: true,
+      }}
+      completeEditing={vi.fn()}
+    />,
+    { wrapper: Wrapper },
+  );
+  await waitFor(() =>
+    expect(screen.getByLabelText("Model")).toHaveTextContent("Available"),
+  );
+  await screen.findByText("0 selected");
+  await userEvent.click(
+    screen.getByRole("button", { name: "Save configuration" }),
+  );
+  await waitFor(() => expect(mocks.update).toHaveBeenCalled());
+  expect(mocks.saveSkills).not.toHaveBeenCalled();
 });

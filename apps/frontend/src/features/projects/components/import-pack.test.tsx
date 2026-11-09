@@ -204,6 +204,7 @@ it("sends a skipped item as a decision, not an omission", async () => {
       name: null,
       model_id: null,
       approved_tools: [],
+      approved_skills: [],
     },
   ]);
   expect(submitted().templates[0]).toMatchObject({ name: "Brief" });
@@ -363,4 +364,70 @@ it("says what is left to do next to the disabled button", async () => {
   await user.type(screen.getByLabelText("New name for Summary"), "Brief");
   expect(screen.queryByRole("status")).not.toBeInTheDocument();
   expect(screen.getByRole("button", { name: "Import 2 items" })).toBeEnabled();
+});
+
+const citeSkill = (overrides = {}) => ({
+  key: "cite",
+  name: "cite-sources",
+  description: "Cite.",
+  content: "---\nname: cite-sources\ndescription: Cite.\n---\nCite.",
+  assignment_requested: false,
+  assignment_allowed: true,
+  name_conflict: false,
+  ...overrides,
+});
+
+it("lets a sub-agent load a requested skill only when approved and imported (US-75.4)", async () => {
+  const user = await open(
+    review({
+      sub_agents: [agent({ requested_tools: [], requested_skills: ["cite"] })],
+      skills: [citeSkill()],
+    }),
+  );
+  await chooseModel(user, "Plain model (P)");
+  const allow = await screen.findByRole("checkbox", {
+    name: "Let it load cite-sources",
+  });
+  expect(allow).not.toBeChecked();
+  await user.click(allow);
+  // Skills are loaded with a tool, so the model must support tools.
+  expect(screen.getByRole("alert")).toHaveTextContent(
+    "Choose a model that supports tools",
+  );
+  await chooseModel(user, "Tool model (P)");
+
+  // Skipping the skill withdraws the approval.
+  const skills = screen.getByRole("region", { name: "Skills" });
+  await user.click(within(skills).getByRole("checkbox", { name: /Import/ }));
+  expect(
+    screen.getByRole("checkbox", {
+      name: "Let it load cite-sources (import this skill to allow it)",
+    }),
+  ).toBeDisabled();
+  await user.click(within(skills).getByRole("checkbox", { name: /Import/ }));
+
+  await user.click(screen.getByRole("button", { name: "Import 2 items" }));
+  await waitFor(() => expect(mocks.importPack).toHaveBeenCalled());
+  expect(submitted().sub_agents[0]).toMatchObject({
+    model_id: M1,
+    approved_skills: ["cite"],
+  });
+});
+
+it("disables skill approvals while skills are turned off (US-75.4)", async () => {
+  const user = await open(
+    review({
+      sub_agents: [agent({ requested_tools: [], requested_skills: ["cite"] })],
+      skills: [citeSkill({ assignment_allowed: false })],
+    }),
+  );
+  await chooseModel(user, "Tool model (P)");
+  expect(
+    await screen.findByRole("checkbox", {
+      name: "Let it load cite-sources (skills are turned off by your administrator)",
+    }),
+  ).toBeDisabled();
+  await user.click(screen.getByRole("button", { name: "Import 2 items" }));
+  await waitFor(() => expect(mocks.importPack).toHaveBeenCalled());
+  expect(submitted().sub_agents[0].approved_skills).toEqual([]);
 });

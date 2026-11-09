@@ -140,6 +140,15 @@ catalog skills with the grants `agent_assignment` and `admin_policy`. A pack
 sub-agent can request pack skills (`requested_skills`); import assigns only
 those the user approves (`approved_skills`) and imports, while the policy is on.
 
+In the UI (US-75.4), the sub-agent editor has a searchable, paged **Skills**
+picker under its tools. Saving stores the definition first, then the skills
+against the revision that save returned; unchanged skills are not sent. It
+warns when the chosen model can't use tools. Timelines name each `load_skill`
+call "Loaded skill <name>" (or "Loading…"/"Could not load…") in the live
+sub-agent panel, the run graph and the delegation details. Pack import review
+lists a sub-agent's requested skills; each can be approved only while that
+skill is imported and skills are on.
+
 ## Module and storage boundaries
 
 Document validation, owner-scoped base queries, lifecycle service, assignment

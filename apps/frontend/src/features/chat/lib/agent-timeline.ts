@@ -15,10 +15,51 @@ export type AgentTimelineStep =
       name: string;
       arguments: string;
       status: ToolStepStatus;
+      /** A plain-language name for the step, e.g. "Loaded skill review-code". */
+      label?: string;
       /** Result text shown to the user; for failures, the error message. */
       result?: string;
       durationMs?: number;
     };
+
+/** The internal tool a sub-agent uses to load one of its skills (ADR-0062). */
+export const SKILL_TOOL = "load_skill";
+
+const textField = (json: string | undefined, key: string): string | null => {
+  if (!json) return null;
+  try {
+    const value: unknown = JSON.parse(json);
+    const field =
+      value && typeof value === "object"
+        ? (value as Record<string, unknown>)[key]
+        : undefined;
+    return typeof field === "string" && field.trim() ? field : null;
+  } catch {
+    return null;
+  }
+};
+
+/**
+ * "Loaded skill review-code" for a load_skill call: the loaded skill's name
+ * when it succeeded, else the name the agent asked for. Undefined for other tools.
+ */
+export function skillLoadLabel(
+  name: string,
+  args: string,
+  status: ToolStepStatus,
+  resultContent?: string,
+): string | undefined {
+  if (name !== SKILL_TOOL) return undefined;
+  const skill =
+    (status === "succeeded" ? textField(resultContent, "name") : null) ??
+    textField(args, "name") ??
+    "a skill";
+  if (status === "succeeded") return `Loaded skill ${skill}`;
+  if (status === "running") return `Loading skill ${skill}`;
+  if (status === "failed" || status === "denied")
+    return `Could not load skill ${skill}`;
+  return `Load skill ${skill}`;
+}
 
 /** Client-observed tool timing; the backend does not persist durations. */
 export type ToolTiming = { startedAt: number; endedAt?: number };
@@ -117,6 +158,12 @@ export function messageTimelineSteps(
       name: call.function.name,
       arguments: call.function.arguments,
       status,
+      label: skillLoadLabel(
+        call.function.name,
+        call.function.arguments,
+        status,
+        result?.content,
+      ),
       result: result
         ? (errorOf(result.raw_result) ?? result.content)
         : undefined,

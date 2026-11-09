@@ -99,5 +99,5 @@ to its tools. The run graph and delegation details show "Loaded skill
 <name>" for each load. Help explains that sub-agents load their skills on
 their own, while main-agent chats use `/`.
 
-- [ ] Sub-agent skills picker; skill loads in run graph and delegation details; approving requested sub-agent skills in pack import review.
-- [ ] Help; unit tests; E2E from assigning a skill to a sub-agent to seeing its load in a delegated run.
+- [x] Sub-agent skills picker; skill loads in run graph and delegation details; approving requested sub-agent skills in pack import review.
+- [x] Help; unit tests; E2E from assigning a skill to a sub-agent to seeing its load in a delegated run.
