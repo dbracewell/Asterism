@@ -80,7 +80,6 @@ vi.mock("./chat-file-context", () => ({ ChatFileContext: () => null }));
 vi.mock("@/components/file-manager/library-file-picker", () => ({
   LibraryFilePickerDialog: () => null,
 }));
-vi.mock("./attach-menu", () => ({ AttachMenu: () => null }));
 
 beforeEach(() => sessionStorage.clear());
 
@@ -107,6 +106,13 @@ function setup() {
 async function build(user: ReturnType<typeof userEvent.setup>) {
   await user.type(await screen.findByLabelText(/Task/), "laundry");
   await user.click(screen.getByRole("button", { name: "Use prompt" }));
+}
+
+async function openTemplates(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(screen.getByRole("button", { name: "More options" }));
+  await user.click(
+    await screen.findByRole("menuitem", { name: "Prompt templates" }),
+  );
 }
 
 it("discovers /template and template names by slash and opens the builder", async () => {
@@ -136,7 +142,7 @@ it("discovers /template and template names by slash and opens the builder", asyn
 it("sends template provenance once and drops it when removed or cleared", async () => {
   const user = userEvent.setup();
   const { submit, input } = setup();
-  await user.click(screen.getByRole("button", { name: "Prompt templates" }));
+  await openTemplates(user);
   await user.click(await screen.findByRole("button", { name: /^RTF/ }));
   await build(user);
   await user.click(screen.getByLabelText("Send message"));
@@ -175,7 +181,7 @@ it("sends template provenance once and drops it when removed or cleared", async 
 it("records the scaffolding level the prompt was built at", async () => {
   const user = userEvent.setup();
   const { submit, input } = setup();
-  await user.click(screen.getByRole("button", { name: "Prompt templates" }));
+  await openTemplates(user);
   await user.click(await screen.findByRole("button", { name: /^RTF/ }));
   await user.click(await screen.findByRole("tab", { name: "Freeform" }));
   await user.type(screen.getByLabelText(/Your prompt/), "Fold my laundry.");
@@ -200,7 +206,7 @@ it("records the scaffolding level the prompt was built at", async () => {
 it("keeps the label and prompt across a reload, like skill drafts", async () => {
   const user = userEvent.setup();
   const first = setup();
-  await user.click(screen.getByRole("button", { name: "Prompt templates" }));
+  await openTemplates(user);
   await user.click(await screen.findByRole("button", { name: /^RTF/ }));
   await build(user);
   await waitFor(() => expect(first.input).toHaveValue("Do laundry."));

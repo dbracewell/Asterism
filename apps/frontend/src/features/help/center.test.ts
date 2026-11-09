@@ -73,6 +73,6 @@ describe("searchHelp", () => {
   });
 
   it("finds page guides by their areas and tips", () => {
-    expect(all("paperclip", false)).toContain("page-new-chat");
+    expect(all("+ menu to attach", false)).toContain("page-new-chat");
   });
 });

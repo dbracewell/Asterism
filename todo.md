@@ -62,6 +62,6 @@ Source: user request (2026-11-08). Suggested order: EPIC-74 → 67 → 70 → 68
 
 - [x] US-73.1: Layout proposal ([approved proposal](docs/plans/us-73.1-composer-layout.md), 2026-11-08)
   - [x] Inventory every composer control and when it shows; produce the mockup; get approval.
-- [ ] US-73.2: Rebuild the composer
-  - [ ] Implement the layout; update help.
-  - [ ] Update unit tests and the composer-related E2E specs.
+- [ ] US-73.2: Rebuild the composer (implemented; awaiting confirmation)
+  - [x] Implement the layout; update help.
+  - [x] Update unit tests and the composer-related E2E specs.

@@ -237,7 +237,7 @@ export function ThemeContrastHarness() {
                   requestScope="palette-review"
                   onSubmit={() => {}}
                   placeholder="Write a message"
-                  modelSelector={
+                  chips={
                     <ChatModelPicker
                       value={chatModel}
                       onChange={setChatModel}

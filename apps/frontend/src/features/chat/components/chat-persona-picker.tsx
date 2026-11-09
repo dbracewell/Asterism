@@ -1,5 +1,7 @@
 "use client";
 
+import { COMPOSER_CHIP } from "../lib/composer-chip";
+import { ComposerNotice } from "./composer-notice";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -55,7 +57,7 @@ export function ChatPersonaPicker({
           aria-label="Chat persona"
           data-tour="persona"
           aria-invalid={!!query.data && !personaAvailable(query.data, value)}
-          className="max-w-full min-w-0 border-0! bg-transparent"
+          className={COMPOSER_CHIP}
         >
           <UserRoundIcon className="text-muted-foreground" />
           <SelectValue placeholder="Choose persona" />
@@ -91,10 +93,7 @@ export function ChatPersonaPicker({
         </p>
       )}
       {query.error && (
-        <p
-          role="alert"
-          className="text-destructive order-last w-full basis-full px-2 text-xs"
-        >
+        <ComposerNotice role="alert" className="text-destructive">
           {query.data
             ? "Could not refresh personas. Showing cached choices."
             : "Could not load personas."}
@@ -107,15 +106,12 @@ export function ChatPersonaPicker({
           >
             Retry personas
           </Button>
-        </p>
+        </ComposerNotice>
       )}
       {query.data && !personaAvailable(query.data, value) && (
-        <p
-          role="alert"
-          className="text-destructive order-last w-full basis-full px-2 text-xs"
-        >
+        <ComposerNotice role="alert" className="text-destructive">
           Selected persona is unavailable. Choose an available persona.
-        </p>
+        </ComposerNotice>
       )}
     </>
   );
@@ -159,10 +155,7 @@ export function ExistingChatPersonaPicker({
         }
       />
       {mutation.error && (
-        <p
-          role="alert"
-          className="text-destructive order-last w-full basis-full px-2 text-xs"
-        >
+        <ComposerNotice role="alert" className="text-destructive">
           Could not change persona. Reload the chat and retry when generation is
           idle.
           <Button
@@ -181,7 +174,7 @@ export function ExistingChatPersonaPicker({
           >
             Reload current persona
           </Button>
-        </p>
+        </ComposerNotice>
       )}
     </>
   );

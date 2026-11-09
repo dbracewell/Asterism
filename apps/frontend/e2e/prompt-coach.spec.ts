@@ -60,6 +60,12 @@ async function mock(page: Page, available = true) {
   return reviews;
 }
 
+/** Reviews the draft from the composer's "+" menu (US-73.2). */
+async function openReview(page: Page) {
+  await page.getByRole("button", { name: "More options" }).click();
+  await page.getByRole("menuitem", { name: "Review prompt" }).click();
+}
+
 for (const [width, height] of [
   [1280, 800],
   [320, 568],
@@ -70,14 +76,16 @@ for (const [width, height] of [
     await page.setViewportSize({ width, height });
     const reviews = await mock(page);
     await page.goto("/e2e/skill-chat");
+    await page.getByRole("button", { name: "More options" }).click();
     await expect(
-      page.getByRole("button", { name: "Review prompt" }),
+      page.getByRole("menuitem", { name: /^Review prompt/ }),
     ).toHaveCount(0);
+    await page.keyboard.press("Escape");
     await page.getByRole("button", { name: "Turn coach on" }).click();
 
     const input = page.getByLabel("Message", { exact: true });
     await input.fill("Write about dogs.");
-    await page.getByRole("button", { name: "Review prompt" }).click();
+    await openReview(page);
     const panel = page.getByRole("region", { name: "Prompt review" });
     await expect(panel.getByRole("listitem")).toHaveCount(3);
     expect(reviews).toEqual([
@@ -126,9 +134,10 @@ test("the review action is unavailable without a usable model", async ({
   await page.goto("/e2e/skill-chat");
   await page.getByRole("button", { name: "Turn coach on" }).click();
   await page.getByLabel("Message", { exact: true }).fill("Write about dogs.");
-  const button = page.getByRole("button", { name: "Review prompt" });
-  await expect(button).toBeDisabled();
-  await expect(button).toHaveAccessibleDescription(
+  await page.getByRole("button", { name: "More options" }).click();
+  const item = page.getByRole("menuitem", { name: /^Review prompt/ });
+  await expect(item).toHaveAttribute("aria-disabled", "true");
+  await expect(item).toContainText(
     "Prompt review needs a draft model or a connected ChatGPT plan",
   );
   expect(reviews).toEqual([]);
@@ -147,7 +156,7 @@ for (const [width, height] of [
     await page.getByRole("button", { name: "Turn coach on" }).click();
     const input = page.getByLabel("Message", { exact: true });
     await input.fill("Write about dogs.");
-    await page.getByRole("button", { name: "Review prompt" }).click();
+    await openReview(page);
     const panel = page.getByRole("region", { name: "Prompt review" });
     await expect(
       panel.getByRole("button", { name: "Compare before/after" }),

@@ -207,11 +207,10 @@ test("reopens a saved model, switches and regenerates through the real chat comp
   await expect(executedModel(page)).toContainText("Alpha");
   finishModelChange();
   await expect(page.getByLabel("Chat model")).toContainText("Beta");
-  await expect(
-    page
-      .getByLabel("Selected model capabilities")
-      .getByText("Images supported"),
-  ).toBeVisible();
+  await expect(page.getByLabel("Chat model")).toHaveAttribute(
+    "title",
+    /Images supported/,
+  );
   await expect(executedModel(page)).toContainText("Alpha");
   expect(changes).toEqual([{ model_id: B, expected_model_revision: 1 }]);
   await page.reload();

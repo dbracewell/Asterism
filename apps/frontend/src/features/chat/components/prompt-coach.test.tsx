@@ -55,7 +55,6 @@ vi.mock("./chat-file-context", () => ({ ChatFileContext: () => null }));
 vi.mock("@/components/file-manager/library-file-picker", () => ({
   LibraryFilePickerDialog: () => null,
 }));
-vi.mock("./attach-menu", () => ({ AttachMenu: () => null }));
 
 const MODEL = "00000000-0000-4000-8000-000000000001";
 const SUGGESTIONS = {
@@ -105,21 +104,38 @@ function setup(coach = true) {
   return { submit, input: screen.getByLabelText("Message") };
 }
 
-it("is absent unless the owner turned the coach on", () => {
+/** Opens the "+" menu and returns its "Review prompt" item. */
+async function reviewItem(
+  user: ReturnType<typeof userEvent.setup>,
+  { enabled = true } = {},
+) {
+  await user.click(screen.getByRole("button", { name: "More options" }));
+  const item = await screen.findByRole("menuitem", { name: /^Review prompt/ });
+  if (enabled)
+    await waitFor(() => expect(item).not.toHaveAttribute("aria-disabled"));
+  return item;
+}
+
+it("is absent unless the owner turned the coach on", async () => {
+  const user = userEvent.setup();
   setup(false);
+  await user.click(screen.getByRole("button", { name: "More options" }));
+  await screen.findByRole("menuitem", { name: "Prompt templates" });
   expect(
-    screen.queryByRole("button", { name: "Review prompt" }),
+    screen.queryByRole("menuitem", { name: /^Review prompt/ }),
   ).not.toBeInTheDocument();
 });
 
 it("reviews the draft and applies suggestions without sending", async () => {
   const user = userEvent.setup();
   const { input, submit } = setup();
-  const button = await screen.findByRole("button", { name: "Review prompt" });
-  expect(button).toBeDisabled();
+  expect(await reviewItem(user, { enabled: false })).toHaveAttribute(
+    "aria-disabled",
+    "true",
+  );
+  await user.keyboard("{Escape}");
   await user.type(input, "Write about dogs.");
-  await waitFor(() => expect(button).toBeEnabled());
-  await user.click(button);
+  await user.click(await reviewItem(user));
 
   expect(review).toHaveBeenCalledWith({
     prompt: "Write about dogs.",
@@ -160,9 +176,7 @@ it("disables a rewrite once its text is edited away, and can be dismissed", asyn
   const user = userEvent.setup();
   const { input } = setup();
   await user.type(input, "Write about dogs.");
-  await user.click(
-    await screen.findByRole("button", { name: "Review prompt" }),
-  );
+  await user.click(await reviewItem(user));
   const panel = await screen.findByRole("region", { name: "Prompt review" });
   await user.clear(input);
   await user.type(input, "Write about cats.");
@@ -183,13 +197,13 @@ it("shows that the coach is unavailable without a usable model", async () => {
   const user = userEvent.setup();
   const { input } = setup();
   await user.type(input, "Write about dogs.");
-  const button = screen.getByRole("button", { name: "Review prompt" });
+  const item = await reviewItem(user, { enabled: false });
   await waitFor(() =>
-    expect(button).toHaveAccessibleDescription(
+    expect(item).toHaveTextContent(
       "Prompt review needs a draft model or a connected ChatGPT plan",
     ),
   );
-  expect(button).toBeDisabled();
+  expect(item).toHaveAttribute("aria-disabled", "true");
   expect(review).not.toHaveBeenCalled();
 });
 
@@ -200,9 +214,7 @@ it("reports a failed review and retries the reviewed draft", async () => {
   const user = userEvent.setup();
   const { input } = setup();
   await user.type(input, "Write about dogs.");
-  await user.click(
-    await screen.findByRole("button", { name: "Review prompt" }),
-  );
+  await user.click(await reviewItem(user));
   expect(await screen.findByRole("alert")).toHaveTextContent(
     "could not review this prompt",
   );
@@ -216,9 +228,7 @@ it("shows a clear message when nothing needs to change", async () => {
   const user = userEvent.setup();
   const { input } = setup();
   await user.type(input, "Write about dogs.");
-  await user.click(
-    await screen.findByRole("button", { name: "Review prompt" }),
-  );
+  await user.click(await reviewItem(user));
   expect(await screen.findByText(/Nothing to add/)).toBeInTheDocument();
 });
 
@@ -226,9 +236,7 @@ it("compares the reviewed original with the improved draft once a suggestion is 
   const user = userEvent.setup();
   const { input, submit } = setup();
   await user.type(input, "Write about dogs.");
-  await user.click(
-    await screen.findByRole("button", { name: "Review prompt" }),
-  );
+  await user.click(await reviewItem(user));
   const panel = await screen.findByRole("region", { name: "Prompt review" });
   expect(
     within(panel).queryByRole("button", { name: "Compare before/after" }),
@@ -282,9 +290,7 @@ it("does not offer before/after without a selected model", async () => {
     </QueryClientProvider>,
   );
   await user.type(screen.getByLabelText("Message"), "Write about dogs.");
-  await user.click(
-    await screen.findByRole("button", { name: "Review prompt" }),
-  );
+  await user.click(await reviewItem(user));
   const panel = await screen.findByRole("region", { name: "Prompt review" });
   await user.click(
     within(panel).getByRole("button", { name: "Apply goal suggestion" }),

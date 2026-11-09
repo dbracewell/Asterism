@@ -38,7 +38,6 @@ vi.mock("./chat-file-context", () => ({ ChatFileContext: () => null }));
 vi.mock("@/components/file-manager/library-file-picker", () => ({
   LibraryFilePickerDialog: () => null,
 }));
-vi.mock("./attach-menu", () => ({ AttachMenu: () => null }));
 const items = [
   {
     id: "00000000-0000-4000-8000-000000000001",
@@ -110,6 +109,21 @@ beforeEach(() => {
   }));
 });
 
+const chipName = (name: string) => new RegExp(`^Skill ${name}\\b`);
+const findChip = (name: string) =>
+  screen.findByRole("button", { name: chipName(name) });
+const queryChip = (name: string) =>
+  screen.queryByRole("button", { name: chipName(name) });
+/** Opens a skill chip's menu and chooses `action`. */
+async function skillAction(
+  user: ReturnType<typeof userEvent.setup>,
+  name: string,
+  action: string,
+) {
+  await user.click(await findChip(name));
+  await user.click(await screen.findByRole("menuitem", { name: action }));
+}
+
 it("resolves ordered typed names, strips only leading commands, and sends skill-only messages", async () => {
   const { submit } = setup();
   const user = userEvent.setup();
@@ -139,7 +153,7 @@ it("selects with keyboard, deduplicates and retains text through failure/reload"
   await user.type(screen.getByLabelText("Message"), "/");
   await screen.findByRole("option", { name: /review/ });
   await user.keyboard("{ArrowDown}{Enter}");
-  await screen.findByLabelText("Remove write");
+  await findChip("write");
   expect(screen.getByLabelText("Message")).toHaveValue("");
   await user.click(screen.getByLabelText("Send message"));
   await waitFor(() =>
@@ -157,7 +171,7 @@ it("selects with keyboard, deduplicates and retains text through failure/reload"
   await waitFor(() =>
     expect(screen.getByLabelText("Message")).toHaveValue("Keep this"),
   );
-  expect(screen.getByLabelText("Remove write")).toBeVisible();
+  expect(await findChip("write")).toBeVisible();
 });
 it("unknown commands and failed lookup require explicit literal opt-in", async () => {
   const { submit } = setup();
@@ -179,7 +193,7 @@ it("unknown commands and failed lookup require explicit literal opt-in", async (
 it("stages refresh and explicit last-skill removal, without mutating accepted state", async () => {
   const { submit } = setup({ activeSkills: state });
   const user = userEvent.setup();
-  await user.click(await screen.findByLabelText("Refresh review"));
+  await skillAction(user, "review", "Refresh on next send");
   await user.type(screen.getByLabelText("Message"), "Continue");
   await user.click(screen.getByLabelText("Send message"));
   await waitFor(() =>
@@ -207,7 +221,7 @@ it("unavailable state permits explicit removal and blocks inherited execution", 
   await user.click(screen.getByLabelText("Send message"));
   await screen.findByText("Remove unavailable skills before sending.");
   expect(submit).not.toHaveBeenCalled();
-  await user.click(screen.getByLabelText("Remove review"));
+  await skillAction(user, "review", "Remove");
   await user.click(screen.getByLabelText("Send message"));
   await waitFor(() =>
     expect(submit).toHaveBeenCalledWith(
@@ -240,8 +254,8 @@ it("picker resolves preceding typed commands before the clicked skill", async ()
   const user = userEvent.setup();
   await user.type(screen.getByLabelText("Message"), "/review /wr");
   await user.click(await screen.findByRole("option", { name: /write/ }));
-  await screen.findByLabelText("Remove review");
-  await screen.findByLabelText("Remove write");
+  await findChip("review");
+  await findChip("write");
   await user.click(screen.getByLabelText("Send message"));
   await waitFor(() =>
     expect(submit).toHaveBeenCalledWith(
@@ -260,22 +274,22 @@ it("preserves pending drafts across branches and keeps them private to the owner
   await user.type(screen.getByLabelText("Message"), "Branch draft");
   view.rerenderProps({ skillScope: "other-branch" });
   await waitFor(() => expect(screen.getByLabelText("Message")).toHaveValue(""));
-  expect(screen.queryByLabelText("Remove review")).not.toBeInTheDocument();
+  expect(queryChip("review")).not.toBeInTheDocument();
   view.rerenderProps({ skillScope: "new:general" });
   await waitFor(() =>
     expect(screen.getByLabelText("Message")).toHaveValue("Branch draft"),
   );
-  expect(screen.getByLabelText("Remove review")).toBeVisible();
+  expect(await findChip("review")).toBeVisible();
   view.rerenderProps({ skillOwner: "bob" });
   await waitFor(() => expect(screen.getByLabelText("Message")).toHaveValue(""));
-  expect(screen.queryByLabelText("Remove review")).not.toBeInTheDocument();
+  expect(queryChip("review")).not.toBeInTheDocument();
 });
 it("stale accepted revisions preserve pending text until explicit reload", async () => {
   const confirm = vi.spyOn(window, "confirm").mockReturnValue(true);
   const view = setup({ activeSkills: state });
   const user = userEvent.setup();
   await user.type(screen.getByLabelText("Message"), "Keep my text");
-  await user.click(screen.getByLabelText("Remove review"));
+  await skillAction(user, "review", "Remove");
   view.rerenderProps({ activeSkills: { ...state, revision: 4 } });
   await user.click(screen.getByLabelText("Send message"));
   expect(view.submit).not.toHaveBeenCalled();
@@ -284,7 +298,7 @@ it("stale accepted revisions preserve pending text until explicit reload", async
   );
   expect(confirm).toHaveBeenCalled();
   expect(screen.getByLabelText("Message")).toHaveValue("Keep my text");
-  expect(screen.getByLabelText("Remove review")).toBeVisible();
+  expect(await findChip("review")).toBeVisible();
   confirm.mockRestore();
 });
 it("lookup failures preserve the original text and never silently activate cached data", async () => {
@@ -308,7 +322,7 @@ it("reorders selected skills and submits only ordered IDs", async () => {
     activeSkills: { revision: 3, skills: [state.skills![0], second] },
   });
   const user = userEvent.setup();
-  await user.click(await screen.findByLabelText("Move write earlier"));
+  await skillAction(user, "write", "Move earlier");
   await user.type(screen.getByLabelText("Message"), "Use this order");
   await user.click(screen.getByLabelText("Send message"));
   await waitFor(() =>
@@ -352,4 +366,17 @@ it("explicit reactivation adopts an available new revision through refresh IDs",
       }),
     ),
   );
+});
+
+it("opens the skill list from the menu and focuses the message box", async () => {
+  setup();
+  const user = userEvent.setup();
+  await user.click(screen.getByRole("button", { name: "More options" }));
+  await user.click(await screen.findByRole("menuitem", { name: "Skills" }));
+  expect(
+    await screen.findByRole("listbox", { name: "Skills and templates" }),
+  ).toBeVisible();
+  await waitFor(() => expect(screen.getByLabelText("Message")).toHaveFocus());
+  await user.click(await screen.findByRole("option", { name: /review/ }));
+  expect(await findChip("review")).toHaveTextContent("review");
 });

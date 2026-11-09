@@ -150,6 +150,18 @@ the admin audience. See
 
 ## Chat content and composer layout
 
+The composer (`features/chat/components/chat-input.tsx`, US-73.2) has three
+bands. The top row holds chips: model, persona and learning mode always; goal,
+rubric, compare, skills and a template label only when they apply. Picker
+notices render below the row through `ComposerNotice`, so the row can scroll
+sideways on narrow screens without growing. Below it are the message box and an
+action row with the **+** menu (`composer-menu.tsx`: attach, prompt templates,
+review prompt, skills, compare models, help) and, beside Send, the status ring
+(`composer-status.tsx`: context usage and Compact now, connection, General chat
+sub-agents, ChatGPT plan usage). Pass chips through the `chips` prop and
+comparison through `compare`; style chips with `COMPOSER_CHIP`. See the
+[layout proposal](../../docs/plans/us-73.1-composer-layout.md).
+
 Chat history and the composer share normal flow. The composer has a bounded scroll
 area for expanded context and attachments, so it cannot cover the last response.
 Wide Markdown tables, code and math scroll locally with keyboard focus; long text,
@@ -376,16 +388,17 @@ Per-message labels show the pinned skill names/revisions. See the
 
 ## Side-by-side comparison
 
-Use **Compare models** in the composer toolbar to send the next message to two
+Choose **Compare models** in the composer's **+** menu to send the next message to two
 or three models, or **Compare with other models** on an answer to add one or two
-more models beside it. The answers appear in columns (stacked on narrow
+more models beside it. While models are chosen, a **Compare** chip above the
+message box reopens the choice. The answers appear in columns (stacked on narrow
 screens), each with its token usage and, when it delegated, a **Run graph** link.
 Columns answer one after another; the active one shows **Continuing here**, and
 **Continue from …** switches the conversation to another column's branch.
 
 ## Prompt template builder
 
-Choose **Prompt templates** in the composer toolbar to pick a bundled framework
+Choose **Prompt templates** in the composer's **+** menu to pick a bundled framework
 (RTF, CO-STAR, CRAFT, few-shot, step-by-step) or one of your own templates. The
 form is generated from the template's field schema, beside a live preview of the
 assembled prompt (stacked on narrow screens). Hovering or focusing a field
@@ -401,13 +414,14 @@ of a message. A removable **Built with …** chip, kept with the draft across
 reloads, records the template and level on the sent message, which then shows a small label (marked unavailable if the template is
 later deleted).
 
-Turn on **Prompt Coach** under **User Settings → General** to add a **Review
-prompt** button to the composer. It checks the draft for a goal, audience,
+Turn on **Prompt Coach** under **User Settings → General** to add **Review
+prompt** to the composer's **+** menu. It checks the draft for a goal, audience,
 context, constraints, output format and examples, and lists suggestions you can
 apply to the message text one by one. After applying one, **Compare
 before/after** sends the original and the improved prompt to the selected model
-as **Before** and **After** columns. Reviewing alone sends and saves nothing; the button is
-disabled when no draft model or connected ChatGPT plan is available. See the
+as **Before** and **After** columns. Reviewing alone sends and saves nothing; the item is
+disabled, with the reason shown, when no draft model or connected ChatGPT plan
+is available. See the
 [prompt templates contract](../../docs/architecture/prompt-templates.md).
 
 Administrators can enable or disable activation under **Admin Settings → Skills**

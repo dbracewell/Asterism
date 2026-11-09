@@ -64,9 +64,7 @@ function setup(element: React.ReactNode) {
   };
 }
 async function openFromLibrary() {
-  await userEvent.click(
-    screen.getByRole("button", { name: "Add attachments" }),
-  );
+  await userEvent.click(screen.getByRole("button", { name: "More options" }));
   await userEvent.click(
     await screen.findByRole("menuitem", { name: "From library" }),
   );

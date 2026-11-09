@@ -97,15 +97,9 @@ vi.mock("@/components/logo", () => ({ default: () => null }));
 vi.mock("@/features/help/components/first-chat-tour", () => ({
   FirstChatTour: () => null,
 }));
-vi.mock(
-  "@/features/chat/components/compare-targets",
-  async (importOriginal) => ({
-    ...(await importOriginal<
-      typeof import("@/features/chat/components/compare-targets")
-    >()),
-    CompareModelsPicker: () => null,
-  }),
-);
+vi.mock("@/features/chat/components/composer-status", () => ({
+  ComposerStatus: () => null,
+}));
 vi.mock("@/features/chat/components/chat-input", async () => {
   const React = await import("react");
   return {
@@ -113,17 +107,17 @@ vi.mock("@/features/chat/components/chat-input", async () => {
       ref,
       onSubmit,
       disabled,
-      modelSelector,
+      chips,
     }: {
       ref: React.Ref<{ fill: (text: string) => void }>;
       onSubmit: (value: unknown) => void;
       disabled: boolean;
-      modelSelector: React.ReactNode;
+      chips: React.ReactNode;
     }) => {
       React.useImperativeHandle(ref, () => ({ fill: mocks.fill }));
       return (
         <>
-          {modelSelector}
+          {chips}
           <button
             disabled={disabled}
             onClick={() =>
@@ -199,11 +193,21 @@ it("starts a course project chat in a mode its class policy allows", async () =>
     answer_reveal: false,
   });
   renderPage();
+  // The policy marks the mode chip and heads its list (US-73.2).
+  const picker = await screen.findByRole("combobox", { name: "Learning mode" });
+  await waitFor(() =>
+    expect(picker).toHaveAttribute(
+      "aria-description",
+      "Limited by your class's policy",
+    ),
+  );
+  await userEvent.click(picker);
   expect(
     await screen.findByText(
       "Biology 101: Tutor mode only, answers can't be revealed. Set by Dr Teach.",
     ),
   ).toBeInTheDocument();
+  await userEvent.keyboard("{Escape}");
   await waitFor(() =>
     expect(screen.getByRole("button", { name: "Start chat" })).toBeEnabled(),
   );

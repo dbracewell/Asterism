@@ -1,34 +1,26 @@
 "use client";
 
 import { QueryError } from "@/components/query-error";
-import {
-  capabilityLabels,
-  supportedCapabilities,
-} from "@/components/settings/model-identity";
 import { ModelSelector } from "@/components/settings/model-selector";
 import {
   isPlanErrorCode,
   PlanRecoveryNotice,
-  PlanUsageIndicator,
 } from "@/features/chatgpt/components/plan-usage";
 import { Button } from "@/components/ui/button";
-import { Hint } from "@/components/ui/hint";
 import { client } from "@/lib/api";
-import { ChatInfo, ChatModelChoice, MessageExecution } from "@/lib/client";
+import { ChatInfo, MessageExecution } from "@/lib/client";
 import {
   chatModelsListOptions,
   chatModelUpdateMutation,
   chatSessionGetOneOptions,
 } from "@/lib/client/@tanstack/react-query.gen";
-import { cn } from "@/lib/utils";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
-
-const NOTICE_CLASS = "order-last w-full basis-full px-2 text-xs";
+import { ComposerNotice } from "./composer-notice";
 
 /**
- * Composer-toolbar model selector. Renders as a fragment so the selector sits
- * inline while status notices wrap onto their own row of a flex-wrap parent.
+ * The composer's model chip. Capabilities show in the list; status notices
+ * render below the chip row (US-73.2).
  */
 export function ChatModelPicker({
   value,
@@ -52,7 +44,7 @@ export function ChatModelPicker({
     <>
       <ModelSelector
         id="chat-model"
-        variant="inline"
+        variant="chip"
         aria-label="Chat model"
         data-tour="model"
         aria-invalid={!!value && !!query.data && !selected?.available}
@@ -64,19 +56,15 @@ export function ChatModelPicker({
         savedLabel={savedLabel}
         disabled={disabled || !query.data}
       />
-      {selected && <ModelCapabilities model={selected} />}
-      {selected?.provider_type === "chatgpt" && selected.available && (
-        <PlanUsageIndicator />
-      )}
       {query.isPending && (
         <p role="status" className="sr-only">
           Loading models…
         </p>
       )}
       {query.isError && (
-        <p
+        <ComposerNotice
           role="alert"
-          className={cn(NOTICE_CLASS, "text-destructive flex items-center")}
+          className="text-destructive flex items-center"
         >
           {query.data
             ? "Could not refresh models. Showing cached choices."
@@ -89,50 +77,29 @@ export function ChatModelPicker({
           >
             Retry
           </Button>
-        </p>
+        </ComposerNotice>
       )}
       {query.data && !choices.some((choice) => choice.available) && (
-        <p role="status" className={cn(NOTICE_CLASS, "text-muted-foreground")}>
+        <ComposerNotice role="status" className="text-muted-foreground">
           No available models. Ask an administrator to enable one.
-        </p>
+        </ComposerNotice>
       )}
       {value &&
         query.data &&
         !selected?.available &&
         (isPlanErrorCode(selected?.unavailable_code) ? (
-          <PlanRecoveryNotice
-            code={selected.unavailable_code}
-            message={selected.unavailable_reason ?? ""}
-            className={NOTICE_CLASS}
-          />
+          <ComposerNotice>
+            <PlanRecoveryNotice
+              code={selected.unavailable_code}
+              message={selected.unavailable_reason ?? ""}
+            />
+          </ComposerNotice>
         ) : (
-          <p role="alert" className={cn(NOTICE_CLASS, "text-destructive")}>
+          <ComposerNotice role="alert" className="text-destructive">
             Selected model is unavailable. Choose an available replacement.
-          </p>
+          </ComposerNotice>
         ))}
     </>
-  );
-}
-
-export function ModelCapabilities({ model }: { model: ChatModelChoice }) {
-  const labels = capabilityLabels(model);
-  return (
-    <div
-      aria-label="Selected model capabilities"
-      title={labels.join(" · ")}
-      className="text-muted-foreground flex items-center gap-1.5 px-1 text-xs"
-    >
-      {supportedCapabilities(model).map(({ key, icon: Icon, name }) => (
-        <Hint key={key} hint={name}>
-          <Icon aria-hidden="true" className="size-5" />
-        </Hint>
-      ))}
-      <span className="sr-only">
-        {labels.map((label) => (
-          <span key={label}>{label}</span>
-        ))}
-      </span>
-    </div>
   );
 }
 
@@ -188,9 +155,9 @@ export function ExistingChatModelPicker({
         }
       />
       {mutation.error && (
-        <div
+        <ComposerNotice
           role="alert"
-          className={cn(NOTICE_CLASS, "text-destructive flex items-center")}
+          className="text-destructive flex items-center"
         >
           <p>
             {mutation.error.detail ?? "Could not change model."} Reload the chat
@@ -210,10 +177,10 @@ export function ExistingChatModelPicker({
           >
             Reload chat model
           </Button>
-        </div>
+        </ComposerNotice>
       )}
       {mutation.error && current.error && (
-        <div className={NOTICE_CLASS}>
+        <ComposerNotice>
           <QueryError
             error={current.error}
             message="Could not reload the chat model."
@@ -226,7 +193,7 @@ export function ExistingChatModelPicker({
             }}
             isRetrying={current.isFetching}
           />
-        </div>
+        </ComposerNotice>
       )}
     </>
   );

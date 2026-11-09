@@ -1,7 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { HelpTopic } from "@/features/help/components/help-topic";
 import { Button } from "@/components/ui/button";
-import { Hint } from "@/components/ui/hint";
 import { client } from "@/lib/api";
 import { promptCoachReviewMutation } from "@/lib/client/@tanstack/react-query.gen";
 import type { PromptReview, PromptSuggestion } from "@/lib/client";
@@ -9,7 +8,6 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   AlertCircleIcon,
   CheckIcon,
-  ClipboardCheckIcon,
   ColumnsIcon,
   LoaderCircleIcon,
   XIcon,
@@ -87,37 +85,20 @@ export function PromptCoachScope({
   return children(usePromptCoach(owner, modelId));
 }
 
-export function PromptCoachButton({
-  coach,
-  prompt,
-  disabled,
-}: {
-  coach: PromptCoachControl;
-  prompt: string;
-  disabled?: boolean;
-}) {
+/**
+ * The composer menu's "Review prompt" item: disabled without a draft or while
+ * a review runs, and explains itself when no model can review.
+ */
+export function reviewOffer(
+  coach: PromptCoachControl,
+  prompt: string,
+  disabled?: boolean,
+) {
   const unavailable = !coach.checking && !coach.available;
-  return (
-    <Hint hint={unavailable ? COACH_UNAVAILABLE_HINT : "Review prompt"}>
-      {/* A wrapper keeps the hint reachable while the button is disabled. */}
-      <span tabIndex={unavailable ? 0 : undefined} className="inline-flex">
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-lg"
-          className="rounded-control"
-          aria-label="Review prompt"
-          aria-description={unavailable ? COACH_UNAVAILABLE_HINT : undefined}
-          disabled={
-            disabled || !coach.available || coach.pending || !prompt.trim()
-          }
-          onClick={() => coach.run(prompt)}
-        >
-          <ClipboardCheckIcon />
-        </Button>
-      </span>
-    </Hint>
-  );
+  return {
+    disabled: disabled || !coach.available || coach.pending || !prompt.trim(),
+    description: unavailable ? COACH_UNAVAILABLE_HINT : undefined,
+  };
 }
 
 export function PromptCoachPanel({

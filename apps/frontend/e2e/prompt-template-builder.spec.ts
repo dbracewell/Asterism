@@ -80,7 +80,8 @@ for (const [width, height] of [
     await page.goto("/e2e/skill-chat");
     const input = page.getByLabel("Message", { exact: true });
     await input.fill("Context first. ");
-    await page.getByRole("button", { name: "Prompt templates" }).click();
+    await page.getByRole("button", { name: "More options" }).click();
+    await page.getByRole("menuitem", { name: "Prompt templates" }).click();
     const dialog = page.getByRole("dialog");
     await dialog.getByRole("button", { name: /^RTF/ }).click();
     await expect(dialog.getByRole("heading", { name: "RTF" })).toBeVisible();
@@ -165,7 +166,8 @@ for (const [width, height] of [
     await mock(page);
     await page.goto("/e2e/skill-chat");
     const input = page.getByLabel("Message", { exact: true });
-    await page.getByRole("button", { name: "Prompt templates" }).click();
+    await page.getByRole("button", { name: "More options" }).click();
+    await page.getByRole("menuitem", { name: "Prompt templates" }).click();
     const dialog = page.getByRole("dialog");
     await dialog.getByRole("button", { name: /^RTF/ }).click();
     const levels = dialog.getByRole("tablist", { name: "Scaffolding level" });

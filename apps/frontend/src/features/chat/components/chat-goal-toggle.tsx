@@ -1,5 +1,6 @@
 "use client";
 
+import { COMPOSER_CHIP } from "../lib/composer-chip";
 import { Button } from "@/components/ui/button";
 import { Hint } from "@/components/ui/hint";
 import { client } from "@/lib/api";
@@ -42,16 +43,20 @@ export function ChatGoalToggle({
     >
       <Button
         type="button"
-        variant={value ? "secondary" : "ghost"}
-        size="lg"
-        className={cn("rounded-control", !value && "text-muted-foreground")}
+        variant="outline"
+        size="sm"
+        className={cn(
+          COMPOSER_CHIP,
+          value &&
+            "bg-accent text-accent-foreground hover:bg-accent/80 border-transparent",
+        )}
         aria-pressed={value}
         aria-label="Include learning goal"
         disabled={disabled}
         onClick={() => onChange(!value)}
       >
         <TargetIcon />
-        <span className="hidden sm:inline">Goal</span>
+        Goal
       </Button>
     </Hint>
   );

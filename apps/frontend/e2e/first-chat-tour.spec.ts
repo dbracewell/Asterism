@@ -72,7 +72,7 @@ for (const [width, height] of [
       if ((await next.textContent()) === "Finish") break;
       await next.click();
     }
-    await expect(dialog).toHaveAccessibleName("Attachments");
+    await expect(dialog).toHaveAccessibleName("More options");
     await dialog.getByRole("button", { name: "Finish" }).click();
     await expect(dialog).toBeHidden();
     await expect(page.getByLabel("Message", { exact: true })).toBeFocused();

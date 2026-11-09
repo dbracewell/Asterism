@@ -95,7 +95,7 @@ for (const theme of themes)
         ).toBeVisible();
         await expect(
           page.getByRole("combobox", { name: "Chat model", exact: true }),
-        ).toHaveText("Matrix model (Synthetic)");
+        ).toHaveText("Matrix model");
         await page.evaluate((size) => {
           document.documentElement.style.fontSize = `${size}px`;
         }, viewport.fontSize);

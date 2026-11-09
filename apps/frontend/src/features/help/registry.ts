@@ -148,7 +148,7 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
       "A helper you define with its own instructions and its own fixed model. The main agent can hand parts of a task to it.",
     details: [
       "The main agent can only use sub-agents you've allowed. General chats use the General chat sub-agents you choose in User Settings → Agents. Project chats use the sub-agents selected in that project's Sub-agents tab, and ignore your General choices.",
-      "Delegation also needs the chat's model to support tools, the sub-agent's fixed model to be available and an administrator to allow sub-agents. In a General chat, a robot icon beside the send button shows whether delegation is available.",
+      "Delegation also needs the chat's model to support tools, the sub-agent's fixed model to be available and an administrator to allow sub-agents. In a General chat, the status ring beside the send button shows whether delegation is available.",
       "If you change your choices while a reply is running, the next hand-off in that reply is refused; send a new message to use the new choices.",
       "A sub-agent can use the same files as the chat or fewer, never more. Its work appears in the chat so you can see what it did.",
     ],
@@ -388,7 +388,7 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
       "When a chat nears the model's context limit, earlier turns are summarized so the chat keeps working. Your messages are never deleted.",
     details: [
       "A divider marks where the summary starts. Open it to read the summary. From then on the model reads the summary instead of the messages above the divider, plus your most recent turns in full.",
-      "The context meter beside the message box shows how full the next request is. Open it and choose Compact now to summarize earlier turns yourself.",
+      "The status ring beside the send button shows how full the next request is. Open it and choose Compact now to summarize earlier turns yourself.",
       "The summary is written by a model and can miss details. It never changes your persona, skills or instructions, and it grants no tools or files.",
       "Each branch keeps its own history: a reply regenerated from before the divider uses the full conversation as it was.",
     ],
@@ -628,15 +628,12 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
   "composer.controls": {
     title: "Chat controls",
     summary:
-      "The buttons around the message box change what you send and how the assistant answers. Pick one below to learn more.",
+      "The chips above the message box and the + menu beside it change what you send and how the assistant answers. Pick a term below to learn more.",
     details: [
-      "Paperclip: attach files, or see which files this chat can use.",
-      "Template and prompt review: build a clearer prompt from a form, or get feedback on your draft before sending.",
-      "Model and Compare: choose the AI model, or send the same message to several models at once.",
-      "Persona: choose which description of you the assistant should keep in mind.",
-      "Learning mode: choose between direct answers and modes that help you work it out yourself.",
-      "Type / in the message box to add a skill.",
-      "Robot icon (General chats only): shows whether the main agent can hand work to your General chat sub-agents with this model. Select it to manage them.",
+      "Chips above the box: the model, persona and learning mode are always shown. Goal, rubric, compare, skills and a template label appear only when they apply. Select a chip to change it.",
+      "The + menu: attach files or see which files this chat can use; open prompt templates; review your draft before sending; add a skill; compare models side by side; open this help.",
+      "Type / in the message box to add a skill or a prompt template.",
+      "The status ring beside the send button shows how full the context is and whether the chat is connected. Open it to compact the chat, see your General chat sub-agents or check ChatGPT plan usage.",
     ],
     related: [
       "concept.attachment",

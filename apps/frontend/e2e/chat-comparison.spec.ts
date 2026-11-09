@@ -314,7 +314,8 @@ test("the composer sends to two models, and asks for a second before sending", a
   const input = page.getByLabel("Message", { exact: true });
   await expect(input).toBeEnabled({ timeout: 15_000 });
 
-  await page.getByRole("button", { name: "Compare models" }).click();
+  await page.getByRole("button", { name: "More options" }).click();
+  await page.getByRole("menuitem", { name: "Compare models" }).click();
   await page.getByLabel("Alpha").check();
   await expect(
     page.getByText("Choose one more model to compare."),

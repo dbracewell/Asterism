@@ -51,6 +51,15 @@ async function mock(page: Page) {
   });
   return state;
 }
+/** An active skill's chip in the composer's top row (US-73.2). */
+const skillChip = (page: Page, name: string) =>
+  page.getByRole("button", { name: new RegExp(`^Skill ${name}\\b`) });
+
+async function skillAction(page: Page, name: string, action: string) {
+  await skillChip(page, name).click();
+  await page.getByRole("menuitem", { name: action }).click();
+}
+
 for (const [width, height] of [
   [1280, 800],
   [390, 600],
@@ -67,7 +76,7 @@ for (const [width, height] of [
     await expect(page.getByRole("option", { name: /review/ })).toBeVisible();
     await input.press("ArrowDown");
     await input.press("Enter");
-    await expect(page.getByLabel("Remove write")).toBeVisible();
+    await expect(skillChip(page, "write")).toBeVisible();
     await expect(input).toBeFocused();
     await input.fill("Keep this draft");
     state.fail = true;
@@ -78,9 +87,9 @@ for (const [width, height] of [
     await expect(input).toHaveValue("Keep this draft");
     await page.reload();
     await expect(input).toHaveValue("Keep this draft");
-    await expect(page.getByLabel("Remove write")).toBeVisible();
+    await expect(skillChip(page, "write")).toBeVisible();
     await page.getByRole("button", { name: "Project", exact: true }).click();
-    await expect(page.getByLabel("Remove write")).toHaveCount(0);
+    await expect(skillChip(page, "write")).toHaveCount(0);
     await expect(input).toHaveValue("");
     await page.getByRole("button", { name: "General", exact: true }).click();
     await expect(input).toHaveValue("Keep this draft");
@@ -88,7 +97,7 @@ for (const [width, height] of [
       .getByRole("button", { name: "Switch owner", exact: true })
       .click();
     await expect(input).toHaveValue("");
-    await expect(page.getByLabel("Remove write")).toHaveCount(0);
+    await expect(skillChip(page, "write")).toHaveCount(0);
     await page
       .getByRole("button", { name: "Switch owner", exact: true })
       .click();
@@ -263,7 +272,7 @@ for (const project of [null, "00000000-0000-4000-8000-000000000099"]) {
     });
     await page.goto("/e2e/chat-model-session");
     const input = page.getByLabel("Message", { exact: true });
-    await expect(page.getByLabel("Remove review")).toBeVisible();
+    await expect(skillChip(page, "review")).toBeVisible();
     await expect(page.getByLabel("Message skills")).toContainText(
       "/review · r1",
     );
@@ -272,10 +281,10 @@ for (const project of [null, "00000000-0000-4000-8000-000000000099"]) {
     await expect.poll(() => sends.length).toBe(1);
     expect(sends[0]).not.toHaveProperty("skills");
     await expect(input).toBeEnabled();
-    await expect(page.getByLabel("Remove review")).toBeVisible();
+    await expect(skillChip(page, "review")).toBeVisible();
     await page.reload();
-    await expect(page.getByLabel("Remove review")).toBeVisible();
-    await page.getByLabel("Refresh review").click();
+    await expect(skillChip(page, "review")).toBeVisible();
+    await skillAction(page, "review", "Refresh on next send");
     await input.fill("Refresh explicitly");
     await page.getByLabel("Send message").click();
     await expect.poll(() => sends.length).toBe(2);
@@ -287,7 +296,7 @@ for (const project of [null, "00000000-0000-4000-8000-000000000099"]) {
       },
     });
     await expect(input).toBeEnabled();
-    await page.getByLabel("Remove review").click();
+    await skillAction(page, "review", "Remove");
     await input.fill("No workflow now");
     await page.getByLabel("Send message").click();
     await expect.poll(() => sends.length).toBe(3);
@@ -295,7 +304,7 @@ for (const project of [null, "00000000-0000-4000-8000-000000000099"]) {
       skills: { expected_revision: 2, skill_ids: [], refresh_ids: [] },
     });
     await page.reload();
-    await expect(page.getByLabel("Remove review")).toHaveCount(0);
+    await expect(skillChip(page, "review")).toHaveCount(0);
   });
 }
 

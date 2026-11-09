@@ -1,9 +1,13 @@
 "use client";
 
-import { HelpTopic } from "@/features/help/components/help-topic";
 import { EmptyState } from "@/components/empty-state";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Popover,
   PopoverAnchor,
@@ -26,7 +30,15 @@ import type {
   SkillSummary,
 } from "@/lib/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowDownIcon, ArrowUpIcon, RefreshCwIcon, XIcon } from "lucide-react";
+import {
+  ArrowDownIcon,
+  ArrowUpIcon,
+  ChevronDownIcon,
+  RefreshCwIcon,
+  SlashIcon,
+  XIcon,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
 import {
   useEffect,
   useId,
@@ -35,6 +47,7 @@ import {
   type KeyboardEvent,
   type ReactNode,
 } from "react";
+import { COMPOSER_CHIP } from "../lib/composer-chip";
 import { parseSkillCommands, slashSearch } from "../lib/skill-commands";
 import { isScaffoldingLevel } from "@/features/templates/lib/levels";
 
@@ -51,7 +64,13 @@ export type SkillComposerControl = {
   changeTemplate: (template: AppliedTemplate | null) => void;
   hasSkills: boolean;
   ready: boolean;
-  controls: ReactNode;
+  /** One chip per active skill for the composer's top row. */
+  chips: ReactNode;
+  /** Pending-change, conflict and error lines below the top row. */
+  notices: ReactNode;
+  canOpenList: boolean;
+  /** Opens the skill list, as typing "/" does; the caller focuses the box. */
+  openList: () => void;
   keyDown: (event: KeyboardEvent<HTMLTextAreaElement>) => boolean;
   inputProps: {
     "aria-controls"?: string;
@@ -190,7 +209,7 @@ export function SkillComposer({
     ...eligibleSkillOptions(owner, manual ? "" : (search ?? "")),
     enabled: open,
   });
-  // Templates are offered only for typed slash searches, not the Skills button.
+  // Templates are offered only for typed slash searches, not the Skills menu item.
   const templateSearch = onOpenTemplate && !manual ? search : null;
   const frameworks = useQuery({
     ...frameworkCatalogOptions(),
@@ -366,114 +385,93 @@ export function SkillComposer({
         : {}),
     };
   }
-  const controls = (
-    <div className="flex min-w-0 flex-col gap-2 px-3 pt-2">
-      <div
-        className="flex min-w-0 flex-wrap items-center gap-1"
-        aria-label="Active skills"
-      >
-        <Button
-          type="button"
-          size="sm"
-          variant="ghost"
-          disabled={disabled || !draft}
-          onClick={() => {
-            setManual(true);
-            setDismissed(false);
-            requestAnimationFrame(() =>
-              anchorRef.current?.querySelector("textarea")?.focus(),
-            );
-          }}
-        >
-          Skills /
-        </Button>
-        <HelpTopic id="concept.skill" />
-        {current.skills.map((skill, position) => (
-          <div
-            key={skill.id}
-            className="flex max-w-full min-w-0 flex-wrap items-center gap-0.5"
+  const move = (position: number, offset: -1 | 1) => {
+    const skills = [...current.skills];
+    [skills[position + offset], skills[position]] = [
+      skills[position],
+      skills[position + offset],
+    ];
+    update({ ...current, skills });
+  };
+  const chips = current.skills.map((skill, position) => {
+    const unavailable = skill.available === false;
+    const refreshing = current.refresh.includes(skill.id);
+    return (
+      <DropdownMenu key={skill.id} modal={false}>
+        <DropdownMenuTrigger asChild>
+          <Button
+            type="button"
+            variant={unavailable ? "destructive" : "secondary"}
+            size="sm"
+            disabled={disabled}
+            className={cn(COMPOSER_CHIP, "max-w-56")}
+            aria-label={`Skill ${skill.name}${unavailable ? ", unavailable" : ""}${
+              skill.update_available || refreshing ? ", update available" : ""
+            }`}
+            title={skill.name}
           >
-            <Badge
-              variant={skill.available === false ? "destructive" : "secondary"}
-              className="max-w-48 shrink truncate"
-              title={skill.name}
-            >
-              {skill.name} · {skill.digest ? `r${skill.revision}` : "pending"}
-            </Badge>
-            {skill.available === false && (
-              <span className="text-destructive text-xs">Unavailable</span>
+            <SlashIcon aria-hidden="true" />
+            <span className="truncate">{skill.name}</span>
+            <span className="text-muted-foreground shrink-0">
+              {unavailable
+                ? "Unavailable"
+                : skill.digest
+                  ? `r${skill.revision}`
+                  : "pending"}
+            </span>
+            {(skill.update_available || refreshing) && (
+              <RefreshCwIcon aria-hidden="true" />
             )}
-            {(skill.update_available || current.refresh.includes(skill.id)) && (
-              <Button
-                type="button"
-                size="icon-xs"
-                variant="ghost"
-                disabled={disabled}
-                title="Update available; refresh on next send"
-                aria-label={`Refresh ${skill.name}`}
-                onClick={() =>
-                  update({
-                    ...current,
-                    refresh: [...new Set([...current.refresh, skill.id])],
-                  })
-                }
-              >
-                <RefreshCwIcon />
-              </Button>
-            )}
-            <Button
-              type="button"
-              size="icon-xs"
-              variant="ghost"
-              disabled={disabled || position === 0}
-              aria-label={`Move ${skill.name} earlier`}
-              onClick={() => {
-                const skills = [...current.skills];
-                [skills[position - 1], skills[position]] = [
-                  skills[position],
-                  skills[position - 1],
-                ];
-                update({ ...current, skills });
-              }}
-            >
-              <ArrowUpIcon />
-            </Button>
-            <Button
-              type="button"
-              size="icon-xs"
-              variant="ghost"
-              disabled={disabled || position === current.skills.length - 1}
-              aria-label={`Move ${skill.name} later`}
-              onClick={() => {
-                const skills = [...current.skills];
-                [skills[position + 1], skills[position]] = [
-                  skills[position],
-                  skills[position + 1],
-                ];
-                update({ ...current, skills });
-              }}
-            >
-              <ArrowDownIcon />
-            </Button>
-            <Button
-              type="button"
-              size="icon-xs"
-              variant="ghost"
-              disabled={disabled}
-              aria-label={`Remove ${skill.name}`}
-              onClick={() =>
+            <ChevronDownIcon aria-hidden="true" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent side="top" align="start">
+          {(skill.update_available || refreshing) && (
+            <DropdownMenuItem
+              disabled={refreshing}
+              onSelect={() =>
                 update({
                   ...current,
-                  skills: current.skills.filter((s) => s.id !== skill.id),
-                  refresh: current.refresh.filter((id) => id !== skill.id),
+                  refresh: [...new Set([...current.refresh, skill.id])],
                 })
               }
             >
-              <XIcon />
-            </Button>
-          </div>
-        ))}
-      </div>
+              <RefreshCwIcon />
+              {refreshing ? "Refreshes on next send" : "Refresh on next send"}
+            </DropdownMenuItem>
+          )}
+          <DropdownMenuItem
+            disabled={position === 0}
+            onSelect={() => move(position, -1)}
+          >
+            <ArrowUpIcon />
+            Move earlier
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            disabled={position === current.skills.length - 1}
+            onSelect={() => move(position, 1)}
+          >
+            <ArrowDownIcon />
+            Move later
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onSelect={() =>
+              update({
+                ...current,
+                skills: current.skills.filter((s) => s.id !== skill.id),
+                refresh: current.refresh.filter((id) => id !== skill.id),
+              })
+            }
+          >
+            <XIcon />
+            Remove
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
+  });
+  const notices = (
+    <div className="flex min-w-0 flex-col gap-2 empty:hidden">
       {(dirty || current.refresh.length > 0) && (
         <p role="status" className="text-muted-foreground text-xs">
           Skill changes apply to the next accepted message.
@@ -566,7 +564,13 @@ export function SkillComposer({
     },
     hasSkills: current.skills.length > 0,
     ready: !!draft && !resolving,
-    controls,
+    chips,
+    notices,
+    canOpenList: !disabled && !!draft,
+    openList() {
+      setManual(true);
+      setDismissed(false);
+    },
     inputProps: {
       "aria-controls": open ? listId : undefined,
       "aria-expanded": open,

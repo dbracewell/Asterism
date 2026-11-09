@@ -4,6 +4,7 @@ import { client } from "@/lib/api";
 import type { CourseModePolicy, LearningModeId } from "@/lib/client";
 import { courseModePolicyGetOptions } from "@/lib/client/@tanstack/react-query.gen";
 import { useQuery } from "@tanstack/react-query";
+import { cn } from "@/lib/utils";
 import { GraduationCapIcon } from "lucide-react";
 import { learningModeQueryOptions } from "./chat-learning-mode-picker";
 
@@ -33,11 +34,13 @@ function orList(items: string[]) {
     : (items[0] ?? "no");
 }
 
-/** Shows what the educator limited and who set it. */
+/** Shows what the educator limited and who set it; heads the mode list. */
 export function CoursePolicyNotice({
   policy,
+  className,
 }: {
   policy: CourseModePolicy | null;
+  className?: string;
 }) {
   const catalog = useQuery(learningModeQueryOptions());
   if (!policy) return null;
@@ -52,7 +55,10 @@ export function CoursePolicyNotice({
   return (
     <p
       aria-label="Course policy"
-      className="text-muted-foreground order-last flex w-full basis-full items-start gap-1.5 px-2 text-xs"
+      className={cn(
+        "text-muted-foreground flex items-start gap-1.5 text-xs",
+        className,
+      )}
     >
       <GraduationCapIcon className="mt-0.5 size-3.5 shrink-0" aria-hidden />
       <span className="wrap-anywhere">

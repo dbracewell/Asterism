@@ -1,7 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 import { LibraryFilePickerDialog } from "@/components/file-manager/library-file-picker";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { FieldSet } from "@/components/ui/field";
 import { Hint } from "@/components/ui/hint";
 import { Textarea } from "@/components/ui/textarea";
@@ -42,7 +41,10 @@ import {
   readClipboard,
 } from "../lib/capture";
 import { HelpTopic } from "@/features/help/components/help-topic";
-import { AttachMenu, type AttachAction } from "./attach-menu";
+import { ComposerMenu, type ComposerAction } from "./composer-menu";
+import { ComposerNoticeSlot } from "./composer-notice";
+import { CompareModelsPicker } from "./compare-targets";
+import { COMPOSER_CHIP } from "../lib/composer-chip";
 import { ChatFileContext } from "./chat-file-context";
 import { SkillComposer, type SkillComposerControl } from "./skill-composer";
 import {
@@ -53,9 +55,9 @@ import {
 import { levelLabel } from "@/features/templates/lib/levels";
 import { beforeAfterTargets, originalBody } from "../lib/comparison";
 import {
-  PromptCoachButton,
   PromptCoachPanel,
   PromptCoachScope,
+  reviewOffer,
   type PromptCoachControl,
 } from "@/features/templates/components/prompt-coach";
 
@@ -91,8 +93,17 @@ export type ChatInputHandle = {
 
 export type ChatInputProps = {
   ref?: React.Ref<ChatInputHandle>;
-  /** Rendered in the toolbar after the attach menu, e.g. a model selector. */
-  modelSelector?: React.ReactNode;
+  /**
+   * Chips in the top row (US-73.2): the model, persona and learning mode, and
+   * options such as goal and rubric when they apply.
+   */
+  chips?: React.ReactNode;
+  /** Models chosen to answer the next message side by side. */
+  compare?: {
+    value: string[];
+    onChange: (value: string[]) => void;
+    disabled?: boolean;
+  };
   skillOwner?: string;
   skillScope?: string;
   activeSkills?: ActiveSkillState;
@@ -109,7 +120,7 @@ export type ChatInputProps = {
   promptCoach?: { modelId?: string | null };
   /** Supplied by the owned input when `promptCoach` is set. */
   coach?: PromptCoachControl;
-  /** Compact indicators shown in the toolbar beside the send button. */
+  /** The status indicator beside the send button. */
   status?: React.ReactNode;
   onSubmit: (data: {
     prompt: string;
@@ -207,7 +218,8 @@ const ChatInputCore = ({
   skillOwner,
   templateSelection,
   onTemplateSelectionChange,
-  modelSelector,
+  chips,
+  compare,
   coach,
   promptCoach,
   status,
@@ -230,6 +242,11 @@ const ChatInputCore = ({
   const [isDragOver, setIsDragOver] = useState(false);
   const [libraryOpen, setLibraryOpen] = useState(false);
   const [contextOpen, setContextOpen] = useState(false);
+  const [compareOpen, setCompareOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
+  const [noticeSlot, setNoticeSlot] = useState<HTMLDivElement | null>(null);
+  const optionsRef = useRef<HTMLButtonElement>(null);
+  const focusOptions = () => optionsRef.current?.focus();
   // Template labels exist only with an owner, so the composer draft persists them.
   const appliedTemplate = skillComposer?.template ?? null;
   const [localPrompt, setPrompt] = useState("");
@@ -501,12 +518,19 @@ const ChatInputCore = ({
     }
   };
 
-  const handleAttach = (action: AttachAction) => {
+  const handleAction = (action: ComposerAction) => {
     if (action === "upload") fileInputRef.current?.click();
     else if (action === "library") setLibraryOpen(true);
     else if (action === "context") setContextOpen(true);
     else if (action === "paste") void pasteFromClipboard();
-    else void takeScreenshot();
+    else if (action === "screenshot") void takeScreenshot();
+    else if (action === "templates") onTemplateSelectionChange?.(null);
+    else if (action === "review") coach?.run(prompt);
+    else if (action === "skills") {
+      skillComposer?.openList();
+      requestAnimationFrame(() => textareaRef.current?.focus());
+    } else if (action === "compare") setCompareOpen(true);
+    else setHelpOpen(true);
   };
 
   const hasPrompt = prompt.trim().length > 0 || !!skillComposer?.hasSkills;
@@ -634,37 +658,75 @@ const ChatInputCore = ({
               <span>{sendError}</span>
             </p>
           )}
-          {skillComposer && (
-            <FieldSet disabled={controlsDisabled}>
-              {skillComposer.controls}
-            </FieldSet>
-          )}
-          {appliedTemplate && (
-            <div className="flex min-w-0 items-center gap-0.5 px-3 pt-2">
-              <Badge
-                variant="secondary"
-                className="max-w-full min-w-0"
-                title={`This message records that it was built with ${appliedTemplate.name} at the ${appliedTemplate.use.level} level.`}
+          <ComposerNoticeSlot value={noticeSlot}>
+            <div className="flex min-w-0 flex-col gap-1.5 px-3 pt-2.5 empty:hidden">
+              <div
+                role="group"
+                aria-label="Message options"
+                className="-m-0.5 flex min-w-0 [scrollbar-width:none] items-center gap-1.5 overflow-x-auto p-0.5 empty:hidden sm:flex-wrap sm:overflow-visible"
               >
-                <span className="truncate">
-                  Built with {appliedTemplate.name}
-                </span>
-                <span className="shrink-0">
-                  · {levelLabel(appliedTemplate.use.level)}
-                </span>
-              </Badge>
-              <Button
-                type="button"
-                size="icon-xs"
-                variant="ghost"
-                disabled={controlsDisabled}
-                aria-label={`Remove ${appliedTemplate.name} template label`}
-                onClick={() => skillComposer?.changeTemplate(null)}
-              >
-                <XIcon />
-              </Button>
+                {chips}
+                {compare && (
+                  <CompareModelsPicker
+                    value={compare.value}
+                    onChange={compare.onChange}
+                    disabled={compare.disabled}
+                    open={compareOpen}
+                    onOpenChange={setCompareOpen}
+                    onCloseAutoFocus={(event) => {
+                      event.preventDefault();
+                      focusOptions();
+                    }}
+                  />
+                )}
+                {skillComposer?.hasSkills && (
+                  <fieldset disabled={controlsDisabled} className="contents">
+                    {skillComposer.chips}
+                  </fieldset>
+                )}
+                {appliedTemplate && (
+                  <span
+                    className={cn(
+                      COMPOSER_CHIP,
+                      "bg-secondary text-secondary-foreground inline-flex items-center pr-0.5",
+                    )}
+                    title={`This message records that it was built with ${appliedTemplate.name} at the ${appliedTemplate.use.level} level.`}
+                  >
+                    <LayoutTemplateIcon
+                      aria-hidden="true"
+                      className="size-3.5 shrink-0"
+                    />
+                    <span className="truncate">
+                      Built with {appliedTemplate.name}
+                    </span>
+                    <span className="text-muted-foreground shrink-0">
+                      · {levelLabel(appliedTemplate.use.level)}
+                    </span>
+                    <Button
+                      type="button"
+                      size="icon-xs"
+                      variant="ghost"
+                      className="rounded-chip"
+                      disabled={controlsDisabled}
+                      aria-label={`Remove ${appliedTemplate.name} template label`}
+                      onClick={() => skillComposer?.changeTemplate(null)}
+                    >
+                      <XIcon />
+                    </Button>
+                  </span>
+                )}
+              </div>
+              <div
+                ref={setNoticeSlot}
+                className="flex min-w-0 flex-col gap-1 empty:hidden"
+              />
+              {skillComposer && (
+                <FieldSet disabled={controlsDisabled} className="empty:hidden">
+                  {skillComposer.notices}
+                </FieldSet>
+              )}
             </div>
-          )}
+          </ComposerNoticeSlot>
           {coach && (
             <PromptCoachPanel
               coach={coach}
@@ -726,33 +788,36 @@ const ChatInputCore = ({
             placeholder={placeholder}
           />
         </div>
-        <div className="flex min-w-0 flex-wrap items-center gap-1 px-2 pb-2">
-          <AttachMenu disabled={controlsDisabled} onAction={handleAttach} />
-          {skillOwner && (
-            <Hint hint="Prompt templates">
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-lg"
-                className="rounded-control"
-                aria-label="Prompt templates"
-                disabled={controlsDisabled}
-                onClick={() => onTemplateSelectionChange?.(null)}
-              >
-                <LayoutTemplateIcon />
-              </Button>
-            </Hint>
-          )}
-          {coach && (
-            <PromptCoachButton
-              coach={coach}
-              prompt={prompt}
-              disabled={controlsDisabled}
-            />
-          )}
-          {modelSelector}
-          <HelpTopic id="composer.controls" />
-          <div className="ml-auto flex shrink-0 items-center gap-2">
+        <div className="flex min-w-0 items-center gap-1 px-2 pb-2">
+          <ComposerMenu
+            ref={optionsRef}
+            disabled={controlsDisabled}
+            templates={
+              skillOwner && onTemplateSelectionChange
+                ? { disabled: controlsDisabled }
+                : undefined
+            }
+            review={
+              coach ? reviewOffer(coach, prompt, controlsDisabled) : undefined
+            }
+            skills={
+              skillComposer
+                ? { disabled: controlsDisabled || !skillComposer.canOpenList }
+                : undefined
+            }
+            compare={compare ? { disabled: compare.disabled } : undefined}
+            onAction={handleAction}
+          />
+          <HelpTopic
+            id="composer.controls"
+            align="start"
+            anchor={{
+              open: helpOpen,
+              onOpenChange: setHelpOpen,
+              returnFocus: focusOptions,
+            }}
+          />
+          <div className="ml-auto flex shrink-0 items-center gap-1">
             {status}
             {isProcessing && onStop ? (
               <Button

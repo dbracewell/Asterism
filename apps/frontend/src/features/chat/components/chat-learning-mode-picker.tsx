@@ -1,5 +1,7 @@
 "use client";
 
+import { COMPOSER_CHIP } from "../lib/composer-chip";
+import { ComposerNotice } from "./composer-notice";
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -19,14 +21,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { client } from "@/lib/api";
-import type { ChatInfo, LearningModeId } from "@/lib/client";
+import type { ChatInfo, CourseModePolicy, LearningModeId } from "@/lib/client";
 import {
   chatLearningModeUpdateMutation,
   chatSessionGetOneOptions,
   learningModeGetManyOptions,
 } from "@/lib/client/@tanstack/react-query.gen";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { GraduationCapIcon } from "lucide-react";
+import { GraduationCapIcon, LockIcon } from "lucide-react";
 import React from "react";
 import { CoursePolicyNotice, useCourseModePolicy } from "./course-mode-policy";
 import {
@@ -49,14 +51,15 @@ export function LearningModePicker({
   value,
   onChange,
   disabled = false,
-  allowedModes = null,
+  policy = null,
 }: {
   value: LearningModeId;
   onChange: (value: LearningModeId) => void;
   disabled?: boolean;
-  /** A class policy's allowed modes; others are shown but can't be chosen. */
-  allowedModes?: LearningModeId[] | null;
+  /** A class policy; modes it doesn't allow are shown but can't be chosen. */
+  policy?: CourseModePolicy | null;
 }) {
+  const allowedModes = policy?.allowed_modes ?? null;
   const query = useQuery(learningModeQueryOptions());
   const modes = query.data?.modes;
   const selected = modes?.find((mode) => mode.id === value);
@@ -70,12 +73,21 @@ export function LearningModePicker({
         <SelectTrigger
           aria-label="Learning mode"
           data-tour="learning-mode"
-          className="max-w-full min-w-0 border-0! bg-transparent"
+          aria-description={
+            policy ? "Limited by your class's policy" : undefined
+          }
+          className={COMPOSER_CHIP}
         >
           <GraduationCapIcon className="text-muted-foreground" />
           <SelectValue placeholder="Learning mode" />
+          {policy && (
+            <LockIcon aria-hidden="true" className="text-muted-foreground" />
+          )}
         </SelectTrigger>
         <SelectContent className="max-w-[min(18rem,calc(100vw-1rem))]">
+          {policy && (
+            <CoursePolicyNotice policy={policy} className="px-2 py-1.5" />
+          )}
           <SelectGroup>
             {!selected && (
               <SelectItem value={value} disabled>
@@ -100,10 +112,7 @@ export function LearningModePicker({
         </SelectContent>
       </Select>
       {query.error && (
-        <p
-          role="alert"
-          className="text-destructive order-last w-full basis-full px-2 text-xs"
-        >
+        <ComposerNotice role="alert" className="text-destructive">
           Could not load learning modes.
           <Button
             type="button"
@@ -114,7 +123,7 @@ export function LearningModePicker({
           >
             Retry modes
           </Button>
-        </p>
+        </ComposerNotice>
       )}
     </>
   );
@@ -160,7 +169,7 @@ export function ExistingChatLearningModePicker({
     <>
       <LearningModePicker
         value={mode}
-        allowedModes={policy?.allowed_modes}
+        policy={policy}
         disabled={disabled || mutation.isPending || !!mutation.error}
         onChange={(learningMode) => {
           if (learningMode === "standard" && info.learning_mode_locked)
@@ -168,7 +177,6 @@ export function ExistingChatLearningModePicker({
           else select(learningMode);
         }}
       />
-      <CoursePolicyNotice policy={policy} />
       <AlertDialog open={confirmStandard} onOpenChange={setConfirmStandard}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -190,10 +198,7 @@ export function ExistingChatLearningModePicker({
         </AlertDialogContent>
       </AlertDialog>
       {mutation.error && (
-        <p
-          role="alert"
-          className="text-destructive order-last w-full basis-full px-2 text-xs"
-        >
+        <ComposerNotice role="alert" className="text-destructive">
           Could not change the learning mode. Reload the chat and retry when
           generation is idle.
           <Button
@@ -212,7 +217,7 @@ export function ExistingChatLearningModePicker({
           >
             Reload current mode
           </Button>
-        </p>
+        </ComposerNotice>
       )}
     </>
   );

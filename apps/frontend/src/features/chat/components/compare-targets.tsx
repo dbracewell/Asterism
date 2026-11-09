@@ -11,10 +11,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Hint } from "@/components/ui/hint";
 import { Label } from "@/components/ui/label";
 import {
   Popover,
+  PopoverAnchor,
   PopoverContent,
   PopoverDescription,
   PopoverHeader,
@@ -27,10 +27,12 @@ import {
   chatMessageCompareMutation,
   chatModelsListOptions,
 } from "@/lib/client/@tanstack/react-query.gen";
+import { cn } from "@/lib/utils";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { ColumnsIcon } from "lucide-react";
 import { useId, useState } from "react";
 import { MAX_COMPARE, MIN_COMPARE, toggleTarget } from "../lib/comparison";
+import { COMPOSER_CHIP } from "../lib/composer-chip";
 
 const modelName = (model: ChatModelChoice) => model.display_name || model.name;
 
@@ -98,41 +100,58 @@ function ModelChecklist({
 }
 
 /**
- * Composer toggle for running the next prompt on two or three models side by
- * side. An empty selection sends normally.
+ * Chooses two or three models to run the next prompt on side by side. Opened
+ * from the composer's "+" menu; while models are chosen it shows as a chip.
+ * An empty selection sends normally.
  */
 export function CompareModelsPicker({
   value,
   onChange,
   disabled,
+  open,
+  onOpenChange,
+  onCloseAutoFocus,
 }: {
   value: string[];
   onChange: (value: string[]) => void;
   disabled?: boolean;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  /** Where focus goes when the popover closes without its chip. */
+  onCloseAutoFocus?: (event: Event) => void;
 }) {
   const active = value.length > 0;
   return (
-    <Popover>
-      <Hint hint="Compare models side by side">
+    <Popover open={open} onOpenChange={onOpenChange}>
+      {active ? (
         <PopoverTrigger asChild>
           <Button
             type="button"
-            variant={active ? "secondary" : "ghost"}
-            size={active ? "lg" : "icon-lg"}
-            className="rounded-control"
-            aria-label={
-              active
-                ? `Compare models (${value.length} selected)`
-                : "Compare models"
-            }
+            variant="outline"
+            size="sm"
+            className={cn(
+              COMPOSER_CHIP,
+              "bg-accent text-accent-foreground hover:bg-accent/80 border-transparent",
+            )}
+            aria-label={`Compare models (${value.length} selected)`}
             disabled={disabled}
           >
             <ColumnsIcon />
-            {active && <span aria-hidden="true">{value.length}</span>}
+            <span aria-hidden="true">Compare · {value.length}</span>
           </Button>
         </PopoverTrigger>
-      </Hint>
-      <PopoverContent align="start" className="w-72">
+      ) : (
+        <PopoverAnchor asChild>
+          <span aria-hidden="true" className="-mx-0.75 h-7 w-0 shrink-0" />
+        </PopoverAnchor>
+      )}
+      <PopoverContent
+        side="top"
+        align="start"
+        aria-label="Compare models"
+        className="w-72"
+        onCloseAutoFocus={active ? undefined : onCloseAutoFocus}
+      >
         <PopoverHeader>
           <PopoverTitle>Compare models</PopoverTitle>
           <PopoverDescription>
@@ -153,7 +172,10 @@ export function CompareModelsPicker({
             variant="outline"
             size="sm"
             className="self-start"
-            onClick={() => onChange([])}
+            onClick={() => {
+              onChange([]);
+              onOpenChange(false);
+            }}
           >
             Stop comparing
           </Button>
