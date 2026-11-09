@@ -26,7 +26,13 @@ import {
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
+import {
+  revisionPrompt,
+  useSkillDraft,
+  type SkillDraftRun,
+} from "../hooks/use-skill-draft";
 import { skillDetailOptions, skillMutationInvalidates } from "../queries";
+import { SkillDescribePanel } from "./skill-describe-panel";
 import { SkillFailure } from "./skill-status";
 
 export const SKILL_TEMPLATE =
@@ -96,6 +102,7 @@ export function SkillEditorDialog(props: Props) {
 }
 
 function LoadedSkillEditor({
+  owner,
   initial,
   latest,
   reload,
@@ -113,6 +120,23 @@ function LoadedSkillEditor({
   const [baseline, setBaseline] = useState(initial);
   const [content, setContent] = useState(initial?.content ?? SKILL_TEMPLATE);
   const [tab, setTab] = useState(initial ? "preview" : "source");
+  // A new skill is written by hand or described to the main agent (US-71.2).
+  const [mode, setMode] = useState<"write" | "describe">("write");
+  const run = useSkillDraft(owner);
+  const [adopted, setAdopted] = useState<{ id: string; content: string }>();
+  const ready = run.draft.data?.status === "ready" ? run.draft.data : null;
+  // Each finished revision opens in the editor once, with its preview.
+  if (
+    !run.running &&
+    ready?.message_id &&
+    ready.content &&
+    ready.message_id !== adopted?.id
+  ) {
+    setAdopted({ id: ready.message_id, content: ready.content });
+    setContent(ready.content);
+    setMode("write");
+    setTab("preview");
+  }
   const create = useMutation({
     ...skillCreateMutation({ client }),
     meta: { invalidates: skillMutationInvalidates() },
@@ -164,8 +188,22 @@ function LoadedSkillEditor({
     confirmText: "Delete skill",
     confirmVariant: "destructive",
   });
+  const discardDraft = useConfirmationDialog({
+    title: "Discard this draft?",
+    description:
+      "The draft and your agent's run are deleted. Nothing was saved as a skill.",
+    confirmText: "Discard draft",
+    confirmVariant: "destructive",
+  });
   const close = async () => {
-    if (!pending && (!dirty || (await discard.confirm()))) onClose();
+    if (pending) return;
+    if (run.chat) {
+      if (!(await discardDraft.confirm())) return;
+      void run.discard();
+      onClose();
+      return;
+    }
+    if (!dirty || (await discard.confirm())) onClose();
   };
   const reloadCurrent = async () => {
     if (dirty && !(await discard.confirm())) return;
@@ -208,6 +246,7 @@ function LoadedSkillEditor({
           </DialogDescription>
         </DialogHeader>
         {discard.dialog}
+        {discardDraft.dialog}
         {deletion.dialog}
         {refreshError != null && (
           <QueryError
@@ -223,130 +262,227 @@ function LoadedSkillEditor({
             before saving.
           </p>
         )}
-        <form
-          className="flex min-w-0 flex-col gap-4"
-          onSubmit={async (event) => {
-            event.preventDefault();
-            if (
-              pending ||
-              refreshing ||
-              changed ||
-              !content.trim() ||
-              bytes > 65536
-            )
-              return;
-            try {
-              if (baseline)
-                await update.mutateAsync({
-                  path: { skill_id: baseline.id },
-                  body: { content, expected_revision: baseline.revision },
-                });
-              else await create.mutateAsync({ body: { content } });
-              toast.success(baseline ? "Skill saved" : "Skill created");
-              onClose();
-            } catch {
-              /* Mutation errors stay visible with the original draft. */
-            }
-          }}
+        <Tabs
+          value={mode}
+          onValueChange={(value) => setMode(value as "write" | "describe")}
+          className="min-w-0"
         >
-          <Tabs value={tab} onValueChange={setTab} className="min-w-0">
-            <TabsList>
-              <TabsTrigger value="source">Source</TabsTrigger>
-              <TabsTrigger value="preview">Preview</TabsTrigger>
+          {!baseline && (
+            <TabsList aria-label="How to create the skill">
+              <TabsTrigger value="write">Write it</TabsTrigger>
+              <TabsTrigger value="describe">Describe it</TabsTrigger>
             </TabsList>
-            <TabsContent value="source">
-              <Field>
-                <FieldLabel htmlFor="skill-document">
-                  SKILL.md source
-                </FieldLabel>
-                <Textarea
-                  id="skill-document"
-                  className="min-h-56 max-w-full font-mono"
-                  value={content}
-                  disabled={pending}
-                  onChange={(event) => setContent(event.target.value)}
-                />
-                <FieldDescription>
-                  {bytes.toLocaleString()} / 65,536 UTF-8 bytes. The server
-                  validates frontmatter when saving.
-                </FieldDescription>
-              </Field>
-            </TabsContent>
-            <TabsContent value="preview" className="min-w-0">
-              <section
-                aria-label="Skill preview"
-                className="rounded-surface min-h-40 min-w-0 border p-3"
-              >
-                <MarkdownViewer content={previewBody(content)} />
-              </section>
-            </TabsContent>
-          </Tabs>
-          {bytes > 65536 && (
-            <p role="alert">Skill source exceeds the 65,536-byte limit.</p>
           )}
-          {error && (
-            <SkillFailure
-              error={error}
-              title="Could not save or delete skill"
+          <TabsContent value="describe" className="min-w-0">
+            <SkillDescribePanel
+              owner={owner}
+              run={run}
+              onEditDraft={(draft) => {
+                setContent(draft);
+                setMode("write");
+                setTab("source");
+              }}
             />
-          )}
-          <footer className="flex flex-wrap items-center justify-end gap-2">
-            {baseline && (
-              <>
-                <Button
-                  type="button"
-                  variant="destructive"
-                  disabled={pending || refreshing || changed}
-                  onClick={async () => {
-                    if (await deletion.confirm()) {
-                      try {
-                        await remove.mutateAsync({
-                          path: { skill_id: baseline.id },
-                          query: { expected_revision: baseline.revision },
-                        });
-                        toast.success("Skill deleted");
-                        onClose(true);
-                      } catch {
-                        /* Keep the draft and revision on failure. */
-                      }
-                    }
-                  }}
-                >
-                  Delete skill
-                </Button>
+          </TabsContent>
+          <TabsContent value="write" className="min-w-0">
+            <form
+              className="flex min-w-0 flex-col gap-4"
+              onSubmit={async (event) => {
+                event.preventDefault();
+                if (
+                  pending ||
+                  refreshing ||
+                  changed ||
+                  !content.trim() ||
+                  bytes > 65536
+                )
+                  return;
+                try {
+                  if (baseline)
+                    await update.mutateAsync({
+                      path: { skill_id: baseline.id },
+                      body: { content, expected_revision: baseline.revision },
+                    });
+                  else {
+                    await create.mutateAsync({ body: { content } });
+                    // The draft's hidden chat has served its purpose.
+                    void run.discard();
+                  }
+                  toast.success(baseline ? "Skill saved" : "Skill created");
+                  onClose();
+                } catch {
+                  /* Mutation errors stay visible with the original draft. */
+                }
+              }}
+            >
+              <Tabs value={tab} onValueChange={setTab} className="min-w-0">
+                <TabsList>
+                  <TabsTrigger value="source">Source</TabsTrigger>
+                  <TabsTrigger value="preview">Preview</TabsTrigger>
+                </TabsList>
+                <TabsContent value="source">
+                  <Field>
+                    <FieldLabel htmlFor="skill-document">
+                      SKILL.md source
+                    </FieldLabel>
+                    <Textarea
+                      id="skill-document"
+                      className="min-h-56 max-w-full font-mono"
+                      value={content}
+                      disabled={pending}
+                      onChange={(event) => setContent(event.target.value)}
+                    />
+                    <FieldDescription>
+                      {bytes.toLocaleString()} / 65,536 UTF-8 bytes. The server
+                      validates frontmatter when saving.
+                    </FieldDescription>
+                  </Field>
+                </TabsContent>
+                <TabsContent value="preview" className="min-w-0">
+                  <section
+                    aria-label="Skill preview"
+                    className="rounded-surface min-h-40 min-w-0 border p-3"
+                  >
+                    <MarkdownViewer content={previewBody(content)} />
+                  </section>
+                </TabsContent>
+              </Tabs>
+              {run.chat && (
+                <DraftRevision
+                  run={run}
+                  edited={
+                    adopted && content !== adopted.content ? content : null
+                  }
+                  onSent={() => setMode("describe")}
+                />
+              )}
+              {bytes > 65536 && (
+                <p role="alert">Skill source exceeds the 65,536-byte limit.</p>
+              )}
+              {error && (
+                <SkillFailure
+                  error={error}
+                  title="Could not save or delete skill"
+                />
+              )}
+              <footer className="flex flex-wrap items-center justify-end gap-2">
+                {baseline && (
+                  <>
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      disabled={pending || refreshing || changed}
+                      onClick={async () => {
+                        if (await deletion.confirm()) {
+                          try {
+                            await remove.mutateAsync({
+                              path: { skill_id: baseline.id },
+                              query: { expected_revision: baseline.revision },
+                            });
+                            toast.success("Skill deleted");
+                            onClose(true);
+                          } catch {
+                            /* Keep the draft and revision on failure. */
+                          }
+                        }
+                      }}
+                    >
+                      Delete skill
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      disabled={pending || refreshing}
+                      onClick={() => void reloadCurrent()}
+                    >
+                      Reload current skill
+                    </Button>
+                  </>
+                )}
                 <Button
                   type="button"
                   variant="outline"
-                  disabled={pending || refreshing}
-                  onClick={() => void reloadCurrent()}
+                  disabled={pending}
+                  onClick={() => void close()}
                 >
-                  Reload current skill
+                  {run.chat ? "Discard draft" : "Cancel"}
                 </Button>
-              </>
-            )}
-            <Button
-              type="button"
-              variant="outline"
-              disabled={pending}
-              onClick={() => void close()}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              disabled={
-                pending ||
-                refreshing ||
-                changed ||
-                !content.trim() ||
-                bytes > 65536
-              }
-            >
-              {pending ? "Saving…" : "Save skill"}
-            </Button>
-          </footer>
-        </form>
+                <Button
+                  type="submit"
+                  disabled={
+                    pending ||
+                    refreshing ||
+                    changed ||
+                    !content.trim() ||
+                    bytes > 65536
+                  }
+                >
+                  {pending ? "Saving…" : "Save skill"}
+                </Button>
+              </footer>
+            </form>
+          </TabsContent>
+        </Tabs>
       </DialogContent>
     </Dialog>
+  );
+}
+
+/** "Ask for changes" on a drafted skill; edits made here travel with it. */
+function DraftRevision({
+  run,
+  edited,
+  onSent,
+}: {
+  run: SkillDraftRun;
+  edited: string | null;
+  onSent: () => void;
+}) {
+  const [request, setRequest] = useState("");
+  const blocked =
+    run.running ||
+    run.sending.isPending ||
+    !request.trim() ||
+    !run.draft.data?.message_id;
+  return (
+    <Field>
+      <FieldLabel htmlFor="skill-revision">Ask for changes</FieldLabel>
+      <Textarea
+        id="skill-revision"
+        className="min-h-16"
+        maxLength={4000}
+        value={request}
+        disabled={run.sending.isPending}
+        onChange={(event) => setRequest(event.target.value)}
+      />
+      <FieldDescription>
+        Your agent revises the draft
+        {edited !== null ? ", starting from your edits" : ""}.
+      </FieldDescription>
+      <div className="flex justify-end">
+        <Button
+          type="button"
+          variant="outline"
+          disabled={blocked}
+          onClick={async () => {
+            try {
+              await run.revise(revisionPrompt(request.trim(), edited));
+              setRequest("");
+              onSent();
+            } catch {
+              /* The error shows below; the request is kept. */
+            }
+          }}
+        >
+          {run.sending.isPending ? "Sending…" : "Send changes"}
+        </Button>
+      </div>
+      {run.sending.error && (
+        <SkillFailure
+          error={run.sending.error}
+          title="Could not send your request"
+        />
+      )}
+    </Field>
   );
 }

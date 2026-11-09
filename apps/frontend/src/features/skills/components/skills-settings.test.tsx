@@ -67,8 +67,21 @@ vi.mock("@/lib/client/@tanstack/react-query.gen", () => {
     mainAgentSkillsUpdateMutation: () => ({
       mutationFn: mocks.saveAssignments,
     }),
+    // "Describe it" (US-71.2) is covered in skill-describe.test.tsx.
+    skillDraftGetOneOptions: ({ path }: { path: object }) => ({
+      queryKey: key("skillDraftGetOne", { path }),
+      queryFn: vi.fn(),
+    }),
+    skillDraftCreateMutation: () => ({ mutationFn: vi.fn() }),
+    chatMessageSendMutation: () => ({ mutationFn: vi.fn() }),
+    chatSessionDeleteMutation: () => ({ mutationFn: vi.fn() }),
+    chatModelsListOptions: () => ({
+      queryKey: key("chatModelsList"),
+      queryFn: async () => [],
+    }),
   };
 });
+vi.mock("@/lib/auth-client", () => ({ authClient: { token: vi.fn() } }));
 
 const source =
   "---\nname: review-code\ndescription: Review code.\n---\n# Review\nCheck the edge cases.";

@@ -41,9 +41,9 @@ Source: user request (2026-11-08). Suggested order: EPIC-74 → 67 → 70 → 68
 - [x] US-71.1: Skill drafting run (confirmed 2026-11-09)
   - [x] Decide in an ADR whether drafting reuses a hidden chat or a new run type; prefer reuse. ([ADR-0061](docs/adr/0061-skill-drafting-runs.md): hidden chat)
   - [x] Implement the writing prompt, output schema and validation; tests for validation, revisions, delegation scope and policy gating.
-- [ ] US-71.2: "Describe it" in the skill editor (in progress)
-  - [ ] Build the flow with generated client hooks; reuse the skill editor and preview.
-  - [ ] Help; unit tests and an E2E with a fake provider from description to saved skill.
+- [ ] US-71.2: "Describe it" in the skill editor (implemented; awaiting confirmation)
+  - [x] Build the flow with generated client hooks; reuse the skill editor and preview.
+  - [x] Help; unit tests and an E2E with a fake provider from description to saved skill.
 
 ### [EPIC-72: Canvas](docs/epics/EPIC-72-CANVAS.md)
 
