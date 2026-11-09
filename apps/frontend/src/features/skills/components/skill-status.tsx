@@ -1,5 +1,7 @@
 import { QueryError } from "@/components/query-error";
 import { EmptyState } from "@/components/empty-state";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { skillAvailabilityOptions } from "../queries";
 
@@ -27,8 +29,15 @@ export function SkillAvailability({ owner }: { owner: string }) {
       }
       description={
         policy.data?.policy_enabled
-          ? "Type / in the chat input to use an assigned skill; skill text never grants tools or file access."
-          : "You can still edit skills and save assignments, which take effect once an administrator enables activation."
+          ? "A skill shows up in chat only after you assign it to your main agent under Agents. Then type / in the chat input to use it. Skill text never grants tools or file access."
+          : "A skill must be assigned to your main agent under Agents before chats can use it. You can still edit skills and save assignments; they take effect once an administrator enables activation."
+      }
+      action={
+        <Button variant="outline" size="sm" asChild className="w-fit">
+          <Link href="/settings?t=user&setting=agents">
+            Assign skills to your main agent
+          </Link>
+        </Button>
       }
     />
   );
