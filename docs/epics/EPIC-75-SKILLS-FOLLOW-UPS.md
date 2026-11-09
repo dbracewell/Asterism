@@ -1,6 +1,6 @@
 # EPIC-75: Skills follow-ups
 
-Status: in progress (US-75.1 done; US-75.2). Source: user request (2026-11-09), after using skill drafting
+Status: in progress (US-75.1–75.2 done; US-75.3). Source: user request (2026-11-09), after using skill drafting
 (EPIC-71). Comes before EPIC-72 (Canvas).
 
 ## Objective

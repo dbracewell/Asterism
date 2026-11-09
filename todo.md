@@ -43,7 +43,7 @@ Source: user request (2026-11-09). Comes before EPIC-72.
 - [x] US-75.1: Truncate long model names
   - [x] Fix the card header (`min-w-0` on the label, full name in a tooltip/title); audit other model-name spots.
   - [x] Unit test for the accessible full name; E2E overflow check with a long model name at 1280 and 320px.
-- [ ] US-75.2: Skills page layout and assignment (implemented; awaiting confirmation)
+- [x] US-75.2: Skills page layout and assignment
   - [x] Banner; per-row assignment state and control; pagination with count and URL state.
   - [x] Help updates; unit tests; E2E covering assignment from the list, paging and narrow widths.
 - [ ] US-75.3: Skills for sub-agents (backend)
