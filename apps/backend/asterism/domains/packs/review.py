@@ -112,6 +112,7 @@ async def review_pack(*, user_id: str, source: str, session: AsyncSession) -> Pa
             max_steps=agent.max_steps,
             generation=agent.generation,
             requested_tools=[PackToolRequest(name=name, available=name in tools) for name in agent.requested_tools],
+            requested_skills=list(agent.requested_skills),
             model_requirements=agent.model_requirements,
             model_options=[
                 PackModelOption(

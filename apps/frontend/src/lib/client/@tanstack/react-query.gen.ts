@@ -642,6 +642,12 @@ import type {
   SubAgentInstructionsUpdateData,
   SubAgentInstructionsUpdateError,
   SubAgentInstructionsUpdateResponse,
+  SubAgentSkillsGetData,
+  SubAgentSkillsGetError,
+  SubAgentSkillsGetResponse,
+  SubAgentSkillsUpdateData,
+  SubAgentSkillsUpdateError,
+  SubAgentSkillsUpdateResponse,
   SubAgentsListData,
   SubAgentsListError,
   SubAgentsListResponse,
@@ -5907,6 +5913,65 @@ export const mainAgentSkillsUpdateMutation = (
   > = {
     mutationFn: async (fnOptions) => {
       const { data } = await ApiClient.__registry.get().mainAgentSkillsUpdate({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const subAgentSkillsGetQueryKey = (
+  options: Options<SubAgentSkillsGetData>,
+) => createQueryKey("subAgentSkillsGet", options);
+
+/**
+ * Get Sub Agent Assignments
+ *
+ * The skills this sub-agent may load with load_skill (ADR-0062).
+ */
+export const subAgentSkillsGetOptions = (
+  options: Options<SubAgentSkillsGetData>,
+) =>
+  queryOptions<
+    SubAgentSkillsGetResponse,
+    SubAgentSkillsGetError,
+    SubAgentSkillsGetResponse,
+    ReturnType<typeof subAgentSkillsGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry.get().subAgentSkillsGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: subAgentSkillsGetQueryKey(options),
+  });
+
+/**
+ * Put Sub Agent Assignments
+ *
+ * Replace the sub-agent's skills if its definition is still at ``expected_revision``.
+ */
+export const subAgentSkillsUpdateMutation = (
+  options?: Partial<Options<SubAgentSkillsUpdateData>>,
+): UseMutationOptions<
+  SubAgentSkillsUpdateResponse,
+  SubAgentSkillsUpdateError,
+  Options<SubAgentSkillsUpdateData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    SubAgentSkillsUpdateResponse,
+    SubAgentSkillsUpdateError,
+    Options<SubAgentSkillsUpdateData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().subAgentSkillsUpdate({
         ...options,
         ...fnOptions,
         throwOnError: true,

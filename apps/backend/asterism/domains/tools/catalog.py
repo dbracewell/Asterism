@@ -19,9 +19,19 @@ class ToolPolicy(StrEnum):
     CONTEXT_MANAGED = "context_managed"
 
 
+#: Loads one of the calling sub-agent's own assigned skills (ADR-0062).
+SKILL_TOOL_NAME = "load_skill"
+
+#: Internal tools gated by the admin Tools allowlist (``active_tools``) whose
+#: ceiling a delegated child inherits from its parent run (file scope and
+#: delegation selections).
+SCOPED_TOOL_NAMES = frozenset({"sub_agent", "search_knowledge"})
+
 #: Internal, context-managed tools. Availability is derived server-side from
-#: live project/chat scope and admin policy; user payloads cannot grant them.
-INTERNAL_TOOL_NAMES = frozenset({"sub_agent", "search_knowledge"})
+#: live context and admin policy; user payloads cannot grant them.
+#: ``load_skill`` belongs to the calling agent (its assigned skills) and is
+#: gated by the Skills policy instead of the Tools allowlist.
+INTERNAL_TOOL_NAMES = SCOPED_TOOL_NAMES | {SKILL_TOOL_NAME}
 
 
 def tool_policy(name: str) -> ToolPolicy:

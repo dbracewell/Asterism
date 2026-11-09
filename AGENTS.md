@@ -82,7 +82,8 @@ fixed models and receive the same or narrower execution file scope.
 ## 2.4 Skills / Tools / MCP / Image Generation
 
 - Users own private SKILL.md-style skill documents and their CRUD lifecycle.
-  Skills require explicit assignment to the user's main-agent configuration;
+  Skills require explicit assignment to the user's main-agent configuration
+  (for `/` in chats) or to a sub-agent definition (loaded by that sub-agent);
   admin `skills_enabled` policy controls eligibility and defaults to disabled.
   Skill text never grants tools, file access, MCP, or delegation. User Settings
   provides private skill editing/preview and main-agent assignment controls.
@@ -103,6 +104,10 @@ fixed models and receive the same or narrower execution file scope.
   selections or the General chat set, file scope, admin policy, and explicit model
   `supports_tools=True`.
   User payloads, chat preferences, prompt text, and approval cannot grant them.
+- `load_skill` is also internal: a sub-agent gets it, with a catalog of its own
+  assigned skills, when it has assignments, the admin Skills policy is on and its
+  model supports tools ([ADR-0062](docs/adr/0062-sub-agent-skills.md)). The
+  Skills policy, not the Tools allowlist, gates it; the main agent keeps `/`.
 
 ---
 

@@ -51,6 +51,7 @@ AGENT_CHAT_READERS = {
     "asterism.domains.chat.runtime_files.create_runtime_file_reader",
     "asterism.domains.chat.prompt_composition.build_prompt_snapshot",
     "asterism.domains.chat.prompt_composition.build_runtime_prompt",
+    "asterism.domains.chat.prompt_composition.read_skill_catalog_layer",
 }
 
 

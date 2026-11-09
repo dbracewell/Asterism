@@ -48,6 +48,7 @@ const layerNames: Record<ContextLayer["kind"], string> = {
   task: "Task instructions",
   project: "Project instructions",
   skills: "Skills",
+  skill_catalog: "Skill catalog",
   runtime: "Runtime details",
 };
 

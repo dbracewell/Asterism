@@ -7,9 +7,16 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from asterism.db.database import get_async_db_session
 from asterism.domains.agent.execution_scope import ChatScopeSnapshot, ProjectScopeSnapshot
 from asterism.domains.agent.learning_inputs import LearningModeSnapshot
-from asterism.domains.agent.prompts import PersonaSnapshot, PromptComposer, PromptSnapshot
+from asterism.domains.agent.prompts import (
+    PersonaSnapshot,
+    PromptComposer,
+    PromptLayer,
+    PromptSnapshot,
+    skill_catalog_layer,
+)
 from asterism.domains.agent.schemas import AgentProfile
-from asterism.domains.agent.skill_inputs import SkillSnapshot
+from asterism.domains.agent.skill_inputs import SkillCatalogEntry, SkillSnapshot
+from asterism.domains.tools.catalog import SKILL_TOOL_NAME
 from asterism.domains.tools.context import ContextToolScope
 
 from .delegation import eligible_delegation_targets
@@ -89,8 +96,10 @@ async def build_prompt_snapshot(
 
             skills = () if profile.sub_agent or drafting else (await branch_skills(user_id, chat_id, db)).snapshots
             await validate_snapshots(user_id, skills, db)
+        _, catalog_layer = await read_skill_catalog_layer(user_id=user_id, profile=profile, tools=tools, session=db)
         return PromptComposer().snapshot(
             skills=skills,
+            skill_catalog_layer=catalog_layer,
             profile_layer=persona.layer,
             # Delegated agents never inherit the learner-facing mode layer.
             mode_layer=(
@@ -106,6 +115,20 @@ async def build_prompt_snapshot(
             project_instructions=instructions,
             runtime_context=runtime,
         )
+
+
+async def read_skill_catalog_layer(
+    *, user_id: str, profile: AgentProfile, tools: list[str], session: AsyncSession | None = None
+) -> tuple[tuple[SkillCatalogEntry, ...], PromptLayer | None]:
+    """A sub-agent's loadable skills and their catalog layer, when it was offered load_skill (ADR-0062)."""
+    if not profile.sub_agent or SKILL_TOOL_NAME not in tools:
+        return (), None
+    from asterism.domains.skills.loading import read_skill_catalog
+
+    async with get_async_db_session(session) as db:
+        rows = await read_skill_catalog(user_id, profile.id, db)
+        entries = tuple(SkillCatalogEntry.model_validate(row) for row in rows)
+    return entries, skill_catalog_layer(entries)
 
 
 def _skill_writer_layer():

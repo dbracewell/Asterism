@@ -27,7 +27,7 @@ from asterism.domains.prompt_templates.models import PromptTemplateModel
 from asterism.domains.prompt_templates.rubric_service import new_rubric
 from asterism.domains.prompt_templates.rubrics import parse_rubric, serialize_rubric
 from asterism.domains.prompt_templates.service import new_template
-from asterism.domains.skills.assignments import add_assignments
+from asterism.domains.skills.assignments import add_assignments, add_sub_agent_assignments
 from asterism.domains.skills.documents import parse_document as parse_skill
 from asterism.domains.skills.documents import rename_document
 from asterism.domains.skills.models import SkillModel
@@ -84,7 +84,10 @@ async def _build_sub_agent(
     model = await available_user_model(user_id, decision.model_id, session)
     if model is None:
         raise BadDataException(f"Pack item '{agent.key}': the chosen model is not available")
-    if approved and model.supports_tools is not True:
+    skills = decision.approved_skills
+    if len(set(skills)) != len(skills) or set(skills) - set(agent.requested_skills):
+        raise BadDataException(f"Pack item '{agent.key}': approve only skills the pack requests, once each")
+    if (approved or skills) and model.supports_tools is not True:
         raise BadDataException(f"Pack item '{agent.key}': the chosen model does not support tools")
     return await new_sub_agent(
         user_id,
@@ -184,7 +187,11 @@ async def import_pack(*, user_id: str, payload: PackImportRequest, session: Asyn
         if skill_choices[item.key].include
     }
     assigned = [key for key in skills if skill_choices[key].assign_to_main_agent]
-    if assigned and not (await read_policy(session)).enabled:
+    agent_skills = {key: agent_choices[key].approved_skills for key in agents if agent_choices[key].approved_skills}
+    for key, approved in agent_skills.items():
+        if set(approved) - set(skills):
+            raise BadDataException(f"Pack item '{key}': import every skill you approve for it")
+    if (assigned or agent_skills) and not (await read_policy(session)).enabled:
         raise BadDataException("Skills are turned off by your administrator, so they cannot be assigned")
     taken = set(names.templates)
     templates = {
@@ -209,6 +216,8 @@ async def import_pack(*, user_id: str, payload: PackImportRequest, session: Asyn
         await session.flush()
         if assigned:
             await add_assignments(user_id, [skills[key].id for key in assigned], session)
+        for key, approved in agent_skills.items():
+            add_sub_agent_assignments(user_id, agents[key].id, [skills[item].id for item in approved], session)
         if project is not None and manifest.project is not None:
             session.add_all(
                 [

@@ -32,7 +32,7 @@ from asterism.domains.agent.instruction_overrides import override_for
 from asterism.domains.agent.schemas import SubAgentEventEnvelope
 from asterism.domains.llm.schemas import LLMMessage
 from asterism.domains.llm.token_counting import estimate_text_tokens
-from asterism.domains.tools.catalog import INTERNAL_TOOL_NAMES
+from asterism.domains.tools.catalog import SCOPED_TOOL_NAMES
 from asterism.domains.tools.registry import ToolContext, tool_registry
 
 
@@ -202,8 +202,10 @@ async def _child_capabilities(agent: Agent) -> CapabilityManifest | None:
                 tools=agent.effective_tools,
                 # A delegated child runs its own assigned tools without asking.
                 auto_approved_tools=None,
-                # Sub-agents never receive the chat's active skills.
+                # Sub-agents never receive the chat's active skills, only
+                # their own catalog to load from (ADR-0062).
                 skills=(),
+                catalog_skills=agent.skill_catalog,
                 files=scope.file_provenance if scope else (),
                 delegation=agent.delegation_scope,
                 session=session,
@@ -375,7 +377,7 @@ async def sub_agent(ctx: ToolContext[SubAgentArgs]) -> str:
         executed_model=ModelIdentity(id=parent_scope.model_id),
         eligible_sub_agent_ids=(parent_scope.delegation.agent_ids if parent_scope.delegation else frozenset())
         | {target_id},
-        effective_internal_tools=frozenset(INTERNAL_TOOL_NAMES),
+        effective_internal_tools=SCOPED_TOOL_NAMES,
         active_branch_message_ids=(),
         configuration_revision=1,
         prompt_revision=parent_scope.delegation.context_revision if parent_scope.delegation else None,

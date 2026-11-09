@@ -92,11 +92,11 @@ run and deletes it.
 
 ## Assignments and policy
 
-`agent_skills` records explicit main-agent assignments, not chat activation or
-ordering. Composite foreign keys enforce the same owner for agent and skill and
-pin the agent role to main; a check constraint disallows sub-agent assignment in
-this first version. At most 100 unique skills can be assigned per request.
-Another user's skill ID cannot be assigned, even by an admin.
+`agent_skills` records explicit assignments to the main agent or to a
+sub-agent definition, not chat activation or ordering. Composite foreign keys
+enforce the same owner for agent and skill and that the row's role matches the
+agent's. At most 100 unique skills can be assigned per request. Another user's
+skill ID cannot be assigned, even by an admin.
 
 Assignment replacement uses the main agent's configuration revision as its
 optimistic token and increments it atomically. Other main settings updates retain
@@ -116,6 +116,29 @@ assignments, and live enabled admin policy. Availability requires no model bindi
 or tool support: these are instruction skills. Assignment/eligibility never adds
 tool permissions. Revoking policy hides eligibility without deleting documents or
 assignments. Skill instructions do not expand any runtime capability.
+
+## Sub-agent skills
+
+Sub-agents use skills on their own, without `/`
+([ADR-0062](../adr/0062-sub-agent-skills.md)). `GET/PUT
+/agents/sub-agents/{agent_id}/skills` reads and replaces a sub-agent's skills
+with the same contract as the main agent's, guarded by the definition's
+`config_revision`; class-managed definitions refuse changes. Sub-agent
+assignments never make a skill eligible for `/` in chats.
+
+When a delegated sub-agent has at least one assigned skill, the policy is on and
+its model supports tools, its prompt gains a `skill_catalog` layer (each skill's
+name and description) and it gets the internal tool `load_skill(name)`. The
+tool returns the skill's current instructions after a live check of the policy
+and of the assignment to the calling definition, which comes from the server
+tool scope. `load_skill` is gated by the Skills policy, not the Tools allowlist,
+and is not listed among admin tools. The main agent never gets it.
+
+Each successful load is recorded on the delegation record as `skill_loads`
+(skill id, name, revision), and the child's capability manifest lists its
+catalog skills with the grants `agent_assignment` and `admin_policy`. A pack
+sub-agent can request pack skills (`requested_skills`); import assigns only
+those the user approves (`approved_skills`) and imports, while the policy is on.
 
 ## Module and storage boundaries
 

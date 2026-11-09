@@ -67,6 +67,15 @@ class InlineFileReference(BaseModel):
     size: int | None = Field(default=None, ge=0)
 
 
+class SkillLoad(BaseModel):
+    """One skill a sub-agent loaded with load_skill, as it was when loaded (ADR-0062)."""
+
+    model_config = ConfigDict(extra="forbid")
+    skill_id: uuid.UUID
+    name: str
+    revision: int = Field(ge=1)
+
+
 class DelegationRecord(BaseModel):
     """One sub-agent delegation observed during an assistant step.
 
@@ -110,6 +119,8 @@ class DelegationRecord(BaseModel):
     inline_files: list[InlineFileReference] = Field(default_factory=list)
     # Citations in ``output``, resolved against this sub-agent's own retrievals (US-55.1).
     citations: list[SpanCitation] = Field(default_factory=list)
+    # Skills this sub-agent loaded, in call order (ADR-0062).
+    skill_loads: list[SkillLoad] = Field(default_factory=list)
 
 
 class MessageFileReference(BaseModel):

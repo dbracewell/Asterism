@@ -21,16 +21,17 @@ from asterism.domains.agent.capabilities import (
 from asterism.domains.agent.delegation_scope import DelegationScope
 from asterism.domains.agent.execution_scope import FileProvenance
 from asterism.domains.agent.schemas import AgentProfile
-from asterism.domains.agent.skill_inputs import SkillIdentity
+from asterism.domains.agent.skill_inputs import SkillCatalogEntry, SkillIdentity
 from asterism.domains.files.models import UserFileModel
 from asterism.domains.files.queries import select_owned_files
-from asterism.domains.tools.catalog import INTERNAL_TOOL_NAMES
+from asterism.domains.tools.catalog import INTERNAL_TOOL_NAMES, SKILL_TOOL_NAME
 
 from .delegation import eligible_delegation_targets
 
 _TOOL_GRANTS = {
     "sub_agent": [CapabilityGrant.ADMIN_POLICY, CapabilityGrant.MODEL_SUPPORT, CapabilityGrant.PROJECT_SELECTION],
     "search_knowledge": [CapabilityGrant.ADMIN_POLICY, CapabilityGrant.MODEL_SUPPORT, CapabilityGrant.FILE_SCOPE],
+    SKILL_TOOL_NAME: [CapabilityGrant.AGENT_ASSIGNMENT, CapabilityGrant.ADMIN_POLICY, CapabilityGrant.MODEL_SUPPORT],
 }
 _ORDINARY_TOOL_GRANTS = [
     CapabilityGrant.AGENT_ASSIGNMENT,
@@ -38,6 +39,8 @@ _ORDINARY_TOOL_GRANTS = [
     CapabilityGrant.MODEL_SUPPORT,
 ]
 _SKILL_GRANTS = [CapabilityGrant.CHAT_SELECTION, CapabilityGrant.AGENT_ASSIGNMENT, CapabilityGrant.ADMIN_POLICY]
+# A sub-agent's catalog skills are its own assignments, loaded on its own choice (ADR-0062).
+_CATALOG_SKILL_GRANTS = [CapabilityGrant.AGENT_ASSIGNMENT, CapabilityGrant.ADMIN_POLICY]
 _FILE_GRANTS = {"project": CapabilityGrant.PROJECT_SELECTION, "chat": CapabilityGrant.CHAT_ATTACHMENT}
 
 
@@ -65,6 +68,19 @@ def skill_entries(skills: Sequence[SkillIdentity]) -> list[CapabilityEntry]:
     return [
         CapabilityEntry(
             kind=CapabilityKind.SKILL, id=str(skill.id), name=skill.name, grants=_SKILL_GRANTS, revision=skill.revision
+        )
+        for skill in skills
+    ]
+
+
+def catalog_skill_entries(skills: Sequence[SkillCatalogEntry]) -> list[CapabilityEntry]:
+    return [
+        CapabilityEntry(
+            kind=CapabilityKind.SKILL,
+            id=str(skill.id),
+            name=skill.name,
+            grants=_CATALOG_SKILL_GRANTS,
+            revision=skill.revision,
         )
         for skill in skills
     ]
@@ -133,6 +149,7 @@ async def build_capability_manifest(
     files: Sequence[FileProvenance],
     delegation: DelegationScope | None,
     session: AsyncSession,
+    catalog_skills: Sequence[SkillCatalogEntry] = (),
 ) -> CapabilityManifest:
     """Describe an authorized run: ``tools`` and ``files`` must be its effective sets."""
     # The agent offers tools only on steps that leave room to answer, so a
@@ -141,6 +158,7 @@ async def build_capability_manifest(
     entries = [
         *tool_entries(tools, auto_approved_tools),
         *skill_entries(skills),
+        *(catalog_skill_entries(catalog_skills) if SKILL_TOOL_NAME in tools else []),
         *(
             await sub_agent_entries(
                 user_id=user_id, chat_id=chat_id, caller_id=profile.id, delegation=delegation, session=session

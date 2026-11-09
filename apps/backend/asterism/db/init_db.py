@@ -22,7 +22,7 @@ from asterism.common.log import DEFAULT_LOGGER
 from asterism.core import config
 from asterism.domains.chat.search_index import initialize_search_index
 from asterism.domains.settings.models import ApplicationSettingsModel
-from asterism.domains.tools.catalog import INTERNAL_TOOL_NAMES
+from asterism.domains.tools.catalog import SCOPED_TOOL_NAMES
 
 from .database import db_session_manager, get_async_db_session
 from .model_registry import Base
@@ -123,7 +123,7 @@ async def initialize_database(*, reset: bool = False, assume_yes: bool = False) 
                 insert(ApplicationSettingsModel).values(
                     {
                         "key": "active_tools",
-                        "value": sorted(set(config.default_allowed_tools) | INTERNAL_TOOL_NAMES),
+                        "value": sorted(set(config.default_allowed_tools) | SCOPED_TOOL_NAMES),
                     },
                 ),
             )

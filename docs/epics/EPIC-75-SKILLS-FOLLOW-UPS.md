@@ -85,8 +85,8 @@ is treated as instructions only and grants nothing. Loads are recorded on the
 delegation record. Project pack export/import carries sub-agent skill
 assignments where packs already carry skills.
 
-- [ ] ADR (catalog layer, `load_skill`, recording, main-agent decision); schema and assignment API for sub-agents.
-- [ ] Catalog layer and `load_skill` tool; tests for scope, live eligibility, policy, recording and capability isolation.
+- [x] ADR (catalog layer, `load_skill`, recording, main-agent decision); schema and assignment API for sub-agents.
+- [x] Catalog layer and `load_skill` tool; tests for scope, live eligibility, policy, recording and capability isolation.
 
 ## US-75.4: Skills for sub-agents (UI)
 
@@ -99,5 +99,5 @@ to its tools. The run graph and delegation details show "Loaded skill
 <name>" for each load. Help explains that sub-agents load their skills on
 their own, while main-agent chats use `/`.
 
-- [ ] Sub-agent skills picker; skill loads in run graph and delegation details.
+- [ ] Sub-agent skills picker; skill loads in run graph and delegation details; approving requested sub-agent skills in pack import review.
 - [ ] Help; unit tests; E2E from assigning a skill to a sub-agent to seeing its load in a delegated run.
