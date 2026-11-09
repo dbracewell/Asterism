@@ -34,16 +34,7 @@ EPIC-64 and EPIC-65 are complete and archived in the [2026-11-07 checklist](docs
 
 ## User-requested epics (proposed 2026-11-08)
 
-Source: user request (2026-11-08). Suggested order: EPIC-74 → 67 → 70 → 68 → 69 → 73 → 71 → 72. EPIC-71 depends on EPIC-68. EPIC-73 should leave a place for canvas (EPIC-72). EPIC-74, EPIC-67, EPIC-70, EPIC-68, EPIC-69 and EPIC-73 are complete and archived in the [2026-11-08 checklist](docs/archive/todo-completed-2026-11-08.md).
-
-### [EPIC-71: Model-written skills](docs/epics/EPIC-71-MODEL-WRITTEN-SKILLS.md)
-
-- [x] US-71.1: Skill drafting run (confirmed 2026-11-09)
-  - [x] Decide in an ADR whether drafting reuses a hidden chat or a new run type; prefer reuse. ([ADR-0061](docs/adr/0061-skill-drafting-runs.md): hidden chat)
-  - [x] Implement the writing prompt, output schema and validation; tests for validation, revisions, delegation scope and policy gating.
-- [ ] US-71.2: "Describe it" in the skill editor (implemented; awaiting confirmation)
-  - [x] Build the flow with generated client hooks; reuse the skill editor and preview.
-  - [x] Help; unit tests and an E2E with a fake provider from description to saved skill.
+Source: user request (2026-11-08). Suggested order: EPIC-74 → 67 → 70 → 68 → 69 → 73 → 71 → 72. EPIC-71 depends on EPIC-68. EPIC-73 should leave a place for canvas (EPIC-72). EPIC-74, EPIC-67, EPIC-70, EPIC-68, EPIC-69, EPIC-73 and EPIC-71 are complete and archived in the [2026-11-08 checklist](docs/archive/todo-completed-2026-11-08.md).
 
 ### [EPIC-72: Canvas](docs/epics/EPIC-72-CANVAS.md)
 

@@ -95,3 +95,15 @@ the next began. See the [approved layout](../plans/us-73.1-composer-layout.md).
 - [x] US-73.2: Rebuild the composer (confirmed and merged 2026-11-08)
   - [x] Implement the layout; update help.
   - [x] Update unit tests and the composer-related E2E specs.
+
+The user confirmed US-71.2 on 2026-11-09. EPIC-71 (US-71.1 and US-71.2) is
+complete; see ADR-0061 (skill drafting runs reuse a hidden chat).
+
+### [EPIC-71: Model-written skills](../epics/EPIC-71-MODEL-WRITTEN-SKILLS.md)
+
+- [x] US-71.1: Skill drafting run (confirmed and merged 2026-11-09)
+  - [x] Decide in an ADR whether drafting reuses a hidden chat or a new run type; prefer reuse. ([ADR-0061](../adr/0061-skill-drafting-runs.md): hidden chat)
+  - [x] Implement the writing prompt, output schema and validation; tests for validation, revisions, delegation scope and policy gating.
+- [x] US-71.2: "Describe it" in the skill editor (confirmed and merged 2026-11-09)
+  - [x] Build the flow with generated client hooks; reuse the skill editor and preview.
+  - [x] Help; unit tests and an E2E with a fake provider from description to saved skill.
