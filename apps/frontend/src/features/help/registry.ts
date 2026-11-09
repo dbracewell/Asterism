@@ -167,7 +167,7 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
       'A reusable set of instructions you write once and switch on in a chat, for example "explain like a lab partner" or "cite page numbers".',
     details: [
       "Type / in the message box to find a skill. Active skills appear as chips above the box, where you can reorder or remove them.",
-      "You create skills in User Settings → Skills, either by writing one or by describing it to your main agent. A skill must be assigned to your main agent before you can use it. An administrator also has to turn skills on.",
+      "You create skills in User Settings → Skills, either by writing one or by describing it to your main agent. A skill must be assigned to your main agent before you can use it: turn on Assigned to main agent beside the skill on that page, or use Manage main-agent skills under Agents. An administrator also has to turn skills on.",
       "A skill only adds instructions. It doesn't give the assistant tools or access to files.",
     ],
     related: [

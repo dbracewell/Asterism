@@ -31,6 +31,9 @@ const mocks = vi.hoisted(() => ({
   saveAssignments: vi.fn(),
 }));
 vi.mock("@/lib/api", () => ({ client: {} }));
+vi.mock("next/navigation", () => ({
+  useSearchParams: () => new URLSearchParams(window.location.search),
+}));
 vi.mock("@/features/auth/components/user-context", () => ({
   useUser: () => ({ id: mocks.owner }),
 }));
@@ -424,4 +427,118 @@ it("closes an assignment draft when the authenticated owner changes", async () =
   expect(
     screen.getByRole("button", { name: "Save assignments" }),
   ).toBeDisabled();
+});
+
+it("assigns and unassigns from each skill row against the loaded revision, in sync with the Agents dialog (US-75.2)", async () => {
+  rows = [skill, { ...skill, id: "s2", name: "write-tests" }];
+  render(
+    <>
+      <SkillsSettings />
+      <MainAgentSkills owner="a" />
+    </>,
+    { wrapper: Wrapper },
+  );
+  const reviewSwitch = await screen.findByRole("switch", {
+    name: "review-code assigned to main agent",
+  });
+  await waitFor(() => expect(reviewSwitch).toBeChecked());
+  expect(screen.getByText(/1 of 100 assigned/)).toBeVisible();
+  const testsSwitch = screen.getByRole("switch", {
+    name: "write-tests assigned to main agent",
+  });
+  expect(testsSwitch).not.toBeChecked();
+  mocks.assignments.mockResolvedValue({ skill_ids: ["s1", "s2"], revision: 5 });
+  await userEvent.click(testsSwitch);
+  expect(mocks.saveAssignments).toHaveBeenCalledWith(
+    { body: { skill_ids: ["s1", "s2"], expected_revision: 4 } },
+    expect.anything(),
+  );
+  await waitFor(() => expect(testsSwitch).toBeChecked());
+  expect(screen.getByText(/2 of 100 assigned/)).toBeVisible();
+
+  // The Agents dialog reads the same assignments.
+  await userEvent.click(
+    screen.getByRole("button", { name: "Manage main-agent skills" }),
+  );
+  const dialog = await screen.findByRole("dialog");
+  await waitFor(() =>
+    expect(
+      within(dialog).getByRole("checkbox", { name: /write-tests/ }),
+    ).toBeChecked(),
+  );
+  await userEvent.click(within(dialog).getByRole("button", { name: "Cancel" }));
+
+  // Unassigning sends the new set with the latest revision.
+  await userEvent.click(reviewSwitch);
+  expect(mocks.saveAssignments).toHaveBeenLastCalledWith(
+    { body: { skill_ids: ["s2"], expected_revision: 5 } },
+    expect.anything(),
+  );
+});
+
+it("reloads current assignments when a row change conflicts (US-75.2)", async () => {
+  render(<SkillsSettings />, { wrapper: Wrapper });
+  const reviewSwitch = await screen.findByRole("switch", {
+    name: "review-code assigned to main agent",
+  });
+  await waitFor(() => expect(reviewSwitch).toBeChecked());
+  mocks.saveAssignments.mockRejectedValue({
+    detail: "Main agent changed; reload before assigning skills",
+  });
+  mocks.assignments.mockResolvedValue({ skill_ids: ["s1"], revision: 9 });
+  await userEvent.click(reviewSwitch);
+  expect(await screen.findByRole("alert")).toHaveTextContent(
+    "Main agent changed",
+  );
+  await waitFor(() => expect(reviewSwitch).toBeChecked());
+  expect(mocks.assignments).toHaveBeenCalledTimes(2);
+  mocks.saveAssignments.mockResolvedValue({ skill_ids: [], revision: 10 });
+  await userEvent.click(reviewSwitch);
+  expect(mocks.saveAssignments).toHaveBeenLastCalledWith(
+    { body: { skill_ids: [], expected_revision: 9 } },
+    expect.anything(),
+  );
+});
+
+it("pages through skills with a count and page size kept in the URL (US-75.2)", async () => {
+  window.history.replaceState(
+    null,
+    "",
+    "/settings?t=user&setting=skills&skills_q=re&skills_page=2",
+  );
+  mocks.list.mockImplementation(
+    async ({ page, page_size }: { page: number; page_size: number }) => ({
+      items: [{ ...skill, id: `s${page}`, name: `skill-${page}` }],
+      total: 34,
+      page,
+      page_size,
+    }),
+  );
+  render(<SkillsSettings />, { wrapper: Wrapper });
+  expect(await screen.findByText("11–20 of 34")).toBeVisible();
+  expect(screen.getByLabelText("Search skills")).toHaveValue("re");
+  expect(mocks.list).toHaveBeenLastCalledWith({
+    query: "re",
+    page: 2,
+    page_size: 10,
+  });
+  await userEvent.click(screen.getByRole("button", { name: "Next skills" }));
+  expect(await screen.findByText("21–30 of 34")).toBeVisible();
+  expect(new URLSearchParams(window.location.search).get("skills_page")).toBe(
+    "3",
+  );
+
+  await userEvent.click(screen.getByRole("combobox", { name: "Per page" }));
+  await userEvent.click(await screen.findByRole("option", { name: "25" }));
+  expect(await screen.findByText("1–25 of 34")).toBeVisible();
+  const params = new URLSearchParams(window.location.search);
+  expect(params.get("skills_size")).toBe("25");
+  expect(params.get("skills_page")).toBeNull();
+  expect(params.get("setting")).toBe("skills");
+
+  await userEvent.clear(screen.getByLabelText("Search skills"));
+  expect(
+    new URLSearchParams(window.location.search).get("skills_q"),
+  ).toBeNull();
+  window.history.replaceState(null, "", "/");
 });
