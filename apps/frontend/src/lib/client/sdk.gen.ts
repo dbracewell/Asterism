@@ -642,6 +642,12 @@ import type {
   SubAgentInstructionsUpdateData,
   SubAgentInstructionsUpdateErrors,
   SubAgentInstructionsUpdateResponses,
+  SubAgentSkillsGetData,
+  SubAgentSkillsGetErrors,
+  SubAgentSkillsGetResponses,
+  SubAgentSkillsUpdateData,
+  SubAgentSkillsUpdateErrors,
+  SubAgentSkillsUpdateResponses,
   SubAgentsListData,
   SubAgentsListErrors,
   SubAgentsListResponses,
@@ -4243,6 +4249,56 @@ export class ApiClient extends HeyApiClient {
     >({
       security: [{ scheme: "bearer", type: "http" }],
       url: "/settings/user/main-agent/skills",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+  }
+
+  /**
+   * Get Sub Agent Assignments
+   *
+   * The skills this sub-agent may load with load_skill (ADR-0062).
+   */
+  public subAgentSkillsGet<ThrowOnError extends boolean = false>(
+    options: Options<SubAgentSkillsGetData, ThrowOnError>,
+  ): RequestResult<
+    SubAgentSkillsGetResponses,
+    SubAgentSkillsGetErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).get<
+      SubAgentSkillsGetResponses,
+      SubAgentSkillsGetErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/agents/sub-agents/{agent_id}/skills",
+      ...options,
+    });
+  }
+
+  /**
+   * Put Sub Agent Assignments
+   *
+   * Replace the sub-agent's skills if its definition is still at ``expected_revision``.
+   */
+  public subAgentSkillsUpdate<ThrowOnError extends boolean = false>(
+    options: Options<SubAgentSkillsUpdateData, ThrowOnError>,
+  ): RequestResult<
+    SubAgentSkillsUpdateResponses,
+    SubAgentSkillsUpdateErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).put<
+      SubAgentSkillsUpdateResponses,
+      SubAgentSkillsUpdateErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/agents/sub-agents/{agent_id}/skills",
       ...options,
       headers: {
         "Content-Type": "application/json",

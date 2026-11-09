@@ -1,4 +1,4 @@
-"""Private skill documents and owner/role-consistent main-agent assignments."""
+"""Private skill documents and owner/role-consistent agent assignments (ADR-0062)."""
 
 import uuid
 
@@ -38,7 +38,6 @@ class AgentSkillModel(Base, TimestampMixin):
     sub_agent: Mapped[bool] = mapped_column(nullable=False, default=False, server_default="0")
 
     __table_args__ = (
-        CheckConstraint("sub_agent = false", name="ck_agent_skills_main_only"),
         ForeignKeyConstraint(
             ["agent_id", "user_id", "sub_agent"],
             ["agent_profiles.id", "agent_profiles.user_id", "agent_profiles.sub_agent"],

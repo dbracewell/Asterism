@@ -542,6 +542,7 @@ export const zContextLayer = z.object({
     "task",
     "project",
     "skills",
+    "skill_catalog",
     "runtime",
   ]),
   source_id: z.string(),
@@ -564,6 +565,7 @@ export const zContextLayerText = z.object({
     "task",
     "project",
     "skills",
+    "skill_catalog",
     "runtime",
   ]),
   source_id: z.string(),
@@ -2025,6 +2027,11 @@ export const zPackSubAgent = z.object({
     .max(32)
     .optional()
     .default([]),
+  requested_skills: z
+    .array(z.string().regex(/^[a-z][a-z0-9_-]{0,63}$/))
+    .max(32)
+    .optional()
+    .default([]),
   model_requirements: zModelRequirements.optional(),
 });
 
@@ -2037,6 +2044,7 @@ export const zPackSubAgentDecision = z.object({
   name: z.string().min(1).max(200).nullish(),
   model_id: z.uuid().nullish(),
   approved_tools: z.array(z.string()).max(32).optional(),
+  approved_skills: z.array(z.string()).max(32).optional(),
 });
 
 /**
@@ -2074,6 +2082,7 @@ export const zPackSubAgentReview = z.object({
   max_steps: z.int(),
   generation: zGenerationDefaults,
   requested_tools: z.array(zPackToolRequest),
+  requested_skills: z.array(z.string()).optional(),
   model_requirements: zModelRequirements,
   model_options: z.array(zPackModelOption),
   name_conflict: z.boolean(),
@@ -2359,6 +2368,7 @@ export const zPromptSource = z.object({
     "task",
     "project",
     "skills",
+    "skill_catalog",
     "runtime",
   ]),
   source_id: z.string(),
@@ -3120,6 +3130,17 @@ export const zChatInfoList = z.object({
   total: z.int().gte(0),
   page: z.int().gte(1),
   page_size: z.int().gte(1),
+});
+
+/**
+ * SkillLoad
+ *
+ * One skill a sub-agent loaded with load_skill, as it was when loaded (ADR-0062).
+ */
+export const zSkillLoad = z.object({
+  skill_id: z.uuid(),
+  name: z.string(),
+  revision: z.int().gte(1),
 });
 
 /**
@@ -4493,6 +4514,7 @@ export const zDelegationRecord = z.object({
   error: z.string().nullish(),
   inline_files: z.array(zInlineFileReference).optional(),
   citations: z.array(zSpanCitation).optional(),
+  skill_loads: z.array(zSkillLoad).optional(),
 });
 
 /**
@@ -6326,6 +6348,26 @@ export const zMainAgentSkillsUpdateBody = zSkillAssignmentUpdate;
  * Successful Response
  */
 export const zMainAgentSkillsUpdateResponse = zSkillAssignments;
+
+export const zSubAgentSkillsGetPath = z.object({
+  agent_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zSubAgentSkillsGetResponse = zSkillAssignments;
+
+export const zSubAgentSkillsUpdateBody = zSkillAssignmentUpdate;
+
+export const zSubAgentSkillsUpdatePath = z.object({
+  agent_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zSubAgentSkillsUpdateResponse = zSkillAssignments;
 
 export const zSkillEligibleGetManyQuery = z.object({
   query: z.string().max(200).optional().default(""),

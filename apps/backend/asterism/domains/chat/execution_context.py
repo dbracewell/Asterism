@@ -15,7 +15,7 @@ from asterism.domains.agent.execution_scope import (
     resolve_execution_scope,
 )
 from asterism.domains.agent.schemas import AgentProfile
-from asterism.domains.tools.catalog import INTERNAL_TOOL_NAMES
+from asterism.domains.tools.catalog import SCOPED_TOOL_NAMES
 
 from .capabilities import build_capability_manifest
 from .schemas import MessageExecution
@@ -66,7 +66,7 @@ async def build_execution_provenance(
         chat_id=chat_id,
         selected_model=identity,
         executed_model=identity,
-        effective_internal_tools=frozenset(set(tools) & INTERNAL_TOOL_NAMES),
+        effective_internal_tools=frozenset(set(tools) & SCOPED_TOOL_NAMES),
         configuration_revision=execution.configuration.config_revision,
         chat_scope_reader=chat_reader,
         project_scope_reader=project_reader,

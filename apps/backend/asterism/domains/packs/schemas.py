@@ -75,6 +75,8 @@ class PackSubAgentReview(BaseModel):
     max_steps: int
     generation: GenerationDefaults
     requested_tools: list[PackToolRequest]
+    # Keys of pack skills this sub-agent asks to load; assigned only when approved.
+    requested_skills: list[str] = Field(default_factory=list)
     model_requirements: ModelRequirements
     model_options: list[PackModelOption]
     name_conflict: bool
@@ -135,6 +137,8 @@ class PackItemDecision(BaseModel):
 class PackSubAgentDecision(PackItemDecision):
     model_id: uuid.UUID | None = None
     approved_tools: list[str] = Field(default_factory=list, max_length=MAX_REQUESTED_TOOLS)
+    # Keys of requested pack skills to assign to this sub-agent; each must be imported too.
+    approved_skills: list[str] = Field(default_factory=list, max_length=MAX_SKILLS)
 
 
 class PackSkillDecision(PackItemDecision):

@@ -73,7 +73,7 @@ async def _vision_model_ids(user_id: str, rows: list[AgentProfileModel], session
     return {model.id for model in models}
 
 
-def _sub_agent_item(key: str, row: AgentProfileModel, needs_vision: bool) -> dict:
+def _sub_agent_item(key: str, row: AgentProfileModel, needs_vision: bool, skill_keys: list[str]) -> dict:
     tools = list(dict.fromkeys(configurable_tools(row.tools)))
     parameters = row.chat_parameters or {}
     return {
@@ -84,38 +84,63 @@ def _sub_agent_item(key: str, row: AgentProfileModel, needs_vision: bool) -> dic
         "max_steps": row.max_steps,
         "generation": {name: parameters[name] for name in GenerationDefaults.model_fields if name in parameters},
         "requested_tools": tools,
+        "requested_skills": skill_keys,
         # Vision cannot be read from the configuration, so the bound model's
-        # support is kept. A context window would overstate the need, so it is not.
-        "model_requirements": {"tools": bool(tools), "vision": needs_vision},
+        # support is kept. A context window would overstate the need, so it is
+        # not. Skills are loaded with a tool, so they need tool support too.
+        "model_requirements": {"tools": bool(tools or skill_keys), "vision": needs_vision},
     }
 
 
 async def _sub_agent_items(
-    user_id: str, project_id: uuid.UUID, ids: list[uuid.UUID], session: AsyncSession
+    user_id: str, project_id: uuid.UUID, ids: list[uuid.UUID], skill_keys: dict[uuid.UUID, str], session: AsyncSession
 ) -> list[dict]:
+    """Sub-agents with requests for those of their assigned skills the pack also carries."""
     rows = await _sub_agent_rows(user_id, project_id, ids, session)
     vision = await _vision_model_ids(user_id, rows, session)
+    assignments = await session.execute(
+        select_owned_assignments(user_id)
+        .with_only_columns(AgentSkillModel.agent_id, AgentSkillModel.skill_id)
+        .where(
+            AgentSkillModel.sub_agent.is_(True),
+            AgentSkillModel.agent_id.in_([row.id for row in rows]),
+            AgentSkillModel.skill_id.in_(list(skill_keys)),
+        )
+    )
+    requested: dict[uuid.UUID, set[str]] = {}
+    for agent_id, skill_id in assignments:
+        requested.setdefault(agent_id, set()).add(skill_keys[skill_id])
     return [
-        _sub_agent_item(f"sub-agent-{index}", row, row.model_id in vision) for index, row in enumerate(rows, start=1)
+        _sub_agent_item(
+            f"sub-agent-{index}",
+            row,
+            row.model_id in vision,
+            sorted(requested.get(row.id, ()), key=lambda key: int(key.removeprefix("skill-"))),
+        )
+        for index, row in enumerate(rows, start=1)
     ]
 
 
-async def _skill_items(user_id: str, ids: list[uuid.UUID], session: AsyncSession) -> list[dict]:
+async def _skill_rows(user_id: str, ids: list[uuid.UUID], session: AsyncSession) -> list[SkillModel]:
     rows = list(
         await session.scalars(
             select_owned_skills(user_id).where(SkillModel.id.in_(ids)).order_by(SkillModel.name, SkillModel.id)
         )
     )
     _require_all(ids, rows, "skills")
-    assigned = set(
+    return rows
+
+
+async def _skill_items(user_id: str, rows: list[SkillModel], session: AsyncSession) -> list[dict]:
+    main_assigned = set(
         await session.scalars(
             select_owned_assignments(user_id)
             .with_only_columns(AgentSkillModel.skill_id)
-            .where(AgentSkillModel.skill_id.in_(ids))
+            .where(AgentSkillModel.sub_agent.is_(False), AgentSkillModel.skill_id.in_([row.id for row in rows]))
         )
     )
     return [
-        {"key": f"skill-{index}", "content": row.content, "request_main_agent_assignment": row.id in assigned}
+        {"key": f"skill-{index}", "content": row.content, "request_main_agent_assignment": row.id in main_assigned}
         for index, row in enumerate(rows, start=1)
     ]
 
@@ -152,7 +177,9 @@ async def export_pack(
 ) -> PackManifest:
     """Build the chosen items into a validated pack; foreign IDs are 404."""
     project = await get_project(user_id=user_id, project_id=project_id, session=session)
-    sub_agents = await _sub_agent_items(user_id, project_id, payload.sub_agent_ids, session)
+    skill_rows = await _skill_rows(user_id, payload.skill_ids, session)
+    skill_keys = {row.id: f"skill-{index}" for index, row in enumerate(skill_rows, start=1)}
+    sub_agents = await _sub_agent_items(user_id, project_id, payload.sub_agent_ids, skill_keys, session)
     data = {
         "format": PACK_FORMAT,
         "format_version": PACK_FORMAT_VERSION,
@@ -163,7 +190,7 @@ async def export_pack(
             "description": payload.description,
         },
         "sub_agents": sub_agents,
-        "skills": await _skill_items(user_id, payload.skill_ids, session),
+        "skills": await _skill_items(user_id, skill_rows, session),
         "templates": await _document_items(
             select_owned_templates(user_id), payload.template_ids, "templates", "template", session
         ),

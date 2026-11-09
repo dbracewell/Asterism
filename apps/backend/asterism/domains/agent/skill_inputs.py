@@ -32,6 +32,16 @@ class SkillSnapshot(BaseModel):
         )
 
 
+class SkillCatalogEntry(BaseModel):
+    """A skill a sub-agent may load with load_skill: its listing, not its body (ADR-0062)."""
+
+    model_config = ConfigDict(frozen=True, from_attributes=True)
+    id: uuid.UUID
+    name: str
+    description: str
+    revision: int = Field(ge=1)
+
+
 class AcceptedSkills(BaseModel):
     model_config = ConfigDict(frozen=True)
     revision: int = Field(default=0, ge=0)

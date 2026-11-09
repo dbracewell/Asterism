@@ -7,15 +7,17 @@ the live stream. Records hold display data only (no thinking, no prompts) and
 grant nothing.
 """
 
+import json
 import time
 import uuid
 
 from asterism.domains.agent.context_manifest import ContextManifest
 from asterism.domains.agent.schemas import AgentEventType, SubAgentEventEnvelope
 from asterism.domains.llm.schemas import ToolCall, ToolResult
+from asterism.domains.tools.catalog import SKILL_TOOL_NAME
 
 from .context_manifest import retrieval_context
-from .schemas import DelegationRecord, DelegationStatus, UsageStep
+from .schemas import DelegationRecord, DelegationStatus, SkillLoad, UsageStep
 
 
 def _now_ms() -> int:
@@ -66,6 +68,7 @@ class DelegationCollector:
                     "status": "running" if event.tool_calls else "completed",
                     "output": event.content or record.output,
                     "tool_results": _merge_tool_results(record.tool_results, event.tool_results),
+                    "skill_loads": [*record.skill_loads, *skill_loads(event.tool_results)],
                     "context": _with_retrieval(update.get("context") or record.context, event.tool_results),
                     "steps": [
                         *record.steps,
@@ -90,6 +93,20 @@ class DelegationCollector:
         ]
         self._records = {}
         return records
+
+
+def skill_loads(results: list[ToolResult]) -> list[SkillLoad]:
+    """The skills a step's successful load_skill calls returned; failed loads are not loads."""
+    loads: list[SkillLoad] = []
+    for result in results:
+        if result.tool_call.function.name != SKILL_TOOL_NAME:
+            continue
+        try:
+            data = json.loads(result.content)
+            loads.append(SkillLoad(skill_id=data["skill_id"], name=data["name"], revision=data["revision"]))
+        except (ValueError, KeyError, TypeError):
+            continue
+    return loads
 
 
 def _with_retrieval(context: ContextManifest | None, results: list[ToolResult]) -> ContextManifest | None:

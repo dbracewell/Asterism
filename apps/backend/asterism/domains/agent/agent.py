@@ -31,7 +31,7 @@ from asterism.domains.llm.schemas import (
 )
 from asterism.domains.retrieval.service import RetrievalService
 from asterism.domains.settings.schemas import LlmWithProvider
-from asterism.domains.tools.catalog import INTERNAL_TOOL_NAMES, configurable_tools
+from asterism.domains.tools.catalog import INTERNAL_TOOL_NAMES, SCOPED_TOOL_NAMES, configurable_tools
 from asterism.domains.tools.context import ContextToolScope
 from asterism.domains.tools.registry import tool_registry
 
@@ -49,6 +49,7 @@ from .schemas import (
     AgentProfile,
     SubAgentEventEnvelope,
 )
+from .skill_inputs import SkillCatalogEntry
 
 
 class Agent:
@@ -102,6 +103,8 @@ class Agent:
         self.user_files: list[str] = list(user_files) if user_files else []
         self.parent_message_id: uuid.UUID | None = parent_message_id
         self.messages: list[LLMMessage] = []
+        # The skills a sub-agent could load this run, read with its prompt (ADR-0062).
+        self.skill_catalog: tuple[SkillCatalogEntry, ...] = ()
         self.chat_scope_snapshot: ChatScopeSnapshot | None = None
         self.project_scope_snapshot: ProjectScopeSnapshot | None = None
         # Set when this agent runs as a delegated sub-agent; tags its own delegations.
@@ -283,7 +286,7 @@ class Agent:
                 chat_id=self.session.info.id,
                 selected_model=selected_model,
                 executed_model=executed_model,
-                effective_internal_tools=frozenset(set(self.effective_tools) & INTERNAL_TOOL_NAMES),
+                effective_internal_tools=frozenset(set(self.effective_tools) & SCOPED_TOOL_NAMES),
                 configuration_revision=self.profile.config_revision,
                 chat_scope_reader=chat_reader,
                 project_scope_reader=project_reader,
@@ -412,7 +415,10 @@ class Agent:
         async def authorize_internal(name: str) -> None:
             from asterism.domains.chat.tool_policy import require_internal_tool
 
-            if self.execution_scope is None or name not in self.execution_scope.effective_internal_tools:
+            # Scoped tools are capped by the inherited ceiling; load_skill is the agent's own.
+            if self.execution_scope is None or (
+                name in SCOPED_TOOL_NAMES and name not in self.execution_scope.effective_internal_tools
+            ):
                 raise BadDataException("Internal tool is unavailable in this execution context")
             await require_internal_tool(
                 name=name, user_id=self.user.id, chat_id=self.session.info.id, scope=self.tool_scope
@@ -476,7 +482,7 @@ class Agent:
             self.effective_tools = [
                 name
                 for name in self.effective_tools
-                if name not in INTERNAL_TOOL_NAMES or name in self.execution_scope.effective_internal_tools
+                if name not in SCOPED_TOOL_NAMES or name in self.execution_scope.effective_internal_tools
             ]
         self.delegation_scope = self.tool_scope.delegation if self.tool_scope else None
         return self.effective_tools
@@ -499,8 +505,14 @@ class Agent:
                 raise BadDataException("Recorded prompt changed; regenerate")
             self.prompt_snapshot = snapshot
         if snapshot is None and self.execution_scope is not None and self.profile.sub_agent:
+            from asterism.domains.chat.prompt_composition import read_skill_catalog_layer
+
             scope = self.execution_scope
+            self.skill_catalog, catalog_layer = await read_skill_catalog_layer(
+                user_id=self.user.id, profile=self.profile, tools=self.effective_tools
+            )
             snapshot = PromptComposer().snapshot(
+                skill_catalog_layer=catalog_layer,
                 profile_layer=scope.persona_layer,
                 agent_id=self.profile.id,
                 agent_revision=self.profile.config_revision,

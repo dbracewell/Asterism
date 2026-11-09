@@ -127,6 +127,8 @@ class PackSubAgent(_PackModel):
     max_steps: int = Field(default=5, ge=1, le=100)
     generation: GenerationDefaults = Field(default_factory=GenerationDefaults)
     requested_tools: tuple[ToolName, ...] = Field(default=(), max_length=MAX_REQUESTED_TOOLS)
+    # Keys of this pack's skills the sub-agent may load (ADR-0062).
+    requested_skills: tuple[ItemKey, ...] = Field(default=(), max_length=MAX_SKILLS)
     model_requirements: ModelRequirements = Field(default_factory=ModelRequirements)
 
     _name_line = field_validator("name")(one_line)
@@ -271,6 +273,12 @@ def _check_sub_agent(agent: PackSubAgent) -> None:
         raise BadDataException(f"Sub-agent '{agent.key}' requests an internal tool, which is managed by context")
     if agent.requested_tools and not agent.model_requirements.tools:
         raise BadDataException(f"Sub-agent '{agent.key}' requests tools, so its model requirements must include tools")
+    _require_unique(agent.requested_skills, f"sub-agent '{agent.key}' requested skills")
+    if agent.requested_skills and not agent.model_requirements.tools:
+        raise BadDataException(
+            f"Sub-agent '{agent.key}' requests skills, which it loads with a tool, so its model requirements "
+            "must include tools"
+        )
 
 
 def check_item[T, R](key: str, document: T, parser: Callable[[T], R]) -> R:
@@ -288,8 +296,11 @@ def _check_semantics(manifest: PackManifest) -> None:
     _require_unique((template.key for template in manifest.templates), "template keys")
     _require_unique((rubric.key for rubric in manifest.rubrics), "rubric keys")
     _require_unique((folded_name(agent.name) for agent in manifest.sub_agents), "sub-agent names")
+    skill_keys = {skill.key for skill in manifest.skills}
     for agent in manifest.sub_agents:
         _check_sub_agent(agent)
+        if set(agent.requested_skills) - skill_keys:
+            raise BadDataException(f"Sub-agent '{agent.key}' requests a skill the pack does not define")
     skills = [check_item(skill.key, skill.content, parse_skill) for skill in manifest.skills]
     _require_unique((skill.name for skill in skills), "skill names")
     for template in manifest.templates:

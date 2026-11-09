@@ -11,7 +11,7 @@ from asterism.domains.agent.schemas import AgentProfile
 from asterism.domains.agent.service import get_agent_profile
 from asterism.domains.chatgpt.availability import available_user_model
 from asterism.domains.settings.tool_settings import get_tool_settings, user_active_tools
-from asterism.domains.tools.catalog import INTERNAL_TOOL_NAMES, configurable_tools
+from asterism.domains.tools.catalog import INTERNAL_TOOL_NAMES, SKILL_TOOL_NAME, configurable_tools
 from asterism.domains.tools.context import ContextToolScope
 
 from .delegation import eligible_delegation_targets, require_delegation_target, resolve_delegation_scope
@@ -86,6 +86,8 @@ async def resolve_effective_tools(
                 config_revision=profile.config_revision,
                 session=db,
             )
+            if await _offers_skills(user_id, profile.id, db):
+                names.add(SKILL_TOOL_NAME)
         if "search_knowledge" in active and ceiling.file_ids.intersection(files.allowed_file_ids):
             names.add("search_knowledge")
     if "sub_agent" in active:
@@ -95,6 +97,13 @@ async def resolve_effective_tools(
         if any(target.id != profile.id for target in targets):
             names.add("sub_agent")
     return sorted(names), ceiling
+
+
+async def _offers_skills(user_id: str, agent_id: uuid.UUID, session: AsyncSession) -> bool:
+    """A sub-agent gets load_skill while skills are on and it has an assigned skill (ADR-0062)."""
+    from asterism.domains.skills.loading import read_skill_catalog
+
+    return bool(await read_skill_catalog(user_id, agent_id, session))
 
 
 async def require_internal_tool(
@@ -109,7 +118,7 @@ async def require_internal_tool(
             model is None
             or not model.is_active
             or model.supports_tools is not True
-            or name not in settings.active_tools
+            or (name != SKILL_TOOL_NAME and name not in settings.active_tools)
         ):
             raise BadDataException("Internal tool authorization was revoked or its context is empty")
         profile = await get_agent_profile(user_id, scope.caller_agent_id, db)
@@ -119,7 +128,13 @@ async def require_internal_tool(
             await require_delegation_target(
                 user_id=user_id, chat_id=chat_id, scope=scope.delegation, target_id=profile.id, session=db
             )
-        if name == "sub_agent":
+        if name == SKILL_TOOL_NAME:
+            # The tool rechecks the named skill's assignment; this checks the gate.
+            from asterism.domains.skills.policy import read_policy
+
+            if not profile.sub_agent or not (await read_policy(db)).enabled:
+                raise BadDataException("Skills are unavailable in this execution context")
+        elif name == "sub_agent":
             # Polling an in-flight delegation must not scan conversation/file history.
             # The built-in separately validates the actual target before starting work.
             live = await resolve_delegation_scope(user_id=user_id, chat_id=chat_id, session=db)

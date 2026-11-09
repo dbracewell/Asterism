@@ -247,8 +247,10 @@ async def test_fresh_schema_enforces_assignment_owner_role_uniqueness_and_cascad
     invalid = [
         {"agent_id": uuid.UUID(main_a), "user_id": "a", "skill_id": uuid.UUID(b["id"])},
         {"agent_id": uuid.UUID(main_b), "user_id": "a", "skill_id": uuid.UUID(a["id"])},
+        # A row's role must match its agent's (ADR-0062 allows sub-agent rows).
         {"agent_id": worker_id, "user_id": "a", "skill_id": uuid.UUID(a["id"]), "sub_agent": False},
-        {"agent_id": worker_id, "user_id": "a", "skill_id": uuid.UUID(a["id"]), "sub_agent": True},
+        {"agent_id": uuid.UUID(main_a), "user_id": "a", "skill_id": uuid.UUID(a["id"]), "sub_agent": True},
+        {"agent_id": worker_id, "user_id": "a", "skill_id": uuid.UUID(b["id"]), "sub_agent": True},
     ]
     for values in invalid:
         async with sessions() as db:
@@ -258,6 +260,7 @@ async def test_fresh_schema_enforces_assignment_owner_role_uniqueness_and_cascad
             await db.rollback()
     async with sessions() as db:
         db.add(AgentSkillModel(agent_id=uuid.UUID(main_a), user_id="a", skill_id=uuid.UUID(a["id"])))
+        db.add(AgentSkillModel(agent_id=worker_id, user_id="a", skill_id=uuid.UUID(a["id"]), sub_agent=True))
         await db.commit()
         with pytest.raises(IntegrityError):
             await db.execute(

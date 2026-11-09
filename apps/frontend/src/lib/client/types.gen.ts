@@ -1491,6 +1491,7 @@ export type ContextLayer = {
     | "task"
     | "project"
     | "skills"
+    | "skill_catalog"
     | "runtime";
   /**
    * Source Id
@@ -1527,6 +1528,7 @@ export type ContextLayerText = {
     | "task"
     | "project"
     | "skills"
+    | "skill_catalog"
     | "runtime";
   /**
    * Source Id
@@ -2057,6 +2059,10 @@ export type DelegationRecord = {
    * Citations
    */
   citations?: Array<SpanCitation>;
+  /**
+   * Skill Loads
+   */
+  skill_loads?: Array<SkillLoad>;
 };
 
 /**
@@ -4848,6 +4854,10 @@ export type PackSubAgent = {
    * Requested Tools
    */
   requested_tools?: Array<string>;
+  /**
+   * Requested Skills
+   */
+  requested_skills?: Array<string>;
   model_requirements?: ModelRequirements;
 };
 
@@ -4875,6 +4885,10 @@ export type PackSubAgentDecision = {
    * Approved Tools
    */
   approved_tools?: Array<string>;
+  /**
+   * Approved Skills
+   */
+  approved_skills?: Array<string>;
 };
 
 /**
@@ -4906,6 +4920,10 @@ export type PackSubAgentReview = {
    * Requested Tools
    */
   requested_tools: Array<PackToolRequest>;
+  /**
+   * Requested Skills
+   */
+  requested_skills?: Array<string>;
   model_requirements: ModelRequirements;
   /**
    * Model Options
@@ -5507,6 +5525,7 @@ export type PromptSource = {
     | "task"
     | "project"
     | "skills"
+    | "skill_catalog"
     | "runtime";
   /**
    * Source Id
@@ -6678,6 +6697,26 @@ export type SkillIdentity = {
    * Digest
    */
   digest: string;
+};
+
+/**
+ * SkillLoad
+ *
+ * One skill a sub-agent loaded with load_skill, as it was when loaded (ADR-0062).
+ */
+export type SkillLoad = {
+  /**
+   * Skill Id
+   */
+  skill_id: string;
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * Revision
+   */
+  revision: number;
 };
 
 /**
@@ -16017,6 +16056,110 @@ export type MainAgentSkillsUpdateResponses = {
 
 export type MainAgentSkillsUpdateResponse =
   MainAgentSkillsUpdateResponses[keyof MainAgentSkillsUpdateResponses];
+
+export type SubAgentSkillsGetData = {
+  body?: never;
+  path: {
+    /**
+     * Agent Id
+     */
+    agent_id: string;
+  };
+  query?: never;
+  url: "/agents/sub-agents/{agent_id}/skills";
+};
+
+export type SubAgentSkillsGetErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Forbidden
+   */
+  403: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type SubAgentSkillsGetError =
+  SubAgentSkillsGetErrors[keyof SubAgentSkillsGetErrors];
+
+export type SubAgentSkillsGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: SkillAssignments;
+};
+
+export type SubAgentSkillsGetResponse =
+  SubAgentSkillsGetResponses[keyof SubAgentSkillsGetResponses];
+
+export type SubAgentSkillsUpdateData = {
+  body: SkillAssignmentUpdate;
+  path: {
+    /**
+     * Agent Id
+     */
+    agent_id: string;
+  };
+  query?: never;
+  url: "/agents/sub-agents/{agent_id}/skills";
+};
+
+export type SubAgentSkillsUpdateErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Forbidden
+   */
+  403: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type SubAgentSkillsUpdateError =
+  SubAgentSkillsUpdateErrors[keyof SubAgentSkillsUpdateErrors];
+
+export type SubAgentSkillsUpdateResponses = {
+  /**
+   * Successful Response
+   */
+  200: SkillAssignments;
+};
+
+export type SubAgentSkillsUpdateResponse =
+  SubAgentSkillsUpdateResponses[keyof SubAgentSkillsUpdateResponses];
 
 export type SkillEligibleGetManyData = {
   body?: never;

@@ -63,6 +63,22 @@ async def put_assignments(
 
 
 # Static discovery must precede /skills/{skill_id}.
+@skills_router.get("/agents/sub-agents/{agent_id}/skills", operation_id="subAgentSkillsGet")
+async def get_sub_agent_assignments(
+    agent_id: uuid.UUID, user: AuthedUserDep, session: DBSessionDep
+) -> SkillAssignments:
+    """The skills this sub-agent may load with load_skill (ADR-0062)."""
+    return await assignments.read_sub_agent_assignments(user.id, agent_id, session)
+
+
+@skills_router.put("/agents/sub-agents/{agent_id}/skills", operation_id="subAgentSkillsUpdate")
+async def put_sub_agent_assignments(
+    agent_id: uuid.UUID, payload: SkillAssignmentUpdate, user: AuthedUserDep, session: DBSessionDep
+) -> SkillAssignments:
+    """Replace the sub-agent's skills if its definition is still at ``expected_revision``."""
+    return await assignments.replace_sub_agent_assignments(user.id, agent_id, payload, session)
+
+
 @skills_router.get("/skills/eligible", operation_id="skillEligibleGetMany")
 async def eligible(
     user: AuthedUserDep,

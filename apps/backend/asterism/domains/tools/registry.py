@@ -30,7 +30,7 @@ from asterism.domains.chat.schemas import Chat
 from asterism.domains.components.schemas import ComponentType
 from asterism.domains.llm.schemas import LLMClientProtocol, ToolCall, ToolResult
 from asterism.domains.settings.schemas import ApplicationSettings
-from asterism.domains.tools.catalog import ToolPolicy, tool_policy
+from asterism.domains.tools.catalog import SKILL_TOOL_NAME, ToolPolicy, tool_policy
 from asterism.domains.tools.context import ContextToolScope
 from asterism.domains.tools.schemas import ToolInfo, ToolInfoList
 
@@ -231,7 +231,10 @@ class ToolRegistry:
         )
 
     def tools(self) -> ToolInfoList:
-        """List every registered tool regardless of policy or admin settings."""
+        """List every tool the admin Tools allowlist can switch.
+
+        ``load_skill`` is left out: the Skills policy switches it (ADR-0062).
+        """
         return ToolInfoList(
             items=[
                 ToolInfo(
@@ -241,6 +244,7 @@ class ToolRegistry:
                     policy=t.policy,
                 )
                 for t in self.registry.values()
+                if t.name != SKILL_TOOL_NAME
             ],
         )
 
@@ -354,7 +358,8 @@ class ToolRegistry:
 
         # Cheapest gate first: a disabled tool skips argument parsing and the
         # internal-tool authorization round-trips entirely.
-        if llm_tool.name not in app_settings.active_tools:
+        # load_skill answers to the Skills policy, checked by its own gate (ADR-0062).
+        if llm_tool.name not in app_settings.active_tools and llm_tool.name != SKILL_TOOL_NAME:
             return ToolRegistry._exception_to_tool_result(ValueError("Tool disabled by administrator"), tool_call)
         if llm_tool.policy == ToolPolicy.USER_CONFIGURABLE and not await _group_allows_tool(user.id, llm_tool.name):
             return ToolRegistry._exception_to_tool_result(ValueError("Tool not available to your group"), tool_call)
