@@ -214,11 +214,17 @@ function SubAgentCard({
   return (
     <Card className="flex h-80 w-60 max-w-full min-w-0 flex-col">
       {dialog}
-      <CardHeader>
+      <CardHeader className="min-w-0">
         <CardTitle className="[overflow-wrap:anywhere]">{agent.name}</CardTitle>
-        <CardDescription className="flex items-center justify-between">
-          <p className="text-muted-foreground truncate text-xs">{modelLabel}</p>
-          <span role="status">
+        <CardDescription className="flex min-w-0 items-center justify-between gap-2">
+          {/* Long model names end in an ellipsis; the full name stays in the text and title. */}
+          <p
+            className="text-muted-foreground min-w-0 truncate text-xs"
+            title={modelLabel}
+          >
+            {modelLabel}
+          </p>
+          <span role="status" className="shrink-0">
             <span className="sr-only">
               {agent.model_available
                 ? "Fixed model available"

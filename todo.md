@@ -40,9 +40,9 @@ Source: user request (2026-11-08). Suggested order: EPIC-74 → 67 → 70 → 68
 
 Source: user request (2026-11-09). Comes before EPIC-72.
 
-- [ ] US-75.1: Truncate long model names
-  - [ ] Fix the card header (`min-w-0` on the label, full name in a tooltip/title); audit other model-name spots.
-  - [ ] Unit test for the accessible full name; E2E overflow check with a long model name at 1280 and 320px.
+- [ ] US-75.1: Truncate long model names (implemented; awaiting confirmation)
+  - [x] Fix the card header (`min-w-0` on the label, full name in a tooltip/title); audit other model-name spots.
+  - [x] Unit test for the accessible full name; E2E overflow check with a long model name at 1280 and 320px.
 - [ ] US-75.2: Skills page layout and assignment
   - [ ] Banner; per-row assignment state and control; pagination with count and URL state.
   - [ ] Help updates; unit tests; E2E covering assignment from the list, paging and narrow widths.

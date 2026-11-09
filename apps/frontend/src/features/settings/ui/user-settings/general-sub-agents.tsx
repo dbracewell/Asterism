@@ -93,8 +93,10 @@ export function GeneralSubAgents() {
               key={agent.id}
               className="rounded-surface flex flex-wrap items-center gap-2 border p-3"
             >
-              <span className="font-medium break-words">{agent.name}</span>
-              <span className="text-muted-foreground text-sm break-words">
+              <span className="min-w-0 font-medium wrap-anywhere">
+                {agent.name}
+              </span>
+              <span className="text-muted-foreground min-w-0 text-sm wrap-anywhere">
                 {fixedModelLabel(agent, models.data)}
               </span>
               <AvailabilityBadge agent={agent} />

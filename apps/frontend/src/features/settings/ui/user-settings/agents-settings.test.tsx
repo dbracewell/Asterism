@@ -87,3 +87,10 @@ it("marks course sub-agents and offers no edit or delete for them", async () => 
     screen.queryByRole("button", { name: "Delete Tutor" }),
   ).not.toBeInTheDocument();
 });
+it("keeps the full model name readable when the card truncates it (US-75.1)", async () => {
+  render(<AgentsSettings />, { wrapper: Wrapper });
+  const [label] = await screen.findAllByTitle("fixed");
+  // Visually clipped with an ellipsis, but the whole name stays in the text.
+  expect(label).toHaveTextContent("fixed");
+  expect(label).toHaveClass("truncate", "min-w-0");
+});
