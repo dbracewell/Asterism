@@ -24,6 +24,7 @@ from .documents import (
     ExportedComponent,
     ExportedGroup,
     ExportedImageGeneration,
+    ExportedLocalImage,
     ExportedModel,
     ExportedProvider,
     ModelReference,
@@ -105,6 +106,13 @@ async def collect_settings(session: AsyncSession) -> SettingsBundle:
         active_tools=tuple(settings.active_tools),
         skills_enabled=settings.skills_enabled,
         canvas_enabled=settings.canvas_enabled,
+        image_generation_local=ExportedLocalImage.model_validate(
+            {
+                key: value
+                for key, value in (settings.image_generation_local or {}).items()
+                if key in ExportedLocalImage.model_fields
+            }
+        ),
         image_generation=ExportedImageGeneration.model_validate(
             {
                 key: value

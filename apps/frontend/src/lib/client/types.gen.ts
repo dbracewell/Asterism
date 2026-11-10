@@ -94,6 +94,12 @@ export type ApplicationSettings = {
   image_generation?: {
     [key: string]: unknown;
   } | null;
+  /**
+   * Image Generation Local
+   */
+  image_generation_local?: {
+    [key: string]: unknown;
+  } | null;
   compaction?: CompactionSettings;
   /**
    * Chatgpt Plan Enabled
@@ -2453,6 +2459,16 @@ export type DownloadProgress = {
   bundle_sha256?: string | null;
 };
 
+/**
+ * DownloadRequest
+ */
+export type DownloadRequest = {
+  /**
+   * Accept License
+   */
+  accept_license?: boolean;
+};
+
 export type DownloadStatus =
   | "idle"
   | "downloading"
@@ -3399,6 +3415,46 @@ export type GroupUpdate = {
 };
 
 /**
+ * HardwareReport
+ *
+ * What the backend can use. Memory is in GiB.
+ */
+export type HardwareReport = {
+  /**
+   * Device
+   */
+  device: "cuda" | "mps" | "cpu";
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * Memory Gb
+   */
+  memory_gb: number;
+  /**
+   * Free Gb
+   */
+  free_gb?: number | null;
+  /**
+   * System Ram Gb
+   */
+  system_ram_gb: number;
+  /**
+   * Cpu Count
+   */
+  cpu_count: number;
+  /**
+   * Bf16
+   */
+  bf16: boolean;
+  /**
+   * Available
+   */
+  available: Array<"cuda" | "mps" | "cpu">;
+};
+
+/**
  * HintLevel
  *
  * Branch-local hint state, weakest first; ``answer`` is the explicit reveal.
@@ -4009,6 +4065,128 @@ export type LlmDisplayInfo = {
   context_window_source?: ModelCapabilitySource;
   vision_source?: ModelCapabilitySource;
   pricing?: ModelPricing | null;
+};
+
+/**
+ * LocalDownload
+ */
+export type LocalDownload = {
+  /**
+   * Status
+   */
+  status: "idle" | "downloading" | "verifying" | "ready" | "failed";
+  /**
+   * Bytes Downloaded
+   */
+  bytes_downloaded: number;
+  /**
+   * Total Bytes
+   */
+  total_bytes: number;
+  /**
+   * Error
+   */
+  error?: string | null;
+};
+
+/**
+ * LocalModel
+ */
+export type LocalModel = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * Repo
+   */
+  repo: string;
+  /**
+   * Revision
+   */
+  revision: string;
+  /**
+   * License
+   */
+  license: string;
+  /**
+   * Commercial Use
+   */
+  commercial_use: boolean;
+  /**
+   * Description
+   */
+  description: string;
+  /**
+   * Disk Gb
+   */
+  disk_gb: number;
+  /**
+   * Memory Gb
+   */
+  memory_gb: number;
+  plan: Plan;
+  download: LocalDownload;
+  /**
+   * License Accepted
+   */
+  license_accepted: boolean;
+};
+
+/**
+ * LocalOverview
+ */
+export type LocalOverview = {
+  hardware: HardwareReport;
+  /**
+   * Recommended Id
+   */
+  recommended_id: string | null;
+  settings: LocalSettings;
+  /**
+   * Models
+   */
+  models: Array<LocalModel>;
+  /**
+   * Worker Running
+   */
+  worker_running: boolean;
+};
+
+/**
+ * LocalSelection
+ */
+export type LocalSelection = {
+  /**
+   * Model Id
+   */
+  model_id: string | null;
+  /**
+   * Device
+   */
+  device?: "auto" | "cuda" | "mps" | "cpu";
+};
+
+/**
+ * LocalSettings
+ */
+export type LocalSettings = {
+  /**
+   * Model Id
+   */
+  model_id?: string | null;
+  /**
+   * Device
+   */
+  device?: "auto" | "cuda" | "mps" | "cpu";
+  /**
+   * Accepted Licenses
+   */
+  accepted_licenses?: Array<string>;
 };
 
 /**
@@ -5388,6 +5566,24 @@ export type PersonaUpdate = {
    * Expected Revision
    */
   expected_revision: number;
+};
+
+/**
+ * Plan
+ */
+export type Plan = {
+  /**
+   * Fits
+   */
+  fits: boolean;
+  /**
+   * Mode
+   */
+  mode: "device" | "offload" | "none";
+  /**
+   * Detail
+   */
+  detail: string;
 };
 
 /**
@@ -9670,6 +9866,12 @@ export type ApplicationSettingsWritable = {
    * Image Generation
    */
   image_generation?: {
+    [key: string]: unknown;
+  } | null;
+  /**
+   * Image Generation Local
+   */
+  image_generation_local?: {
     [key: string]: unknown;
   } | null;
   compaction?: CompactionSettings;
@@ -17642,6 +17844,212 @@ export type ImageGenerationAvailabilityResponses = {
 
 export type ImageGenerationAvailabilityResponse =
   ImageGenerationAvailabilityResponses[keyof ImageGenerationAvailabilityResponses];
+
+export type LocalImageOverviewData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/settings/app/image-generation/local";
+};
+
+export type LocalImageOverviewErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+};
+
+export type LocalImageOverviewError =
+  LocalImageOverviewErrors[keyof LocalImageOverviewErrors];
+
+export type LocalImageOverviewResponses = {
+  /**
+   * Successful Response
+   */
+  200: LocalOverview;
+};
+
+export type LocalImageOverviewResponse =
+  LocalImageOverviewResponses[keyof LocalImageOverviewResponses];
+
+export type LocalImageSelectData = {
+  body: LocalSelection;
+  path?: never;
+  query?: never;
+  url: "/settings/app/image-generation/local";
+};
+
+export type LocalImageSelectErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type LocalImageSelectError =
+  LocalImageSelectErrors[keyof LocalImageSelectErrors];
+
+export type LocalImageSelectResponses = {
+  /**
+   * Successful Response
+   */
+  200: LocalOverview;
+};
+
+export type LocalImageSelectResponse =
+  LocalImageSelectResponses[keyof LocalImageSelectResponses];
+
+export type LocalImageCancelDownloadData = {
+  body?: never;
+  path: {
+    /**
+     * Model Id
+     */
+    model_id: string;
+  };
+  query?: never;
+  url: "/settings/app/image-generation/local/models/{model_id}/download";
+};
+
+export type LocalImageCancelDownloadErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type LocalImageCancelDownloadError =
+  LocalImageCancelDownloadErrors[keyof LocalImageCancelDownloadErrors];
+
+export type LocalImageCancelDownloadResponses = {
+  /**
+   * Successful Response
+   */
+  200: LocalOverview;
+};
+
+export type LocalImageCancelDownloadResponse =
+  LocalImageCancelDownloadResponses[keyof LocalImageCancelDownloadResponses];
+
+export type LocalImageDownloadData = {
+  body: DownloadRequest;
+  path: {
+    /**
+     * Model Id
+     */
+    model_id: string;
+  };
+  query?: never;
+  url: "/settings/app/image-generation/local/models/{model_id}/download";
+};
+
+export type LocalImageDownloadErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type LocalImageDownloadError =
+  LocalImageDownloadErrors[keyof LocalImageDownloadErrors];
+
+export type LocalImageDownloadResponses = {
+  /**
+   * Successful Response
+   */
+  200: LocalOverview;
+};
+
+export type LocalImageDownloadResponse =
+  LocalImageDownloadResponses[keyof LocalImageDownloadResponses];
+
+export type LocalImageRemoveData = {
+  body?: never;
+  path: {
+    /**
+     * Model Id
+     */
+    model_id: string;
+  };
+  query?: never;
+  url: "/settings/app/image-generation/local/models/{model_id}";
+};
+
+export type LocalImageRemoveErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type LocalImageRemoveError =
+  LocalImageRemoveErrors[keyof LocalImageRemoveErrors];
+
+export type LocalImageRemoveResponses = {
+  /**
+   * Successful Response
+   */
+  200: LocalOverview;
+};
+
+export type LocalImageRemoveResponse =
+  LocalImageRemoveResponses[keyof LocalImageRemoveResponses];
 
 export type LearningModeGetManyData = {
   body?: never;

@@ -26,6 +26,14 @@ from .events import EventType, NoArgEvent, event_bus
 logger = get_logger("ASTERISM")
 
 
+async def _shutdown_image_generation() -> None:
+    from asterism.domains.image_generation.local import downloads
+    from asterism.domains.image_generation.local.runtime import runtime
+
+    await runtime.stop()
+    await downloads.shutdown()
+
+
 async def init_system() -> None:
     """Bring up all backend subsystems in dependency order.
 
@@ -78,6 +86,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     await event_bus.shutdown()
     await chat_jobs.shutdown()
     await shutdown_knowledge_runtime()
+    await _shutdown_image_generation()
     await close_fetch_browser()
     await close_openai_clients()
     await close_oauth_client()

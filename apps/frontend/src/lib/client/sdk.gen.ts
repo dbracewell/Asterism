@@ -423,6 +423,21 @@ import type {
   LearningModeGetManyData,
   LearningModeGetManyErrors,
   LearningModeGetManyResponses,
+  LocalImageCancelDownloadData,
+  LocalImageCancelDownloadErrors,
+  LocalImageCancelDownloadResponses,
+  LocalImageDownloadData,
+  LocalImageDownloadErrors,
+  LocalImageDownloadResponses,
+  LocalImageOverviewData,
+  LocalImageOverviewErrors,
+  LocalImageOverviewResponses,
+  LocalImageRemoveData,
+  LocalImageRemoveErrors,
+  LocalImageRemoveResponses,
+  LocalImageSelectData,
+  LocalImageSelectErrors,
+  LocalImageSelectResponses,
   MainAgentGeneralSubAgentsGetData,
   MainAgentGeneralSubAgentsGetErrors,
   MainAgentGeneralSubAgentsGetResponses,
@@ -4869,6 +4884,125 @@ export class ApiClient extends HeyApiClient {
     >({
       security: [{ scheme: "bearer", type: "http" }],
       url: "/image-generation/availability",
+      ...options,
+    });
+  }
+
+  /**
+   * Overview
+   *
+   * Detected hardware, the catalog with fit and download state, and the recommendation.
+   */
+  public localImageOverview<ThrowOnError extends boolean = false>(
+    options?: Options<LocalImageOverviewData, ThrowOnError>,
+  ): RequestResult<
+    LocalImageOverviewResponses,
+    LocalImageOverviewErrors,
+    ThrowOnError
+  > {
+    return (options?.client ?? this.client).get<
+      LocalImageOverviewResponses,
+      LocalImageOverviewErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/settings/app/image-generation/local",
+      ...options,
+    });
+  }
+
+  /**
+   * Select
+   */
+  public localImageSelect<ThrowOnError extends boolean = false>(
+    options: Options<LocalImageSelectData, ThrowOnError>,
+  ): RequestResult<
+    LocalImageSelectResponses,
+    LocalImageSelectErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).put<
+      LocalImageSelectResponses,
+      LocalImageSelectErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/settings/app/image-generation/local",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+  }
+
+  /**
+   * Cancel
+   */
+  public localImageCancelDownload<ThrowOnError extends boolean = false>(
+    options: Options<LocalImageCancelDownloadData, ThrowOnError>,
+  ): RequestResult<
+    LocalImageCancelDownloadResponses,
+    LocalImageCancelDownloadErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).delete<
+      LocalImageCancelDownloadResponses,
+      LocalImageCancelDownloadErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/settings/app/image-generation/local/models/{model_id}/download",
+      ...options,
+    });
+  }
+
+  /**
+   * Download
+   *
+   * Start downloading a model. A non-commercial license must be accepted first.
+   */
+  public localImageDownload<ThrowOnError extends boolean = false>(
+    options: Options<LocalImageDownloadData, ThrowOnError>,
+  ): RequestResult<
+    LocalImageDownloadResponses,
+    LocalImageDownloadErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).post<
+      LocalImageDownloadResponses,
+      LocalImageDownloadErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/settings/app/image-generation/local/models/{model_id}/download",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+  }
+
+  /**
+   * Remove
+   *
+   * Delete a downloaded model's files to free disk space.
+   */
+  public localImageRemove<ThrowOnError extends boolean = false>(
+    options: Options<LocalImageRemoveData, ThrowOnError>,
+  ): RequestResult<
+    LocalImageRemoveResponses,
+    LocalImageRemoveErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).delete<
+      LocalImageRemoveResponses,
+      LocalImageRemoveErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/settings/app/image-generation/local/models/{model_id}",
       ...options,
     });
   }

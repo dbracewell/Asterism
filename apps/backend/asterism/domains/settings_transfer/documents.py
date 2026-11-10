@@ -86,6 +86,14 @@ class ExportedImageGeneration(_Document):
     provider: Literal["none", "comfyui", "diffusers"] = "none"
 
 
+class ExportedLocalImage(_Document):
+    """The local generator's model and device (US-76.2). Downloads and license
+    acceptance stay with the installation."""
+
+    model_id: str | None = None
+    device: Literal["auto", "cuda", "mps", "cpu"] = "auto"
+
+
 class ExportedCompaction(_Document):
     """Context compaction policy (ADR-0060); the summarizer model travels by name."""
 
@@ -118,6 +126,7 @@ class SettingsBundle(_Document):
     skills_enabled: bool = False
     canvas_enabled: bool = False
     image_generation: ExportedImageGeneration = Field(default_factory=ExportedImageGeneration)
+    image_generation_local: ExportedLocalImage = Field(default_factory=ExportedLocalImage)
     chatgpt_plan_enabled: bool = False
     web_search_provider: ExportedComponent | None = None
     image_search_provider: ExportedComponent | None = None

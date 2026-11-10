@@ -1,6 +1,7 @@
 # ADR-0064 — Image generation runs through one provider interface and produces chat files
 
-Status: accepted; domain, tool and Create image in US-76.1 on 2026-11-09
+Status: accepted; domain, tool and Create image in US-76.1, local diffusers
+generator in US-76.2 on 2026-11-09
 ([EPIC-76](../epics/EPIC-76-IMAGE-GENERATION.md)).
 
 ## Context
@@ -108,6 +109,41 @@ comparison, and generation is available now. On that turn's first step:
 
 The direct path does not write tool-call messages, so a model without tool
 support never sees tool messages in its history.
+
+### Local diffusers generator (US-76.2)
+
+- **Hardware.** `local/hardware.py` detects CUDA (name, total and free
+  memory), Apple MPS (unified memory) or CPU (RAM), plus bf16 support; an admin
+  may force a present device. Status checks use a cached report; the admin
+  page detects fresh.
+- **Catalog.** `local/catalog.py` pins each model's repository and commit
+  (checked against Hugging Face on 2026-11-09), pipeline class, license,
+  recommended steps and guidance, disk size and memory estimates with
+  everything on the device and with model CPU offload. In preference order:
+  Qwen-Image-2.1 Turbo (8 steps, non-commercial), Qwen-Image-2.1 (40 steps,
+  non-commercial), Z-Image-Turbo (Apache 2.0), FLUX.2 [klein] 4B (Apache
+  2.0). Only the diffusers folders download, never extra single-file
+  checkpoints.
+- **Fit and recommendation.** CUDA: fully on the GPU when memory covers the
+  estimate plus 2 GB, else with CPU offload when the GPU covers the offload
+  peak and system RAM holds the model. MPS: when 70% of unified memory covers
+  it (no offload; memory is shared). CPU: 80% of RAM. The recommendation is
+  the first catalog model that fits.
+- **Downloads** reuse `ModelDownloadService` (pinned revision, manifest
+  verification, cancel) under `STORAGE_ROOT/models/image-generation`, kept by
+  the development reset. A non-commercial license must be accepted first;
+  acceptance is recorded in the `image_generation_local` setting and logged.
+- **Worker process.** `local/runtime.py` spawns one worker per model, device,
+  mode and dtype, and keeps it for the next job. The worker loads the
+  pipeline from local files only, generates images one at a time with a CPU
+  generator per seed (same seed, same image on every device), reports each
+  step, and returns PNGs. Changing the model or device, cancelling a job, an
+  out-of-memory error, or 10 idle minutes stops it. A crash is reported and
+  the next job starts a fresh worker. Dtype: bf16, or fp16 on CUDA GPUs
+  without bf16.
+- **Settings.** `image_generation_local` holds the model, device override and
+  accepted licenses. The settings file carries the model and device, not
+  downloads or license acceptance.
 
 ## Consequences
 

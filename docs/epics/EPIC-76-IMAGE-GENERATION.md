@@ -1,6 +1,6 @@
 # EPIC-76: Image generation
 
-Status: in progress (US-76.1; [ADR-0064](../adr/0064-image-generation.md)). Source: user request (2026-11-09).
+Status: in progress (US-76.1 done, US-76.2; [ADR-0064](../adr/0064-image-generation.md)). Source: user request (2026-11-09).
 
 ## Objective
 
@@ -135,8 +135,14 @@ pinned and verified; the API recommends a model for the detected hardware;
 downloads reuse the pinned-model flow; generation runs in a worker process
 with per-device settings, idle unload and clear out-of-memory errors.
 
-- [ ] Detection, catalog, recommendation, download and worker runtime.
-- [ ] Tests with a stub pipeline (device choice, recommendation, OOM, worker crash); a manual run on CUDA, MPS and CPU recorded in the story.
+- [x] Detection, catalog, recommendation, download and worker runtime.
+- [x] Tests with a stub pipeline (device choice, recommendation, OOM, worker crash); a manual run on CUDA, MPS and CPU recorded in the story.
+
+Manual run (2026-11-09, Apple M-series, 128 GB): the real worker loaded
+`tiny-random/z-image` with `ZImagePipeline` and made two 256² images with
+seeds 3 and 4 and step progress: MPS in 2.1 s, CPU in 31.5 s. This machine
+recommends Qwen-Image-2.1 Turbo; a full-size run needs its 32 GB download.
+CUDA has not been run: no NVIDIA machine was available.
 
 ## US-76.3: ComfyUI generator
 

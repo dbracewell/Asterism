@@ -818,6 +818,14 @@ def _validate_non_provider_app_setting(
         except ValidationError as exc:
             raise BadDataException("Invalid image generation policy") from exc
 
+    if key == "image_generation_local":
+        from asterism.domains.image_generation.local.schemas import LocalSettings
+
+        try:
+            return LocalSettings.model_validate(value).model_dump(mode="json"), None
+        except ValidationError as exc:
+            raise BadDataException("Invalid local image generation settings") from exc
+
     if key == "compaction":
         try:
             return CompactionSettings.model_validate(value).model_dump(mode="json"), None
