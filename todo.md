@@ -32,6 +32,28 @@ Source: product direction discussion (2026-10-31). Suggested order: EPIC-51 → 
 
 EPIC-64 and EPIC-65 are complete and archived in the [2026-11-07 checklist](docs/archive/todo-completed-2026-11-07.md); EPIC-66 is complete and archived in the [2026-11-08 checklist](docs/archive/todo-completed-2026-11-08.md). Next: a multi-user deployment readiness epic (not yet written).
 
+## Image generation (proposed 2026-11-09)
+
+Source: user request (2026-11-09). Order: US-76.1 → 76.2 → 76.3 → 76.4 → 76.5 (76.2 and 76.3 can swap).
+
+### [EPIC-76: Image generation](docs/epics/EPIC-76-IMAGE-GENERATION.md)
+
+- [ ] US-76.1: Image generation domain and agent tool
+  - [ ] ADR; domain, job queue, storage, provenance, policy and tool.
+  - [ ] Tests: gating, explicit mode with and without tools, storage, ownership, cancellation, refusal and audit.
+- [ ] US-76.2: Local diffusers generator
+  - [ ] Detection, catalog, recommendation, download and worker runtime.
+  - [ ] Tests with a stub pipeline (device choice, recommendation, OOM, worker crash); a manual run on CUDA, MPS and CPU recorded in the story.
+- [ ] US-76.3: ComfyUI generator
+  - [ ] Client, workflow templating and settings.
+  - [ ] Tests against a fake ComfyUI server.
+- [ ] US-76.4: Admin settings
+  - [ ] Admin page with generated client hooks.
+  - [ ] Unit tests and an E2E for each provider path.
+- [ ] US-76.5: Images in chat
+  - [ ] Composer mode, inline images, progress, viewer, help.
+  - [ ] Unit tests and an E2E with a fake provider from prompt to saved image.
+
 ## User-requested epics (proposed 2026-11-08)
 
 Source: user request (2026-11-08). Suggested order: EPIC-74 → 67 → 70 → 68 → 69 → 73 → 71 → 72. EPIC-71 depends on EPIC-68. EPIC-73 should leave a place for canvas (EPIC-72). EPIC-74, EPIC-67, EPIC-70, EPIC-68, EPIC-69, EPIC-73, EPIC-71, EPIC-75 (skills follow-ups, added 2026-11-09) and EPIC-72 are complete and archived in the [2026-11-08 checklist](docs/archive/todo-completed-2026-11-08.md).
