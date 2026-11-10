@@ -35,4 +35,3 @@ EPIC-64 and EPIC-65 are complete and archived in the [2026-11-07 checklist](docs
 ## User-requested epics (proposed 2026-11-08)
 
 Source: user request (2026-11-08). Suggested order: EPIC-74 → 67 → 70 → 68 → 69 → 73 → 71 → 72. EPIC-71 depends on EPIC-68. EPIC-73 should leave a place for canvas (EPIC-72). EPIC-74, EPIC-67, EPIC-70, EPIC-68, EPIC-69, EPIC-73, EPIC-71, EPIC-75 (skills follow-ups, added 2026-11-09) and EPIC-72 are complete and archived in the [2026-11-08 checklist](docs/archive/todo-completed-2026-11-08.md).
-
