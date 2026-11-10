@@ -1,6 +1,6 @@
 # EPIC-72: Canvas
 
-Status: in progress (US-72.1 and US-72.2 done, US-72.3; [ADR-0063](../adr/0063-canvas.md)). Source: user request (2026-11-08).
+Status: complete (US-72.1 through US-72.4, 2026-11-09; [ADR-0063](../adr/0063-canvas.md)). Source: user request (2026-11-08).
 
 ## Objective
 

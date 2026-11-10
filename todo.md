@@ -34,20 +34,5 @@ EPIC-64 and EPIC-65 are complete and archived in the [2026-11-07 checklist](docs
 
 ## User-requested epics (proposed 2026-11-08)
 
-Source: user request (2026-11-08). Suggested order: EPIC-74 → 67 → 70 → 68 → 69 → 73 → 71 → 72. EPIC-71 depends on EPIC-68. EPIC-73 should leave a place for canvas (EPIC-72). EPIC-74, EPIC-67, EPIC-70, EPIC-68, EPIC-69, EPIC-73, EPIC-71 and EPIC-75 (skills follow-ups, added 2026-11-09) are complete and archived in the [2026-11-08 checklist](docs/archive/todo-completed-2026-11-08.md).
+Source: user request (2026-11-08). Suggested order: EPIC-74 → 67 → 70 → 68 → 69 → 73 → 71 → 72. EPIC-71 depends on EPIC-68. EPIC-73 should leave a place for canvas (EPIC-72). EPIC-74, EPIC-67, EPIC-70, EPIC-68, EPIC-69, EPIC-73, EPIC-71, EPIC-75 (skills follow-ups, added 2026-11-09) and EPIC-72 are complete and archived in the [2026-11-08 checklist](docs/archive/todo-completed-2026-11-08.md).
 
-### [EPIC-72: Canvas](docs/epics/EPIC-72-CANVAS.md)
-
-- [x] US-72.1: Canvas domain and agent tools
-  - [x] Write the ADR (data model, tool contracts, branch rules, sandboxing, exports).
-  - [x] Implement storage, tools and settings; regenerate the client.
-  - [x] Tests: gating, owner isolation, versions, branch visibility, deletion.
-- [x] US-72.2: Canvas panel
-  - [x] Build the panel, editors, history and "ask about selection".
-  - [x] Unit tests, keyboard/contrast checks and an E2E with a fake provider.
-- [ ] US-72.3: Downloads and settings (implemented; awaiting confirmation)
-  - [x] Implement exports (server-side) and save-to-library.
-  - [x] Settings toggles, help and glossary; tests for each export type.
-- [ ] US-72.4: Start a canvas item yourself (implemented; awaiting confirmation)
-  - [x] Endpoint, chip, dialog and help.
-  - [x] Backend, unit and E2E tests.

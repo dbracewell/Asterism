@@ -125,3 +125,23 @@ is complete; see ADR-0062 (sub-agents load their own assigned skills).
 - [x] US-75.4: Skills for sub-agents (UI) (confirmed and merged 2026-11-09)
   - [x] Sub-agent skills picker; skill loads in run graph and delegation details; approving requested sub-agent skills in pack import review.
   - [x] Help; unit tests; E2E from assigning a skill to a sub-agent to seeing its load in a delegated run.
+
+The user confirmed US-72.3 and US-72.4 on 2026-11-09. EPIC-72 (US-72.1
+through US-72.4) is complete; see ADR-0063 (canvas items are versioned,
+branch-aware chat records).
+
+### [EPIC-72: Canvas](../epics/EPIC-72-CANVAS.md)
+
+- [x] US-72.1: Canvas domain and agent tools (confirmed and merged 2026-11-09)
+  - [x] Write the ADR (data model, tool contracts, branch rules, sandboxing, exports).
+  - [x] Implement storage, tools and settings; regenerate the client.
+  - [x] Tests: gating, owner isolation, versions, branch visibility, deletion.
+- [x] US-72.2: Canvas panel (confirmed and merged 2026-11-09)
+  - [x] Build the panel, editors, history and "ask about selection".
+  - [x] Unit tests, keyboard/contrast checks and an E2E with a fake provider.
+- [x] US-72.3: Downloads and settings (confirmed and merged 2026-11-09)
+  - [x] Implement exports (server-side) and save-to-library.
+  - [x] Settings toggles, help and glossary; tests for each export type.
+- [x] US-72.4: Start a canvas item yourself (confirmed and merged 2026-11-09)
+  - [x] Endpoint, chip, dialog and help.
+  - [x] Backend, unit and E2E tests.
