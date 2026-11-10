@@ -1,6 +1,6 @@
 # EPIC-76: Image generation
 
-Status: proposed (2026-11-09). Source: user request (2026-11-09).
+Status: in progress (US-76.1; [ADR-0064](../adr/0064-image-generation.md)). Source: user request (2026-11-09).
 
 ## Objective
 
@@ -28,13 +28,14 @@ the existing `ImageGenerator` component type.
   image for later editing) and returns image bytes plus provenance (provider,
   model, revision, seed, settings). ComfyUI and local diffusers both implement
   it; tests use a fake provider. Only one provider is active at a time.
-- **Opt-in at two levels, like canvas.** Admin policy `image_generation_enabled`
+- **Opt-in at two levels, like canvas.** Admin policy `image_generation`
   (default off) plus the active provider being configured and ready. Admins can
-  also limit it by user group (ADR-0058), and class mode policy can turn it off
-  for a class. Users don't need a separate switch; generating needs the policy
+  also limit it by user group (ADR-0058). (A class-level switch was dropped in
+  ADR-0064: class policies govern learning modes, and group limits cover
+  students.) Users don't need a separate switch; generating needs the policy
   and a ready provider.
 - **Agent tool.** `generate_image` is an internal, context-managed tool for the
-  main agent (and, if chosen in the ADR, sub-agents), offered only when image
+  main agent (sub-agents don't get it; ADR-0064), offered only when image
   generation is available and the chat model supports tools. The agent writes
   the prompt from the conversation. Prompt text grants nothing else.
 - **Explicit mode.** "Create image" in the composer marks the next message as
@@ -119,8 +120,8 @@ supports tools; explicit mode forces it, or calls the generator directly
 without tool support. Group and class policies apply; the minors-content
 refusal and audit log are in place.
 
-- [ ] ADR; domain, job queue, storage, provenance, policy and tool.
-- [ ] Tests: gating, explicit mode with and without tools, storage, ownership, cancellation, refusal and audit.
+- [x] ADR; domain, job queue, storage, provenance, policy and tool.
+- [x] Tests: gating, explicit mode with and without tools, storage, ownership, cancellation, refusal and audit.
 
 ## US-76.2: Local diffusers generator
 

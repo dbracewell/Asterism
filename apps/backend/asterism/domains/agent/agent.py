@@ -31,7 +31,7 @@ from asterism.domains.llm.schemas import (
 )
 from asterism.domains.retrieval.service import RetrievalService
 from asterism.domains.settings.schemas import LlmWithProvider
-from asterism.domains.tools.catalog import INTERNAL_TOOL_NAMES, SCOPED_TOOL_NAMES, configurable_tools
+from asterism.domains.tools.catalog import IMAGE_TOOL_NAME, INTERNAL_TOOL_NAMES, SCOPED_TOOL_NAMES, configurable_tools
 from asterism.domains.tools.context import ContextToolScope
 from asterism.domains.tools.registry import tool_registry
 
@@ -48,6 +48,7 @@ from .schemas import (
     AgentEventType,
     AgentProfile,
     SubAgentEventEnvelope,
+    ToolProgress,
 )
 from .skill_inputs import SkillCatalogEntry
 
@@ -105,6 +106,8 @@ class Agent:
         self.messages: list[LLMMessage] = []
         # The skills a sub-agent could load this run, read with its prompt (ADR-0062).
         self.skill_catalog: tuple[SkillCatalogEntry, ...] = ()
+        # The turn was sent with "Create image": its first step must generate (ADR-0064).
+        self.image_request = False
         self.chat_scope_snapshot: ChatScopeSnapshot | None = None
         self.project_scope_snapshot: ProjectScopeSnapshot | None = None
         # Set when this agent runs as a delegated sub-agent; tags its own delegations.
@@ -403,6 +406,7 @@ class Agent:
         user_message: str,
         auths: list[ToolUseAuthorization],
         event_sink: Callable[[SubAgentEventEnvelope], Awaitable[None] | None] | None = None,
+        progress_sink: Callable[[ToolProgress], Awaitable[None]] | None = None,
     ) -> AsyncGenerator[ToolResult, None]:
         if self.authorization_check:
             await self.authorization_check()
@@ -451,6 +455,7 @@ class Agent:
                 authorize_internal=authorize_internal,
                 retrieval_service=retrieval,
                 file_reader=create_runtime_file_reader(ceiling=self.tool_scope, check_active=self.authorization_check),
+                progress_sink=progress_sink,
             )
             for auth in auths
             if auth.accept
@@ -559,7 +564,7 @@ class Agent:
             sorted(set(self.allowed_tools) | (set(self.effective_tools) & INTERNAL_TOOL_NAMES)),
         )
 
-        sub_agent_queue: asyncio.Queue[SubAgentEventEnvelope] = asyncio.Queue()
+        sub_agent_queue: asyncio.Queue[SubAgentEventEnvelope | ToolProgress] = asyncio.Queue()
 
         async def _internal_sink(envelope: SubAgentEventEnvelope) -> None:
             await sub_agent_queue.put(envelope)
@@ -567,6 +572,9 @@ class Agent:
                 res = self.event_sink(envelope)
                 if inspect.isawaitable(res):
                     await res
+
+        async def _progress_sink(progress: ToolProgress) -> None:
+            await sub_agent_queue.put(progress)
 
         async def _collect_tool_results() -> list[ToolResult]:
             collected: list[ToolResult] = []
@@ -583,6 +591,7 @@ class Agent:
                 user_message=last_message,
                 auths=auths,
                 event_sink=_internal_sink,
+                progress_sink=_progress_sink,
             ):
                 collected.append(resp)
 
@@ -599,20 +608,12 @@ class Agent:
                     return_when=asyncio.FIRST_COMPLETED,
                 )
                 if get_task in done:
-                    envelope = get_task.result()
-                    yield AgentEvent(
-                        type=AgentEventType.SUB_AGENT,
-                        sub_agent=envelope,
-                    )
+                    yield self._queued_event(get_task.result())
                 else:
                     get_task.cancel()
 
             while not sub_agent_queue.empty():
-                envelope = sub_agent_queue.get_nowait()
-                yield AgentEvent(
-                    type=AgentEventType.SUB_AGENT,
-                    sub_agent=envelope,
-                )
+                yield self._queued_event(sub_agent_queue.get_nowait())
 
             responses = await tool_task
         finally:
@@ -624,6 +625,64 @@ class Agent:
         for response in responses:
             self.logger.debug("tool completed name=%s", response.tool_call.function.name)
             results.append(response)
+
+    async def _direct_image(
+        self, last_user_message: LLMMessage, *, tools_supported: bool
+    ) -> AsyncGenerator[AgentEvent, None]:
+        """ "Create image" without the tool: the message text is the prompt (ADR-0064).
+
+        Used when the chat model has no tool support. If the model has tools but
+        generate_image isn't offered, image generation was turned off since the
+        message was sent.
+        """
+        from asterism.domains.image_generation.schemas import ImageProgress, ImageRequest
+        from asterism.domains.image_generation.service import generate_images
+
+        yield AgentEvent(type=AgentEventType.START)
+        prompt = _message_text(last_user_message).strip()
+        if tools_supported or self.execution_scope is None or not prompt:
+            yield AgentEvent(type=AgentEventType.ERROR, content="Image generation is unavailable for this message")
+            return
+        queue: asyncio.Queue[ToolProgress] = asyncio.Queue()
+
+        async def progress(update: ImageProgress) -> None:
+            await queue.put(ToolProgress(tool_call_id="direct", name=IMAGE_TOOL_NAME, **update.model_dump()))
+
+        task = asyncio.create_task(
+            generate_images(
+                user_id=self.user.id,
+                chat_id=self.session.info.id,
+                request=ImageRequest(prompt=prompt[:4000]),
+                progress=progress,
+                scope=self.execution_scope,
+            )
+        )
+        try:
+            while not task.done():
+                getter = asyncio.create_task(queue.get())
+                done, _ = await asyncio.wait([task, getter], return_when=asyncio.FIRST_COMPLETED)
+                if getter in done:
+                    yield self._queued_event(getter.result())
+                else:
+                    getter.cancel()
+            while not queue.empty():
+                yield self._queued_event(queue.get_nowait())
+            images = task.result()
+        except BadDataException as error:
+            yield AgentEvent(type=AgentEventType.ERROR, content=str(error))
+            return
+        finally:
+            if not task.done():
+                task.cancel()
+                await asyncio.gather(task, return_exceptions=True)
+        embeds = "\n\n".join(image.embed for image in images)
+        yield AgentEvent(type=AgentEventType.COMPLETE, content=f"Here's the image you asked for.\n\n{embeds}")
+
+    @staticmethod
+    def _queued_event(item: SubAgentEventEnvelope | ToolProgress) -> AgentEvent:
+        if isinstance(item, ToolProgress):
+            return AgentEvent(type=AgentEventType.TOOL_PROGRESS, tool_progress=item)
+        return AgentEvent(type=AgentEventType.SUB_AGENT, sub_agent=item)
 
     async def _replay_step(
         self,
@@ -704,10 +763,18 @@ class Agent:
 
             if self.file_input_authorization:
                 await self.file_input_authorization()
+            parameters = dict(self.profile.chat_parameters)
+            if self.image_request and step == first_step and replay is None:
+                if tools and IMAGE_TOOL_NAME in tools:
+                    parameters["tool_choice"] = {"type": "function", "function": {"name": IMAGE_TOOL_NAME}}
+                else:
+                    async for event in self._direct_image(last_user_message, tools_supported=bool(tools)):
+                        yield event
+                    return
             async for event in client.chat(
                 messages=messages,
                 tools=tools,
-                **self.profile.chat_parameters,
+                **parameters,
             ):
                 if self.authorization_check:
                     await self.authorization_check()
@@ -760,3 +827,10 @@ class Agent:
                         # and "length"/"content_filter" must not re-prompt the model.
                         if not event.tool_calls:
                             return
+
+
+def _message_text(message: LLMMessage) -> str:
+    if isinstance(message.content, str):
+        return message.content
+    # The typed prompt is the first text part; attachments follow it.
+    return next((part.text for part in cast(list[ContentPart], message.content) if part.type == "text"), "")

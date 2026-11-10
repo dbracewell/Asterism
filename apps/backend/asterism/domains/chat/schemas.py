@@ -240,6 +240,8 @@ class Message(LLMMessage):
     rubric: RubricLabel | None = None
     # Set when the learner included the project's learning goal (US-58.1).
     goal: GoalSnapshot | None = None
+    # A user turn sent with "Create image" (ADR-0064).
+    image_request: bool = False
     execution: MessageExecution | None = None
     model_config = ConfigDict(from_attributes=True)
     # Persisted chat content remains plain text; multimodal parts are runtime-only.
@@ -498,6 +500,8 @@ class NewChatRequest(BaseModel):
     rubric: RubricUse | None = None
     # Include the project's learning goal in this turn (US-58.1).
     include_goal: bool = False
+    # "Create image": this turn must generate an image (ADR-0064).
+    create_image: bool = False
     persona_id: uuid.UUID | None = None
     learning_mode: LearningModeId = LearningModeId.STANDARD
     hint: HintRequest | None = None
@@ -563,6 +567,8 @@ class ChatSendRequest(BaseModel):
     rubric: RubricUse | None = None
     # Include the project's learning goal in this turn (US-58.1).
     include_goal: bool = False
+    # "Create image": this turn must generate an image (ADR-0064).
+    create_image: bool = False
     hint: HintRequest | None = None
     expected_model_revision: int = Field(ge=1)
     model_config = ConfigDict(extra="forbid")

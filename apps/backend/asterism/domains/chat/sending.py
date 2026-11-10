@@ -127,6 +127,8 @@ async def persist_user_send(
         if payload.include_goal
         else None
     )
+    if payload.create_image:
+        await _require_image_turn(user_id=user_id, chat=chat, payload=payload, session=session)
     await bind_message_files(user_id=user_id, chat_id=chat.id, files=files, session=session)
     inputs = {
         "user_id": user_id,
@@ -144,6 +146,7 @@ async def persist_user_send(
         ),
         "files": files,
         "parent_message_id": parent_id,
+        "image_request": payload.create_image,
     }
     if payload.compare is None:
         message = MessageModel(**inputs, content=payload.user_prompt, role="user", status=MessageStatus.PENDING)
@@ -191,6 +194,19 @@ async def persist_user_send(
     result = Chat(info=await selection_info(chat, session), messages=[Message.model_validate(message)])
     await session.commit()
     return result
+
+
+async def _require_image_turn(
+    *, user_id: str, chat: ChatModel, payload: NewChatRequest | ChatSendRequest, session: AsyncSession
+) -> None:
+    """ "Create image" needs an ordinary chat, one reply and image generation available now."""
+    from asterism.domains.image_generation.policy import require_available
+
+    if chat.purpose != "conversation":
+        raise BadDataException("Images can't be created in this chat")
+    if payload.compare is not None:
+        raise BadDataException("Create image can't be combined with a comparison")
+    await require_available(user_id, session)
 
 
 async def create_chat(

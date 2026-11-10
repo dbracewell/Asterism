@@ -810,6 +810,14 @@ def _validate_non_provider_app_setting(
             raise BadDataException("Canvas policy must be a boolean")
         return value, None
 
+    if key == "image_generation":
+        from asterism.domains.image_generation.schemas import ImageGenerationPolicy
+
+        try:
+            return ImageGenerationPolicy.model_validate(value).model_dump(mode="json"), None
+        except ValidationError as exc:
+            raise BadDataException("Invalid image generation policy") from exc
+
     if key == "compaction":
         try:
             return CompactionSettings.model_validate(value).model_dump(mode="json"), None

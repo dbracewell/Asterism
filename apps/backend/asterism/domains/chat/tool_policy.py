@@ -13,6 +13,7 @@ from asterism.domains.chatgpt.availability import available_user_model
 from asterism.domains.settings.tool_settings import get_tool_settings, user_active_tools
 from asterism.domains.tools.catalog import (
     CANVAS_TOOL_NAMES,
+    IMAGE_TOOL_NAME,
     INTERNAL_TOOL_NAMES,
     POLICY_GATED_TOOL_NAMES,
     SKILL_TOOL_NAME,
@@ -83,6 +84,8 @@ async def resolve_effective_tools(
             return [], ceiling
         if not profile.sub_agent and await _offers_canvas(user_id, chat_id, db):
             names |= CANVAS_TOOL_NAMES
+        if not profile.sub_agent and await _offers_images(user_id, chat_id, db):
+            names.add(IMAGE_TOOL_NAME)
         if files.project_id != ceiling.project_id:
             return sorted(names), ceiling
         if profile.sub_agent:
@@ -112,6 +115,13 @@ async def _offers_canvas(user_id: str, chat_id: uuid.UUID, session: AsyncSession
     from asterism.domains.canvas.policy import canvas_available
 
     return await canvas_available(user_id, chat_id, session)
+
+
+async def _offers_images(user_id: str, chat_id: uuid.UUID, session: AsyncSession) -> bool:
+    """The main agent gets generate_image when the policy, group and provider allow it (ADR-0064)."""
+    from asterism.domains.image_generation.policy import chat_offers_images
+
+    return await chat_offers_images(user_id, chat_id, session)
 
 
 async def _offers_skills(user_id: str, agent_id: uuid.UUID, session: AsyncSession) -> bool:
@@ -147,6 +157,10 @@ async def require_internal_tool(
             # Both switches, the chat's purpose and ownership, read live.
             if profile.sub_agent or not await _offers_canvas(user_id, chat_id, db):
                 raise BadDataException("Canvas is unavailable in this execution context")
+        elif name == IMAGE_TOOL_NAME:
+            # Policy, group, provider readiness and the chat's purpose, read live.
+            if profile.sub_agent or not await _offers_images(user_id, chat_id, db):
+                raise BadDataException("Image generation is unavailable in this execution context")
         elif name == SKILL_TOOL_NAME:
             # The tool rechecks the named skill's assignment; this checks the gate.
             from asterism.domains.skills.policy import read_policy

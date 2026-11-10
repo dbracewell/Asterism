@@ -213,6 +213,13 @@ class MessageModel(Base, TimestampMixin, UuidPrimaryKeyMixin):
         jsonb_type(TypeAdapter(GoalSnapshot)),
         nullable=True,
     )
+    # A user turn sent with "Create image": its run must generate (ADR-0064).
+    image_request: Mapped[bool] = mapped_column(
+        Boolean(create_constraint=True, name="ck_messages_image_request_boolean"),
+        nullable=False,
+        default=False,
+        server_default="0",
+    )
     # US-54.4: a user turn that is one column of a side-by-side comparison.
     # Columns are sibling turns sharing ``comparison_id``; each runs on its
     # fixed ``target_model_id``. Set once, then immutable (SQLite trigger).

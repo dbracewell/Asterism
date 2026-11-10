@@ -30,9 +30,12 @@ SCOPED_TOOL_NAMES = frozenset({"sub_agent", "search_knowledge"})
 #: The main agent's canvas tools (ADR-0063).
 CANVAS_TOOL_NAMES = frozenset({"canvas_create", "canvas_update", "canvas_read"})
 
-#: Internal tools gated by their own admin policy (Skills, Canvas) instead of
-#: the Tools allowlist; they are not listed among admin tools.
-POLICY_GATED_TOOL_NAMES = frozenset({SKILL_TOOL_NAME}) | CANVAS_TOOL_NAMES
+#: The main agent's image tool (ADR-0064).
+IMAGE_TOOL_NAME = "generate_image"
+
+#: Internal tools gated by their own admin policy (Skills, Canvas, Image
+#: generation) instead of the Tools allowlist; they are not listed among admin tools.
+POLICY_GATED_TOOL_NAMES = frozenset({SKILL_TOOL_NAME, IMAGE_TOOL_NAME}) | CANVAS_TOOL_NAMES
 
 #: Internal, context-managed tools. Availability is derived server-side from
 #: live context and admin policy; user payloads cannot grant them.

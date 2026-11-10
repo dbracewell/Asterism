@@ -25,7 +25,7 @@ from asterism.common.retries import async_retry
 from asterism.core.schemas import AuthedUser
 from asterism.domains.agent.delegation_scope import DelegationScope
 from asterism.domains.agent.execution_scope import ExecutionScope
-from asterism.domains.agent.schemas import SubAgentEventEnvelope
+from asterism.domains.agent.schemas import SubAgentEventEnvelope, ToolProgress
 from asterism.domains.chat.schemas import Chat
 from asterism.domains.components.schemas import ComponentType
 from asterism.domains.llm.schemas import LLMClientProtocol, ToolCall, ToolResult
@@ -159,6 +159,8 @@ class ToolContext[T: BaseModel | None]:
     retrieval_service: RetrievalService | None = None
     file_reader: RuntimeFileReader | None = None
     tool_call_id: str | None = None
+    # Streams a long-running tool's progress to the chat (ADR-0064).
+    progress_sink: Callable[[ToolProgress], Awaitable[None]] | None = None
 
 
 @dataclass(frozen=True)
@@ -311,6 +313,7 @@ class ToolRegistry:
         authorize_internal: Callable[[str], Awaitable[None]] | None = None,
         retrieval_service: RetrievalService | None = None,
         file_reader: RuntimeFileReader | None = None,
+        progress_sink: Callable[[ToolProgress], Awaitable[None]] | None = None,
     ) -> ToolResult:
         """Validate, authorize, and run one model tool call.
 
@@ -418,6 +421,7 @@ class ToolRegistry:
                 retrieval_service=retrieval_service,
                 file_reader=file_reader,
                 tool_call_id=tool_call.id,
+                progress_sink=progress_sink,
             )
 
             if llm_tool.is_async:

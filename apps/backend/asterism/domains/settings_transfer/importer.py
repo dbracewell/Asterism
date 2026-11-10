@@ -113,6 +113,7 @@ def _changed_settings(bundle: SettingsBundle, current: SettingsBundle) -> list[s
         "Active tools": set(bundle.active_tools) != set(current.active_tools),
         "Skills policy": bundle.skills_enabled != current.skills_enabled,
         "Canvas policy": bundle.canvas_enabled != current.canvas_enabled,
+        "Image generation policy": bundle.image_generation != current.image_generation,
         "ChatGPT plan policy": bundle.chatgpt_plan_enabled != current.chatgpt_plan_enabled,
         "Web search provider": bundle.web_search_provider is not None
         and bundle.web_search_provider != current.web_search_provider,
@@ -245,6 +246,15 @@ async def _apply_groups(bundle: SettingsBundle, session: AsyncSession) -> None:
         row.tool_access = None if group.tools is None else sorted(set(group.tools))
 
 
+async def _apply_image_generation(bundle: SettingsBundle, session: AsyncSession) -> None:
+    """Imports the switch and provider; this installation keeps its own group limits."""
+    from asterism.domains.image_generation.policy import read_policy
+
+    current = await read_policy(session)
+    policy = current.model_copy(update=bundle.image_generation.model_dump())
+    await _put_setting("image_generation", policy.model_dump(mode="json"), session)
+
+
 async def _apply_captioning(bundle: SettingsBundle, session: AsyncSession) -> None:
     captioning = bundle.captioning
     model = await _find_model(captioning.model, session)
@@ -274,6 +284,7 @@ async def import_settings(
         await _put_setting("active_tools", list(bundle.active_tools), session)
         await _put_setting("skills_enabled", bundle.skills_enabled, session)
         await _put_setting("canvas_enabled", bundle.canvas_enabled, session)
+        await _apply_image_generation(bundle, session)
         await _put_setting("chatgpt_plan_enabled", bundle.chatgpt_plan_enabled, session)
         await _put_component("web_search_provider", bundle.web_search_provider, session)
         await _put_component("image_search_provider", bundle.image_search_provider, session)

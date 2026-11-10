@@ -9,7 +9,7 @@ source ⇒ MANUAL" hold on every object that leaves the service layer.
 from __future__ import annotations
 
 import uuid
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import (
     BaseModel,
@@ -238,6 +238,8 @@ class ApplicationSettings(BaseModel):
     skills_enabled: StrictBool = False
     # Canvas writing for everyone (ADR-0063); each user also opts in.
     canvas_enabled: StrictBool = False
+    # Image generation policy and provider (ADR-0064), stored as one JSON value.
+    image_generation: dict[str, Any] | None = None
     compaction: CompactionSettings = Field(default_factory=CompactionSettings)
     chatgpt_plan_enabled: StrictBool = False
     llm_providers: list[Provider] = Field(default_factory=list)

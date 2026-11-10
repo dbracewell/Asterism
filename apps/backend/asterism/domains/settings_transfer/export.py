@@ -23,6 +23,7 @@ from .documents import (
     ExportedCompaction,
     ExportedComponent,
     ExportedGroup,
+    ExportedImageGeneration,
     ExportedModel,
     ExportedProvider,
     ModelReference,
@@ -104,6 +105,13 @@ async def collect_settings(session: AsyncSession) -> SettingsBundle:
         active_tools=tuple(settings.active_tools),
         skills_enabled=settings.skills_enabled,
         canvas_enabled=settings.canvas_enabled,
+        image_generation=ExportedImageGeneration.model_validate(
+            {
+                key: value
+                for key, value in (settings.image_generation or {}).items()
+                if key in ExportedImageGeneration.model_fields
+            }
+        ),
         compaction=ExportedCompaction(
             **settings.compaction.model_dump(exclude={"model_id"}),
             model=_reference(settings.compaction.model_id, providers),

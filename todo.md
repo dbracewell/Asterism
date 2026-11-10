@@ -38,9 +38,9 @@ Source: user request (2026-11-09). Order: US-76.1 → 76.2 → 76.3 → 76.4 →
 
 ### [EPIC-76: Image generation](docs/epics/EPIC-76-IMAGE-GENERATION.md)
 
-- [ ] US-76.1: Image generation domain and agent tool
-  - [ ] ADR; domain, job queue, storage, provenance, policy and tool.
-  - [ ] Tests: gating, explicit mode with and without tools, storage, ownership, cancellation, refusal and audit.
+- [x] US-76.1: Image generation domain and agent tool
+  - [x] ADR; domain, job queue, storage, provenance, policy and tool.
+  - [x] Tests: gating, explicit mode with and without tools, storage, ownership, cancellation, refusal and audit.
 - [ ] US-76.2: Local diffusers generator
   - [ ] Detection, catalog, recommendation, download and worker runtime.
   - [ ] Tests with a stub pipeline (device choice, recommendation, OOM, worker crash); a manual run on CUDA, MPS and CPU recorded in the story.

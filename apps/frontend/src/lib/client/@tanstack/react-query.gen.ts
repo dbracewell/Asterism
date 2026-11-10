@@ -408,6 +408,18 @@ import type {
   GroupRenameData,
   GroupRenameError,
   GroupRenameResponse,
+  ImageGenerationAvailabilityData,
+  ImageGenerationAvailabilityError,
+  ImageGenerationAvailabilityResponse,
+  ImageGenerationPolicyGetData,
+  ImageGenerationPolicyGetError,
+  ImageGenerationPolicyGetResponse,
+  ImageGenerationPolicyUpdateData,
+  ImageGenerationPolicyUpdateError,
+  ImageGenerationPolicyUpdateResponse,
+  ImageGenerationProviderStatusData,
+  ImageGenerationProviderStatusError,
+  ImageGenerationProviderStatusResponse,
   LearningModeGetManyData,
   LearningModeGetManyError,
   LearningModeGetManyResponse,
@@ -6651,6 +6663,127 @@ export const canvasVersionSaveToLibraryMutation = (
   };
   return mutationOptions;
 };
+
+export const imageGenerationPolicyGetQueryKey = (
+  options?: Options<ImageGenerationPolicyGetData>,
+) => createQueryKey("imageGenerationPolicyGet", options);
+
+/**
+ * Get Policy
+ */
+export const imageGenerationPolicyGetOptions = (
+  options?: Options<ImageGenerationPolicyGetData>,
+) =>
+  queryOptions<
+    ImageGenerationPolicyGetResponse,
+    ImageGenerationPolicyGetError,
+    ImageGenerationPolicyGetResponse,
+    ReturnType<typeof imageGenerationPolicyGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry
+        .get()
+        .imageGenerationPolicyGet({
+          ...options,
+          ...queryKey[0],
+          signal,
+          throwOnError: true,
+        });
+      return data;
+    },
+    queryKey: imageGenerationPolicyGetQueryKey(options),
+  });
+
+/**
+ * Put Policy
+ */
+export const imageGenerationPolicyUpdateMutation = (
+  options?: Partial<Options<ImageGenerationPolicyUpdateData>>,
+): UseMutationOptions<
+  ImageGenerationPolicyUpdateResponse,
+  ImageGenerationPolicyUpdateError,
+  Options<ImageGenerationPolicyUpdateData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ImageGenerationPolicyUpdateResponse,
+    ImageGenerationPolicyUpdateError,
+    Options<ImageGenerationPolicyUpdateData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry
+        .get()
+        .imageGenerationPolicyUpdate({
+          ...options,
+          ...fnOptions,
+          throwOnError: true,
+        });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const imageGenerationProviderStatusQueryKey = (
+  options?: Options<ImageGenerationProviderStatusData>,
+) => createQueryKey("imageGenerationProviderStatus", options);
+
+/**
+ * Get Status
+ */
+export const imageGenerationProviderStatusOptions = (
+  options?: Options<ImageGenerationProviderStatusData>,
+) =>
+  queryOptions<
+    ImageGenerationProviderStatusResponse,
+    ImageGenerationProviderStatusError,
+    ImageGenerationProviderStatusResponse,
+    ReturnType<typeof imageGenerationProviderStatusQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry
+        .get()
+        .imageGenerationProviderStatus({
+          ...options,
+          ...queryKey[0],
+          signal,
+          throwOnError: true,
+        });
+      return data;
+    },
+    queryKey: imageGenerationProviderStatusQueryKey(options),
+  });
+
+export const imageGenerationAvailabilityQueryKey = (
+  options?: Options<ImageGenerationAvailabilityData>,
+) => createQueryKey("imageGenerationAvailability", options);
+
+/**
+ * Get Availability
+ *
+ * Whether you can create images now; the reason is shown when you can't.
+ */
+export const imageGenerationAvailabilityOptions = (
+  options?: Options<ImageGenerationAvailabilityData>,
+) =>
+  queryOptions<
+    ImageGenerationAvailabilityResponse,
+    ImageGenerationAvailabilityError,
+    ImageGenerationAvailabilityResponse,
+    ReturnType<typeof imageGenerationAvailabilityQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry
+        .get()
+        .imageGenerationAvailability({
+          ...options,
+          ...queryKey[0],
+          signal,
+          throwOnError: true,
+        });
+      return data;
+    },
+    queryKey: imageGenerationAvailabilityQueryKey(options),
+  });
 
 export const learningModeGetManyQueryKey = (
   options?: Options<LearningModeGetManyData>,

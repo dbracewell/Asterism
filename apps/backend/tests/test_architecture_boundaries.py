@@ -16,6 +16,7 @@ DB_COMPOSITION_ROOTS = {
     "asterism.db.model_registry": {
         "asterism.domains.agent.models",
         "asterism.domains.canvas.models",
+        "asterism.domains.image_generation.models",
         "asterism.domains.chat.models",
         "asterism.domains.chat.execution_models",
         "asterism.domains.chat.compaction_models",

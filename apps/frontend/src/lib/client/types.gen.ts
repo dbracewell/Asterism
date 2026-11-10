@@ -88,6 +88,12 @@ export type ApplicationSettings = {
    * Canvas Enabled
    */
   canvas_enabled?: boolean;
+  /**
+   * Image Generation
+   */
+  image_generation?: {
+    [key: string]: unknown;
+  } | null;
   compaction?: CompactionSettings;
   /**
    * Chatgpt Plan Enabled
@@ -1125,6 +1131,10 @@ export type ChatSendRequest = {
    * Include Goal
    */
   include_goal?: boolean;
+  /**
+   * Create Image
+   */
+  create_image?: boolean;
   hint?: HintRequest | null;
   /**
    * Expected Model Revision
@@ -3422,6 +3432,60 @@ export type HintRequest = {
 };
 
 /**
+ * ImageGenerationAvailability
+ *
+ * Whether this user can generate images now, and why not.
+ */
+export type ImageGenerationAvailability = {
+  /**
+   * Available
+   */
+  available: boolean;
+  /**
+   * Reason
+   */
+  reason?: string;
+};
+
+/**
+ * ImageGenerationPolicy
+ *
+ * The admin policy: on or off, which groups may use it, and the active provider.
+ */
+export type ImageGenerationPolicy = {
+  /**
+   * Enabled
+   */
+  enabled?: boolean;
+  /**
+   * Group Ids
+   */
+  group_ids?: Array<string> | null;
+  /**
+   * Provider
+   */
+  provider?: "none" | "comfyui" | "diffusers";
+};
+
+/**
+ * ImageProviderStatus
+ */
+export type ImageProviderStatus = {
+  /**
+   * Provider
+   */
+  provider: "none" | "comfyui" | "diffusers";
+  /**
+   * Ready
+   */
+  ready: boolean;
+  /**
+   * Detail
+   */
+  detail?: string;
+};
+
+/**
  * InlineFileReference
  *
  * One ``asterism-file:`` reference in saved Markdown, resolved at save time (ADR-0039).
@@ -4234,6 +4298,10 @@ export type Message = {
   template?: TemplateLabel | null;
   rubric?: RubricLabel | null;
   goal?: GoalSnapshot | null;
+  /**
+   * Image Request
+   */
+  image_request?: boolean;
   execution?: MessageExecution | null;
   /**
    * Id
@@ -4552,6 +4620,10 @@ export type NewChatRequest = {
    * Include Goal
    */
   include_goal?: boolean;
+  /**
+   * Create Image
+   */
+  create_image?: boolean;
   /**
    * Persona Id
    */
@@ -9594,6 +9666,12 @@ export type ApplicationSettingsWritable = {
    * Canvas Enabled
    */
   canvas_enabled?: boolean;
+  /**
+   * Image Generation
+   */
+  image_generation?: {
+    [key: string]: unknown;
+  } | null;
   compaction?: CompactionSettings;
   /**
    * Chatgpt Plan Enabled
@@ -17420,6 +17498,150 @@ export type CanvasVersionSaveToLibraryResponses = {
 
 export type CanvasVersionSaveToLibraryResponse =
   CanvasVersionSaveToLibraryResponses[keyof CanvasVersionSaveToLibraryResponses];
+
+export type ImageGenerationPolicyGetData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/settings/app/image-generation";
+};
+
+export type ImageGenerationPolicyGetErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Forbidden
+   */
+  403: ErrorDetail;
+};
+
+export type ImageGenerationPolicyGetError =
+  ImageGenerationPolicyGetErrors[keyof ImageGenerationPolicyGetErrors];
+
+export type ImageGenerationPolicyGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: ImageGenerationPolicy;
+};
+
+export type ImageGenerationPolicyGetResponse =
+  ImageGenerationPolicyGetResponses[keyof ImageGenerationPolicyGetResponses];
+
+export type ImageGenerationPolicyUpdateData = {
+  body: ImageGenerationPolicy;
+  path?: never;
+  query?: never;
+  url: "/settings/app/image-generation";
+};
+
+export type ImageGenerationPolicyUpdateErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Forbidden
+   */
+  403: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type ImageGenerationPolicyUpdateError =
+  ImageGenerationPolicyUpdateErrors[keyof ImageGenerationPolicyUpdateErrors];
+
+export type ImageGenerationPolicyUpdateResponses = {
+  /**
+   * Successful Response
+   */
+  200: ImageGenerationPolicy;
+};
+
+export type ImageGenerationPolicyUpdateResponse =
+  ImageGenerationPolicyUpdateResponses[keyof ImageGenerationPolicyUpdateResponses];
+
+export type ImageGenerationProviderStatusData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/settings/app/image-generation/status";
+};
+
+export type ImageGenerationProviderStatusErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Forbidden
+   */
+  403: ErrorDetail;
+};
+
+export type ImageGenerationProviderStatusError =
+  ImageGenerationProviderStatusErrors[keyof ImageGenerationProviderStatusErrors];
+
+export type ImageGenerationProviderStatusResponses = {
+  /**
+   * Successful Response
+   */
+  200: ImageProviderStatus;
+};
+
+export type ImageGenerationProviderStatusResponse =
+  ImageGenerationProviderStatusResponses[keyof ImageGenerationProviderStatusResponses];
+
+export type ImageGenerationAvailabilityData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/image-generation/availability";
+};
+
+export type ImageGenerationAvailabilityErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Forbidden
+   */
+  403: ErrorDetail;
+};
+
+export type ImageGenerationAvailabilityError =
+  ImageGenerationAvailabilityErrors[keyof ImageGenerationAvailabilityErrors];
+
+export type ImageGenerationAvailabilityResponses = {
+  /**
+   * Successful Response
+   */
+  200: ImageGenerationAvailability;
+};
+
+export type ImageGenerationAvailabilityResponse =
+  ImageGenerationAvailabilityResponses[keyof ImageGenerationAvailabilityResponses];
 
 export type LearningModeGetManyData = {
   body?: never;
