@@ -49,14 +49,26 @@ class _StubPipeline:
         return type("Output", (), {"images": [image]})()
 
 
-def _load(model_dir: str, pipeline: str, device: str, mode: str, dtype: str):
+def _load(model_dir: str, pipeline: str, device: str, mode: str, dtype: str, scheduler: str | None = None):
     if pipeline == "stub":
         return _StubPipeline()
+    from pathlib import Path
+
     import diffusers
     import torch
 
     cls = getattr(diffusers, pipeline)
-    pipe = cls.from_pretrained(model_dir, torch_dtype=getattr(torch, dtype), local_files_only=True)
+    options: dict[str, Any] = {"torch_dtype": getattr(torch, dtype), "local_files_only": True}
+    # Repositories that ship fp16 weights next to fp32 ones download only the fp16 files.
+    if any(Path(model_dir).glob("*/*.fp16.safetensors")):
+        options["variant"] = "fp16"
+    # Stable Diffusion's separate image safety checker isn't downloaded; the
+    # platform's prompt check governs (ADR-0064).
+    if "safety_checker" in inspect.signature(cls.__init__).parameters:
+        options.update(safety_checker=None, feature_extractor=None, requires_safety_checker=False)
+    pipe = cls.from_pretrained(model_dir, **options)
+    if scheduler:
+        pipe.scheduler = getattr(diffusers, scheduler).from_config(pipe.scheduler.config)
     if mode == "offload":
         pipe.enable_model_cpu_offload()
     else:
@@ -115,9 +127,11 @@ def _generate(pipe, pipeline: str, job: dict[str, Any], conn: Connection) -> lis
     return results
 
 
-def worker_main(conn: Connection, model_dir: str, pipeline: str, device: str, mode: str, dtype: str) -> None:
+def worker_main(
+    conn: Connection, model_dir: str, pipeline: str, device: str, mode: str, dtype: str, scheduler: str | None = None
+) -> None:
     try:
-        pipe = _load(model_dir, pipeline, device, mode, dtype)
+        pipe = _load(model_dir, pipeline, device, mode, dtype, scheduler)
     except BaseException as error:  # noqa: BLE001 - reported to the parent, then exit
         conn.send(("error", "oom" if _is_oom(error) else "error", f"Loading the model failed: {error}"))
         traceback.print_exc()

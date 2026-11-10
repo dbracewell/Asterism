@@ -8,8 +8,8 @@ from unittest.mock import AsyncMock
 import pytest
 from asterism.domains.image_generation.local import catalog, downloads, provider
 from asterism.domains.image_generation.local.catalog import BY_ID, CATALOG
-from asterism.domains.image_generation.local.hardware import HardwareReport, detect
-from asterism.domains.image_generation.local.planning import plan, recommend
+from asterism.domains.image_generation.local.hardware import HardwareReport, cpu_bf16, detect, mps_bf16
+from asterism.domains.image_generation.local.planning import dtype_for, plan, recommend
 from asterism.domains.image_generation.local.runtime import OOM_MESSAGE, LocalRuntime, WorkerKey
 from asterism.domains.image_generation.providers import ImageGenerationError
 from asterism.domains.image_generation.schemas import ImageProgress, ImageRequest
@@ -29,7 +29,7 @@ canvas_api = _canvas_api
 STUB = WorkerKey(model_dir="unused", pipeline="stub", device="cpu", mode="device", dtype="bfloat16")
 
 
-def hardware(device="cuda", memory=24.0, ram=64.0) -> HardwareReport:
+def hardware(device="cuda", memory=24.0, ram=64.0, bf16=None) -> HardwareReport:
     return HardwareReport(
         device=device,
         name="Test",
@@ -37,7 +37,7 @@ def hardware(device="cuda", memory=24.0, ram=64.0) -> HardwareReport:
         free_gb=memory if device == "cuda" else None,
         system_ram_gb=ram,
         cpu_count=8,
-        bf16=True,
+        bf16=device != "cpu" if bf16 is None else bf16,
         available=[device, "cpu"] if device != "cpu" else ["cpu"],
     )
 
@@ -48,13 +48,20 @@ async def test_catalog_is_pinned_and_licensed():
         "qwen-image-2.1",
         "z-image-turbo",
         "flux2-klein-4b",
+        "dreamshaper-xl-lightning",
+        "dreamshaper-8-lcm",
     ]
     for entry in CATALOG:
         assert len(entry.revision) == 40 and entry.license and entry.pipeline
         assert entry.pinned().revision == entry.revision
-        # Only the diffusers folders download, never extra single-file checkpoints.
-        assert "transformer/*" in entry.pinned().allow_patterns and "*" not in entry.pinned().allow_patterns
+        patterns = entry.pinned().allow_patterns
+        # Only the diffusers folders download, never single-file checkpoints or extra copies.
+        assert "model_index.json" in patterns and "*" not in patterns and not any(".ckpt" in p for p in patterns)
+        assert not any("safety_checker" in p for p in patterns)
     assert not BY_ID["qwen-image-2.1-turbo"].commercial_use and BY_ID["z-image-turbo"].commercial_use
+    sdxl = BY_ID["dreamshaper-xl-lightning"].pinned().allow_patterns
+    assert "unet/diffusion_pytorch_model.fp16.safetensors" in sdxl
+    assert "unet/diffusion_pytorch_model.safetensors" not in sdxl
 
 
 async def test_recommendation_follows_the_hardware():
@@ -68,14 +75,62 @@ async def test_recommendation_follows_the_hardware():
     assert plan(BY_ID["qwen-image-2.1-turbo"], hardware("cuda", 24, ram=64)).mode == "offload"
     assert best(hardware("cuda", 24, ram=32)) == "z-image-turbo"
     assert best(hardware("cuda", 12, ram=32)) == "flux2-klein-4b"
-    assert best(hardware("cuda", 8, ram=32)) is None
     assert not plan(BY_ID["flux2-klein-4b"], hardware("cuda", 8)).fits
+    # Small GPUs get the Stable Diffusion fine-tunes.
+    assert best(hardware("cuda", 8, ram=16)) == "dreamshaper-xl-lightning"
+    assert plan(BY_ID["dreamshaper-xl-lightning"], hardware("cuda", 8, ram=16)).mode == "offload"
+    assert best(hardware("cuda", 6, ram=16)) == "dreamshaper-8-lcm"
+    assert plan(BY_ID["dreamshaper-8-lcm"], hardware("cuda", 4, ram=8)).mode == "device"
+    assert plan(BY_ID["dreamshaper-8-lcm"], hardware("cuda", 3, ram=8)).mode == "offload"
+    assert best(hardware("cuda", 2, ram=8)) is None
     # Apple Silicon: a share of unified memory, no offload.
     assert best(hardware("mps", 64)) == "qwen-image-2.1-turbo"
     assert best(hardware("mps", 36)) == "z-image-turbo"
-    assert best(hardware("mps", 16)) is None
-    cpu = plan(BY_ID["z-image-turbo"], hardware("cpu", 32))
-    assert cpu.fits and "minutes" in cpu.detail
+    assert best(hardware("mps", 16)) == "dreamshaper-xl-lightning"
+    assert best(hardware("mps", 8)) == "dreamshaper-8-lcm"
+    assert best(hardware("mps", 2)) is None
+    # On the CPU the smallest model that fits wins, even with room for larger ones.
+    # It runs in float32, so it needs twice the memory.
+    assert plan(BY_ID["z-image-turbo"], hardware("cpu", 64)).fits
+    assert not plan(BY_ID["z-image-turbo"], hardware("cpu", 32)).fits
+    assert "minutes" in plan(BY_ID["z-image-turbo"], hardware("cpu", 64)).detail
+    assert best(hardware("cpu", 64)) == "dreamshaper-8-lcm"
+    assert "seconds" in plan(BY_ID["dreamshaper-8-lcm"], hardware("cpu", 8)).detail
+    assert best(hardware("cpu", 4)) is None
+
+
+async def test_precision_follows_the_os_processor_and_model():
+    qwen, small = BY_ID["qwen-image-2.1-turbo"], BY_ID["dreamshaper-8-lcm"]
+    # Native bf16 everywhere it's fast.
+    assert dtype_for(qwen, hardware("cuda", 48)) == "bfloat16"
+    assert dtype_for(small, hardware("cpu", 16, bf16=True)) == "bfloat16"
+    # Without it: fp16 on a GPU for models trained in fp16, float32 otherwise.
+    assert dtype_for(small, hardware("cuda", 8, bf16=False)) == "float16"
+    assert dtype_for(small, hardware("mps", 8, bf16=False)) == "float16"
+    assert dtype_for(qwen, hardware("cuda", 48, bf16=False)) == "float32"
+    assert dtype_for(small, hardware("cpu", 16)) == "float32"
+    # float32 doubles the memory: Qwen doesn't fit a 48 GB pre-Ampere GPU fully.
+    assert plan(qwen, hardware("cuda", 48, ram=128, bf16=False)).mode == "offload"
+    assert not plan(qwen, hardware("cuda", 48, ram=64, bf16=False)).fits
+    # A CPU with native bf16 fits Z-Image in 32 GB; one without needs 64 GB.
+    assert plan(BY_ID["z-image-turbo"], hardware("cpu", 32, bf16=True)).fits
+
+    # Which CPUs count as having fast bf16.
+    assert cpu_bf16({"avx512_bf16": True}, "Linux") and cpu_bf16({"amx_bf16": True}, "Windows")
+    assert cpu_bf16({"sve_bf16": True}, "Linux")
+    assert not cpu_bf16({"avx2": True, "avx512_f": True}, "Linux")
+    # Apple CPUs report ARM bf16, but PyTorch runs it far slower than float32.
+    assert not cpu_bf16({"bf16": True, "sve_bf16": True}, "Darwin")
+    assert mps_bf16("Apple M5 Max", True) and not mps_bf16("Apple M1 Pro", True)
+    assert not mps_bf16("Apple M3", False)
+
+
+async def test_requests_are_scaled_to_the_model_native_size():
+    assert provider.native_size(1024, 1024, 1024) == (1024, 1024)
+    assert provider.native_size(1024, 1024, 512) == (512, 512)
+    assert provider.native_size(1536, 864, 512) == (704, 384)
+    # Smaller requests are kept.
+    assert provider.native_size(256, 256, 512) == (256, 256)
 
 
 async def test_detection_reports_this_machine():
@@ -236,6 +291,8 @@ async def test_admin_endpoints_show_hardware_and_gate_licenses(local, monkeypatc
         # About 23 GB plus headroom doesn't fit 24 GB fully.
         "z-image-turbo": "offload",
         "flux2-klein-4b": "device",
+        "dreamshaper-xl-lightning": "device",
+        "dreamshaper-8-lcm": "device",
     }
     assert {model["id"]: model["license_accepted"] for model in overview["models"]}["z-image-turbo"] is True
 

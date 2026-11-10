@@ -113,22 +113,40 @@ support never sees tool messages in its history.
 ### Local diffusers generator (US-76.2)
 
 - **Hardware.** `local/hardware.py` detects CUDA (name, total and free
-  memory), Apple MPS (unified memory) or CPU (RAM), plus bf16 support; an admin
-  may force a present device. Status checks use a cached report; the admin
-  page detects fresh.
+  memory), Apple MPS (unified memory) or CPU (RAM), and whether the chosen
+  device has fast native bf16; an admin may force a present device. Status
+  checks use a cached report; the admin page detects fresh.
+- **Precision depends on OS, processor and model.** Native bf16 means:
+  NVIDIA Ampere or later (not emulated); Apple GPUs from M2 on with macOS 14;
+  CPUs with AVX-512 BF16 or AMX (Intel Cooper Lake / Sapphire Rapids and
+  later, AMD Zen 4 and later) or ARM SVE BF16 on Linux (Graviton 3 and later).
+  macOS CPUs never count: an M5 Max reports ARM bf16, yet PyTorch ran a
+  Stable Diffusion model over 50 times slower in bf16 than float32. Without
+  native bf16, models trained in fp16 (the Stable Diffusion entries) run in
+  fp16 on a GPU; bf16-trained models, which can overflow in fp16, and every
+  CPU run use float32, and fit planning doubles their memory.
 - **Catalog.** `local/catalog.py` pins each model's repository and commit
   (checked against Hugging Face on 2026-11-09), pipeline class, license,
   recommended steps and guidance, disk size and memory estimates with
   everything on the device and with model CPU offload. In preference order:
   Qwen-Image-2.1 Turbo (8 steps, non-commercial), Qwen-Image-2.1 (40 steps,
   non-commercial), Z-Image-Turbo (Apache 2.0), FLUX.2 [klein] 4B (Apache
-  2.0). Only the diffusers folders download, never extra single-file
-  checkpoints.
-- **Fit and recommendation.** CUDA: fully on the GPU when memory covers the
-  estimate plus 2 GB, else with CPU offload when the GPU covers the offload
-  peak and system RAM holds the model. MPS: when 70% of unified memory covers
-  it (no offload; memory is shared). CPU: 80% of RAM. The recommendation is
-  the first catalog model that fits.
+  2.0), then two unfiltered Stable Diffusion community fine-tunes for small
+  hardware: DreamShaper XL Lightning (SDXL, 4 steps, Open RAIL++-M; 8 GB GPUs,
+  16 GB Macs) and DreamShaper 8 LCM (SD 1.5 at 512 px, 8 steps, Open RAIL-M;
+  3–6 GB GPUs, 8 GB Macs, CPU). An entry may name a scheduler from its model
+  card and a native resolution: larger requests are scaled down to its area,
+  keeping the aspect ratio. Only the diffusers folders download: no
+  single-file checkpoints, fp32 copies when fp16 weights exist (loaded as the
+  `fp16` variant), or Stable Diffusion's separate image safety checker, which
+  is not loaded; the platform's prompt check governs.
+- **Fit and recommendation.** Headroom is a tenth of the estimate, at least
+  1 GB. CUDA: fully on the GPU when memory covers the estimate plus headroom,
+  else with CPU offload when the GPU covers the offload peak and system RAM
+  holds the model. MPS: when 70% of unified memory covers it (no offload;
+  memory is shared). CPU: 80% of RAM. The recommendation is the first catalog
+  model that fits; on the CPU it is the smallest that fits, since speed
+  matters more there.
 - **Downloads** reuse `ModelDownloadService` (pinned revision, manifest
   verification, cancel) under `STORAGE_ROOT/models/image-generation`, kept by
   the development reset. A non-commercial license must be accepted first;
@@ -139,8 +157,7 @@ support never sees tool messages in its history.
   generator per seed (same seed, same image on every device), reports each
   step, and returns PNGs. Changing the model or device, cancelling a job, an
   out-of-memory error, or 10 idle minutes stops it. A crash is reported and
-  the next job starts a fresh worker. Dtype: bf16, or fp16 on CUDA GPUs
-  without bf16.
+  the next job starts a fresh worker.
 - **Settings.** `image_generation_local` holds the model, device override and
   accepted licenses. The settings file carries the model and device, not
   downloads or license acceptance.

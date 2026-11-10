@@ -33,6 +33,7 @@ class WorkerKey:
     device: str
     mode: str
     dtype: str
+    scheduler: str | None = None
 
 
 @dataclass
@@ -58,7 +59,7 @@ class LocalRuntime:
         parent, child = context.Pipe()
         process = context.Process(
             target=worker_main,
-            args=(child, key.model_dir, key.pipeline, key.device, key.mode, key.dtype),
+            args=(child, key.model_dir, key.pipeline, key.device, key.mode, key.dtype, key.scheduler),
             daemon=True,
             name="asterism-image-worker",
         )
