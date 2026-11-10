@@ -240,6 +240,8 @@ class ApplicationSettings(BaseModel):
     canvas_enabled: StrictBool = False
     # Image generation policy and provider (ADR-0064), stored as one JSON value.
     image_generation: dict[str, Any] | None = None
+    # The local diffusers generator's model and device (US-76.2).
+    image_generation_local: dict[str, Any] | None = None
     compaction: CompactionSettings = Field(default_factory=CompactionSettings)
     chatgpt_plan_enabled: StrictBool = False
     llm_providers: list[Provider] = Field(default_factory=list)

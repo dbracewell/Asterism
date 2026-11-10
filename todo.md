@@ -41,9 +41,10 @@ Source: user request (2026-11-09). Order: US-76.1 → 76.2 → 76.3 → 76.4 →
 - [x] US-76.1: Image generation domain and agent tool
   - [x] ADR; domain, job queue, storage, provenance, policy and tool.
   - [x] Tests: gating, explicit mode with and without tools, storage, ownership, cancellation, refusal and audit.
-- [ ] US-76.2: Local diffusers generator
-  - [ ] Detection, catalog, recommendation, download and worker runtime.
-  - [ ] Tests with a stub pipeline (device choice, recommendation, OOM, worker crash); a manual run on CUDA, MPS and CPU recorded in the story.
+- [x] US-76.2: Local diffusers generator
+  - [x] Detection, catalog, recommendation, download and worker runtime.
+  - [x] Tests with a stub pipeline (device choice, recommendation, OOM, worker crash); manual runs on MPS and CPU recorded in the story (no CUDA machine available).
+  - [x] Small-hardware models (DreamShaper XL Lightning, DreamShaper 8 LCM) and precision by OS, processor and model; real runs on MPS and CPU.
 - [ ] US-76.3: ComfyUI generator
   - [ ] Client, workflow templating and settings.
   - [ ] Tests against a fake ComfyUI server.

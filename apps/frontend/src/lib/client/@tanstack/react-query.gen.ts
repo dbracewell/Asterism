@@ -423,6 +423,21 @@ import type {
   LearningModeGetManyData,
   LearningModeGetManyError,
   LearningModeGetManyResponse,
+  LocalImageCancelDownloadData,
+  LocalImageCancelDownloadError,
+  LocalImageCancelDownloadResponse,
+  LocalImageDownloadData,
+  LocalImageDownloadError,
+  LocalImageDownloadResponse,
+  LocalImageOverviewData,
+  LocalImageOverviewError,
+  LocalImageOverviewResponse,
+  LocalImageRemoveData,
+  LocalImageRemoveError,
+  LocalImageRemoveResponse,
+  LocalImageSelectData,
+  LocalImageSelectError,
+  LocalImageSelectResponse,
   MainAgentGeneralSubAgentsGetData,
   MainAgentGeneralSubAgentsGetError,
   MainAgentGeneralSubAgentsGetResponse,
@@ -6784,6 +6799,150 @@ export const imageGenerationAvailabilityOptions = (
     },
     queryKey: imageGenerationAvailabilityQueryKey(options),
   });
+
+export const localImageOverviewQueryKey = (
+  options?: Options<LocalImageOverviewData>,
+) => createQueryKey("localImageOverview", options);
+
+/**
+ * Overview
+ *
+ * Detected hardware, the catalog with fit and download state, and the recommendation.
+ */
+export const localImageOverviewOptions = (
+  options?: Options<LocalImageOverviewData>,
+) =>
+  queryOptions<
+    LocalImageOverviewResponse,
+    LocalImageOverviewError,
+    LocalImageOverviewResponse,
+    ReturnType<typeof localImageOverviewQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry.get().localImageOverview({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: localImageOverviewQueryKey(options),
+  });
+
+/**
+ * Select
+ */
+export const localImageSelectMutation = (
+  options?: Partial<Options<LocalImageSelectData>>,
+): UseMutationOptions<
+  LocalImageSelectResponse,
+  LocalImageSelectError,
+  Options<LocalImageSelectData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    LocalImageSelectResponse,
+    LocalImageSelectError,
+    Options<LocalImageSelectData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().localImageSelect({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Cancel
+ */
+export const localImageCancelDownloadMutation = (
+  options?: Partial<Options<LocalImageCancelDownloadData>>,
+): UseMutationOptions<
+  LocalImageCancelDownloadResponse,
+  LocalImageCancelDownloadError,
+  Options<LocalImageCancelDownloadData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    LocalImageCancelDownloadResponse,
+    LocalImageCancelDownloadError,
+    Options<LocalImageCancelDownloadData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry
+        .get()
+        .localImageCancelDownload({
+          ...options,
+          ...fnOptions,
+          throwOnError: true,
+        });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Download
+ *
+ * Start downloading a model. A non-commercial license must be accepted first.
+ */
+export const localImageDownloadMutation = (
+  options?: Partial<Options<LocalImageDownloadData>>,
+): UseMutationOptions<
+  LocalImageDownloadResponse,
+  LocalImageDownloadError,
+  Options<LocalImageDownloadData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    LocalImageDownloadResponse,
+    LocalImageDownloadError,
+    Options<LocalImageDownloadData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().localImageDownload({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Remove
+ *
+ * Delete a downloaded model's files to free disk space.
+ */
+export const localImageRemoveMutation = (
+  options?: Partial<Options<LocalImageRemoveData>>,
+): UseMutationOptions<
+  LocalImageRemoveResponse,
+  LocalImageRemoveError,
+  Options<LocalImageRemoveData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    LocalImageRemoveResponse,
+    LocalImageRemoveError,
+    Options<LocalImageRemoveData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().localImageRemove({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
 
 export const learningModeGetManyQueryKey = (
   options?: Options<LearningModeGetManyData>,

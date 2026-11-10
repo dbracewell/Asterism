@@ -120,7 +120,7 @@ user settings expose General, Personas, Skills, and Agents.
 | Image captioning     | Admin captioning policy and file-processing integration                                                                                                  | —                                                          |
 | Users and access     | Admin/user access checks, owner scoping and backend user lifecycle                                                                                       | Users management screens and permission-policy controls    |
 | Groups               | —                                                                                                                                                        | Group management and group policy settings                 |
-| Image Generation     | Image search and captioning are separate existing capabilities                                                                                           | Image-generation providers, models and generation workflow |
+| Image Generation     | Policy, `generate_image`, Create image and the local diffusers generator ([ADR-0064](../../docs/adr/0064-image-generation.md))                          | ComfyUI, admin page and chat UI (EPIC-76)                  |
 | Code Execution       | —                                                                                                                                                        | Sandboxed execution and runtime settings                   |
 | Export               | Individual file downloads                                                                                                                                | Data/conversation export tools                             |
 | Personas and memory  | Persona CRUD/defaults, chat selection and immutable execution inputs                                                                                     | Long-term memory engine                                    |
@@ -131,6 +131,39 @@ lifecycle checks. Navigation visibility does not grant access. Persona settings 
 follow that default or select a fixed persona. Accepted turns preserve their
 instructions and provenance. Long-term memory remains future work. See the [product-surface inventory](../../docs/architecture/frontend-and-themes.md#current-versus-planned-product-surface) for ownership
 and limits.
+
+## Local image generation
+
+The local generator (US-76.2) runs Hugging Face `diffusers` pipelines in a
+separate worker process started by the backend. It picks a device at startup:
+CUDA if available, then Apple MPS, then CPU. An administrator can override it.
+
+- **Catalog and recommendation.** `GET /settings/app/image-generation/local`
+  reports the hardware, each pinned catalog model's fit (fully on the device,
+  with CPU offload, or not at all) and the recommended model. Memory figures
+  are estimates at each model's native resolution. The catalog runs from
+  Qwen-Image-2.1 (about 20 GB of GPU memory with offload) down to DreamShaper
+  8 LCM (3 GB GPUs, 8 GB Macs, CPU).
+- **Precision** follows the OS, processor and model: bf16 where the device has
+  fast native support (NVIDIA Ampere+, Apple M2+ GPUs on macOS 14, Intel and
+  AMD CPUs with AVX-512 BF16 or AMX, Graviton 3+), otherwise fp16 on a GPU for
+  Stable Diffusion models and float32 for the rest and for CPUs, including
+  every Mac CPU. float32 doubles the memory a model needs.
+- **Downloads** go to `STORAGE_ROOT/models/image-generation/<model>` at a
+  pinned revision and are verified by manifest (4–33 GB per model).
+  Non-commercial licenses (Qwen-Image-2.1) must be accepted before download.
+- **Apple Silicon (local development):** MPS works with the default torch
+  build. About 70% of unified memory is assumed usable by the GPU.
+- **NVIDIA in Docker:** the image runs on CPU by default. For CUDA, run the
+  container with the NVIDIA container runtime (`--gpus all`) and a CUDA build
+  of torch; check the admin page's hardware report shows `cuda`.
+- **CPU** works for every model that fits in memory. The recommendation is
+  the smallest: DreamShaper 8 LCM takes about 13 s per 512² image on an M5 Max
+  CPU; large models take minutes.
+
+The worker loads the model on the first image and unloads after 10 idle
+minutes. Out-of-memory errors and crashes are reported to the user and the
+next request starts a fresh worker.
 
 ## Quality checks
 

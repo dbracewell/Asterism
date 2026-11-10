@@ -333,6 +333,7 @@ class Config(BaseSettings):
         self.knowledge_root.mkdir(exist_ok=True, parents=True)
         self.knowledge_models_root.mkdir(exist_ok=True, parents=True)
         self.local_caption_models_root.mkdir(exist_ok=True, parents=True)
+        self.image_models_root.mkdir(exist_ok=True, parents=True)
 
     @property
     def jwt_issuer(self) -> str:
@@ -374,6 +375,12 @@ class Config(BaseSettings):
     def knowledge_models_root(self) -> Path:
         """Directory for the pinned CLIP embedding model bundle."""
         return self.storage_root / "models" / "knowledge-clip"
+
+    @computed_field
+    @property
+    def image_models_root(self) -> Path:
+        """Directory for local image generation model bundles (ADR-0064)."""
+        return self.storage_root / "models" / "image-generation"
 
     @computed_field
     @property

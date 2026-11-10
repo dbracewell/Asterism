@@ -69,7 +69,7 @@ class ProviderResult(BaseModel):
 class ImageProgress(BaseModel):
     """Streamed while a job runs, as a ``tool_progress`` event."""
 
-    stage: Literal["queued", "running", "saving"]
+    stage: Literal["queued", "loading", "running", "saving"]
     step: int | None = None
     total: int | None = None
 

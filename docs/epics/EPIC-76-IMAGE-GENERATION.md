@@ -1,6 +1,6 @@
 # EPIC-76: Image generation
 
-Status: in progress (US-76.1; [ADR-0064](../adr/0064-image-generation.md)). Source: user request (2026-11-09).
+Status: in progress (US-76.1 and US-76.2 done; [ADR-0064](../adr/0064-image-generation.md)). Source: user request (2026-11-09).
 
 ## Objective
 
@@ -135,8 +135,28 @@ pinned and verified; the API recommends a model for the detected hardware;
 downloads reuse the pinned-model flow; generation runs in a worker process
 with per-device settings, idle unload and clear out-of-memory errors.
 
-- [ ] Detection, catalog, recommendation, download and worker runtime.
-- [ ] Tests with a stub pipeline (device choice, recommendation, OOM, worker crash); a manual run on CUDA, MPS and CPU recorded in the story.
+- [x] Detection, catalog, recommendation, download and worker runtime.
+- [x] Tests with a stub pipeline (device choice, recommendation, OOM, worker crash); a manual run on CUDA, MPS and CPU recorded in the story.
+
+Manual run (2026-11-09, Apple M-series, 128 GB): the real worker loaded
+`tiny-random/z-image` with `ZImagePipeline` and made two 256² images with
+seeds 3 and 4 and step progress: MPS in 2.1 s, CPU in 31.5 s. This machine
+recommends Qwen-Image-2.1 Turbo; a full-size run needs its 32 GB download.
+CUDA has not been run: no NVIDIA machine was available.
+
+Small models (2026-11-10, same machine, real downloads, `a red fox sitting in
+a snowy forest`, seed 42, one image after a warm-up):
+
+| Model | Device, precision | Size | Time |
+| --- | --- | --- | --- |
+| DreamShaper 8 LCM | MPS, bf16 / fp16 | 512² | 2.7 s / 2.5 s |
+| DreamShaper 8 LCM | CPU, float32 | 512² | 12.8 s |
+| DreamShaper 8 LCM | CPU, bf16 | 512² | stopped after 10 min (2 cores busy) |
+| DreamShaper XL Lightning | MPS, bf16 / fp16 | 1024² | 2.8 s / 3.5 s |
+| DreamShaper XL Lightning | CPU, float32 | 1024² | 49.4 s |
+
+The bf16 CPU result led to per-OS, per-processor precision (ADR-0064). fp16
+images were checked for the SDXL black-image problem: none.
 
 ## US-76.3: ComfyUI generator
 

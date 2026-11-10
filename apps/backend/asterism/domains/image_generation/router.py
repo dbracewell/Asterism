@@ -8,6 +8,7 @@ from asterism.db.dependencies import DBSessionDep
 from asterism.domains.user.dependencies import AdminUserDep, AuthedUserDep
 
 from . import policy
+from .local import provider as _local_provider  # noqa: F401 - registers the diffusers provider
 from .schemas import ImageGenerationAvailability, ImageGenerationPolicy, ImageProviderStatus
 
 image_generation_router = APIRouter(

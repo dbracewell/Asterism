@@ -890,6 +890,13 @@ export const zDisagreementSummary = z.object({
   usage: zDisagreementUsage,
 });
 
+/**
+ * DownloadRequest
+ */
+export const zDownloadRequest = z.object({
+  accept_license: z.boolean().optional().default(false),
+});
+
 export const zDownloadStatus = z.enum([
   "idle",
   "downloading",
@@ -1328,6 +1335,22 @@ export const zGroupUpdate = z.object({
 });
 
 /**
+ * HardwareReport
+ *
+ * What the backend can use. Memory is in GiB.
+ */
+export const zHardwareReport = z.object({
+  device: z.enum(["cuda", "mps", "cpu"]),
+  name: z.string(),
+  memory_gb: z.number(),
+  free_gb: z.number().nullish(),
+  system_ram_gb: z.number(),
+  cpu_count: z.int(),
+  bf16: z.boolean(),
+  available: z.array(z.enum(["cuda", "mps", "cpu"])),
+});
+
+/**
  * HintLevel
  *
  * Branch-local hint state, weakest first; ``answer`` is the explicit reveal.
@@ -1732,6 +1755,33 @@ export const zLearningModeProvenance = z.object({
   name: z.string(),
   version: z.int().gte(1),
   hint_level: zHintLevel.nullish(),
+});
+
+/**
+ * LocalDownload
+ */
+export const zLocalDownload = z.object({
+  status: z.enum(["idle", "downloading", "verifying", "ready", "failed"]),
+  bytes_downloaded: z.int(),
+  total_bytes: z.int(),
+  error: z.string().nullish(),
+});
+
+/**
+ * LocalSelection
+ */
+export const zLocalSelection = z.object({
+  model_id: z.string().nullable(),
+  device: z.enum(["auto", "cuda", "mps", "cpu"]).optional().default("auto"),
+});
+
+/**
+ * LocalSettings
+ */
+export const zLocalSettings = z.object({
+  model_id: z.string().nullish(),
+  device: z.enum(["auto", "cuda", "mps", "cpu"]).optional().default("auto"),
+  accepted_licenses: z.array(z.string()).max(50).optional(),
 });
 
 /**
@@ -2276,6 +2326,44 @@ export const zPersonaUpdate = z.object({
 });
 
 /**
+ * Plan
+ */
+export const zPlan = z.object({
+  fits: z.boolean(),
+  mode: z.enum(["device", "offload", "none"]),
+  detail: z.string(),
+});
+
+/**
+ * LocalModel
+ */
+export const zLocalModel = z.object({
+  id: z.string(),
+  name: z.string(),
+  repo: z.string(),
+  revision: z.string(),
+  license: z.string(),
+  commercial_use: z.boolean(),
+  description: z.string(),
+  disk_gb: z.number(),
+  memory_gb: z.number(),
+  plan: zPlan,
+  download: zLocalDownload,
+  license_accepted: z.boolean(),
+});
+
+/**
+ * LocalOverview
+ */
+export const zLocalOverview = z.object({
+  hardware: zHardwareReport,
+  recommended_id: z.string().nullable(),
+  settings: zLocalSettings,
+  models: z.array(zLocalModel),
+  worker_running: z.boolean(),
+});
+
+/**
  * ProjectAreas
  *
  * On/off switch for each optional area. Overview, Chats, Files and Settings are always shown.
@@ -2696,6 +2784,7 @@ export const zApplicationSettings = z.object({
   skills_enabled: z.boolean().optional().default(false),
   canvas_enabled: z.boolean().optional().default(false),
   image_generation: z.record(z.string(), z.unknown()).nullish(),
+  image_generation_local: z.record(z.string(), z.unknown()).nullish(),
   compaction: zCompactionSettings.optional(),
   chatgpt_plan_enabled: z.boolean().optional().default(false),
   llm_providers: z.array(zProvider).optional(),
@@ -4960,6 +5049,7 @@ export const zApplicationSettingsWritable = z.object({
   skills_enabled: z.boolean().optional().default(false),
   canvas_enabled: z.boolean().optional().default(false),
   image_generation: z.record(z.string(), z.unknown()).nullish(),
+  image_generation_local: z.record(z.string(), z.unknown()).nullish(),
   compaction: zCompactionSettings.optional(),
   chatgpt_plan_enabled: z.boolean().optional().default(false),
   llm_providers: z.array(zProviderWritable).optional(),
@@ -6726,6 +6816,47 @@ export const zImageGenerationProviderStatusResponse = zImageProviderStatus;
  */
 export const zImageGenerationAvailabilityResponse =
   zImageGenerationAvailability;
+
+/**
+ * Successful Response
+ */
+export const zLocalImageOverviewResponse = zLocalOverview;
+
+export const zLocalImageSelectBody = zLocalSelection;
+
+/**
+ * Successful Response
+ */
+export const zLocalImageSelectResponse = zLocalOverview;
+
+export const zLocalImageCancelDownloadPath = z.object({
+  model_id: z.string(),
+});
+
+/**
+ * Successful Response
+ */
+export const zLocalImageCancelDownloadResponse = zLocalOverview;
+
+export const zLocalImageDownloadBody = zDownloadRequest;
+
+export const zLocalImageDownloadPath = z.object({
+  model_id: z.string(),
+});
+
+/**
+ * Successful Response
+ */
+export const zLocalImageDownloadResponse = zLocalOverview;
+
+export const zLocalImageRemovePath = z.object({
+  model_id: z.string(),
+});
+
+/**
+ * Successful Response
+ */
+export const zLocalImageRemoveResponse = zLocalOverview;
 
 /**
  * Successful Response

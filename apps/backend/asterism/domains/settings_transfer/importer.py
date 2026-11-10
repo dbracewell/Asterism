@@ -114,6 +114,7 @@ def _changed_settings(bundle: SettingsBundle, current: SettingsBundle) -> list[s
         "Skills policy": bundle.skills_enabled != current.skills_enabled,
         "Canvas policy": bundle.canvas_enabled != current.canvas_enabled,
         "Image generation policy": bundle.image_generation != current.image_generation,
+        "Local image model": bundle.image_generation_local != current.image_generation_local,
         "ChatGPT plan policy": bundle.chatgpt_plan_enabled != current.chatgpt_plan_enabled,
         "Web search provider": bundle.web_search_provider is not None
         and bundle.web_search_provider != current.web_search_provider,
@@ -253,6 +254,18 @@ async def _apply_image_generation(bundle: SettingsBundle, session: AsyncSession)
     current = await read_policy(session)
     policy = current.model_copy(update=bundle.image_generation.model_dump())
     await _put_setting("image_generation", policy.model_dump(mode="json"), session)
+
+    from asterism.domains.image_generation.local.catalog import entry
+    from asterism.domains.image_generation.local.settings import read_settings
+
+    local = await read_settings(session)
+    chosen = bundle.image_generation_local.model_id
+    update = {
+        "device": bundle.image_generation_local.device,
+        # A model this version doesn't know is skipped rather than failing the import.
+        "model_id": chosen if chosen is None or entry(chosen) is not None else local.model_id,
+    }
+    await _put_setting("image_generation_local", local.model_copy(update=update).model_dump(mode="json"), session)
 
 
 async def _apply_captioning(bundle: SettingsBundle, session: AsyncSession) -> None:
