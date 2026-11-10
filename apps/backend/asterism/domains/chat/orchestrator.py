@@ -713,6 +713,14 @@ class ChatOrchestrator:
                 files=files,
                 compaction=self._compaction.manifest() if self._compaction else None,
             )
+            # "Create image" turns force generate_image on the first step (ADR-0064).
+            # A fork has trimmed the list to its step's history, so look it up safely.
+            request = (
+                self.chat.messages[last_user_message_index]
+                if last_user_message_index < len(self.chat.messages)
+                else None
+            )
+            self.agent.image_request = bool(request is not None and getattr(request, "image_request", False))
             async for event in self.agent.run(messages=messages, replay=replay):
                 match event:
                     case AgentEvent(type=AgentEventType.COMPLETE):
@@ -779,6 +787,10 @@ class ChatOrchestrator:
                                     "event": (event.sub_agent.event.model_dump(mode="json")),
                                 },
                             )
+
+                    case AgentEvent(type=AgentEventType.TOOL_PROGRESS):
+                        if event.tool_progress:
+                            await self._emit({"type": "tool_progress", **event.tool_progress.model_dump(mode="json")})
 
                     case AgentEvent(type=AgentEventType.START):
                         await self._emit(

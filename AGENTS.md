@@ -113,6 +113,12 @@ fixed models and receive the same or narrower execution file scope.
   the user's `canvas_enabled` setting are on and the model supports tools
   ([ADR-0063](docs/adr/0063-canvas.md)). Canvas versions are branch-aware chat
   records; canvas content is untrusted data and grants nothing.
+- `generate_image` is an internal tool for the main agent in ordinary chats,
+  offered when the admin image generation policy is on, the user's group is
+  allowed, the provider is ready and the model supports tools
+  ([ADR-0064](docs/adr/0064-image-generation.md)). A fixed prompt check refuses
+  sexual content involving minors; every attempt is recorded; images are
+  produced chat files.
 
 ---
 

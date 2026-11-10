@@ -1358,6 +1358,36 @@ export const zHintRequest = z.object({
 });
 
 /**
+ * ImageGenerationAvailability
+ *
+ * Whether this user can generate images now, and why not.
+ */
+export const zImageGenerationAvailability = z.object({
+  available: z.boolean(),
+  reason: z.string().optional().default(""),
+});
+
+/**
+ * ImageGenerationPolicy
+ *
+ * The admin policy: on or off, which groups may use it, and the active provider.
+ */
+export const zImageGenerationPolicy = z.object({
+  enabled: z.boolean().optional().default(false),
+  group_ids: z.array(z.string()).max(200).nullish(),
+  provider: z.enum(["none", "comfyui", "diffusers"]).optional().default("none"),
+});
+
+/**
+ * ImageProviderStatus
+ */
+export const zImageProviderStatus = z.object({
+  provider: z.enum(["none", "comfyui", "diffusers"]),
+  ready: z.boolean(),
+  detail: z.string().optional().default(""),
+});
+
+/**
  * InlineFileReference
  *
  * One ``asterism-file:`` reference in saved Markdown, resolved at save time (ADR-0039).
@@ -2665,6 +2695,7 @@ export const zProvider = z.object({
 export const zApplicationSettings = z.object({
   skills_enabled: z.boolean().optional().default(false),
   canvas_enabled: z.boolean().optional().default(false),
+  image_generation: z.record(z.string(), z.unknown()).nullish(),
   compaction: zCompactionSettings.optional(),
   chatgpt_plan_enabled: z.boolean().optional().default(false),
   llm_providers: z.array(zProvider).optional(),
@@ -4377,6 +4408,7 @@ export const zChatSendRequest = z.object({
   template: zTemplateUse.nullish(),
   rubric: zRubricUse.nullish(),
   include_goal: z.boolean().optional().default(false),
+  create_image: z.boolean().optional().default(false),
   hint: zHintRequest.nullish(),
   expected_model_revision: z.int().gte(1),
   request_id: z.uuid(),
@@ -4395,6 +4427,7 @@ export const zNewChatRequest = z.object({
   template: zTemplateUse.nullish(),
   rubric: zRubricUse.nullish(),
   include_goal: z.boolean().optional().default(false),
+  create_image: z.boolean().optional().default(false),
   persona_id: z.uuid().nullish(),
   learning_mode: zLearningModeId.optional().default("standard"),
   hint: zHintRequest.nullish(),
@@ -4810,6 +4843,7 @@ export const zMessage = z.object({
   template: zTemplateLabel.nullish(),
   rubric: zRubricLabel.nullish(),
   goal: zGoalSnapshot.nullish(),
+  image_request: z.boolean().optional().default(false),
   execution: zMessageExecution.nullish(),
   id: z.uuid(),
   status: zMessageStatus,
@@ -4925,6 +4959,7 @@ export const zProviderWritable = z.object({
 export const zApplicationSettingsWritable = z.object({
   skills_enabled: z.boolean().optional().default(false),
   canvas_enabled: z.boolean().optional().default(false),
+  image_generation: z.record(z.string(), z.unknown()).nullish(),
   compaction: zCompactionSettings.optional(),
   chatgpt_plan_enabled: z.boolean().optional().default(false),
   llm_providers: z.array(zProviderWritable).optional(),
@@ -6668,6 +6703,29 @@ export const zCanvasVersionSaveToLibraryPath = z.object({
  * Successful Response
  */
 export const zCanvasVersionSaveToLibraryResponse = zUserFile;
+
+/**
+ * Successful Response
+ */
+export const zImageGenerationPolicyGetResponse = zImageGenerationPolicy;
+
+export const zImageGenerationPolicyUpdateBody = zImageGenerationPolicy;
+
+/**
+ * Successful Response
+ */
+export const zImageGenerationPolicyUpdateResponse = zImageGenerationPolicy;
+
+/**
+ * Successful Response
+ */
+export const zImageGenerationProviderStatusResponse = zImageProviderStatus;
+
+/**
+ * Successful Response
+ */
+export const zImageGenerationAvailabilityResponse =
+  zImageGenerationAvailability;
 
 /**
  * Successful Response

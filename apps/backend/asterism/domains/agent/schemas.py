@@ -30,6 +30,17 @@ class AgentEventType(StrEnum):
     DELTA = auto()
     TOOL_PERMISSION_REQUEST = auto()
     SUB_AGENT = auto()
+    TOOL_PROGRESS = auto()
+
+
+class ToolProgress(BaseModel):
+    """A long-running tool's progress, streamed while it runs (e.g. image steps)."""
+
+    tool_call_id: str
+    name: str
+    stage: str
+    step: int | None = None
+    total: int | None = None
 
 
 class SubAgentEventEnvelope(BaseModel):
@@ -75,6 +86,7 @@ class AgentEvent(BaseModel):
     total_tokens: int = Field(default=0)
     generation_duration_ms: int = Field(default=0)
     sub_agent: SubAgentEventEnvelope | None = None
+    tool_progress: ToolProgress | None = None
     # Machine-readable provider error code on ERROR events (e.g. chatgpt_plan_usage_limit).
     error_code: str | None = None
 

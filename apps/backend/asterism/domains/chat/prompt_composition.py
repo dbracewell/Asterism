@@ -16,7 +16,7 @@ from asterism.domains.agent.prompts import (
 )
 from asterism.domains.agent.schemas import AgentProfile
 from asterism.domains.agent.skill_inputs import SkillCatalogEntry, SkillSnapshot
-from asterism.domains.tools.catalog import CANVAS_TOOL_NAMES, SKILL_TOOL_NAME
+from asterism.domains.tools.catalog import CANVAS_TOOL_NAMES, IMAGE_TOOL_NAME, SKILL_TOOL_NAME
 from asterism.domains.tools.context import ContextToolScope
 
 from .delegation import eligible_delegation_targets
@@ -189,8 +189,19 @@ async def build_runtime_prompt(
         runtime += CITATION_GUIDANCE
     if CANVAS_TOOL_NAMES <= set(tools):
         runtime += await _canvas_guidance(user_id=user_id, chat_id=chat_id, session=session)
+    if IMAGE_TOOL_NAME in tools:
+        runtime += IMAGE_GUIDANCE
     return runtime
 
+
+IMAGE_GUIDANCE = (
+    "\n\nImages: when the user asks you to create, draw, render or design an image, call "
+    "generate_image with a detailed prompt (subject, setting, style, lighting, composition) "
+    "instead of describing it in words. The images are shown in the chat and saved to the "
+    "user's files, so don't repeat their file ids; say briefly what you made. To vary an "
+    "earlier image, reuse its seed with a changed prompt."
+)
+"""ADR-0064: offered only with generate_image. It grants nothing."""
 
 CANVAS_GUIDANCE = (
     "\nCanvas: put a long document (more than a few paragraphs), a whole program or an HTML page "

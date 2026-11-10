@@ -437,7 +437,7 @@ async def test_agent_replay_runs_only_unreused_calls_then_uses_the_remaining_bud
     client = OneAnswer()
     ran: list[str] = []
 
-    async def run_tools(*, user_message, auths, event_sink=None):
+    async def run_tools(*, user_message, auths, event_sink=None, progress_sink=None):
         for auth_item in auths:
             ran.append(auth_item.tool.id)
             yield result(auth_item.tool.id, "fresh")

@@ -245,7 +245,7 @@ async def test_tool_calls_run_through_the_agent_loop_with_stateless_history():
         await self.resolve_tools()
         return "Use tools."
 
-    async def run_tools(self, user_message, auths, event_sink=None):
+    async def run_tools(self, user_message, auths, event_sink=None, progress_sink=None):
         for auth in auths:
             executed.append(auth.tool)
             yield ToolResult(content="12:00", raw_result="12:00", is_empty=False, tool_call=auth.tool)

@@ -408,6 +408,18 @@ import type {
   GroupRenameData,
   GroupRenameErrors,
   GroupRenameResponses,
+  ImageGenerationAvailabilityData,
+  ImageGenerationAvailabilityErrors,
+  ImageGenerationAvailabilityResponses,
+  ImageGenerationPolicyGetData,
+  ImageGenerationPolicyGetErrors,
+  ImageGenerationPolicyGetResponses,
+  ImageGenerationPolicyUpdateData,
+  ImageGenerationPolicyUpdateErrors,
+  ImageGenerationPolicyUpdateResponses,
+  ImageGenerationProviderStatusData,
+  ImageGenerationProviderStatusErrors,
+  ImageGenerationProviderStatusResponses,
   LearningModeGetManyData,
   LearningModeGetManyErrors,
   LearningModeGetManyResponses,
@@ -4768,6 +4780,96 @@ export class ApiClient extends HeyApiClient {
         "Content-Type": "application/json",
         ...options.headers,
       },
+    });
+  }
+
+  /**
+   * Get Policy
+   */
+  public imageGenerationPolicyGet<ThrowOnError extends boolean = false>(
+    options?: Options<ImageGenerationPolicyGetData, ThrowOnError>,
+  ): RequestResult<
+    ImageGenerationPolicyGetResponses,
+    ImageGenerationPolicyGetErrors,
+    ThrowOnError
+  > {
+    return (options?.client ?? this.client).get<
+      ImageGenerationPolicyGetResponses,
+      ImageGenerationPolicyGetErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/settings/app/image-generation",
+      ...options,
+    });
+  }
+
+  /**
+   * Put Policy
+   */
+  public imageGenerationPolicyUpdate<ThrowOnError extends boolean = false>(
+    options: Options<ImageGenerationPolicyUpdateData, ThrowOnError>,
+  ): RequestResult<
+    ImageGenerationPolicyUpdateResponses,
+    ImageGenerationPolicyUpdateErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).put<
+      ImageGenerationPolicyUpdateResponses,
+      ImageGenerationPolicyUpdateErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/settings/app/image-generation",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+  }
+
+  /**
+   * Get Status
+   */
+  public imageGenerationProviderStatus<ThrowOnError extends boolean = false>(
+    options?: Options<ImageGenerationProviderStatusData, ThrowOnError>,
+  ): RequestResult<
+    ImageGenerationProviderStatusResponses,
+    ImageGenerationProviderStatusErrors,
+    ThrowOnError
+  > {
+    return (options?.client ?? this.client).get<
+      ImageGenerationProviderStatusResponses,
+      ImageGenerationProviderStatusErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/settings/app/image-generation/status",
+      ...options,
+    });
+  }
+
+  /**
+   * Get Availability
+   *
+   * Whether you can create images now; the reason is shown when you can't.
+   */
+  public imageGenerationAvailability<ThrowOnError extends boolean = false>(
+    options?: Options<ImageGenerationAvailabilityData, ThrowOnError>,
+  ): RequestResult<
+    ImageGenerationAvailabilityResponses,
+    ImageGenerationAvailabilityErrors,
+    ThrowOnError
+  > {
+    return (options?.client ?? this.client).get<
+      ImageGenerationAvailabilityResponses,
+      ImageGenerationAvailabilityErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/image-generation/availability",
+      ...options,
     });
   }
 

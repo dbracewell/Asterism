@@ -78,6 +78,14 @@ class ExportedCaptioning(_Document):
     model: ModelReference | None = None
 
 
+class ExportedImageGeneration(_Document):
+    """Image generation policy and provider (ADR-0064). Group limits stay with the
+    installation: group ids differ between installations."""
+
+    enabled: bool = False
+    provider: Literal["none", "comfyui", "diffusers"] = "none"
+
+
 class ExportedCompaction(_Document):
     """Context compaction policy (ADR-0060); the summarizer model travels by name."""
 
@@ -109,6 +117,7 @@ class SettingsBundle(_Document):
     active_tools: tuple[str, ...] = ()
     skills_enabled: bool = False
     canvas_enabled: bool = False
+    image_generation: ExportedImageGeneration = Field(default_factory=ExportedImageGeneration)
     chatgpt_plan_enabled: bool = False
     web_search_provider: ExportedComponent | None = None
     image_search_provider: ExportedComponent | None = None
