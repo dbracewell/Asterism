@@ -72,3 +72,18 @@ canvas toggle; Admin Settings has the policy. Help covers canvas.
 
 - [x] Implement exports (server-side) and save-to-library.
 - [x] Settings toggles, help and glossary; tests for each export type.
+
+## US-72.4: Start a canvas item yourself
+
+As a user, I want to start a canvas item without asking the agent, and find
+every item in the chat.
+
+Estimate: 1 day. Dependencies: US-72.3. Source: user request (2026-11-09).
+
+Acceptance: a Canvas chip in the composer lists the items on the branch being
+viewed and opens them; "New canvas item" creates an empty document, code
+(with a language) or HTML item as the user, opens it, and the agent sees it on
+the next turn. It follows the canvas switches and needs a message to anchor to.
+
+- [x] Endpoint, chip, dialog and help.
+- [x] Backend, unit and E2E tests.

@@ -287,6 +287,31 @@ async def save_user_version(
     )
 
 
+async def create_user_item(
+    user_id: str,
+    chat_id: uuid.UUID,
+    branch: Branch,
+    *,
+    kind: CanvasKind,
+    title: str,
+    language: str | None,
+    content: str,
+    session: AsyncSession,
+) -> VisibleItem:
+    """An item the user starts, anchored like their edits to the branch's last message."""
+    return await create_item(
+        user_id,
+        chat_id,
+        branch,
+        _user_anchor(branch),
+        kind=kind,
+        title=title,
+        content=content,
+        language=language,
+        session=session,
+    )
+
+
 async def restore_version(
     user_id: str,
     chat_id: uuid.UUID,

@@ -15,6 +15,7 @@ import type {
 const MODEL = "11111111-1111-4111-8111-111111111111";
 const CHAT = "77777777-7777-4777-8777-777777777777";
 const ITEM = "cccccccc-cccc-4ccc-8ccc-000000000001";
+const NEW_ITEM = "cccccccc-cccc-4ccc-8ccc-000000000002";
 
 const model: ChatModelChoice = {
   id: MODEL,
@@ -187,6 +188,38 @@ async function openChat(page: Page) {
       },
     });
   });
+  const created: Record<string, unknown>[] = [];
+  await page.route(`**/api/py/chat/${CHAT}/canvas`, (route) => {
+    const request = route.request();
+    const latest = canvas.versions.at(-1)!;
+    const listed = {
+      id: ITEM,
+      kind: "document",
+      language: "",
+      title: latest.title,
+      version: latest.number,
+      author: latest.author,
+      size: 0,
+      updated_at: 1,
+    };
+    if (request.method() === "POST") {
+      const body = request.postDataJSON();
+      created.push(body);
+      return route.fulfill({
+        json: {
+          ...latest,
+          item_id: NEW_ITEM,
+          number: 1,
+          author: "user",
+          title: body.title,
+          kind: body.kind,
+          language: body.language ?? "",
+          content: "",
+        },
+      });
+    }
+    return route.fulfill({ json: chat.messages.length > 1 ? [listed] : [] });
+  });
   const transport: { socket?: WebSocketRoute } = {};
   await page.routeWebSocket(`**/api/py/chat/stream/${CHAT}?**`, (socket) => {
     transport.socket = socket;
@@ -209,7 +242,7 @@ async function openChat(page: Page) {
   socket.send(
     JSON.stringify({ type: "complete", last_messages: [userMessage, step] }),
   );
-  return { canvas, sends };
+  return { canvas, sends, created };
 }
 
 test("open, edit, ask about a selection and restore a canvas item", async ({
@@ -330,4 +363,30 @@ test("opens as a full-screen sheet on mobile", async ({ page }, info) => {
   await page.screenshot({ path: info.outputPath("canvas-mobile.png") });
   await page.keyboard.press("Escape");
   await expect(sheet).toBeHidden();
+});
+
+test("start a canvas item from the composer's Canvas chip", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  const { created } = await openChat(page);
+  const chip = page.getByRole("button", { name: "Canvas, 1 item" });
+  await chip.click();
+  const popover = page.locator("[data-slot=popover-content]");
+  await expect(
+    popover.getByRole("button", { name: /Launch plan/ }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "New canvas item" }).click();
+  const dialog = page.getByRole("dialog", { name: "New canvas item" });
+  await dialog.getByLabel("Title").fill("Parser");
+  await dialog.getByRole("radio", { name: "Code" }).click();
+  await dialog.getByLabel("Language").fill("python");
+  await dialog.getByRole("button", { name: "Create" }).click();
+  await expect.poll(() => created.length).toBe(1);
+  expect(created[0]).toEqual({
+    kind: "code",
+    title: "Parser",
+    language: "python",
+  });
+  await expect(dialog).toBeHidden();
 });

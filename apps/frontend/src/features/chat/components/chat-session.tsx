@@ -18,6 +18,7 @@ import {
   CanvasProvider,
   type CanvasContextValue,
 } from "@/features/canvas/components/canvas-context";
+import { CanvasChip } from "@/features/canvas/components/canvas-chip";
 import { CanvasLayout } from "@/features/canvas/components/canvas-layout";
 import { canvasRefs } from "@/features/canvas/lib/canvas";
 import { StreamingIndicator } from "@/features/chat/components/message/streaming-indicator";
@@ -917,6 +918,10 @@ export const ChatSession = ({
                             : previous,
                         )
                       }
+                    />
+                    <CanvasChip
+                      chatId={chatId}
+                      hasMessages={session.messages.length > 0}
                     />
                     {projectGoal && (
                       <ChatGoalToggle

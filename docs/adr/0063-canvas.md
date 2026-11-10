@@ -1,7 +1,8 @@
 # ADR-0063 — Canvas items are versioned, branch-aware chat records
 
 Status: accepted; domain and agent tools in US-72.1, panel and user edits in
-US-72.2, downloads and settings in US-72.3 on 2026-11-09
+US-72.2, downloads and settings in US-72.3, user-started items in US-72.4 on
+2026-11-09
 ([EPIC-72](../epics/EPIC-72-CANVAS.md)).
 
 ## Context
@@ -97,6 +98,12 @@ need canvas on (both switches) and anchor to the last message on the active
 branch, so the agent's next turn, a child of that message, sees them.
 `base_version` must be the item's current version on that branch, else 409: an
 edit never silently overwrites a version the agent wrote meanwhile.
+
+`POST /chat/{chat_id}/canvas` (`{kind, title, language?, content?}`, content
+empty by default) starts an item as the user (US-72.4), with the same switches
+and anchor as an edit, so a chat needs a message first. The composer's Canvas
+chip lists the items on the active branch, since a user-started item has no
+tool-result card, and offers "New canvas item".
 
 "Ask about selection" is a client feature: it sends an ordinary chat message
 that quotes the selected text with the item's id and version and asks for a

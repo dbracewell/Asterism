@@ -15,6 +15,7 @@ from . import downloads, policy, service
 from .branches import active_branch
 from .exports import CanvasExportFormat, ExportedFile, content_disposition
 from .schemas import (
+    CanvasItemCreate,
     CanvasItemHistory,
     CanvasItemSummary,
     CanvasLibrarySave,
@@ -54,6 +55,26 @@ async def list_items(chat_id: uuid.UUID, user: AuthedUserDep, session: DBSession
     """Items visible on the chat's active branch, with their current versions."""
     branch = await active_branch(user.id, chat_id, session)
     return [service.summary(entry) for entry in await service.visible_items(user.id, chat_id, branch, session)]
+
+
+@canvas_router.post("/chat/{chat_id}/canvas", operation_id="canvasItemCreate")
+async def create_item(
+    chat_id: uuid.UUID, payload: CanvasItemCreate, user: AuthedUserDep, session: DBSessionDep
+) -> CanvasVersion:
+    """Start a canvas item yourself; the agent sees it on its next turn."""
+    branch = await active_branch(user.id, chat_id, session)
+    await policy.require_canvas(user.id, chat_id, session)
+    entry = await service.create_user_item(
+        user.id,
+        chat_id,
+        branch,
+        kind=payload.kind,
+        title=payload.title,
+        language=payload.language,
+        content=payload.content,
+        session=session,
+    )
+    return service.full_version(entry)
 
 
 _BINARY = {

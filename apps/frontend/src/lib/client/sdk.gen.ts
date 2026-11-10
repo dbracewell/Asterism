@@ -90,6 +90,9 @@ import type {
   CanvasExportZipData,
   CanvasExportZipErrors,
   CanvasExportZipResponses,
+  CanvasItemCreateData,
+  CanvasItemCreateErrors,
+  CanvasItemCreateResponses,
   CanvasItemGetManyData,
   CanvasItemGetManyErrors,
   CanvasItemGetManyResponses,
@@ -4567,6 +4570,33 @@ export class ApiClient extends HeyApiClient {
       security: [{ scheme: "bearer", type: "http" }],
       url: "/chat/{chat_id}/canvas",
       ...options,
+    });
+  }
+
+  /**
+   * Create Item
+   *
+   * Start a canvas item yourself; the agent sees it on its next turn.
+   */
+  public canvasItemCreate<ThrowOnError extends boolean = false>(
+    options: Options<CanvasItemCreateData, ThrowOnError>,
+  ): RequestResult<
+    CanvasItemCreateResponses,
+    CanvasItemCreateErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).post<
+      CanvasItemCreateResponses,
+      CanvasItemCreateErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/chat/{chat_id}/canvas",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
     });
   }
 

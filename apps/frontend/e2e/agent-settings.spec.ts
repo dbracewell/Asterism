@@ -189,6 +189,14 @@ test("browses pages and recovers query failures while retaining an unavailable b
       },
     }),
   );
+  // Only the sub-agent list fails here; its alert must be the page's only one.
+  await page.route(
+    "**/api/py/settings/user/main-agent/general-sub-agents",
+    (route) =>
+      route.fulfill({
+        json: { revision: 1, agents: [], delegation_allowed: true },
+      }),
+  );
   await page.route("**/api/py/chat/models", (route) =>
     route.fulfill({ json: [] }),
   );
