@@ -70,5 +70,5 @@ source extension, `.html`), DOCX and PDF for documents, and a ZIP of all items i
 a chat. Users can save a version to their file library. User Settings has the
 canvas toggle; Admin Settings has the policy. Help covers canvas.
 
-- [ ] Implement exports (server-side) and save-to-library.
-- [ ] Settings toggles, help and glossary; tests for each export type.
+- [x] Implement exports (server-side) and save-to-library.
+- [x] Settings toggles, help and glossary; tests for each export type.

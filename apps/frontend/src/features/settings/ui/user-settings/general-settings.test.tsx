@@ -3,10 +3,11 @@ import { describe, expect, it, vi } from "vitest";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { GeneralSettings } from "./general-settings";
 
-const { updateSetting, setTheme, role } = vi.hoisted(() => ({
+const { updateSetting, setTheme, role, canvas } = vi.hoisted(() => ({
   updateSetting: vi.fn(),
   setTheme: vi.fn(),
   role: { current: "user" },
+  canvas: { allowed: true },
 }));
 vi.mock("@/features/settings/hooks/use-update-user-settings", () => ({
   useUpdateUserSettings: () => ({
@@ -17,7 +18,11 @@ vi.mock("@/features/settings/hooks/use-update-user-settings", () => ({
 vi.mock("@/features/auth/components/user-context", () => ({
   useUser: () => ({
     role: role.current,
-    settings: { theme: "atlas", font_size: "16px" },
+    settings: {
+      theme: "atlas",
+      font_size: "16px",
+      canvas_allowed: canvas.allowed,
+    },
   }),
 }));
 vi.mock("@/features/theme/components/theme-context", () => ({
@@ -55,6 +60,24 @@ describe("General settings labels", () => {
       true,
       false,
     );
+  });
+
+  it("offers the canvas when the administrator allows it", () => {
+    canvas.allowed = true;
+    const { unmount } = render(<GeneralSettings />, {
+      wrapper: TooltipProvider,
+    });
+    const toggle = screen.getByRole("checkbox", { name: "Canvas" });
+    expect(toggle).not.toBeChecked();
+    fireEvent.click(toggle);
+    expect(updateSetting).toHaveBeenCalledWith("canvas_enabled", true, false);
+    unmount();
+    canvas.allowed = false;
+    render(<GeneralSettings />, { wrapper: TooltipProvider });
+    const off = screen.getByRole("checkbox", { name: "Canvas" });
+    expect(off).toBeDisabled();
+    expect(off).toHaveAccessibleDescription(/administrator has turned/);
+    canvas.allowed = true;
   });
 
   it("saves and applies a theme picked from the gallery", () => {

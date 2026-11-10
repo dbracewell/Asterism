@@ -87,6 +87,9 @@ import type {
   AppToolSettingsUpdateData,
   AppToolSettingsUpdateError,
   AppToolSettingsUpdateResponse,
+  CanvasExportZipData,
+  CanvasExportZipError,
+  CanvasExportZipResponse,
   CanvasItemGetManyData,
   CanvasItemGetManyError,
   CanvasItemGetManyResponse,
@@ -102,12 +105,18 @@ import type {
   CanvasVersionCreateData,
   CanvasVersionCreateError,
   CanvasVersionCreateResponse,
+  CanvasVersionExportData,
+  CanvasVersionExportError,
+  CanvasVersionExportResponse,
   CanvasVersionGetOneData,
   CanvasVersionGetOneError,
   CanvasVersionGetOneResponse,
   CanvasVersionRestoreData,
   CanvasVersionRestoreError,
   CanvasVersionRestoreResponse,
+  CanvasVersionSaveToLibraryData,
+  CanvasVersionSaveToLibraryError,
+  CanvasVersionSaveToLibraryResponse,
   ChatAiUseLogCreateData,
   ChatAiUseLogCreateError,
   ChatAiUseLogCreateResponse,
@@ -6406,6 +6415,34 @@ export const canvasItemGetManyOptions = (
     queryKey: canvasItemGetManyQueryKey(options),
   });
 
+export const canvasExportZipQueryKey = (
+  options: Options<CanvasExportZipData>,
+) => createQueryKey("canvasExportZip", options);
+
+/**
+ * Export Zip
+ *
+ * A ZIP of every item on the active branch, each at its current version.
+ */
+export const canvasExportZipOptions = (options: Options<CanvasExportZipData>) =>
+  queryOptions<
+    CanvasExportZipResponse,
+    CanvasExportZipError,
+    CanvasExportZipResponse,
+    ReturnType<typeof canvasExportZipQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry.get().canvasExportZip({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: canvasExportZipQueryKey(options),
+  });
+
 export const canvasItemGetOneQueryKey = (
   options: Options<CanvasItemGetOneData>,
 ) => createQueryKey("canvasItemGetOne", options);
@@ -6516,6 +6553,67 @@ export const canvasVersionRestoreMutation = (
         ...fnOptions,
         throwOnError: true,
       });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const canvasVersionExportQueryKey = (
+  options: Options<CanvasVersionExportData>,
+) => createQueryKey("canvasVersionExport", options);
+
+/**
+ * Export One
+ *
+ * One version as a file: .md, .txt, its source extension, .html, DOCX or PDF.
+ */
+export const canvasVersionExportOptions = (
+  options: Options<CanvasVersionExportData>,
+) =>
+  queryOptions<
+    CanvasVersionExportResponse,
+    CanvasVersionExportError,
+    CanvasVersionExportResponse,
+    ReturnType<typeof canvasVersionExportQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry.get().canvasVersionExport({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: canvasVersionExportQueryKey(options),
+  });
+
+/**
+ * Save To Library
+ *
+ * Save one version to the user's file library.
+ */
+export const canvasVersionSaveToLibraryMutation = (
+  options?: Partial<Options<CanvasVersionSaveToLibraryData>>,
+): UseMutationOptions<
+  CanvasVersionSaveToLibraryResponse,
+  CanvasVersionSaveToLibraryError,
+  Options<CanvasVersionSaveToLibraryData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    CanvasVersionSaveToLibraryResponse,
+    CanvasVersionSaveToLibraryError,
+    Options<CanvasVersionSaveToLibraryData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry
+        .get()
+        .canvasVersionSaveToLibrary({
+          ...options,
+          ...fnOptions,
+          throwOnError: true,
+        });
       return data;
     },
   };

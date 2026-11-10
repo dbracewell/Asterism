@@ -64,6 +64,7 @@ describe("getLazyAdminSettingsSections", () => {
       "Users",
       "Tools",
       "Skills",
+      "Canvas",
       "ChatGPT Plans",
       "Context Compaction",
       "Image Captioning",

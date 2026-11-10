@@ -87,6 +87,9 @@ import type {
   AppToolSettingsUpdateData,
   AppToolSettingsUpdateErrors,
   AppToolSettingsUpdateResponses,
+  CanvasExportZipData,
+  CanvasExportZipErrors,
+  CanvasExportZipResponses,
   CanvasItemGetManyData,
   CanvasItemGetManyErrors,
   CanvasItemGetManyResponses,
@@ -102,12 +105,18 @@ import type {
   CanvasVersionCreateData,
   CanvasVersionCreateErrors,
   CanvasVersionCreateResponses,
+  CanvasVersionExportData,
+  CanvasVersionExportErrors,
+  CanvasVersionExportResponses,
   CanvasVersionGetOneData,
   CanvasVersionGetOneErrors,
   CanvasVersionGetOneResponses,
   CanvasVersionRestoreData,
   CanvasVersionRestoreErrors,
   CanvasVersionRestoreResponses,
+  CanvasVersionSaveToLibraryData,
+  CanvasVersionSaveToLibraryErrors,
+  CanvasVersionSaveToLibraryResponses,
   ChatAiUseLogCreateData,
   ChatAiUseLogCreateErrors,
   ChatAiUseLogCreateResponses,
@@ -4562,6 +4571,29 @@ export class ApiClient extends HeyApiClient {
   }
 
   /**
+   * Export Zip
+   *
+   * A ZIP of every item on the active branch, each at its current version.
+   */
+  public canvasExportZip<ThrowOnError extends boolean = false>(
+    options: Options<CanvasExportZipData, ThrowOnError>,
+  ): RequestResult<
+    CanvasExportZipResponses,
+    CanvasExportZipErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).get<
+      CanvasExportZipResponses,
+      CanvasExportZipErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/chat/{chat_id}/canvas/export",
+      ...options,
+    });
+  }
+
+  /**
    * Get Item
    *
    * The item's versions visible on the chat's active branch.
@@ -4651,6 +4683,56 @@ export class ApiClient extends HeyApiClient {
     >({
       security: [{ scheme: "bearer", type: "http" }],
       url: "/chat/{chat_id}/canvas/{item_id}/versions/{number}/restore",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+  }
+
+  /**
+   * Export One
+   *
+   * One version as a file: .md, .txt, its source extension, .html, DOCX or PDF.
+   */
+  public canvasVersionExport<ThrowOnError extends boolean = false>(
+    options: Options<CanvasVersionExportData, ThrowOnError>,
+  ): RequestResult<
+    CanvasVersionExportResponses,
+    CanvasVersionExportErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).get<
+      CanvasVersionExportResponses,
+      CanvasVersionExportErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/chat/{chat_id}/canvas/{item_id}/versions/{number}/export",
+      ...options,
+    });
+  }
+
+  /**
+   * Save To Library
+   *
+   * Save one version to the user's file library.
+   */
+  public canvasVersionSaveToLibrary<ThrowOnError extends boolean = false>(
+    options: Options<CanvasVersionSaveToLibraryData, ThrowOnError>,
+  ): RequestResult<
+    CanvasVersionSaveToLibraryResponses,
+    CanvasVersionSaveToLibraryErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).post<
+      CanvasVersionSaveToLibraryResponses,
+      CanvasVersionSaveToLibraryErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/chat/{chat_id}/canvas/{item_id}/versions/{number}/library",
       ...options,
       headers: {
         "Content-Type": "application/json",

@@ -7,6 +7,7 @@ import {
 } from "@/features/settings/ui/admin-settings/admin-pane-state";
 import {
   BookOpenIcon,
+  PanelRightIcon,
   CodeIcon,
   PaletteIcon,
   ToolboxIcon,
@@ -62,6 +63,13 @@ const SkillsPolicySettings = dynamic(
   () =>
     import("@/features/settings/ui/admin-settings/skills-policy-settings").then(
       (module) => module.SkillsPolicySettings,
+    ),
+  { loading: AdminPaneLoading },
+);
+const CanvasPolicySettings = dynamic(
+  () =>
+    import("@/features/settings/ui/admin-settings/canvas-policy-settings").then(
+      (module) => module.CanvasPolicySettings,
     ),
   { loading: AdminPaneLoading },
 );
@@ -167,6 +175,13 @@ export const getLazyAdminSettingsSections = (): Types => [
     value: "skills",
     icon: <BookOpenIcon />,
     settingsPane: pane("Skills", <SkillsPolicySettings />),
+  },
+  {
+    type: "section",
+    label: "Canvas",
+    value: "canvas",
+    icon: <PanelRightIcon />,
+    settingsPane: pane("Canvas", <CanvasPolicySettings />),
   },
   {
     type: "section",

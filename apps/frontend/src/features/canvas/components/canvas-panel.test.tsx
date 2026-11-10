@@ -20,10 +20,14 @@ const { api } = vi.hoisted(() => ({
     canvasVersionGetOne: vi.fn(),
     canvasVersionCreate: vi.fn(),
     canvasVersionRestore: vi.fn(),
+    canvasVersionSaveToLibrary: vi.fn(),
+    canvasVersionExport: vi.fn(),
+    canvasExportZip: vi.fn(),
   },
 }));
 vi.mock("@/lib/api", () => ({
   client: { getConfig: () => ({ baseUrl: "" }) },
+  api,
 }));
 vi.mock("@/features/theme/components/theme-context", () => ({
   useTheme: () => ({ currentTheme: "light", currentThemeType: "light" }),
@@ -233,6 +237,74 @@ describe("CanvasPanel", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "Canvas item not found in this conversation",
     );
+  });
+});
+
+describe("CanvasDownloads", () => {
+  it("downloads the viewed version and saves it to the library", async () => {
+    const created = vi.fn(() => "blob:canvas");
+    vi.stubGlobal(
+      "URL",
+      Object.assign(URL, {
+        createObjectURL: created,
+        revokeObjectURL: vi.fn(),
+      }),
+    );
+    api.canvasVersionExport.mockResolvedValue({
+      data: new Blob(["docx"]),
+      response: new Response(null, {
+        headers: {
+          "content-disposition":
+            "attachment; filename=\"Notes.docx\"; filename*=UTF-8''Notes.docx",
+        },
+      }),
+    });
+    api.canvasVersionSaveToLibrary.mockResolvedValue({
+      data: { filename: "Notes.pdf" },
+    });
+    setup();
+    await screen.findByRole("textbox", { name: "Notes, version 2" });
+    const menu = screen.getByRole("button", { name: "Download or save" });
+    await userEvent.click(menu);
+    expect(
+      screen.getAllByRole("menuitem").map((item) => item.textContent),
+    ).toEqual([
+      "Markdown (.md)",
+      "Plain text (.txt)",
+      "Word document (.docx)",
+      "PDF (.pdf)",
+      "Markdown (.md)",
+      "Plain text (.txt)",
+      "Word document (.docx)",
+      "PDF (.pdf)",
+      "All canvas items in this chat (.zip)",
+    ]);
+    await userEvent.click(
+      screen.getAllByRole("menuitem", { name: "Word document (.docx)" })[0],
+    );
+    await waitFor(() =>
+      expect(api.canvasVersionExport).toHaveBeenCalledWith(
+        expect.objectContaining({
+          path: { chat_id: "chat", item_id: ITEM, number: 2 },
+          query: { format: "docx" },
+          parseAs: "blob",
+        }),
+      ),
+    );
+    await waitFor(() => expect(created).toHaveBeenCalled());
+    await userEvent.click(menu);
+    await userEvent.click(
+      screen.getAllByRole("menuitem", { name: "PDF (.pdf)" })[1],
+    );
+    await waitFor(() =>
+      expect(api.canvasVersionSaveToLibrary).toHaveBeenCalledWith(
+        expect.objectContaining({
+          path: { chat_id: "chat", item_id: ITEM, number: 2 },
+          body: { format: "pdf" },
+        }),
+      ),
+    );
+    vi.unstubAllGlobals();
   });
 });
 

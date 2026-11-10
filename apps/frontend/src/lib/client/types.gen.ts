@@ -257,6 +257,16 @@ export type CanvasItemSummary = {
 };
 
 /**
+ * CanvasLibrarySave
+ */
+export type CanvasLibrarySave = {
+  /**
+   * Format
+   */
+  format: "md" | "txt" | "source" | "html" | "docx" | "pdf";
+};
+
+/**
  * CanvasPolicy
  */
 export type CanvasPolicy = {
@@ -16926,6 +16936,58 @@ export type CanvasItemGetManyResponses = {
 export type CanvasItemGetManyResponse =
   CanvasItemGetManyResponses[keyof CanvasItemGetManyResponses];
 
+export type CanvasExportZipData = {
+  body?: never;
+  path: {
+    /**
+     * Chat Id
+     */
+    chat_id: string;
+  };
+  query?: never;
+  url: "/chat/{chat_id}/canvas/export";
+};
+
+export type CanvasExportZipErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Forbidden
+   */
+  403: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type CanvasExportZipError =
+  CanvasExportZipErrors[keyof CanvasExportZipErrors];
+
+export type CanvasExportZipResponses = {
+  /**
+   * The exported file
+   */
+  200: Blob | File;
+};
+
+export type CanvasExportZipResponse =
+  CanvasExportZipResponses[keyof CanvasExportZipResponses];
+
 export type CanvasItemGetOneData = {
   body?: never;
   path: {
@@ -17157,6 +17219,131 @@ export type CanvasVersionRestoreResponses = {
 
 export type CanvasVersionRestoreResponse =
   CanvasVersionRestoreResponses[keyof CanvasVersionRestoreResponses];
+
+export type CanvasVersionExportData = {
+  body?: never;
+  path: {
+    /**
+     * Chat Id
+     */
+    chat_id: string;
+    /**
+     * Item Id
+     */
+    item_id: string;
+    /**
+     * Number
+     */
+    number: number;
+  };
+  query: {
+    /**
+     * Format
+     */
+    format: "md" | "txt" | "source" | "html" | "docx" | "pdf";
+  };
+  url: "/chat/{chat_id}/canvas/{item_id}/versions/{number}/export";
+};
+
+export type CanvasVersionExportErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Forbidden
+   */
+  403: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type CanvasVersionExportError =
+  CanvasVersionExportErrors[keyof CanvasVersionExportErrors];
+
+export type CanvasVersionExportResponses = {
+  /**
+   * The exported file
+   */
+  200: Blob | File;
+};
+
+export type CanvasVersionExportResponse =
+  CanvasVersionExportResponses[keyof CanvasVersionExportResponses];
+
+export type CanvasVersionSaveToLibraryData = {
+  body: CanvasLibrarySave;
+  path: {
+    /**
+     * Chat Id
+     */
+    chat_id: string;
+    /**
+     * Item Id
+     */
+    item_id: string;
+    /**
+     * Number
+     */
+    number: number;
+  };
+  query?: never;
+  url: "/chat/{chat_id}/canvas/{item_id}/versions/{number}/library";
+};
+
+export type CanvasVersionSaveToLibraryErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Forbidden
+   */
+  403: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type CanvasVersionSaveToLibraryError =
+  CanvasVersionSaveToLibraryErrors[keyof CanvasVersionSaveToLibraryErrors];
+
+export type CanvasVersionSaveToLibraryResponses = {
+  /**
+   * Successful Response
+   */
+  200: UserFile;
+};
+
+export type CanvasVersionSaveToLibraryResponse =
+  CanvasVersionSaveToLibraryResponses[keyof CanvasVersionSaveToLibraryResponses];
 
 export type LearningModeGetManyData = {
   body?: never;

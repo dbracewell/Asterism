@@ -42,6 +42,7 @@ import dynamic from "next/dynamic";
 import React from "react";
 import { kindLabel, selectionRequest } from "../lib/canvas";
 import { useCanvas } from "./canvas-context";
+import { CanvasDownloads } from "./canvas-downloads";
 import { HtmlPreview } from "./html-preview";
 
 const CanvasEditor = dynamic(() => import("./canvas-editor"), {
@@ -216,6 +217,9 @@ function VersionView({
             ))}
           </SelectContent>
         </Select>
+        {version.data && (
+          <CanvasDownloads chatId={chatId} version={version.data} />
+        )}
         {!headerless && <PanelClose onClose={close} />}
       </header>
       {version.error ? (

@@ -601,3 +601,112 @@ async def test_user_edits_and_restores_are_new_versions_the_next_turn_sees(canva
     await switches(sessions, user=False)
     off = await client.post(f"{base}/versions", headers=auth(), json={"base_version": 3, "content": "x"})
     assert off.status_code == 400
+
+
+async def three_items(client, sessions):
+    """A finished turn that wrote a document, Python code and an HTML page."""
+    chat_id, request, run = await started_chat(client, sessions)
+    await switches(sessions)
+    scope = scope_for(chat_id, request, run)
+    made = {}
+    for kind, title, content, language in [
+        ("document", "Plan: v1/final", "# Plan\n\n- **Ship** 日本語\n\n![x](http://169.254.169.254/a.png)", None),
+        ("code", "Parser", "def parse():\n    return 1\n", "python"),
+        ("html", "Plan: v1/final", "<p>Hi</p>", None),
+    ]:
+        args = CanvasCreateArgs(kind=kind, title=title, content=content, language=language)
+        made[kind] = (await canvas_create(tool_ctx(chat_id, scope, args)))["item_id"]
+    await finish(sessions, chat_id, request, run)
+    return chat_id, made
+
+
+async def test_each_kind_downloads_as_its_file_types(canvas_api, monkeypatch):
+    import io
+
+    import docx
+    import pdfplumber
+
+    client, sessions = canvas_api
+    chat_id, made = await three_items(client, sessions)
+
+    def url(kind, export):
+        return f"/chat/{chat_id}/canvas/{made[kind]}/versions/1/export?format={export}"
+
+    md = await client.get(url("document", "md"), headers=auth())
+    assert md.status_code == 200, md.text
+    assert md.headers["content-type"].startswith("text/markdown")
+    assert md.headers["content-disposition"] == (
+        "attachment; filename=\"Plan v1 final.md\"; filename*=UTF-8''Plan%20v1%20final.md"
+    )
+    assert md.headers["x-content-type-options"] == "nosniff"
+    assert md.text.startswith("# Plan")
+    source = await client.get(url("code", "source"), headers=auth())
+    assert source.headers["content-disposition"].endswith("filename*=UTF-8''Parser.py")
+    assert source.text == "def parse():\n    return 1\n"
+    page = await client.get(url("html", "html"), headers=auth())
+    # Downloaded HTML is inert if opened from the API origin.
+    assert page.headers["content-security-policy"].startswith("sandbox")
+    assert (await client.get(url("html", "txt"), headers=auth())).text == "<p>Hi</p>"
+
+    word = await client.get(url("document", "docx"), headers=auth())
+    assert word.status_code == 200, word.text
+    paragraphs = [(p.style.name, p.text) for p in docx.Document(io.BytesIO(word.content)).paragraphs]
+    assert ("Heading 1", "Plan") in paragraphs and ("List Bullet", "Ship 日本語") in paragraphs
+    pdf = await client.get(url("document", "pdf"), headers=auth())
+    assert pdf.status_code == 200 and pdf.content.startswith(b"%PDF")
+    text = pdfplumber.open(io.BytesIO(pdf.content)).pages[0].extract_text()
+    assert "Plan" in text and "Ship" in text
+    # Without a Unicode font, the PDF still renders, replacing what Latin-1 lacks.
+    monkeypatch.setattr("asterism.domains.canvas.exports.FONT_DIRS", ())
+    fallback = await client.get(url("document", "pdf"), headers=auth())
+    assert (
+        fallback.status_code == 200 and "Ship" in pdfplumber.open(io.BytesIO(fallback.content)).pages[0].extract_text()
+    )
+
+    # Each kind only offers its own formats; others can't download.
+    assert (await client.get(url("code", "pdf"), headers=auth())).status_code == 400
+    assert (await client.get(url("document", "exe"), headers=auth())).status_code == 422
+    assert (await client.get(url("document", "md"), headers=auth("b"))).status_code == 404
+
+
+async def test_a_chat_downloads_as_a_zip_of_current_versions(canvas_api):
+    import io
+    import zipfile
+
+    client, sessions = canvas_api
+    chat_id, made = await three_items(client, sessions)
+    saved = await client.post(
+        f"/chat/{chat_id}/canvas/{made['code']}/versions",
+        headers=auth(),
+        json={"base_version": 1, "content": "print(2)\n"},
+    )
+    assert saved.status_code == 200, saved.text
+    archive = await client.get(f"/chat/{chat_id}/canvas/export", headers=auth())
+    assert archive.status_code == 200, archive.text
+    assert archive.headers["content-type"] == "application/zip"
+    with zipfile.ZipFile(io.BytesIO(archive.content)) as bundle:
+        assert sorted(bundle.namelist()) == ["Parser.py", "Plan v1 final.html", "Plan v1 final.md"]
+        assert bundle.read("Parser.py") == b"print(2)\n"
+    assert (await client.get(f"/chat/{chat_id}/canvas/export", headers=auth("b"))).status_code == 404
+    empty = await new_chat(client)
+    assert (await client.get(f"/chat/{empty['info']['id']}/canvas/export", headers=auth())).status_code == 404
+
+
+async def test_saving_a_version_to_the_library(canvas_api, monkeypatch, tmp_path):
+    from asterism.domains.files.store import LocalFileStore
+
+    store = LocalFileStore(tmp_path / "files")
+    monkeypatch.setattr("asterism.domains.files.service.get_file_store", lambda: store)
+    monkeypatch.setattr("asterism.domains.files.store.get_file_store", lambda: store)
+    monkeypatch.setattr("asterism.domains.files.service.start_ingestion", lambda **_: None)
+    client, sessions = canvas_api
+    chat_id, made = await three_items(client, sessions)
+    path = f"/chat/{chat_id}/canvas/{made['document']}/versions/1/library"
+    saved = await client.post(path, headers=auth(), json={"format": "docx"})
+    assert saved.status_code == 200, saved.text
+    assert saved.json()["filename"] == "Plan v1 final.docx"
+    assert len(list((tmp_path / "files").rglob("*.docx"))) == 1
+    again = await client.post(path, headers=auth(), json={"format": "docx"})
+    assert again.json()["filename"] == "Plan v1 final(2).docx"
+    assert (await client.post(path, headers=auth("b"), json={"format": "md"})).status_code == 404
+    assert (await client.post(path, headers=auth(), json={"format": "source"})).status_code == 400

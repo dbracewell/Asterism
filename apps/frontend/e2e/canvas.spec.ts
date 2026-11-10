@@ -149,6 +149,20 @@ async function openChat(page: Page) {
     const request = route.request();
     const path = new URL(request.url()).pathname;
     const { versions, writes, add } = canvas;
+    if (path.endsWith("/export"))
+      return route.fulfill({
+        body: "PK-docx",
+        headers: {
+          "content-type":
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+          "content-disposition":
+            "attachment; filename=\"Launch plan.docx\"; filename*=UTF-8''Launch%20plan.docx",
+        },
+      });
+    if (path.endsWith("/library")) {
+      writes.push({ url: path, body: request.postDataJSON() });
+      return route.fulfill({ json: { filename: "Launch plan.pdf" } });
+    }
     if (request.method() === "POST") {
       const body = request.postDataJSON();
       writes.push({ url: path, body });
@@ -281,6 +295,21 @@ test("open, edit, ask about a selection and restore a canvas item", async ({
   await expect(
     panel.getByRole("textbox", { name: "Launch plan, version 3" }),
   ).toContainText("Ship on Friday.");
+  // Download the latest version as Word, then save a PDF to the library.
+  await panel.getByRole("button", { name: "Download or save" }).click();
+  const pending = page.waitForEvent("download");
+  await page
+    .getByRole("menuitem", { name: "Word document (.docx)" })
+    .first()
+    .click();
+  expect((await pending).suggestedFilename()).toBe("Launch plan.docx");
+  await panel.getByRole("button", { name: "Download or save" }).click();
+  await page.getByRole("menuitem", { name: "PDF (.pdf)" }).last().click();
+  await expect.poll(() => canvas.writes.length).toBe(3);
+  expect(canvas.writes[2]).toEqual({
+    url: `/api/py/chat/${CHAT}/canvas/${ITEM}/versions/3/library`,
+    body: { format: "pdf" },
+  });
   await page.screenshot({ path: info.outputPath("canvas-panel.png") });
 
   await panel.getByRole("button", { name: "Close canvas" }).click();
