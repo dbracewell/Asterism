@@ -11,7 +11,7 @@ wrong passphrase fail the same way and reveal nothing.
 import base64
 import os
 import unicodedata
-from typing import Literal
+from typing import Any, Literal
 
 from cryptography.exceptions import InvalidKey
 from cryptography.fernet import Fernet, InvalidToken
@@ -94,6 +94,22 @@ class ExportedLocalImage(_Document):
     device: Literal["auto", "cuda", "mps", "cpu"] = "auto"
 
 
+class ExportedComfyUI(_Document):
+    """The ComfyUI server, credentials, workflow and limits (US-76.3). The token
+    travels like provider API keys, inside the encrypted bundle."""
+
+    base_url: str
+    auth: Literal["none", "bearer", "basic"] = "none"
+    username: str = ""
+    token: str = ""
+    workflow: dict[str, Any] | None = None
+    checkpoint: str = ""
+    steps: int = 25
+    guidance: float = 6.0
+    timeout_seconds: int = 300
+    verify_tls: bool = True
+
+
 class ExportedCompaction(_Document):
     """Context compaction policy (ADR-0060); the summarizer model travels by name."""
 
@@ -127,6 +143,8 @@ class SettingsBundle(_Document):
     canvas_enabled: bool = False
     image_generation: ExportedImageGeneration = Field(default_factory=ExportedImageGeneration)
     image_generation_local: ExportedLocalImage = Field(default_factory=ExportedLocalImage)
+    # Absent when this installation has no ComfyUI server; importing then keeps the local one.
+    image_generation_comfyui: ExportedComfyUI | None = None
     chatgpt_plan_enabled: bool = False
     web_search_provider: ExportedComponent | None = None
     image_search_provider: ExportedComponent | None = None

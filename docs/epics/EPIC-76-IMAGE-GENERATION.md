@@ -168,8 +168,22 @@ Acceptance: URL, auth and workflow settings; the default workflow; prompt
 submission, progress, result download and errors (unreachable, bad workflow,
 timeout); test connection.
 
-- [ ] Client, workflow templating and settings.
-- [ ] Tests against a fake ComfyUI server.
+- [x] Client, workflow templating and settings.
+- [x] Tests against a fake ComfyUI server.
+
+Implemented 2026-11-10 ([ADR-0064](../adr/0064-image-generation.md), ComfyUI
+section). The fake server (`tests/fake_comfyui.py`) is a real HTTP and
+WebSocket server on a local port.
+
+Manual run (2026-11-10, Apple M5 Max): ComfyUI 0.44.0 (commit `bbd810e6`)
+with `DreamShaper8_LCM.safetensors`, installed in a temporary folder and
+removed afterwards. Test connection listed the checkpoint and the `mps`
+device; the built-in workflow made two 512² images (seeds 42 and 43) in 5.1 s
+with step progress 1–16 of 16 from the WebSocket. A missing checkpoint, an
+unknown node and a workflow with no output each came back as "ComfyUI
+rejected the workflow: …" with ComfyUI's reason. A 10 s timeout on a
+150-step 1536² job deleted and interrupted it by prompt id; ComfyUI stopped at
+the next step.
 
 ## US-76.4: Admin settings
 

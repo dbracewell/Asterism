@@ -1,8 +1,8 @@
 # ADR-0064 — Image generation runs through one provider interface and produces chat files
 
 Status: accepted; domain, tool and Create image in US-76.1, local diffusers
-generator in US-76.2 on 2026-11-09
-([EPIC-76](../epics/EPIC-76-IMAGE-GENERATION.md)).
+generator in US-76.2 on 2026-11-09, ComfyUI generator in US-76.3 on
+2026-11-10 ([EPIC-76](../epics/EPIC-76-IMAGE-GENERATION.md)).
 
 ## Context
 
@@ -161,6 +161,41 @@ support never sees tool messages in its history.
 - **Settings.** `image_generation_local` holds the model, device override and
   accepted licenses. The settings file carries the model and device, not
   downloads or license acceptance.
+
+### ComfyUI generator (US-76.3)
+
+- **Settings.** `image_generation_comfyui` holds the server address (http or
+  https, optional path prefix for a reverse proxy), auth (none, bearer token,
+  or basic username and password), an optional custom workflow, the checkpoint
+  for the built-in workflow, default steps and guidance, a per-request timeout
+  (10–600 s) and TLS verification. The token is Fernet-encrypted at rest and
+  never returned (`has_token` instead; an update without a token keeps it).
+  The key is deliberately outside the generic application settings aggregate,
+  so only `GET/PUT /settings/app/image-generation/comfyui` read or write it.
+  The settings file carries it, token included, inside the encrypted bundle
+  like provider API keys; a file without a ComfyUI server keeps the local one.
+- **Workflows** are ComfyUI's API format ("Save (API)"). The built-in one is a
+  plain checkpoint pipeline (checkpoint loader, two text encoders, empty
+  latent, KSampler, VAE decode, Save Image). Placeholders: `{{prompt}}`
+  (required), `{{negative_prompt}}`, `{{width}}`, `{{height}}`, `{{seed}}`,
+  `{{steps}}`, `{{guidance}}`, `{{checkpoint}}`. A value that is exactly one
+  placeholder takes the typed value; placeholders inside longer strings are
+  replaced as text. User text only lands in values and is never re-read as a
+  placeholder. Saving rejects the UI format, unknown placeholders and a
+  missing `{{prompt}}`.
+- **Jobs.** Each image is its own prompt with seed, seed + 1, …, matching the
+  local generator. A WebSocket on a fresh client id reports sampler steps;
+  completion and errors come from `/history`, polled every 0.5 s, so a proxy
+  that blocks WebSockets only loses progress. Saved (`output`) images are
+  downloaded from `/view` (64 MB cap; temp previews only when nothing was
+  saved) and sized from the file. Rejected workflows, node errors, missing
+  outputs, unreachable servers, bad credentials and timeouts each give their
+  own message. On timeout or cancellation the job is deleted from the queue
+  and interrupted by prompt id, so other users' jobs on a shared server keep
+  running.
+- **Status** checks configuration first, then reachability (`/system_stats`,
+  cached 30 s per settings). **Test connection** tries unsaved settings and
+  returns the version, devices and checkpoints, flagging a missing checkpoint.
 
 ## Consequences
 

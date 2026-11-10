@@ -13,6 +13,7 @@ from asterism.domains.settings.secrets import decrypt_component_provider_dict
 from asterism.domains.settings_transfer import documents, importer
 from asterism.domains.settings_transfer.documents import (
     ExportedCaptioning,
+    ExportedComfyUI,
     ExportedCompaction,
     ExportedComponent,
     ExportedModel,
@@ -200,6 +201,32 @@ async def test_settings_overwrite_and_keys_are_reencrypted(api):
     assert settings["draft_model_id"] == str(imported.id)
     assert "img-key" not in json.dumps(settings["image_search_provider"])
     assert decrypt_component_provider_dict(settings["image_search_provider"])["parameters"]["api_key"] == "img-key"
+
+
+async def test_comfyui_server_round_trips_with_its_token_encrypted(api):
+    client, sessions = api
+    from asterism.domains.image_generation.comfyui.settings import read_settings
+
+    comfyui = ExportedComfyUI(
+        base_url="https://comfy.example.test",
+        auth="bearer",
+        token="comfy-token",
+        workflow={"1": {"class_type": "X", "inputs": {"text": "{{prompt}}"}}},
+        steps=12,
+    )
+    assert "ComfyUI server" in (await post(client, PREVIEW, request(bundle(image_generation_comfyui=comfyui)))).text
+    assert (await post(client, IMPORT, request(bundle(image_generation_comfyui=comfyui)))).status_code == 200
+    async with sessions() as session:
+        stored = (await session.get(ApplicationSettingsModel, "image_generation_comfyui")).value
+        restored = await read_settings(session)
+        exported = (await collect_settings(session)).image_generation_comfyui
+    assert "comfy-token" not in json.dumps(stored)
+    assert restored.token == "comfy-token" and restored.steps == 12
+    assert exported == comfyui
+    # A file without a ComfyUI server keeps this installation's.
+    assert (await post(client, IMPORT, request(bundle()))).status_code == 200
+    async with sessions() as session:
+        assert (await read_settings(session)).base_url == "https://comfy.example.test"
 
 
 async def test_compaction_policy_is_applied_with_its_model_by_name(api):

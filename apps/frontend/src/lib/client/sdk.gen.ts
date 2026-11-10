@@ -336,6 +336,15 @@ import type {
   ClassUpdateData,
   ClassUpdateErrors,
   ClassUpdateResponses,
+  ComfyuiSettingsGetData,
+  ComfyuiSettingsGetErrors,
+  ComfyuiSettingsGetResponses,
+  ComfyuiSettingsUpdateData,
+  ComfyuiSettingsUpdateErrors,
+  ComfyuiSettingsUpdateResponses,
+  ComfyuiTestConnectionData,
+  ComfyuiTestConnectionErrors,
+  ComfyuiTestConnectionResponses,
   ComponentsByTypeData,
   ComponentsByTypeErrors,
   ComponentsByTypeResponses,
@@ -5004,6 +5013,81 @@ export class ApiClient extends HeyApiClient {
       security: [{ scheme: "bearer", type: "http" }],
       url: "/settings/app/image-generation/local/models/{model_id}",
       ...options,
+    });
+  }
+
+  /**
+   * Get Settings
+   *
+   * The server, auth (the token is never returned), workflow and limits.
+   */
+  public comfyuiSettingsGet<ThrowOnError extends boolean = false>(
+    options?: Options<ComfyuiSettingsGetData, ThrowOnError>,
+  ): RequestResult<
+    ComfyuiSettingsGetResponses,
+    ComfyuiSettingsGetErrors,
+    ThrowOnError
+  > {
+    return (options?.client ?? this.client).get<
+      ComfyuiSettingsGetResponses,
+      ComfyuiSettingsGetErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/settings/app/image-generation/comfyui",
+      ...options,
+    });
+  }
+
+  /**
+   * Put Settings
+   */
+  public comfyuiSettingsUpdate<ThrowOnError extends boolean = false>(
+    options: Options<ComfyuiSettingsUpdateData, ThrowOnError>,
+  ): RequestResult<
+    ComfyuiSettingsUpdateResponses,
+    ComfyuiSettingsUpdateErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).put<
+      ComfyuiSettingsUpdateResponses,
+      ComfyuiSettingsUpdateErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/settings/app/image-generation/comfyui",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+  }
+
+  /**
+   * Test Connection
+   *
+   * Try these settings (unsaved; a missing token uses the stored one) and list checkpoints.
+   */
+  public comfyuiTestConnection<ThrowOnError extends boolean = false>(
+    options: Options<ComfyuiTestConnectionData, ThrowOnError>,
+  ): RequestResult<
+    ComfyuiTestConnectionResponses,
+    ComfyuiTestConnectionErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).post<
+      ComfyuiTestConnectionResponses,
+      ComfyuiTestConnectionErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/settings/app/image-generation/comfyui/test",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
     });
   }
 

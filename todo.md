@@ -45,9 +45,9 @@ Source: user request (2026-11-09). Order: US-76.1 → 76.2 → 76.3 → 76.4 →
   - [x] Detection, catalog, recommendation, download and worker runtime.
   - [x] Tests with a stub pipeline (device choice, recommendation, OOM, worker crash); manual runs on MPS and CPU recorded in the story (no CUDA machine available).
   - [x] Small-hardware models (DreamShaper XL Lightning, DreamShaper 8 LCM) and precision by OS, processor and model; real runs on MPS and CPU.
-- [ ] US-76.3: ComfyUI generator
-  - [ ] Client, workflow templating and settings.
-  - [ ] Tests against a fake ComfyUI server.
+- [ ] US-76.3: ComfyUI generator (implemented; awaiting confirmation)
+  - [x] Client, workflow templating and settings.
+  - [x] Tests against a fake ComfyUI server.
 - [ ] US-76.4: Admin settings
   - [ ] Admin page with generated client hooks.
   - [ ] Unit tests and an E2E for each provider path.

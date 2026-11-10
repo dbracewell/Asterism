@@ -20,6 +20,7 @@ from asterism.domains.settings.service import get_all_providers, get_app_setting
 
 from .documents import (
     ExportedCaptioning,
+    ExportedComfyUI,
     ExportedCompaction,
     ExportedComponent,
     ExportedGroup,
@@ -95,6 +96,13 @@ async def _groups(providers: list[ProviderModel], session: AsyncSession) -> tupl
     return tuple(groups)
 
 
+async def _comfyui(session: AsyncSession) -> ExportedComfyUI | None:
+    from asterism.domains.image_generation.comfyui.settings import read_settings
+
+    comfyui = await read_settings(session)
+    return ExportedComfyUI.model_validate(comfyui.model_dump()) if comfyui.base_url else None
+
+
 async def collect_settings(session: AsyncSession) -> SettingsBundle:
     settings = await get_app_settings(session)
     providers = await get_all_providers(session)
@@ -113,6 +121,7 @@ async def collect_settings(session: AsyncSession) -> SettingsBundle:
                 if key in ExportedLocalImage.model_fields
             }
         ),
+        image_generation_comfyui=await _comfyui(session),
         image_generation=ExportedImageGeneration.model_validate(
             {
                 key: value

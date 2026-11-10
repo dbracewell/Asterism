@@ -104,6 +104,7 @@ dependencies = [
     { name = "transformers" },
     { name = "truststore" },
     { name = "uvicorn", extra = ["standard"] },
+    { name = "websockets" },
 ]
 
 [package.dev-dependencies]
@@ -150,6 +151,7 @@ requires-dist = [
     { name = "transformers", specifier = ">=5.14.1" },
     { name = "truststore", specifier = ">=0.10.4" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.48.0" },
+    { name = "websockets", specifier = ">=15.0" },
 ]
 
 [package.metadata.requires-dev]

@@ -8,6 +8,7 @@ from asterism.db.dependencies import DBSessionDep
 from asterism.domains.user.dependencies import AdminUserDep, AuthedUserDep
 
 from . import policy
+from .comfyui import provider as _comfyui_provider  # noqa: F401 - registers the ComfyUI provider
 from .local import provider as _local_provider  # noqa: F401 - registers the diffusers provider
 from .schemas import ImageGenerationAvailability, ImageGenerationPolicy, ImageProviderStatus
 

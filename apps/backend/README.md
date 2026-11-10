@@ -120,7 +120,7 @@ user settings expose General, Personas, Skills, and Agents.
 | Image captioning     | Admin captioning policy and file-processing integration                                                                                                  | —                                                          |
 | Users and access     | Admin/user access checks, owner scoping and backend user lifecycle                                                                                       | Users management screens and permission-policy controls    |
 | Groups               | —                                                                                                                                                        | Group management and group policy settings                 |
-| Image Generation     | Policy, `generate_image`, Create image and the local diffusers generator ([ADR-0064](../../docs/adr/0064-image-generation.md))                          | ComfyUI, admin page and chat UI (EPIC-76)                  |
+| Image Generation     | Policy, `generate_image`, Create image, the local diffusers and ComfyUI generators ([ADR-0064](../../docs/adr/0064-image-generation.md))                 | Admin page and chat UI (EPIC-76)                           |
 | Code Execution       | —                                                                                                                                                        | Sandboxed execution and runtime settings                   |
 | Export               | Individual file downloads                                                                                                                                | Data/conversation export tools                             |
 | Personas and memory  | Persona CRUD/defaults, chat selection and immutable execution inputs                                                                                     | Long-term memory engine                                    |
@@ -164,6 +164,17 @@ CUDA if available, then Apple MPS, then CPU. An administrator can override it.
 The worker loads the model on the first image and unloads after 10 idle
 minutes. Out-of-memory errors and crashes are reported to the user and the
 next request starts a fresh worker.
+
+## ComfyUI image generation
+
+The ComfyUI generator (US-76.3) sends jobs to an existing ComfyUI server. Set
+it under `/settings/app/image-generation/comfyui` (admin): the address,
+optional bearer or basic auth (for a server behind a proxy; ComfyUI itself has
+no auth), and either a checkpoint for the built-in workflow or a custom
+workflow exported with **Save (API)** and using `{{prompt}}`, `{{seed}}`,
+`{{width}}` and the other placeholders. `POST …/comfyui/test` checks unsaved
+settings and lists the server's checkpoints. Step progress uses ComfyUI's
+WebSocket when the proxy allows it.
 
 ## Quality checks
 

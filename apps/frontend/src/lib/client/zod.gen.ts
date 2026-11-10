@@ -508,6 +508,60 @@ export const zCoachCriterion = z.enum([
 ]);
 
 /**
+ * ComfyUISettingsUpdate
+ *
+ * What the admin page sends. ``token`` None keeps the stored one; "" clears it.
+ */
+export const zComfyUiSettingsUpdate = z.object({
+  base_url: z.string().max(500).nullish(),
+  auth: z.enum(["none", "bearer", "basic"]).optional().default("none"),
+  username: z.string().max(200).optional().default(""),
+  workflow: z.record(z.string(), z.unknown()).nullish(),
+  checkpoint: z.string().max(500).optional().default(""),
+  steps: z.int().gte(1).lte(150).optional().default(25),
+  guidance: z.number().gte(0).lte(30).optional().default(6),
+  timeout_seconds: z.int().gte(10).lte(600).optional().default(300),
+  verify_tls: z.boolean().optional().default(true),
+  token: z.string().max(4000).nullish(),
+});
+
+/**
+ * ComfyUISettingsView
+ */
+export const zComfyUiSettingsView = z.object({
+  base_url: z.string().max(500).nullish(),
+  auth: z.enum(["none", "bearer", "basic"]).optional().default("none"),
+  username: z.string().max(200).optional().default(""),
+  workflow: z.record(z.string(), z.unknown()).nullish(),
+  checkpoint: z.string().max(500).optional().default(""),
+  steps: z.int().gte(1).lte(150).optional().default(25),
+  guidance: z.number().gte(0).lte(30).optional().default(6),
+  timeout_seconds: z.int().gte(10).lte(600).optional().default(300),
+  verify_tls: z.boolean().optional().default(true),
+  has_token: z.boolean().optional().default(false),
+});
+
+/**
+ * ComfyUIOverview
+ */
+export const zComfyUiOverview = z.object({
+  settings: zComfyUiSettingsView,
+  default_workflow: z.record(z.string(), z.unknown()),
+  placeholders: z.array(z.string()),
+});
+
+/**
+ * ComfyUITestResult
+ */
+export const zComfyUiTestResult = z.object({
+  ok: z.boolean(),
+  detail: z.string(),
+  version: z.string().nullish(),
+  devices: z.array(z.string()).optional(),
+  checkpoints: z.array(z.string()).optional(),
+});
+
+/**
  * CompactionSettings
  *
  * Automatic context compaction policy (ADR-0060), stored under one key.
@@ -6857,6 +6911,25 @@ export const zLocalImageRemovePath = z.object({
  * Successful Response
  */
 export const zLocalImageRemoveResponse = zLocalOverview;
+
+/**
+ * Successful Response
+ */
+export const zComfyuiSettingsGetResponse = zComfyUiOverview;
+
+export const zComfyuiSettingsUpdateBody = zComfyUiSettingsUpdate;
+
+/**
+ * Successful Response
+ */
+export const zComfyuiSettingsUpdateResponse = zComfyUiOverview;
+
+export const zComfyuiTestConnectionBody = zComfyUiSettingsUpdate;
+
+/**
+ * Successful Response
+ */
+export const zComfyuiTestConnectionResponse = zComfyUiTestResult;
 
 /**
  * Successful Response

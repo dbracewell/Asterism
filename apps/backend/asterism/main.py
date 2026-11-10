@@ -25,6 +25,7 @@ from asterism.domains.components.router import components_router
 from asterism.domains.courses.router import course_policy_router, courses_router
 from asterism.domains.files.router import file_router
 from asterism.domains.groups.router import groups_router
+from asterism.domains.image_generation.comfyui.router import comfyui_router
 from asterism.domains.image_generation.local.router import local_image_router
 from asterism.domains.image_generation.router import image_generation_router
 from asterism.domains.knowledge.router import knowledge_router
@@ -163,6 +164,7 @@ app.include_router(skills_router)
 app.include_router(canvas_router)
 app.include_router(image_generation_router)
 app.include_router(local_image_router)
+app.include_router(comfyui_router)
 app.include_router(learning_router)
 app.include_router(prompt_templates_router)
 app.include_router(rubrics_router)

@@ -16,6 +16,7 @@ dependencies = [
   "fpdf2>=2.9.0",
   "html-to-markdown>=3.10.2",
   "httpx>=0.28.0",
+  "websockets>=15.0",
   "huggingface-hub>=1.25",
   "lancedb>=0.29.2,<0.30",
   "markdown-it-py>=4.2.0",

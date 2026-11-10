@@ -1433,6 +1433,147 @@ export type CoachCriterion =
   | "examples";
 
 /**
+ * ComfyUIOverview
+ */
+export type ComfyUiOverview = {
+  settings: ComfyUiSettingsView;
+  /**
+   * Default Workflow
+   */
+  default_workflow: {
+    [key: string]: unknown;
+  };
+  /**
+   * Placeholders
+   */
+  placeholders: Array<string>;
+};
+
+/**
+ * ComfyUISettingsUpdate
+ *
+ * What the admin page sends. ``token`` None keeps the stored one; "" clears it.
+ */
+export type ComfyUiSettingsUpdate = {
+  /**
+   * Base Url
+   */
+  base_url?: string | null;
+  /**
+   * Auth
+   */
+  auth?: "none" | "bearer" | "basic";
+  /**
+   * Username
+   */
+  username?: string;
+  /**
+   * Workflow
+   */
+  workflow?: {
+    [key: string]: unknown;
+  } | null;
+  /**
+   * Checkpoint
+   */
+  checkpoint?: string;
+  /**
+   * Steps
+   */
+  steps?: number;
+  /**
+   * Guidance
+   */
+  guidance?: number;
+  /**
+   * Timeout Seconds
+   */
+  timeout_seconds?: number;
+  /**
+   * Verify Tls
+   */
+  verify_tls?: boolean;
+  /**
+   * Token
+   */
+  token?: string | null;
+};
+
+/**
+ * ComfyUISettingsView
+ */
+export type ComfyUiSettingsView = {
+  /**
+   * Base Url
+   */
+  base_url?: string | null;
+  /**
+   * Auth
+   */
+  auth?: "none" | "bearer" | "basic";
+  /**
+   * Username
+   */
+  username?: string;
+  /**
+   * Workflow
+   */
+  workflow?: {
+    [key: string]: unknown;
+  } | null;
+  /**
+   * Checkpoint
+   */
+  checkpoint?: string;
+  /**
+   * Steps
+   */
+  steps?: number;
+  /**
+   * Guidance
+   */
+  guidance?: number;
+  /**
+   * Timeout Seconds
+   */
+  timeout_seconds?: number;
+  /**
+   * Verify Tls
+   */
+  verify_tls?: boolean;
+  /**
+   * Has Token
+   */
+  has_token?: boolean;
+};
+
+/**
+ * ComfyUITestResult
+ */
+export type ComfyUiTestResult = {
+  /**
+   * Ok
+   */
+  ok: boolean;
+  /**
+   * Detail
+   */
+  detail: string;
+  /**
+   * Version
+   */
+  version?: string | null;
+  /**
+   * Devices
+   */
+  devices?: Array<string>;
+  /**
+   * Checkpoints
+   */
+  checkpoints?: Array<string>;
+};
+
+/**
  * CompactionPolicy
  *
  * The policy and the models an admin may choose as the summarizer.
@@ -18050,6 +18191,107 @@ export type LocalImageRemoveResponses = {
 
 export type LocalImageRemoveResponse =
   LocalImageRemoveResponses[keyof LocalImageRemoveResponses];
+
+export type ComfyuiSettingsGetData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/settings/app/image-generation/comfyui";
+};
+
+export type ComfyuiSettingsGetErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+};
+
+export type ComfyuiSettingsGetError =
+  ComfyuiSettingsGetErrors[keyof ComfyuiSettingsGetErrors];
+
+export type ComfyuiSettingsGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: ComfyUiOverview;
+};
+
+export type ComfyuiSettingsGetResponse =
+  ComfyuiSettingsGetResponses[keyof ComfyuiSettingsGetResponses];
+
+export type ComfyuiSettingsUpdateData = {
+  body: ComfyUiSettingsUpdate;
+  path?: never;
+  query?: never;
+  url: "/settings/app/image-generation/comfyui";
+};
+
+export type ComfyuiSettingsUpdateErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type ComfyuiSettingsUpdateError =
+  ComfyuiSettingsUpdateErrors[keyof ComfyuiSettingsUpdateErrors];
+
+export type ComfyuiSettingsUpdateResponses = {
+  /**
+   * Successful Response
+   */
+  200: ComfyUiOverview;
+};
+
+export type ComfyuiSettingsUpdateResponse =
+  ComfyuiSettingsUpdateResponses[keyof ComfyuiSettingsUpdateResponses];
+
+export type ComfyuiTestConnectionData = {
+  body: ComfyUiSettingsUpdate;
+  path?: never;
+  query?: never;
+  url: "/settings/app/image-generation/comfyui/test";
+};
+
+export type ComfyuiTestConnectionErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type ComfyuiTestConnectionError =
+  ComfyuiTestConnectionErrors[keyof ComfyuiTestConnectionErrors];
+
+export type ComfyuiTestConnectionResponses = {
+  /**
+   * Successful Response
+   */
+  200: ComfyUiTestResult;
+};
+
+export type ComfyuiTestConnectionResponse =
+  ComfyuiTestConnectionResponses[keyof ComfyuiTestConnectionResponses];
 
 export type LearningModeGetManyData = {
   body?: never;
