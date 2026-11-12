@@ -336,18 +336,12 @@ import type {
   ClassUpdateData,
   ClassUpdateError,
   ClassUpdateResponse,
-  ComfyuiSettingsGetData,
-  ComfyuiSettingsGetError,
-  ComfyuiSettingsGetResponse,
-  ComfyuiSettingsUpdateData,
-  ComfyuiSettingsUpdateError,
-  ComfyuiSettingsUpdateResponse,
-  ComfyuiTestConnectionData,
-  ComfyuiTestConnectionError,
-  ComfyuiTestConnectionResponse,
   ComponentsByTypeData,
   ComponentsByTypeError,
   ComponentsByTypeResponse,
+  ComponentsTestData,
+  ComponentsTestError,
+  ComponentsTestResponse,
   CourseModePolicyGetData,
   CourseModePolicyGetError,
   CourseModePolicyGetResponse,
@@ -6953,92 +6947,6 @@ export const localImageRemoveMutation = (
   return mutationOptions;
 };
 
-export const comfyuiSettingsGetQueryKey = (
-  options?: Options<ComfyuiSettingsGetData>,
-) => createQueryKey("comfyuiSettingsGet", options);
-
-/**
- * Get Settings
- *
- * The server, auth (the token is never returned), workflow and limits.
- */
-export const comfyuiSettingsGetOptions = (
-  options?: Options<ComfyuiSettingsGetData>,
-) =>
-  queryOptions<
-    ComfyuiSettingsGetResponse,
-    ComfyuiSettingsGetError,
-    ComfyuiSettingsGetResponse,
-    ReturnType<typeof comfyuiSettingsGetQueryKey>
-  >({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await ApiClient.__registry.get().comfyuiSettingsGet({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: comfyuiSettingsGetQueryKey(options),
-  });
-
-/**
- * Put Settings
- */
-export const comfyuiSettingsUpdateMutation = (
-  options?: Partial<Options<ComfyuiSettingsUpdateData>>,
-): UseMutationOptions<
-  ComfyuiSettingsUpdateResponse,
-  ComfyuiSettingsUpdateError,
-  Options<ComfyuiSettingsUpdateData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    ComfyuiSettingsUpdateResponse,
-    ComfyuiSettingsUpdateError,
-    Options<ComfyuiSettingsUpdateData>
-  > = {
-    mutationFn: async (fnOptions) => {
-      const { data } = await ApiClient.__registry.get().comfyuiSettingsUpdate({
-        ...options,
-        ...fnOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
-/**
- * Test Connection
- *
- * Try these settings (unsaved; a missing token uses the stored one) and list checkpoints.
- */
-export const comfyuiTestConnectionMutation = (
-  options?: Partial<Options<ComfyuiTestConnectionData>>,
-): UseMutationOptions<
-  ComfyuiTestConnectionResponse,
-  ComfyuiTestConnectionError,
-  Options<ComfyuiTestConnectionData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    ComfyuiTestConnectionResponse,
-    ComfyuiTestConnectionError,
-    Options<ComfyuiTestConnectionData>
-  > = {
-    mutationFn: async (fnOptions) => {
-      const { data } = await ApiClient.__registry.get().comfyuiTestConnection({
-        ...options,
-        ...fnOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
 export const learningModeGetManyQueryKey = (
   options?: Options<LearningModeGetManyData>,
 ) => createQueryKey("learningModeGetMany", options);
@@ -9382,6 +9290,33 @@ export const componentsByTypeOptions = (
     },
     queryKey: componentsByTypeQueryKey(options),
   });
+
+/**
+ * Check a component's parameters, usually before saving them
+ */
+export const componentsTestMutation = (
+  options?: Partial<Options<ComponentsTestData>>,
+): UseMutationOptions<
+  ComponentsTestResponse,
+  ComponentsTestError,
+  Options<ComponentsTestData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ComponentsTestResponse,
+    ComponentsTestError,
+    Options<ComponentsTestData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().componentsTest({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
 
 export const subAgentsListQueryKey = (options?: Options<SubAgentsListData>) =>
   createQueryKey("subAgentsList", options);

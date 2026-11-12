@@ -8,7 +8,7 @@ from asterism.core.exceptions import BadDataException
 from asterism.domains.settings.models import ApplicationSettingsModel
 from asterism.domains.settings.service import upsert_app_setting
 
-from .providers import load_provider
+from .providers import load_generator, selected_name
 from .schemas import ImageGenerationAvailability, ImageGenerationPolicy, ImageProviderStatus
 
 POLICY_KEY = "image_generation"
@@ -37,11 +37,13 @@ async def write_policy(payload: ImageGenerationPolicy, session: AsyncSession) ->
     return await read_policy(session)
 
 
-async def provider_status(policy: ImageGenerationPolicy, session: AsyncSession) -> ImageProviderStatus:
-    provider = await load_provider(policy.provider, session)
-    if provider is None:
-        return ImageProviderStatus(provider=policy.provider, ready=False, detail="No image provider is set up")
-    return await provider.status()
+async def provider_status(session: AsyncSession) -> ImageProviderStatus:
+    generator = await load_generator(session)
+    if generator is None:
+        return ImageProviderStatus(
+            provider=await selected_name(session), ready=False, detail="No image provider is set up"
+        )
+    return await generator.status()
 
 
 async def availability(user_id: str, session: AsyncSession) -> ImageGenerationAvailability:
@@ -53,7 +55,7 @@ async def availability(user_id: str, session: AsyncSession) -> ImageGenerationAv
         return ImageGenerationAvailability(available=False, reason="Image generation is turned off")
     if policy.group_ids is not None and await read_group_id(user_id, session) not in policy.group_ids:
         return ImageGenerationAvailability(available=False, reason="Image generation isn't available to your group")
-    status = await provider_status(policy, session)
+    status = await provider_status(session)
     if not status.ready:
         return ImageGenerationAvailability(available=False, reason=status.detail or "The image provider isn't ready")
     return ImageGenerationAvailability(available=True)

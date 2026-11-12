@@ -14,20 +14,55 @@ platform's own guards decide who may generate and what is refused.
 
 ## Decision
 
-### Provider interface
+### Generators are components
 
-`image_generation/providers.py` defines `ImageProvider`: a `name`, `status()`
-(ready or not, with a reason) and `generate(request, progress)`, which returns
-PNG bytes with seed and size per image, plus the model and revision. Providers
-register a factory by name (`comfyui`, `diffusers`); tests register a fake.
-The admin policy names the one active provider; `none` is never ready. A
-provider raises `ImageGenerationError` for failures the user may see; any
-other exception is logged and shown as a generic failure.
+Image generators are `ImageGenerator` components (`domains/components`), the
+same adapter layer as the search providers; the image generation domain
+consumes one, as the web-search tool consumes a `WebSearch` component. This
+replaced a separate provider registry during US-76.3, so there is one way to
+add, configure, secure and export an adapter.
+
+- `image_generation/providers.py` defines `ImageGeneratorComponent`: a
+  parameter model, `status()` (ready or not, with a reason; called on every
+  availability check, so cheap) and `__call__(request, progress)`, which
+  returns PNG bytes with seed and size per image, plus the model and revision.
+  `generators.py` registers `ComfyUI` and `Diffusers`; tests register a fake.
+- The selection is the `image_generator_provider` component setting
+  (`{name, parameters}`), like `web_search_provider`. No selection is never
+  ready.
+- A generator raises `ImageGenerationError` for failures the user may see; any
+  other exception is logged and shown as a generic failure.
+- The domain keeps everything that isn't an adapter: policy, prompt check,
+  jobs, audit, storage, the tool and Create image. Local infrastructure (the
+  diffusers worker, hardware, catalog, downloads, licenses) stays in
+  `image_generation/local` with its own endpoints; components stay stateless
+  configuration plus a call.
+
+The generic component layer gained what generators needed:
+
+- **Typed parameters.** Component parameters are JSON values (numbers,
+  switches, objects), not strings. Secrets, found by key name, are strings,
+  encrypted at rest and redacted in responses as before.
+- **Checked on save.** Saving a component setting through the generic
+  settings endpoint validates the parameters against the component's own
+  model, stores them normalized, and returns the model's reason on failure
+  (for example "workflow: This is ComfyUI's UI format…"). An unknown
+  component name is refused. `components/catalog.ensure_loaded()` registers
+  every component for code that runs outside the app.
+- **Test before saving.** A component may implement `test()`;
+  `/components/by_type` reports `testable`, and admins call
+  `POST /components/{type}/{name}/test` with unsaved parameters. A redacted
+  secret means the stored one when that component is the saved selection. The
+  result has `ok`, a `detail` and `suggestions` per parameter (ComfyUI returns
+  its checkpoints).
+- **The generic form** renders switches for booleans, number inputs, a JSON
+  editor for objects (with the schema's first example), password inputs for
+  secrets, a Test connection button and the suggestions as choices.
 
 ### Policy
 
 One application setting, `image_generation`
-(`{enabled, provider, group_ids}`), default off, with admin endpoints
+(`{enabled, group_ids}`), default off, with admin endpoints
 `GET/PUT /settings/app/image-generation` and
 `GET /settings/app/image-generation/status`. `group_ids` null means every
 group; a list limits generation to those groups (ADR-0058), checked live.
@@ -38,8 +73,10 @@ generate and why not.
 The epic suggested a class mode policy switch too. Class policies govern
 learning modes, not tools, so this is left out; group limits cover students.
 
-The settings file exports the switch and provider, not group limits (group ids
-differ between installations); importing keeps the local limits.
+The settings file exports the switch, not group limits (group ids differ
+between installations); importing keeps the local limits. The generator
+travels as an ordinary component, secrets included, inside the encrypted
+bundle.
 
 ### Jobs
 
@@ -164,16 +201,13 @@ support never sees tool messages in its history.
 
 ### ComfyUI generator (US-76.3)
 
-- **Settings.** `image_generation_comfyui` holds the server address (http or
-  https, optional path prefix for a reverse proxy), auth (none, bearer token,
-  or basic username and password), an optional custom workflow, the checkpoint
-  for the built-in workflow, default steps and guidance, a per-request timeout
-  (10–600 s) and TLS verification. The token is Fernet-encrypted at rest and
-  never returned (`has_token` instead; an update without a token keeps it).
-  The key is deliberately outside the generic application settings aggregate,
-  so only `GET/PUT /settings/app/image-generation/comfyui` read or write it.
-  The settings file carries it, token included, inside the encrypted bundle
-  like provider API keys; a file without a ComfyUI server keeps the local one.
+- **Parameters** (`ComfyUIParameters`): the server address (http or https,
+  optional path prefix for a reverse proxy), sign-in (none, bearer token, or
+  basic username and password; ComfyUI itself has none), the checkpoint for
+  the built-in workflow, an optional custom workflow, default steps and
+  guidance, a per-request timeout (10–600 s) and TLS verification. `token` is
+  a component secret: encrypted at rest, redacted in responses, kept when the
+  redacted value is saved back.
 - **Workflows** are ComfyUI's API format ("Save (API)"). The built-in one is a
   plain checkpoint pipeline (checkpoint loader, two text encoders, empty
   latent, KSampler, VAE decode, Save Image). Placeholders: `{{prompt}}`
@@ -181,8 +215,8 @@ support never sees tool messages in its history.
   `{{steps}}`, `{{guidance}}`, `{{checkpoint}}`. A value that is exactly one
   placeholder takes the typed value; placeholders inside longer strings are
   replaced as text. User text only lands in values and is never re-read as a
-  placeholder. Saving rejects the UI format, unknown placeholders and a
-  missing `{{prompt}}`.
+  placeholder. The parameter model rejects the UI format, unknown
+  placeholders and a missing `{{prompt}}`, so saving gives the reason.
 - **Jobs.** Each image is its own prompt with seed, seed + 1, …, matching the
   local generator. A WebSocket on a fresh client id reports sampler steps;
   completion and errors come from `/history`, polled every 0.5 s, so a proxy
@@ -194,12 +228,14 @@ support never sees tool messages in its history.
   and interrupted by prompt id, so other users' jobs on a shared server keep
   running.
 - **Status** checks configuration first, then reachability (`/system_stats`,
-  cached 30 s per settings). **Test connection** tries unsaved settings and
-  returns the version, devices and checkpoints, flagging a missing checkpoint.
+  cached 30 s per parameters). **Test connection** is the component's
+  `test()`: it reports the version and devices, suggests the server's
+  checkpoints, and flags a checkpoint the server doesn't have.
 
 ## Consequences
 
-- ComfyUI and diffusers only implement `status` and `generate`.
+- ComfyUI and diffusers only implement `status` and `__call__` (and ComfyUI
+  `test`); a new backend is a new component.
 - Generated images appear in the user's files and in the chat with existing
   file access rules, and the audit trail records every attempt.
 - The prompt check can refuse harmless prompts; that is accepted for this

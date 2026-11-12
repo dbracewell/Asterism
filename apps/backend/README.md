@@ -167,14 +167,17 @@ next request starts a fresh worker.
 
 ## ComfyUI image generation
 
-The ComfyUI generator (US-76.3) sends jobs to an existing ComfyUI server. Set
-it under `/settings/app/image-generation/comfyui` (admin): the address,
-optional bearer or basic auth (for a server behind a proxy; ComfyUI itself has
-no auth), and either a checkpoint for the built-in workflow or a custom
-workflow exported with **Save (API)** and using `{{prompt}}`, `{{seed}}`,
-`{{width}}` and the other placeholders. `POST …/comfyui/test` checks unsaved
-settings and lists the server's checkpoints. Step progress uses ComfyUI's
-WebSocket when the proxy allows it.
+The ComfyUI generator (US-76.3) sends jobs to an existing ComfyUI server. It is
+an `ImageGenerator` component: select and configure it through the
+`image_generator_provider` application setting (`{"name": "ComfyUI",
+"parameters": {...}}`), like the search providers. Parameters: the address,
+optional bearer or basic sign-in (for a server behind a proxy; ComfyUI itself
+has none), and either a checkpoint for the built-in workflow or a custom
+workflow exported with **Save (API)** using `{{prompt}}`, `{{seed}}`,
+`{{width}}` and the other placeholders. Saving validates them and returns the
+reason when they're wrong. `POST /components/ImageGenerator/ComfyUI/test`
+checks unsaved parameters and suggests the server's checkpoints. Step progress
+uses ComfyUI's WebSocket when the proxy allows it.
 
 ## Quality checks
 

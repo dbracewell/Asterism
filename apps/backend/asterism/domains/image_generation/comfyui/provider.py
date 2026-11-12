@@ -13,14 +13,14 @@ import time
 import uuid
 from typing import Any
 
-from sqlalchemy.ext.asyncio import AsyncSession
+from asterism.domains.components.registry import component_registry
+from asterism.domains.components.schemas import ComponentTestResult
 
-from ..providers import ImageGenerationError, ProgressCallback, register_provider
+from ..providers import ImageGenerationError, ImageGeneratorComponent, ProgressCallback
 from ..schemas import ImageProgress, ImageProviderStatus, ImageRequest, ProviderImage, ProviderResult
 from .client import ComfyUIClient
-from .schemas import ComfyUISettings
-from .settings import read_settings
-from .workflow import DEFAULT_WORKFLOW, check_workflow, fill
+from .schemas import ComfyUIParameters
+from .workflow import DEFAULT_WORKFLOW, fill
 
 POLL_SECONDS = 0.5
 PROBE_TTL_SECONDS = 30.0
@@ -32,21 +32,16 @@ def clear_probes() -> None:
     _PROBES.clear()
 
 
-def _fingerprint(settings: ComfyUISettings) -> str:
+def _fingerprint(settings: ComfyUIParameters) -> str:
     return hashlib.sha256(settings.model_dump_json().encode()).hexdigest()
 
 
-def configuration_problem(settings: ComfyUISettings) -> str | None:
+def configuration_problem(settings: ComfyUIParameters) -> str | None:
+    """What's missing; the workflow itself was checked when the parameters were validated."""
     if not settings.base_url:
         return "Set the ComfyUI server address"
-    if settings.workflow is None:
-        if not settings.checkpoint:
-            return "Choose a checkpoint for the ComfyUI workflow"
-        return None
-    try:
-        check_workflow(settings.workflow)
-    except ValueError as error:
-        return f"The ComfyUI workflow can't be used: {error}"
+    if settings.workflow is None and not settings.checkpoint:
+        return "Choose a checkpoint for the ComfyUI workflow"
     return None
 
 
@@ -74,16 +69,46 @@ def _failure(entry: dict[str, Any]) -> str | None:
     return "ComfyUI reported an error"
 
 
-class ComfyUIProvider:
-    name = "comfyui"
+@component_registry.register()
+class ComfyUI(ImageGeneratorComponent[ComfyUIParameters]):
+    """An existing ComfyUI server."""
 
-    def __init__(self, settings: ComfyUISettings):
-        self.settings = settings
+    name = "ComfyUI"
+    parameters = ComfyUIParameters
+
+    @property
+    def settings(self) -> ComfyUIParameters:
+        return self.config
+
+    async def test(self) -> ComponentTestResult:
+        """Reach the server and list its checkpoints; flags a checkpoint it doesn't have."""
+        if not self.settings.base_url:
+            return ComponentTestResult(ok=False, detail="Enter the ComfyUI server address")
+        try:
+            async with ComfyUIClient(self.settings) as client:
+                stats = await client.system_stats()
+                checkpoints = await client.checkpoints()
+        except ImageGenerationError as error:
+            return ComponentTestResult(ok=False, detail=str(error))
+        system = stats.get("system") or {}
+        version = system.get("comfyui_version")
+        devices = [str(device.get("name", "?")) for device in stats.get("devices") or [] if isinstance(device, dict)]
+        detail = f"Connected to ComfyUI {version}" if version else "Connected to ComfyUI"
+        if devices:
+            detail += f" on {', '.join(devices)}"
+        suggestions = {"checkpoint": checkpoints}
+        if self.settings.workflow is None and self.settings.checkpoint and self.settings.checkpoint not in checkpoints:
+            return ComponentTestResult(
+                ok=False,
+                detail=f"{detail}, but it has no checkpoint named {self.settings.checkpoint}",
+                suggestions=suggestions,
+            )
+        return ComponentTestResult(ok=True, detail=detail, suggestions=suggestions)
 
     async def status(self) -> ImageProviderStatus:
         problem = configuration_problem(self.settings)
         if problem:
-            return ImageProviderStatus(provider="comfyui", ready=False, detail=problem)
+            return ImageProviderStatus(provider=self.name, ready=False, detail=problem)
         key = _fingerprint(self.settings)
         checked = _PROBES.get(key)
         if checked is None or time.monotonic() - checked[0] > PROBE_TTL_SECONDS:
@@ -95,10 +120,10 @@ class ComfyUIProvider:
                 error = str(failure)
             checked = _PROBES[key] = (time.monotonic(), error)
         if checked[1]:
-            return ImageProviderStatus(provider="comfyui", ready=False, detail=checked[1])
-        return ImageProviderStatus(provider="comfyui", ready=True, detail=f"ComfyUI at {self.settings.base_url}")
+            return ImageProviderStatus(provider=self.name, ready=False, detail=checked[1])
+        return ImageProviderStatus(provider=self.name, ready=True, detail=f"ComfyUI at {self.settings.base_url}")
 
-    async def generate(self, request: ImageRequest, progress: ProgressCallback) -> ProviderResult:
+    async def __call__(self, request: ImageRequest, progress: ProgressCallback) -> ProviderResult:
         problem = configuration_problem(self.settings)
         if problem:
             raise ImageGenerationError(problem)
@@ -181,10 +206,3 @@ class ComfyUIProvider:
         finally:
             listener.cancel()
             await asyncio.gather(listener, return_exceptions=True)
-
-
-async def _factory(session: AsyncSession) -> ComfyUIProvider:
-    return ComfyUIProvider(await read_settings(session))
-
-
-register_provider("comfyui", _factory)

@@ -19,7 +19,7 @@ import httpx
 from asterism.common.log import get_logger
 
 from ..providers import ImageGenerationError
-from .schemas import ComfyUISettings
+from .schemas import ComfyUIParameters
 
 logger = get_logger("ComfyUI")
 
@@ -28,7 +28,7 @@ REQUEST_TIMEOUT = httpx.Timeout(30.0, connect=5.0)
 StepCallback = Callable[[int, int], Awaitable[None]]
 
 
-def auth_headers(settings: ComfyUISettings) -> dict[str, str]:
+def auth_headers(settings: ComfyUIParameters) -> dict[str, str]:
     if settings.auth == "bearer" and settings.token:
         return {"Authorization": f"Bearer {settings.token}"}
     if settings.auth == "basic":
@@ -56,7 +56,7 @@ def _detail(response: httpx.Response) -> str:
 
 
 class ComfyUIClient:
-    def __init__(self, settings: ComfyUISettings, transport: httpx.AsyncBaseTransport | None = None):
+    def __init__(self, settings: ComfyUIParameters, transport: httpx.AsyncBaseTransport | None = None):
         if not settings.base_url:
             raise ImageGenerationError("Set the ComfyUI server address first")
         self.settings = settings

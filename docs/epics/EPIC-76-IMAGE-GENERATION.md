@@ -172,7 +172,11 @@ timeout); test connection.
 - [x] Tests against a fake ComfyUI server.
 
 Implemented 2026-11-10 ([ADR-0064](../adr/0064-image-generation.md), ComfyUI
-section). The fake server (`tests/fake_comfyui.py`) is a real HTTP and
+section). On 2026-11-12, by the user's decision, both generators became
+`ImageGenerator` components, replacing the separate provider registry and
+ComfyUI settings endpoints; the generic component layer gained typed
+parameters, validation on save, an optional `test()` with suggestions, and
+form support for switches, numbers and JSON. The fake server (`tests/fake_comfyui.py`) is a real HTTP and
 WebSocket server on a local port.
 
 Manual run (2026-11-10, Apple M5 Max): ComfyUI 0.44.0 (commit `bbd810e6`)

@@ -2,9 +2,11 @@
 
 import random
 
-from sqlalchemy.ext.asyncio import AsyncSession
+from pydantic import BaseModel, ConfigDict
 
-from ..providers import ImageGenerationError, ProgressCallback, register_provider
+from asterism.domains.components.registry import component_registry
+
+from ..providers import ImageGenerationError, ImageGeneratorComponent, ProgressCallback
 from ..schemas import ImageProviderStatus, ImageRequest, ProviderImage, ProviderResult
 from . import downloads
 from .catalog import CatalogEntry, entry
@@ -25,31 +27,49 @@ def native_size(width: int, height: int, resolution: int) -> tuple[int, int]:
     return max(64, round(width * scale / 64) * 64), max(64, round(height * scale / 64) * 64)
 
 
-class DiffusersProvider:
-    name = "diffusers"
+class DiffusersParameters(BaseModel):
+    """No form fields: the model and device are chosen on the local models page,
+    which also handles downloads and licenses (US-76.2)."""
 
-    def __init__(self, settings: LocalSettings):
-        self.settings = settings
+    model_config = ConfigDict(extra="ignore")
 
-    def _chosen(self) -> CatalogEntry | None:
-        return entry(self.settings.model_id) if self.settings.model_id else None
+
+async def _local_settings() -> LocalSettings:
+    from asterism.db import database
+
+    async with database.get_async_db_session() as session:
+        return await read_settings(session)
+
+
+@component_registry.register()
+class Diffusers(ImageGeneratorComponent[DiffusersParameters]):
+    """A local diffusers model run in a worker process by this backend."""
+
+    name = "Diffusers"
+    parameters = DiffusersParameters
+
+    @staticmethod
+    def _chosen(settings: LocalSettings) -> CatalogEntry | None:
+        return entry(settings.model_id) if settings.model_id else None
 
     async def status(self) -> ImageProviderStatus:
-        model = self._chosen()
+        settings = await _local_settings()
+        model = self._chosen(settings)
         if model is None:
-            return ImageProviderStatus(provider="diffusers", ready=False, detail="Choose a local model")
+            return ImageProviderStatus(provider=self.name, ready=False, detail="Choose a local model")
         if not downloads.service(model).is_ready():
-            return ImageProviderStatus(provider="diffusers", ready=False, detail=f"Download {model.name} first")
-        fit = plan(model, cached_detect(self.settings.device))
+            return ImageProviderStatus(provider=self.name, ready=False, detail=f"Download {model.name} first")
+        fit = plan(model, cached_detect(settings.device))
         if not fit.fits:
-            return ImageProviderStatus(provider="diffusers", ready=False, detail=fit.detail)
-        return ImageProviderStatus(provider="diffusers", ready=True, detail=f"{model.name}: {fit.detail}")
+            return ImageProviderStatus(provider=self.name, ready=False, detail=fit.detail)
+        return ImageProviderStatus(provider=self.name, ready=True, detail=f"{model.name}: {fit.detail}")
 
-    async def generate(self, request: ImageRequest, progress: ProgressCallback) -> ProviderResult:
-        model = self._chosen()
+    async def __call__(self, request: ImageRequest, progress: ProgressCallback) -> ProviderResult:
+        settings = await _local_settings()
+        model = self._chosen(settings)
         if model is None or not downloads.service(model).is_ready():
             raise ImageGenerationError("The local model isn't ready")
-        hardware = cached_detect(self.settings.device)
+        hardware = cached_detect(settings.device)
         fit = plan(model, hardware)
         if not fit.fits:
             raise ImageGenerationError(fit.detail)
@@ -84,10 +104,3 @@ class DiffusersProvider:
             revision=model.revision,
             steps=steps,
         )
-
-
-async def _factory(session: AsyncSession) -> DiffusersProvider:
-    return DiffusersProvider(await read_settings(session))
-
-
-register_provider("diffusers", _factory)

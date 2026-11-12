@@ -16,8 +16,8 @@ from asterism.common.log import get_logger
 from asterism.core.exceptions import BadDataException
 
 from .models import ImageGenerationModel
-from .policy import read_policy, require_available
-from .providers import ImageGenerationError, load_provider
+from .policy import require_available
+from .providers import ImageGenerationError, load_generator, selected_name
 from .safety import refusal_reason
 from .schemas import (
     DEFAULT_TIMEOUT_SECONDS,
@@ -126,13 +126,13 @@ async def generate_images(
 
     started = time.monotonic()
     async with get_async_db_session() as session:
-        policy = await read_policy(session)
+        provider_name = await selected_name(session)
     if reason := refusal_reason(request.prompt, request.negative_prompt):
         await _record(
             user_id=user_id,
             chat_id=chat_id,
             request=request,
-            provider=policy.provider,
+            provider=provider_name,
             status="refused",
             started=started,
             error=reason,
@@ -140,7 +140,7 @@ async def generate_images(
         raise BadDataException(reason)
     async with get_async_db_session() as session:
         await require_available(user_id, session)
-        provider = await load_provider(policy.provider, session)
+        provider = await load_generator(session)
     if provider is None:
         raise BadDataException("No image provider is set up")
 
@@ -149,7 +149,7 @@ async def generate_images(
     try:
         async with slot:
             await progress(ImageProgress(stage="running", step=0, total=request.steps))
-            result = await asyncio.wait_for(provider.generate(request, progress), timeout)
+            result = await asyncio.wait_for(provider(request, progress), timeout)
             if not result.images:
                 raise ImageGenerationError("The image provider returned no images")
             await progress(ImageProgress(stage="saving"))

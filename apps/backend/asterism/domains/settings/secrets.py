@@ -86,7 +86,7 @@ def is_secret_parameter_key(key: str) -> bool:
     return normalized in _SECRET_KEY_NAMES or normalized.endswith(_SECRET_KEY_SUFFIXES)
 
 
-def redact_component_parameters(parameters: dict[str, str]) -> dict[str, str]:
+def redact_component_parameters(parameters: dict[str, Any]) -> dict[str, Any]:
     """Replace the values of secret-looking keys with :data:`REDACTED_SECRET` (empty values stay empty)."""
     return {k: (REDACTED_SECRET if is_secret_parameter_key(k) and v else v) for k, v in parameters.items()}
 
@@ -116,17 +116,18 @@ def encrypt_component_provider_dict(
         if isinstance(raw_existing_params, dict):
             existing_params = raw_existing_params
 
-    encrypted_params: dict[str, str] = {}
+    encrypted_params: dict[str, Any] = {}
     for k, v in params.items():
-        str_val = str(v) if v is not None else ""
         if is_secret_parameter_key(k):
+            str_val = str(v) if v is not None else ""
             if str_val == REDACTED_SECRET and k in existing_params:
                 existing_val = str(existing_params[k])
                 encrypted_params[k] = encrypt_secret(decrypt_secret(existing_val))
             else:
                 encrypted_params[k] = encrypt_secret(str_val)
         else:
-            encrypted_params[k] = str_val
+            # Other parameters keep their JSON type (numbers, switches, workflows).
+            encrypted_params[k] = v
 
     return {
         **provider_dict,

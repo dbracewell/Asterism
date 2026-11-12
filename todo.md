@@ -48,6 +48,7 @@ Source: user request (2026-11-09). Order: US-76.1 → 76.2 → 76.3 → 76.4 →
 - [ ] US-76.3: ComfyUI generator (implemented; awaiting confirmation)
   - [x] Client, workflow templating and settings.
   - [x] Tests against a fake ComfyUI server.
+  - [x] Generators as `ImageGenerator` components; generic component layer: typed parameters, validation on save, test connection, switches/numbers/JSON in the form.
 - [ ] US-76.4: Admin settings
   - [ ] Admin page with generated client hooks.
   - [ ] Unit tests and an E2E for each provider path.

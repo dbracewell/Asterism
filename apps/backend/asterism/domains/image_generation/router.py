@@ -7,9 +7,8 @@ from asterism.core.schemas import ErrorDetail
 from asterism.db.dependencies import DBSessionDep
 from asterism.domains.user.dependencies import AdminUserDep, AuthedUserDep
 
+from . import generators as _generators  # noqa: F401 - registers the image generator components
 from . import policy
-from .comfyui import provider as _comfyui_provider  # noqa: F401 - registers the ComfyUI provider
-from .local import provider as _local_provider  # noqa: F401 - registers the diffusers provider
 from .schemas import ImageGenerationAvailability, ImageGenerationPolicy, ImageProviderStatus
 
 image_generation_router = APIRouter(
@@ -29,16 +28,13 @@ async def put_policy(
     payload: ImageGenerationPolicy, user: AdminUserDep, session: DBSessionDep
 ) -> ImageGenerationPolicy:
     result = await policy.write_policy(payload, session)
-    logger.info(
-        f"Image generation policy set by admin {user.id}: enabled={result.enabled} "
-        f"provider={result.provider} groups={result.group_ids}"
-    )
+    logger.info(f"Image generation policy set by admin {user.id}: enabled={result.enabled} groups={result.group_ids}")
     return result
 
 
 @image_generation_router.get("/settings/app/image-generation/status", operation_id="imageGenerationProviderStatus")
 async def get_status(user: AdminUserDep, session: DBSessionDep) -> ImageProviderStatus:
-    return await policy.provider_status(await policy.read_policy(session), session)
+    return await policy.provider_status(session)
 
 
 @image_generation_router.get("/image-generation/availability", operation_id="imageGenerationAvailability")

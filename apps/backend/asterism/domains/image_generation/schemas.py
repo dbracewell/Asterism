@@ -5,7 +5,6 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, StrictBool
 
-ImageProviderName = Literal["none", "comfyui", "diffusers"]
 ImageGenerationStatus = Literal["completed", "failed", "refused", "cancelled"]
 
 MAX_PROMPT_LENGTH = 4000
@@ -15,17 +14,18 @@ DEFAULT_TIMEOUT_SECONDS = 600
 
 
 class ImageGenerationPolicy(BaseModel):
-    """The admin policy: on or off, which groups may use it, and the active provider."""
+    """The admin policy: on or off and which groups may use it. The generator
+    itself is the ``image_generator_provider`` component setting."""
 
     model_config = ConfigDict(extra="forbid")
     enabled: StrictBool = False
     # None: every group. A list limits it to those groups (ADR-0058 groups).
     group_ids: list[str] | None = Field(default=None, max_length=200)
-    provider: ImageProviderName = "none"
 
 
 class ImageProviderStatus(BaseModel):
-    provider: ImageProviderName
+    # The generator component's name, or "none".
+    provider: str
     ready: bool
     detail: str = ""
 

@@ -11,12 +11,12 @@ wrong passphrase fail the same way and reveal nothing.
 import base64
 import os
 import unicodedata
-from typing import Any, Literal
+from typing import Literal
 
 from cryptography.exceptions import InvalidKey
 from cryptography.fernet import Fernet, InvalidToken
 from cryptography.hazmat.primitives.kdf.scrypt import Scrypt
-from pydantic import BaseModel, ConfigDict, Field, PositiveInt, ValidationError
+from pydantic import BaseModel, ConfigDict, Field, JsonValue, PositiveInt, ValidationError
 
 from asterism.core.exceptions import BadDataException
 from asterism.domains.settings.pricing import ModelPricing
@@ -67,10 +67,10 @@ class ExportedProvider(_Document):
 
 
 class ExportedComponent(_Document):
-    """A search provider. Unlike the API schema, this keeps parameter values."""
+    """A component provider (search, image generator). Unlike the API schema, this keeps secret values."""
 
     name: str
-    parameters: dict[str, str] = Field(default_factory=dict, repr=False)
+    parameters: dict[str, JsonValue] = Field(default_factory=dict, repr=False)
 
 
 class ExportedCaptioning(_Document):
@@ -83,7 +83,6 @@ class ExportedImageGeneration(_Document):
     installation: group ids differ between installations."""
 
     enabled: bool = False
-    provider: Literal["none", "comfyui", "diffusers"] = "none"
 
 
 class ExportedLocalImage(_Document):
@@ -92,22 +91,6 @@ class ExportedLocalImage(_Document):
 
     model_id: str | None = None
     device: Literal["auto", "cuda", "mps", "cpu"] = "auto"
-
-
-class ExportedComfyUI(_Document):
-    """The ComfyUI server, credentials, workflow and limits (US-76.3). The token
-    travels like provider API keys, inside the encrypted bundle."""
-
-    base_url: str
-    auth: Literal["none", "bearer", "basic"] = "none"
-    username: str = ""
-    token: str = ""
-    workflow: dict[str, Any] | None = None
-    checkpoint: str = ""
-    steps: int = 25
-    guidance: float = 6.0
-    timeout_seconds: int = 300
-    verify_tls: bool = True
 
 
 class ExportedCompaction(_Document):
@@ -143,8 +126,7 @@ class SettingsBundle(_Document):
     canvas_enabled: bool = False
     image_generation: ExportedImageGeneration = Field(default_factory=ExportedImageGeneration)
     image_generation_local: ExportedLocalImage = Field(default_factory=ExportedLocalImage)
-    # Absent when this installation has no ComfyUI server; importing then keeps the local one.
-    image_generation_comfyui: ExportedComfyUI | None = None
+    image_generator_provider: ExportedComponent | None = None
     chatgpt_plan_enabled: bool = False
     web_search_provider: ExportedComponent | None = None
     image_search_provider: ExportedComponent | None = None
