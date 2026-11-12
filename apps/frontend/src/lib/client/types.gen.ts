@@ -3243,6 +3243,46 @@ export type GeneralSubAgentsUpdate = {
 };
 
 /**
+ * GeneratedImage
+ *
+ * A generated image as messages and tool results carry it: a file, never pixels.
+ */
+export type GeneratedImage = {
+  /**
+   * File Id
+   */
+  file_id: string;
+  /**
+   * Filename
+   */
+  filename: string;
+  /**
+   * Width
+   */
+  width: number;
+  /**
+   * Height
+   */
+  height: number;
+  /**
+   * Seed
+   */
+  seed: number;
+  /**
+   * Model
+   */
+  model: string;
+  /**
+   * Prompt
+   */
+  prompt: string;
+  /**
+   * Embed
+   */
+  embed: string;
+};
+
+/**
  * GenerationDefaults
  */
 export type GenerationDefaults = {
@@ -3576,6 +3616,18 @@ export type ImageProviderStatus = {
    * Detail
    */
   detail?: string;
+};
+
+/**
+ * ImageTestRequest
+ *
+ * An administrator's test generation: one square image.
+ */
+export type ImageTestRequest = {
+  /**
+   * Prompt
+   */
+  prompt: string;
 };
 
 /**
@@ -17847,6 +17899,45 @@ export type ImageGenerationProviderStatusResponses = {
 
 export type ImageGenerationProviderStatusResponse =
   ImageGenerationProviderStatusResponses[keyof ImageGenerationProviderStatusResponses];
+
+export type ImageGenerationTestData = {
+  body: ImageTestRequest;
+  path?: never;
+  query?: never;
+  url: "/settings/app/image-generation/test";
+};
+
+export type ImageGenerationTestErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Forbidden
+   */
+  403: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type ImageGenerationTestError =
+  ImageGenerationTestErrors[keyof ImageGenerationTestErrors];
+
+export type ImageGenerationTestResponses = {
+  /**
+   * Successful Response
+   */
+  200: GeneratedImage;
+};
+
+export type ImageGenerationTestResponse =
+  ImageGenerationTestResponses[keyof ImageGenerationTestResponses];
 
 export type ImageGenerationAvailabilityData = {
   body?: never;

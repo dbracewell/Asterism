@@ -232,6 +232,24 @@ support never sees tool messages in its history.
   `test()`: it reports the version and devices, suggests the server's
   checkpoints, and flags a checkpoint the server doesn't have.
 
+### Admin page and test generation (US-76.4)
+
+Admin Settings → Image Generation has four parts, in the order an
+administrator works: **Generator** (the generic component form for
+`image_generator_provider`, with the generator's status), **Local models**
+(shown when Diffusers is picked: detected hardware, device override, the
+catalog with fit, license and recommendation, download progress, cancel,
+remove and "use this model"; a non-commercial license is accepted in a
+confirmation dialog), **Try it** and **Availability** (the switch and group
+limits).
+
+`POST /settings/app/image-generation/test` generates one image for an
+administrator and saves it to their files. It runs while the policy is off,
+so a generator can be tried before it is switched on. It is not a bypass:
+the prompt check, the generator's own readiness, the queue and the audit
+record all apply, and it uses the same job code as chat generation
+(`service._run`).
+
 ## Consequences
 
 - ComfyUI and diffusers only implement `status` and `__call__` (and ComfyUI

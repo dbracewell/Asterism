@@ -1,6 +1,6 @@
 # EPIC-76: Image generation
 
-Status: in progress (US-76.1, US-76.2 and US-76.3 done; [ADR-0064](../adr/0064-image-generation.md)). Source: user request (2026-11-09).
+Status: in progress (US-76.1 to US-76.4 done; [ADR-0064](../adr/0064-image-generation.md)). Source: user request (2026-11-09).
 
 ## Objective
 
@@ -201,8 +201,18 @@ recommended model and its license, download with progress, ComfyUI
 connection, and a test generation. Settings export includes the policy and
 provider settings (not secrets).
 
-- [ ] Admin page with generated client hooks.
-- [ ] Unit tests and an E2E for each provider path.
+- [x] Admin page with generated client hooks.
+- [x] Unit tests and an E2E for each provider path.
+
+Implemented 2026-11-12 ([ADR-0064](../adr/0064-image-generation.md), admin
+page section). The page reuses the generic component form for the generator
+and adds the local models list, a test generation
+(`POST /settings/app/image-generation/test`, usable before the policy is on)
+and the availability policy. The settings file carries the generator with its
+secrets inside the encrypted bundle, like provider API keys, which supersedes
+"not secrets" above. E2E (`e2e/image-generation-settings.spec.ts`) covers the
+ComfyUI path and the local download path against a mocked backend; the admin
+settings harness now provides an administrator user.
 
 ## US-76.5: Images in chat
 

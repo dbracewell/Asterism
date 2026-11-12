@@ -223,6 +223,39 @@ async def test_policy_endpoints_and_availability(images):
     ).status_code == 422
 
 
+async def test_an_admin_can_test_the_generator_before_turning_it_on(images):
+    client, sessions, provider = images
+    url = "/settings/app/image-generation/test"
+    await set_policy(sessions, enabled=False, provider=None)
+    assert (await client.post(url, headers=auth("a"), json={"prompt": "A heron"})).status_code == 401
+    none = await client.post(url, headers=auth("admin"), json={"prompt": "A heron"})
+    assert none.status_code == 400 and "No image provider is set up" in none.text
+
+    # The policy is off for users, but the admin's test still runs and saves to their files.
+    await set_policy(sessions, enabled=False)
+    assert (await client.get("/image-generation/availability", headers=auth("admin"))).json()["available"] is False
+    made = await client.post(url, headers=auth("admin"), json={"prompt": "A heron at dawn"})
+    assert made.status_code == 200, made.text
+    image = made.json()
+    assert image["model"] == "fake/model" and image["prompt"] == "A heron at dawn"
+    async with sessions() as db:
+        file = await db.get(UserFileModel, uuid.UUID(image["file_id"]))
+    assert file.user_id == "admin" and file.filename == image["filename"]
+    assert provider.calls[-1].count == 1 and provider.calls[-1].width == 1024
+
+    # Readiness, the prompt check and the audit record still apply.
+    provider.ready = False
+    down = await client.post(url, headers=auth("admin"), json={"prompt": "A heron"})
+    assert down.status_code == 400 and "Server down" in down.text
+    provider.ready = True
+    refused = await client.post(url, headers=auth("admin"), json={"prompt": "naked child"})
+    assert refused.status_code == 400
+    assert [(row.user_id, row.status) for row in await records(sessions)] == [
+        ("admin", "completed"),
+        ("admin", "refused"),
+    ]
+
+
 async def test_the_tool_is_offered_to_the_main_agent_only_when_available(images):
     client, sessions, provider = images
     chat_id, _, _ = await started_chat(client, sessions)

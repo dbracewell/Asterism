@@ -1232,6 +1232,22 @@ export const zGeneralSubAgentsUpdate = z.object({
 });
 
 /**
+ * GeneratedImage
+ *
+ * A generated image as messages and tool results carry it: a file, never pixels.
+ */
+export const zGeneratedImage = z.object({
+  file_id: z.uuid(),
+  filename: z.string(),
+  width: z.int(),
+  height: z.int(),
+  seed: z.int(),
+  model: z.string(),
+  prompt: z.string(),
+  embed: z.string(),
+});
+
+/**
  * GenerationDefaults
  */
 export const zGenerationDefaults = z.object({
@@ -1414,6 +1430,15 @@ export const zImageProviderStatus = z.object({
   provider: z.string(),
   ready: z.boolean(),
   detail: z.string().optional().default(""),
+});
+
+/**
+ * ImageTestRequest
+ *
+ * An administrator's test generation: one square image.
+ */
+export const zImageTestRequest = z.object({
+  prompt: z.string().min(1).max(4000),
 });
 
 /**
@@ -6832,6 +6857,13 @@ export const zImageGenerationPolicyUpdateResponse = zImageGenerationPolicy;
  * Successful Response
  */
 export const zImageGenerationProviderStatusResponse = zImageProviderStatus;
+
+export const zImageGenerationTestBody = zImageTestRequest;
+
+/**
+ * Successful Response
+ */
+export const zImageGenerationTestResponse = zGeneratedImage;
 
 /**
  * Successful Response

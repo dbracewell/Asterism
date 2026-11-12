@@ -423,6 +423,9 @@ import type {
   ImageGenerationProviderStatusData,
   ImageGenerationProviderStatusErrors,
   ImageGenerationProviderStatusResponses,
+  ImageGenerationTestData,
+  ImageGenerationTestErrors,
+  ImageGenerationTestResponses,
   LearningModeGetManyData,
   LearningModeGetManyErrors,
   LearningModeGetManyResponses,
@@ -4865,6 +4868,36 @@ export class ApiClient extends HeyApiClient {
       security: [{ scheme: "bearer", type: "http" }],
       url: "/settings/app/image-generation/status",
       ...options,
+    });
+  }
+
+  /**
+   * Post Test
+   *
+   * Generate one image with the configured generator, even while the policy is off.
+   *
+   * The image is saved to the administrator's files. This can take minutes
+   * while a local model loads.
+   */
+  public imageGenerationTest<ThrowOnError extends boolean = false>(
+    options: Options<ImageGenerationTestData, ThrowOnError>,
+  ): RequestResult<
+    ImageGenerationTestResponses,
+    ImageGenerationTestErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).post<
+      ImageGenerationTestResponses,
+      ImageGenerationTestErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/settings/app/image-generation/test",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
     });
   }
 

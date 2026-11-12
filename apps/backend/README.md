@@ -179,6 +179,10 @@ reason when they're wrong. `POST /components/ImageGenerator/ComfyUI/test`
 checks unsaved parameters and suggests the server's checkpoints. Step progress
 uses ComfyUI's WebSocket when the proxy allows it.
 
+Administrators set all of this up in Admin Settings → Image Generation.
+`POST /settings/app/image-generation/test` generates one image with the saved
+generator into the administrator's files, even while the policy is off.
+
 ## Quality checks
 
 Backend `typecheck` runs full basedpyright followed by compileall; root and CI
