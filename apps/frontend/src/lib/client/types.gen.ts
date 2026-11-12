@@ -100,6 +100,7 @@ export type ApplicationSettings = {
   image_generation_local?: {
     [key: string]: unknown;
   } | null;
+  image_generator_provider?: ComponentProviderParameters | null;
   compaction?: CompactionSettings;
   /**
    * Chatgpt Plan Enabled
@@ -1553,10 +1554,11 @@ export type ComponentListResponse = {
 /**
  * ComponentProviderParameters
  *
- * A named component provider (e.g. web search) plus its string parameters.
+ * A named component provider (e.g. web search) plus its parameters.
  *
- * JSON serialization redacts values whose keys look like secrets, so API
- * responses never echo stored credentials.
+ * Parameters are JSON values checked against the component's own parameter
+ * model when saved; secrets (by key name) are strings. JSON serialization
+ * redacts secret values, so API responses never echo stored credentials.
  */
 export type ComponentProviderParameters = {
   /**
@@ -1567,7 +1569,7 @@ export type ComponentProviderParameters = {
    * Parameters
    */
   parameters?: {
-    [key: string]: string;
+    [key: string]: JsonValue;
   };
 };
 
@@ -1588,6 +1590,44 @@ export type ComponentResponse = {
    */
   parameters: {
     [key: string]: unknown;
+  };
+  /**
+   * Testable
+   */
+  testable?: boolean;
+};
+
+/**
+ * ComponentTestRequest
+ *
+ * Parameters to try, usually unsaved. A redacted secret means "the stored one".
+ */
+export type ComponentTestRequest = {
+  /**
+   * Parameters
+   */
+  parameters?: {
+    [key: string]: unknown;
+  };
+};
+
+/**
+ * ComponentTestResult
+ */
+export type ComponentTestResult = {
+  /**
+   * Ok
+   */
+  ok: boolean;
+  /**
+   * Detail
+   */
+  detail: string;
+  /**
+   * Suggestions
+   */
+  suggestions?: {
+    [key: string]: Array<string>;
   };
 };
 
@@ -3506,7 +3546,8 @@ export type ImageGenerationAvailability = {
 /**
  * ImageGenerationPolicy
  *
- * The admin policy: on or off, which groups may use it, and the active provider.
+ * The admin policy: on or off and which groups may use it. The generator
+ * itself is the ``image_generator_provider`` component setting.
  */
 export type ImageGenerationPolicy = {
   /**
@@ -3517,10 +3558,6 @@ export type ImageGenerationPolicy = {
    * Group Ids
    */
   group_ids?: Array<string> | null;
-  /**
-   * Provider
-   */
-  provider?: "none" | "comfyui" | "diffusers";
 };
 
 /**
@@ -3530,7 +3567,7 @@ export type ImageProviderStatus = {
   /**
    * Provider
    */
-  provider: "none" | "comfyui" | "diffusers";
+  provider: string;
   /**
    * Ready
    */
@@ -9874,6 +9911,7 @@ export type ApplicationSettingsWritable = {
   image_generation_local?: {
     [key: string]: unknown;
   } | null;
+  image_generator_provider?: ComponentProviderParameters | null;
   compaction?: CompactionSettings;
   /**
    * Chatgpt Plan Enabled
@@ -20877,6 +20915,43 @@ export type ComponentsByTypeResponses = {
 
 export type ComponentsByTypeResponse =
   ComponentsByTypeResponses[keyof ComponentsByTypeResponses];
+
+export type ComponentsTestData = {
+  body: ComponentTestRequest;
+  path: {
+    component_type: ComponentType;
+    /**
+     * Name
+     */
+    name: string;
+  };
+  query?: never;
+  url: "/components/{component_type}/{name}/test";
+};
+
+export type ComponentsTestErrors = {
+  /**
+   * Not found
+   */
+  404: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type ComponentsTestError =
+  ComponentsTestErrors[keyof ComponentsTestErrors];
+
+export type ComponentsTestResponses = {
+  /**
+   * Successful Response
+   */
+  200: ComponentTestResult;
+};
+
+export type ComponentsTestResponse =
+  ComponentsTestResponses[keyof ComponentsTestResponses];
 
 export type SubAgentsListData = {
   body?: never;

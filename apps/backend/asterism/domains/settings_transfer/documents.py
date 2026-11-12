@@ -16,7 +16,7 @@ from typing import Literal
 from cryptography.exceptions import InvalidKey
 from cryptography.fernet import Fernet, InvalidToken
 from cryptography.hazmat.primitives.kdf.scrypt import Scrypt
-from pydantic import BaseModel, ConfigDict, Field, PositiveInt, ValidationError
+from pydantic import BaseModel, ConfigDict, Field, JsonValue, PositiveInt, ValidationError
 
 from asterism.core.exceptions import BadDataException
 from asterism.domains.settings.pricing import ModelPricing
@@ -67,10 +67,10 @@ class ExportedProvider(_Document):
 
 
 class ExportedComponent(_Document):
-    """A search provider. Unlike the API schema, this keeps parameter values."""
+    """A component provider (search, image generator). Unlike the API schema, this keeps secret values."""
 
     name: str
-    parameters: dict[str, str] = Field(default_factory=dict, repr=False)
+    parameters: dict[str, JsonValue] = Field(default_factory=dict, repr=False)
 
 
 class ExportedCaptioning(_Document):
@@ -83,7 +83,6 @@ class ExportedImageGeneration(_Document):
     installation: group ids differ between installations."""
 
     enabled: bool = False
-    provider: Literal["none", "comfyui", "diffusers"] = "none"
 
 
 class ExportedLocalImage(_Document):
@@ -127,6 +126,7 @@ class SettingsBundle(_Document):
     canvas_enabled: bool = False
     image_generation: ExportedImageGeneration = Field(default_factory=ExportedImageGeneration)
     image_generation_local: ExportedLocalImage = Field(default_factory=ExportedLocalImage)
+    image_generator_provider: ExportedComponent | None = None
     chatgpt_plan_enabled: bool = False
     web_search_provider: ExportedComponent | None = None
     image_search_provider: ExportedComponent | None = None

@@ -339,6 +339,9 @@ import type {
   ComponentsByTypeData,
   ComponentsByTypeErrors,
   ComponentsByTypeResponses,
+  ComponentsTestData,
+  ComponentsTestErrors,
+  ComponentsTestResponses,
   CourseModePolicyGetData,
   CourseModePolicyGetErrors,
   CourseModePolicyGetResponses,
@@ -6696,6 +6699,31 @@ export class ApiClient extends HeyApiClient {
       security: [{ scheme: "bearer", type: "http" }],
       url: "/components/by_type/{component_type}",
       ...options,
+    });
+  }
+
+  /**
+   * Check a component's parameters, usually before saving them
+   */
+  public componentsTest<ThrowOnError extends boolean = false>(
+    options: Options<ComponentsTestData, ThrowOnError>,
+  ): RequestResult<
+    ComponentsTestResponses,
+    ComponentsTestErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).post<
+      ComponentsTestResponses,
+      ComponentsTestErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/components/{component_type}/{name}/test",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
     });
   }
 

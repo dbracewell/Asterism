@@ -253,7 +253,7 @@ async def select(sessions, model_id):
 
 async def test_the_provider_reports_status_and_generates_through_the_worker(local):
     (client, sessions), ready, _ = local
-    await set_policy(sessions, provider="diffusers")
+    await set_policy(sessions, provider="Diffusers")
     availability = lambda: client.get("/image-generation/availability", headers=auth())  # noqa: E731
     assert (await availability()).json()["reason"] == "Choose a local model"
     await select(sessions, "stub")

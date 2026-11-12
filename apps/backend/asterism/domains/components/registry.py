@@ -46,17 +46,21 @@ class ComponentRegistry:
         if factory.singleton and key in self.singletons:
             return self.singletons[key]
 
-        if parameters_dict:
-            instance = factory(
-                factory.parameters.model_validate(parameters_dict),  # pyright: ignore[reportGeneralTypeIssues]
-            )
-        else:
+        if factory.parameters is NoArgs:
             instance = factory(NoArgs())
+        else:
+            # Empty parameters still validate, so the component gets its defaults.
+            instance = factory(
+                factory.parameters.model_validate(parameters_dict or {}),  # pyright: ignore[reportGeneralTypeIssues]
+            )
 
         if factory.singleton:
             self.singletons[key] = instance
 
         return instance
+
+    def find(self, component_type: ComponentType, name: str) -> type[Component[Any]] | None:
+        return self.providers_by_unique_id.get(ComponentRegistry._make_key(component_type, name))
 
     def get_providers[T](
         self,

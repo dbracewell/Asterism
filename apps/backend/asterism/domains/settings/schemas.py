@@ -154,17 +154,18 @@ class LlmDisplayInfo(BaseModel):
 
 
 class ComponentProviderParameters(BaseModel):
-    """A named component provider (e.g. web search) plus its string parameters.
+    """A named component provider (e.g. web search) plus its parameters.
 
-    JSON serialization redacts values whose keys look like secrets, so API
-    responses never echo stored credentials.
+    Parameters are JSON values checked against the component's own parameter
+    model when saved; secrets (by key name) are strings. JSON serialization
+    redacts secret values, so API responses never echo stored credentials.
     """
 
     name: str
-    parameters: dict[str, str] = Field(default_factory=dict)
+    parameters: dict[str, JsonValue] = Field(default_factory=dict)
 
     @field_serializer("parameters", when_used="json")
-    def _redact_secrets_for_json(self, parameters: dict[str, str]) -> dict[str, str]:
+    def _redact_secrets_for_json(self, parameters: dict[str, JsonValue]) -> dict[str, JsonValue]:
         return redact_component_parameters(parameters)
 
 
@@ -242,6 +243,8 @@ class ApplicationSettings(BaseModel):
     image_generation: dict[str, Any] | None = None
     # The local diffusers generator's model and device (US-76.2).
     image_generation_local: dict[str, Any] | None = None
+    # The active image generator component and its parameters (ADR-0064).
+    image_generator_provider: ComponentProviderParameters | None = None
     compaction: CompactionSettings = Field(default_factory=CompactionSettings)
     chatgpt_plan_enabled: StrictBool = False
     llm_providers: list[Provider] = Field(default_factory=list)

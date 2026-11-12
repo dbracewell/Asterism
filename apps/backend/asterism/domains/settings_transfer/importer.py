@@ -115,6 +115,8 @@ def _changed_settings(bundle: SettingsBundle, current: SettingsBundle) -> list[s
         "Canvas policy": bundle.canvas_enabled != current.canvas_enabled,
         "Image generation policy": bundle.image_generation != current.image_generation,
         "Local image model": bundle.image_generation_local != current.image_generation_local,
+        "Image generator": bundle.image_generator_provider is not None
+        and bundle.image_generator_provider != current.image_generator_provider,
         "ChatGPT plan policy": bundle.chatgpt_plan_enabled != current.chatgpt_plan_enabled,
         "Web search provider": bundle.web_search_provider is not None
         and bundle.web_search_provider != current.web_search_provider,
@@ -266,6 +268,7 @@ async def _apply_image_generation(bundle: SettingsBundle, session: AsyncSession)
         "model_id": chosen if chosen is None or entry(chosen) is not None else local.model_id,
     }
     await _put_setting("image_generation_local", local.model_copy(update=update).model_dump(mode="json"), session)
+    await _put_component("image_generator_provider", bundle.image_generator_provider, session)
 
 
 async def _apply_captioning(bundle: SettingsBundle, session: AsyncSession) -> None:

@@ -222,7 +222,10 @@ async def test_passphrase_is_compared_after_unicode_normalization():
 
 async def test_wrong_passphrase_and_tampering_fail_alike():
     envelope = seal(SettingsBundle(exported_at=1), PASSPHRASE)
-    flipped = envelope.ciphertext[:-3] + ("A" if envelope.ciphertext[-3] != "A" else "B") + envelope.ciphertext[-2:]
+    # Flip a character mid-token: near the end, base64 padding bits can make a flip a no-op.
+    middle = len(envelope.ciphertext) // 2
+    replacement = "A" if envelope.ciphertext[middle] != "A" else "Q"
+    flipped = envelope.ciphertext[:middle] + replacement + envelope.ciphertext[middle + 1 :]
     attempts = [
         (envelope, "another passphrase"),
         (envelope.model_copy(update={"ciphertext": flipped}), PASSPHRASE),

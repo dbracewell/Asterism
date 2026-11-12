@@ -10,8 +10,13 @@ from .schemas import ToolSettings
 from .secrets import decrypt_component_provider_dict
 
 _TOOL_SETTINGS_KEYS = set(ToolSettings.model_fields)
-#: Component-provider setting keys whose JSON values hold encrypted parameters.
-COMPONENT_PROVIDER_KEYS = {"web_search_provider", "image_search_provider"}
+#: Component-provider setting keys (JSON values with encrypted secret
+#: parameters) and the component type each one selects.
+COMPONENT_PROVIDER_KEYS: dict[str, str] = {
+    "web_search_provider": "WebSearch",
+    "image_search_provider": "ImageSearch",
+    "image_generator_provider": "ImageGenerator",
+}
 
 
 async def get_tool_settings(

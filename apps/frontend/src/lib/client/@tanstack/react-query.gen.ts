@@ -339,6 +339,9 @@ import type {
   ComponentsByTypeData,
   ComponentsByTypeError,
   ComponentsByTypeResponse,
+  ComponentsTestData,
+  ComponentsTestError,
+  ComponentsTestResponse,
   CourseModePolicyGetData,
   CourseModePolicyGetError,
   CourseModePolicyGetResponse,
@@ -9287,6 +9290,33 @@ export const componentsByTypeOptions = (
     },
     queryKey: componentsByTypeQueryKey(options),
   });
+
+/**
+ * Check a component's parameters, usually before saving them
+ */
+export const componentsTestMutation = (
+  options?: Partial<Options<ComponentsTestData>>,
+): UseMutationOptions<
+  ComponentsTestResponse,
+  ComponentsTestError,
+  Options<ComponentsTestData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ComponentsTestResponse,
+    ComponentsTestError,
+    Options<ComponentsTestData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().componentsTest({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
 
 export const subAgentsListQueryKey = (options?: Options<SubAgentsListData>) =>
   createQueryKey("subAgentsList", options);

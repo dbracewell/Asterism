@@ -202,6 +202,33 @@ async def test_settings_overwrite_and_keys_are_reencrypted(api):
     assert decrypt_component_provider_dict(settings["image_search_provider"])["parameters"]["api_key"] == "img-key"
 
 
+async def test_image_generator_round_trips_with_its_token_encrypted(api):
+    client, sessions = api
+    generator = ExportedComponent(
+        name="ComfyUI",
+        parameters={
+            "base_url": "https://comfy.example.test",
+            "auth": "bearer",
+            "token": "comfy-token",
+            "workflow": {"1": {"class_type": "X", "inputs": {"text": "{{prompt}}"}}},
+            "steps": 12,
+        },
+    )
+    item = bundle(image_generator_provider=generator)
+    assert "Image generator" in (await post(client, PREVIEW, request(item))).text
+    assert (await post(client, IMPORT, request(item))).status_code == 200
+    async with sessions() as session:
+        stored = (await session.get(ApplicationSettingsModel, "image_generator_provider")).value
+        exported = (await collect_settings(session)).image_generator_provider
+    assert "comfy-token" not in json.dumps(stored) and stored["parameters"]["steps"] == 12
+    assert stored["parameters"]["workflow"] == generator.parameters["workflow"]
+    assert exported == generator
+    # A file without a generator keeps this installation's.
+    assert (await post(client, IMPORT, request(bundle()))).status_code == 200
+    async with sessions() as session:
+        assert (await session.get(ApplicationSettingsModel, "image_generator_provider")).value["name"] == "ComfyUI"
+
+
 async def test_compaction_policy_is_applied_with_its_model_by_name(api):
     client, sessions = api
     item = bundle(

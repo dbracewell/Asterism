@@ -1,9 +1,9 @@
 """The admin's local generator choices, stored as one application setting (US-76.2)."""
 
+from sqlalchemy.dialects.sqlite import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from asterism.domains.settings.models import ApplicationSettingsModel
-from asterism.domains.settings.service import upsert_app_setting
 
 from .schemas import LocalSettings
 
@@ -23,5 +23,13 @@ async def read_settings(session: AsyncSession) -> LocalSettings:
 
 
 async def write_settings(settings: LocalSettings, session: AsyncSession) -> LocalSettings:
-    await upsert_app_setting(SETTING_KEY, settings.model_dump(mode="json"), session=session)
+    # Written directly (validated by LocalSettings) so the generator doesn't depend on the settings service.
+    value = settings.model_dump(mode="json")
+    await session.execute(
+        insert(ApplicationSettingsModel)
+        .values(key=SETTING_KEY, value=value)
+        .on_conflict_do_update(index_elements=[ApplicationSettingsModel.key], set_={"value": value})
+    )
+    await session.commit()
+    session.expire_all()
     return await read_settings(session)

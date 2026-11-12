@@ -694,7 +694,7 @@ async def update_tool_settings(
             for row in (
                 await session.scalars(
                     select(ApplicationSettingsModel).where(
-                        ApplicationSettingsModel.key.in_(COMPONENT_PROVIDER_KEYS),
+                        ApplicationSettingsModel.key.in_(list(COMPONENT_PROVIDER_KEYS)),
                     ),
                 )
             ).all()
@@ -770,6 +770,34 @@ def _parse_llm_providers_setting(value: JsonValue) -> list[Provider]:
         raise BadDataException("Invalid value for application setting 'llm_providers'") from exc
 
 
+def validation_message(error: ValidationError) -> str:
+    """The first problem in a validation error, phrased for an admin."""
+    first = error.errors()[0]
+    where = ".".join(str(part) for part in first.get("loc", ()) if part != "__root__")
+    message = str(first.get("msg", "is invalid")).removeprefix("Value error, ")
+    return f"{where}: {message}" if where else message
+
+
+def _check_component_parameters(key: str, value: ComponentProviderParameters) -> ComponentProviderParameters:
+    """Check parameters against the selected component's own model and store them normalized.
+
+    Secrets may be the redaction marker (keep the stored value); it validates as a string.
+    """
+    from asterism.domains.components.catalog import ensure_loaded
+    from asterism.domains.components.registry import component_registry
+    from asterism.domains.components.schemas import ComponentType
+
+    ensure_loaded()
+    component = component_registry.find(ComponentType(COMPONENT_PROVIDER_KEYS[key]), value.name)
+    if component is None:
+        raise BadDataException(f"Unknown provider '{value.name}' for application setting '{key}'")
+    try:
+        parameters = component.parameters.model_validate(value.parameters)
+    except ValidationError as exc:
+        raise BadDataException(f"Invalid {value.name} settings: {validation_message(exc)}") from exc
+    return ComponentProviderParameters(name=component.name, parameters=parameters.model_dump(mode="json"))
+
+
 def _validate_non_provider_app_setting(
     key: str,
     value: JsonValue,
@@ -798,6 +826,7 @@ def _validate_non_provider_app_setting(
             validated = ComponentProviderParameters.model_validate(value)
         except ValidationError as exc:
             raise BadDataException(f"Invalid value for application setting '{key}'") from exc
+        validated = _check_component_parameters(key, validated)
         return value, validated
 
     if key == "skills_enabled":

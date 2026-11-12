@@ -546,25 +546,13 @@ export const zComparisonTarget = z.object({
 });
 
 /**
- * ComponentProviderParameters
- *
- * A named component provider (e.g. web search) plus its string parameters.
- *
- * JSON serialization redacts values whose keys look like secrets, so API
- * responses never echo stored credentials.
- */
-export const zComponentProviderParameters = z.object({
-  name: z.string(),
-  parameters: z.record(z.string(), z.string()).optional(),
-});
-
-/**
  * ComponentResponse
  */
 export const zComponentResponse = z.object({
   type: z.string(),
   name: z.string(),
   parameters: z.record(z.string(), z.unknown()),
+  testable: z.boolean().optional().default(false),
 });
 
 /**
@@ -572,6 +560,24 @@ export const zComponentResponse = z.object({
  */
 export const zComponentListResponse = z.object({
   items: z.array(zComponentResponse),
+});
+
+/**
+ * ComponentTestRequest
+ *
+ * Parameters to try, usually unsaved. A redacted secret means "the stored one".
+ */
+export const zComponentTestRequest = z.object({
+  parameters: z.record(z.string(), z.unknown()).optional(),
+});
+
+/**
+ * ComponentTestResult
+ */
+export const zComponentTestResult = z.object({
+  ok: z.boolean(),
+  detail: z.string(),
+  suggestions: z.record(z.string(), z.array(z.string())).optional(),
 });
 
 /**
@@ -1393,19 +1399,19 @@ export const zImageGenerationAvailability = z.object({
 /**
  * ImageGenerationPolicy
  *
- * The admin policy: on or off, which groups may use it, and the active provider.
+ * The admin policy: on or off and which groups may use it. The generator
+ * itself is the ``image_generator_provider`` component setting.
  */
 export const zImageGenerationPolicy = z.object({
   enabled: z.boolean().optional().default(false),
   group_ids: z.array(z.string()).max(200).nullish(),
-  provider: z.enum(["none", "comfyui", "diffusers"]).optional().default("none"),
 });
 
 /**
  * ImageProviderStatus
  */
 export const zImageProviderStatus = z.object({
-  provider: z.enum(["none", "comfyui", "diffusers"]),
+  provider: z.string(),
   ready: z.boolean(),
   detail: z.string().optional().default(""),
 });
@@ -1548,6 +1554,20 @@ export const zJsonValue = z.unknown();
  */
 export const zBulkUpdateSettingRequest = z.object({
   values: z.record(z.string(), zJsonValue),
+});
+
+/**
+ * ComponentProviderParameters
+ *
+ * A named component provider (e.g. web search) plus its parameters.
+ *
+ * Parameters are JSON values checked against the component's own parameter
+ * model when saved; secrets (by key name) are strings. JSON serialization
+ * redacts secret values, so API responses never echo stored credentials.
+ */
+export const zComponentProviderParameters = z.object({
+  name: z.string(),
+  parameters: z.record(z.string(), zJsonValue).optional(),
 });
 
 /**
@@ -2785,6 +2805,7 @@ export const zApplicationSettings = z.object({
   canvas_enabled: z.boolean().optional().default(false),
   image_generation: z.record(z.string(), z.unknown()).nullish(),
   image_generation_local: z.record(z.string(), z.unknown()).nullish(),
+  image_generator_provider: zComponentProviderParameters.nullish(),
   compaction: zCompactionSettings.optional(),
   chatgpt_plan_enabled: z.boolean().optional().default(false),
   llm_providers: z.array(zProvider).optional(),
@@ -5050,6 +5071,7 @@ export const zApplicationSettingsWritable = z.object({
   canvas_enabled: z.boolean().optional().default(false),
   image_generation: z.record(z.string(), z.unknown()).nullish(),
   image_generation_local: z.record(z.string(), z.unknown()).nullish(),
+  image_generator_provider: zComponentProviderParameters.nullish(),
   compaction: zCompactionSettings.optional(),
   chatgpt_plan_enabled: z.boolean().optional().default(false),
   llm_providers: z.array(zProviderWritable).optional(),
@@ -7428,6 +7450,18 @@ export const zComponentsByTypePath = z.object({
  * Successful Response
  */
 export const zComponentsByTypeResponse = zComponentListResponse;
+
+export const zComponentsTestBody = zComponentTestRequest;
+
+export const zComponentsTestPath = z.object({
+  component_type: zComponentType,
+  name: z.string(),
+});
+
+/**
+ * Successful Response
+ */
+export const zComponentsTestResponse = zComponentTestResult;
 
 export const zSubAgentsListQuery = z.object({
   page: z.int().gte(1).optional().default(1),

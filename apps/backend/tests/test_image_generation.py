@@ -8,17 +8,17 @@ from unittest.mock import AsyncMock
 
 import pytest
 from asterism.core.exceptions import BadDataException
-from asterism.core.schemas import AuthedUser
+from asterism.core.schemas import AuthedUser, NoArgs
 from asterism.domains.agent.agent import Agent
 from asterism.domains.agent.schemas import AgentEventType, ToolProgress
 from asterism.domains.agent.service import get_agent_profile, get_main_agent_profile
 from asterism.domains.chat.models import ChatFileModel, ChatModel
 from asterism.domains.chat.service import get_one
 from asterism.domains.chat.tool_policy import require_internal_tool, resolve_effective_tools
+from asterism.domains.components.registry import component_registry
 from asterism.domains.files.models import FileOrigin, UserFileModel
-from asterism.domains.image_generation import providers
 from asterism.domains.image_generation.models import ImageGenerationModel
-from asterism.domains.image_generation.providers import ImageGenerationError
+from asterism.domains.image_generation.providers import ImageGenerationError, ImageGeneratorComponent
 from asterism.domains.image_generation.safety import refusal_reason
 from asterism.domains.image_generation.schemas import (
     ImageProgress,
@@ -58,7 +58,7 @@ def png(color=(200, 40, 40), size=(32, 24)) -> bytes:
 
 
 class FakeProvider:
-    name = "comfyui"
+    name = "Fake"
 
     def __init__(self):
         self.ready = True
@@ -66,7 +66,7 @@ class FakeProvider:
         self.behavior = "ok"
 
     async def status(self):
-        return ImageProviderStatus(provider="comfyui", ready=self.ready, detail="" if self.ready else "Server down")
+        return ImageProviderStatus(provider="Fake", ready=self.ready, detail="" if self.ready else "Server down")
 
     async def generate(self, request, progress):
         self.calls.append(request)
@@ -88,6 +88,21 @@ class FakeProvider:
         )
 
 
+@component_registry.register()
+class FakeGenerator(ImageGeneratorComponent[NoArgs]):
+    """An image generator component delegating to the test's FakeProvider."""
+
+    name = "Fake"
+    parameters = NoArgs
+    current: FakeProvider = FakeProvider()
+
+    async def status(self):
+        return await FakeGenerator.current.status()
+
+    async def __call__(self, request, progress):
+        return await FakeGenerator.current.generate(request, progress)
+
+
 @pytest.fixture
 def images(canvas_api, monkeypatch, tmp_path):
     from asterism.domains.files.store import LocalFileStore
@@ -101,25 +116,23 @@ def images(canvas_api, monkeypatch, tmp_path):
 
     # produced.py keeps its own reference to the session factory.
     monkeypatch.setattr("asterism.domains.files.produced.get_async_db_session", database.get_async_db_session)
-    provider = FakeProvider()
-
-    async def factory(session):
-        return provider
-
-    providers.register_provider("comfyui", factory)
+    provider = FakeGenerator.current = FakeProvider()
     client, sessions = canvas_api
-    yield client, sessions, provider
-    providers.unregister_provider("comfyui")
+    return client, sessions, provider
 
 
-async def set_policy(sessions, *, enabled=True, provider="comfyui", group_ids=None, tools=True):
+async def set_policy(sessions, *, enabled=True, provider="Fake", group_ids=None, tools=True, parameters=None):
+    """The policy plus the selected generator component (None: no generator)."""
+    keys = ("image_generation", "image_generator_provider")
     async with sessions() as db:
-        await db.execute(delete(ApplicationSettingsModel).where(ApplicationSettingsModel.key == "image_generation"))
-        db.add(
-            ApplicationSettingsModel(
-                key="image_generation", value={"enabled": enabled, "provider": provider, "group_ids": group_ids}
+        await db.execute(delete(ApplicationSettingsModel).where(ApplicationSettingsModel.key.in_(keys)))
+        db.add(ApplicationSettingsModel(key="image_generation", value={"enabled": enabled, "group_ids": group_ids}))
+        if provider is not None:
+            db.add(
+                ApplicationSettingsModel(
+                    key="image_generator_provider", value={"name": provider, "parameters": parameters or {}}
+                )
             )
-        )
         await db.execute(update(LLMModel).values(supports_tools=tools))
         await db.commit()
 
@@ -157,17 +170,25 @@ async def test_policy_endpoints_and_availability(images):
     assert (await client.get("/settings/app/image-generation", headers=auth("admin"))).json() == {
         "enabled": False,
         "group_ids": None,
-        "provider": "none",
     }
     available = await client.get("/image-generation/availability", headers=auth())
     assert available.json() == {"available": False, "reason": "Image generation is turned off"}
 
-    saved = await client.put(
-        "/settings/app/image-generation", headers=auth("admin"), json={"enabled": True, "provider": "comfyui"}
-    )
+    saved = await client.put("/settings/app/image-generation", headers=auth("admin"), json={"enabled": True})
     assert saved.status_code == 200, saved.text
     status = await client.get("/settings/app/image-generation/status", headers=auth("admin"))
-    assert status.json() == {"provider": "comfyui", "ready": True, "detail": ""}
+    assert status.json() == {"provider": "none", "ready": False, "detail": "No image provider is set up"}
+    # The generator is a component setting, chosen like the search providers.
+    chosen = await client.put(
+        "/settings/app/image_generator_provider", headers=auth("admin"), json={"value": {"name": "Fake"}}
+    )
+    assert chosen.status_code == 200, chosen.text
+    unknown = await client.put(
+        "/settings/app/image_generator_provider", headers=auth("admin"), json={"value": {"name": "Nope"}}
+    )
+    assert unknown.status_code == 400 and "Unknown provider" in unknown.text
+    status = await client.get("/settings/app/image-generation/status", headers=auth("admin"))
+    assert status.json() == {"provider": "Fake", "ready": True, "detail": ""}
     assert (await client.get("/image-generation/availability", headers=auth())).json()["available"] is True
 
     provider.ready = False
@@ -181,13 +202,13 @@ async def test_policy_endpoints_and_availability(images):
     bad = await client.put(
         "/settings/app/image-generation",
         headers=auth("admin"),
-        json={"enabled": True, "provider": "comfyui", "group_ids": ["nope"]},
+        json={"enabled": True, "group_ids": ["nope"]},
     )
     assert bad.status_code == 400
     limited = await client.put(
         "/settings/app/image-generation",
         headers=auth("admin"),
-        json={"enabled": True, "provider": "comfyui", "group_ids": ["educator"]},
+        json={"enabled": True, "group_ids": ["educator"]},
     )
     assert limited.status_code == 200, limited.text
     assert (await client.get("/image-generation/availability", headers=auth())).json() == {
@@ -195,7 +216,7 @@ async def test_policy_endpoints_and_availability(images):
         "reason": "Image generation isn't available to your group",
     }
     # An unconfigured provider is never ready, and malformed policy writes are refused.
-    await set_policy(sessions, provider="diffusers")
+    await set_policy(sessions, provider="Diffusers")
     assert (await client.get("/image-generation/availability", headers=auth())).json()["available"] is False
     assert (
         await client.put("/settings/app/image-generation", headers=auth("admin"), json={"enabled": "yes"})

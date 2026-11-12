@@ -113,6 +113,7 @@ async def collect_settings(session: AsyncSession) -> SettingsBundle:
                 if key in ExportedLocalImage.model_fields
             }
         ),
+        image_generator_provider=_component(settings.image_generator_provider),
         image_generation=ExportedImageGeneration.model_validate(
             {
                 key: value
