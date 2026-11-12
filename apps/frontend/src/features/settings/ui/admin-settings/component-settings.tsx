@@ -49,6 +49,8 @@ type ComponentSettingsProps = {
     name: string;
     parameters: ComponentProviderParameters;
   }) => void;
+  /** Called when another provider is picked, before any of its parameters change. */
+  onProviderChange?: (name: string) => void;
 };
 
 export const ComponentSettings = ({
@@ -57,6 +59,7 @@ export const ComponentSettings = ({
   settings_key,
   className,
   onUpdate,
+  onProviderChange,
 }: ComponentSettingsProps) => {
   const { data, isLoading } = useQuery({
     ...componentsByTypeOptions({
@@ -95,7 +98,13 @@ export const ComponentSettings = ({
     <div className={cn("flex flex-col", className)}>
       <div className={cn("flex flex-1 flex-col gap-2 overflow-y-auto")}>
         <Label>Select Your Provider</Label>
-        <Select value={providerName} onValueChange={setProviderName}>
+        <Select
+          value={providerName}
+          onValueChange={(name) => {
+            setProviderName(name);
+            onProviderChange?.(name);
+          }}
+        >
           <SelectTrigger className="max-w-100 min-w-40 truncate">
             <SelectValue placeholder="Select a provider" />
           </SelectTrigger>

@@ -43,6 +43,7 @@ export type PageGuideId =
   | "admin.chatgpt"
   | "admin.context-compaction"
   | "admin.image-captioning"
+  | "admin.image-generation"
   | "admin.groups"
   | "admin.users"
   | "admin.educators"
@@ -948,6 +949,39 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
     terms: ["admin.context-compaction", "concept.context-compaction"],
     audience: "admin",
   },
+  "admin.image-generation": {
+    title: "Image generation",
+    purpose:
+      "Choose what creates images, try it, and decide who may create images in chat.",
+    areas: [
+      {
+        name: "Generator",
+        description:
+          "An existing ComfyUI server, or Diffusers, which runs a model on this server. Test connection checks a ComfyUI server and lists its checkpoints.",
+      },
+      {
+        name: "Local models",
+        description:
+          "Shown for Diffusers: the detected hardware, which models fit it, their licenses and download sizes. Download one, then select Use this model.",
+      },
+      {
+        name: "Try it",
+        description:
+          "Creates one image with the saved generator and puts it in your files. It works before image generation is turned on.",
+      },
+      {
+        name: "Availability",
+        description:
+          "Off until enabled. Limit it to selected groups, or leave it open to everyone.",
+      },
+    ],
+    tasks: [
+      "Save the generator before trying it; the test uses the saved settings.",
+      "Read a model's license before downloading: some may not be used commercially.",
+    ],
+    terms: ["admin.image-generation", "admin.settings-file"],
+    audience: "admin",
+  },
   "admin.image-captioning": {
     title: "Image captioning",
     purpose:
@@ -1072,7 +1106,7 @@ const adminSettingsGuides: Record<string, PageGuideId | null> = {
   educators: "admin.educators",
   export: "admin.export",
   "group-settings": "admin.groups",
-  "image-generation": null,
+  "image-generation": "admin.image-generation",
   "code-execution": null,
 };
 

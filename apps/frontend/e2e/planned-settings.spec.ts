@@ -4,7 +4,7 @@ for (const viewport of [
   { width: 1280, height: 720 },
   { width: 320, height: 300 },
 ]) {
-  test(`two planned panes retain badges, keyboard access and honest scope at ${viewport.width}px`, async ({
+  test(`the planned pane retains its badge, keyboard access and honest scope at ${viewport.width}px`, async ({
     page,
   }, info) => {
     await page.setViewportSize(viewport);
@@ -21,7 +21,7 @@ for (const viewport of [
       });
     });
     await page.goto(
-      "/e2e/planned-settings?keep=one&keep=two&setting=image-generation",
+      "/e2e/planned-settings?keep=one&keep=two&setting=code-execution",
     );
     const tabs = page.getByRole("tablist").last();
     const horizontal = viewport.width < 640;
@@ -29,13 +29,14 @@ for (const viewport of [
       "aria-orientation",
       horizontal ? "horizontal" : "vertical",
     );
-    await expect(tabs.getByText("Planned", { exact: true })).toHaveCount(2);
+    await expect(tabs.getByText("Planned", { exact: true })).toHaveCount(1);
     for (const label of [
       "Providers",
       "Theme Editor",
       "Groups",
       "Users",
       "Tools",
+      "Image Generation",
       "Image Captioning",
       "Educators",
       "Export",
@@ -134,19 +135,13 @@ for (const viewport of [
         [],
       );
     };
-    const generation = tabs.getByRole("tab", {
-      name: "Image Generation Planned",
+    const execution = tabs.getByRole("tab", {
+      name: "Code Execution Planned",
       exact: true,
     });
-    await generation.focus();
-    await verify("Image Generation", "Image generation");
-    expect(requests).toEqual([]);
-    await page.keyboard.press(horizontal ? "ArrowRight" : "ArrowDown"); // available Captioning
-    await expect(
-      tabs.getByRole("tab", { name: "Image Captioning", exact: true }),
-    ).toBeFocused();
-    await page.keyboard.press(horizontal ? "ArrowRight" : "ArrowDown");
+    await execution.focus();
     await verify("Code Execution", "Code execution");
+    expect(requests).toEqual([]);
     await page.keyboard.press("End");
     await expect(
       tabs.getByRole("tab", { name: "Export", exact: true }),

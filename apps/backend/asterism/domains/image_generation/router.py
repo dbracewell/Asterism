@@ -9,7 +9,15 @@ from asterism.domains.user.dependencies import AdminUserDep, AuthedUserDep
 
 from . import generators as _generators  # noqa: F401 - registers the image generator components
 from . import policy
-from .schemas import ImageGenerationAvailability, ImageGenerationPolicy, ImageProviderStatus
+from .schemas import (
+    GeneratedImage,
+    ImageGenerationAvailability,
+    ImageGenerationPolicy,
+    ImageProviderStatus,
+    ImageRequest,
+    ImageTestRequest,
+)
+from .service import run_test_generation
 
 image_generation_router = APIRouter(
     tags=["image-generation"],
@@ -35,6 +43,18 @@ async def put_policy(
 @image_generation_router.get("/settings/app/image-generation/status", operation_id="imageGenerationProviderStatus")
 async def get_status(user: AdminUserDep, session: DBSessionDep) -> ImageProviderStatus:
     return await policy.provider_status(session)
+
+
+@image_generation_router.post("/settings/app/image-generation/test", operation_id="imageGenerationTest")
+async def post_test(payload: ImageTestRequest, user: AdminUserDep) -> GeneratedImage:
+    """Generate one image with the configured generator, even while the policy is off.
+
+    The image is saved to the administrator's files. This can take minutes
+    while a local model loads.
+    """
+    images = await run_test_generation(admin_id=user.id, request=ImageRequest(prompt=payload.prompt))
+    logger.info(f"Admin {user.id} ran a test image generation")
+    return images[0]
 
 
 @image_generation_router.get("/image-generation/availability", operation_id="imageGenerationAvailability")

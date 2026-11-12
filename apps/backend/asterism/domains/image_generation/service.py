@@ -17,7 +17,7 @@ from asterism.core.exceptions import BadDataException
 
 from .models import ImageGenerationModel
 from .policy import require_available
-from .providers import ImageGenerationError, load_generator, selected_name
+from .providers import ImageGenerationError, ImageGeneratorComponent, load_generator, selected_name
 from .safety import refusal_reason
 from .schemas import (
     DEFAULT_TIMEOUT_SECONDS,
@@ -107,6 +107,25 @@ async def _record(
     logger.info(f"Image generation {status} for user {user_id} in chat {chat_id} via {provider}")
 
 
+async def _refuse_unsafe(user_id: str, chat_id: uuid.UUID | None, request: ImageRequest, started: float) -> None:
+    """The fixed prompt check, recorded before anything else so every refusal is audited."""
+    from asterism.db.database import get_async_db_session
+
+    if reason := refusal_reason(request.prompt, request.negative_prompt):
+        async with get_async_db_session() as session:
+            provider_name = await selected_name(session)
+        await _record(
+            user_id=user_id,
+            chat_id=chat_id,
+            request=request,
+            provider=provider_name,
+            status="refused",
+            started=started,
+            error=reason,
+        )
+        raise BadDataException(reason)
+
+
 async def generate_images(
     *,
     user_id: str,
@@ -125,25 +144,47 @@ async def generate_images(
     from asterism.db.database import get_async_db_session
 
     started = time.monotonic()
-    async with get_async_db_session() as session:
-        provider_name = await selected_name(session)
-    if reason := refusal_reason(request.prompt, request.negative_prompt):
-        await _record(
-            user_id=user_id,
-            chat_id=chat_id,
-            request=request,
-            provider=provider_name,
-            status="refused",
-            started=started,
-            error=reason,
-        )
-        raise BadDataException(reason)
+    await _refuse_unsafe(user_id, chat_id, request, started)
     async with get_async_db_session() as session:
         await require_available(user_id, session)
         provider = await load_generator(session)
     if provider is None:
         raise BadDataException("No image provider is set up")
+    return await _run(provider, user_id, chat_id, request, progress, timeout, scope, started)
 
+
+async def run_test_generation(*, admin_id: str, request: ImageRequest) -> list[GeneratedImage]:
+    """An administrator tries the configured generator; the images go to their library.
+
+    This works while the policy is off, so a generator can be tried before it
+    is switched on for users. The prompt check, the queue, the audit record and
+    the generator's own readiness still apply.
+    """
+    from asterism.db.database import get_async_db_session
+
+    started = time.monotonic()
+    await _refuse_unsafe(admin_id, None, request, started)
+    async with get_async_db_session() as session:
+        provider = await load_generator(session)
+    if provider is None:
+        raise BadDataException("No image provider is set up")
+    status = await provider.status()
+    if not status.ready:
+        raise BadDataException(status.detail or "The image provider isn't ready")
+    return await _run(provider, admin_id, None, request, _no_progress, DEFAULT_TIMEOUT_SECONDS, None, started)
+
+
+async def _run(
+    provider: ImageGeneratorComponent,
+    user_id: str,
+    chat_id: uuid.UUID | None,
+    request: ImageRequest,
+    progress: Progress,
+    timeout: float,
+    scope: "ExecutionScope | None",
+    started: float,
+) -> list[GeneratedImage]:
+    """One queued job on a ready generator: generate, clean, save and record."""
     slot = _slot(provider.name)
     await progress(ImageProgress(stage="queued"))
     try:

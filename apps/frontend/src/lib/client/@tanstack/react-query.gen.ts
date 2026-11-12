@@ -423,6 +423,9 @@ import type {
   ImageGenerationProviderStatusData,
   ImageGenerationProviderStatusError,
   ImageGenerationProviderStatusResponse,
+  ImageGenerationTestData,
+  ImageGenerationTestError,
+  ImageGenerationTestResponse,
   LearningModeGetManyData,
   LearningModeGetManyError,
   LearningModeGetManyResponse,
@@ -6770,6 +6773,38 @@ export const imageGenerationProviderStatusOptions = (
     },
     queryKey: imageGenerationProviderStatusQueryKey(options),
   });
+
+/**
+ * Post Test
+ *
+ * Generate one image with the configured generator, even while the policy is off.
+ *
+ * The image is saved to the administrator's files. This can take minutes
+ * while a local model loads.
+ */
+export const imageGenerationTestMutation = (
+  options?: Partial<Options<ImageGenerationTestData>>,
+): UseMutationOptions<
+  ImageGenerationTestResponse,
+  ImageGenerationTestError,
+  Options<ImageGenerationTestData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ImageGenerationTestResponse,
+    ImageGenerationTestError,
+    Options<ImageGenerationTestData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().imageGenerationTest({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
 
 export const imageGenerationAvailabilityQueryKey = (
   options?: Options<ImageGenerationAvailabilityData>,

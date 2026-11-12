@@ -1,11 +1,9 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { ImageGenSettings } from "./image-gen-settings";
 import { CodeExecutionSettings } from "./code-execution-settings";
 
 describe("planned administration panes", () => {
   it.each([
-    ["Image generation", ImageGenSettings, "Image generation providers"],
     ["Code execution", CodeExecutionSettings, "Sandboxed code execution"],
   ])(
     "%s explains its future scope without offering configuration controls",

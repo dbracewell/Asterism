@@ -202,7 +202,6 @@ export const getLazyAdminSettingsSections = (): Types => [
     label: "Image Generation",
     value: "image-generation",
     icon: <ImagePlusIcon />,
-    badge: "Planned",
     settingsPane: pane("Image Generation", <ImageGenSettings />),
   },
   {

@@ -86,3 +86,10 @@ class GeneratedImage(BaseModel):
     prompt: str
     # The Markdown that shows it in a reply: ![name](asterism-file:<id>) (ADR-0039).
     embed: str
+
+
+class ImageTestRequest(BaseModel):
+    """An administrator's test generation: one square image."""
+
+    model_config = ConfigDict(extra="forbid")
+    prompt: str = Field(min_length=1, max_length=MAX_PROMPT_LENGTH)

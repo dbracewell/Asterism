@@ -60,6 +60,7 @@ export type HelpId =
   | "admin.tools"
   | "admin.skills-policy"
   | "admin.canvas-policy"
+  | "admin.image-generation"
   | "admin.context-compaction"
   | "admin.settings-file";
 
@@ -734,6 +735,17 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
       "When it's on, each user still turns the canvas on in their own settings, and the chat's model must support tools. Turning it off stops new writes at once; existing items stay readable and downloadable.",
     ],
     related: ["concept.canvas"],
+    audience: "admin",
+  },
+  "admin.image-generation": {
+    title: "Image generation settings",
+    summary:
+      "Choose the generator that creates images, and who may use it. It's off until an administrator enables it.",
+    details: [
+      "A generator is either an existing ComfyUI server or a model run on this server with Diffusers. Local models need a download of several gigabytes and enough GPU or system memory; the page shows which ones fit.",
+      "Every request is recorded, and prompts that sexualize minors are always refused, whichever generator is used. Images are saved to the user's files.",
+    ],
+    related: ["admin.settings-file"],
     audience: "admin",
   },
   "admin.context-compaction": {
