@@ -424,3 +424,35 @@ it("forwards compaction packets without starting an answer stream", () => {
   expect(onStreamStart).not.toHaveBeenCalled();
   expect(onStreamError).not.toHaveBeenCalled();
 });
+
+it("reports tool progress and clears it when the turn moves on", () => {
+  const onStreamUpdate = vi.fn();
+  const { result } = renderHook(() =>
+    useChatWebSocket({ chatId: "chat-1", jwtToken: "t", onStreamUpdate }),
+  );
+  const send = (packet: object) =>
+    act(() => {
+      const options = socket.mock.calls.at(-1)?.[1] as {
+        onMessage: (event: { data: string }) => void;
+      };
+      options.onMessage({ data: JSON.stringify(packet) });
+    });
+  const progress = {
+    type: "tool_progress",
+    tool_call_id: "direct",
+    name: "generate_image",
+    stage: "running",
+    step: 2,
+    total: 8,
+  };
+  expect(result.current.toolProgress).toBeNull();
+  send(progress);
+  expect(result.current.toolProgress).toEqual(progress);
+  // Progress is not part of the message stream.
+  expect(onStreamUpdate).not.toHaveBeenCalled();
+  send({ type: "delta", content: "Here it is", thinking: "" });
+  expect(result.current.toolProgress).toBeNull();
+  send(progress);
+  send({ type: "status", is_processing: false });
+  expect(result.current.toolProgress).toBeNull();
+});

@@ -133,6 +133,19 @@ export const AgentSubAgentEventSchema = z.object({
 
 export type AgentSubAgentEvent = z.infer<typeof AgentSubAgentEventSchema>;
 
+/** Progress of a long-running tool (image generation, ADR-0064). */
+export const ToolProgressEventSchema = z.object({
+  type: z.literal("tool_progress"),
+  /** The tool call's id, or "direct" when a model without tools creates an image. */
+  tool_call_id: z.string(),
+  name: z.string(),
+  stage: z.string(),
+  step: z.number().nullish(),
+  total: z.number().nullish(),
+});
+
+export type ToolProgressEvent = z.infer<typeof ToolProgressEventSchema>;
+
 export const AgentEventSchema = z.discriminatedUnion("type", [
   GenericAgentEvent,
   AgentToolCallEvent,
@@ -144,4 +157,5 @@ export const AgentEventSchema = z.discriminatedUnion("type", [
   AgentToolPermissionRequest,
   AgentSubAgentEventSchema,
   CompactionEvent,
+  ToolProgressEventSchema,
 ]);

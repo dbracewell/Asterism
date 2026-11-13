@@ -16,6 +16,7 @@ import {
   AlertCircleIcon,
   ArrowUpIcon,
   FileTextIcon,
+  ImagePlusIcon,
   LayoutTemplateIcon,
   LoaderCircleIcon,
   RefreshCwIcon,
@@ -104,6 +105,11 @@ export type ChatInputProps = {
     onChange: (value: string[]) => void;
     disabled?: boolean;
   };
+  /**
+   * Offers "Create image", which makes the next message an image request
+   * (ADR-0064). Omit when image generation isn't available to this user.
+   */
+  createImage?: { disabled?: boolean };
   skillOwner?: string;
   skillScope?: string;
   activeSkills?: ActiveSkillState;
@@ -131,6 +137,8 @@ export type ChatInputProps = {
     template?: TemplateUse;
     /** Set for a before/after send: `prompt` is the original (US-51.7). */
     compare?: ComparisonTarget[];
+    /** The message asks for an image; the text is the description. */
+    createImage?: true;
   }) => void | Promise<unknown>;
   requestScope?: string;
   /** Changes when the saved file scope may have changed (branch, model). */
@@ -220,6 +228,7 @@ const ChatInputCore = ({
   onTemplateSelectionChange,
   chips,
   compare,
+  createImage,
   coach,
   promptCoach,
   status,
@@ -243,6 +252,9 @@ const ChatInputCore = ({
   const [libraryOpen, setLibraryOpen] = useState(false);
   const [contextOpen, setContextOpen] = useState(false);
   const [compareOpen, setCompareOpen] = useState(false);
+  const [imageRequested, setImageRequested] = useState(false);
+  // An image request can't also be a model comparison.
+  const imageMode = imageRequested && !!createImage && !compare?.value.length;
   const [helpOpen, setHelpOpen] = useState(false);
   const [noticeSlot, setNoticeSlot] = useState<HTMLDivElement | null>(null);
   const optionsRef = useRef<HTMLButtonElement>(null);
@@ -430,6 +442,7 @@ const ChatInputCore = ({
       const signature = JSON.stringify({
         prompt: prepared.prompt,
         compare,
+        image: imageMode,
         skills: prepared.skills,
         template,
         files,
@@ -445,6 +458,7 @@ const ChatInputCore = ({
         ...(compare ? { compare } : {}),
         ...(prepared.skills ? { skills: prepared.skills } : {}),
         ...(template ? { template } : {}),
+        ...(imageMode && !compare ? { createImage: true as const } : {}),
         files,
         requestId: requestRef.current.id,
         ...(draft.id.current ? { draftId: draft.id.current } : {}),
@@ -453,6 +467,7 @@ const ChatInputCore = ({
       clearAttachments();
       coach?.dismiss();
       updatePrompt("");
+      setImageRequested(false);
       skillComposer?.accepted();
       requestRef.current = null;
     } catch (error) {
@@ -530,7 +545,10 @@ const ChatInputCore = ({
       skillComposer?.openList();
       requestAnimationFrame(() => textareaRef.current?.focus());
     } else if (action === "compare") setCompareOpen(true);
-    else setHelpOpen(true);
+    else if (action === "image") {
+      setImageRequested(true);
+      requestAnimationFrame(() => textareaRef.current?.focus());
+    } else setHelpOpen(true);
   };
 
   const hasPrompt = prompt.trim().length > 0 || !!skillComposer?.hasSkills;
@@ -684,6 +702,32 @@ const ChatInputCore = ({
                     {skillComposer.chips}
                   </fieldset>
                 )}
+                {imageMode && (
+                  <span
+                    className={cn(
+                      COMPOSER_CHIP,
+                      "bg-secondary text-secondary-foreground inline-flex items-center pr-0.5",
+                    )}
+                    title="Your next message describes an image to create."
+                  >
+                    <ImagePlusIcon
+                      aria-hidden="true"
+                      className="size-3.5 shrink-0"
+                    />
+                    <span className="truncate">Image</span>
+                    <Button
+                      type="button"
+                      size="icon-xs"
+                      variant="ghost"
+                      className="rounded-chip"
+                      disabled={controlsDisabled}
+                      aria-label="Don't create an image"
+                      onClick={() => setImageRequested(false)}
+                    >
+                      <XIcon />
+                    </Button>
+                  </span>
+                )}
                 {appliedTemplate && (
                   <span
                     className={cn(
@@ -785,7 +829,9 @@ const ChatInputCore = ({
                 if (!isDisabled) void submitPrompt();
               }
             }}
-            placeholder={placeholder}
+            placeholder={
+              imageMode ? "Describe the image to create" : placeholder
+            }
           />
         </div>
         <div className="flex min-w-0 items-center gap-1 px-2 pb-2">
@@ -805,7 +851,19 @@ const ChatInputCore = ({
                 ? { disabled: controlsDisabled || !skillComposer.canOpenList }
                 : undefined
             }
-            compare={compare ? { disabled: compare.disabled } : undefined}
+            compare={
+              compare ? { disabled: compare.disabled || imageMode } : undefined
+            }
+            image={
+              createImage
+                ? compare?.value.length
+                  ? {
+                      disabled: true,
+                      description: "Not while comparing models",
+                    }
+                  : { disabled: controlsDisabled || createImage.disabled }
+                : undefined
+            }
             onAction={handleAction}
           />
           <HelpTopic

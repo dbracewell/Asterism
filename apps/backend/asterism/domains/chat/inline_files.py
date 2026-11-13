@@ -97,6 +97,7 @@ async def resolve_inline_files(
                 role="produced" if file_id in produced else "referenced",
                 producing_execution_id=execution.id if file_id in produced else None,
                 name=file.original_name,
+                filename=file.filename,
                 mime_type=file.mime_type,
                 kind=file.kind,
                 size=file.size,

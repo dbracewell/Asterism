@@ -250,6 +250,27 @@ the prompt check, the generator's own readiness, the queue and the audit
 record all apply, and it uses the same job code as chat generation
 (`service._run`).
 
+### Images in chat (US-76.5)
+
+- **Create image.** The composer's + menu offers Create image when
+  `GET /image-generation/availability` says the user can generate. It adds an
+  Image chip; the next message is sent with `create_image: true` and the chip
+  clears. It is not offered while models are being compared (the backend
+  refuses that combination).
+- **Progress.** The chat socket hook keeps the latest `tool_progress` event
+  and drops it when the turn moves on (a delta, a tool call, completion, an
+  error or a status of not processing). The chat shows the stage and, once
+  steps are known, a bar. Progress is keyed by tool call id; a model without
+  tools reports under `direct`. The stop button cancels the run as for any
+  turn.
+- **Images** are ordinary inline produced files (ADR-0039): shown in the
+  reply, opened full size, downloadable. Inline file references now carry the
+  library `filename`, so the viewer links to the file's page. **More like
+  this** sends the image's description again as a Create image message, so the
+  generator picks a new seed; the description comes from the agent's tool
+  result, or from the requesting message when the image was made directly.
+  Regenerating the reply also makes a new image.
+
 ## Consequences
 
 - ComfyUI and diffusers only implement `status` and `__call__` (and ComfyUI

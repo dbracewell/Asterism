@@ -52,9 +52,9 @@ Source: user request (2026-11-09). Order: US-76.1 → 76.2 → 76.3 → 76.4 →
 - [x] US-76.4: Admin settings
   - [x] Admin page with generated client hooks.
   - [x] Unit tests and an E2E for each provider path.
-- [ ] US-76.5: Images in chat
-  - [ ] Composer mode, inline images, progress, viewer, help.
-  - [ ] Unit tests and an E2E with a fake provider from prompt to saved image.
+- [ ] US-76.5: Images in chat (implemented; awaiting confirmation)
+  - [x] Composer mode, inline images, progress, viewer, help.
+  - [x] Unit tests and an E2E with a fake provider from prompt to saved image.
 
 ## User-requested epics (proposed 2026-11-08)
 

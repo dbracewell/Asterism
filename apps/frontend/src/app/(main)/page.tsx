@@ -33,6 +33,7 @@ import { client } from "@/lib/api";
 import type { LearningModeId, RubricUse } from "@/lib/client";
 import {
   chatModelsListOptions,
+  imageGenerationAvailabilityOptions,
   projectGetOneOptions,
 } from "@/lib/client/@tanstack/react-query.gen";
 import { useQuery } from "@tanstack/react-query";
@@ -91,6 +92,12 @@ export default function AppPage() {
   const suggestions = heroSuggestions({
     project: projectId ? project.data : null,
     skills: skills.error ? [] : skills.data?.items,
+  });
+  // Whether "Create image" is offered (ADR-0064).
+  const imageAvailability = useQuery({
+    ...imageGenerationAvailabilityOptions({ client }),
+    staleTime: 60 * 1000,
+    retry: false,
   });
   const composer = useRef<ChatInputHandle>(null);
   const sendBlocked = !modelAvailable || !workspaceAvailable || !hasPersona;
@@ -151,6 +158,7 @@ export default function AppPage() {
               onChange: setCompareModels,
               disabled: sendBlocked,
             }}
+            createImage={imageAvailability.data?.available ? {} : undefined}
             chips={
               <>
                 <ChatModelPicker value={modelId} onChange={setChosenModelId} />
@@ -184,6 +192,7 @@ export default function AppPage() {
               skills,
               template,
               compare,
+              createImage,
             }) => {
               if (sendBlocked)
                 throw new Error(
@@ -203,7 +212,12 @@ export default function AppPage() {
                   ...(sentRubric ? { rubric: sentRubric } : {}),
                   ...(includeGoal ? { include_goal: true } : {}),
                   ...(draftId ? { draft_id: draftId } : {}),
-                  ...(compare ? { compare } : comparePayload(compareModels)),
+                  ...(createImage ? { create_image: true } : {}),
+                  ...(compare
+                    ? { compare }
+                    : createImage
+                      ? {}
+                      : comparePayload(compareModels)),
                 },
               });
             }}

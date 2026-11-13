@@ -3661,6 +3661,10 @@ export type InlineFileReference = {
    */
   name?: string | null;
   /**
+   * Filename
+   */
+  filename?: string | null;
+  /**
    * Mime Type
    */
   mime_type?: string | null;

@@ -9,7 +9,11 @@ import {
 import { beforeEach, expect, it, vi } from "vitest";
 import type { InlineFileReference } from "@/lib/client";
 import MarkdownViewer from ".";
-import { InlineFilesProvider, InlineFilesScope } from "./inline-files";
+import {
+  ImageActionsContext,
+  InlineFilesProvider,
+  InlineFilesScope,
+} from "./inline-files";
 import { fileTokenId, markdownUrlTransform } from "./policy";
 
 vi.mock("@/features/theme/components/theme-context", () => ({
@@ -332,4 +336,44 @@ it("opens a document mention's preview from its chip", async () => {
   expect(
     await screen.findByText("The preview is still being prepared."),
   ).toBeInTheDocument();
+});
+
+it("offers Open in Files and More like this for a generated image", async () => {
+  const again = vi.fn();
+  const asked: string[] = [];
+  const generated = ref(IMAGE, { name: "fox.png", filename: "fox-7.png" });
+  render(
+    <QueryClientProvider client={new QueryClient()}>
+      <ImageActionsContext.Provider
+        value={{
+          moreLikeThis: (fileId) => {
+            asked.push(fileId);
+            return fileId === IMAGE ? again : undefined;
+          },
+        }}
+      >
+        <InlineFilesProvider
+          value={{ chatId: "chat-1", files: [generated, files[2]] }}
+        >
+          <MarkdownViewer
+            content={`![fox](${token(IMAGE)}) and [deck](${token(DOC)})`}
+          />
+        </InlineFilesProvider>
+      </ImageActionsContext.Provider>
+    </QueryClientProvider>,
+  );
+  fireEvent.click(
+    await screen.findByRole("button", { name: "Open image fox" }),
+  );
+  const dialog = await screen.findByRole("dialog");
+  expect(
+    within(dialog).getByRole("link", { name: "Open in Files" }),
+  ).toHaveAttribute("href", "/files/fox-7.png");
+  fireEvent.click(
+    within(dialog).getByRole("button", { name: "More like this" }),
+  );
+  expect(again).toHaveBeenCalledOnce();
+  await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  // Only images are asked about, and only a known prompt gets the button.
+  expect(new Set(asked)).toEqual(new Set([IMAGE]));
 });

@@ -1,6 +1,7 @@
 import {
   AgentEventSchema,
   AgentSubAgentEvent,
+  ToolProgressEvent,
   CompactionPacket,
 } from "@/features/chat/schemas";
 import { ToolTimings } from "@/features/chat/lib/agent-timeline";
@@ -68,6 +69,9 @@ export const useChatWebSocket = ({
 }: UseChatWebSocketProps) => {
   const [activeToken, setActiveToken] = React.useState(jwtToken);
   const [toolTimings, setToolTimings] = React.useState<ToolTimings>({});
+  // The latest progress report of the tool now running; cleared as the turn moves on.
+  const [toolProgress, setToolProgress] =
+    React.useState<ToolProgressEvent | null>(null);
   const didUnmount = React.useRef(false);
   const flushTimerRef = React.useRef<NodeJS.Timeout | null>(null);
   const streamingMessageRef = React.useRef<StreamingMessage | null>(null);
@@ -145,6 +149,7 @@ export const useChatWebSocket = ({
       return !didUnmount.current;
     },
     onClose: () => {
+      setToolProgress(null);
       if (flushTimerRef.current) {
         clearTimeout(flushTimerRef.current);
         flushTimerRef.current = null;
@@ -195,6 +200,7 @@ export const useChatWebSocket = ({
           statusRef.current = raw_object["is_processing"];
           onStatusChangeRef.current?.(raw_object["is_processing"]);
         }
+        if (!raw_object["is_processing"]) setToolProgress(null);
         return;
       }
 
@@ -223,6 +229,13 @@ export const useChatWebSocket = ({
         onSubAgentEventRef.current?.(msgContent);
         return;
       }
+
+      if (msgContent.type === "tool_progress") {
+        setToolProgress(msgContent);
+        return;
+      }
+      // Any other step of the turn ends the progress shown for the last tool.
+      if (msgContent.type !== "compaction") setToolProgress(null);
 
       if (msgContent.type === "compaction") {
         onCompactionRef.current?.(msgContent);
@@ -378,7 +391,8 @@ export const useChatWebSocket = ({
       sendJsonMessage,
       readyState,
       toolTimings,
+      toolProgress,
     }),
-    [readyState, sendJsonMessage, toolTimings],
+    [readyState, sendJsonMessage, toolTimings, toolProgress],
   );
 };
