@@ -145,3 +145,26 @@ branch-aware chat records).
 - [x] US-72.4: Start a canvas item yourself (confirmed and merged 2026-11-09)
   - [x] Endpoint, chip, dialog and help.
   - [x] Backend, unit and E2E tests.
+
+The user confirmed US-76.5 on 2026-11-13. EPIC-76 (US-76.1
+through US-76.5) is complete; see ADR-0064.
+
+### [EPIC-76: Image generation](../epics/EPIC-76-IMAGE-GENERATION.md)
+
+- [x] US-76.1: Image generation domain and agent tool
+  - [x] ADR; domain, job queue, storage, provenance, policy and tool.
+  - [x] Tests: gating, explicit mode with and without tools, storage, ownership, cancellation, refusal and audit.
+- [x] US-76.2: Local diffusers generator
+  - [x] Detection, catalog, recommendation, download and worker runtime.
+  - [x] Tests with a stub pipeline (device choice, recommendation, OOM, worker crash); manual runs on MPS and CPU recorded in the story (no CUDA machine available).
+  - [x] Small-hardware models (DreamShaper XL Lightning, DreamShaper 8 LCM) and precision by OS, processor and model; real runs on MPS and CPU.
+- [x] US-76.3: ComfyUI generator
+  - [x] Client, workflow templating and settings.
+  - [x] Tests against a fake ComfyUI server.
+  - [x] Generators as `ImageGenerator` components; generic component layer: typed parameters, validation on save, test connection, switches/numbers/JSON in the form.
+- [x] US-76.4: Admin settings
+  - [x] Admin page with generated client hooks.
+  - [x] Unit tests and an E2E for each provider path.
+- [x] US-76.5: Images in chat (confirmed and merged 2026-11-13)
+  - [x] Composer mode, inline images, progress, viewer, help.
+  - [x] Unit tests and an E2E with a fake provider from prompt to saved image.

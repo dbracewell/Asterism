@@ -34,27 +34,7 @@ EPIC-64 and EPIC-65 are complete and archived in the [2026-11-07 checklist](docs
 
 ## Image generation (proposed 2026-11-09)
 
-Source: user request (2026-11-09). Order: US-76.1 → 76.2 → 76.3 → 76.4 → 76.5 (76.2 and 76.3 can swap).
-
-### [EPIC-76: Image generation](docs/epics/EPIC-76-IMAGE-GENERATION.md)
-
-- [x] US-76.1: Image generation domain and agent tool
-  - [x] ADR; domain, job queue, storage, provenance, policy and tool.
-  - [x] Tests: gating, explicit mode with and without tools, storage, ownership, cancellation, refusal and audit.
-- [x] US-76.2: Local diffusers generator
-  - [x] Detection, catalog, recommendation, download and worker runtime.
-  - [x] Tests with a stub pipeline (device choice, recommendation, OOM, worker crash); manual runs on MPS and CPU recorded in the story (no CUDA machine available).
-  - [x] Small-hardware models (DreamShaper XL Lightning, DreamShaper 8 LCM) and precision by OS, processor and model; real runs on MPS and CPU.
-- [x] US-76.3: ComfyUI generator
-  - [x] Client, workflow templating and settings.
-  - [x] Tests against a fake ComfyUI server.
-  - [x] Generators as `ImageGenerator` components; generic component layer: typed parameters, validation on save, test connection, switches/numbers/JSON in the form.
-- [x] US-76.4: Admin settings
-  - [x] Admin page with generated client hooks.
-  - [x] Unit tests and an E2E for each provider path.
-- [x] US-76.5: Images in chat (confirmed and merged 2026-11-13)
-  - [x] Composer mode, inline images, progress, viewer, help.
-  - [x] Unit tests and an E2E with a fake provider from prompt to saved image.
+EPIC-76 (US-76.1 through US-76.5) is confirmed complete and archived in the [2026-11-08 checklist](docs/archive/todo-completed-2026-11-08.md).
 
 ## User-requested epics (proposed 2026-11-08)
 
