@@ -5,6 +5,7 @@ import { APIDownload } from "@/components/api-download";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
   DialogTitle,
@@ -26,9 +27,11 @@ import {
   FileTextIcon,
   FileWarningIcon,
   ImageIcon,
+  ImagePlusIcon,
   PresentationIcon,
   type LucideIcon,
 } from "lucide-react";
+import Link from "next/link";
 import { createContext, useContext, useEffect, useState } from "react";
 
 /**
@@ -49,6 +52,17 @@ export const InlineFilesContext = createContext<InlineFiles>({
 });
 
 export const InlineFilesProvider = InlineFilesContext.Provider;
+
+/**
+ * Actions the surrounding chat offers for a generated image (ADR-0064).
+ * `moreLikeThis` returns a handler when the image's prompt is known and
+ * another image can be requested now.
+ */
+type ImageActions = {
+  moreLikeThis?: (fileId: string) => (() => void) | undefined;
+};
+
+export const ImageActionsContext = createContext<ImageActions>({});
 
 /** Narrows the resolved lists (e.g. to one sub-agent's output) within the same chat. */
 export function InlineFilesScope({
@@ -469,6 +483,8 @@ function Lightbox({
   name: string;
   children: React.ReactNode;
 }) {
+  const { moreLikeThis } = useContext(ImageActionsContext);
+  const again = isInlineImage(file) ? moreLikeThis?.(file.file_id) : undefined;
   return (
     <DialogContent className="flex max-h-[calc(100dvh-2rem)] max-w-[95vw]! flex-col items-center gap-3">
       <DialogTitle className={cn("max-w-full truncate pr-8")}>
@@ -478,12 +494,29 @@ function Lightbox({
         {[file.mime_type, sizeLabel(file.size)].filter(Boolean).join(" · ")}
       </DialogDescription>
       {children}
-      <APIDownload
-        chatId={chatId}
-        fileId={file.file_id}
-        filename={file.name || name}
-        linkText="Download"
-      />
+      <div className="flex max-w-full flex-wrap items-center justify-center gap-x-4 gap-y-2">
+        <APIDownload
+          chatId={chatId}
+          fileId={file.file_id}
+          filename={file.name || name}
+          linkText="Download"
+        />
+        {file.filename && (
+          <Button variant="link" asChild className="h-auto p-0 font-normal">
+            <Link href={`/files/${encodeURIComponent(file.filename)}`}>
+              Open in Files
+            </Link>
+          </Button>
+        )}
+        {again && (
+          <DialogClose asChild>
+            <Button variant="outline" size="sm" onClick={again}>
+              <ImagePlusIcon aria-hidden="true" />
+              More like this
+            </Button>
+          </DialogClose>
+        )}
+      </div>
     </DialogContent>
   );
 }

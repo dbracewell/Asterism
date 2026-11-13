@@ -24,6 +24,7 @@ BARE = {
     "role": None,
     "producing_execution_id": None,
     "name": None,
+    "filename": None,
     "mime_type": None,
     "kind": None,
     "size": None,
@@ -110,6 +111,8 @@ async def test_only_scoped_and_run_produced_files_resolve(produced):
         "role": "referenced",
         "producing_execution_id": None,
         "name": "attached.txt",
+        # The library filename, for the viewer's link to the file's page.
+        "filename": attached["filename"],
         "mime_type": "text/plain",
         "kind": "text",
         "size": len(b"attached.txt"),

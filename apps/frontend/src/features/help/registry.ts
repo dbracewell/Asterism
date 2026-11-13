@@ -34,6 +34,7 @@ export type HelpId =
   | "concept.template"
   | "concept.prompt-coach"
   | "concept.canvas"
+  | "concept.image-generation"
   | "concept.model"
   | "concept.context-compaction"
   | "concept.attachment"
@@ -163,6 +164,19 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
       "concept.project",
       "concept.model",
     ],
+    audience: "everyone",
+  },
+  "concept.image-generation": {
+    title: "Image generation",
+    summary:
+      "Creating a picture from a description, in chat. Ask in plain words, or choose Create image so your next message is the description.",
+    details: [
+      'Asking in plain words ("draw a red fox in the snow") works when the chat\'s model supports tools: the agent writes the description and creates the image. Create image, in the + menu beside the message box, adds an Image chip: your next message is used as the description, with any model.',
+      "While the image is made, the chat shows what is happening and how many steps are left; the stop button cancels it. A model running on your server can take a few minutes to load before its first image.",
+      "Select an image to see it full size, download it, open it in Files or choose More like this, which asks for the same description again and gives a different picture. Regenerating the reply also makes a new one. Images are saved to your files.",
+      "Create image only appears when an administrator has turned image generation on and it is allowed for your group. Every request is recorded, and some requests are always refused.",
+    ],
+    related: ["composer.controls", "concept.main-agent", "concept.model"],
     audience: "everyone",
   },
   "concept.canvas": {
@@ -668,7 +682,7 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
       "The chips above the message box and the + menu beside it change what you send and how the assistant answers. Pick a term below to learn more.",
     details: [
       "Chips above the box: the model, persona and learning mode are always shown. Goal, rubric, compare, skills and a template label appear only when they apply. Select a chip to change it.",
-      "The + menu: attach files or see which files this chat can use; open prompt templates; review your draft before sending; add a skill; compare models side by side; open this help.",
+      "The + menu: attach files or see which files this chat can use; open prompt templates; review your draft before sending; add a skill; create an image; compare models side by side; open this help.",
       "Type / in the message box to add a skill or a prompt template.",
       "The status ring beside the send button shows how full the context is and whether the chat is connected. Open it to compact the chat, see your General chat sub-agents or check ChatGPT plan usage.",
     ],
@@ -679,6 +693,7 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
       "concept.prompt-coach",
       "concept.model",
       "concept.comparison",
+      "concept.image-generation",
       "concept.persona",
       "concept.learning-mode",
       "concept.skill",
@@ -745,7 +760,7 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
       "A generator is either an existing ComfyUI server or a model run on this server with Diffusers. Local models need a download of several gigabytes and enough GPU or system memory; the page shows which ones fit.",
       "Every request is recorded, and prompts that sexualize minors are always refused, whichever generator is used. Images are saved to the user's files.",
     ],
-    related: ["admin.settings-file"],
+    related: ["concept.image-generation", "admin.settings-file"],
     audience: "admin",
   },
   "admin.context-compaction": {

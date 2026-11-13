@@ -1,6 +1,6 @@
 # EPIC-76: Image generation
 
-Status: in progress (US-76.1 to US-76.4 done; [ADR-0064](../adr/0064-image-generation.md)). Source: user request (2026-11-09).
+Status: complete (US-76.1 to US-76.5 confirmed and merged 2026-11-13; [ADR-0064](../adr/0064-image-generation.md)). Source: user request (2026-11-09).
 
 ## Objective
 
@@ -226,8 +226,16 @@ shows progress and can be cancelled; finished images appear inline with
 full-size view, download and a link to the file; regenerate and "more like
 this" (new seed) work. Help and glossary cover image generation.
 
-- [ ] Composer mode, inline images, progress, viewer, help.
-- [ ] Unit tests and an E2E with a fake provider from prompt to saved image.
+- [x] Composer mode, inline images, progress, viewer, help.
+- [x] Unit tests and an E2E with a fake provider from prompt to saved image.
+
+Implemented 2026-11-12 ([ADR-0064](../adr/0064-image-generation.md), images
+in chat section). Create image is in the composer's + menu on new and existing
+chats; the chat shows stage and step progress; the image viewer gained Open in
+Files and More like this; help has an "Image generation" entry linked from the
+chat guide and chat controls. E2E (`e2e/image-generation-chat.spec.ts`) runs a
+fake provider over a mocked socket: request, progress, inline image, viewer,
+More like this, stop, and no offer when unavailable.
 
 ## Later (not in this epic)
 

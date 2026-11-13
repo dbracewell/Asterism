@@ -127,6 +127,7 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
       "Use Compare with other models under a reply to see how different models answer.",
       "Lock the learning mode from the header to stop yourself skipping ahead.",
       "Open the status ring beside the send button and choose Compact now to summarize earlier turns of a long chat.",
+      "Choose Create image in the + menu, then describe the picture you want.",
     ],
     terms: [
       "concept.chat",
@@ -137,6 +138,7 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
       "concept.citation",
       "concept.tool-approval",
       "concept.canvas",
+      "concept.image-generation",
     ],
     audience: "everyone",
   },
@@ -979,7 +981,11 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
       "Save the generator before trying it; the test uses the saved settings.",
       "Read a model's license before downloading: some may not be used commercially.",
     ],
-    terms: ["admin.image-generation", "admin.settings-file"],
+    terms: [
+      "admin.image-generation",
+      "concept.image-generation",
+      "admin.settings-file",
+    ],
     audience: "admin",
   },
   "admin.image-captioning": {

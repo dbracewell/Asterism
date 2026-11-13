@@ -1456,6 +1456,7 @@ export const zInlineFileReference = z.object({
   role: z.enum(["produced", "referenced"]).nullish(),
   producing_execution_id: z.uuid().nullish(),
   name: z.string().nullish(),
+  filename: z.string().nullish(),
   mime_type: z.string().nullish(),
   kind: zFileKind.nullish(),
   size: z.int().gte(0).nullish(),

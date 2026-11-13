@@ -51,7 +51,7 @@ class UsageStep(BaseModel):
 class InlineFileReference(BaseModel):
     """One ``asterism-file:`` reference in saved Markdown, resolved at save time (ADR-0039).
 
-    Unavailable references carry only ``file_id``: no role, name, type or size is
+    Unavailable references carry only ``file_id``: no role, name, filename, type or size is
     ever recorded or returned for them, so a foreign or guessed ID reveals nothing
     a missing ID would not. ``available`` is rechecked against live scope on read.
     """
@@ -62,6 +62,8 @@ class InlineFileReference(BaseModel):
     role: Literal["produced", "referenced"] | None = None
     producing_execution_id: uuid.UUID | None = None
     name: str | None = None
+    # The library filename, so the viewer can link to the file's page.
+    filename: str | None = None
     mime_type: str | None = None
     kind: FileKind | None = None
     size: int | None = Field(default=None, ge=0)

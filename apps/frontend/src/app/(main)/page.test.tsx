@@ -59,6 +59,10 @@ vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
     queryKey: ["models"],
     queryFn: async () => mocks.models,
   }),
+  imageGenerationAvailabilityOptions: () => ({
+    queryKey: ["image-availability"],
+    queryFn: async () => ({ available: false, reason: "" }),
+  }),
   learningModeGetManyOptions: () => ({
     queryKey: ["learning-modes"],
     queryFn: async () => ({

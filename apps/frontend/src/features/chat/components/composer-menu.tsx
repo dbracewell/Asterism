@@ -16,6 +16,7 @@ import {
   ClipboardPasteIcon,
   ColumnsIcon,
   FilesIcon,
+  ImagePlusIcon,
   LayoutTemplateIcon,
   LibraryIcon,
   MonitorUpIcon,
@@ -39,6 +40,7 @@ export type ComposerAction =
   | "review"
   | "skills"
   | "compare"
+  | "image"
   | "help";
 
 /** Actions that move focus to a dialog, popover or the message box. */
@@ -62,6 +64,7 @@ export function ComposerMenu({
   review,
   skills,
   compare,
+  image,
   onAction,
 }: {
   ref?: React.Ref<HTMLButtonElement>;
@@ -71,6 +74,8 @@ export function ComposerMenu({
   review?: Offer;
   skills?: Offer;
   compare?: Offer;
+  /** Make the next message an image request (ADR-0064). */
+  image?: Offer;
   onAction: (action: ComposerAction) => void;
 }) {
   const keepFocus = useRef(false);
@@ -167,6 +172,15 @@ export function ComposerMenu({
                 </MenuOffer>
               )}
             </DropdownMenuGroup>
+          </>
+        )}
+        {image && (
+          <>
+            <DropdownMenuSeparator />
+            <MenuOffer offer={image} onSelect={() => select("image")}>
+              <ImagePlusIcon />
+              Create image
+            </MenuOffer>
           </>
         )}
         {compare && (

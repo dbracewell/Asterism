@@ -1,4 +1,5 @@
 import type { Message, ToolResult } from "@/lib/client";
+import { imageToolLabel } from "./image-generation";
 
 export type ToolStepStatus =
   | "running"
@@ -200,6 +201,11 @@ export function messageTimelineSteps(
           call.function.arguments,
           status,
           result?.content,
+        ) ??
+        imageToolLabel(
+          call.function.name,
+          status,
+          result?.raw_result ?? result?.content,
         ),
       result: result
         ? (errorOf(result.raw_result) ?? result.content)

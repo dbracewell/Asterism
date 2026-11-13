@@ -342,3 +342,71 @@ it("opens chat controls help from the menu and returns focus to it", async () =>
   expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   expect(screen.getByRole("button", { name: "More options" })).toHaveFocus();
 });
+
+it("offers Create image only when available and sends the next message as an image request", async () => {
+  const user = userEvent.setup();
+  const onSubmit = vi.fn();
+  const { unmount } = render(<ChatInput onSubmit={vi.fn()} />);
+  await user.click(screen.getByRole("button", { name: "More options" }));
+  expect(
+    screen.queryByRole("menuitem", { name: "Create image" }),
+  ).not.toBeInTheDocument();
+  unmount();
+
+  render(
+    <ChatInput
+      onSubmit={onSubmit}
+      createImage={{}}
+      placeholder="Ask anything…"
+    />,
+  );
+  await user.click(screen.getByRole("button", { name: "More options" }));
+  await user.click(
+    await screen.findByRole("menuitem", { name: "Create image" }),
+  );
+  const box = screen.getByPlaceholderText("Describe the image to create");
+  await waitFor(() => expect(box).toHaveFocus());
+  const options = screen.getByRole("group", { name: "Message options" });
+  expect(within(options).getByText("Image")).toBeVisible();
+
+  // Removing the chip returns to an ordinary message.
+  await user.click(
+    screen.getByRole("button", { name: "Don't create an image" }),
+  );
+  expect(screen.getByPlaceholderText("Ask anything…")).toBeVisible();
+  await user.type(screen.getByRole("textbox"), "Hello{Enter}");
+  await waitFor(() => expect(onSubmit).toHaveBeenCalledOnce());
+  expect(onSubmit.mock.calls[0][0]).not.toHaveProperty("createImage");
+
+  await user.click(screen.getByRole("button", { name: "More options" }));
+  await user.click(
+    await screen.findByRole("menuitem", { name: "Create image" }),
+  );
+  await user.type(screen.getByRole("textbox"), "A heron at dawn{Enter}");
+  await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(2));
+  expect(onSubmit.mock.calls[1][0]).toMatchObject({
+    prompt: "A heron at dawn",
+    createImage: true,
+  });
+  // One request only: the chip is gone after sending.
+  await waitFor(() =>
+    expect(
+      screen.queryByRole("button", { name: "Don't create an image" }),
+    ).toBeNull(),
+  );
+});
+
+it("doesn't offer Create image while models are being compared", async () => {
+  const user = userEvent.setup();
+  render(
+    <ChatInput
+      onSubmit={vi.fn()}
+      createImage={{}}
+      compare={{ value: ["a", "b"], onChange: vi.fn() }}
+    />,
+  );
+  await user.click(screen.getByRole("button", { name: "More options" }));
+  const item = await screen.findByRole("menuitem", { name: /Create image/ });
+  expect(item).toHaveAttribute("aria-disabled", "true");
+  expect(item).toHaveTextContent("Not while comparing models");
+});
