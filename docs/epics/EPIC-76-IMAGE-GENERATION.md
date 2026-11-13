@@ -1,6 +1,6 @@
 # EPIC-76: Image generation
 
-Status: in progress (US-76.1 to US-76.4 done, US-76.5 awaiting confirmation; [ADR-0064](../adr/0064-image-generation.md)). Source: user request (2026-11-09).
+Status: complete (US-76.1 to US-76.5 confirmed and merged 2026-11-13; [ADR-0064](../adr/0064-image-generation.md)). Source: user request (2026-11-09).
 
 ## Objective
 
