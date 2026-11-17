@@ -6,6 +6,14 @@ import { createInterface } from "node:readline/promises";
 
 const assumeYes = process.argv.includes("--yes");
 const storageRoot = process.env.STORAGE_ROOT;
+// This script deletes data, so never guess where it lives (the app's own
+// default is /storage). `pnpm reset:db` loads it from the root .env.
+if (!storageRoot) {
+  console.error(
+    "STORAGE_ROOT is not set. Run this through the root package script, or set it explicitly.",
+  );
+  process.exit(1);
+}
 const authPath = resolve(
   process.env.BETTER_AUTH_DB_PATH ?? join(storageRoot, "users.db"),
 );
