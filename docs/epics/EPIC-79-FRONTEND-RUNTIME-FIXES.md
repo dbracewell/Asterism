@@ -1,6 +1,6 @@
 # EPIC-79: Frontend runtime fixes
 
-Status: in progress (US-79.1–US-79.4 done). Source: [codebase review](../../codebase_review.md), verified 2026-11-14 (items 4, 5, 6, 12, 18).
+Status: in progress (US-79.1–US-79.5 done). Source: [codebase review](../../codebase_review.md), verified 2026-11-14 (items 4, 5, 6, 12, 18).
 
 ## Objective
 
@@ -38,7 +38,8 @@ event webhooks, sign-in failures, and needless full-app refetches.
 
 ### US-79.5: SSE worker does not reconnect with no tabs
 
-- [ ] `initSSE()` returns when `ports.size === 0`; clear the pending reconnect timer when the last port unloads.
+- [x] `initSSE()` returns when `ports.size === 0`; clear the pending reconnect timer when the last port unloads.
+- [x] Also close the stream when `broadcast` drops the last dead port. Covered by `src/features/sse/sse-worker.test.ts`.
 
 ### US-79.6: Pickers and image settings stop refetching the app
 
