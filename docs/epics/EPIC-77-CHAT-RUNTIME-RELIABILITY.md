@@ -1,6 +1,6 @@
 # EPIC-77: Chat runtime reliability
 
-Status: in progress (US-77.2, US-77.1 and US-77.3 done). Source: [codebase review](../../codebase_review.md), verified 2026-11-14 (items 1, 2, 3, 7, 8, 12).
+Status: in progress (US-77.2, US-77.1, US-77.3 and US-77.4 done). Source: [codebase review](../../codebase_review.md), verified 2026-11-14 (items 1, 2, 3, 7, 8, 12).
 
 ## Objective
 
@@ -36,9 +36,9 @@ All controllers for a chat consume one shared `MessageQueue`, so two tabs steal 
 
 ### US-77.4: Job and shutdown races
 
-- [ ] `JobManager.enqueue`: the done callback only removes its own task (`self._tasks.get(key) is task`), and logs `task.exception()`; same exception retrieval in `BackgroundTaskManager`.
-- [ ] `EventBus.shutdown()` awaits pending tasks (with a timeout) before cancelling so `SYSTEM_STOP` handlers run.
-- [ ] Tests for re-enqueue immediately after completion and for a `SYSTEM_STOP` handler running during lifespan shutdown.
+- [x] `JobManager.enqueue`: the done callback only removes its own task (`self._tasks.get(key) is task`), and logs `task.exception()`; same exception retrieval in `BackgroundTaskManager`.
+- [x] `EventBus.shutdown()` awaits pending tasks (with a timeout) before cancelling so `SYSTEM_STOP` handlers run.
+- [x] Tests for re-enqueue immediately after completion and for a `SYSTEM_STOP` handler running during lifespan shutdown.
 
 ### US-77.5: WebSocket rejects cleanly before accept
 

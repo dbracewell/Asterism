@@ -4,6 +4,8 @@ import asyncio
 from collections.abc import Coroutine
 from typing import Any
 
+from asterism.common.job_queue import log_task_failure
+
 
 class BackgroundTaskManager:
     """Manages background tasks for graceful shutdown.
@@ -27,8 +29,12 @@ class BackgroundTaskManager:
         """
         task = asyncio.create_task(coro)
         self.tasks.add(task)
-        task.add_done_callback(self.tasks.discard)
+        task.add_done_callback(self._finished)
         return task
+
+    def _finished(self, task: asyncio.Task[Any]) -> None:
+        self.tasks.discard(task)
+        log_task_failure(task, task.get_name())
 
     async def shutdown(self) -> None:
         """Cancel and await connection-owned tasks without masking errors."""
