@@ -754,27 +754,20 @@ async def delete_user_files(
 
     try:
         async with get_async_db_session(session) as session:
-            await require_not_course_managed(
-                user_id=user_id,
-                record_ids=await session.scalars(
-                    select(UserFileModel.id).where(
-                        UserFileModel.user_id == user_id, UserFileModel.filename.in_(filenames)
-                    )
-                ),
-                session=session,
-            )
-            for filename in filenames:
-                file = await session.scalar(
-                    select(UserFileModel).where(
-                        UserFileModel.user_id == user_id,
-                        UserFileModel.filename == filename,
-                    ),
+            by_name = {
+                file.filename: file
+                for file in await session.scalars(
+                    select(UserFileModel).where(UserFileModel.user_id == user_id, UserFileModel.filename.in_(filenames))
                 )
-                if file is not None:
-                    deleted_files.extend(await describe_files(user_id=user_id, files=[file], session=session))
-                    await _remove_file_knowledge_records(file_id=file.id, session=session)
-                    storage_keys.append(file.storage_key)
-                    await session.delete(file)
+            }
+            # Request order, each file once; unknown names are skipped.
+            files = [by_name[name] for name in dict.fromkeys(filenames) if name in by_name]
+            await require_not_course_managed(user_id=user_id, record_ids=[file.id for file in files], session=session)
+            deleted_files = await describe_files(user_id=user_id, files=files, session=session) if files else []
+            for file in files:
+                await _remove_file_knowledge_records(file_id=file.id, session=session)
+                storage_keys.append(file.storage_key)
+                await session.delete(file)
             await session.commit()
     except Exception:
         await session.rollback()

@@ -583,3 +583,45 @@ async def test_bulk_physical_deletion_cleans_project_references_without_fk_casca
     for project in projects:
         await file_session.refresh(project)
         assert project.context_revision == 2
+
+
+@pytest.mark.asyncio
+async def test_bulk_deletion_looks_files_up_and_describes_them_once(file_session, monkeypatch):
+    from asterism.domains.files import service as file_service
+    from sqlalchemy import event
+
+    await upload_files(
+        user_id="user-a",
+        uploads=[_upload(name, name.encode()) for name in ("a.txt", "b.txt", "c.txt")],
+        session=file_session,
+    )
+    await upload_files(user_id="user-b", uploads=[_upload("b.txt", b"foreign")], session=file_session)
+
+    described: list[list[str]] = []
+    real_describe = file_service.describe_files
+
+    async def counting_describe(*, user_id, files, session):
+        described.append([file.filename for file in files])
+        return await real_describe(user_id=user_id, files=files, session=session)
+
+    monkeypatch.setattr(file_service, "describe_files", counting_describe)
+    lookups = []
+
+    def record(_connection, _cursor, statement, *_):
+        if statement.lstrip().upper().startswith("SELECT") and "user_files.filename IN" in statement:
+            lookups.append(statement)
+
+    engine = file_session.bind.sync_engine
+    event.listen(engine, "before_cursor_execute", record)
+    try:
+        result = await file_service.delete_user_files(
+            user_id="user-a", filenames=["c.txt", "missing.txt", "a.txt", "c.txt", "b.txt"], session=file_session
+        )
+    finally:
+        event.remove(engine, "before_cursor_execute", record)
+
+    assert [file.filename for file in result.files] == ["c.txt", "a.txt", "b.txt"]
+    assert described == [["c.txt", "a.txt", "b.txt"]]
+    assert len(lookups) == 1
+    remaining = await file_session.scalars(select(UserFileModel.user_id))
+    assert list(remaining) == ["user-b"]

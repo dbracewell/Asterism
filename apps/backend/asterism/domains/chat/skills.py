@@ -7,7 +7,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from asterism.core.exceptions import CodedException
 from asterism.db.database import get_async_db_session
 from asterism.domains.agent.skill_inputs import AcceptedSkills, SkillSnapshot
-from asterism.domains.skills.activation import eligible_rows, validate_limits, validate_snapshots
+from asterism.domains.skills.activation import (
+    available_skill_ids,
+    eligible_rows,
+    validate_limits,
+    validate_snapshots,
+)
 
 from .branches import latest_branch_user_turn, nearest_user_ancestor
 from .models import ChatModel, MessageModel
@@ -59,18 +64,14 @@ async def describe_skills(user_id: str, state: AcceptedSkills, session: AsyncSes
             select_owned_skills(user_id).where(SkillModel.id.in_([item.id for item in state.snapshots]))
         )
     }
+    available = await available_skill_ids(user_id, state.snapshots, session)
     result = []
     for item in state.snapshots:
-        try:
-            await validate_snapshots(user_id, (item,), session)
-            available = True
-        except CodedException:
-            available = False
         row = rows.get(item.id)
         result.append(
             ActiveSkill(
                 **item.identity.model_dump(),
-                available=available,
+                available=item.id in available,
                 update_available=row is not None and row.revision != item.revision,
             )
         )

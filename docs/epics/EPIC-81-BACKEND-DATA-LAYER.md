@@ -23,10 +23,10 @@ The message update trigger already fires only on `content`; the cost is on delet
 
 ### US-81.3: Remove targeted N+1 queries
 
-- [ ] `list_versions`: load files for all versions in one query.
-- [ ] `describe_skills`: validate snapshots in one batch.
-- [ ] `delete_user_files`: one query for the filenames, one batch describe.
-- [ ] Query-count tests for each.
+- [x] `list_versions`: load files for all versions in one query.
+- [x] `describe_skills`: validate snapshots in one batch.
+- [x] `delete_user_files`: one query for the filenames, one batch describe.
+- [x] Query-count tests for each.
 
 ### US-81.4: Async file store reads
 
@@ -45,3 +45,5 @@ The message update trigger already fires only on `content`; the cost is on delet
 US-81.5 is a refactor; do it last and keep it separate from bug fixes.
 
 US-81.1: SQLite runs cascaded message deletes after the chat row is gone, so the `EXISTS` guard skips them (checked with a probe; both `delete_chat` and `delete_chats` rely on the DB cascade). The update trigger now fires on `content, chat_id` and rebuilds the old chat too when a message moves. `initialize_search_index` drops and recreates the triggers on every start, so existing databases pick up new definitions.
+
+US-81.3: `files_by_version` loads a page's course files in one query; `available_skill_ids` reads the skills policy once and checks eligibility in one query (per-item size limits unchanged); `delete_user_files` loads the files once and describes them in one batch. Per-file knowledge cleanup and row deletes in `delete_user_files` remain per file. Tests assert counts stay constant as items grow, rather than pinning exact numbers.

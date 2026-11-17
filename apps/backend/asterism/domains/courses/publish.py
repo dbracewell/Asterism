@@ -109,6 +109,23 @@ async def version_files(version_id: uuid.UUID, session: AsyncSession) -> list[Co
     )
 
 
+async def files_by_version(
+    version_ids: list[uuid.UUID], session: AsyncSession
+) -> dict[uuid.UUID, list[CourseFileModel]]:
+    """Load the files of several versions in one query, each list ordered by name."""
+    grouped: dict[uuid.UUID, list[CourseFileModel]] = {version_id: [] for version_id in version_ids}
+    if not version_ids:
+        return grouped
+    rows = await session.scalars(
+        select(CourseFileModel)
+        .where(CourseFileModel.version_id.in_(version_ids))
+        .order_by(CourseFileModel.version_id, CourseFileModel.name)
+    )
+    for row in rows:
+        grouped[row.version_id].append(row)
+    return grouped
+
+
 def _view(row: CourseVersionModel, files: list[CourseFileModel]) -> CourseVersion:
     manifest = parse_pack(row.manifest.encode("utf-8"))
     return CourseVersion(
@@ -208,8 +225,9 @@ async def list_versions(
         page=page,
         page_size=page_size,
     )
+    files = await files_by_version([row.id for row in result.records], session)
     return CourseVersionPage(
-        items=[_view(row, await version_files(row.id, session)) for row in result.records],
+        items=[_view(row, files[row.id]) for row in result.records],
         total=result.total,
         page=page,
         page_size=page_size,
