@@ -2,6 +2,10 @@
 
 Status: accepted and implemented for US-58.2 on 2026-11-06
 ([EPIC-58](../epics/EPIC-58-LEARNING-GOALS-REFLECTION-AND-PROGRESS.md)).
+Amended by [ADR-0066](0066-about-you.md) on 2026-11-17: personas are gone, so
+reflections partition by user and project only. `persona_id`, its foreign key,
+its index segment and the list filter are removed. The persona text below is
+history.
 
 ## Context
 

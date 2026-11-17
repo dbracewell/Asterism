@@ -1,4 +1,4 @@
-"""US-58.2: session reflections partitioned by owner, persona and project."""
+"""US-58.2: session reflections partitioned by owner and project."""
 
 import uuid
 
@@ -29,28 +29,21 @@ async def reflect(client, chat_id, user="a", **text):
     return await client.post(BASE, headers=auth(user), json=body)
 
 
-async def persona(client, name):
-    response = await client.post("/users/personas", headers=auth(), json={"name": name})
-    assert response.status_code == 200, response.text
-    return response.json()["id"]
-
-
 @pytest.mark.asyncio
-async def test_reflections_take_project_and_persona_from_the_chat(project_api):
+async def test_reflections_take_project_from_the_chat(project_api):
     client, _, _ = project_api
     project = (await client.post("/projects/", headers=auth(), json={"name": "Biology"})).json()
-    teaching = await persona(client, "Teaching")
-    project_chat = await new_chat(client, project_id=project["id"], persona_id=teaching)
+    project_chat = await new_chat(client, project_id=project["id"])
     general_chat = await new_chat(client)
 
     created = await reflect(client, project_chat["info"]["id"], learned="  Osmosis basics  ")
     assert created.status_code == 201, created.text
     body = created.json()
-    assert body["project_id"] == project["id"] and body["persona_id"] == teaching
+    assert body["project_id"] == project["id"] and "persona_id" not in body
     assert body["chat_id"] == project_chat["info"]["id"] and body["learned"] == "Osmosis basics"
     assert body["revision"] == 1
     general = (await reflect(client, general_chat["info"]["id"], unclear="")).json()
-    assert general["project_id"] is None and general["persona_id"] != teaching
+    assert general["project_id"] is None
 
     in_project = (await client.get(f"{BASE}?project_id={project['id']}", headers=auth())).json()
     assert [item["id"] for item in in_project["items"]] == [body["id"]]
@@ -59,20 +52,15 @@ async def test_reflections_take_project_and_persona_from_the_chat(project_api):
 
 
 @pytest.mark.asyncio
-async def test_lists_are_partitioned_by_persona_and_owner(project_api):
+async def test_lists_are_partitioned_by_owner(project_api):
     client, _, _ = project_api
-    teaching = await persona(client, "Teaching")
-    exam = await persona(client, "Exam prep")
-    first = (await reflect(client, (await new_chat(client, persona_id=teaching))["info"]["id"])).json()
-    second = (await reflect(client, (await new_chat(client, persona_id=exam))["info"]["id"])).json()
+    first = (await reflect(client, (await new_chat(client))["info"]["id"])).json()
+    second = (await reflect(client, (await new_chat(client))["info"]["id"])).json()
 
     everything = (await client.get(BASE, headers=auth())).json()
     assert {item["id"] for item in everything["items"]} == {first["id"], second["id"]}
-    only_exam = (await client.get(f"{BASE}?persona_id={exam}", headers=auth())).json()
-    assert [item["id"] for item in only_exam["items"]] == [second["id"]]
-    # Another user sees nothing and cannot probe a foreign persona.
+    # Another user sees nothing.
     assert (await client.get(BASE, headers=auth("b"))).json()["total"] == 0
-    assert (await client.get(f"{BASE}?persona_id={exam}", headers=auth("b"))).status_code == 404
     assert (await reflect(client, (await new_chat(client))["info"]["id"], user="b")).status_code == 404
 
 

@@ -1,7 +1,7 @@
 """Builds the AI-use log from recorded provenance (US-57.4, ADR-0046).
 
 Each selected chat contributes its active branch: every user turn with the
-mode, persona, template, rubric, skills and files it was sent with, and the
+mode, About you revision, template, rubric, skills and files it was sent with, and the
 reply that answered it (model, tools, cited files, exercise label,
 verification counts). The log is owner scoped; one foreign or missing chat
 rejects the whole request. Selecting individual turns and rendering happen in
@@ -27,7 +27,7 @@ from .ai_use_log_schemas import (
     LoggedTurn,
     LoggedVerification,
 )
-from .schemas import Message, MessageVerification
+from .schemas import Message, MessageExecution, MessageVerification
 
 
 def _verification(record: MessageVerification | None) -> LoggedVerification | None:
@@ -71,6 +71,13 @@ def _reply(steps: Sequence[Message]) -> LoggedReply | None:
     )
 
 
+def about_revision(execution: MessageExecution | None) -> int | None:
+    """The About you revision a turn was sent with, or None when it added no profile layer."""
+    if execution is None:
+        return None
+    return next((source.revision for source in execution.prompt.sources if source.kind == "profile"), None)
+
+
 def _turn(request: Message, steps: Sequence[Message]) -> LoggedTurn:
     execution = next((step.execution for step in steps if step.execution), None)
     return LoggedTurn(
@@ -78,7 +85,7 @@ def _turn(request: Message, steps: Sequence[Message]) -> LoggedTurn:
         at=request.created_at,
         prompt=request.content,
         learning_mode=request.learning_mode,
-        persona=execution.persona.name if execution else None,
+        about_revision=about_revision(execution),
         template=(
             LoggedTemplate(
                 name=request.template.name, level=request.template.level, available=request.template.available

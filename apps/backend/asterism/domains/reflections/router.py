@@ -50,14 +50,11 @@ async def list_reflections(
     user: AuthedUserDep,
     db: DBSessionDep,
     project_id: uuid.UUID | None = None,
-    persona_id: uuid.UUID | None = None,
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=10, ge=1, le=100),
 ) -> ReflectionPage:
-    """One project's reflections (General without ``project_id``), optionally one persona's."""
-    return await service.list_reflections(
-        user.id, db, project_id=project_id, persona_id=persona_id, page=page, page_size=page_size
-    )
+    """One project's reflections (General without ``project_id``)."""
+    return await service.list_reflections(user.id, db, project_id=project_id, page=page, page_size=page_size)
 
 
 @reflections_router.post("/", operation_id="reflectionCreate", status_code=201)

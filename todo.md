@@ -50,16 +50,16 @@ Source: user request and the [feature overlap review](docs/reviews/2026-11-17-fe
 
 ### US-83.1: About you replaces personas (backend)
 
-- [ ] ADR-0066 "About you" superseding ADR-0021; amend ADR-0016/0028/0048/0061
-- [ ] `users.about_md` / `about_revision`; remove persona table, default pointer, trigger and FK
-- [ ] `GET`/`PUT /users/me/about` with expected revision; delete persona router, schemas, service
-- [ ] Profile layer from About you, framed as user information (skip when blank); pin `accepted_about` on acceptance
-- [ ] Remove chat persona override, route and `pending_persona`
-- [ ] `ExecutionScope` and `MemoryNamespace` drop the profile/persona segment
-- [ ] Reflections drop `persona_id`, FK, index segment and filter
-- [ ] Skill drafting drops `persona_id`
-- [ ] AI-use log, context inspection, comparisons report About you revision
-- [ ] Replace persona tests; regenerate OpenAPI and Hey API client
+- [x] ADR-0066 "About you" superseding ADR-0021; amend ADR-0028/0048/0061 (ADR-0016 covers process resources, no persona content)
+- [x] `users.about_md` / `about_revision`; remove persona table, default pointer, trigger and FK
+- [x] `GET`/`PUT /users/me/about` with expected revision; delete persona router, schemas, service
+- [x] Profile layer from About you, framed as user information (skip when blank); pin `accepted_about` on acceptance
+- [x] Remove chat persona override, route and `pending_persona`
+- [x] `ExecutionScope` and `MemoryNamespace` drop the profile/persona segment
+- [x] Reflections drop `persona_id`, FK, index segment and filter
+- [x] Skill drafting drops `persona_id`
+- [x] AI-use log, context inspection, comparisons report About you revision
+- [x] Replace persona tests; regenerate OpenAPI and Hey API client
 
 ### US-83.2: Your Asterism settings section (frontend)
 

@@ -22,7 +22,7 @@ context_runtime = _context_runtime
 
 def test_shared_agent_profile_never_implies_shared_context():
     scope, child, model = make_scope()
-    scope = replace(scope, user_profile_id=uuid.uuid4(), project_instructions="PRIVATE instructions")
+    scope = replace(scope, about_revision=3, project_instructions="PRIVATE instructions")
     other_project = replace(scope, project_id=uuid.uuid4())
     sibling = replace(scope, chat_id=uuid.uuid4())
     general = replace(scope, project_id=None)
@@ -32,7 +32,8 @@ def test_shared_agent_profile_never_implies_shared_context():
     assert DerivedContextKey.from_scope(scope) != DerivedContextKey.from_scope(sibling)
     assert MemoryNamespace.from_scope(general) != MemoryNamespace.from_scope(other_general)
     assert MemoryNamespace.from_scope(scope) != MemoryNamespace.from_scope(replace(scope, user_id="foreign"))
-    assert MemoryNamespace.from_scope(scope) != MemoryNamespace.from_scope(replace(scope, user_profile_id=uuid.uuid4()))
+    # Memory keys by user and project (or chat); About you edits do not repartition it.
+    assert MemoryNamespace.from_scope(scope) == MemoryNamespace.from_scope(replace(scope, about_revision=4))
     assert "PRIVATE" not in describe_context(scope).model_dump_json()
     delegated = scope.narrow_for_sub_agent(
         agent_id=child, executed_model=model, configuration_revision=9, effective_internal_tools=frozenset()

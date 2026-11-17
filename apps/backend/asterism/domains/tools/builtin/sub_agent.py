@@ -373,7 +373,6 @@ async def sub_agent(ctx: ToolContext[SubAgentArgs]) -> str:
     # Prefer the live execution scope; fall back to one rebuilt from the tool ceiling.
     parent_execution = ctx.execution_scope or ExecutionScope(
         user_id=parent_scope.user_id,
-        user_profile_id=None,
         agent_id=parent_scope.caller_agent_id,
         is_sub_agent=False,
         chat_id=parent_scope.chat_id,

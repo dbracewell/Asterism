@@ -26,8 +26,7 @@ class ModelProvenance(BaseModel):
 class ContextProvenance(BaseModel):
     model_config = ConfigDict(frozen=True)
     user_id: str
-    user_profile_id: uuid.UUID | None
-    user_profile_revision: int | None = None
+    about_revision: int | None = None
     chat_id: uuid.UUID
     project_id: uuid.UUID | None
     execution_id: uuid.UUID | None
@@ -43,7 +42,7 @@ class ContextProvenance(BaseModel):
 
 
 class MemoryNamespace(BaseModel):
-    """Future memory must use this partition, never a profile-only namespace.
+    """Future memory partitions by user and project, or user and chat in General.
 
     Project namespaces may share explicitly written memory within a project.
     This does not implement automatic writes or project-wide chat history.
@@ -51,7 +50,6 @@ class MemoryNamespace(BaseModel):
 
     model_config = ConfigDict(frozen=True)
     user_id: str
-    user_profile_id: uuid.UUID | None
     kind: Literal["project", "chat"]
     source_id: uuid.UUID
 
@@ -59,7 +57,6 @@ class MemoryNamespace(BaseModel):
     def from_scope(cls, scope: "ExecutionScope") -> "MemoryNamespace":
         return cls(
             user_id=scope.user_id,
-            user_profile_id=scope.user_profile_id,
             kind="project" if scope.project_id else "chat",
             source_id=scope.project_id or scope.chat_id,
         )
@@ -101,8 +98,7 @@ def describe_context(scope: "ExecutionScope") -> ContextProvenance:
     # Canonical source identity includes branch/membership/provenance, not file text.
     source = {
         "user": scope.user_id,
-        "profile": str(scope.user_profile_id),
-        "profile_revision": scope.user_profile_revision,
+        "about_revision": scope.about_revision,
         "chat": str(scope.chat_id),
         "project": str(scope.project_id),
         "project_revision": scope.prompt_revision,
@@ -120,8 +116,7 @@ def describe_context(scope: "ExecutionScope") -> ContextProvenance:
     }
     return ContextProvenance(
         user_id=scope.user_id,
-        user_profile_id=scope.user_profile_id,
-        user_profile_revision=scope.user_profile_revision,
+        about_revision=scope.about_revision,
         chat_id=scope.chat_id,
         project_id=scope.project_id,
         execution_id=scope.execution_id,

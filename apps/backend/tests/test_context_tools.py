@@ -119,7 +119,6 @@ def make_execution_scope(r, scope):
     delegation = scope.delegation
     return ExecutionScope(
         user_id=scope.user_id,
-        user_profile_id=None,
         agent_id=scope.caller_agent_id,
         is_sub_agent=False,
         chat_id=scope.chat_id,

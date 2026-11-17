@@ -23,7 +23,7 @@ class _ReflectionText(BaseModel):
 
 
 class ReflectionCreate(_ReflectionText):
-    """A reflection on one owned chat; its project and persona come from the chat."""
+    """A reflection on one owned chat; its project comes from the chat."""
 
     chat_id: uuid.UUID
 
@@ -35,7 +35,6 @@ class ReflectionUpdate(_ReflectionText):
 class Reflection(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: uuid.UUID
-    persona_id: uuid.UUID
     project_id: uuid.UUID | None
     chat_id: uuid.UUID | None
     learned: str

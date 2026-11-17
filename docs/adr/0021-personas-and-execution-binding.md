@@ -1,6 +1,10 @@
 # ADR-0021 — User personas, default selection and immutable execution inputs
 
-Status: implemented and verified in US-35.2; completion confirmed on 2026-10-24.
+Status: superseded by [ADR-0066](0066-about-you.md) on 2026-11-17. Implemented
+and verified in US-35.2; completion confirmed on 2026-10-24.
+
+Personas, default selection and per-chat overrides were removed in EPIC-83.
+Each user now has one About you text. The text below is kept as history.
 
 ## Ownership and storage
 

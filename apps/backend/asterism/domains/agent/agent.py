@@ -126,14 +126,6 @@ class Agent:
             from asterism.domains.chat.skills import validate_execution_skills
 
             await validate_execution_skills(user_id=self.user.id, execution=self.execution)
-        persona_id = self.execution_scope.user_profile_id if self.execution_scope else None
-        if persona_id is None and self.prompt_snapshot is not None:
-            layer = next((layer for layer in self.prompt_snapshot.layers if layer.kind == "profile"), None)
-            persona_id = uuid.UUID(layer.source_id) if layer else None
-        if persona_id is not None:
-            from asterism.domains.chat.personas import validate_persona_access
-
-            await validate_persona_access(user_id=self.user.id, persona_id=persona_id)
 
     async def refresh_main_configuration(self) -> None:
         from .service import get_main_agent_profile
@@ -277,13 +269,6 @@ class Agent:
 
             scope = await resolve_execution_scope(
                 user_id=self.user.id,
-                user_profile_id=(
-                    self.execution.persona.id
-                    if self.execution
-                    else self.execution_scope.user_profile_id
-                    if self.execution_scope
-                    else None
-                ),
                 agent_id=self.profile.id,
                 is_sub_agent=self.profile.sub_agent,
                 chat_id=self.session.info.id,
@@ -300,12 +285,13 @@ class Agent:
                 if self.prompt_snapshot
                 else None
             )
-            scope = replace(scope, user_profile_revision=self.execution.persona.revision, persona_layer=layer)
+            scope = replace(scope, about_revision=self.execution.about.revision, about_layer=layer)
         elif self.profile.sub_agent and self.execution_scope is not None:
+            # Child agents inherit the recorded About you layer.
             scope = replace(
                 scope,
-                user_profile_revision=self.execution_scope.user_profile_revision,
-                persona_layer=self.execution_scope.persona_layer,
+                about_revision=self.execution_scope.about_revision,
+                about_layer=self.execution_scope.about_layer,
             )
 
         if self.profile.sub_agent and self.execution_scope is not None:
@@ -518,7 +504,7 @@ class Agent:
             )
             snapshot = PromptComposer().snapshot(
                 skill_catalog_layer=catalog_layer,
-                profile_layer=scope.persona_layer,
+                profile_layer=scope.about_layer,
                 agent_id=self.profile.id,
                 agent_revision=self.profile.config_revision,
                 agent_instructions=self.profile.system_prompt or "",

@@ -300,7 +300,7 @@ class LLMMessage(BaseModel):
 
     @classmethod
     def system(cls, content: str) -> Self:
-        """Build a plain-text ``system`` message (persona/instructions layer)."""
+        """Build a plain-text ``system`` message (instruction layers)."""
         return cls(role="system", content=content)
 
     @classmethod

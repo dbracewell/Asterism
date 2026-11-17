@@ -29,7 +29,9 @@ by the server when a draft starts and never changes. A drafting chat:
   the usual live checks (ADR-0059); moving it into a project is refused;
 - runs in Standard learning mode with no mode layer, and with no active
   skills: a send that selects skills is refused;
-- keeps the chat's persona layer, so the writer knows who the skill is for;
+- keeps the user's About you layer (a persona layer before
+  [ADR-0066](0066-about-you.md)), so the writer knows who the skill is for; the
+  start payload has no `persona_id`;
 - is hidden from the chat list (`chatSessionGetMany`) and from search, but is
   reachable by id for streaming, the run record, the run graph and deletion.
 

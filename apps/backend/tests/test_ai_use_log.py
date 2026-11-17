@@ -77,7 +77,8 @@ async def test_log_lists_each_turn_with_its_recorded_provenance(produced):
     assert turn["prompt"] == "Here is my draft for feedback."
     assert turn["learning_mode"]["id"] == "draft_feedback"
     assert turn["rubric"] == "Argumentative essay"
-    assert turn["persona"] == execution.persona.name
+    # A blank About you adds no profile layer, so no revision is reported.
+    assert turn["about_revision"] is None
     assert turn["files"] == [{"name": "essay.txt", "available": True}]
     assert turn["template"] is None and turn["skills"] == [] and turn["compared"] is False
     assert turn["reply"] == {

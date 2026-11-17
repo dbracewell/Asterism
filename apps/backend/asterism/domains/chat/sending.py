@@ -15,8 +15,8 @@ from asterism.domains.agent.execution_scope import ChatPurpose
 from asterism.domains.projects.goals import resolve_goal
 from asterism.domains.projects.scope import require_owned_project
 from asterism.domains.prompt_templates.provenance import resolve_template_use
+from asterism.domains.user.about import read_about_snapshot
 from asterism.domains.user.models import UserModel
-from asterism.domains.user.personas import require_persona_access
 
 from .attachments import bind_message_files, resolve_file_references
 from .binding import resolve_main_agent_id
@@ -34,7 +34,6 @@ from .learning_modes import (
 )
 from .model_selection import require_chat_model, selection_info
 from .models import ChatModel, MessageModel
-from .personas import resolve_persona_snapshot
 from .queries import select_owned_chats, select_owned_messages
 from .schemas import Chat, ChatSendRequest, Message, MessageStatus, NewChatRequest
 
@@ -139,11 +138,7 @@ async def persist_user_send(
         "accepted_goal": goal,
         "accepted_learning_mode": current_mode_snapshot(chat, hint_level),
         "hint_level": hint_level,
-        "accepted_persona": await resolve_persona_snapshot(
-            user_id=user_id,
-            persona_id=chat.persona_id,
-            session=session,
-        ),
+        "accepted_about": await read_about_snapshot(user_id=user_id, session=session),
         "files": files,
         "parent_message_id": parent_id,
         "image_request": payload.create_image,
@@ -252,13 +247,10 @@ async def create_chat(
                 draft = await owned_draft(user_id=user_id, draft_id=payload.draft_id, session=session)
                 if draft.model_id is not None and draft.model_id != payload.model_id:
                     raise CodedException(409, "Draft model selection changed; reload before sending")
-            if payload.persona_id is not None:
-                await require_persona_access(user_id=user_id, persona_id=payload.persona_id, session=session)
             chat = ChatModel(
                 user_id=user_id,
                 agent_id=agent_id,
                 project_id=payload.project_id,
-                persona_id=payload.persona_id,
                 learning_mode=payload.learning_mode,
                 selected_model_id=payload.model_id,
                 selected_model_snapshot=choice,

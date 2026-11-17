@@ -283,7 +283,7 @@ async def compare_existing(
 ) -> ChatComparison:
     """Turn an answered user turn into column 0 and add a pending column per target.
 
-    New columns rerun the turn's accepted inputs (files, skills, persona and
+    New columns rerun the turn's accepted inputs (files, skills, About you and
     template) exactly; only the model, and optionally the prompt, differ. The
     original turn stays active, so the conversation is unchanged until the
     user chooses another column.
@@ -344,7 +344,7 @@ async def compare_existing(
                 parent_message_id=source.parent_message_id,
                 files=source.files,
                 accepted_skills=source.accepted_skills,
-                accepted_persona=source.accepted_persona,
+                accepted_about=source.accepted_about,
                 accepted_learning_mode=source.accepted_learning_mode,
                 hint_level=source.hint_level,
                 accepted_template=source.accepted_template,

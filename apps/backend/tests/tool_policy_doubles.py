@@ -33,7 +33,6 @@ def isolated_tool_policy(monkeypatch):
         if self.execution_scope is None:
             self.execution_scope = ExecutionScope(
                 user_id=self.user.id,
-                user_profile_id=None,
                 agent_id=self.profile.id,
                 is_sub_agent=self.profile.sub_agent,
                 chat_id=self.session.info.id,

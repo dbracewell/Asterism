@@ -91,19 +91,15 @@ async def add_message(
         )
         if message.role == "user":
             from asterism.domains.skills.activation import validate_snapshots
+            from asterism.domains.user.about import read_about_snapshot
 
-            from .personas import resolve_persona_snapshot
             from .skills import inherited_skills
 
             new_message.accepted_skills = await inherited_skills(
                 user_id=user_id, chat_id=chat_id, parent_id=message.parent_message_id, session=session
             )
             await validate_snapshots(user_id, new_message.accepted_skills.snapshots, session)
-            new_message.accepted_persona = await resolve_persona_snapshot(
-                user_id=user_id,
-                persona_id=chat.persona_id,
-                session=session,
-            )
+            new_message.accepted_about = await read_about_snapshot(user_id=user_id, session=session)
             from .branches import nearest_user_ancestor
             from .learning_modes import current_mode_snapshot, turn_hint_level
 
@@ -392,9 +388,6 @@ async def get_one(
             None,
         )
         if pending is not None:
-            from .personas import describe_pending_persona
-
-            await describe_pending_persona(user_id=user_id, pending=pending, info=chat_info, session=session)
             from .learning_modes import describe_pending_learning_mode
 
             describe_pending_learning_mode(pending=pending, info=chat_info)

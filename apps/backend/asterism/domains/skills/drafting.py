@@ -35,7 +35,6 @@ async def start_draft(user_id: str, payload: SkillDraftStart, session: AsyncSess
         NewChatRequest(
             request_id=payload.request_id,
             model_id=payload.model_id,
-            persona_id=payload.persona_id,
             user_prompt=opening_prompt(payload),
         ),
         session,

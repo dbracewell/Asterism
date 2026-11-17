@@ -12,7 +12,7 @@ from asterism.domains.agent.context_provenance import ContextProvenance
 from asterism.domains.agent.execution_scope import ChatPurpose
 from asterism.domains.agent.instruction_overrides import MAX_OVERRIDE_CHARS, InstructionOverrideProvenance
 from asterism.domains.agent.learning_inputs import HintLevel, LearningModeId, LearningModeProvenance
-from asterism.domains.agent.prompts import LayerKind, PersonaProvenance, PromptProvenance
+from asterism.domains.agent.prompts import AboutProvenance, LayerKind, PromptProvenance
 from asterism.domains.agent.schemas import MainAgentConfiguration
 from asterism.domains.agent.skill_inputs import SkillIdentity
 from asterism.domains.files.models import FileContentStatus, FileKind
@@ -194,7 +194,7 @@ class ForkProvenance(BaseModel):
 
 class MessageExecution(BaseModel):
     skills: list[SkillIdentity] = Field(default_factory=list)
-    persona: PersonaProvenance
+    about: AboutProvenance
     learning_mode: LearningModeProvenance
     # The request turn's rubric (US-57.1); a reply is parsed against its labels.
     rubric: RubricProvenance | None = None
@@ -372,8 +372,6 @@ class ChatInfo(BaseModel):
     preview: str | None = Field(default=None)
     message_count: int | None = Field(default=None)
     context_model: ChatContextModel | None = Field(default=None)
-    persona_id: uuid.UUID | None = None
-    persona_revision: int = Field(default=1, ge=1)
     learning_mode: LearningModeId = LearningModeId.STANDARD
     learning_mode_revision: int = Field(default=1, ge=1)
     # Self-imposed lock (US-52.5); never set while the mode is Standard.
@@ -385,7 +383,6 @@ class ChatInfo(BaseModel):
     model_revision: int = Field(default=1, ge=1)
     selected_model: ChatModelChoice | None = None
     pending_execution: MessageExecution | None = None
-    pending_persona: PersonaProvenance | None = None
     pending_learning_mode: LearningModeProvenance | None = None
     resume_error: str | None = None
 
@@ -509,7 +506,6 @@ class NewChatRequest(BaseModel):
     include_goal: bool = False
     # "Create image": this turn must generate an image (ADR-0064).
     create_image: bool = False
-    persona_id: uuid.UUID | None = None
     learning_mode: LearningModeId = LearningModeId.STANDARD
     hint: HintRequest | None = None
     model_id: uuid.UUID
@@ -592,12 +588,6 @@ class ChatDraftModelUpdate(BaseModel):
     expected_model_id: uuid.UUID | None
 
 
-class ChatPersonaUpdate(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-    persona_id: uuid.UUID | None
-    expected_persona_revision: int = Field(ge=1)
-
-
 class ChatLearningModeUpdate(BaseModel):
     """Select the chat's learning mode and optionally lock or unlock it.
 
@@ -617,7 +607,7 @@ class MessageCompareRequest(BaseModel):
     """Compare an answered turn with one or two more targets (US-54.4).
 
     The existing turn becomes column 0; each target adds a column that reruns
-    the same accepted inputs (prompt, files, skills, persona, learning mode,
+    the same accepted inputs (prompt, files, skills, About you, learning mode,
     template).
     """
 

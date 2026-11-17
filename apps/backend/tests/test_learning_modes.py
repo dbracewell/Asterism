@@ -17,8 +17,8 @@ from asterism.domains.chat.service import get_one
 from asterism.domains.learning import catalog
 from sqlalchemy import update
 from sqlalchemy.exc import IntegrityError
+from test_about_you import write_about
 from test_chat_models import B, new_chat
-from test_persona_execution import edit_persona, profiles
 from test_project_sub_agents import runtime_setup
 from test_projects_api import auth
 from test_projects_api import project_api as _project_api
@@ -219,11 +219,10 @@ async def test_each_turn_pins_the_selection_at_its_own_acceptance(project_api):
 
 
 @pytest.mark.asyncio
-async def test_mode_layers_between_persona_and_skills(skills_api):
+async def test_mode_layers_between_about_you_and_skills(skills_api):
     client, sessions, _ = skills_api
     skills = await setup_skills(client)
-    persona = (await profiles(client))["profiles"][0]
-    await edit_persona(client, persona, "Persona: I am a first-year student")
+    await write_about(client, "About you: I am a first-year student")
     chat = await new_chat(client, learning_mode="tutor", skills=selection([skills[0]["id"]]))
     cid, mid = uuid.UUID(chat["info"]["id"]), uuid.UUID(chat["messages"][0]["id"])
     async with sessions() as db:
@@ -263,11 +262,11 @@ def test_composer_orders_mode_after_profile_and_before_project():
         project_id=project_id,
         project_revision=1,
         project_instructions="Project task",
-        profile_layer=PromptLayer(kind="profile", source_id="p", revision=1, text="Persona"),
+        profile_layer=PromptLayer(kind="profile", source_id="about-you", revision=1, text="About you"),
         mode_layer=PromptLayer(kind="mode", source_id="tutor", revision=1, text="Mode text"),
     )
     assert [layer.kind for layer in snapshot.layers] == ["platform", "agent", "profile", "mode", "project", "runtime"]
-    assert snapshot.text.index("Persona") < snapshot.text.index("Mode text") < snapshot.text.index("Project task")
+    assert snapshot.text.index("About you") < snapshot.text.index("Mode text") < snapshot.text.index("Project task")
     with pytest.raises(ValueError, match="learning-mode"):
         PromptComposer().snapshot(
             agent_id=agent_id,

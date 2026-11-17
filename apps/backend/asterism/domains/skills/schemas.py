@@ -68,7 +68,6 @@ class SkillDraftStart(BaseModel):
     model_config = ConfigDict(extra="forbid")
     request_id: uuid.UUID
     model_id: uuid.UUID
-    persona_id: uuid.UUID | None = None
     description: str = Field(min_length=1, max_length=4000)
     examples: str | None = Field(default=None, max_length=8000)
 

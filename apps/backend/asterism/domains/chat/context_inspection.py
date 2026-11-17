@@ -1,7 +1,7 @@
 """Owner-only read of the prompt layers a recorded run used (US-54.3).
 
 The layer text comes from the run's immutable execution record, so it shows
-exactly what the model was given, never the current persona, skills or
+exactly what the model was given, never the current About you, skills or
 instructions. Only the chat owner can read it.
 """
 
