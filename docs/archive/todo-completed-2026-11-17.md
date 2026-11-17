@@ -68,3 +68,14 @@ US-83.4 was merged after. See ADR-0066 (About you).
 - [x] US-83.2: Your Asterism settings section (frontend)
 - [x] US-83.3: Remove persona from chat and the rest of the UI
 - [x] US-83.4: Docs and invariants
+
+EPIC-84 is complete. US-84.1 to US-84.3 were each merged on 2026-11-17. US-84.1
+pointed the old panels at the new routes so the frontend stayed green until
+US-84.2 replaced them. US-84.2 also added the `item` field to Add card, so a
+reworded card still clears its unclear item. See ADR-0067 (Progress panel).
+
+### [EPIC-84: One progress panel](../epics/EPIC-84-ONE-PROGRESS-PANEL.md)
+
+- [x] US-84.1: Progress read and one practice route (backend)
+- [x] US-84.2: Progress panel (frontend)
+- [x] US-84.3: Help and docs

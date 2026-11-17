@@ -46,28 +46,7 @@ Source: [codebase review](codebase_review.md), verified against the code on 2026
 
 ## Feature consolidation (proposed 2026-11-17)
 
-Source: user request and the [feature overlap review](docs/reviews/2026-11-17-feature-overlap-review.md). Suggested order: [EPIC-83](docs/epics/EPIC-83-YOUR-ASTERISM-AND-PERSONA-REMOVAL.md) → [EPIC-84](docs/epics/EPIC-84-ONE-PROGRESS-PANEL.md) → [EPIC-85](docs/epics/EPIC-85-ONE-MODE-POLICY.md). Work one story at a time. EPIC-83 is complete and archived in the [2026-11-17 checklist](docs/archive/todo-completed-2026-11-17.md).
-
-### US-84.1: Progress read and one practice route (backend)
-
-- [x] ADR-0067 "Progress panel"; amend ADR-0036/0049/0050
-- [x] `GET …/study/progress`: topics, weak spots with topics, pending unclear items
-- [x] Server-side unclear-item splitting with tests
-- [x] `POST …/study/practice {topic?}`; one `practice` quiz origin
-- [x] Remove old topics/weak-spots reads and practice routes; regenerate client
-
-### US-84.2: Progress panel (frontend)
-
-- [x] `ProjectProgress` replaces topic mastery and weak spots panels, with topic filter
-- [x] Add card flow moves from the reflection dialog into the panel; reflection list links to it
-- [x] Empty states
-- [x] Study harness, unit and Playwright tests updated
-- [x] Add card sends the original `item`; reworded cards still clear it (ADR-0067)
-
-### US-84.3: Help and docs
-
-- [x] One Progress help entry; reflections help updated
-- [x] Architecture and README study sections
+Source: user request and the [feature overlap review](docs/reviews/2026-11-17-feature-overlap-review.md). Suggested order: [EPIC-83](docs/epics/EPIC-83-YOUR-ASTERISM-AND-PERSONA-REMOVAL.md) → [EPIC-84](docs/epics/EPIC-84-ONE-PROGRESS-PANEL.md) → [EPIC-85](docs/epics/EPIC-85-ONE-MODE-POLICY.md). Work one story at a time. EPIC-83 and EPIC-84 are complete and archived in the [2026-11-17 checklist](docs/archive/todo-completed-2026-11-17.md).
 
 ### US-85.1: Effective policy and one check (backend)
 

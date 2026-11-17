@@ -1,6 +1,6 @@
 # EPIC-84: One progress panel
 
-Status: complete (2026-11-17); awaiting archive. Source: user decision on the
+Status: complete (2026-11-17). Source: user decision on the
 [feature overlap review](../reviews/2026-11-17-feature-overlap-review.md), finding 4.
 
 ## Objective
