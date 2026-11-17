@@ -228,7 +228,8 @@ async def test_websocket_load_failure_releases_reserved_controller(monkeypatch):
     monkeypatch.setattr(router, "verify_jwks_token", lambda _: SimpleNamespace(id="a"))
     session = AsyncMock()
     monkeypatch.setattr(router.db_session_manager, "session", lambda: session)
-    monkeypatch.setattr(router.chat_service, "get_one", AsyncMock(side_effect=CodedException(404, "missing")))
+    # A 404 now closes cleanly (US-77.5); any other load failure still propagates.
+    monkeypatch.setattr(router.chat_service, "get_one", AsyncMock(side_effect=CodedException(503, "database down")))
     with pytest.raises(CodedException):
         await router.chat(SimpleNamespace(), uuid.uuid4(), "token")
     assert jobs.controller_count == jobs.count == 0
