@@ -152,27 +152,32 @@ async def _authorized_events(
     events: AsyncGenerator[AgentEvent, None],
     check: Callable[[], Awaitable[None]],
 ) -> AsyncGenerator[AgentEvent, None]:
-    """Yield child events, re-checking live authorization while the child is silent.
+    """Yield child events, re-checking live authorization without a check per token.
 
-    While the pending event read is in flight, ``check`` is re-run every
-    ``_AUTH_POLL_INTERVAL`` seconds so a revoked delegation cancels even a
-    silent/in-flight child; a failing check propagates out of this generator.
+    Every event but a text delta is checked before it is forwarded. Deltas, and
+    a silent child, are re-checked at most every ``_AUTH_POLL_INTERVAL``
+    seconds (US-77.1), so a revoked delegation still cancels an in-flight
+    child; a failing check propagates out of this generator.
     """
     pending = None
     try:
+        await check()
+        checked_at = time.monotonic()
         while True:
-            await check()
             pending = asyncio.create_task(anext(events))
             while not pending.done():
                 await asyncio.wait({pending}, timeout=_AUTH_POLL_INTERVAL)
                 if pending.done():
                     break
                 await check()
+                checked_at = time.monotonic()
             try:
                 event = pending.result()
             except StopAsyncIteration:
                 return
-            await check()
+            if event.type != AgentEventType.DELTA or time.monotonic() - checked_at >= _AUTH_POLL_INTERVAL:
+                await check()
+                checked_at = time.monotonic()
             yield event
     finally:
         if pending is not None:
