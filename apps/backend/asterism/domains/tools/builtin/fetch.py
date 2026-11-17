@@ -236,8 +236,9 @@ async def validate_public_http_url(raw_url: str) -> str:
 def extract_clean_markdown(html: Document) -> Document:
     """Convert an HTML Document to clean Markdown.
 
-    Strips non-content tags (scripts, nav, forms, ...), converts the remainder
-    with markdownify, and collapses blank lines.
+    Parses the HTML once, strips non-content tags (scripts, nav, forms, ...),
+    converts the same tree with markdownify, and collapses blank lines. This is
+    CPU-bound; async callers run it with ``asyncio.to_thread``.
 
     Args:
         html: The fetched page as a Document with an HTML body.
@@ -252,12 +253,11 @@ def extract_clean_markdown(html: Document) -> Document:
     for tag in soup(_HTML_TAGS_TO_REMOVE):
         tag.decompose()
 
-    raw_markdown = markdownify.markdownify(
-        str(soup),
+    raw_markdown = markdownify.MarkdownConverter(
         heading_style="ATX",
         wrap=False,
         strip=["button"],
-    )
+    ).convert_soup(soup)
 
     cleaned_markdown = re.sub(r"\n\s*\n", "\n\n", raw_markdown).strip()
 
@@ -567,7 +567,9 @@ async def fetch_page(
     timeout: float = 5.0,
     threshold_for_playwright: int = 1050,
 ) -> Document:
-    """Fetch a web page and return its content as a Document.
+    """Fetch a web page and return its raw, unparsed body as a Document.
+
+    Parsing and cleanup happen once, in ``extract_clean_markdown``.
 
     Raises:
         UnsafeFetchUrlError: When the URL or any redirect hop is not public.
@@ -579,12 +581,6 @@ async def fetch_page(
     # refetched in a headless browser to capture rendered content.
     if len(html_page) < threshold_for_playwright or possible_js_page(html_page):
         html_page, mime_type = await _js_site_fetch(current_url, timeout)
-
-    soup = BeautifulSoup(html_page, "html.parser")
-    for tag in soup(_HTML_TAGS_TO_REMOVE):
-        tag.decompose()
-
-    html_page = soup.prettify()
 
     return Document(
         content=html_page,
@@ -601,6 +597,6 @@ async def fetch_markdown(
     """Fetch a web page and return its content as a Markdown Document."""
 
     html_page = await fetch_page(url, timeout, threshold_for_playwright)
-    extracted = extract_clean_markdown(html_page)
+    extracted = await asyncio.to_thread(extract_clean_markdown, html_page)
     logger.debug(f"Fetched and converted page to markdown {url}")
     return extracted

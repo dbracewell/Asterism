@@ -5,6 +5,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import httpx
 import pytest
+from asterism.core.schemas import Document
 from asterism.domains.tools.builtin import fetch as fetch_module
 from asterism.domains.tools.builtin.fetch import (
     UnsafeFetchUrlError,
@@ -581,3 +582,69 @@ async def test_pooled_browser_cannot_reach_the_network_unrouted() -> None:
         await fetch_module.close_fetch_browser()
 
     assert hits == []
+
+
+@pytest.mark.asyncio
+async def test_extract_clean_markdown_strips_chrome_and_converts_once() -> None:
+    page = Document(
+        content="<html><nav>menu</nav><script>evil()</script><h1>Title</h1><p>Body <b>text</b></p></html>",
+        mime_type="text/html",
+        metadata={"source": "https://example.com/"},
+    )
+
+    markdown = fetch_module.extract_clean_markdown(page)
+
+    assert markdown.content == "# Title\n\nBody **text**"
+    assert markdown.metadata == {"source": "https://example.com/"}
+
+
+@pytest.mark.asyncio
+async def test_web_search_parses_pages_without_blocking_the_event_loop(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Ten slow parses run in worker threads while the loop keeps ticking."""
+    import threading
+    import time
+
+    from asterism.domains.components.builtin.base_search import SearchResult
+    from asterism.domains.tools.builtin import web_search as web_search_module
+
+    loop_thread = threading.get_ident()
+    parse_threads: list[int] = []
+
+    async def fake_fetch_page(url: str, timeout: float, threshold: int) -> Document:
+        return Document(content=f"<p>{url}</p>", mime_type="text/html", metadata={"source": url})
+
+    def slow_extract(html: Document) -> Document:
+        parse_threads.append(threading.get_ident())
+        time.sleep(0.2)
+        return Document(content=html.content, mime_type="text/markdown", metadata=html.metadata)
+
+    monkeypatch.setattr(fetch_module, "fetch_page", fake_fetch_page)
+    monkeypatch.setattr(fetch_module, "extract_clean_markdown", slow_extract)
+
+    gaps: list[float] = []
+    done = asyncio.Event()
+
+    async def heartbeat() -> None:
+        last = time.monotonic()
+        while not done.is_set():
+            await asyncio.sleep(0.01)
+            now = time.monotonic()
+            gaps.append(now - last)
+            last = now
+
+    results = [
+        SearchResult(title=f"Result {i}", url=f"https://example.com/{i}", relevance_score=1.0) for i in range(10)
+    ]
+    ticker = asyncio.create_task(heartbeat())
+    try:
+        output = await web_search_module._research(results)
+    finally:
+        done.set()
+        await ticker
+
+    assert len(parse_threads) == 10
+    assert loop_thread not in parse_threads
+    assert all(f"https://example.com/{i}" in output for i in range(10))
+    assert max(gaps) < 0.15
