@@ -1,4 +1,4 @@
-import { defaultPersonaProvenance } from "@/test/personas";
+import { defaultAboutProvenance } from "@/test/about";
 import { standardLearningMode } from "@/test/learning-modes";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
@@ -177,7 +177,7 @@ it("keeps cached choices visible on refresh failure and offers retry", async () 
 });
 it("labels historical output from its recorded snapshot", () => {
   const execution: MessageExecution = {
-    persona: defaultPersonaProvenance,
+    about: defaultAboutProvenance,
     learning_mode: standardLearningMode,
     id: "run",
     request_message_id: "message",
@@ -197,9 +197,31 @@ it("labels historical output from its recorded snapshot", () => {
       config_revision: 2,
     },
   };
-  render(<ExecutionLabel execution={execution} />);
+  const { rerender } = render(<ExecutionLabel execution={execution} />);
   expect(screen.getByLabelText("Executed model")).toHaveTextContent(
     "Original model · Original provider · configuration 2",
+  );
+  // A blank About you adds no profile layer, so nothing is shown for it.
+  expect(screen.queryByLabelText("Executed About you")).not.toBeInTheDocument();
+  rerender(
+    <ExecutionLabel
+      execution={{
+        ...execution,
+        prompt: {
+          sources: [
+            {
+              kind: "profile",
+              source_id: "about-you",
+              revision: 4,
+              digest: "d",
+            },
+          ],
+        },
+      }}
+    />,
+  );
+  expect(screen.getByLabelText("Executed About you")).toHaveTextContent(
+    "About you (revision 4)",
   );
 });
 

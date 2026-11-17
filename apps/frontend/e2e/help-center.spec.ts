@@ -80,7 +80,7 @@ test("a related link clears the search and focuses its entry", async ({
   await search.fill("isn't a memory");
   await expect(anchorTarget(page, "concept.skill")).toHaveCount(0);
 
-  await anchorTarget(page, "concept.persona")
+  await anchorTarget(page, "concept.about-you")
     .getByRole("navigation", { name: "Related" })
     .getByRole("link", { name: "Skill" })
     .click();
@@ -101,5 +101,5 @@ test("the help center fits a 320px screen", async ({ page }) => {
   await page.getByRole("searchbox", { name: "Search help" }).fill("zzqq");
   await expect(page.getByText("No help matches your search")).toBeVisible();
   await page.getByRole("button", { name: "Clear search" }).click();
-  await expect(anchorTarget(page, "concept.persona")).toBeVisible();
+  await expect(anchorTarget(page, "concept.about-you")).toBeVisible();
 });

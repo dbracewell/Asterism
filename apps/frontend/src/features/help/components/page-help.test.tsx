@@ -51,7 +51,7 @@ describe("PageHelp", () => {
     expect(
       screen.getByRole("heading", { name: "Terms used here" }),
     ).toBeInTheDocument();
-    expect(sheet).toHaveTextContent(helpEntries["concept.persona"].summary);
+    expect(sheet).toHaveTextContent(helpEntries["concept.about-you"].summary);
 
     await user.keyboard("{Escape}");
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();

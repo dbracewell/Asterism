@@ -6,7 +6,7 @@ export default function HelpTestPage() {
   return (
     <main className="flex h-dvh flex-col gap-4 p-4">
       <p className="flex items-center gap-1">
-        Persona <HelpTopic id="concept.persona" />
+        About you <HelpTopic id="concept.about-you" />
       </p>
       <p className="flex items-center gap-1">
         Tools <HelpTopic id="admin.tools" />

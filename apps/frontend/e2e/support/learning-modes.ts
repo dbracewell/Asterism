@@ -1,6 +1,5 @@
 import type { Page } from "@playwright/test";
 import type { LearningModeCatalog } from "../../src/lib/client";
-import { defaultPersonas } from "../../src/test/personas";
 
 export const learningModes: LearningModeCatalog = {
   modes: [
@@ -48,14 +47,8 @@ export const learningModes: LearningModeCatalog = {
   ],
 };
 
-/**
- * Synthetic chat harnesses need an owned persona just like their model
- * fixtures, and the composer's learning-mode catalog beside it.
- */
-export async function mockDefaultPersonas(page: Page) {
-  await page.route(/\/api\/py\/users\/personas(?:\?.*)?$/, (route) =>
-    route.fulfill({ json: defaultPersonas }),
-  );
+/** Synthetic chat harnesses need the composer's learning-mode catalog. */
+export async function mockLearningModes(page: Page) {
   await page.route(/\/api\/py\/learning-modes(?:\?.*)?$/, (route) =>
     route.fulfill({ json: learningModes }),
   );

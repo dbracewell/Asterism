@@ -1,4 +1,4 @@
-import { mockDefaultPersonas } from "./support/personas";
+import { mockLearningModes } from "./support/learning-modes";
 import { expect, test, type Page, type WebSocketRoute } from "./support/test";
 import type { Chat, ChatModelChoice, Message } from "../src/lib/client";
 
@@ -32,7 +32,7 @@ const pending = (page: Page) =>
   history(page).getByRole("status").filter({ hasText: "Assistant is working" });
 
 async function openChat(page: Page) {
-  await mockDefaultPersonas(page);
+  await mockLearningModes(page);
   const chat: Chat = {
     info: {
       id: C,

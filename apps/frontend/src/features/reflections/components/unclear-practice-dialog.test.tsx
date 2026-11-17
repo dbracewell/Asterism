@@ -23,7 +23,6 @@ vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
 
 const reflection: Reflection = {
   id: "r1",
-  persona_id: "p1",
   project_id: "proj",
   chat_id: "c1",
   learned: "",

@@ -11,10 +11,10 @@ test("help popover opens by tap, fits a 320px screen and closes with Escape", as
     page.getByRole("button", { name: "Help: Tool policy" }),
   ).toHaveCount(0);
 
-  const trigger = page.getByRole("button", { name: "Help: Persona" });
+  const trigger = page.getByRole("button", { name: "Help: About you" });
   await trigger.tap();
   const dialog = page.getByRole("dialog");
-  await expect(dialog).toHaveAccessibleName("Help: Persona");
+  await expect(dialog).toHaveAccessibleName("Help: About you");
   await dialog.getByRole("button", { name: "Learn more" }).tap();
   await expect(dialog.getByText(/isn't a memory/)).toBeVisible();
 
@@ -27,7 +27,9 @@ test("help popover opens by tap, fits a 320px screen and closes with Escape", as
   await expect(dialog).toHaveAccessibleName("Help: Skill");
   await expect(dialog.getByRole("heading", { name: "Skill" })).toBeFocused();
   await dialog.getByRole("button", { name: "Back" }).tap();
-  await expect(dialog.getByRole("heading", { name: "Persona" })).toBeVisible();
+  await expect(
+    dialog.getByRole("heading", { name: "About you" }),
+  ).toBeVisible();
 
   await page.keyboard.press("Escape");
   await expect(dialog).toBeHidden();

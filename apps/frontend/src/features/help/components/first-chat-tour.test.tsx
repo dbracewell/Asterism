@@ -30,14 +30,7 @@ beforeEach(() => {
   state.replace.mockReset();
 });
 
-const allTargets = [
-  "composer",
-  "message",
-  "persona",
-  "learning-mode",
-  "model",
-  "options",
-];
+const allTargets = ["composer", "message", "learning-mode", "model", "options"];
 
 function Composer({ targets }: { targets: string[] }) {
   const has = (target: string) => targets.includes(target);
@@ -52,11 +45,6 @@ function Composer({ targets }: { targets: string[] }) {
       {has("model") && (
         <button type="button" data-tour="model">
           Chat model
-        </button>
-      )}
-      {has("persona") && (
-        <button type="button" data-tour="persona">
-          Chat persona
         </button>
       )}
       {has("learning-mode") && (
@@ -170,7 +158,7 @@ describe("FirstChatTour", () => {
     await user.click(
       within(tourDialog()).getByRole("button", { name: "Next" }),
     );
-    expect(tourDialog()).toHaveAccessibleName("Persona");
+    expect(tourDialog()).toHaveAccessibleName("Learning mode");
     await user.click(
       within(tourDialog()).getByRole("button", { name: "Back" }),
     );
@@ -178,8 +166,8 @@ describe("FirstChatTour", () => {
 
     const { seen, titles, finish } = await walk(user);
     expect(titles).not.toContain("Skills");
-    // Skills are off here, so five of the six steps are shown.
-    expect(seen).toEqual([1, 2, 3, 4, 5].map((n) => `Step ${n} of 5`));
+    // Skills are off here, so four of the five steps are shown.
+    expect(seen).toEqual([1, 2, 3, 4].map((n) => `Step ${n} of 4`));
     expect(state.updateSetting).not.toHaveBeenCalled();
     await user.click(finish);
     expect(state.updateSetting).toHaveBeenCalledWith(
@@ -198,11 +186,11 @@ describe("FirstChatTour", () => {
     await user.click(
       within(tourDialog()).getByRole("button", { name: "Next" }),
     );
-    const persona = firstChatTourSteps.find((step) => step.id === "persona")!;
+    const mode = firstChatTourSteps.find(
+      (step) => step.id === "learning-mode",
+    )!;
     const live = tourDialog().querySelector('[aria-live="polite"]');
-    expect(live).toHaveTextContent(
-      `Step 2 of 5: ${persona.title}. ${persona.body}`,
-    );
+    expect(live).toHaveTextContent(`Step 2 of 4: ${mode.title}. ${mode.body}`);
   });
 
   it("keeps keyboard focus inside the step", async () => {
@@ -228,14 +216,14 @@ describe("FirstChatTour", () => {
   it("skips steps whose control is not on the page", async () => {
     const user = userEvent.setup();
     renderTour({
-      targets: allTargets.filter((target) => target !== "persona"),
+      targets: allTargets.filter((target) => target !== "learning-mode"),
     });
     await user.click(screen.getByRole("button", { name: "Start tour" }));
     await user.click(
       within(tourDialog()).getByRole("button", { name: "Next" }),
     );
-    expect(tourDialog()).toHaveAccessibleName("Learning mode");
-    expect(within(tourDialog()).getByText("Step 2 of 4")).toBeInTheDocument();
+    expect(tourDialog()).toHaveAccessibleName("Model");
+    expect(within(tourDialog()).getByText("Step 2 of 3")).toBeInTheDocument();
   });
 
   it("records Escape and Skip as a dismissal", async () => {

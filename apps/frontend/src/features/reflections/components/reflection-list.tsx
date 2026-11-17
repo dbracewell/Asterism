@@ -6,16 +6,8 @@ import { ListSkeleton } from "@/components/loading-skeletons";
 import { QueryError } from "@/components/query-error";
 import { Button } from "@/components/ui/button";
 import { Field, FieldLabel } from "@/components/ui/field";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useUser } from "@/features/auth/components/user-context";
-import { personaQueryOptions } from "@/features/settings/persona-queries";
 import { client } from "@/lib/api";
 import type { Reflection } from "@/lib/client";
 import {
@@ -38,9 +30,7 @@ import {
 import { UnclearPracticeDialog } from "./unclear-practice-dialog";
 import { HelpHeading } from "@/features/help/components/help-heading";
 
-const ALL = "all";
-
-/** A project's (or General's) reflections, filterable by persona (US-58.2). */
+/** A project's (or General's) reflections (US-58.2). */
 export function ReflectionList({ projectId }: { projectId: string | null }) {
   const user = useUser();
   return (
@@ -55,14 +45,9 @@ function OwnedReflectionList({
   owner: string;
   projectId: string | null;
 }) {
-  const [personaId, setPersonaId] = useState<string | null>(null);
   const [page, setPage] = useState(1);
-  const personas = useQuery(personaQueryOptions(owner));
   const reflections = useQuery(
-    reflectionListOptions(owner, { projectId, personaId, page }),
-  );
-  const names = new Map(
-    personas.data?.profiles.map((profile) => [profile.id, profile.name]),
+    reflectionListOptions(owner, { projectId, page }),
   );
   const lastPage = reflections.data
     ? Math.max(1, Math.ceil(reflections.data.total / REFLECTION_PAGE_SIZE))
@@ -74,27 +59,6 @@ function OwnedReflectionList({
         <HelpHeading help="concept.reflection" className="text-heading">
           Reflections
         </HelpHeading>
-        {(personas.data?.profiles.length ?? 0) > 1 && (
-          <Select
-            value={personaId ?? ALL}
-            onValueChange={(value) => {
-              setPersonaId(value === ALL ? null : value);
-              setPage(1);
-            }}
-          >
-            <SelectTrigger aria-label="Persona" className="w-full sm:w-52">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={ALL}>All personas</SelectItem>
-              {personas.data?.profiles.map((profile) => (
-                <SelectItem key={profile.id} value={profile.id}>
-                  {profile.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        )}
       </div>
       {reflections.isPending && (
         <ListSkeleton label="Loading reflections" rows={2} detail />
@@ -116,11 +80,7 @@ function OwnedReflectionList({
       {!!reflections.data?.items.length && (
         <ul className="flex flex-col gap-3">
           {reflections.data.items.map((reflection) => (
-            <ReflectionItem
-              key={reflection.id}
-              reflection={reflection}
-              persona={names.get(reflection.persona_id)}
-            />
+            <ReflectionItem key={reflection.id} reflection={reflection} />
           ))}
         </ul>
       )}
@@ -152,13 +112,7 @@ function OwnedReflectionList({
   );
 }
 
-function ReflectionItem({
-  reflection,
-  persona,
-}: {
-  reflection: Reflection;
-  persona?: string;
-}) {
+function ReflectionItem({ reflection }: { reflection: Reflection }) {
   const id = useId();
   const [editing, setEditing] = useState(false);
   const [practicing, setPracticing] = useState(false);
@@ -200,7 +154,6 @@ function ReflectionItem({
       )}
       <p className="text-muted-foreground text-xs">
         {when}
-        {persona && ` · ${persona}`}
         {reflection.chat_id && (
           <>
             {" · "}

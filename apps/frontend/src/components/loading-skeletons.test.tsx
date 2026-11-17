@@ -10,7 +10,7 @@ import {
 
 it.each([
   ["list", <ListSkeleton key="list" label="Loading projects" detail />],
-  ["form", <FormSkeleton key="form" label="Loading personas…" />],
+  ["form", <FormSkeleton key="form" label="Loading About you…" />],
   ["nav", <NavListSkeleton key="nav" label="Loading chats" />],
   ["header", <PageHeaderSkeleton key="header" label="Loading project" />],
   [

@@ -11,11 +11,9 @@ import {
 } from "@/components/ui/breadcrumb";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useUser } from "@/features/auth/components/user-context";
 import { ChatModeLock } from "@/features/chat/components/chat-mode-lock";
 import { ChatSessionActionMenu } from "@/features/dashboard/components/chat-session-action-menu";
 import { PageHelp } from "@/features/help/components/page-help";
-import { personaQueryOptions } from "@/features/settings/persona-queries";
 import { client } from "@/lib/api";
 import type { ChatInfo } from "@/lib/client";
 import {
@@ -24,7 +22,7 @@ import {
 } from "@/lib/client/@tanstack/react-query.gen";
 import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
-import { CpuIcon, UserRoundIcon } from "lucide-react";
+import { CpuIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Fragment, type ReactNode } from "react";
@@ -158,46 +156,29 @@ export function ChatHeaderContent({
 }
 
 function ChatChips({ info }: { info: ChatInfo }) {
-  const user = useUser();
-  const personas = useQuery(personaQueryOptions(user.id));
-  const personaId = info.persona_id ?? personas.data?.default_persona_id;
-  const persona = personas.data?.profiles.find(({ id }) => id === personaId);
   const model = info.selected_model;
-  if (!model && !persona) return null;
+  if (!model) return null;
   return (
     <ul
       aria-label="Chat configuration"
       className="hidden min-w-0 shrink items-center gap-1 md:flex"
     >
-      {model && (
-        <li className="min-w-0">
-          <Badge
-            variant={model.available ? "secondary" : "destructive"}
-            className="h-6 max-w-48 text-xs"
-            title={
-              model.available
-                ? `${model.name} · ${model.provider_name}`
-                : (model.unavailable_reason ?? `${model.name} is unavailable`)
-            }
-          >
-            <CpuIcon aria-hidden="true" />
-            <span className="sr-only">Model: </span>
-            <span className="truncate">{model.name}</span>
-            {!model.available && (
-              <span className="sr-only"> (unavailable)</span>
-            )}
-          </Badge>
-        </li>
-      )}
-      {persona && (
-        <li className="min-w-0">
-          <Badge variant="outline" className="h-6 max-w-40 text-xs">
-            <UserRoundIcon aria-hidden="true" />
-            <span className="sr-only">Persona: </span>
-            <span className="truncate">{persona.name}</span>
-          </Badge>
-        </li>
-      )}
+      <li className="min-w-0">
+        <Badge
+          variant={model.available ? "secondary" : "destructive"}
+          className="h-6 max-w-48 text-xs"
+          title={
+            model.available
+              ? `${model.name} · ${model.provider_name}`
+              : (model.unavailable_reason ?? `${model.name} is unavailable`)
+          }
+        >
+          <CpuIcon aria-hidden="true" />
+          <span className="sr-only">Model: </span>
+          <span className="truncate">{model.name}</span>
+          {!model.available && <span className="sr-only"> (unavailable)</span>}
+        </Badge>
+      </li>
     </ul>
   );
 }

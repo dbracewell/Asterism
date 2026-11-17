@@ -1,6 +1,6 @@
 import type { Page } from "@playwright/test";
 import type { ChatModelChoice } from "../src/lib/client";
-import { mockDefaultPersonas } from "./support/personas";
+import { mockLearningModes } from "./support/learning-modes";
 import { expect, test } from "./support/test";
 
 // US-61.4: the optional first-chat tour on the new-chat page.
@@ -17,7 +17,7 @@ const model: ChatModelChoice = {
 };
 
 async function mock(page: Page, { skills }: { skills: boolean }) {
-  await mockDefaultPersonas(page);
+  await mockLearningModes(page);
   await page.route("**/api/py/chat/models*", (route) =>
     route.fulfill({ json: [model] }),
   );
@@ -59,7 +59,7 @@ for (const [width, height] of [
     const dialog = page.getByRole("dialog");
     for (let step = 1; ; step++) {
       await expect(
-        dialog.getByText(`Step ${step} of 6`, { exact: true }),
+        dialog.getByText(`Step ${step} of 5`, { exact: true }),
       ).toBeVisible();
       // The step and its highlight stay on screen.
       const box = (await dialog.boundingBox())!;
@@ -88,8 +88,8 @@ test("the skills step is skipped while skills are off, and Escape dismisses", as
   await page.goto("/e2e/chat-model-session?draft=true&learner=new");
   await page.getByRole("button", { name: "Start tour" }).click();
   const dialog = page.getByRole("dialog");
-  await expect(dialog.getByText("Step 1 of 5", { exact: true })).toBeVisible();
-  for (let step = 0; step < 4; step++) {
+  await expect(dialog.getByText("Step 1 of 4", { exact: true })).toBeVisible();
+  for (let step = 0; step < 3; step++) {
     await expect(dialog).not.toHaveAccessibleName("Skills");
     await dialog.getByRole("button", { name: "Next" }).click();
   }
@@ -111,7 +111,7 @@ test("a tour link replays the tour for a learner who finished it", async ({
   const saved = await mock(page, { skills: false });
   await page.goto("/e2e/chat-model-session?draft=true&tour=first-chat");
   const dialog = page.getByRole("dialog");
-  await expect(dialog.getByText("Step 1 of 5", { exact: true })).toBeVisible();
+  await expect(dialog.getByText("Step 1 of 4", { exact: true })).toBeVisible();
   await dialog.getByRole("button", { name: "Skip tour" }).first().click();
   await expect(dialog).toBeHidden();
   await expect(page).toHaveURL(/draft=true$/);

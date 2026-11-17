@@ -70,11 +70,11 @@ Source: user request and the [feature overlap review](docs/reviews/2026-11-17-fe
 
 ### US-83.3: Remove persona from chat and the rest of the UI
 
-- [ ] Remove persona picker, composer chip, header label and new-chat persona state
-- [ ] Message provenance, context manifest and AI-use log show About you
-- [ ] Reflections UI drops persona filter and labels
-- [ ] Help pages, composer/header/transcript text and guided tour updated
-- [ ] Unit and Playwright tests updated; lint, typecheck, test, format:check pass
+- [x] Remove persona picker, composer chip, header label and new-chat persona state
+- [x] Message provenance, context manifest and AI-use log show About you
+- [x] Reflections UI drops persona filter and labels
+- [x] Help pages, composer/header/transcript text and guided tour updated
+- [x] Unit and Playwright tests updated; lint, typecheck, test, format:check pass
 
 ### US-83.4: Docs and invariants
 

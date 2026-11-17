@@ -8,6 +8,7 @@ import type {
   TemplateProvenance,
   ToolResult,
 } from "@/lib/client";
+import { aboutLabel } from "./about-you";
 
 /**
  * Context inspection (US-54.3): what each agent in a turn was given. Every
@@ -43,7 +44,7 @@ export type TurnContext = {
 const layerNames: Record<ContextLayer["kind"], string> = {
   platform: "Platform rules",
   agent: "Agent instructions",
-  profile: "Persona",
+  profile: "About you",
   mode: "Learning mode",
   task: "Task instructions",
   project: "Project instructions",
@@ -52,7 +53,7 @@ const layerNames: Record<ContextLayer["kind"], string> = {
   runtime: "Runtime details",
 };
 
-/** A readable name for a layer, using the run's recorded persona and skills. */
+/** A readable name for a layer, using the run's recorded About you revision and skills. */
 export function layerLabel(
   layer: ContextLayer,
   execution: MessageExecution | null | undefined,
@@ -61,8 +62,8 @@ export function layerLabel(
   if (layer.kind === "agent") {
     return isSubAgent ? "Sub-agent instructions" : "Main-agent instructions";
   }
-  if (layer.kind === "profile" && execution?.persona) {
-    return `Persona: ${execution.persona.name}`;
+  if (layer.kind === "profile") {
+    return aboutLabel(layer.revision);
   }
   if (layer.kind === "skills" && execution?.skills?.length) {
     return `Skills: ${execution.skills.map((skill) => skill.name).join(", ")}`;

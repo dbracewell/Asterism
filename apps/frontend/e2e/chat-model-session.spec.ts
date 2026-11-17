@@ -1,6 +1,6 @@
-import { defaultPersonaProvenance } from "../src/test/personas";
+import { defaultAboutProvenance } from "../src/test/about";
 import { standardLearningMode } from "../src/test/learning-modes";
-import { mockDefaultPersonas } from "./support/personas";
+import { mockLearningModes } from "./support/learning-modes";
 import { expect, test, type Page } from "./support/test";
 import type {
   Chat,
@@ -9,7 +9,7 @@ import type {
   MessageExecution,
 } from "../src/lib/client";
 test.beforeEach(async ({ page }) => {
-  await mockDefaultPersonas(page);
+  await mockLearningModes(page);
 });
 
 const executedModel = (page: Page) =>
@@ -46,7 +46,7 @@ const models: ChatModelChoice[] = [
   },
 ];
 const execution = (model: ChatModelChoice): MessageExecution => ({
-  persona: defaultPersonaProvenance,
+  about: defaultAboutProvenance,
   learning_mode: standardLearningMode,
   id: "44444444-4444-4444-8444-444444444444",
   request_message_id: U,

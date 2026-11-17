@@ -1,5 +1,4 @@
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { defaultPersonas } from "@/test/personas";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -46,10 +45,6 @@ vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
   projectGetOneOptions: () => ({
     queryKey: ["project"],
     queryFn: mocks.getProject,
-  }),
-  userPersonaListOptions: () => ({
-    queryKey: ["personas"],
-    queryFn: async () => defaultPersonas,
   }),
   skillEligibleGetManyOptions: () => ({
     queryKey: [{ _id: "skills" }],
@@ -168,7 +163,6 @@ it("prefills only the explicit default, permits a different model, and sends it 
       request_id: "request",
       draft_id: "staged-draft",
       model_id: "other",
-      persona_id: null,
       learning_mode: "standard",
       project_id: "project",
       user_prompt: "Hello",

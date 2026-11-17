@@ -54,7 +54,7 @@ export type ChatInputHandle = {
 export type ChatInputProps = {
   ref?: React.Ref<ChatInputHandle>;
   /**
-   * Chips in the top row (US-73.2): the model, persona and learning mode, and
+   * Chips in the top row (US-73.2): the model and learning mode, and
    * options such as goal and rubric when they apply.
    */
   chips?: React.ReactNode;

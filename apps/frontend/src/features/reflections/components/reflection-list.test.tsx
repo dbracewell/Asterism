@@ -12,7 +12,6 @@ import { ReflectionList } from "./reflection-list";
 
 const mocks = vi.hoisted(() => ({
   list: vi.fn(),
-  personas: vi.fn(),
   update: vi.fn(),
   remove: vi.fn(),
 }));
@@ -26,10 +25,6 @@ vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
     queryFn: () => mocks.list(query),
   }),
   reflectionGetManyQueryKey: () => [{ _id: "reflectionGetMany" }],
-  userPersonaListOptions: () => ({
-    queryKey: [{ _id: "userPersonaList" }],
-    queryFn: mocks.personas,
-  }),
   reflectionUpdateMutation: () => ({ mutationFn: mocks.update }),
   reflectionDeleteMutation: () => ({ mutationFn: mocks.remove }),
   studyDeckGetManyOptions: () => ({
@@ -41,7 +36,6 @@ vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
 
 const reflection = {
   id: "r1",
-  persona_id: "p2",
   project_id: "proj",
   chat_id: "c1",
   learned: "Osmosis moves water.",
@@ -64,14 +58,6 @@ beforeEach(() => {
     page: 1,
     page_size: 10,
   });
-  mocks.personas.mockResolvedValue({
-    profiles: [
-      { id: "p1", name: "Default" },
-      { id: "p2", name: "Exam prep" },
-    ],
-    default_persona_id: "p1",
-    default_revision: 1,
-  });
   mocks.update.mockResolvedValue({ ...reflection, revision: 3 });
   mocks.remove.mockResolvedValue(undefined);
   cache = new QueryClient({
@@ -83,13 +69,11 @@ beforeEach(() => {
   });
 });
 
-it("lists the project's reflections and filters by persona", async () => {
-  const user = userEvent.setup();
+it("lists the project's reflections", async () => {
   render(<ReflectionList projectId="proj" />, { wrapper: Wrapper });
   const item = await screen.findByRole("listitem", {
     name: /Reflection from/,
   });
-  expect(item).toHaveTextContent("Exam prep");
   expect(
     screen.getByRole("button", { name: "Help: Reflection" }),
   ).toBeInTheDocument();
@@ -103,16 +87,9 @@ it("lists the project's reflections and filters by persona", async () => {
     page: 1,
     page_size: 10,
   });
-  await user.click(screen.getByRole("combobox", { name: "Persona" }));
-  await user.click(await screen.findByRole("option", { name: "Exam prep" }));
-  await waitFor(() =>
-    expect(mocks.list).toHaveBeenLastCalledWith({
-      project_id: "proj",
-      persona_id: "p2",
-      page: 1,
-      page_size: 10,
-    }),
-  );
+  expect(
+    screen.queryByRole("combobox", { name: "Persona" }),
+  ).not.toBeInTheDocument();
 });
 
 it("edits and deletes with the loaded revision", async () => {

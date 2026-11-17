@@ -17,17 +17,12 @@ import {
   useModeTakesRubric,
 } from "@/features/chat/components/chat-rubric-picker";
 import {
-  ChatPersonaPicker,
-  personaAvailable,
-} from "@/features/chat/components/chat-persona-picker";
-import {
   HeroMark,
   HeroSuggestions,
 } from "@/features/chat/components/new-chat-hero";
 import { FirstChatTour } from "@/features/help/components/first-chat-tour";
 import { useChatSessionCrud } from "@/features/chat/hooks/use-chat-session-crud";
 import { heroSuggestions } from "@/features/chat/lib/hero-suggestions";
-import { personaQueryOptions } from "@/features/settings/persona-queries";
 import { eligibleSkillOptions } from "@/features/skills/queries";
 import { client } from "@/lib/api";
 import type { LearningModeId, RubricUse } from "@/lib/client";
@@ -56,7 +51,6 @@ export default function AppPage() {
   const [chosenModelId, setChosenModelId] = useState(
     user.settings.default_model_id ?? "",
   );
-  const [personaId, setPersonaId] = useState<string | null>(null);
   const [chosenMode, setLearningMode] = useState<LearningModeId>("standard");
   const [compareModels, setCompareModels] = useState<string[]>([]);
   const [rubric, setRubric] = useState<RubricUse | null>(null);
@@ -71,9 +65,6 @@ export default function AppPage() {
   const [goalChoice, setGoalChoice] = useState(false);
   const projectGoal = projectId ? project.data?.goal.trim() || null : null;
   const includeGoal = !!projectGoal && goalChoice;
-  const personas = useQuery(personaQueryOptions(user.id));
-  const hasPersona =
-    !personas.error && personaAvailable(personas.data, personaId);
   const models = useQuery({
     ...chatModelsListOptions({ client }),
     staleTime: 0,
@@ -100,7 +91,7 @@ export default function AppPage() {
     retry: false,
   });
   const composer = useRef<ChatInputHandle>(null);
-  const sendBlocked = !modelAvailable || !workspaceAvailable || !hasPersona;
+  const sendBlocked = !modelAvailable || !workspaceAvailable;
 
   return (
     <div className="flex min-h-fit flex-1 shrink-0 flex-col items-center p-2 pt-12">
@@ -151,7 +142,7 @@ export default function AppPage() {
             promptCoach={
               user.settings.prompt_coach_enabled ? { modelId } : undefined
             }
-            requestScope={`${main.id}:${modelId || "none"}:${personaId ?? "default"}:${learningMode}:${searchParams.get("project_id") ?? "general"}:${compareModels.join(",")}:${sentRubric ? `${sentRubric.source}:${sentRubric.id}` : "none"}:${includeGoal ? "goal" : ""}`}
+            requestScope={`${main.id}:${modelId || "none"}:${learningMode}:${searchParams.get("project_id") ?? "general"}:${compareModels.join(",")}:${sentRubric ? `${sentRubric.source}:${sentRubric.id}` : "none"}:${includeGoal ? "goal" : ""}`}
             status={<ComposerStatus modelId={modelId} general={!projectId} />}
             compare={{
               value: compareModels,
@@ -162,7 +153,6 @@ export default function AppPage() {
             chips={
               <>
                 <ChatModelPicker value={modelId} onChange={setChosenModelId} />
-                <ChatPersonaPicker value={personaId} onChange={setPersonaId} />
                 <LearningModePicker
                   value={learningMode}
                   onChange={setLearningMode}
@@ -202,7 +192,6 @@ export default function AppPage() {
                 body: {
                   request_id: requestId,
                   model_id: modelId,
-                  persona_id: personaId,
                   learning_mode: learningMode,
                   project_id: projectId,
                   user_prompt: prompt,

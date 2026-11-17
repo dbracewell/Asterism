@@ -97,15 +97,17 @@ it("adds sub-agents that recorded context and is null when nothing was recorded"
   expect(turnContext([step({ delegations: [record("none")] })])).toBeNull();
 });
 
-it("labels layers with the run's recorded persona and skills", () => {
+it("labels layers with the run's recorded About you revision and skills", () => {
   const execution = {
-    persona: { id: "p", name: "Teacher", revision: 1 },
+    about: { revision: 1 },
     skills: [
       { id: "s", name: "Proofs", revision: 1, digest: "d" },
       { id: "t", name: "Style", revision: 2, digest: "d" },
     ],
   } as unknown as Message["execution"];
-  expect(layerLabel(layer("profile"), execution)).toBe("Persona: Teacher");
+  expect(layerLabel(layer("profile"), execution)).toBe(
+    "About you (revision 1)",
+  );
   expect(layerLabel(layer("skills"), execution)).toBe("Skills: Proofs, Style");
   expect(layerLabel(layer("agent"), execution)).toBe("Main-agent instructions");
   expect(layerLabel(layer("agent"), execution, true)).toBe(

@@ -17,6 +17,7 @@ import {
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { ComposerNotice } from "./composer-notice";
+import { aboutLabel, aboutRevision } from "../lib/about-you";
 
 /**
  * The composer's model chip. Capabilities show in the list; status notices
@@ -207,18 +208,21 @@ export function ExecutionLabel({
   execution?: MessageExecution | null;
 }) {
   if (!execution) return null;
+  const about = aboutRevision(execution);
   return (
     <>
       <p className="text-muted-foreground text-xs" aria-label="Executed model">
         {execution.model.name} · {execution.model.provider_name} · configuration{" "}
         {execution.configuration.config_revision}
       </p>
-      <p
-        className="text-muted-foreground text-xs wrap-anywhere"
-        aria-label="Executed persona"
-      >
-        {execution.persona.name} · persona revision {execution.persona.revision}
-      </p>
+      {about !== null && (
+        <p
+          className="text-muted-foreground text-xs"
+          aria-label="Executed About you"
+        >
+          {aboutLabel(about)}
+        </p>
+      )}
     </>
   );
 }

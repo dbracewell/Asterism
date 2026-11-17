@@ -19,7 +19,6 @@ import { canvasRefs } from "@/features/canvas/lib/canvas";
 import { useChatAutoScroll } from "@/features/chat/hooks/use-chat-auto-scroll";
 import { useChatStream } from "@/features/chat/hooks/use-chat-stream";
 import { connectionStatusMap } from "@/features/chat/types";
-import { personaQueryOptions } from "@/features/settings/persona-queries";
 import { useSubscribeEvent } from "@/features/sse/hooks/use-subscribe-event";
 import { client } from "@/lib/api";
 import { Chat, DelegationRecord } from "@/lib/client";
@@ -47,10 +46,6 @@ import { ExistingChatLearningModePicker } from "./chat-learning-mode-picker";
 import { ChatHintControls } from "./chat-hint-controls";
 import { ChatRubricPicker, useModeTakesRubric } from "./chat-rubric-picker";
 import { ChatGoalToggle, useProjectGoal } from "./chat-goal-toggle";
-import {
-  ExistingChatPersonaPicker,
-  personaAvailable,
-} from "./chat-persona-picker";
 
 export const ChatSession = ({
   chatId,
@@ -95,17 +90,9 @@ export const ChatSession = ({
     retry: false,
   });
   const [isChangingModel, setIsChangingModel] = React.useState(false);
-  const [isChangingPersona, setIsChangingPersona] = React.useState(false);
   const [isChangingMode, setIsChangingMode] = React.useState(false);
   // "New problem" resets the branch hint level with the next sent message.
   const [resetHints, setResetHints] = React.useState(false);
-  const personas = useQuery({
-    ...personaQueryOptions(user.id),
-    enabled: !!session,
-  });
-  const hasPersona =
-    !personas.error &&
-    personaAvailable(personas.data, session?.info.persona_id ?? null);
   const queryKey = chatSessionGetOneQueryKey({
     path: { chat_id: chatId },
   });
@@ -322,15 +309,7 @@ export const ChatSession = ({
     isCompacting ||
     sendMessage.isPending ||
     isChangingModel ||
-    isChangingPersona ||
     isChangingMode;
-  const promptPersona =
-    session.info.pending_persona ??
-    personas.data?.profiles.find(
-      (profile) =>
-        profile.id ===
-        (session.info.persona_id ?? personas.data?.default_persona_id),
-    );
   const pendingRequestId =
     session.info.pending_execution?.request_message_id ??
     session.messages.findLast(
@@ -339,7 +318,6 @@ export const ChatSession = ({
   function requestRegeneration(parentId?: string | null) {
     if (
       !selectedModelAvailable ||
-      !hasPersona ||
       interactionBusy ||
       connectionStatus !== "Connected"
     )
@@ -410,7 +388,6 @@ export const ChatSession = ({
     !interactionBusy &&
     connectionStatus === "Connected" &&
     selectedModelAvailable &&
-    hasPersona &&
     !pendingRequestId;
   const imageActions = {
     moreLikeThis: (fileId: string) => {
@@ -498,15 +475,6 @@ export const ChatSession = ({
                   description="Write a message below to begin."
                 />
               )}
-              {session.info.pending_persona && (
-                <p
-                  className="text-muted-foreground text-sm"
-                  aria-label="Saved turn persona"
-                >
-                  This response uses {session.info.pending_persona.name}{" "}
-                  (persona revision {session.info.pending_persona.revision}).
-                </p>
-              )}
               {session.info.resume_error && (
                 <div className="flex flex-wrap items-center gap-2">
                   <p role="alert">{session.info.resume_error}</p>
@@ -516,7 +484,6 @@ export const ChatSession = ({
                       variant="outline"
                       disabled={
                         interactionBusy ||
-                        !hasPersona ||
                         !selectedModelAvailable ||
                         connectionStatus !== "Connected"
                       }
@@ -584,7 +551,6 @@ export const ChatSession = ({
                       interactionBusy ||
                       connectionStatus !== "Connected" ||
                       !selectedModelAvailable ||
-                      !hasPersona ||
                       !!pendingRequestId
                     }
                     resetPending={resetHints}
@@ -621,13 +587,12 @@ export const ChatSession = ({
                   disabled={
                     interactionBusy ||
                     connectionStatus !== "Connected" ||
-                    !selectedModelAvailable ||
-                    !hasPersona
+                    !selectedModelAvailable
                   }
                   isProcessing={isProcessing}
                   onStop={() => sendJsonMessage({ type: "cancel" })}
-                  requestScope={`${session.info.id}:${session.info.model_revision ?? 1}:${session.info.persona_revision ?? 1}:${session.info.learning_mode_revision ?? 1}:${compareModels.join(",")}:${sentRubric ? `${sentRubric.source}:${sentRubric.id}` : "none"}:${includeGoal ? "goal" : ""}`}
-                  scopeKey={`${session.info.model_revision}:${session.info.persona_revision}:${session.info.learning_mode_revision}:${promptPersona?.id}:${promptPersona?.revision}:${session.info.project_id}:${session.messages.map((message) => message.id).join()}`}
+                  requestScope={`${session.info.id}:${session.info.model_revision ?? 1}:${session.info.learning_mode_revision ?? 1}:${compareModels.join(",")}:${sentRubric ? `${sentRubric.source}:${sentRubric.id}` : "none"}:${includeGoal ? "goal" : ""}`}
+                  scopeKey={`${session.info.model_revision}:${session.info.learning_mode_revision}:${session.info.project_id}:${session.messages.map((message) => message.id).join()}`}
                   scopeLocked={isProcessing || sendMessage.isPending}
                   onSubmit={addUserMessage}
                   createImage={
@@ -651,12 +616,6 @@ export const ChatSession = ({
                         info={session.info}
                         disabled={interactionBusy}
                         onPendingChange={setIsChangingModel}
-                        onSelected={mergeInfo}
-                      />
-                      <ExistingChatPersonaPicker
-                        info={session.info}
-                        disabled={interactionBusy}
-                        onPendingChange={setIsChangingPersona}
                         onSelected={mergeInfo}
                       />
                       <ExistingChatLearningModePicker

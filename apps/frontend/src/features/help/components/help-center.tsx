@@ -81,7 +81,7 @@ export function HelpCenter() {
             aria-label="Search help"
             className="h-10 pl-8 text-sm"
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search help, for example “persona” or “hints”"
+            placeholder="Search help, for example “about you” or “hints”"
             value={query}
           />
         </div>

@@ -21,7 +21,7 @@ const step: Message = {
   status: "completed",
   created_at: 0,
   execution: {
-    persona: { id: "p", name: "Teacher", revision: 2 },
+    about: { revision: 2 },
     skills: [],
   } as unknown as Message["execution"],
   tool_call_results: [
@@ -43,7 +43,7 @@ const step: Message = {
       },
       {
         kind: "profile",
-        source_id: "p",
+        source_id: "about-you",
         revision: 2,
         digest: "d",
         characters: 9,
@@ -90,7 +90,12 @@ beforeEach(() => {
     data: {
       layers: [
         { kind: "platform", source_id: "asterism", revision: 1, text: "Rules" },
-        { kind: "profile", source_id: "p", revision: 2, text: "Be gentle" },
+        {
+          kind: "profile",
+          source_id: "about-you",
+          revision: 2,
+          text: "I study nursing",
+        },
       ],
     },
   });
@@ -113,12 +118,12 @@ it("loads layer text only once opened and shows what the run was given", async (
   );
 
   const layers = within(dialog).getByRole("list", { name: "Prompt layers" });
-  expect(within(layers).getByText("Persona: Teacher")).toBeVisible();
+  expect(within(layers).getByText("About you (revision 2)")).toBeVisible();
   const toggles = await within(layers).findAllByRole("button", {
     name: "Show text",
   });
   await userEvent.click(toggles[1]);
-  expect(within(layers).getByText("Be gentle")).toBeVisible();
+  expect(within(layers).getByText("I study nursing")).toBeVisible();
 
   const files = within(dialog).getByRole("list", { name: "Attached files" });
   expect(within(files).getByText("Included as text")).toBeVisible();

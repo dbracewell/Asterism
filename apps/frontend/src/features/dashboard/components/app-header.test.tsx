@@ -58,17 +58,6 @@ vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
       page_size: 10,
     }),
   }),
-  userPersonaListOptions: () => ({
-    queryKey: [{ _id: "userPersonaList" }],
-    queryFn: async () => ({
-      profiles: [
-        { id: "persona-default", name: "Everyday" },
-        { id: "persona-writer", name: "Editor" },
-      ],
-      default_persona_id: "persona-default",
-      default_revision: 1,
-    }),
-  }),
   learningModeGetManyOptions: () => ({
     queryKey: ["learning-modes"],
     queryFn: async () => ({
@@ -104,7 +93,6 @@ function chatInfo(overrides: object = {}) {
       updated_at: 0,
       title: "Quarterly plan",
       project_id: "p",
-      persona_id: null,
       selected_model: {
         id: "m",
         name: "Opus",
@@ -212,7 +200,7 @@ describe("app header breadcrumbs", () => {
     );
     const chips = screen.getByRole("list", { name: "Chat configuration" });
     expect(chips).toHaveTextContent("Model: Opus");
-    expect(await within(chips).findByText("Everyday")).toBeInTheDocument();
+    expect(within(chips).queryByText(/Persona/)).not.toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "Chat actions" }),
     ).toBeInTheDocument();
@@ -220,9 +208,7 @@ describe("app header breadcrumbs", () => {
 
   it("links General chats and file views back to their parents", async () => {
     route.pathname = "/c/c/files/f";
-    mocks.chat.mockResolvedValue(
-      chatInfo({ project_id: null, persona_id: "persona-writer" }),
-    );
+    mocks.chat.mockResolvedValue(chatInfo({ project_id: null }));
     render(<Shell />);
     expect(
       await screen.findByRole("link", { name: "General" }),
@@ -233,7 +219,6 @@ describe("app header breadcrumbs", () => {
     expect(screen.getByRole("link", { current: "page" })).toHaveTextContent(
       "File",
     );
-    expect(await screen.findByText("Editor")).toBeInTheDocument();
   });
 
   it("marks an unavailable model chip", async () => {

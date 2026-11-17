@@ -1,6 +1,6 @@
 import type { Message, MessageExecution } from "@/lib/client";
 import { record } from "@/test/delegation-records";
-import { defaultPersonaProvenance } from "@/test/personas";
+import { defaultAboutProvenance } from "@/test/about";
 import { standardLearningMode } from "@/test/learning-modes";
 import { describe, expect, it } from "vitest";
 import {
@@ -15,7 +15,7 @@ const PRICE = { input_per_million: 2, output_per_million: 10 };
 const execution = (
   model: Partial<MessageExecution["model"]> = {},
 ): MessageExecution => ({
-  persona: defaultPersonaProvenance,
+  about: defaultAboutProvenance,
   learning_mode: standardLearningMode,
   id: "e",
   request_message_id: "r",
