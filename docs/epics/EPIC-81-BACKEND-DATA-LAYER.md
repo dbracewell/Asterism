@@ -1,6 +1,6 @@
 # EPIC-81: Backend data layer and storage
 
-Status: in progress. Source: [codebase review](../../codebase_review.md), verified 2026-11-14 (items 13, 14, 15, 16, 17).
+Status: complete (2026-11-17). Source: [codebase review](../../codebase_review.md), verified 2026-11-14 (items 13, 14, 15, 16, 17).
 
 ## Objective
 
@@ -36,9 +36,9 @@ The message update trigger already fires only on `content`; the cost is on delet
 
 ### US-81.5: `files/service.py` structure
 
-- [ ] Move remaining `UserFileModel` select builders into `domains/files/queries.py`.
-- [ ] Replace `require_write` / `require_project_write` flags with explicit readable/writable helpers.
-- [ ] No behavior change; existing tests stay green.
+- [x] Move remaining `UserFileModel` select builders into `domains/files/queries.py`.
+- [x] Replace `require_write` / `require_project_write` flags with explicit readable/writable helpers.
+- [x] No behavior change; existing tests stay green.
 
 ## Notes
 
@@ -49,3 +49,5 @@ US-81.1: SQLite runs cascaded message deletes after the chat row is gone, so the
 US-81.3: `files_by_version` loads a page's course files in one query; `available_skill_ids` reads the skills policy once and checks eligibility in one query (per-item size limits unchanged); `delete_user_files` loads the files once and describes them in one batch. Per-file knowledge cleanup and row deletes in `delete_user_files` remain per file. Tests assert counts stay constant as items grow, rather than pinning exact numbers.
 
 US-81.4: `FileStore.open()` became `local_path()`, kept only for consumers that need a real file (the two `FileResponse` downloads, the converter/digest in `processor.py`, `document_counts` in preview); every other read uses `read_bytes`/`exists`. The knowledge contract now carries image bytes (`SourceContent.image`) instead of a path, so captioning and `embed_image` work on bytes; `CaptionRequest.image` is excluded from its repr. A missing course source raises a 409 naming the file; publish and apply also roll back on `CancelledError` (a cancelled apply is tested too).
+
+US-81.5: the eight inline selects in `files/service.py` now compose small owner-scoped builders in `files/queries.py` (`select_file_by_name`, `select_files_by_names`, `select_files_by_ids`, `select_owned_file_ids`, `select_file_id_by_name`, `select_file_by_content`); `delete_user_file` reuses `_owned_file`. An AST test keeps `select(...)` out of `service.py`. The `require_write` / `require_project_write` flags had already been removed by earlier work, so no change was needed there.
