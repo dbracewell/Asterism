@@ -20,11 +20,11 @@ vi.mock("@/components/markdown-viewer", () => ({
   default: ({ content }: { content: string }) => <span>{content}</span>,
 }));
 vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
-  studyWeakSpotGetManyOptions: () => ({
-    queryKey: ["weak-spots"],
-    queryFn: () => mocks.spots(),
+  studyProgressGetOptions: () => ({
+    queryKey: ["progress"],
+    queryFn: async () => ({ weak_spots: await mocks.spots() }),
   }),
-  studyWeakSpotPracticeMutation: () => ({ mutationFn: mocks.practice }),
+  studyPracticeCreateMutation: () => ({ mutationFn: mocks.practice }),
 }));
 
 const spot = (overrides: Record<string, unknown>) => ({
@@ -39,6 +39,7 @@ const spot = (overrides: Record<string, unknown>) => ({
   container_id: "q1",
   container_title: "Cells quiz",
   citations: [],
+  topics: [],
   ...overrides,
 });
 
@@ -147,7 +148,7 @@ it("reports a failed practice build", async () => {
   expect(mocks.push).not.toHaveBeenCalled();
 });
 
-it("describes quizzes built from weak spots", () => {
+it("describes practice quizzes", () => {
   const base = {
     id: "w1",
     project_id: "p",
@@ -166,12 +167,12 @@ it("describes quizzes built from weak spots", () => {
   expect(
     quizDescription({
       ...base,
-      origin: "weak_spots",
+      origin: "practice",
       model_id: null,
       model_name: null,
     }),
   ).toBe(
-    "2 questions · 1 multiple choice, 1 short answer · built from your weak spots",
+    "2 questions · 1 multiple choice, 1 short answer · built for practice",
   );
   expect(
     quizDescription({

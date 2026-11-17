@@ -2,6 +2,9 @@
 
 Status: accepted and implemented for US-58.3 on 2026-11-06
 ([EPIC-58](../epics/EPIC-58-LEARNING-GOALS-REFLECTION-AND-PROGRESS.md)).
+Amended by [ADR-0067](0067-progress-panel.md): topics are read through
+`GET …/study/progress`, topic practice moved to `POST …/study/practice` with
+`topic`, and the `topic` origin became `practice`.
 
 ## Context
 

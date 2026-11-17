@@ -1,4 +1,7 @@
-"""Turning a reflection's "still unclear" items into practice (US-58.4, ADR-0050).
+"""Turning a reflection's "still unclear" items into practice (US-58.4, ADR-0050, ADR-0067).
+
+Items are split on the server and listed as pending until a card from that
+reflection has the item as its front.
 
 Each request creates one card the learner confirmed; nothing is converted in
 bulk or by a model. The card is due for review at once. With ``weak_spot`` it
@@ -6,25 +9,62 @@ also counts as a weak spot until recalled: the flag is a weak-spot event of its
 own, never a fake review, so scheduling and mastery stay based on real results.
 """
 
+import re
 import uuid
 
+from sqlalchemy import func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from asterism.common.log import get_logger
 from asterism.core.exceptions import BadDataException, ConflictException, NotFoundException
 from asterism.domains.projects.scope import require_owned_project
 from asterism.domains.reflections.models import ReflectionModel
-from asterism.domains.reflections.queries import select_owned_reflections
+from asterism.domains.reflections.queries import select_owned_reflections, select_scoped_reflections
 
 from . import clock
 from .models import StudyCardModel, StudyDeckModel
-from .queries import select_deck_by_name, select_reflection_card
-from .schemas import StudyCard, StudyUnclearCardCreate
+from .queries import select_deck_by_name, select_reflection_card, select_reflection_card_fronts
+from .schemas import StudyCard, StudyUnclearCardCreate, StudyUnclearItem, StudyUnclearItems
 from .service import require_deck, to_cards
 
 logger = get_logger("StudyUnclear")
 
 UNCLEAR_DECK_NAME = "Unclear items"
+_MARKER = re.compile(r"^\s*(?:[-*•]|\d+[.)])\s+")
+
+
+def split_unclear(text: str) -> list[str]:
+    """One item per line without list markers; blanks and repeats dropped. A paragraph stays one item."""
+    items = (_MARKER.sub("", line, count=1).strip() for line in re.split(r"\r?\n", text))
+    return list(dict.fromkeys(item for item in items if item))
+
+
+async def pending_unclear_items(
+    *, user_id: str, project_id: uuid.UUID, limit: int, session: AsyncSession
+) -> StudyUnclearItems:
+    """Unclear items of an owned project's reflections that are not cards yet, newest reflection first."""
+    reflections = list(
+        await session.scalars(
+            select_scoped_reflections(user_id, project_id=project_id).where(
+                func.length(func.trim(ReflectionModel.unclear)) > 0
+            )
+        )
+    )
+    done: set[tuple[uuid.UUID | None, str]] = set()
+    if reflections:
+        result = await session.execute(
+            select_reflection_card_fronts(user_id=user_id, reflection_ids=[r.id for r in reflections])
+        )
+        done = set(result.tuples())
+    pending = [
+        StudyUnclearItem(
+            reflection_id=reflection.id, chat_id=reflection.chat_id, reflected_at=reflection.created_at, text=text
+        )
+        for reflection in reflections
+        for text in split_unclear(reflection.unclear)
+        if (reflection.id, text) not in done
+    ]
+    return StudyUnclearItems(items=pending[:limit], total=len(pending))
 
 
 async def _deck(

@@ -7,8 +7,8 @@ import { Button } from "@/components/ui/button";
 import { client } from "@/lib/api";
 import type { StudyWeakSpot } from "@/lib/client";
 import {
-  studyWeakSpotGetManyOptions,
-  studyWeakSpotPracticeMutation,
+  studyPracticeCreateMutation,
+  studyProgressGetOptions,
 } from "@/lib/client/@tanstack/react-query.gen";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import Link from "next/link";
@@ -37,15 +37,15 @@ export function weakSpotHref(projectId: string, spot: StudyWeakSpot) {
 export function ProjectWeakSpots({ projectId }: { projectId: string }) {
   const router = useRouter();
   const spots = useQuery({
-    ...studyWeakSpotGetManyOptions({
+    ...studyProgressGetOptions({
       client,
       path: { project_id: projectId },
-      query: { limit: SHOWN },
     }),
+    select: (data) => data.weak_spots,
     retry: false,
   });
   const practice = useMutation({
-    ...studyWeakSpotPracticeMutation({ client }),
+    ...studyPracticeCreateMutation({ client }),
     onSuccess: (quiz) =>
       router.push(`/projects/${projectId}/study/quizzes/${quiz.id}/take`),
   });
@@ -59,7 +59,8 @@ export function ProjectWeakSpots({ projectId }: { projectId: string }) {
       />
     );
   if (!spots.data || spots.data.total === 0) return null;
-  const { items, total } = spots.data;
+  const { total } = spots.data;
+  const items = spots.data.items.slice(0, SHOWN);
   const count = Math.min(total, PRACTICE_QUESTIONS);
   const busy = practice.isPending || practice.isSuccess;
   return (

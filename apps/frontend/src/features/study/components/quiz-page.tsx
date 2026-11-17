@@ -50,8 +50,8 @@ export function quizDescription(quiz: StudyQuiz) {
       `${quiz.multiple_choice_count} multiple choice, ${quiz.short_answer_count} short answer`,
     );
   parts.push(
-    quiz.origin === "weak_spots"
-      ? "built from your weak spots"
+    quiz.origin === "practice"
+      ? "built for practice"
       : `written by ${quiz.model_name ?? "an unknown model"}`,
   );
   return parts.join(" · ");

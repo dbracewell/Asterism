@@ -1,4 +1,4 @@
-"""US-53.5: weak spots derived from attempts and review logs, and weak-spot practice."""
+"""US-53.5, ADR-0067: weak spots derived from attempts and review logs, and weak-spot practice."""
 
 import json
 import uuid
@@ -32,18 +32,27 @@ def ticking(monkeypatch):
     monkeypatch.setattr(clock, "now_seconds", lambda: next(now))
 
 
-def weak_path(project_id, *rest):
-    return "/".join([f"/projects/{project_id}/study/weak-spots", *rest])
+def progress_path(project_id):
+    return f"/projects/{project_id}/study/progress"
 
 
-async def weak(api, project_id, user="a", **params):
-    response = await api.client.get(weak_path(project_id), headers=auth(user), params=params)
+def practice_path(project_id):
+    return f"/projects/{project_id}/study/practice"
+
+
+async def progress(api, project_id, user="a"):
+    response = await api.client.get(progress_path(project_id), headers=auth(user))
     assert response.status_code == 200, response.text
+    assert response.headers["cache-control"] == "no-store"
     return response.json()
 
 
+async def weak(api, project_id, user="a"):
+    return (await progress(api, project_id, user))["weak_spots"]
+
+
 async def practice(api, project_id, user="a", **body):
-    return await api.client.post(weak_path(project_id, "practice"), headers=auth(user), json=body)
+    return await api.client.post(practice_path(project_id), headers=auth(user), json=body)
 
 
 def choose(quiz, prompt, option):
@@ -131,6 +140,7 @@ async def test_cards_rated_again_are_weak_until_recalled(drafts_api, ticking):
             "container_id": deck["id"],
             "container_title": "Deck",
             "citations": [],
+            "topics": [],
         }
     ]
     await rate(api, project_id, deck, card, "hard")
@@ -150,8 +160,8 @@ async def test_practice_copies_weak_items_and_success_clears_the_originals(draft
     response = await practice(api, project_id, question_count=2)
     assert response.status_code == 201, response.text
     drill = response.json()
-    assert drill["origin"] == "weak_spots" and drill["model_name"] is None and drill["model_id"] is None
-    assert drill["title"] == "Weak spots practice"
+    assert drill["origin"] == "practice" and drill["model_name"] is None and drill["model_id"] is None
+    assert drill["title"] == "Practice: weak spots" and drill["tags"] == []
     assert [(q["kind"], q["prompt"]) for q in drill["questions"]][0] == ("short_answer", "What is ATP?")
     assert len(drill["questions"]) == 2
     async with api.sessions() as session:
@@ -226,11 +236,9 @@ async def test_weak_spots_are_owner_and_project_scoped(drafts_api, ticking):
     assert (await weak(api, other))["total"] == 0
     response = await practice(api, other)
     assert response.status_code == 400 and response.json()["detail"] == "There are no weak spots to practice yet"
-    for path in (weak_path(project_id), weak_path(project_id, "practice")):
-        method = api.client.get if path.endswith("weak-spots") else api.client.post
-        kwargs = {} if path.endswith("weak-spots") else {"json": {}}
-        assert (await method(path, headers=auth("b"), **kwargs)).status_code == 404
-    assert (await api.client.get(weak_path(str(uuid.uuid4())), headers=auth())).status_code == 404
+    assert (await api.client.get(progress_path(project_id), headers=auth("b"))).status_code == 404
+    assert (await practice(api, project_id, user="b")).status_code == 404
+    assert (await api.client.get(progress_path(str(uuid.uuid4())), headers=auth())).status_code == 404
 
 
 @pytest.mark.asyncio
@@ -238,11 +246,8 @@ async def test_limits_and_validation(drafts_api, ticking):
     api = drafts_api
     project_id, _, quiz = await setup_quiz(api)
     await submit(api, project_id, quiz["id"], [])
-    spots = await weak(api, project_id, limit=1)
-    assert spots["total"] == 4 and len(spots["items"]) == 1
-    for params in ({"limit": 0}, {"limit": 51}):
-        assert (await api.client.get(weak_path(project_id), headers=auth(), params=params)).status_code == 422
-    for body in ({"question_count": 0}, {"question_count": 21}, {"unknown": 1}):
+    assert (await weak(api, project_id))["total"] == 4
+    for body in ({"question_count": 0}, {"question_count": 21}, {"unknown": 1}, {"topic": ""}, {"topic": "x" * 41}):
         assert (await practice(api, project_id, **body)).status_code == 422
     assert len((await practice(api, project_id)).json()["questions"]) == 4
     deleted = await api.client.delete(quizzes_path(project_id, quiz["id"]), headers=auth())

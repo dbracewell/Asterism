@@ -85,7 +85,7 @@ async def _context(*, user_id: str, project_id: uuid.UUID, session: AsyncSession
     quiz_page = await quizzes.list_quizzes(
         user_id=user_id, project_id=project_id, page=1, page_size=MAX_CONTEXT_QUIZZES, session=session
     )
-    weak = await weak_spots.list_weak_spots(user_id=user_id, project_id=project_id, limit=1, session=session)
+    weak_total = await weak_spots.count_weak_spots(user_id=user_id, project_id=project_id, session=session)
     _, file_ids = await read_project_context(user_id=user_id, project_id=project_id, session=session)
     names = await project_member_files(user_id=user_id, project_id=project_id, file_ids=set(file_ids), session=session)
     file_names = sorted(names.values())[:MAX_CONTEXT_FILES]
@@ -105,7 +105,7 @@ async def _context(*, user_id: str, project_id: uuid.UUID, session: AsyncSession
         )
         for index, quiz in enumerate(quiz_page.items, start=1)
     ] or ["(none)"]
-    lines.append(f"\nWeak spots: {weak.total}")
+    lines.append(f"\nWeak spots: {weak_total}")
     lines.append("\nFiles:")
     lines += [f"- {json.dumps(' '.join(name.split()))}" for name in file_names] or ["(none)"]
     return _Context(

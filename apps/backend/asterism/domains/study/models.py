@@ -138,15 +138,15 @@ MAX_FEEDBACK_CHARS = 2_000
 
 
 class StudyQuizModel(Base, UuidPrimaryKeyMixin, TimestampMixin):
-    """A quiz, generated from files or built from weak spots. Questions are fixed; only the title changes."""
+    """A quiz, generated from files or copied for practice. Questions are fixed; only the title changes."""
 
     __tablename__ = "study_quizzes"
 
     user_id: Mapped[str] = mapped_column(String, nullable=False)
     project_id: Mapped[uuid.UUID] = mapped_column(nullable=False)
     title: Mapped[str] = mapped_column(String(MAX_QUIZ_TITLE_CHARS), nullable=False)
-    # generated (from files by a model), weak_spots (copied from missed items, no
-    # model) or topic (copied from one topic's items, no model; US-58.3).
+    # generated (from files by a model) or practice (copied from weak spots or one
+    # topic's items, no model; ADR-0067).
     origin: Mapped[str] = mapped_column(String(16), nullable=False, default="generated", server_default="generated")
     # Provenance of the generating model; not a foreign key, so model deletion keeps the quiz.
     model_id: Mapped[uuid.UUID | None] = mapped_column(nullable=True)
@@ -166,7 +166,7 @@ class StudyQuizModel(Base, UuidPrimaryKeyMixin, TimestampMixin):
             f"length(trim(title)) > 0 AND length(title) <= {MAX_QUIZ_TITLE_CHARS}", name="ck_study_quizzes_title"
         ),
         CheckConstraint(
-            "(origin = 'generated' AND model_name IS NOT NULL) OR origin IN ('weak_spots', 'topic')",
+            "(origin = 'generated' AND model_name IS NOT NULL) OR origin = 'practice'",
             name="ck_study_quizzes_origin",
         ),
         Index("idx_study_quizzes_project", "user_id", "project_id", "created_at", "id"),
@@ -190,7 +190,7 @@ class StudyQuizQuestionModel(Base, UuidPrimaryKeyMixin):
     explanation: Mapped[str] = mapped_column(Text, nullable=False, default="", server_default="")
     # Canonical JSON list of StudyCitationInput, as on cards.
     citations: Mapped[str] = mapped_column(Text, nullable=False, default="[]", server_default="[]")
-    # Weak-spot practice copies (US-53.5) name the original question or card they re-ask,
+    # Practice copies (ADR-0067) name the original question or card they re-ask,
     # so practising a copy resolves the original. Plain ids, not foreign keys: the
     # original may be deleted while its copies keep their history.
     source_question_id: Mapped[uuid.UUID | None] = mapped_column(nullable=True)

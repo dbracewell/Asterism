@@ -648,6 +648,12 @@ import type {
   StudyNoteUpdateData,
   StudyNoteUpdateErrors,
   StudyNoteUpdateResponses,
+  StudyPracticeCreateData,
+  StudyPracticeCreateErrors,
+  StudyPracticeCreateResponses,
+  StudyProgressGetData,
+  StudyProgressGetErrors,
+  StudyProgressGetResponses,
   StudyProjectSummaryGetData,
   StudyProjectSummaryGetErrors,
   StudyProjectSummaryGetResponses,
@@ -681,21 +687,9 @@ import type {
   StudySummaryGenerateData,
   StudySummaryGenerateErrors,
   StudySummaryGenerateResponses,
-  StudyTopicMasteryGetManyData,
-  StudyTopicMasteryGetManyErrors,
-  StudyTopicMasteryGetManyResponses,
-  StudyTopicPracticeData,
-  StudyTopicPracticeErrors,
-  StudyTopicPracticeResponses,
   StudyUnclearCardCreateData,
   StudyUnclearCardCreateErrors,
   StudyUnclearCardCreateResponses,
-  StudyWeakSpotGetManyData,
-  StudyWeakSpotGetManyErrors,
-  StudyWeakSpotGetManyResponses,
-  StudyWeakSpotPracticeData,
-  StudyWeakSpotPracticeErrors,
-  StudyWeakSpotPracticeResponses,
   SubAgentCreateData,
   SubAgentCreateErrors,
   SubAgentCreateResponses,
@@ -3723,97 +3717,47 @@ export class ApiClient extends HeyApiClient {
   }
 
   /**
-   * List Weak Spots
+   * Get Progress
    *
-   * Questions and cards whose latest outcome was a miss, most recent first.
+   * Topics, weak spots with their topics, and pending unclear items, derived on read.
    */
-  public studyWeakSpotGetMany<ThrowOnError extends boolean = false>(
-    options: Options<StudyWeakSpotGetManyData, ThrowOnError>,
+  public studyProgressGet<ThrowOnError extends boolean = false>(
+    options: Options<StudyProgressGetData, ThrowOnError>,
   ): RequestResult<
-    StudyWeakSpotGetManyResponses,
-    StudyWeakSpotGetManyErrors,
+    StudyProgressGetResponses,
+    StudyProgressGetErrors,
     ThrowOnError
   > {
     return (options.client ?? this.client).get<
-      StudyWeakSpotGetManyResponses,
-      StudyWeakSpotGetManyErrors,
+      StudyProgressGetResponses,
+      StudyProgressGetErrors,
       ThrowOnError
     >({
       security: [{ scheme: "bearer", type: "http" }],
-      url: "/projects/{project_id}/study/weak-spots",
+      url: "/projects/{project_id}/study/progress",
       ...options,
     });
   }
 
   /**
-   * Practice Weak Spots
+   * Create Practice
    *
-   * Save a quiz that re-asks the most recent weak spots; 400 when there are none.
+   * Save a quiz of one topic's weakest items, or of the most recent weak spots; 404 for an unknown topic.
    */
-  public studyWeakSpotPractice<ThrowOnError extends boolean = false>(
-    options: Options<StudyWeakSpotPracticeData, ThrowOnError>,
+  public studyPracticeCreate<ThrowOnError extends boolean = false>(
+    options: Options<StudyPracticeCreateData, ThrowOnError>,
   ): RequestResult<
-    StudyWeakSpotPracticeResponses,
-    StudyWeakSpotPracticeErrors,
+    StudyPracticeCreateResponses,
+    StudyPracticeCreateErrors,
     ThrowOnError
   > {
     return (options.client ?? this.client).post<
-      StudyWeakSpotPracticeResponses,
-      StudyWeakSpotPracticeErrors,
+      StudyPracticeCreateResponses,
+      StudyPracticeCreateErrors,
       ThrowOnError
     >({
       security: [{ scheme: "bearer", type: "http" }],
-      url: "/projects/{project_id}/study/weak-spots/practice",
-      ...options,
-      headers: {
-        "Content-Type": "application/json",
-        ...options.headers,
-      },
-    });
-  }
-
-  /**
-   * List Topic Mastery
-   *
-   * Mastery per deck and quiz tag, derived from review ratings and quiz results.
-   */
-  public studyTopicMasteryGetMany<ThrowOnError extends boolean = false>(
-    options: Options<StudyTopicMasteryGetManyData, ThrowOnError>,
-  ): RequestResult<
-    StudyTopicMasteryGetManyResponses,
-    StudyTopicMasteryGetManyErrors,
-    ThrowOnError
-  > {
-    return (options.client ?? this.client).get<
-      StudyTopicMasteryGetManyResponses,
-      StudyTopicMasteryGetManyErrors,
-      ThrowOnError
-    >({
-      security: [{ scheme: "bearer", type: "http" }],
-      url: "/projects/{project_id}/study/topics",
-      ...options,
-    });
-  }
-
-  /**
-   * Practice Topic
-   *
-   * Save a quiz of one topic's weakest items; 404 for an unknown topic.
-   */
-  public studyTopicPractice<ThrowOnError extends boolean = false>(
-    options: Options<StudyTopicPracticeData, ThrowOnError>,
-  ): RequestResult<
-    StudyTopicPracticeResponses,
-    StudyTopicPracticeErrors,
-    ThrowOnError
-  > {
-    return (options.client ?? this.client).post<
-      StudyTopicPracticeResponses,
-      StudyTopicPracticeErrors,
-      ThrowOnError
-    >({
-      security: [{ scheme: "bearer", type: "http" }],
-      url: "/projects/{project_id}/study/topics/practice",
+      url: "/projects/{project_id}/study/practice",
       ...options,
       headers: {
         "Content-Type": "application/json",

@@ -2,6 +2,8 @@
 
 Status: accepted and implemented for US-58.4 on 2026-11-06
 ([EPIC-58](../epics/EPIC-58-LEARNING-GOALS-REFLECTION-AND-PROGRESS.md)).
+Amended by [ADR-0067](0067-progress-panel.md): pending unclear items are
+split and listed by the server in `GET …/study/progress`.
 
 ## Context
 

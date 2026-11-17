@@ -81,14 +81,14 @@ session; background refetches never reset one.
 
 Decisions are recorded in [ADR-0035](../adr/0035-practice-quizzes-and-grading.md).
 
-| Route                                                     | Behavior                                                                  |
-| --------------------------------------------------------- | ------------------------------------------------------------------------- |
-| `GET /projects/{project_id}/study/quizzes`                | Quiz page, newest first, with counts and last and best score (0–1)       |
-| `POST /projects/{project_id}/study/quizzes`               | Generate and save; `{quiz, files}`, `quiz` null if nothing was usable    |
-| `GET`/`PATCH`/`DELETE …/quizzes/{quiz_id}`                | Read without answer key, rename (`title` only), delete with attempts     |
-| `GET …/quizzes/{quiz_id}/attempts`                        | Attempt page, newest first                                                |
-| `POST …/quizzes/{quiz_id}/attempts`                       | `{answers, model_id?}`; grades, saves and returns the results (201)       |
-| `GET …/quizzes/{quiz_id}/attempts/{attempt_id}`           | One attempt's results with answer key, feedback and live citations       |
+| Route                                           | Behavior                                                              |
+| ----------------------------------------------- | --------------------------------------------------------------------- |
+| `GET /projects/{project_id}/study/quizzes`      | Quiz page, newest first, with counts and last and best score (0–1)    |
+| `POST /projects/{project_id}/study/quizzes`     | Generate and save; `{quiz, files}`, `quiz` null if nothing was usable |
+| `GET`/`PATCH`/`DELETE …/quizzes/{quiz_id}`      | Read without answer key, rename (`title` only), delete with attempts  |
+| `GET …/quizzes/{quiz_id}/attempts`              | Attempt page, newest first                                            |
+| `POST …/quizzes/{quiz_id}/attempts`             | `{answers, model_id?}`; grades, saves and returns the results (201)   |
+| `GET …/quizzes/{quiz_id}/attempts/{attempt_id}` | One attempt's results with answer key, feedback and live citations    |
 
 Generation takes `{model_id, question_count (1–20), kinds, file_ids, title?}`
 and uses the card-draft pipeline and limits (`study/drafting.py`). Each question
@@ -114,21 +114,23 @@ and feedback text are untrusted and render through `MarkdownViewer`.
 
 ## Weak spots (US-53.5)
 
-Decisions are recorded in [ADR-0036](../adr/0036-weak-spots-and-practice.md).
+Decisions are recorded in [ADR-0036](../adr/0036-weak-spots-and-practice.md)
+and [ADR-0067](../adr/0067-progress-panel.md).
 
-| Route                                           | Behavior                                                             |
-| ----------------------------------------------- | -------------------------------------------------------------------- |
-| `GET /projects/{project_id}/study/weak-spots`   | Up to `limit` (1–50, default 20) weak spots, newest miss first      |
-| `POST /projects/{project_id}/study/weak-spots/practice` | `{question_count}` (1–20, default 10); saves and returns a quiz (201) |
+| Route                                        | Behavior                                                                                                                    |
+| -------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `GET /projects/{project_id}/study/progress`  | Topics, up to 50 weak spots newest miss first (with `total` and topic keys), and up to 50 pending unclear items; `no-store` |
+| `POST /projects/{project_id}/study/practice` | `{topic?, question_count}` (1–20, default 10); saves and returns a `practice` quiz (201)                                    |
 
 A question or card is a weak spot when its latest outcome in the project was a
 miss: an incorrect or partly correct quiz answer, or an Again rating. Any later
 success clears it, and ungraded answers are ignored. Each item names its
 original (`root_*`), the question or card last answered (`source_*`), and that
-source's quiz or deck (`container_*`). Nothing is stored.
+source's quiz or deck (`container_*`), plus `topics`, the keys of the original's
+topics. Nothing is stored.
 
-Practice copies the most recent weak spots into a quiz with `origin:
-"weak_spots"` and no model: missed questions keep their answer key (options
+Practice without a topic copies the most recent weak spots into a quiz titled
+"Practice: weak spots" with `origin: "practice"` and no model: missed questions keep their answer key (options
 reshuffled), and weak cards become short-answer questions graded against the
 card's back. Answering a copy counts towards its original. With no weak spots
 the route returns 400.
@@ -142,20 +144,19 @@ with the other quizzes and described as built from weak spots.
 
 Decisions are recorded in [ADR-0037](../adr/0037-study-notes-summaries-and-guides.md).
 
-| Route                                                 | Behavior                                                                  |
-| ----------------------------------------------------- | ------------------------------------------------------------------------- |
-| `POST /projects/{project_id}/study/summaries`         | Draft `{sections, body, citations, files}`; `no-store`, nothing saved     |
-| `POST /projects/{project_id}/study/study-guides`      | Draft day plan `{days, body}` linked to decks and quizzes; nothing saved  |
-| `GET`/`POST /projects/{project_id}/study/notes`       | Note page (newest update first, no bodies) / save a draft (201)          |
-| `GET`/`PATCH`/`DELETE …/notes/{note_id}`              | Read with live citations, edit title and body, delete                     |
+| Route                                            | Behavior                                                                 |
+| ------------------------------------------------ | ------------------------------------------------------------------------ |
+| `POST /projects/{project_id}/study/summaries`    | Draft `{sections, body, citations, files}`; `no-store`, nothing saved    |
+| `POST /projects/{project_id}/study/study-guides` | Draft day plan `{days, body}` linked to decks and quizzes; nothing saved |
+| `GET`/`POST /projects/{project_id}/study/notes`  | Note page (newest update first, no bodies) / save a draft (201)          |
+| `GET`/`PATCH`/`DELETE …/notes/{note_id}`         | Read with live citations, edit title and body, delete                    |
 
 Summaries take `{model_id, depth: simple|standard|expert, file_ids}` and use the
 card-draft pipeline and limits; each section cites the chunks it draws on and
 each file reports `used` or `failed`. Study guides take `{model_id, start_date,
 exam_date, minutes_per_day}` (1–60 days, 10–480 minutes). The model sees deck,
 quiz and file names with counts and scores, never file contents; only deck and
-quiz labels it was given become links. An unusable plan is a 502 and a timeout a
-504. Notes take `{kind, title, body, citations, model_id?}`; citations must be
+quiz labels it was given become links. An unusable plan is a 502 and a timeout a 504. Notes take `{kind, title, body, citations, model_id?}`; citations must be
 in the project's live scope and the model must be one the learner can see.
 
 The project page lists **Study notes** with **Summarize files**
@@ -176,13 +177,12 @@ are dropped, keeping the first spelling. Deck create and update, quiz
 generation and quiz update (`{title?, tags?}`; explicit null is a 422) accept
 them.
 
-| Route                                           | Behavior                                                         |
-| ----------------------------------------------- | ---------------------------------------------------------------- |
-| `GET /projects/{project_id}/study/topics`       | Mastery per topic, by label; `no-store`; nothing stored          |
-| `POST /projects/{project_id}/study/topics/practice` | `{topic, question_count}` (1–20, default 10); saves a quiz (201) |
+Topics are returned by `GET …/study/progress` (by label; nothing stored) and
+practised with `POST …/study/practice` and a `topic`
+([ADR-0067](../adr/0067-progress-panel.md)).
 
 A topic is a case-folded tag. Its items are the cards of decks with the tag and
-the original questions of quizzes with it; weak-spot and topic practice copies
+the original questions of quizzes with it; practice copies
 count towards the item they re-ask, never as items of their own. Each item's
 latest graded outcome is scored 0–1: quiz answers correct 1, partial 0.5,
 incorrect 0 (ungraded ignored); card ratings Again 0, Hard 0.6, Good 0.9,
@@ -193,7 +193,7 @@ points ending now, each computed from events up to that time.
 
 Practice orders the topic's items weakest first (latest score below 1, lowest
 then oldest), then unpracticed items, then the rest by oldest practice, and
-copies them into a quiz with `origin: "topic"`, the topic as its tag and no
+copies them into a quiz with `origin: "practice"`, the topic as its tag and no
 model, exactly like weak-spot practice. An unknown topic is 404 and a topic
 without items is 400.
 
@@ -206,9 +206,9 @@ and **Practice**, which opens the new quiz for taking. Deck forms and the quiz
 
 Decisions are recorded in [ADR-0050](../adr/0050-unclear-items-feed-review.md).
 
-| Route                                              | Behavior                                                                     |
-| -------------------------------------------------- | ---------------------------------------------------------------------------- |
-| `POST /projects/{project_id}/study/unclear-cards`  | `{reflection_id, deck_id?, front, back, weak_spot}`; one card (201), 409 if repeated |
+| Route                                             | Behavior                                                                             |
+| ------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| `POST /projects/{project_id}/study/unclear-cards` | `{reflection_id, deck_id?, front, back, weak_spot}`; one card (201), 409 if repeated |
 
 **Practice unclear items** on a project reflection lists each "still unclear"
 line. The learner edits the question, writes the answer and adds each card
@@ -216,4 +216,3 @@ separately, into a chosen deck or the "Unclear items" deck. With **Also add to
 weak spots** (on by default) the card appears under weak spots as "Flagged as
 unclear" until it is recalled. The flag is not a review, so it changes neither
 scheduling nor mastery.
-

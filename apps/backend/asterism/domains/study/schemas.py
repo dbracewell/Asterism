@@ -269,7 +269,7 @@ QuizTitle = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1
 StudyQuestionKind = Literal["multiple_choice", "short_answer"]
 StudyVerdict = Literal["correct", "partial", "incorrect", "ungraded"]
 StudyGrader = Literal["exact", "model", "none"]
-StudyQuizOrigin = Literal["generated", "weak_spots", "topic"]
+StudyQuizOrigin = Literal["generated", "practice"]
 
 
 class StudyQuizGenerateRequest(BaseModel):
@@ -329,7 +329,7 @@ class StudyQuizSummary(BaseModel):
     # Score fraction (0–1) of the newest and the best attempt, null before the first.
     last_score: float | None
     best_score: float | None
-    # generated from files by ``model_name``, or weak_spots (copied from missed items; no model).
+    # generated from files by ``model_name``, or practice (copied from weak spots or a topic; no model).
     origin: StudyQuizOrigin
     model_id: uuid.UUID | None
     model_name: str | None
@@ -460,9 +460,10 @@ MAX_PRACTICE_QUESTIONS = 20
 class StudyWeakSpot(BaseModel):
     """A question or card whose latest outcome was a miss. Text is untrusted.
 
-    ``root_*`` names the original item (a copy re-asked in a weak-spot quiz counts
+    ``root_*`` names the original item (a copy re-asked in a practice quiz counts
     towards its original); ``source_*`` is the question or card last answered.
-    ``container_*`` is that source's quiz or deck.
+    ``container_*`` is that source's quiz or deck. ``topics`` are the keys of the
+    original's topics (ADR-0067).
     """
 
     root_kind: Literal["question", "card"]
@@ -477,6 +478,7 @@ class StudyWeakSpot(BaseModel):
     container_id: uuid.UUID
     container_title: str
     citations: list[StudyCitation]
+    topics: list[str]
 
 
 class StudyWeakSpots(BaseModel):
@@ -484,14 +486,6 @@ class StudyWeakSpots(BaseModel):
 
     items: list[StudyWeakSpot]
     total: int = Field(ge=0)
-
-
-class StudyWeakSpotPracticeRequest(BaseModel):
-    """Build a quiz from up to ``question_count`` of the most recent weak spots."""
-
-    model_config = ConfigDict(extra="forbid")
-
-    question_count: int = Field(default=10, ge=1, le=MAX_PRACTICE_QUESTIONS)
 
 
 # ---------------------------------------------------------------------------
@@ -688,17 +682,6 @@ class StudyTopicMastery(BaseModel):
     trend: list[StudyTrendPoint]
 
 
-class StudyTopicMasteryList(BaseModel):
-    items: list[StudyTopicMastery]
-    computed_at: int
-
-
-class StudyTopicPracticeRequest(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-    topic: str = Field(min_length=1, max_length=MAX_TAG_CHARS)
-    question_count: int = Field(default=10, ge=1, le=MAX_QUIZ_QUESTIONS)
-
-
 # --- Unclear items (US-58.4) ---------------------------------------------------
 
 
@@ -716,3 +699,42 @@ class StudyUnclearCardCreate(BaseModel):
     front: CardSide
     back: CardSide
     weak_spot: bool = True
+
+
+class StudyUnclearItem(BaseModel):
+    """One "still unclear" line of a reflection that is not a card yet. Text is untrusted."""
+
+    reflection_id: uuid.UUID
+    chat_id: uuid.UUID | None
+    reflected_at: int
+    text: str
+
+
+class StudyUnclearItems(BaseModel):
+    """Pending items, newest reflection first, capped; ``total`` counts all of them."""
+
+    items: list[StudyUnclearItem]
+    total: int = Field(ge=0)
+
+
+# --- Progress (ADR-0067) --------------------------------------------------------
+
+MAX_UNCLEAR_ITEMS = 50
+
+
+class StudyProgress(BaseModel):
+    """Topics, weak spots and pending unclear items of one project, derived on read."""
+
+    topics: list[StudyTopicMastery]
+    weak_spots: StudyWeakSpots
+    unclear: StudyUnclearItems
+    computed_at: int
+
+
+class StudyPracticeRequest(BaseModel):
+    """Copy items into a quiz: one topic's weakest items, or the most recent weak spots."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    topic: str | None = Field(default=None, min_length=1, max_length=MAX_TAG_CHARS)
+    question_count: int = Field(default=10, ge=1, le=MAX_PRACTICE_QUESTIONS)

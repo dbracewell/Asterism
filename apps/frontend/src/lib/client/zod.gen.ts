@@ -3769,6 +3769,16 @@ export const zStudyNoteUpdate = z.object({
 });
 
 /**
+ * StudyPracticeRequest
+ *
+ * Copy items into a quiz: one topic's weakest items, or the most recent weak spots.
+ */
+export const zStudyPracticeRequest = z.object({
+  topic: z.string().min(1).max(40).nullish(),
+  question_count: z.int().gte(1).lte(20).optional().default(10),
+});
+
+/**
  * StudyProjectSummary
  */
 export const zStudyProjectSummary = z.object({
@@ -3886,7 +3896,7 @@ export const zStudyQuiz = z.object({
   attempt_count: z.int().gte(0),
   last_score: z.number().nullable(),
   best_score: z.number().nullable(),
-  origin: z.enum(["generated", "weak_spots", "topic"]),
+  origin: z.enum(["generated", "practice"]),
   model_id: z.uuid().nullable(),
   model_name: z.string().nullable(),
   created_at: z.int(),
@@ -3956,7 +3966,7 @@ export const zStudyQuizSummary = z.object({
   attempt_count: z.int().gte(0),
   last_score: z.number().nullable(),
   best_score: z.number().nullable(),
-  origin: z.enum(["generated", "weak_spots", "topic"]),
+  origin: z.enum(["generated", "practice"]),
   model_id: z.uuid().nullable(),
   model_name: z.string().nullable(),
   created_at: z.int(),
@@ -4088,14 +4098,6 @@ export const zStudySummaryDraft = z.object({
 });
 
 /**
- * StudyTopicPracticeRequest
- */
-export const zStudyTopicPracticeRequest = z.object({
-  topic: z.string().min(1).max(40),
-  question_count: z.int().gte(1).lte(20).optional().default(10),
-});
-
-/**
  * StudyTrendPoint
  *
  * Mastery as of ``at`` (end of a week); null when nothing had been practiced.
@@ -4121,14 +4123,6 @@ export const zStudyTopicMastery = z.object({
 });
 
 /**
- * StudyTopicMasteryList
- */
-export const zStudyTopicMasteryList = z.object({
-  items: z.array(zStudyTopicMastery),
-  computed_at: z.int(),
-});
-
-/**
  * StudyUnclearCardCreate
  *
  * One confirmed "still unclear" item; the learner reviewed both sides.
@@ -4145,13 +4139,36 @@ export const zStudyUnclearCardCreate = z.object({
 });
 
 /**
+ * StudyUnclearItem
+ *
+ * One "still unclear" line of a reflection that is not a card yet. Text is untrusted.
+ */
+export const zStudyUnclearItem = z.object({
+  reflection_id: z.uuid(),
+  chat_id: z.uuid().nullable(),
+  reflected_at: z.int(),
+  text: z.string(),
+});
+
+/**
+ * StudyUnclearItems
+ *
+ * Pending items, newest reflection first, capped; ``total`` counts all of them.
+ */
+export const zStudyUnclearItems = z.object({
+  items: z.array(zStudyUnclearItem),
+  total: z.int().gte(0),
+});
+
+/**
  * StudyWeakSpot
  *
  * A question or card whose latest outcome was a miss. Text is untrusted.
  *
- * ``root_*`` names the original item (a copy re-asked in a weak-spot quiz counts
+ * ``root_*`` names the original item (a copy re-asked in a practice quiz counts
  * towards its original); ``source_*`` is the question or card last answered.
- * ``container_*`` is that source's quiz or deck.
+ * ``container_*`` is that source's quiz or deck. ``topics`` are the keys of the
+ * original's topics (ADR-0067).
  */
 export const zStudyWeakSpot = z.object({
   root_kind: z.enum(["question", "card"]),
@@ -4165,15 +4182,7 @@ export const zStudyWeakSpot = z.object({
   container_id: z.uuid(),
   container_title: z.string(),
   citations: z.array(zStudyCitation),
-});
-
-/**
- * StudyWeakSpotPracticeRequest
- *
- * Build a quiz from up to ``question_count`` of the most recent weak spots.
- */
-export const zStudyWeakSpotPracticeRequest = z.object({
-  question_count: z.int().gte(1).lte(20).optional().default(10),
+  topics: z.array(z.string()),
 });
 
 /**
@@ -4184,6 +4193,18 @@ export const zStudyWeakSpotPracticeRequest = z.object({
 export const zStudyWeakSpots = z.object({
   items: z.array(zStudyWeakSpot),
   total: z.int().gte(0),
+});
+
+/**
+ * StudyProgress
+ *
+ * Topics, weak spots and pending unclear items of one project, derived on read.
+ */
+export const zStudyProgress = z.object({
+  topics: z.array(zStudyTopicMastery),
+  weak_spots: zStudyWeakSpots,
+  unclear: zStudyUnclearItems,
+  computed_at: z.int(),
 });
 
 /**
@@ -6381,49 +6402,25 @@ export const zStudyQuizAttemptGetOnePath = z.object({
  */
 export const zStudyQuizAttemptGetOneResponse = zStudyQuizAttempt;
 
-export const zStudyWeakSpotGetManyPath = z.object({
-  project_id: z.uuid(),
-});
-
-export const zStudyWeakSpotGetManyQuery = z.object({
-  limit: z.int().gte(1).lte(50).optional().default(20),
-});
-
-/**
- * Successful Response
- */
-export const zStudyWeakSpotGetManyResponse = zStudyWeakSpots;
-
-export const zStudyWeakSpotPracticeBody = zStudyWeakSpotPracticeRequest;
-
-export const zStudyWeakSpotPracticePath = z.object({
+export const zStudyProgressGetPath = z.object({
   project_id: z.uuid(),
 });
 
 /**
  * Successful Response
  */
-export const zStudyWeakSpotPracticeResponse = zStudyQuiz;
+export const zStudyProgressGetResponse = zStudyProgress;
 
-export const zStudyTopicMasteryGetManyPath = z.object({
+export const zStudyPracticeCreateBody = zStudyPracticeRequest;
+
+export const zStudyPracticeCreatePath = z.object({
   project_id: z.uuid(),
 });
 
 /**
  * Successful Response
  */
-export const zStudyTopicMasteryGetManyResponse = zStudyTopicMasteryList;
-
-export const zStudyTopicPracticeBody = zStudyTopicPracticeRequest;
-
-export const zStudyTopicPracticePath = z.object({
-  project_id: z.uuid(),
-});
-
-/**
- * Successful Response
- */
-export const zStudyTopicPracticeResponse = zStudyQuiz;
+export const zStudyPracticeCreateResponse = zStudyQuiz;
 
 export const zStudyUnclearCardCreateBody = zStudyUnclearCardCreate;
 

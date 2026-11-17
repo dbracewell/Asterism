@@ -135,8 +135,15 @@ test("shares explorer controls for project membership, library picking, upload, 
   await page.route(`**/api/py/projects/${P}/study/quizzes?**`, (route) =>
     route.fulfill({ json: { items: [], total: 0, page: 1, page_size: 20 } }),
   );
-  await page.route(`**/api/py/projects/${P}/study/weak-spots?**`, (route) =>
-    route.fulfill({ json: { items: [], total: 0 } }),
+  await page.route(`**/api/py/projects/${P}/study/progress`, (route) =>
+    route.fulfill({
+      json: {
+        topics: [],
+        weak_spots: { items: [], total: 0 },
+        unclear: { items: [], total: 0 },
+        computed_at: 1,
+      },
+    }),
   );
   await page.route(`**/api/py/projects/${P}/study/notes?**`, (route) =>
     route.fulfill({ json: { items: [], total: 0, page: 1, page_size: 20 } }),

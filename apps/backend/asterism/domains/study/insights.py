@@ -13,7 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from . import clock
 from .citations import parse_citations
-from .mastery import Item, _history, latest_scores, mean
+from .mastery import Item, latest_scores, load_history, mean
 from .queries import select_cited_cards, select_cited_questions
 
 
@@ -29,7 +29,7 @@ async def scores_by_cited_file(*, user_id: str, project_id: uuid.UUID, session: 
                 items_by_file[file_id].append((kind, item_id))
     if not items_by_file:
         return {}
-    history = await _history(user_id=user_id, project_id=project_id, session=session)
+    history = await load_history(user_id=user_id, project_id=project_id, session=session)
     now = clock.now_seconds()
     result = {}
     for file_id, items in items_by_file.items():

@@ -311,9 +311,11 @@ US-53.3 adds FSRS-6 scheduling, review logs, due counts and the review queue and
 rating routes. US-53.4 adds practice quizzes under `…/study/quizzes`, with exact
 multiple-choice grading, model-graded short answers and saved attempts
 ([ADR-0035](../../docs/adr/0035-practice-quizzes-and-grading.md)). US-53.5 derives
-weak spots from attempts and review logs at `…/study/weak-spots` and builds
-practice quizzes from them
-([ADR-0036](../../docs/adr/0036-weak-spots-and-practice.md)). US-53.6 adds cited
+weak spots from attempts and review logs and builds practice quizzes from
+them ([ADR-0036](../../docs/adr/0036-weak-spots-and-practice.md)); topics, weak
+spots and pending unclear items are read together at `…/study/progress` and
+practised at `…/study/practice`
+([ADR-0067](../../docs/adr/0067-progress-panel.md)). US-53.6 adds cited
 summary drafts, study-guide drafts and saved study notes
 ([ADR-0037](../../docs/adr/0037-study-notes-summaries-and-guides.md)). See the [study tools
 contract](../../docs/architecture/study-tools.md) and

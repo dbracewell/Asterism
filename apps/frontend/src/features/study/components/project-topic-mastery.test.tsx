@@ -13,11 +13,11 @@ const mocks = vi.hoisted(() => ({
 vi.mock("@/lib/api", () => ({ client: {} }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: mocks.push }) }));
 vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
-  studyTopicMasteryGetManyOptions: () => ({
-    queryKey: [{ _id: "studyTopicMasteryGetMany" }],
-    queryFn: () => mocks.topics(),
+  studyProgressGetOptions: () => ({
+    queryKey: [{ _id: "studyProgressGet" }],
+    queryFn: async () => ({ topics: (await mocks.topics()).items }),
   }),
-  studyTopicPracticeMutation: () => ({ mutationFn: mocks.practice }),
+  studyPracticeCreateMutation: () => ({ mutationFn: mocks.practice }),
 }));
 
 const topic = (overrides: Partial<StudyTopicMastery>): StudyTopicMastery => ({

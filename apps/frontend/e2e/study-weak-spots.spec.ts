@@ -18,6 +18,7 @@ const spot = (overrides: Record<string, unknown>) => ({
   container_id: Q,
   container_title: "Cell biology quiz",
   citations: [],
+  topics: [],
   ...overrides,
 });
 
@@ -27,38 +28,40 @@ test("lists weak spots and builds a practice quiz from them", async ({
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
   const practiced: unknown[] = [];
-  await page.route(`**/api/py/projects/${P}/study/weak-spots?**`, (route) =>
+  await page.route(`**/api/py/projects/${P}/study/progress`, (route) =>
     route.fulfill({
       json: {
-        items: [
-          spot({}),
-          spot({
-            root_kind: "card",
-            root_id: "99999999-9999-4999-8999-999999999992",
-            source_kind: "card",
-            source_id: "99999999-9999-4999-8999-999999999992",
-            kind: "card",
-            prompt: "<img src=x onerror=alert(1)> What is ATP?",
-            outcome: "again",
-            container_id: D,
-            container_title:
-              "A deck with a rather long name that should truncate",
-          }),
-        ],
-        total: 2,
+        topics: [],
+        unclear: { items: [], total: 0 },
+        computed_at: 1,
+        weak_spots: {
+          items: [
+            spot({}),
+            spot({
+              root_kind: "card",
+              root_id: "99999999-9999-4999-8999-999999999992",
+              source_kind: "card",
+              source_id: "99999999-9999-4999-8999-999999999992",
+              kind: "card",
+              prompt: "<img src=x onerror=alert(1)> What is ATP?",
+              outcome: "again",
+              container_id: D,
+              container_title:
+                "A deck with a rather long name that should truncate",
+            }),
+          ],
+          total: 2,
+        },
       },
     }),
   );
-  await page.route(
-    `**/api/py/projects/${P}/study/weak-spots/practice`,
-    (route) => {
-      practiced.push(route.request().postDataJSON());
-      return route.fulfill({
-        status: 201,
-        json: { id: W, questions: [], origin: "weak_spots" },
-      });
-    },
-  );
+  await page.route(`**/api/py/projects/${P}/study/practice`, (route) => {
+    practiced.push(route.request().postDataJSON());
+    return route.fulfill({
+      status: 201,
+      json: { id: W, questions: [], origin: "practice" },
+    });
+  });
 
   await page.goto("/e2e/study?view=weak-spots");
   const section = page.getByRole("region", { name: "Weak spots" });

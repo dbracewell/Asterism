@@ -1,6 +1,9 @@
 # ADR-0036 — Weak spots and weak-spot practice
 
-Status: accepted for US-53.5 on 2026-11-01.
+Status: accepted for US-53.5 on 2026-11-01. Amended by
+[ADR-0067](0067-progress-panel.md): weak spots are read through
+`GET …/study/progress` with topic tags, practice moved to `POST …/study/practice`
+and the `weak_spots` origin became `practice`.
 
 ## Context
 
@@ -15,13 +18,13 @@ Review history must stay a user record, not agent memory.
 **Weak spots are derived on read, never stored.** An item is weak when its
 latest outcome in the project was a miss:
 
-| Outcome                                     | Counts as                  |
-| ------------------------------------------- | -------------------------- |
-| Quiz answer `incorrect` or `partial`        | Miss                       |
-| Quiz answer `correct`                       | Success                    |
-| Quiz answer `ungraded`                      | Ignored (says nothing)     |
-| Card rating Again                           | Miss                       |
-| Card rating Hard, Good or Easy              | Success                    |
+| Outcome                              | Counts as              |
+| ------------------------------------ | ---------------------- |
+| Quiz answer `incorrect` or `partial` | Miss                   |
+| Quiz answer `correct`                | Success                |
+| Quiz answer `ungraded`               | Ignored (says nothing) |
+| Card rating Again                    | Miss                   |
+| Card rating Hard, Good or Easy       | Success                |
 
 One SQL query unions answer and rating events, ranks them per item by time and
 keeps items whose newest event is a miss, most recent first. A later success

@@ -7986,6 +7986,40 @@ export type StudyNoteUpdate = {
 };
 
 /**
+ * StudyPracticeRequest
+ *
+ * Copy items into a quiz: one topic's weakest items, or the most recent weak spots.
+ */
+export type StudyPracticeRequest = {
+  /**
+   * Topic
+   */
+  topic?: string | null;
+  /**
+   * Question Count
+   */
+  question_count?: number;
+};
+
+/**
+ * StudyProgress
+ *
+ * Topics, weak spots and pending unclear items of one project, derived on read.
+ */
+export type StudyProgress = {
+  /**
+   * Topics
+   */
+  topics: Array<StudyTopicMastery>;
+  weak_spots: StudyWeakSpots;
+  unclear: StudyUnclearItems;
+  /**
+   * Computed At
+   */
+  computed_at: number;
+};
+
+/**
  * StudyProjectSummary
  */
 export type StudyProjectSummary = {
@@ -8050,7 +8084,7 @@ export type StudyQuiz = {
   /**
    * Origin
    */
-  origin: "generated" | "weak_spots" | "topic";
+  origin: "generated" | "practice";
   /**
    * Model Id
    */
@@ -8459,7 +8493,7 @@ export type StudyQuizSummary = {
   /**
    * Origin
    */
-  origin: "generated" | "weak_spots" | "topic";
+  origin: "generated" | "practice";
   /**
    * Model Id
    */
@@ -8767,34 +8801,6 @@ export type StudyTopicMastery = {
 };
 
 /**
- * StudyTopicMasteryList
- */
-export type StudyTopicMasteryList = {
-  /**
-   * Items
-   */
-  items: Array<StudyTopicMastery>;
-  /**
-   * Computed At
-   */
-  computed_at: number;
-};
-
-/**
- * StudyTopicPracticeRequest
- */
-export type StudyTopicPracticeRequest = {
-  /**
-   * Topic
-   */
-  topic: string;
-  /**
-   * Question Count
-   */
-  question_count?: number;
-};
-
-/**
  * StudyTrendPoint
  *
  * Mastery as of ``at`` (end of a week); null when nothing had been practiced.
@@ -8842,13 +8848,54 @@ export type StudyUnclearCardCreate = {
 };
 
 /**
+ * StudyUnclearItem
+ *
+ * One "still unclear" line of a reflection that is not a card yet. Text is untrusted.
+ */
+export type StudyUnclearItem = {
+  /**
+   * Reflection Id
+   */
+  reflection_id: string;
+  /**
+   * Chat Id
+   */
+  chat_id: string | null;
+  /**
+   * Reflected At
+   */
+  reflected_at: number;
+  /**
+   * Text
+   */
+  text: string;
+};
+
+/**
+ * StudyUnclearItems
+ *
+ * Pending items, newest reflection first, capped; ``total`` counts all of them.
+ */
+export type StudyUnclearItems = {
+  /**
+   * Items
+   */
+  items: Array<StudyUnclearItem>;
+  /**
+   * Total
+   */
+  total: number;
+};
+
+/**
  * StudyWeakSpot
  *
  * A question or card whose latest outcome was a miss. Text is untrusted.
  *
- * ``root_*`` names the original item (a copy re-asked in a weak-spot quiz counts
+ * ``root_*`` names the original item (a copy re-asked in a practice quiz counts
  * towards its original); ``source_*`` is the question or card last answered.
- * ``container_*`` is that source's quiz or deck.
+ * ``container_*`` is that source's quiz or deck. ``topics`` are the keys of the
+ * original's topics (ADR-0067).
  */
 export type StudyWeakSpot = {
   /**
@@ -8895,18 +8942,10 @@ export type StudyWeakSpot = {
    * Citations
    */
   citations: Array<StudyCitation>;
-};
-
-/**
- * StudyWeakSpotPracticeRequest
- *
- * Build a quiz from up to ``question_count`` of the most recent weak spots.
- */
-export type StudyWeakSpotPracticeRequest = {
   /**
-   * Question Count
+   * Topics
    */
-  question_count?: number;
+  topics: Array<string>;
 };
 
 /**
@@ -15562,100 +15601,7 @@ export type StudyQuizAttemptGetOneResponses = {
 export type StudyQuizAttemptGetOneResponse =
   StudyQuizAttemptGetOneResponses[keyof StudyQuizAttemptGetOneResponses];
 
-export type StudyWeakSpotGetManyData = {
-  body?: never;
-  path: {
-    /**
-     * Project Id
-     */
-    project_id: string;
-  };
-  query?: {
-    /**
-     * Limit
-     */
-    limit?: number;
-  };
-  url: "/projects/{project_id}/study/weak-spots";
-};
-
-export type StudyWeakSpotGetManyErrors = {
-  /**
-   * Bad Request
-   */
-  400: ErrorDetail;
-  /**
-   * Unauthorized
-   */
-  401: ErrorDetail;
-  /**
-   * Not Found
-   */
-  404: ErrorDetail;
-  /**
-   * Validation Error
-   */
-  422: ErrorDetail;
-};
-
-export type StudyWeakSpotGetManyError =
-  StudyWeakSpotGetManyErrors[keyof StudyWeakSpotGetManyErrors];
-
-export type StudyWeakSpotGetManyResponses = {
-  /**
-   * Successful Response
-   */
-  200: StudyWeakSpots;
-};
-
-export type StudyWeakSpotGetManyResponse =
-  StudyWeakSpotGetManyResponses[keyof StudyWeakSpotGetManyResponses];
-
-export type StudyWeakSpotPracticeData = {
-  body: StudyWeakSpotPracticeRequest;
-  path: {
-    /**
-     * Project Id
-     */
-    project_id: string;
-  };
-  query?: never;
-  url: "/projects/{project_id}/study/weak-spots/practice";
-};
-
-export type StudyWeakSpotPracticeErrors = {
-  /**
-   * Bad Request
-   */
-  400: ErrorDetail;
-  /**
-   * Unauthorized
-   */
-  401: ErrorDetail;
-  /**
-   * Not Found
-   */
-  404: ErrorDetail;
-  /**
-   * Validation Error
-   */
-  422: ErrorDetail;
-};
-
-export type StudyWeakSpotPracticeError =
-  StudyWeakSpotPracticeErrors[keyof StudyWeakSpotPracticeErrors];
-
-export type StudyWeakSpotPracticeResponses = {
-  /**
-   * Successful Response
-   */
-  201: StudyQuiz;
-};
-
-export type StudyWeakSpotPracticeResponse =
-  StudyWeakSpotPracticeResponses[keyof StudyWeakSpotPracticeResponses];
-
-export type StudyTopicMasteryGetManyData = {
+export type StudyProgressGetData = {
   body?: never;
   path: {
     /**
@@ -15664,10 +15610,10 @@ export type StudyTopicMasteryGetManyData = {
     project_id: string;
   };
   query?: never;
-  url: "/projects/{project_id}/study/topics";
+  url: "/projects/{project_id}/study/progress";
 };
 
-export type StudyTopicMasteryGetManyErrors = {
+export type StudyProgressGetErrors = {
   /**
    * Bad Request
    */
@@ -15686,21 +15632,21 @@ export type StudyTopicMasteryGetManyErrors = {
   422: ErrorDetail;
 };
 
-export type StudyTopicMasteryGetManyError =
-  StudyTopicMasteryGetManyErrors[keyof StudyTopicMasteryGetManyErrors];
+export type StudyProgressGetError =
+  StudyProgressGetErrors[keyof StudyProgressGetErrors];
 
-export type StudyTopicMasteryGetManyResponses = {
+export type StudyProgressGetResponses = {
   /**
    * Successful Response
    */
-  200: StudyTopicMasteryList;
+  200: StudyProgress;
 };
 
-export type StudyTopicMasteryGetManyResponse =
-  StudyTopicMasteryGetManyResponses[keyof StudyTopicMasteryGetManyResponses];
+export type StudyProgressGetResponse =
+  StudyProgressGetResponses[keyof StudyProgressGetResponses];
 
-export type StudyTopicPracticeData = {
-  body: StudyTopicPracticeRequest;
+export type StudyPracticeCreateData = {
+  body: StudyPracticeRequest;
   path: {
     /**
      * Project Id
@@ -15708,10 +15654,10 @@ export type StudyTopicPracticeData = {
     project_id: string;
   };
   query?: never;
-  url: "/projects/{project_id}/study/topics/practice";
+  url: "/projects/{project_id}/study/practice";
 };
 
-export type StudyTopicPracticeErrors = {
+export type StudyPracticeCreateErrors = {
   /**
    * Bad Request
    */
@@ -15730,18 +15676,18 @@ export type StudyTopicPracticeErrors = {
   422: ErrorDetail;
 };
 
-export type StudyTopicPracticeError =
-  StudyTopicPracticeErrors[keyof StudyTopicPracticeErrors];
+export type StudyPracticeCreateError =
+  StudyPracticeCreateErrors[keyof StudyPracticeCreateErrors];
 
-export type StudyTopicPracticeResponses = {
+export type StudyPracticeCreateResponses = {
   /**
    * Successful Response
    */
   201: StudyQuiz;
 };
 
-export type StudyTopicPracticeResponse =
-  StudyTopicPracticeResponses[keyof StudyTopicPracticeResponses];
+export type StudyPracticeCreateResponse =
+  StudyPracticeCreateResponses[keyof StudyPracticeCreateResponses];
 
 export type StudyUnclearCardCreateData = {
   body: StudyUnclearCardCreate;

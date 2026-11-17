@@ -6,8 +6,8 @@ import { Button } from "@/components/ui/button";
 import { client } from "@/lib/api";
 import type { StudyTopicMastery, StudyTrendPoint } from "@/lib/client";
 import {
-  studyTopicMasteryGetManyOptions,
-  studyTopicPracticeMutation,
+  studyPracticeCreateMutation,
+  studyProgressGetOptions,
 } from "@/lib/client/@tanstack/react-query.gen";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
@@ -24,14 +24,15 @@ export const TOPIC_PRACTICE_QUESTIONS = 10;
 export function ProjectTopicMastery({ projectId }: { projectId: string }) {
   const router = useRouter();
   const topics = useQuery({
-    ...studyTopicMasteryGetManyOptions({
+    ...studyProgressGetOptions({
       client,
       path: { project_id: projectId },
     }),
+    select: (data) => ({ items: data.topics }),
     retry: false,
   });
   const practice = useMutation({
-    ...studyTopicPracticeMutation({ client }),
+    ...studyPracticeCreateMutation({ client }),
     onSuccess: (quiz) =>
       router.push(`/projects/${projectId}/study/quizzes/${quiz.id}/take`),
   });
