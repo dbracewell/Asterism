@@ -1,6 +1,6 @@
 # EPIC-77: Chat runtime reliability
 
-Status: in progress (US-77.2 and US-77.1 done). Source: [codebase review](../../codebase_review.md), verified 2026-11-14 (items 1, 2, 3, 7, 8, 12).
+Status: in progress (US-77.2, US-77.1 and US-77.3 done). Source: [codebase review](../../codebase_review.md), verified 2026-11-14 (items 1, 2, 3, 7, 8, 12).
 
 ## Objective
 
@@ -30,9 +30,9 @@ An agent error, an empty completion or an unhandled exception leaves the parent 
 
 All controllers for a chat consume one shared `MessageQueue`, so two tabs steal each other's packets.
 
-- [ ] Give each attached `ChatController` its own bounded subscriber queue on `ChatJob`; broadcast each packet to every subscriber.
-- [ ] Buffer on the job only while no controller is attached, and replay to the first controller that attaches; keep the "drop oldest" bound and `discard_message_queue` lifecycle.
-- [ ] Test two controllers on one chat both receive every `DELTA` and `COMPLETE`, and that detach/reattach loses nothing within the bound.
+- [x] Give each attached `ChatController` its own bounded subscriber queue on the chat's stream (1:1 with `ChatJob`); broadcast each packet to every subscriber.
+- [x] Buffer on the job only while no controller is attached, and replay to the first controller that attaches; keep the "drop oldest" bound and `discard_message_queue` lifecycle.
+- [x] Test two controllers on one chat both receive every `DELTA` and `COMPLETE`, and that detach/reattach loses nothing within the bound.
 
 ### US-77.4: Job and shutdown races
 

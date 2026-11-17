@@ -11,7 +11,7 @@ from asterism.domains.agent.schemas import AgentEventType
 from asterism.domains.chat.capacity import ChatCapacityError
 from asterism.domains.chat.connection import Connection
 from asterism.domains.chat.jobs import ChatJob, ControllerAdmission, chat_jobs
-from asterism.domains.chat.message_queue import MessageQueue, get_message_queue
+from asterism.domains.chat.message_queue import ChatStream, MessageQueue, get_message_queue, subscribe, unsubscribe
 from asterism.domains.chat.orchestrator import ChatOrchestrator
 
 
@@ -34,10 +34,13 @@ class ChatController:
         self.tasks: BackgroundTaskManager = BackgroundTaskManager()
         self.logger: Logger = get_logger("ChatSession")
         self.inbound_commands: MessageQueue = MessageQueue()
+        # This controller's own copy of the chat's outbound packets (US-77.3).
+        self.outbound: MessageQueue | None = None
         self._is_running: bool = False
 
     @property
-    def queue(self) -> MessageQueue:
+    def queue(self) -> ChatStream:
+        """The chat's stream; a packet put here reaches every attached controller."""
         return get_message_queue(self.chat_id)
 
     async def run(self) -> None:
@@ -45,6 +48,7 @@ class ChatController:
         try:
             await self.connection.accept()
             self.manager.attach(self.chat_id, self.job, self.admission)
+            self.outbound, replayed = subscribe(self.chat_id)
             self._is_running = True
             self.tasks.spawn(self.connection.heartbeat_loop())
             self.tasks.spawn(self._status_loop())
@@ -53,7 +57,7 @@ class ChatController:
             # Work survives controller disconnects. Admission fails immediately;
             # retain the control channel so clients can retry or cancel.
             try:
-                if self.queue.qsize() == 0 and not self.job.is_active:
+                if not replayed and not self.job.is_active:
                     self.job.start(self.orchestrator.resume_pending_turn())
                 self.job.start_title_generation()
             except ChatCapacityError as error:
@@ -82,6 +86,8 @@ class ChatController:
             if command_tasks:
                 await asyncio.gather(*command_tasks, return_exceptions=True)
             await self.tasks.shutdown()
+            if self.outbound is not None:
+                unsubscribe(self.chat_id, self.outbound)
             await self.manager.detach(self.chat_id, self.job, self.admission)
 
     async def _accept_commands_loop(self) -> None:
@@ -151,10 +157,11 @@ class ChatController:
         await self.orchestrator.handle_regenerate_message(parent_message_index)
 
     async def _message_queue_processing_loop(self) -> None:
+        assert self.outbound is not None
         event_sequence: set[AgentEventType] = set()
 
         while self._is_running:
-            msg = await self.queue.get()
+            msg = await self.outbound.get()
 
             try:
                 msg_type: AgentEventType = AgentEventType(msg["type"])

@@ -83,9 +83,15 @@ tasks; the chat job owns provider generation. Disconnecting cancels connection
 workers without canceling the generation task. Explicit `cancel` stops generation
 and persists canceled status plus any partial assistant output.
 
-The controller reads commands, processes normal commands sequentially, drains the
-shared outbound queue, emits status every 0.5 seconds, and sends heartbeat pongs
-every 10 seconds. Tool approvals and cancellation bypass the sequential queue so
+The controller reads commands, processes normal commands sequentially, drains its
+own outbound queue, emits status every 0.5 seconds, and sends heartbeat pongs
+every 10 seconds. The chat's `ChatStream` broadcasts every packet to each attached
+controller's bounded queue (256 packets, dropping the oldest), so several tabs on
+one chat each get the full stream (US-77.3). While no controller is attached the
+stream buffers packets under the same bound and replays them to the first one that
+attaches; a controller that is the last to leave hands its unsent packets back to
+that buffer. A stream with attached controllers is pinned; only idle streams use the
+cache TTL, and retiring the chat discards it. Tool approvals and cancellation bypass the sequential queue so
 they can resolve a run that is waiting. Jobs are process-local; pending snapshots
 are persisted, but an interrupted provider connection is not durable. See
 [resource lifecycle contracts](../adr/adr-0016-memory-resource-contracts.md#operations) for

@@ -48,7 +48,7 @@ Source: [codebase review](codebase_review.md), verified against the code on 2026
 
 - [x] US-77.1: Authorization checks stop running per token
 - [x] US-77.2: Failed turns leave `PENDING`
-- [ ] US-77.3: Several tabs on one chat each get the full stream
+- [x] US-77.3: Several tabs on one chat each get the full stream
 - [ ] US-77.4: Job and shutdown races
 - [ ] US-77.5: WebSocket rejects cleanly before accept
 
