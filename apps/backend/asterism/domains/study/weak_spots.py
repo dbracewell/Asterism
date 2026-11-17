@@ -1,4 +1,4 @@
-"""Weak spots and weak-spot practice (US-53.5, ADR-0036).
+"""Weak spots and their practice copies (US-53.5, ADR-0036, ADR-0067).
 
 A weak spot is a quiz question or card whose latest outcome in the project was a
 miss: an incorrect or partly correct answer, or an Again rating. Any later
@@ -6,9 +6,10 @@ success clears it, including answering a weak-spot copy. Weak spots are derived
 on read from attempts and review logs; nothing is stored, and no agent or prompt
 path reads them.
 
-Practice builds a quiz by copying the weak items, without a model call: missed
+Practice (``practice.py``) copies the weak items without a model call: missed
 questions are re-asked (multiple-choice options reshuffled) and weak cards become
-short-answer questions graded against the card's back.
+short-answer questions graded against the card's back. Callers check project
+ownership.
 """
 
 import random
@@ -18,19 +19,16 @@ from dataclasses import dataclass
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from asterism.common.log import get_logger
 from asterism.core.exceptions import BadDataException
-from asterism.domains.projects.scope import project_member_files, require_owned_project
+from asterism.domains.projects.scope import project_member_files
 
 from .citations import parse_citations, resolve_citations
 from .models import StudyCardModel, StudyQuizQuestionModel
 from .queries import select_cards_with_deck_name, select_questions_with_quiz_title, select_weak_spots
-from .quizzes import QuestionDraft, question_options, save_quiz, to_quiz
-from .schemas import StudyQuiz, StudyWeakSpot, StudyWeakSpotPracticeRequest, StudyWeakSpots
+from .quizzes import QuestionDraft, question_options
+from .schemas import StudyWeakSpot, StudyWeakSpots
 
-logger = get_logger("StudyWeakSpots")
-
-PRACTICE_TITLE = "Weak spots practice"
+Item = tuple[str, uuid.UUID]
 
 
 @dataclass(frozen=True)
@@ -72,8 +70,16 @@ async def _load_sources(*, user_id: str, rows: list[_Row], session: AsyncSession
     return _Sources(questions, cards)
 
 
-async def list_weak_spots(*, user_id: str, project_id: uuid.UUID, limit: int, session: AsyncSession) -> StudyWeakSpots:
-    await require_owned_project(user_id=user_id, project_id=project_id, session=session)
+async def count_weak_spots(*, user_id: str, project_id: uuid.UUID, session: AsyncSession) -> int:
+    statement = select_weak_spots(user_id=user_id, project_id=project_id)
+    total = await session.scalar(select(func.count()).select_from(statement.order_by(None).subquery()))
+    return total or 0
+
+
+async def weak_spots(
+    *, user_id: str, project_id: uuid.UUID, limit: int, item_topics: dict[Item, list[str]], session: AsyncSession
+) -> StudyWeakSpots:
+    """The most recent weak spots of an owned project, each with its original's topic keys."""
     rows, total = await _weak_rows(user_id=user_id, project_id=project_id, limit=limit, session=session)
     sources = await _load_sources(user_id=user_id, rows=rows, session=session)
     stored = [
@@ -104,6 +110,7 @@ async def list_weak_spots(*, user_id: str, project_id: uuid.UUID, limit: int, se
                 container_id=container_id,
                 container_title=title,
                 citations=item_citations,
+                topics=item_topics.get((row.root_kind, row.root_id), []),
             )
         )
     return StudyWeakSpots(items=items, total=total)
@@ -148,44 +155,27 @@ def copy_card(card: StudyCardModel, members: set[uuid.UUID]) -> QuestionDraft:
     )
 
 
-async def practice_weak_spots(
-    *,
-    user_id: str,
-    project_id: uuid.UUID,
-    request: StudyWeakSpotPracticeRequest,
-    session: AsyncSession,
-    rng: random.Random | None = None,
-) -> StudyQuiz:
-    """Save a quiz of the most recent weak spots; 400 when there are none."""
-    await require_owned_project(user_id=user_id, project_id=project_id, session=session)
-    rows, _ = await _weak_rows(user_id=user_id, project_id=project_id, limit=request.question_count, session=session)
+async def live_files(
+    *, user_id: str, project_id: uuid.UUID, stored: list[str], session: AsyncSession
+) -> set[uuid.UUID]:
+    """Cited files still in the project; copies keep only those, as any write must."""
+    cited = {citation.file_id for value in stored for citation in parse_citations(value)}
+    return set(await project_member_files(user_id=user_id, project_id=project_id, file_ids=cited, session=session))
+
+
+async def weak_spot_drafts(
+    *, user_id: str, project_id: uuid.UUID, count: int, session: AsyncSession, rng: random.Random
+) -> list[QuestionDraft]:
+    """Copies of the ``count`` most recent weak spots of an owned project; 400 when there are none."""
+    rows, _ = await _weak_rows(user_id=user_id, project_id=project_id, limit=count, session=session)
     if not rows:
         raise BadDataException("There are no weak spots to practice yet")
     sources = await _load_sources(user_id=user_id, rows=rows, session=session)
-    cited = {
-        citation.file_id
-        for value in [q.citations for q, _ in sources.questions.values()]
-        + [c.citations for c, _ in sources.cards.values()]
-        for citation in parse_citations(value)
-    }
-    # Copies keep only citations whose files are still in the project, as any write must.
-    members = set(await project_member_files(user_id=user_id, project_id=project_id, file_ids=cited, session=session))
-    rng = rng or random.Random()
-    questions = [
+    stored = [q.citations for q, _ in sources.questions.values()] + [c.citations for c, _ in sources.cards.values()]
+    members = await live_files(user_id=user_id, project_id=project_id, stored=stored, session=session)
+    return [
         copy_question(sources.questions[row.source_id][0], row.root_kind, row.root_id, members, rng)
         if row.source_kind == "question"
         else copy_card(sources.cards[row.source_id][0], members)
         for row in rows
     ]
-    quiz = await save_quiz(
-        user_id=user_id,
-        project_id=project_id,
-        title=PRACTICE_TITLE,
-        origin="weak_spots",
-        model_id=None,
-        model_name=None,
-        questions=questions,
-        session=session,
-    )
-    logger.info(f"Built weak-spot quiz {quiz.id} with {len(questions)} questions for user {user_id}")
-    return await to_quiz(user_id=user_id, quiz=quiz, session=session)

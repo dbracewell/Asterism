@@ -395,6 +395,13 @@ def select_reflection_card(*, user_id: str, reflection_id: uuid.UUID, front: str
     )
 
 
+def select_reflection_card_fronts(*, user_id: str, reflection_ids: list[uuid.UUID]):
+    """``(reflection id, front)`` of cards made from these reflections, in any deck."""
+    return select(StudyCardModel.source_reflection_id, StudyCardModel.front).where(
+        StudyCardModel.user_id == user_id, StudyCardModel.source_reflection_id.in_(reflection_ids)
+    )
+
+
 def select_cited_cards(*, user_id: str, project_id: uuid.UUID):
     """``(card id, citations JSON)`` for cards of the project's decks."""
     return (

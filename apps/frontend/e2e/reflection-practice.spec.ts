@@ -16,6 +16,7 @@ const spot = {
   container_id: "44444444-4444-4444-8444-444444444444",
   container_title: "Unclear items",
   citations: [],
+  topics: [],
 };
 
 test("turns one confirmed unclear item into a card and a weak spot", async ({
@@ -73,14 +74,16 @@ test("turns one confirmed unclear item into a card and a weak spot", async ({
   await page.route(`**/api/py/projects/${P}/study/notes?**`, (route) =>
     route.fulfill({ json: empty }),
   );
-  await page.route(`**/api/py/projects/${P}/study/topics`, (route) =>
-    route.fulfill({ json: { items: [], computed_at: 1 } }),
-  );
-  await page.route(`**/api/py/projects/${P}/study/weak-spots?**`, (route) =>
+  await page.route(`**/api/py/projects/${P}/study/progress`, (route) =>
     route.fulfill({
-      json: created.length
-        ? { items: [spot], total: 1 }
-        : { items: [], total: 0 },
+      json: {
+        topics: [],
+        weak_spots: created.length
+          ? { items: [spot], total: 1 }
+          : { items: [], total: 0 },
+        unclear: { items: [], total: 0 },
+        computed_at: 1,
+      },
     }),
   );
   await page.route("**/api/py/reflections/?**", (route) =>

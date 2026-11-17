@@ -50,11 +50,11 @@ Source: user request and the [feature overlap review](docs/reviews/2026-11-17-fe
 
 ### US-84.1: Progress read and one practice route (backend)
 
-- [ ] ADR-0067 "Progress panel"; amend ADR-0036/0049/0050
-- [ ] `GET …/study/progress`: topics, weak spots with topics, pending unclear items
-- [ ] Server-side unclear-item splitting with tests
-- [ ] `POST …/study/practice {topic?}`; one `practice` quiz origin
-- [ ] Remove old topics/weak-spots reads and practice routes; regenerate client
+- [x] ADR-0067 "Progress panel"; amend ADR-0036/0049/0050
+- [x] `GET …/study/progress`: topics, weak spots with topics, pending unclear items
+- [x] Server-side unclear-item splitting with tests
+- [x] `POST …/study/practice {topic?}`; one `practice` quiz origin
+- [x] Remove old topics/weak-spots reads and practice routes; regenerate client
 
 ### US-84.2: Progress panel (frontend)
 

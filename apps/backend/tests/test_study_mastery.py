@@ -1,4 +1,4 @@
-"""US-58.3: topic tags, mastery per topic from study results, and topic practice."""
+"""US-58.3, ADR-0067: topic tags, mastery per topic from study results, and topic practice."""
 
 import uuid
 
@@ -8,7 +8,7 @@ from test_projects_api import auth, create
 from test_study_drafts import drafts_api as _drafts_api
 from test_study_drafts import project_api as _project_api
 from test_study_quizzes import answer_for, option_index, quizzes_path, setup_quiz, submit
-from test_study_weak_spots import rate
+from test_study_weak_spots import practice, progress, progress_path, rate
 from test_study_weak_spots import ticking as _ticking
 
 project_api = _project_api
@@ -18,14 +18,8 @@ ticking = _ticking
 POWER, MEMBRANE = "Powerhouse of the cell?", "Cell membrane is made of?"
 
 
-def topics_path(project_id, *rest):
-    return "/".join([f"/projects/{project_id}/study/topics", *rest])
-
-
 async def topics(api, project_id, user="a"):
-    response = await api.client.get(topics_path(project_id), headers=auth(user))
-    assert response.status_code == 200, response.text
-    return {item["label"]: item for item in response.json()["items"]}
+    return {item["label"]: item for item in (await progress(api, project_id, user))["topics"]}
 
 
 async def deck_with_cards(api, project_id, tags, fronts=("A?", "B?"), name="Deck"):
@@ -132,12 +126,10 @@ async def test_topic_practice_copies_weakest_items_and_counts_towards_originals(
     await rate(api, project_id, deck, strong, "easy")
     await rate(api, project_id, deck, weak, "again")
 
-    response = await api.client.post(
-        topics_path(project_id, "practice"), headers=auth(), json={"topic": " CELLS ", "question_count": 2}
-    )
+    response = await practice(api, project_id, topic=" CELLS ", question_count=2)
     assert response.status_code == 201, response.text
     quiz = response.json()
-    assert quiz["origin"] == "topic" and quiz["title"] == "Practice: Cells" and quiz["tags"] == ["Cells"]
+    assert quiz["origin"] == "practice" and quiz["title"] == "Practice: Cells" and quiz["tags"] == ["Cells"]
     assert quiz["model_name"] is None
     assert [question["prompt"] for question in quiz["questions"]] == ["Weak?", "New?"]
     # The practice quiz's copies are not new items.
@@ -161,9 +153,9 @@ async def test_topics_are_owner_and_project_scoped(drafts_api, ticking):
     other = (await create(api.client, name="Other"))["id"]
     await deck_with_cards(api, project_id, ["Cells"], fronts=())
     assert (await topics(api, other)) == {}
-    assert (await api.client.get(topics_path(project_id), headers=auth("b"))).status_code == 404
-    practice = topics_path(project_id, "practice")
-    assert (await api.client.post(practice, headers=auth(), json={"topic": "Unknown"})).status_code == 404
+    assert (await api.client.get(progress_path(project_id), headers=auth("b"))).status_code == 404
+    assert (await practice(api, project_id, topic="Unknown")).status_code == 404
+    assert (await practice(api, project_id, topic="   ")).status_code == 404
     # A tagged deck without cards gives the topic nothing to practice.
-    assert (await api.client.post(practice, headers=auth(), json={"topic": "cells"})).status_code == 400
-    assert (await api.client.post(practice, headers=auth("b"), json={"topic": "cells"})).status_code == 404
+    assert (await practice(api, project_id, topic="cells")).status_code == 400
+    assert (await practice(api, project_id, user="b", topic="cells")).status_code == 404

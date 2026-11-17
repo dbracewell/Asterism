@@ -14,8 +14,9 @@ from asterism.domains.user.dependencies import AuthedUserDep
 from . import (
     attempts,
     generation,
-    mastery,
     notes,
+    practice,
+    progress,
     quiz_generation,
     quizzes,
     review,
@@ -23,11 +24,9 @@ from . import (
     study_guides,
     summaries,
     unclear,
-    weak_spots,
 )
 from .schemas import (
     MAX_REVIEW_QUEUE,
-    MAX_WEAK_SPOTS,
     StudyCard,
     StudyCardCreate,
     StudyCardDraftBatch,
@@ -44,6 +43,8 @@ from .schemas import (
     StudyNoteCreate,
     StudyNotePage,
     StudyNoteUpdate,
+    StudyPracticeRequest,
+    StudyProgress,
     StudyProjectSummary,
     StudyQuiz,
     StudyQuizAttempt,
@@ -58,11 +59,7 @@ from .schemas import (
     StudyReviewRequest,
     StudySummaryDraft,
     StudySummaryRequest,
-    StudyTopicMasteryList,
-    StudyTopicPracticeRequest,
     StudyUnclearCardCreate,
-    StudyWeakSpotPracticeRequest,
-    StudyWeakSpots,
 )
 
 study_router = APIRouter(
@@ -308,48 +305,24 @@ async def get_attempt(
     )
 
 
-# --- Weak spots (US-53.5, ADR-0036) ------------------------------------------
+# --- Progress and practice (ADR-0067) -----------------------------------------
 
 
-@study_router.get("/weak-spots", operation_id="studyWeakSpotGetMany")
-async def list_weak_spots(
-    project_id: uuid.UUID,
-    user: AuthedUserDep,
-    db: DBSessionDep,
-    response: Response,
-    limit: int = Query(default=20, ge=1, le=MAX_WEAK_SPOTS),
-) -> StudyWeakSpots:
-    """Questions and cards whose latest outcome was a miss, most recent first."""
-    response.headers["Cache-Control"] = "no-store"
-    return await weak_spots.list_weak_spots(user_id=user.id, project_id=project_id, limit=limit, session=db)
-
-
-@study_router.post("/weak-spots/practice", operation_id="studyWeakSpotPractice", status_code=201)
-async def practice_weak_spots(
-    project_id: uuid.UUID, payload: StudyWeakSpotPracticeRequest, user: AuthedUserDep, db: DBSessionDep
-) -> StudyQuiz:
-    """Save a quiz that re-asks the most recent weak spots; 400 when there are none."""
-    return await weak_spots.practice_weak_spots(user_id=user.id, project_id=project_id, request=payload, session=db)
-
-
-# --- Topic mastery (US-58.3, ADR-0049) ----------------------------------------
-
-
-@study_router.get("/topics", operation_id="studyTopicMasteryGetMany")
-async def list_topic_mastery(
+@study_router.get("/progress", operation_id="studyProgressGet")
+async def get_progress(
     project_id: uuid.UUID, user: AuthedUserDep, db: DBSessionDep, response: Response
-) -> StudyTopicMasteryList:
-    """Mastery per deck and quiz tag, derived from review ratings and quiz results."""
+) -> StudyProgress:
+    """Topics, weak spots with their topics, and pending unclear items, derived on read."""
     response.headers["Cache-Control"] = "no-store"
-    return await mastery.topic_mastery(user_id=user.id, project_id=project_id, session=db)
+    return await progress.project_progress(user_id=user.id, project_id=project_id, session=db)
 
 
-@study_router.post("/topics/practice", operation_id="studyTopicPractice", status_code=201)
-async def practice_topic(
-    project_id: uuid.UUID, payload: StudyTopicPracticeRequest, user: AuthedUserDep, db: DBSessionDep
+@study_router.post("/practice", operation_id="studyPracticeCreate", status_code=201)
+async def create_practice(
+    project_id: uuid.UUID, payload: StudyPracticeRequest, user: AuthedUserDep, db: DBSessionDep
 ) -> StudyQuiz:
-    """Save a quiz of one topic's weakest items; 404 for an unknown topic."""
-    return await mastery.practice_topic(user_id=user.id, project_id=project_id, request=payload, session=db)
+    """Save a quiz of one topic's weakest items, or of the most recent weak spots; 404 for an unknown topic."""
+    return await practice.practice(user_id=user.id, project_id=project_id, request=payload, session=db)
 
 
 # --- Unclear items (US-58.4, ADR-0050) -----------------------------------------

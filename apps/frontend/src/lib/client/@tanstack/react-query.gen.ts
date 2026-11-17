@@ -648,6 +648,12 @@ import type {
   StudyNoteUpdateData,
   StudyNoteUpdateError,
   StudyNoteUpdateResponse,
+  StudyPracticeCreateData,
+  StudyPracticeCreateError,
+  StudyPracticeCreateResponse,
+  StudyProgressGetData,
+  StudyProgressGetError,
+  StudyProgressGetResponse,
   StudyProjectSummaryGetData,
   StudyProjectSummaryGetError,
   StudyProjectSummaryGetResponse,
@@ -681,21 +687,9 @@ import type {
   StudySummaryGenerateData,
   StudySummaryGenerateError,
   StudySummaryGenerateResponse,
-  StudyTopicMasteryGetManyData,
-  StudyTopicMasteryGetManyError,
-  StudyTopicMasteryGetManyResponse,
-  StudyTopicPracticeData,
-  StudyTopicPracticeError,
-  StudyTopicPracticeResponse,
   StudyUnclearCardCreateData,
   StudyUnclearCardCreateError,
   StudyUnclearCardCreateResponse,
-  StudyWeakSpotGetManyData,
-  StudyWeakSpotGetManyError,
-  StudyWeakSpotGetManyResponse,
-  StudyWeakSpotPracticeData,
-  StudyWeakSpotPracticeError,
-  StudyWeakSpotPracticeResponse,
   SubAgentCreateData,
   SubAgentCreateError,
   SubAgentCreateResponse,
@@ -5227,26 +5221,26 @@ export const studyQuizAttemptGetOneOptions = (
     queryKey: studyQuizAttemptGetOneQueryKey(options),
   });
 
-export const studyWeakSpotGetManyQueryKey = (
-  options: Options<StudyWeakSpotGetManyData>,
-) => createQueryKey("studyWeakSpotGetMany", options);
+export const studyProgressGetQueryKey = (
+  options: Options<StudyProgressGetData>,
+) => createQueryKey("studyProgressGet", options);
 
 /**
- * List Weak Spots
+ * Get Progress
  *
- * Questions and cards whose latest outcome was a miss, most recent first.
+ * Topics, weak spots with their topics, and pending unclear items, derived on read.
  */
-export const studyWeakSpotGetManyOptions = (
-  options: Options<StudyWeakSpotGetManyData>,
+export const studyProgressGetOptions = (
+  options: Options<StudyProgressGetData>,
 ) =>
   queryOptions<
-    StudyWeakSpotGetManyResponse,
-    StudyWeakSpotGetManyError,
-    StudyWeakSpotGetManyResponse,
-    ReturnType<typeof studyWeakSpotGetManyQueryKey>
+    StudyProgressGetResponse,
+    StudyProgressGetError,
+    StudyProgressGetResponse,
+    ReturnType<typeof studyProgressGetQueryKey>
   >({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } = await ApiClient.__registry.get().studyWeakSpotGetMany({
+      const { data } = await ApiClient.__registry.get().studyProgressGet({
         ...options,
         ...queryKey[0],
         signal,
@@ -5254,89 +5248,28 @@ export const studyWeakSpotGetManyOptions = (
       });
       return data;
     },
-    queryKey: studyWeakSpotGetManyQueryKey(options),
+    queryKey: studyProgressGetQueryKey(options),
   });
 
 /**
- * Practice Weak Spots
+ * Create Practice
  *
- * Save a quiz that re-asks the most recent weak spots; 400 when there are none.
+ * Save a quiz of one topic's weakest items, or of the most recent weak spots; 404 for an unknown topic.
  */
-export const studyWeakSpotPracticeMutation = (
-  options?: Partial<Options<StudyWeakSpotPracticeData>>,
+export const studyPracticeCreateMutation = (
+  options?: Partial<Options<StudyPracticeCreateData>>,
 ): UseMutationOptions<
-  StudyWeakSpotPracticeResponse,
-  StudyWeakSpotPracticeError,
-  Options<StudyWeakSpotPracticeData>
+  StudyPracticeCreateResponse,
+  StudyPracticeCreateError,
+  Options<StudyPracticeCreateData>
 > => {
   const mutationOptions: UseMutationOptions<
-    StudyWeakSpotPracticeResponse,
-    StudyWeakSpotPracticeError,
-    Options<StudyWeakSpotPracticeData>
+    StudyPracticeCreateResponse,
+    StudyPracticeCreateError,
+    Options<StudyPracticeCreateData>
   > = {
     mutationFn: async (fnOptions) => {
-      const { data } = await ApiClient.__registry.get().studyWeakSpotPractice({
-        ...options,
-        ...fnOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
-export const studyTopicMasteryGetManyQueryKey = (
-  options: Options<StudyTopicMasteryGetManyData>,
-) => createQueryKey("studyTopicMasteryGetMany", options);
-
-/**
- * List Topic Mastery
- *
- * Mastery per deck and quiz tag, derived from review ratings and quiz results.
- */
-export const studyTopicMasteryGetManyOptions = (
-  options: Options<StudyTopicMasteryGetManyData>,
-) =>
-  queryOptions<
-    StudyTopicMasteryGetManyResponse,
-    StudyTopicMasteryGetManyError,
-    StudyTopicMasteryGetManyResponse,
-    ReturnType<typeof studyTopicMasteryGetManyQueryKey>
-  >({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await ApiClient.__registry
-        .get()
-        .studyTopicMasteryGetMany({
-          ...options,
-          ...queryKey[0],
-          signal,
-          throwOnError: true,
-        });
-      return data;
-    },
-    queryKey: studyTopicMasteryGetManyQueryKey(options),
-  });
-
-/**
- * Practice Topic
- *
- * Save a quiz of one topic's weakest items; 404 for an unknown topic.
- */
-export const studyTopicPracticeMutation = (
-  options?: Partial<Options<StudyTopicPracticeData>>,
-): UseMutationOptions<
-  StudyTopicPracticeResponse,
-  StudyTopicPracticeError,
-  Options<StudyTopicPracticeData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    StudyTopicPracticeResponse,
-    StudyTopicPracticeError,
-    Options<StudyTopicPracticeData>
-  > = {
-    mutationFn: async (fnOptions) => {
-      const { data } = await ApiClient.__registry.get().studyTopicPractice({
+      const { data } = await ApiClient.__registry.get().studyPracticeCreate({
         ...options,
         ...fnOptions,
         throwOnError: true,
