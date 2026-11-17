@@ -1,8 +1,14 @@
 const ports = new Set();
 let eventSource = null;
+let reconnectTimer = null;
+
+const RECONNECT_DELAY_MS = 2000;
 
 function initSSE() {
-  if (eventSource) return;
+  clearTimeout(reconnectTimer);
+  reconnectTimer = null;
+  // No tab is listening: stay closed until one connects again.
+  if (eventSource || ports.size === 0) return;
 
   // Relative or absolute stream endpoint
   eventSource = new EventSource("/api/stream");
@@ -13,12 +19,29 @@ function initSSE() {
 
   eventSource.onerror = () => {
     broadcast({ type: "error", data: "SSE error" });
+    if (!eventSource) return;
     eventSource.close();
     eventSource = null;
-    setTimeout(() => {
-      initSSE();
-    }, 2000);
+    if (ports.size > 0) {
+      reconnectTimer = setTimeout(initSSE, RECONNECT_DELAY_MS);
+    }
   };
+}
+
+/** Closes the stream and cancels any pending reconnect once no tab is left. */
+function closeIfIdle() {
+  if (ports.size > 0) return;
+  clearTimeout(reconnectTimer);
+  reconnectTimer = null;
+  if (eventSource) {
+    eventSource.close();
+    eventSource = null;
+  }
+}
+
+function removePort(port) {
+  ports.delete(port);
+  closeIfIdle();
 }
 
 function broadcast(payload) {
@@ -26,7 +49,7 @@ function broadcast(payload) {
     try {
       port.postMessage(payload);
     } catch {
-      ports.delete(port);
+      removePort(port);
     }
   });
 }
@@ -37,13 +60,7 @@ self.onconnect = (event) => {
   port.start();
 
   port.onmessage = (e) => {
-    if (e.data === "unload") {
-      ports.delete(port);
-      if (ports.size === 0 && eventSource) {
-        eventSource.close();
-        eventSource = null;
-      }
-    }
+    if (e.data === "unload") removePort(port);
   };
 
   initSSE();
