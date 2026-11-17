@@ -12,11 +12,15 @@ from asterism.db.database import get_async_db_session
 from asterism.domains.knowledge.embedding import embedding_download_service, embedding_provider
 from asterism.domains.knowledge.ingestion import ingest
 from asterism.domains.knowledge.models import (
+    INTERRUPTED_ERROR_CODE,
     FileKnowledgeArtifactModel,
     FileKnowledgeExtractionModel,
+    KnowledgeCaptionMode,
     KnowledgeExtractionKind,
     KnowledgeExtractionStatus,
 )
+from asterism.domains.knowledge.policy import get_captioning_configuration
+from asterism.domains.knowledge.queries import select_resumable_captioning_artifacts
 
 from .captioning import caption, captioning_download_service, local_caption_provider
 from .sources import SourceReader, configure_source_reader
@@ -67,7 +71,7 @@ async def recover_interrupted() -> None:
             .where(FileKnowledgeArtifactModel.status == KnowledgeExtractionStatus.RUNNING)
             .values(
                 status=KnowledgeExtractionStatus.PENDING,
-                error_code="interrupted",
+                error_code=INTERRUPTED_ERROR_CODE,
                 error_reason="Processing interrupted by restart; retry queued",
                 started_at=None,
             ),
@@ -80,7 +84,7 @@ async def recover_interrupted() -> None:
             )
             .values(
                 status=KnowledgeExtractionStatus.FAILED,
-                error_code="interrupted",
+                error_code=INTERRUPTED_ERROR_CODE,
                 error_reason="Captioning interrupted by restart; retry queued",
             ),
         )
@@ -88,6 +92,11 @@ async def recover_interrupted() -> None:
 
 
 async def resume_ingestion_jobs() -> None:
+    """Re-enqueue ingestion and captioning that a restart or provisioning wait left undone.
+
+    Safe to call repeatedly: jobs are keyed per artifact, so work that is
+    already queued or running is not enqueued twice.
+    """
     async with get_async_db_session() as session:
         artifacts = list(
             await session.scalars(
@@ -96,12 +105,24 @@ async def resume_ingestion_jobs() -> None:
                 ),
             ),
         )
-        for artifact in artifacts:
-            start_file_ingestion_job(
-                user_id=artifact.user_id,
-                file_id=artifact.file_id,
-                artifact_id=artifact.id,
-            )
+        captioning_mode = (await get_captioning_configuration(session=session)).mode
+        to_caption = (
+            []
+            if captioning_mode == KnowledgeCaptionMode.DISABLED.value
+            else list(await session.scalars(select_resumable_captioning_artifacts()))
+        )
+    for artifact in artifacts:
+        start_file_ingestion_job(
+            user_id=artifact.user_id,
+            file_id=artifact.file_id,
+            artifact_id=artifact.id,
+        )
+    for artifact in to_caption:
+        start_file_caption_job(
+            user_id=artifact.user_id,
+            file_id=artifact.file_id,
+            artifact_id=artifact.id,
+        )
 
 
 async def initialize_knowledge_runtime(source: SourceReader) -> None:

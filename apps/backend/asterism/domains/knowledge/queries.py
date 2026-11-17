@@ -3,9 +3,15 @@
 import uuid
 from collections.abc import Sequence
 
-from sqlalchemy import Select, select
+from sqlalchemy import Select, and_, or_, select
 
-from .models import FileKnowledgeArtifactModel, FileKnowledgeExtractionModel
+from .models import (
+    INTERRUPTED_ERROR_CODE,
+    FileKnowledgeArtifactModel,
+    FileKnowledgeExtractionModel,
+    KnowledgeExtractionKind,
+    KnowledgeExtractionStatus,
+)
 
 
 def select_current_owned_artifacts(user_id: str):
@@ -69,3 +75,35 @@ def select_artifact_extractions(
         A select over the extraction rows of those artifacts.
     """
     return select(FileKnowledgeExtractionModel).where(FileKnowledgeExtractionModel.artifact_id.in_(artifact_ids))
+
+
+def select_resumable_captioning_artifacts() -> Select[tuple[FileKnowledgeArtifactModel]]:
+    """Select current, unsearchable artifacts whose caption was never produced.
+
+    That is captioning still ``pending`` (queued work lost at shutdown) or
+    ``failed`` only because a restart interrupted it. Other failures stay
+    failed; resuming them would retry a broken provider on every restart.
+    Spans all users: only the startup resume calls it.
+
+    Returns:
+        A select over those artifacts, in a stable order.
+    """
+    captioning = FileKnowledgeExtractionModel
+    return (
+        select(FileKnowledgeArtifactModel)
+        .join(captioning, captioning.artifact_id == FileKnowledgeArtifactModel.id)
+        .where(
+            FileKnowledgeArtifactModel.is_current.is_(True),
+            FileKnowledgeArtifactModel.status == KnowledgeExtractionStatus.READY,
+            FileKnowledgeArtifactModel.searchable.is_(False),
+            captioning.kind == KnowledgeExtractionKind.CAPTIONING,
+            or_(
+                captioning.status == KnowledgeExtractionStatus.PENDING,
+                and_(
+                    captioning.status == KnowledgeExtractionStatus.FAILED,
+                    captioning.error_code == INTERRUPTED_ERROR_CODE,
+                ),
+            ),
+        )
+        .order_by(FileKnowledgeArtifactModel.id)
+    )

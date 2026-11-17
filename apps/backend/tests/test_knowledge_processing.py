@@ -477,3 +477,150 @@ async def test_embedding_provisioning_wait_leaves_artifact_pending(processing_se
     )
     assert result.status is KnowledgeExtractionStatus.PENDING
     assert result.error_code == "embedding_bundle_pending"
+
+
+async def _captioning_case(session, *, name, captioning_status, error_code=None, searchable=False, is_current=True):
+    from asterism.domains.knowledge.models import (
+        FileKnowledgeArtifactModel,
+        FileKnowledgeExtractionModel,
+        KnowledgeExtractionKind,
+    )
+
+    file = UserFileModel(
+        storage_key=str(uuid.uuid4()),
+        user_id="user-a",
+        filename=f"{name}.png",
+        original_name=f"{name}.png",
+        size=1,
+        mime_type="image/png",
+        kind=FileKind.IMAGE,
+        sha256=uuid.uuid4().hex * 2,
+    )
+    session.add(file)
+    await session.flush()
+    artifact = FileKnowledgeArtifactModel(
+        user_id="user-a",
+        file_id=file.id,
+        generation=1,
+        processing_profile_generation=1,
+        status=KnowledgeExtractionStatus.READY,
+        is_current=is_current,
+        searchable=searchable,
+    )
+    session.add(artifact)
+    await session.flush()
+    session.add(
+        FileKnowledgeExtractionModel(
+            artifact_id=artifact.id,
+            kind=KnowledgeExtractionKind.CAPTIONING,
+            status=captioning_status,
+            error_code=error_code,
+        ),
+    )
+    await session.commit()
+    return artifact
+
+
+@pytest_asyncio.fixture
+async def resume_runtime(processing_session, monkeypatch):
+    """Route the runtime to the test session, a fresh job manager and a blocking caption job."""
+    import asyncio
+    from types import SimpleNamespace
+
+    from asterism.common.job_queue import JobManager
+    from asterism.domains.knowledge import runtime
+
+    @asynccontextmanager
+    async def session_factory():
+        yield processing_session
+
+    captioned: list[uuid.UUID] = []
+    release = asyncio.Event()
+
+    async def blocking_caption(*, user_id, file_id, artifact_id):
+        captioned.append(artifact_id)
+        await release.wait()
+
+    state = SimpleNamespace(mode="local", captioned=captioned)
+
+    async def captioning_configuration(*, session):
+        return SimpleNamespace(mode=state.mode)
+
+    jobs = JobManager(max_concurrency=4)
+    monkeypatch.setattr(runtime, "get_async_db_session", session_factory)
+    monkeypatch.setattr(runtime, "job_manager", jobs)
+    monkeypatch.setattr(runtime, "caption", blocking_caption)
+    monkeypatch.setattr(runtime, "get_captioning_configuration", captioning_configuration)
+    yield state
+    release.set()
+    await jobs.shutdown()
+
+
+@pytest.mark.asyncio
+async def test_resume_requeues_interrupted_and_pending_captioning_once(processing_session, resume_runtime):
+    import asyncio
+
+    from asterism.domains.knowledge.models import KnowledgeExtractionKind
+    from asterism.domains.knowledge.runtime import resume_ingestion_jobs
+
+    interrupted = await _captioning_case(
+        processing_session, name="interrupted", captioning_status=KnowledgeExtractionStatus.RUNNING
+    )
+    pending = await _captioning_case(
+        processing_session, name="pending", captioning_status=KnowledgeExtractionStatus.PENDING
+    )
+    broken = await _captioning_case(
+        processing_session,
+        name="broken",
+        captioning_status=KnowledgeExtractionStatus.FAILED,
+        error_code="provider_failure",
+    )
+    await _captioning_case(
+        processing_session,
+        name="captioned",
+        captioning_status=KnowledgeExtractionStatus.READY,
+        searchable=True,
+    )
+    await _captioning_case(
+        processing_session,
+        name="superseded",
+        captioning_status=KnowledgeExtractionStatus.PENDING,
+        is_current=False,
+    )
+
+    await recover_interrupted()
+    from asterism.domains.knowledge.models import FileKnowledgeExtractionModel
+
+    recovered = await processing_session.scalar(
+        select(FileKnowledgeExtractionModel).where(
+            FileKnowledgeExtractionModel.artifact_id == interrupted.id,
+            FileKnowledgeExtractionModel.kind == KnowledgeExtractionKind.CAPTIONING,
+        ),
+    )
+    assert recovered is not None
+    assert recovered.status is KnowledgeExtractionStatus.FAILED
+    assert recovered.error_code == "interrupted"
+
+    await resume_ingestion_jobs()
+    await asyncio.sleep(0.05)
+    assert sorted(resume_runtime.captioned) == sorted([interrupted.id, pending.id])
+    assert broken.id not in resume_runtime.captioned
+
+    # The caption jobs are still running, so a second resume adds nothing.
+    await resume_ingestion_jobs()
+    await asyncio.sleep(0.05)
+    assert len(resume_runtime.captioned) == 2
+
+
+@pytest.mark.asyncio
+async def test_resume_leaves_captioning_alone_when_disabled(processing_session, resume_runtime):
+    import asyncio
+
+    from asterism.domains.knowledge.runtime import resume_ingestion_jobs
+
+    resume_runtime.mode = "disabled"
+    await _captioning_case(processing_session, name="pending", captioning_status=KnowledgeExtractionStatus.PENDING)
+
+    await resume_ingestion_jobs()
+    await asyncio.sleep(0.05)
+    assert resume_runtime.captioned == []

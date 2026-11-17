@@ -298,10 +298,15 @@ derived outputs to `pending` and reprocesses both the embedding and the caption.
 `KnowledgeExtractionStatus` is the one lifecycle vocabulary. It moves from
 `pending` to `running` to `ready`, or to `failed`/`canceled`. The artifact row
 uses it for the generation as a whole, and every derived output uses it for
-itself. `KnowledgeIngestionJobs.recover_interrupted()` changes interrupted
-`running` artifacts to retryable `pending` rows at startup, and interrupted
-`running` captioning outputs to `failed` with an `interrupted` error code;
-regenerate and cancel API actions are implemented by
+itself. At startup `knowledge.runtime.recover_interrupted()` changes interrupted
+`running` artifacts to retryable `pending` rows, and interrupted `running`
+captioning outputs to `failed` with an `interrupted` error code. Once the
+embedding bundle is ready, `resume_ingestion_jobs()` re-enqueues ingestion for
+`pending` artifacts and, unless captioning is disabled, captioning for current
+`ready` image artifacts that are not yet searchable and whose captioning is
+`pending` or failed only by interruption. Other caption failures are not
+retried on restart. Jobs are keyed per artifact, so resuming twice does not
+queue the same work twice. Regenerate and cancel API actions are implemented by
 `regenerate_file_knowledge()` and `cancel_file_knowledge_processing()`.
 
 A derived output's status is independent of the artifact's: a generation is

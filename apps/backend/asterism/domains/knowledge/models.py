@@ -38,6 +38,10 @@ class KnowledgeExtractionStatus(StrEnum):
     CANCELED = "canceled"
 
 
+INTERRUPTED_ERROR_CODE = "interrupted"
+"""Error code for work a restart cut short; resume retries exactly this work."""
+
+
 class KnowledgeCaptionMode(StrEnum):
     DISABLED = "disabled"
     PROVIDER = "provider"
