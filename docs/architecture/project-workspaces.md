@@ -33,14 +33,14 @@ text, including “No chats yet.”, and removes those controls from keyboard ac
 
 ## Routes and actions
 
-| Route                                 | Purpose                                                                       |
-| ------------------------------------- | ----------------------------------------------------------------------------- |
-| `/projects`                           | Search project names/descriptions, page through results, and create projects  |
-| `/projects/[projectId]`               | The tabbed project workspace; Overview when no `tab` is given                 |
-| `/projects/[projectId]?tab=[tab]`     | One tab: `chats`, `files`, `study`, `reflections`, `sub-agents`, `settings`   |
-| `/general`                       | Paginated General chats and new General chat                                            |
-| `/?project_id=[projectId]`       | New chat composer with explicit project identity and model selection                    |
-| `/c/[chatId]`                    | Existing chat with linked workspace identity and move dialog                            |
+| Route                             | Purpose                                                                      |
+| --------------------------------- | ---------------------------------------------------------------------------- |
+| `/projects`                       | Search project names/descriptions, page through results, and create projects |
+| `/projects/[projectId]`           | The tabbed project workspace; Overview when no `tab` is given                |
+| `/projects/[projectId]?tab=[tab]` | One tab: `chats`, `files`, `study`, `reflections`, `sub-agents`, `settings`  |
+| `/general`                        | Paginated General chats and new General chat                                 |
+| `/?project_id=[projectId]`        | New chat composer with explicit project identity and model selection         |
+| `/c/[chatId]`                     | Existing chat with linked workspace identity and move dialog                 |
 
 The workspace is organized into tabs (US-65.1): Overview (goal and the five
 latest chats, linking to all), Chats, Files, Study (decks, topic mastery, weak
@@ -348,26 +348,24 @@ See [ADR-0047](../adr/0047-project-learning-goals.md).
 
 `reflections` rows hold a learner's answers to "What did I learn?" and "What's
 still unclear?" (each up to 2,000 characters; at least one non-blank). Each row
-is partitioned by `user_id`, `persona_id` (the chat's current persona; deleting
-the persona deletes its reflections) and `project_id` (null for General; a
+is partitioned by `user_id` and `project_id` (null for General; a
 deleted project's reflections move to General, like its chats), and links its
 source `chat_id` (set null if the chat is deleted). The server derives the
-project and persona from the owned chat; clients never send them.
+project from the owned chat; clients never send it.
 
-| Route                                         | Contract                                                              |
-| --------------------------------------------- | --------------------------------------------------------------------- |
-| `GET /reflections/`                           | Page of one project's (`project_id`) or General's reflections, newest first; optional `persona_id` |
-| `POST /reflections/`                          | `{chat_id, learned, unclear}`, 201                                     |
-| `PUT /reflections/{id}`                       | `{learned, unclear, expected_revision}`; 409 when stale               |
-| `DELETE /reflections/{id}?expected_revision=N`| 204; 409 when stale                                                   |
-| `POST /reflections/draft`                     | `{chat_id}` → `{learned, unclear}` suggestion; never stored           |
+| Route                                          | Contract                                                                    |
+| ---------------------------------------------- | --------------------------------------------------------------------------- |
+| `GET /reflections/`                            | Page of one project's (`project_id`) or General's reflections, newest first |
+| `POST /reflections/`                           | `{chat_id, learned, unclear}`, 201                                          |
+| `PUT /reflections/{id}`                        | `{learned, unclear, expected_revision}`; 409 when stale                     |
+| `DELETE /reflections/{id}?expected_revision=N` | 204; 409 when stale                                                         |
+| `POST /reflections/draft`                      | `{chat_id}` → `{learned, unclear}` suggestion; never stored                 |
 
 The draft runs on the chat-title model (the admin draft model, else the
 caller's own plan); with neither it returns 503. It reads the chat's active
 branch as untrusted text (newest 12,000 characters), leaves out spot-the-error
 answers and tool steps, and asks for first-person suggestions grounded in the
 learner's own messages. **Reflect on this session** in the chat menu opens the
-dialog; the project and General pages list reflections with a persona filter,
-editing and deletion. Agents never read reflections automatically. See
+dialog; the project and General pages list reflections with editing and
+deletion. Agents never read reflections automatically. See
 [ADR-0048](../adr/0048-session-reflections.md).
-

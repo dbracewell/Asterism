@@ -4,8 +4,8 @@ Each user has one model-free main-agent configuration. Chats use that configurat
 and independently persist a selected model. Sub-agent definitions each bind exactly
 one model; projects explicitly select eligible owned definitions, and the main-agent
 configuration holds a separate General chat set that General chats delegate to
-([ADR-0059](../adr/0059-general-chat-delegation.md)). Persona/profile defaults are a separate product invariant and do
-not select or replace the main-agent configuration.
+([ADR-0059](../adr/0059-general-chat-delegation.md)). The user's About you text is
+separate and does not select or replace the main-agent configuration.
 
 ## Configuration and model identity
 
@@ -70,13 +70,13 @@ layers in this order:
 | ---------- | -------------------------------------------------------------------------------------- |
 | `platform` | Mandatory platform rules and capability restrictions                                   |
 | `agent`    | Versioned main or delegated role/instructions                                          |
-| `profile`  | Accepted persona USER.md constraints; separate from memory                             |
+| `profile`  | Pinned About you text, framed as information about the user; omitted when blank        |
 | `mode`     | Pinned server-owned learning-mode instructions; main-agent only                        |
 | `project`  | Project task instructions and context revision, when applicable                        |
 | `skills`   | Explicit ordered, pinned skill instructions; main-agent only                           |
 | `runtime`  | Server-authorized tool names and eligible target metadata; bounded to 8,000 characters |
 
-Agent role and explicit profile constraints remain authoritative; project text
+Agent role and what the user says about themselves remain authoritative; project text
 refines the task within them. User requests, files, retrieved excerpts, and forwarded
 conversation are untrusted task data. Prompt order and instructions cannot grant
 capabilities, delegation, or file access; executable authorization enforces them.
@@ -85,19 +85,19 @@ Estimation, main execution, delegation, and replay use the shared composition pa
 Private `PromptSnapshot` stores replay inputs; public `PromptProvenance` records
 composer revision plus source IDs/revisions/digests without instruction text.
 Project edits affect new turns/regeneration; resume uses its existing snapshot
-with current access rechecks. The profile layer uses the accepted persona snapshot
-and records `user_profile_id` plus its source revision. Default changes and edits
-affect new turns; regeneration explicitly captures current settings. Delegates
-inherit the same recorded persona. Private immutable `chat_executions` records
+with current access rechecks. The profile layer uses the turn's pinned About you
+text (source `about-you`) and records its revision. Edits affect new turns;
+regeneration explicitly reads the current text. Delegates inherit the same
+recorded layer. Private immutable `chat_executions` records
 preserve historical prompts, while public metadata contains identity and digests.
 Skills retain the source turn's pinned snapshots during regeneration as well as
 resume; changes require explicit accepted selection/refresh. Live owner, assignment
 and admin-policy checks run before generation and provider output. Delegates do
 not inherit parent activations. See the [skills contract](skills.md).
-See [ADR-0021](../adr/0021-personas-and-execution-binding.md).
+See [ADR-0066](../adr/0066-about-you.md).
 The `mode` layer uses the turn's pinned learning-mode snapshot; resume replays it,
 and regeneration captures the chat's current selection. It outranks project and
-skill text but not the persona. Delegates do not receive it. See
+skill text but not About you. Delegates do not receive it. See
 [ADR-0028](../adr/0028-learning-mode-layer.md). Modes with tiered hints append
 the turn's branch hint level to the layer; see
 [ADR-0029](../adr/0029-branch-local-hint-levels.md).
@@ -127,7 +127,7 @@ tool calls from compatible endpoints still enter normal authorization. Approved
 tools may execute concurrently; approval never grants capabilities outside the
 current effective allowlist. See [tool authorization](tool-authorization.md).
 
-Live authorization (`authorization_check`: persona, skills, sub-agent target)
+Live authorization (`authorization_check`: skills, sub-agent target)
 runs at the start of the run and of each loop step, when the provider stream
 starts, and on each completed step before it is recorded or its tools run. It
 does not run per text or thinking delta, since each check reads the database
@@ -265,7 +265,7 @@ Each persisted assistant step records a `ContextManifest`
 and reasons only, never content:
 
 - **Layers:** kind, source id, revision, digest and length of each prompt layer
-  (platform, agent, persona, learning mode, task, project, skills, runtime), taken
+  (platform, agent, About you, learning mode, task, project, skills, runtime), taken
   from the run's prompt snapshot.
 - **Compaction:** the stored summary that replaced the start of the branch, if
   any: record id, anchor message, replaced message count and summary length.

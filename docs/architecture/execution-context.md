@@ -137,19 +137,20 @@ See [agent runtime](agent-runtime.md), [tool authorization](tool-authorization.m
 [context and memory isolation](context-isolation.md), and
 [ADR-0017](../adr/0017-project-file-and-chat-boundaries.md) for the remaining contracts.
 
-## Persona binding
+## About you binding
 
-Each accepted user message captures an owned persona ID, name, revision and private
-USER.md input. Chat selection is either a fixed owned persona or the current user
-default. Resume uses captured inputs; regeneration captures current settings.
-Immutable `chat_executions` records store private prompts and public metadata.
-Messages separately reference their producing execution and any execution they
-start, preserving both when an assistant response is regenerated. Owner/chat
-composite foreign keys prevent cross-scope references. Public chat responses never
-serialize USER.md. Deleting a recorded persona revokes pending/running access;
-historical messages retain provenance. Children inherit the root persona without
-expanding capabilities. No memory store is activated. See
-[ADR-0021](../adr/0021-personas-and-execution-binding.md).
+Each accepted user message pins the user's About you text and revision
+(`accepted_about`); a trigger keeps it immutable. A blank text adds no profile
+layer. Resume uses the pinned or recorded text and checks only ownership;
+regeneration reads the current text. `MessageExecution.about` and
+`ContextProvenance.about_revision` record the revision only. Immutable
+`chat_executions` records store private prompts and public metadata. Messages
+separately reference their producing execution and any execution they start,
+preserving both when an assistant response is regenerated. Owner/chat composite
+foreign keys prevent cross-scope references. Public chat responses never serialize
+the About you text. Children inherit the recorded layer through
+`ExecutionScope.about_layer` without expanding capabilities. No memory store is
+activated. See [ADR-0066](../adr/0066-about-you.md).
 
 ## Learning modes
 
