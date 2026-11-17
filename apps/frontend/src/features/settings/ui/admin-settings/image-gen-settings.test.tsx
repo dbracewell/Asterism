@@ -1,7 +1,12 @@
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import {
+  MutationCache,
+  QueryClient,
+  QueryClientProvider,
+} from "@tanstack/react-query";
 import { beforeEach, expect, it, vi } from "vitest";
+import { handleMutationSuccess } from "@/lib/mutation-cache";
 import { ImageGenSettings } from "./image-gen-settings";
 
 const mocks = vi.hoisted(() => ({
@@ -24,6 +29,8 @@ vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
   }),
   appSettingsGetQueryKey: () => [{ _id: "settings" }],
   appSettingUpdateMutation: () => ({ mutationFn: mocks.saveSetting }),
+  fileGetManyQueryKey: () => [{ _id: "fileGetMany" }],
+  fileGetManyInfiniteQueryKey: () => [{ _id: "fileGetMany", infinite: true }],
   groupGetManyOptions: () => ({
     queryKey: [{ _id: "groups" }],
     queryFn: () =>
@@ -85,14 +92,20 @@ vi.mock("@/components/api-image", () => ({
 }));
 
 function setup() {
-  const cache = new QueryClient({
+  // The app's global invalidation, as wired in providers.tsx.
+  const cache: QueryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+    mutationCache: new MutationCache({
+      onSuccess: (_d, _v, _c, mutation) =>
+        handleMutationSuccess(cache, mutation),
+    }),
   });
   render(
     <QueryClientProvider client={cache}>
       <ImageGenSettings />
     </QueryClientProvider>,
   );
+  return cache;
 }
 
 beforeEach(() => {
@@ -212,4 +225,33 @@ it("generates a test image and shows failures", async () => {
   expect(
     screen.getByText(/1024×1024 · sdxl.safetensors · seed 7/),
   ).toBeVisible();
+});
+
+it("keeps the unsaved generator and refreshes only file lists after a test image", async () => {
+  mocks.test.mockResolvedValue({
+    filename: "a-heron-7.png",
+    prompt: "A heron",
+    width: 1024,
+    height: 1024,
+    seed: 7,
+    model: "sdxl.safetensors",
+  });
+  const cache = setup();
+  cache.setQueryData([{ _id: "fileGetMany", page: 1 }], { items: [] });
+  const user = userEvent.setup();
+
+  await user.click(await screen.findByRole("button", { name: "Edit ComfyUI" }));
+  expect(screen.getByText("Unsaved changes")).toBeVisible();
+  await user.click(
+    screen.getByRole("button", { name: "Generate a test image" }),
+  );
+  expect(await screen.findByText("Image a-heron-7.png")).toBeVisible();
+
+  expect(screen.getByText("Unsaved changes")).toBeVisible();
+  expect(mocks.settings).toHaveBeenCalledTimes(1);
+  expect(mocks.status).toHaveBeenCalledTimes(1);
+  expect(mocks.policy).toHaveBeenCalledTimes(1);
+  expect(
+    cache.getQueryState([{ _id: "fileGetMany", page: 1 }])?.isInvalidated,
+  ).toBe(true);
 });

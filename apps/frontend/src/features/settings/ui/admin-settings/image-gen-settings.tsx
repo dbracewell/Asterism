@@ -34,6 +34,8 @@ import {
   appSettingsGetOptions,
   appSettingsGetQueryKey,
   appSettingUpdateMutation,
+  fileGetManyInfiniteQueryKey,
+  fileGetManyQueryKey,
   groupGetManyOptions,
   imageGenerationPolicyGetOptions,
   imageGenerationPolicyGetQueryKey,
@@ -186,7 +188,17 @@ function TestSection() {
   const [prompt, setPrompt] = useState(
     "A lighthouse on a cliff at sunset, oil painting",
   );
-  const test = useMutation({ ...imageGenerationTestMutation({ client }) });
+  // The test image lands in the admin's files; refresh only those lists, not
+  // the generator settings being edited above.
+  const test = useMutation({
+    ...imageGenerationTestMutation({ client }),
+    meta: {
+      invalidates: [
+        fileGetManyQueryKey({ client }),
+        fileGetManyInfiniteQueryKey({ client }),
+      ],
+    },
+  });
   return (
     <SettingsSection
       title="Try it"

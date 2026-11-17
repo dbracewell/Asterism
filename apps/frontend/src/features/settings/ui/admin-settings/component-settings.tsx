@@ -71,17 +71,12 @@ export const ComponentSettings = ({
   });
 
   const [providerName, setProviderName] = useState(defaultValue?.name ?? "");
-  const [provider, setProvider] = useState<ComponentResponse | null>(null);
-
-  useEffect(() => {
-    if (data) {
-      if (providerName) {
-        setProvider(data.items.find((m) => m.name === providerName) ?? null);
-      } else {
-        setProvider(null);
-      }
-    }
-  }, [providerName, setProvider, data]);
+  const provider = useMemo(
+    () =>
+      (providerName && data?.items.find((m) => m.name === providerName)) ||
+      null,
+    [data, providerName],
+  );
 
   const zSchema = useMemo(() => {
     if (provider) {
@@ -268,7 +263,11 @@ const ParameterForm = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [appProvider, form, provider]);
 
-  const test = useMutation({ ...componentsTestMutation({ client }) });
+  // A test reads nothing back into the cache; refetching would reset the form.
+  const test = useMutation({
+    ...componentsTestMutation({ client }),
+    meta: { skipGlobalInvalidation: true },
+  });
   const suggestions = test.data?.suggestions ?? {};
 
   const processChange = () => {
