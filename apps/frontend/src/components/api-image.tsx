@@ -9,10 +9,12 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { api, client } from "@/lib/api";
+import { client } from "@/lib/api";
 import {
+  chatFileDownloadOptions,
   chatFileGetInfoOptions,
   fileGetFileInfoOptions,
+  fileGetOneOptions,
 } from "@/lib/client/@tanstack/react-query.gen";
 import { cn } from "@/lib/utils";
 import { useQuery, UseQueryResult } from "@tanstack/react-query";
@@ -81,6 +83,52 @@ const ChatImage = ({
   );
 };
 
+/**
+ * Loads the original image bytes once the preview opens and exposes them as an
+ * object URL. The query owns the bytes; the effect only owns the URL, which is
+ * revoked when the bytes change (another file) or on unmount.
+ */
+function useFullImageUrl({
+  chatId,
+  fileId,
+  filename,
+  enabled,
+}: {
+  chatId?: string;
+  fileId?: string;
+  filename: string;
+  enabled: boolean;
+}) {
+  const isChatFile = Boolean(chatId && fileId);
+  const chatQuery = useQuery({
+    ...chatFileDownloadOptions({
+      client,
+      path: { chat_id: chatId ?? "", file_id: fileId ?? "" },
+    }),
+    enabled: enabled && isChatFile,
+    staleTime: Infinity,
+    retry: false,
+  });
+  const libraryQuery = useQuery({
+    ...fileGetOneOptions({ client, path: { filename } }),
+    enabled: enabled && !isChatFile,
+    staleTime: Infinity,
+    retry: false,
+  });
+  const { data, isFetching } = isChatFile ? chatQuery : libraryQuery;
+  const [url, setUrl] = useState<string | null>(null);
+  useEffect(() => {
+    if (!data) return;
+    const objectUrl = URL.createObjectURL(data);
+    setUrl(objectUrl);
+    return () => {
+      URL.revokeObjectURL(objectUrl);
+      setUrl(null);
+    };
+  }, [data]);
+  return { url, isFetching };
+}
+
 type ImageContentProps = ImageProps & {
   chatId?: string;
   fileId?: string;
@@ -99,51 +147,12 @@ const ImageContent = ({
   result: { data, isLoading, error },
 }: ImageContentProps) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [fullImageUrl, setFullImageUrl] = useState<string | null>(null);
-  const [isLoadingFull, setIsLoadingFull] = useState(false);
-
-  useEffect(() => {
-    if (!isOpen || fullImageUrl) return;
-    let active = true;
-    let objectUrl: string | null = null;
-    setIsLoadingFull(true);
-
-    const fetchFull = async () => {
-      try {
-        const { data: fileData } =
-          chatId && fileId
-            ? await api.chatFileDownload({
-                path: { chat_id: chatId, file_id: fileId },
-              })
-            : await api.fileGetOne({ path: { filename } });
-        if (!fileData || !active) return;
-        const blob = fileData instanceof Blob ? fileData : new Blob([fileData]);
-        objectUrl = URL.createObjectURL(blob);
-        if (active) {
-          setFullImageUrl(objectUrl);
-        } else {
-          URL.revokeObjectURL(objectUrl);
-        }
-      } catch (e) {
-        console.error("Failed to load full image", e);
-      } finally {
-        if (active) setIsLoadingFull(false);
-      }
-    };
-
-    void fetchFull();
-
-    return () => {
-      active = false;
-      if (objectUrl) URL.revokeObjectURL(objectUrl);
-    };
-  }, [isOpen, fullImageUrl, chatId, fileId, filename]);
-
-  useEffect(() => {
-    return () => {
-      if (fullImageUrl) URL.revokeObjectURL(fullImageUrl);
-    };
-  }, [fullImageUrl]);
+  const { url: fullImageUrl, isFetching: isLoadingFull } = useFullImageUrl({
+    chatId,
+    fileId,
+    filename,
+    enabled: isOpen,
+  });
 
   if (error) {
     return (
