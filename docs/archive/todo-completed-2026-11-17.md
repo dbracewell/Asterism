@@ -54,3 +54,17 @@ and merged with `--no-ff` before the next began.
 - [x] US-82.1: Shared utilities (merged 2026-11-17)
 - [x] US-82.2: One boolean admin policy panel (merged 2026-11-17)
 - [x] US-82.4: Split oversized components (merged 2026-11-17)
+
+## Feature consolidation
+
+Source: the [feature overlap review](../reviews/2026-11-17-feature-overlap-review.md).
+EPIC-83 is complete. US-83.1 to US-83.3 were merged together on 2026-11-17
+because the backend change broke the frontend until the persona UI was removed;
+US-83.4 was merged after. See ADR-0066 (About you).
+
+### [EPIC-83: Your Asterism (replace personas with one "About you")](../epics/EPIC-83-YOUR-ASTERISM-AND-PERSONA-REMOVAL.md)
+
+- [x] US-83.1: About you replaces personas (backend)
+- [x] US-83.2: Your Asterism settings section (frontend)
+- [x] US-83.3: Remove persona from chat and the rest of the UI
+- [x] US-83.4: Docs and invariants

@@ -46,41 +46,7 @@ Source: [codebase review](codebase_review.md), verified against the code on 2026
 
 ## Feature consolidation (proposed 2026-11-17)
 
-Source: user request and the [feature overlap review](docs/reviews/2026-11-17-feature-overlap-review.md). Suggested order: [EPIC-83](docs/epics/EPIC-83-YOUR-ASTERISM-AND-PERSONA-REMOVAL.md) → [EPIC-84](docs/epics/EPIC-84-ONE-PROGRESS-PANEL.md) → [EPIC-85](docs/epics/EPIC-85-ONE-MODE-POLICY.md). Work one story at a time.
-
-### US-83.1: About you replaces personas (backend)
-
-- [x] ADR-0066 "About you" superseding ADR-0021; amend ADR-0028/0048/0061 (ADR-0016 covers process resources, no persona content)
-- [x] `users.about_md` / `about_revision`; remove persona table, default pointer, trigger and FK
-- [x] `GET`/`PUT /users/me/about` with expected revision; delete persona router, schemas, service
-- [x] Profile layer from About you, framed as user information (skip when blank); pin `accepted_about` on acceptance
-- [x] Remove chat persona override, route and `pending_persona`
-- [x] `ExecutionScope` and `MemoryNamespace` drop the profile/persona segment
-- [x] Reflections drop `persona_id`, FK, index segment and filter
-- [x] Skill drafting drops `persona_id`
-- [x] AI-use log, context inspection, comparisons report About you revision
-- [x] Replace persona tests; regenerate OpenAPI and Hey API client
-
-### US-83.2: Your Asterism settings section (frontend)
-
-- [x] Your Asterism section after General with an About you card (revision-safe save)
-- [x] No memory placeholder; leave room for a Memory card
-- [x] Delete persona settings, queries and tests
-- [x] Repoint `personas` links to `your-asterism`
-
-### US-83.3: Remove persona from chat and the rest of the UI
-
-- [x] Remove persona picker, composer chip, header label and new-chat persona state
-- [x] Message provenance, context manifest and AI-use log show About you
-- [x] Reflections UI drops persona filter and labels
-- [x] Help pages, composer/header/transcript text and guided tour updated
-- [x] Unit and Playwright tests updated; lint, typecheck, test, format:check pass
-
-### US-83.4: Docs and invariants
-
-- [x] CLAUDE.md/AGENTS.md §1, §2.2, §3.3, §4, §10
-- [x] Architecture docs that mention personas/profiles
-- [x] Backend and frontend READMEs
+Source: user request and the [feature overlap review](docs/reviews/2026-11-17-feature-overlap-review.md). Suggested order: [EPIC-83](docs/epics/EPIC-83-YOUR-ASTERISM-AND-PERSONA-REMOVAL.md) → [EPIC-84](docs/epics/EPIC-84-ONE-PROGRESS-PANEL.md) → [EPIC-85](docs/epics/EPIC-85-ONE-MODE-POLICY.md). Work one story at a time. EPIC-83 is complete and archived in the [2026-11-17 checklist](docs/archive/todo-completed-2026-11-17.md).
 
 ### US-84.1: Progress read and one practice route (backend)
 

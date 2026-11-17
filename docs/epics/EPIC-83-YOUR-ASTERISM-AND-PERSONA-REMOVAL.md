@@ -1,6 +1,6 @@
 # EPIC-83: Your Asterism (replace personas with one "About you")
 
-Status: implemented (2026-11-17); awaiting confirmation. Source: user request (2026-11-17) and the
+Status: complete (2026-11-17). Source: user request (2026-11-17) and the
 [feature overlap review](../reviews/2026-11-17-feature-overlap-review.md).
 
 ## Objective
