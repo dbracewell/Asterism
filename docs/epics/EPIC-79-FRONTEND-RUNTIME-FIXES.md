@@ -1,6 +1,6 @@
 # EPIC-79: Frontend runtime fixes
 
-Status: in progress (US-79.1, US-79.2 done). Source: [codebase review](../../codebase_review.md), verified 2026-11-14 (items 4, 5, 6, 12, 18).
+Status: in progress (US-79.1, US-79.2, US-79.4 done). Source: [codebase review](../../codebase_review.md), verified 2026-11-14 (items 4, 5, 6, 12, 18).
 
 ## Objective
 
@@ -30,11 +30,11 @@ event webhooks, sign-in failures, and needless full-app refetches.
 
 ### US-79.4: Sign-in and auth robustness
 
-- [ ] `proxy.ts`: keep the query string in `/sign-in?redirect=...`; remove the unreachable `/sign-in` branch (or the matcher exclusion, whichever is intended).
-- [ ] `sign-in/page.tsx`: use `safeParse`, accept a repeated `redirect` without a 500.
-- [ ] `installApp`: apply the same rate limit as `signUpWithInvite`.
-- [ ] Optional: `?? "/storage"` default in `scripts/reset-databases.mjs` (it is loaded through `run-with-env.mjs` today, so this only matters when run directly).
-- [ ] Tests for each.
+- [x] `proxy.ts`: keep the query string in `/sign-in?redirect=...`; removed the unreachable `/sign-in` branch; the matcher keeps excluding `/sign-in`, and the page redirects signed-in users (now to the sanitized `redirect`).
+- [x] `sign-in/page.tsx`: use `safeParse`, accept a repeated `redirect` without a 500.
+- [x] `installApp`: apply the same rate limit as `signUpWithInvite` (one shared per-address `signupLimiter`).
+- [x] Optional: `scripts/reset-databases.mjs` without `STORAGE_ROOT`. Done as a clear error and exit instead of a `/storage` default: the script deletes data, so it must not guess a location when run directly.
+- [x] Tests for each.
 
 ### US-79.5: SSE worker does not reconnect with no tabs
 

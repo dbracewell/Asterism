@@ -9,14 +9,22 @@ import { getAuth } from "@/lib/auth";
 import { BACKEND_API_URL } from "@/lib/backend-url";
 import { getFrontendServerConfig } from "@/lib/server-config";
 import { headers } from "next/headers";
-import { checkInvite, inviteSignupLimiter, redeemInvite } from "./invites";
+import { checkInvite, redeemInvite } from "./invites";
 import { countAdmins, countUsers } from "./session";
 import { clientIpKey } from "@/lib/rate-limit";
+import { signupLimiter } from "./signup-limit";
+
+const TOO_MANY_SIGNUPS =
+  "Too many sign-up attempts. Try again in a few minutes.";
 
 export const installApp = async (data: InstallUserSchemaType) => {
   const parsed = InstallUserSchema.safeParse(data);
   if (!parsed.success) {
     throw Error(parsed.error.message);
+  }
+  const headerList = await headers();
+  if (!signupLimiter.attempt(clientIpKey(headerList.get("x-forwarded-for")))) {
+    throw Error(TOO_MANY_SIGNUPS);
   }
 
   const existingUsers = await countUsers();
@@ -26,7 +34,6 @@ export const installApp = async (data: InstallUserSchemaType) => {
 
   let user;
   try {
-    const headerList = await headers();
     user = await getAuth().api.signUpEmail({
       headers: headerList,
       body: { ...parsed.data },
@@ -97,13 +104,8 @@ export const signUpWithInvite = async (
     };
   }
   const headerList = await headers();
-  if (
-    !inviteSignupLimiter.attempt(clientIpKey(headerList.get("x-forwarded-for")))
-  ) {
-    return {
-      ok: false,
-      error: "Too many sign-up attempts. Try again in a few minutes.",
-    };
+  if (!signupLimiter.attempt(clientIpKey(headerList.get("x-forwarded-for")))) {
+    return { ok: false, error: TOO_MANY_SIGNUPS };
   }
   // Invites only work once an administrator has set Asterism up.
   if ((await countAdmins()) === 0) {

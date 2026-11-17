@@ -2,7 +2,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { BaseUserSchema } from "@/features/auth/schemas";
 import { decideSignupRole, hashMatch } from "@/lib/auth-core";
 import { installApp, signUpWithInvite } from "./actions";
-import { INVALID_INVITE, inviteSignupLimiter } from "./invites";
+import { INVALID_INVITE } from "./invites";
+import { signupLimiter } from "./signup-limit";
 
 const { countMock, deleteUserMock, signUpEmailMock } = vi.hoisted(() => ({
   countMock: vi.fn(),
@@ -100,6 +101,21 @@ describe("installApp", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.unstubAllGlobals();
+    signupLimiter.clear();
+  });
+
+  it("limits install attempts from one address", async () => {
+    countMock.mockResolvedValue(1);
+    for (let attempt = 0; attempt < 10; attempt++) {
+      await expect(installApp(validPayload)).rejects.toThrow(
+        "Application is already installed",
+      );
+    }
+    await expect(installApp(validPayload)).rejects.toThrow(
+      "Too many sign-up attempts. Try again in a few minutes.",
+    );
+    expect(countMock).toHaveBeenCalledTimes(10);
+    expect(signUpEmailMock).not.toHaveBeenCalled();
   });
 
   it("rejects installation when at least one user already exists", async () => {
@@ -210,7 +226,7 @@ describe("signUpWithInvite", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.unstubAllGlobals();
-    inviteSignupLimiter.clear();
+    signupLimiter.clear();
     countMock.mockResolvedValue(1);
   });
 

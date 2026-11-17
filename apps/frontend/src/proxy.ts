@@ -56,16 +56,16 @@ export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname.trim();
 
   if (!session && !isPublicPath(pathname)) {
-    // Not logged in and trying to navigate to somewhere that isn't public
+    // Not logged in and trying to navigate to somewhere that isn't public.
+    // Keep the query string so the user lands back on the same view.
+    const target = `${pathname}${request.nextUrl.search}`;
     const redirectUrl = new URL(
-      `/sign-in?redirect=${encodeURIComponent(pathname)}`,
+      `/sign-in?redirect=${encodeURIComponent(target)}`,
       externalOrigin,
     );
     response = NextResponse.redirect(redirectUrl);
-  } else if (session && pathname === "/sign-in") {
-    // Is logged in and trying to reach the sign-in page, redirect to app
-    response = NextResponse.redirect(new URL("/", externalOrigin));
   }
+  // /sign-in is excluded by the matcher; the page redirects signed-in users.
 
   return response;
 }

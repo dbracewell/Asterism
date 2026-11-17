@@ -59,3 +59,22 @@ it("lets signed-out visitors open an invite link, and nothing below it", async (
     expect(guarded.headers.get("location")).toContain("/sign-in");
   }
 });
+
+it("keeps the query string in the sign-in redirect", async () => {
+  const res = await proxy(
+    new NextRequest("http://localhost:3000/chat/abc?tab=files&q=a%20b"),
+  );
+  const location = new URL(res.headers.get("location")!);
+  expect(location.pathname).toBe("/sign-in");
+  expect(location.searchParams.get("redirect")).toBe(
+    "/chat/abc?tab=files&q=a%20b",
+  );
+});
+
+it("leaves the sign-in page to handle signed-in visitors itself", () => {
+  for (const url of ["/sign-in", "/sign-in?redirect=%2Fsettings"]) {
+    expect(unstable_doesProxyMatch({ config, nextConfig: {}, url })).toBe(
+      false,
+    );
+  }
+});

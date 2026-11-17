@@ -1,18 +1,10 @@
 import "server-only";
 
 import { BACKEND_API_URL } from "@/lib/backend-url";
-import { createRateLimiter } from "@/lib/rate-limit";
 import { getFrontendServerConfig } from "@/lib/server-config";
 
 export const INVALID_INVITE =
   "This invite can't be used. Ask your educator for a new one.";
-
-// Invites are random enough not to be guessed; this slows account spam and
-// probing from one address. Per process, like the other rate limits.
-export const inviteSignupLimiter = createRateLimiter({
-  max: 10,
-  windowMs: 15 * 60_000,
-});
 
 export type InvitePreview = { class_name: string; educator_name: string };
 

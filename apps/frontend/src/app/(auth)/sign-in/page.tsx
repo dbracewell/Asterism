@@ -1,19 +1,12 @@
 import { AuthForm } from "@/features/auth/components/auth-form";
-import { sanitizeRedirectPath } from "@/features/auth/redirect";
+import { signInRedirectPath } from "@/features/auth/redirect";
 import { getUserCount } from "@/features/auth/server/session";
 import { getAuth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import z from "zod";
-
-const searchSchema = z.object({
-  redirect: z.string().optional(),
-});
 
 type HomePageProps = {
-  searchParams: Promise<{
-    redirect?: string;
-  }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
 export default async function Home({ searchParams }: HomePageProps) {
@@ -22,20 +15,16 @@ export default async function Home({ searchParams }: HomePageProps) {
     searchParams,
     getAuth().api.getSession({ headers: headersList }),
   ]);
-  const formParams = searchSchema.parse(resolvedSearchParams);
+  const referer = signInRedirectPath(resolvedSearchParams);
 
   if (sessionData) {
-    redirect("/");
+    redirect(referer);
   }
 
   const userCount = await getUserCount();
   const view = userCount > 0 ? "login" : "install";
 
   return (
-    <AuthForm
-      className="my-auto shrink-0"
-      view={view}
-      referer={sanitizeRedirectPath(formParams.redirect)}
-    />
+    <AuthForm className="my-auto shrink-0" view={view} referer={referer} />
   );
 }
