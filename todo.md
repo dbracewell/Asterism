@@ -43,3 +43,80 @@ Source: user request (2026-11-08). Suggested order: EPIC-74 → 67 → 70 → 68
 ## Codebase review follow-ups (proposed 2026-11-14)
 
 Source: [codebase review](codebase_review.md), verified against the code on 2026-11-14. Suggested order: EPIC-77 → 79 → 78 → 80 → 81 → 82. Work one story at a time. EPIC-77 through EPIC-82 are complete and archived in the [2026-11-17 checklist](docs/archive/todo-completed-2026-11-17.md).
+
+## Feature consolidation (proposed 2026-11-17)
+
+Source: user request and the [feature overlap review](docs/reviews/2026-11-17-feature-overlap-review.md). Suggested order: [EPIC-83](docs/epics/EPIC-83-YOUR-ASTERISM-AND-PERSONA-REMOVAL.md) → [EPIC-84](docs/epics/EPIC-84-ONE-PROGRESS-PANEL.md) → [EPIC-85](docs/epics/EPIC-85-ONE-MODE-POLICY.md). Work one story at a time.
+
+### US-83.1: About you replaces personas (backend)
+
+- [ ] ADR-0066 "About you" superseding ADR-0021; amend ADR-0016/0028/0048/0061
+- [ ] `users.about_md` / `about_revision`; remove persona table, default pointer, trigger and FK
+- [ ] `GET`/`PUT /users/me/about` with expected revision; delete persona router, schemas, service
+- [ ] Profile layer from About you, framed as user information (skip when blank); pin `accepted_about` on acceptance
+- [ ] Remove chat persona override, route and `pending_persona`
+- [ ] `ExecutionScope` and `MemoryNamespace` drop the profile/persona segment
+- [ ] Reflections drop `persona_id`, FK, index segment and filter
+- [ ] Skill drafting drops `persona_id`
+- [ ] AI-use log, context inspection, comparisons report About you revision
+- [ ] Replace persona tests; regenerate OpenAPI and Hey API client
+
+### US-83.2: Your Asterism settings section (frontend)
+
+- [ ] Your Asterism section after General with an About you card (revision-safe save)
+- [ ] No memory placeholder; leave room for a Memory card
+- [ ] Delete persona settings, queries and tests
+- [ ] Repoint `personas` links to `your-asterism`
+
+### US-83.3: Remove persona from chat and the rest of the UI
+
+- [ ] Remove persona picker, composer chip, header label and new-chat persona state
+- [ ] Message provenance, context manifest and AI-use log show About you
+- [ ] Reflections UI drops persona filter and labels
+- [ ] Help pages, composer/header/transcript text and guided tour updated
+- [ ] Unit and Playwright tests updated; lint, typecheck, test, format:check pass
+
+### US-83.4: Docs and invariants
+
+- [ ] CLAUDE.md/AGENTS.md §1, §2.2, §3.3, §4, §10
+- [ ] Architecture docs that mention personas/profiles
+- [ ] Backend and frontend READMEs
+
+### US-84.1: Progress read and one practice route (backend)
+
+- [ ] ADR-0067 "Progress panel"; amend ADR-0036/0049/0050
+- [ ] `GET …/study/progress`: topics, weak spots with topics, pending unclear items
+- [ ] Server-side unclear-item splitting with tests
+- [ ] `POST …/study/practice {topic?}`; one `practice` quiz origin
+- [ ] Remove old topics/weak-spots reads and practice routes; regenerate client
+
+### US-84.2: Progress panel (frontend)
+
+- [ ] `ProjectProgress` replaces topic mastery and weak spots panels, with topic filter
+- [ ] Add card flow moves from the reflection dialog into the panel; reflection list links to it
+- [ ] Empty states
+- [ ] Study harness, unit and Playwright tests updated
+
+### US-84.3: Help and docs
+
+- [ ] One Progress help entry; reflections help updated
+- [ ] Architecture and README study sections
+
+### US-85.1: Effective policy and one check (backend)
+
+- [ ] ADR-0068 "Effective mode policy" superseding ADR-0031/0055 enforcement
+- [ ] `effective_mode_policy` reading learner lock and course policy live
+- [ ] Replace lock and class-policy checks with the one check
+- [ ] `ChatInfo.mode_policy`; remove `GET /course-policy/projects/{id}`
+- [ ] Tests for each source, both, override scope, Standard switch, empty intersection, tightening; regenerate client
+
+### US-85.2: One policy control (frontend)
+
+- [ ] `ModePolicyNotice` replaces mode lock and course policy components
+- [ ] Mode picker and hint controls read `mode_policy`
+- [ ] Unit and Playwright tests updated
+
+### US-85.3: Help and docs
+
+- [ ] One help entry for mode restrictions
+- [ ] Architecture docs and classes/educator README sections
