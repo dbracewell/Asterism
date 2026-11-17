@@ -1,12 +1,17 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import {
+  MutationCache,
+  QueryClient,
+  QueryClientProvider,
+} from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { handleMutationSuccess } from "@/lib/mutation-cache";
 import { ComponentSettings, parameterKind } from "./component-settings";
 
-const mocks = vi.hoisted(() => ({ test: vi.fn() }));
+const mocks = vi.hoisted(() => ({ test: vi.fn(), components: vi.fn() }));
 
 const example = { "1": { class_type: "KSampler", inputs: {} } };
 
@@ -42,12 +47,16 @@ const parameters = {
 vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
   componentsByTypeOptions: () => ({
     queryKey: [{ _id: "componentsByType", baseUrl: "" }],
-    queryFn: () =>
-      Promise.resolve({
+    queryFn: () => {
+      // Each fetch is a new response, so a refetch would hand the form a new
+      // provider object.
+      const fetch = mocks.components();
+      return Promise.resolve({
         items: [
           {
             type: "ImageGenerator",
             name: "ComfyUI",
+            description: `fetch ${fetch}`,
             parameters,
             testable: true,
           },
@@ -58,25 +67,17 @@ vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
             testable: false,
           },
         ],
-      }),
+      });
+    },
   }),
   componentsTestMutation: () => ({ mutationFn: mocks.test }),
 }));
 
+let queryClient: QueryClient;
+
 function Wrapper({ children }: { children: ReactNode }) {
   return (
-    <QueryClientProvider
-      client={
-        new QueryClient({
-          defaultOptions: {
-            queries: { retry: false },
-            mutations: { retry: false },
-          },
-        })
-      }
-    >
-      {children}
-    </QueryClientProvider>
+    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
   );
 }
 
@@ -95,7 +96,22 @@ function renderForm(stored: Record<string, unknown> = {}) {
 }
 
 describe("component settings form", () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    let fetches = 0;
+    mocks.components.mockImplementation(() => ++fetches);
+    // The app's global invalidation, as wired in providers.tsx.
+    queryClient = new QueryClient({
+      defaultOptions: {
+        queries: { retry: false },
+        mutations: { retry: false },
+      },
+      mutationCache: new MutationCache({
+        onSuccess: (_d, _v, _c, mutation) =>
+          handleMutationSuccess(queryClient, mutation),
+      }),
+    });
+  });
 
   it("picks an input for each schema type", () => {
     expect(parameterKind("auth", { enum: ["none", "bearer"] })).toBe("enum");
@@ -202,6 +218,38 @@ describe("component settings form", () => {
     expect(onUpdate).toHaveBeenLastCalledWith({
       name: "ComfyUI",
       parameters: expect.objectContaining({ checkpoint: "flux.safetensors" }),
+    });
+  });
+
+  it("keeps unsaved edits and refetches nothing when testing", async () => {
+    const user = userEvent.setup();
+    mocks.test.mockResolvedValue({ ok: true, detail: "Connected" });
+    const onUpdate = renderForm({ base_url: "http://comfy" });
+
+    const address = await screen.findByLabelText("Server address");
+    await user.clear(address);
+    await user.type(address, "http://edited");
+    await user.click(screen.getByLabelText("Verify TLS certificates"));
+
+    await user.click(screen.getByRole("button", { name: "Test connection" }));
+    expect(await screen.findByText("Connected")).toBeInTheDocument();
+
+    expect(mocks.components).toHaveBeenCalledTimes(1);
+    expect(
+      queryClient.getQueryState([{ _id: "componentsByType", baseUrl: "" }])
+        ?.isInvalidated,
+    ).toBe(false);
+    expect(screen.getByLabelText("Server address")).toHaveValue(
+      "http://edited",
+    );
+    expect(screen.getByLabelText("Verify TLS certificates")).not.toBeChecked();
+    expect(screen.getByText("* Updated")).toBeInTheDocument();
+    expect(onUpdate).toHaveBeenLastCalledWith({
+      name: "ComfyUI",
+      parameters: expect.objectContaining({
+        base_url: "http://edited",
+        verify_tls: false,
+      }),
     });
   });
 

@@ -1,6 +1,6 @@
 # EPIC-79: Frontend runtime fixes
 
-Status: in progress (US-79.1 done). Source: [codebase review](../../codebase_review.md), verified 2026-11-14 (items 4, 5, 6, 12, 18).
+Status: in progress (US-79.1, US-79.2 done). Source: [codebase review](../../codebase_review.md), verified 2026-11-14 (items 4, 5, 6, 12, 18).
 
 ## Objective
 
@@ -19,9 +19,9 @@ event webhooks, sign-in failures, and needless full-app refetches.
 
 ### US-79.2: Admin "Test" does not erase unsaved edits
 
-- [ ] Add `meta: { skipGlobalInvalidation: true }` to `componentsTestMutation` and to `imageGenerationTestMutation`.
-- [ ] Derive `provider` in `ComponentSettings` with `useMemo` instead of syncing state in an effect.
-- [ ] Test that clicking Test keeps edited values in tools, embedding and image-generation settings.
+- [x] Add `meta: { skipGlobalInvalidation: true }` to `componentsTestMutation`; `imageGenerationTestMutation` invalidates only the file lists (`meta.invalidates`), since its image is saved to the admin's files.
+- [x] Derive `provider` in `ComponentSettings` with `useMemo` instead of syncing state in an effect.
+- [x] Test that clicking Test keeps edited values in tools, embedding and image-generation settings.
 
 ### US-79.3: System webhooks are not rate limited as one client
 
