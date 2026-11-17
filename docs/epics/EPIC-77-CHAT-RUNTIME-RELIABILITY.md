@@ -1,6 +1,6 @@
 # EPIC-77: Chat runtime reliability
 
-Status: in progress (US-77.2, US-77.1, US-77.3 and US-77.4 done). Source: [codebase review](../../codebase_review.md), verified 2026-11-14 (items 1, 2, 3, 7, 8, 12).
+Status: complete pending confirmation (US-77.1 through US-77.5 done). Source: [codebase review](../../codebase_review.md), verified 2026-11-14 (items 1, 2, 3, 7, 8, 12).
 
 ## Objective
 
@@ -44,8 +44,8 @@ All controllers for a chat consume one shared `MessageQueue`, so two tabs steal 
 
 `get_one` and `get_agent_profile` run before `websocket.accept()` with no handler for `NotFoundException` / `ForbiddenException`.
 
-- [ ] Map those failures to a close code with a reason (as the unauthorized and no-agent paths do), and keep admission released.
-- [ ] Test for an unknown chat and another user's chat.
+- [x] Map those failures to a close code with a reason (as the unauthorized and no-agent paths do), and keep admission released.
+- [x] Test for an unknown chat and another user's chat.
 
 ## Notes
 

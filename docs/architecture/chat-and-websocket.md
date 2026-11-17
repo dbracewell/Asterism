@@ -78,7 +78,11 @@ sequenceDiagram
 
 The public path is `/api/py/chat/stream/{chat_id}?token={jwt}`.
 `WebSocketConnection` handles JSON framing and heartbeat. Owner authorization occurs
-before attaching to a process-local `ChatJob`. A controller owns its socket worker
+before attaching to a process-local `ChatJob`. Failures before `accept()` close the
+socket with code 1008 and a reason: `Unauthorized` for a bad token, `Chat not found`
+for an unknown chat or another user's chat, `Forbidden` for a refused agent lookup,
+and `This chat has no assigned main agent`. The reserved controller admission is
+always released (US-77.5). A controller owns its socket worker
 tasks; the chat job owns provider generation. Disconnecting cancels connection
 workers without canceling the generation task. Explicit `cancel` stops generation
 and persists canceled status plus any partial assistant output.

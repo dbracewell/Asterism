@@ -153,35 +153,43 @@ async def chat(
 
     job = None
     try:
-        async with db_session_manager.session() as session:
-            chat_session = await chat_service.get_one(
-                chat_id=chat_id,
-                user_id=user.id,
-                session=session,
-            )
-            if chat_session.info.agent_id is None:
-                await websocket.close(
-                    code=1008,
-                    reason="This chat has no assigned main agent",
+        try:
+            async with db_session_manager.session() as session:
+                chat_session = await chat_service.get_one(
+                    chat_id=chat_id,
+                    user_id=user.id,
+                    session=session,
                 )
-                return
+                if chat_session.info.agent_id is None:
+                    await websocket.close(
+                        code=1008,
+                        reason="This chat has no assigned main agent",
+                    )
+                    return
 
-            profile = await agent_service.get_agent_profile(
-                user_id=user.id,
-                agent_id=chat_session.info.agent_id,
-                session=session,
+                profile = await agent_service.get_agent_profile(
+                    user_id=user.id,
+                    agent_id=chat_session.info.agent_id,
+                    session=session,
+                )
+
+            agent: Agent = Agent(
+                model_id=chat_session.info.selected_model_id,
+                profile=profile,
+                user=user,
+                session=chat_session,
+                logger=get_logger("ChatSession"),
+                allowed_tools=chat_session.info.allowed_tools,
             )
+            job = chat_jobs.get_or_create(chat_id, ChatOrchestrator(agent), user_id=user.id)
+        except CodedException as error:
+            # Rejected before accept, like the unauthorized and no-agent paths
+            # (US-77.5). Another user's chat reads as not found.
+            if error.code not in (401, 403, 404):
+                raise
+            await websocket.close(code=1008, reason="Chat not found" if error.code == 404 else "Forbidden")
+            return
 
-        agent: Agent = Agent(
-            model_id=chat_session.info.selected_model_id,
-            profile=profile,
-            user=user,
-            session=chat_session,
-            logger=get_logger("ChatSession"),
-            allowed_tools=chat_session.info.allowed_tools,
-        )
-
-        job = chat_jobs.get_or_create(chat_id, ChatOrchestrator(agent), user_id=user.id)
         controller = ChatController(
             chat_id=chat_id,
             connection=WebSocketConnection(websocket=websocket),
