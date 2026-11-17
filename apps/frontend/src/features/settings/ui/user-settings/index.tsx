@@ -5,7 +5,7 @@ import { ChatGptConnectionSettings } from "@/features/chatgpt/components/chatgpt
 import { SkillsSettings } from "@/features/skills/components/skills-settings";
 import { TemplatesSettings } from "@/features/templates/components/templates-settings";
 import { RubricsSettings } from "@/features/templates/components/rubrics-settings";
-import { PersonaSettings } from "./persona-settings";
+import { YourAsterismSettings } from "./your-asterism-settings";
 import {
   BotIcon,
   Settings2Icon,
@@ -27,10 +27,10 @@ export const UserSettings: Types = [
   },
   {
     type: "section",
-    label: "Personas",
-    value: "personas",
+    label: "Your Asterism",
+    value: "your-asterism",
     icon: <UserRoundIcon />,
-    settingsPane: <PersonaSettings />,
+    settingsPane: <YourAsterismSettings />,
   },
   {
     type: "section",

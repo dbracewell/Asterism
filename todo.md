@@ -63,10 +63,10 @@ Source: user request and the [feature overlap review](docs/reviews/2026-11-17-fe
 
 ### US-83.2: Your Asterism settings section (frontend)
 
-- [ ] Your Asterism section after General with an About you card (revision-safe save)
-- [ ] No memory placeholder; leave room for a Memory card
-- [ ] Delete persona settings, queries and tests
-- [ ] Repoint `personas` links to `your-asterism`
+- [x] Your Asterism section after General with an About you card (revision-safe save)
+- [x] No memory placeholder; leave room for a Memory card
+- [x] Delete persona settings, queries and tests
+- [x] Repoint `personas` links to `your-asterism`
 
 ### US-83.3: Remove persona from chat and the rest of the UI
 

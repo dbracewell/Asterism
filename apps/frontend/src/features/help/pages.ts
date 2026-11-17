@@ -29,7 +29,7 @@ export type PageGuideId =
   | "study.guide-new"
   | "study.note"
   | "settings.general"
-  | "settings.personas"
+  | "settings.your-asterism"
   | "settings.skills"
   | "settings.templates"
   | "settings.rubrics"
@@ -712,21 +712,22 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
     ],
     audience: "everyone",
   },
-  "settings.personas": {
-    title: "Personas",
+  "settings.your-asterism": {
+    title: "Your Asterism",
     purpose:
-      "Describe yourself and how you'd like the assistant to respond. You can keep several personas and choose one as your default.",
+      "Tell Asterism about yourself so its answers fit you. What you write is used in every chat.",
     areas: [
       {
-        name: "Persona list",
+        name: "About you",
         description:
-          "Each persona has a name and a USER.md document. Your default persona is used for new chats unless you pick another.",
+          "One text about who you are, what you're studying or working on, and what you already know. New messages use the latest saved text; messages already sent keep the text they were sent with.",
       },
     ],
     tasks: [
-      'Write your level, goals and preferred explanation style, for example "first-year biology student; explain with everyday examples".',
+      'Write a few facts about yourself, for example "second-year nursing student; I know basic chemistry".',
+      "To change how Asterism responds, pick a learning mode in the chat or edit your main agent's instructions instead.",
     ],
-    terms: ["concept.persona", "concept.learning-mode"],
+    terms: ["concept.learning-mode"],
     audience: "everyone",
   },
   "settings.skills": {
@@ -1090,7 +1091,7 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
 
 const userSettingsGuides: Record<string, PageGuideId> = {
   general: "settings.general",
-  personas: "settings.personas",
+  "your-asterism": "settings.your-asterism",
   skills: "settings.skills",
   templates: "settings.templates",
   rubrics: "settings.rubrics",
