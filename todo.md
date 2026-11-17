@@ -46,10 +46,7 @@ Source: [codebase review](codebase_review.md), verified against the code on 2026
 
 ### EPIC-82: Code cleanup and deduplication ([epic](docs/epics/EPIC-82-CODE-CLEANUP.md))
 
-- [ ] US-82.1: Shared utilities (in progress)
-  - [x] SSE rate limiter built on `createRateLimiter`
-  - [x] One `errorDetail`/`errorMessage` in `@/lib/utils`
-  - [x] Captioning mode uses `RadioGroup`
+- [x] US-82.1: Shared utilities
 - [ ] US-82.2: One boolean admin policy panel
 - [x] US-82.3: Dead code and small leaks
   - [x] Delete `use-clickoutside.ts`, `formatURL`, the `chat-session:scroll` event and `useSubscribeEventState`
