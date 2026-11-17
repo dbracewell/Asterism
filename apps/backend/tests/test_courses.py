@@ -1,5 +1,6 @@
 """US-60.3: educators publish course versions; students add and update their own copy."""
 
+import asyncio
 import hashlib
 import uuid
 
@@ -168,7 +169,7 @@ async def test_a_student_adds_the_course_as_their_own_project(course):
     )
     assert agent.id != course["tutor"]
     [file] = files
-    assert file.filename == "notes.txt" and course["store"].open("s1", file.storage_key).read_bytes() == (
+    assert file.filename == "notes.txt" and course["store"].local_path("s1", file.storage_key).read_bytes() == (
         b"cells have membranes"
     )
     assert [(link.project_id, link.file_id) for link in links] == [(project.id, file.id)]
@@ -326,7 +327,7 @@ async def test_only_the_latest_version_keeps_file_bytes_and_deleting_the_class_r
     assert len(rows) == 3 and len(kept) == 2
     # The unchanged file moved to the new version instead of being copied.
     assert len({row.sha256 for row in rows}) == 2
-    paths = [course["store"].open("teach", key) for key in kept]
+    paths = [course["store"].local_path("teach", key) for key in kept]
     assert all(path.is_file() for path in paths)
     response = await course["client"].delete(f"/classes/{course['class']['id']}", headers=auth("teach"))
     assert response.status_code == 204
@@ -400,3 +401,73 @@ async def test_listing_versions_loads_files_in_one_query(course):
         (2, ["extra.txt", "notes.txt"]),
         (1, ["notes.txt"]),
     ]
+
+
+def _stored_files(store):
+    return sorted(path for path in store.root.rglob("*") if path.is_file())
+
+
+def _cancel_on_second_save(monkeypatch, store):
+    real_save = store.save
+    calls = []
+
+    def save(*args, **kwargs):
+        calls.append(args)
+        if len(calls) == 2:
+            raise asyncio.CancelledError
+        return real_save(*args, **kwargs)
+
+    monkeypatch.setattr(store, "save", save)
+
+
+async def test_a_cancelled_publish_leaves_no_course_bytes(course, monkeypatch):
+    from asterism.domains.courses.publish import publish as publish_version
+    from asterism.domains.courses.schemas import CoursePublish
+
+    await add_file(course, "extra.txt", b"more cells")
+    before = _stored_files(course["store"])
+    _cancel_on_second_save(monkeypatch, course["store"])
+
+    with pytest.raises(asyncio.CancelledError):
+        async with course["sessions"]() as session:
+            await publish_version(
+                "teach",
+                uuid.UUID(course["class"]["id"]),
+                CoursePublish(project_id=uuid.UUID(course["project"]), note=""),
+                session,
+            )
+
+    assert _stored_files(course["store"]) == before
+    async with course["sessions"]() as session:
+        assert await session.scalar(select(CourseFileModel.id)) is None
+
+
+async def test_a_cancelled_course_add_leaves_no_student_files(course, monkeypatch):
+    from asterism.domains.courses.copies import apply_course
+
+    await add_file(course, "extra.txt", b"more cells")
+    assert (await publish(course)).status_code == 201
+    before = _stored_files(course["store"])
+    _cancel_on_second_save(monkeypatch, course["store"])
+
+    with pytest.raises(asyncio.CancelledError):
+        async with course["sessions"]() as session:
+            await apply_course("s1", uuid.UUID(course["class"]["id"]), 1, session)
+
+    assert _stored_files(course["store"]) == before
+    _, _, files, _, _ = await student_records(course)
+    assert files == []
+
+
+async def test_a_missing_course_file_stops_the_add_with_a_clear_error(course):
+    assert (await publish(course)).status_code == 201
+    async with course["sessions"]() as session:
+        key = await session.scalar(select(CourseFileModel.storage_key).where(CourseFileModel.name == "notes.txt"))
+    course["store"].delete("teach", key)
+
+    response = await apply(course, 1)
+
+    assert response.status_code == 409
+    assert response.json()["detail"].startswith('Course file "notes.txt" is missing')
+    projects, _, files, _, _ = await student_records(course)
+    assert projects == [] and files == []

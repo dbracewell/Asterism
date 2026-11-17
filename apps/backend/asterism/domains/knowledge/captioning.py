@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import base64
 import hashlib
+import io
 import uuid
 from pathlib import Path
 from typing import Any
@@ -115,14 +116,14 @@ class LocalSmolVlm2CaptionProvider:
         if self._model is None or self._processor is None:
             raise CaptioningError(CaptionErrorCode.NOT_READY, "Local caption model is not initialized")
         try:
-            if not request.image_path.is_file() or request.image_path.stat().st_size > request.max_image_bytes:
+            if len(request.image) > request.max_image_bytes:
                 raise CaptioningError(
                     CaptionErrorCode.IMAGE_INVALID,
                     "Image is unavailable or exceeds the captioning limit",
                 )
-            with Image.open(request.image_path) as image:
+            with Image.open(io.BytesIO(request.image)) as image:
                 image.verify()
-            with Image.open(request.image_path) as image:
+            with Image.open(io.BytesIO(request.image)) as image:
                 rgb_image = image.convert("RGB")
                 messages = [
                     {
@@ -205,7 +206,7 @@ async def _provider_model_caption(
 
     CaptioningConfiguration(mode=CaptionMode.PROVIDER, provider_model_id=model.id).validate([model])
     client = create_llm_client(model.name, model.provider)
-    image_data = base64.b64encode(request.image_path.read_bytes()).decode("ascii")
+    image_data = base64.b64encode(request.image).decode("ascii")
     logger.info(f"Captioning document {request.file.id} with provider {model.provider.name}/{model.name}")
     response = await client.generate(
         messages=[
@@ -335,8 +336,8 @@ async def _caption(artifact: FileKnowledgeArtifactModel, source: SourceContent) 
         logger.error(f"File artifact {artifact.id} is not an image and cannot be captioned")
         raise CaptioningError(CaptionErrorCode.IMAGE_INVALID, "Only image documents can be captioned")
 
-    image_path = source.file.path
-    if not image_path.is_file() or image_path.stat().st_size > config.max_vision_image_bytes:
+    image = source.image
+    if image is None or len(image) > config.max_vision_image_bytes:
         logger.error(f"Image file ({source.file.id}) is unavailable or exceeds the size limit")
         raise CaptioningError(CaptionErrorCode.IMAGE_INVALID, "Image file is unavailable or exceeds the size limit")
 
@@ -350,7 +351,7 @@ async def _caption(artifact: FileKnowledgeArtifactModel, source: SourceContent) 
     request = CaptionRequest(
         revision_id=artifact.id,
         file=source.file,
-        image_path=image_path,
+        image=image,
         max_image_bytes=config.max_vision_image_bytes,
         max_caption_chars=config.max_caption_chars,
     )

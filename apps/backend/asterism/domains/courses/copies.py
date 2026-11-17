@@ -7,6 +7,7 @@ sub-agents with the educator's models, and only the tools admin policy allows
 now. Course items are changed in place; the student's chats are untouched.
 """
 
+import asyncio
 import json
 import uuid
 
@@ -328,7 +329,12 @@ class _Sync:
                     self.superseded_files.append(current.id)
                 if not source.storage_key:
                     raise ConflictException("The course changed while you were adding it; review it again")
-                content = store.open(educator_id, source.storage_key).read_bytes()
+                try:
+                    content = await store.read_bytes(educator_id, source.storage_key)
+                except FileNotFoundError as exc:
+                    raise ConflictException(
+                        f'Course file "{source.name}" is missing; ask your educator to publish the course again'
+                    ) from exc
                 created = await new_library_file(
                     user_id=self.user_id, original_name=source.name, content=content, session=self.session
                 )
@@ -392,7 +398,8 @@ async def apply_course(user_id: str, class_id: uuid.UUID, version_number: int, s
         for created in sync.new_files:
             store.delete(user_id, created.storage_key)
         raise ConflictException("Something changed while the course was being added; try again") from exc
-    except Exception:
+    except (Exception, asyncio.CancelledError):
+        # A cancelled apply (client gone, shutdown) must not leave orphaned copies.
         await session.rollback()
         for created in sync.new_files:
             store.delete(user_id, created.storage_key)

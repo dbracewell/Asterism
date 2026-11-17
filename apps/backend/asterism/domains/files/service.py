@@ -158,9 +158,11 @@ async def get_user_file(
         raise BadDataException("Access to file is denied")
     async with get_async_db_session(session) as session:
         file = await _owned_file(user_id=user_id, filename=filename, session=session)
-        requested_path = get_file_store().open(user_id, file.storage_key)
-        if not requested_path.is_file():
+        store = get_file_store()
+        if not await store.exists(user_id, file.storage_key):
             raise NotFoundException("Access to file is denied")
+        # FileResponse streams from disk and serves Range requests.
+        requested_path = store.local_path(user_id, file.storage_key)
 
         etag = f'"{file.sha256}"'
         headers = {
@@ -414,7 +416,7 @@ async def upload_files(
             )
             # Reuse only an intact, same-name object. Different content retains the
             # existing name-collision behavior, and ownership is always user-scoped.
-            if existing is not None and store.open(user_id, existing.storage_key).is_file():
+            if existing is not None and await store.exists(user_id, existing.storage_key):
                 if existing not in created:
                     created.append(existing)
                 continue
@@ -850,11 +852,11 @@ async def download_file_by_id(*, user_id: str, file_id: uuid.UUID, session: Asyn
     file = await session.scalar(select_owned_files(user_id=user_id).where(UserFileModel.id == file_id))
     if file is None:
         raise NotFoundException("File not found")
-    path = get_file_store().open(user_id, file.storage_key)
-    if not path.is_file():
+    store = get_file_store()
+    if not await store.exists(user_id, file.storage_key):
         raise NotFoundException("File not found")
     return FileResponse(
-        path=path,
+        path=store.local_path(user_id, file.storage_key),
         filename=file.original_name,
         media_type=file.mime_type,
         headers={"Cache-Control": "private, no-store", **SOURCE_RESPONSE_HEADERS},

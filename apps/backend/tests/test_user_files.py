@@ -296,7 +296,7 @@ async def test_processing_reads_text_caches_and_invalidates(file_session):
     assert processed.content_status is FileContentStatus.READY
     assert processed.content_cache == "hello\nworld"
 
-    path = get_file_store().open(processed.user_id, processed.storage_key)
+    path = get_file_store().local_path(processed.user_id, processed.storage_key)
     path.write_text("changed", encoding="utf-8")
     processed = await ensure_file_processed(file=processed, session=file_session)
     assert processed.content_cache == "changed"
@@ -549,7 +549,7 @@ async def test_download_rejects_traversal(tmp_path, monkeypatch):
 
 async def source_path(session, file):
     model = await session.get(UserFileModel, file.id)
-    return get_file_store().open(model.user_id, model.storage_key)
+    return get_file_store().local_path(model.user_id, model.storage_key)
 
 
 @pytest.mark.asyncio

@@ -11,8 +11,15 @@ Security contract:
 - Every key is validated against a strict shape before it is turned into a
   path, and the resolved path is re-checked for containment inside the root,
   which also rejects symlink escapes.
+
+Reads go through the async :meth:`FileStore.read_bytes` / :meth:`FileStore.exists`.
+:meth:`FileStore.local_path` is the one seam that exposes a filesystem path,
+for the few consumers that need a real file (streamed downloads, the converter
+subprocess, document page counts); an object store would materialize a
+temporary copy there.
 """
 
+import asyncio
 import re
 import shutil
 import uuid
@@ -52,20 +59,41 @@ class FileStore(Protocol):
         """
         ...
 
-    def open(
-        self,
-        user_id: str,
-        storage_key: str,
-    ) -> Path:
-        """Resolve a storage key to a readable path owned by ``user_id``.
+    async def read_bytes(self, user_id: str, storage_key: str, *, limit: int | None = None) -> bytes:
+        """Read stored bytes without blocking the event loop.
 
         Args:
             user_id: Owner the key must belong to.
             storage_key: Key previously returned by :meth:`save`.
+            limit: Read at most this many bytes; ``None`` reads everything.
+                Pass ``max + 1`` to detect an oversized source cheaply.
+
+        Returns:
+            The stored bytes (possibly cut at ``limit``).
+
+        Raises:
+            FileNotFoundError: If nothing is stored under the key.
+            ValueError: If the key is malformed or belongs to another owner.
+        """
+        ...
+
+    async def exists(self, user_id: str, storage_key: str) -> bool:
+        """Report whether bytes are stored under the key.
+
+        Raises:
+            ValueError: If the key is malformed or belongs to another owner.
+        """
+        ...
+
+    def local_path(self, user_id: str, storage_key: str) -> Path:
+        """Resolve a key to a local file path, for consumers that need a real file.
+
+        Only streamed downloads, the converter and document page counts use
+        this; everything else reads through :meth:`read_bytes`.
 
         Returns:
             The absolute path of the stored bytes. The file is not guaranteed
-            to exist; callers must check.
+            to exist; callers check with :meth:`exists`.
 
         Raises:
             ValueError: If the key is malformed or belongs to another owner.
@@ -210,15 +238,22 @@ class LocalFileStore:
             raise
         return key
 
-    def open(self, user_id: str, storage_key: str) -> Path:
+    async def read_bytes(self, user_id: str, storage_key: str, *, limit: int | None = None) -> bytes:
+        """Read the stored bytes in a worker thread; see :meth:`FileStore.read_bytes`."""
+        path = self._path(user_id, storage_key)
+
+        def read() -> bytes:
+            with path.open("rb") as source:
+                return source.read() if limit is None else source.read(limit)
+
+        return await asyncio.to_thread(read)
+
+    async def exists(self, user_id: str, storage_key: str) -> bool:
+        """Check for a regular file in a worker thread; see :meth:`FileStore.exists`."""
+        return await asyncio.to_thread(self._path(user_id, storage_key).is_file)
+
+    def local_path(self, user_id: str, storage_key: str) -> Path:
         """Resolve a key to its path without touching the filesystem.
-
-        Args:
-            user_id: Owner the key must belong to.
-            storage_key: Key previously returned by :meth:`save`.
-
-        Returns:
-            The absolute path of the stored bytes.
 
         Raises:
             ValueError: If the key is malformed or belongs to another owner.

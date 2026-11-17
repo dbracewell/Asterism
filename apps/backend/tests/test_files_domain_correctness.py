@@ -69,7 +69,7 @@ async def test_same_size_replacement_invalidates_the_cached_content(file_session
     assert processed.content_cache == "hello"
 
     # Replace the source with different bytes of exactly the same length.
-    path = get_file_store().open(processed.user_id, processed.storage_key)
+    path = get_file_store().local_path(processed.user_id, processed.storage_key)
     path.write_bytes(b"world")
     assert path.stat().st_size == processed.size
 
@@ -181,7 +181,7 @@ async def test_delete_succeeds_when_the_stored_source_cannot_be_removed(file_ses
 
     class FailingStore:
         def open(self, user_id, storage_key):
-            return get_file_store().open(user_id, storage_key)
+            return get_file_store().local_path(user_id, storage_key)
 
         def delete(self, user_id, storage_key):
             raise OSError("source is locked")

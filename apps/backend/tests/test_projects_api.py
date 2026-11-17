@@ -380,7 +380,7 @@ async def test_deletion_retains_shared_source_bytes_and_extraction(project_api):
         assert len((await session.scalars(select(FileKnowledgeArtifactModel))).all()) == 1
         memberships = (await session.scalars(select(ProjectFileModel))).all()
         assert [m.project_id for m in memberships] == [uuid.UUID(second["id"])]
-    assert store.open("a", source_key).read_bytes() == b"keep these original bytes"
+    assert store.local_path("a", source_key).read_bytes() == b"keep these original bytes"
 
 
 @pytest.mark.asyncio

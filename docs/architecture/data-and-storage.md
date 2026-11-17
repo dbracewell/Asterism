@@ -171,7 +171,11 @@ Asterism provides type-safe JSON serialization directly into SQLite columns usin
 
 Uploaded bytes pass through the `FileStore` protocol; `LocalFileStore` currently
 places them below `{storage_root}/files/{encoded_user_id}/{shard1}/{shard2}/{file_id}/source{extension}`.
-Consumers pass opaque keys through the adapter and do not reconstruct paths. The `user_files` table records
+Consumers pass opaque keys through the adapter and do not reconstruct paths. Reads use the async
+`read_bytes` (with an optional byte `limit`) and `exists`, which run off the event loop. `local_path()`
+is the only method that exposes a filesystem path, reserved for consumers that need a real file:
+streamed downloads (`FileResponse`), the conversion worker and document page counts. An object-store
+adapter would materialize a temporary copy there. The `user_files` table records
 ownership, sanitized and original names, MIME/kind classification, SHA-256, and a
 bounded processing cache. `messages.files` stores typed snapshots/references rather
 than a relational foreign key, so deleting a file removes its bytes and row without

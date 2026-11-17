@@ -127,15 +127,16 @@ class MarkItDownFileProcessor:
         Returns:
             The same file row with an updated ``content_status``.
         """
-        path = self.store.open(file.user_id, file.storage_key)
-        if not path.is_file():
+        if not await self.store.exists(file.user_id, file.storage_key):
             file.content_status = FileContentStatus.FAILED
             file.content_error = "File is no longer available"
             file.content_cache = None
             await session.commit()
             return file
 
-        stat = path.stat()
+        # The converter and digest stream from a real file.
+        path = self.store.local_path(file.user_id, file.storage_key)
+        stat = await asyncio.to_thread(path.stat)
         # The recorded digest is the authority on the stored bytes. The store
         # writes sources exclusively, so the bytes only change when something
         # outside the system rewrote them — and a stale cache would then be

@@ -5,7 +5,6 @@ supply a reader instead of building a source file and its bytes.
 """
 
 import uuid
-from pathlib import Path
 
 from asterism.domains.knowledge.sources import SourceContent, SourceFile
 
@@ -18,7 +17,7 @@ class FakeSourceReader:
         is_image: Whether the source is reported as an image.
         name: The source file's display name.
         mime_type: The source file's MIME type.
-        path: The source file's bytes path.
+        image: The image bytes reported for an image source.
     """
 
     def __init__(
@@ -28,13 +27,13 @@ class FakeSourceReader:
         is_image: bool = False,
         name: str = "notes.txt",
         mime_type: str = "text/plain",
-        path: Path | None = None,
+        image: bytes = b"fake-image",
     ) -> None:
         self.text = text
         self.is_image = is_image
         self.name = name
         self.mime_type = mime_type
-        self.path = path or Path("/tmp/asterism-fake-source")
+        self.image = image
 
     async def read_source(
         self,
@@ -60,9 +59,9 @@ class FakeSourceReader:
                 name=self.name,
                 mime_type=self.mime_type,
                 is_image=self.is_image,
-                path=self.path,
             ),
             text=self.text,
+            image=self.image if self.is_image else None,
         )
 
 
@@ -74,7 +73,7 @@ def fake_source(
     is_image: bool = False,
     name: str = "notes.txt",
     mime_type: str = "text/plain",
-    path: Path | None = None,
+    image: bytes = b"fake-image",
 ) -> SourceContent:
     """Build the source content a fake reader would report.
 
@@ -85,7 +84,7 @@ def fake_source(
         is_image: Whether the source is an image.
         name: The source file's display name.
         mime_type: The source file's MIME type.
-        path: The source file's bytes path.
+        image: The image bytes reported for an image source.
 
     Returns:
         The canned source content.
@@ -97,7 +96,7 @@ def fake_source(
             name=name,
             mime_type=mime_type,
             is_image=is_image,
-            path=path or Path("/tmp/asterism-fake-source"),
         ),
         text=text,
+        image=image if is_image else None,
     )

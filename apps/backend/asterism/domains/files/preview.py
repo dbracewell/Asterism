@@ -79,9 +79,9 @@ async def build_file_preview(*, user_id: str, file_id: uuid.UUID, session: Async
     file = await ensure_file_processed(file=file, session=session)
     text = file.content_cache if file.kind is not FileKind.IMAGE else None
     counts: dict[str, int | None] = {}
-    path = get_file_store().open(user_id, file.storage_key)
-    if path.is_file():
-        counts = await asyncio.to_thread(document_counts, path, file.mime_type)
+    store = get_file_store()
+    if await store.exists(user_id, file.storage_key):
+        counts = await asyncio.to_thread(document_counts, store.local_path(user_id, file.storage_key), file.mime_type)
     return FilePreview(
         file_id=file.id,
         kind=file.kind,
