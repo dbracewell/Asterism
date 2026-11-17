@@ -1,6 +1,6 @@
 # EPIC-81: Backend data layer and storage
 
-Status: proposed. Source: [codebase review](../../codebase_review.md), verified 2026-11-14 (items 13, 14, 15, 16, 17).
+Status: in progress. Source: [codebase review](../../codebase_review.md), verified 2026-11-14 (items 13, 14, 15, 16, 17).
 
 ## Objective
 
@@ -18,8 +18,8 @@ The message update trigger already fires only on `content`; the cost is on delet
 
 ### US-81.2: `paginate_select` counts correctly
 
-- [ ] `_simple_count` returns `None` when the statement has `DISTINCT`, `GROUP BY` or `HAVING`.
-- [ ] Test with a distinct and a grouped single-table select.
+- [x] `_simple_count` returns `None` when the statement has `DISTINCT`, `GROUP BY` or `HAVING`.
+- [x] Test with a distinct and a grouped single-table select.
 
 ### US-81.3: Remove targeted N+1 queries
 
