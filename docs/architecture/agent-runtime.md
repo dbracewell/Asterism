@@ -127,6 +127,12 @@ tool calls from compatible endpoints still enter normal authorization. Approved
 tools may execute concurrently; approval never grants capabilities outside the
 current effective allowlist. See [tool authorization](tool-authorization.md).
 
+Live authorization (`authorization_check`: persona, skills, sub-agent target)
+runs at the start of the run and of each loop step, when the provider stream
+starts, and on each completed step before it is recorded or its tools run. It
+does not run per text or thinking delta, since each check reads the database
+(US-77.1); a revocation mid-stream stops the turn at that step's completion.
+
 Agent events include `START`, `DELTA`, `TOOL_CALL`, `COMPLETE`, `ERROR`, and
 `SUB_AGENT`. The chat layer maps them to socket packets and persists actual model,
 provider, configuration, prompt provenance, token usage, and context provenance.
@@ -169,6 +175,8 @@ nested interactive prompts. Live checks cancel/reject work after deselection,
 project or General set revision/identity changes, configuration/model revocation,
 or cancellation;
 an in-flight silent child is polled rather than allowed to complete unchecked.
+Child text deltas are rechecked at most once per poll interval; every other child
+event is checked before it is forwarded (US-77.1).
 See [context isolation](context-isolation.md) for source ceilings and history limits.
 
 Each forwarded child event is wrapped in a `SubAgentEventEnvelope` and sent as a

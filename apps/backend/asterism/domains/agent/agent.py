@@ -776,8 +776,9 @@ class Agent:
                 tools=tools,
                 **parameters,
             ):
-                if self.authorization_check:
-                    await self.authorization_check()
+                # Access is checked at each step's start, when the stream
+                # starts and before a completed step is recorded or runs tools;
+                # never per delta, since each check reads the database (US-77.1).
                 match event.type:
                     case LLMEventType.ERROR:
                         yield AgentEvent(
@@ -787,6 +788,8 @@ class Agent:
                         )
                         return
                     case LLMEventType.START:
+                        if self.authorization_check:
+                            await self.authorization_check()
                         yield AgentEvent(type=AgentEventType.START)
                     case LLMEventType.TEXT_DELTA | LLMEventType.THINKING_DELTA:
                         yield AgentEvent(
@@ -795,6 +798,8 @@ class Agent:
                             thinking=event.thinking,
                         )
                     case LLMEventType.COMPLETE:
+                        if self.authorization_check:
+                            await self.authorization_check()
                         messages.append(
                             LLMMessage.assistant(
                                 content=event.content,

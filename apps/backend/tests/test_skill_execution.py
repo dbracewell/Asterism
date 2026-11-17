@@ -279,12 +279,15 @@ async def test_streaming_output_rechecks_skill_policy(skills_api, monkeypatch):
     class Client:
         async def chat(self, **kwargs):
             yield LLMEvent(type=LLMEventType.TEXT_DELTA, content="First")
-            yield LLMEvent(type=LLMEventType.TEXT_DELTA, content="Must not be released")
+            yield LLMEvent(type=LLMEventType.TEXT_DELTA, content="First second")
+            yield LLMEvent(type=LLMEventType.COMPLETE, content="Must not be recorded")
 
     monkeypatch.setattr(agent, "_get_client", AsyncMock(return_value=Client()))
     stream = agent.run([])
     assert (await anext(stream)).content == "First"
     await client.put(POLICY, headers=auth("admin"), json={"enabled": False})
+    # Deltas are not checked one by one (US-77.1); the completed step is.
+    assert (await anext(stream)).content == "First second"
     with pytest.raises(CodedException, match="Skills are disabled"):
         await anext(stream)
     await stream.aclose()

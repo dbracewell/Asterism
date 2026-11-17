@@ -172,7 +172,8 @@ async def test_provider_output_is_reauthorized_after_persona_deletion(project_ap
     class Client:
         async def chat(self, **kwargs):
             yield LLMEvent(type=LLMEventType.TEXT_DELTA, content="First")
-            yield LLMEvent(type=LLMEventType.TEXT_DELTA, content="Must not be released")
+            yield LLMEvent(type=LLMEventType.TEXT_DELTA, content="First second")
+            yield LLMEvent(type=LLMEventType.COMPLETE, content="Must not be recorded")
 
     monkeypatch.setattr(agent, "_get_client", AsyncMock(return_value=Client()))
     stream = agent.run([])
@@ -180,6 +181,8 @@ async def test_provider_output_is_reauthorized_after_persona_deletion(project_ap
     replacement = await add_persona(client, "Replacement")
     await set_default(client, replacement["id"])
     assert (await client.delete(f"/users/personas/{old['id']}?expected_revision=1", headers=auth())).status_code == 200
+    # Deltas are not checked one by one (US-77.1); the completed step is.
+    assert (await anext(stream)).content == "First second"
     with pytest.raises(NotFoundException, match="Persona not found"):
         await anext(stream)
     await stream.aclose()

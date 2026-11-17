@@ -1,6 +1,6 @@
 # EPIC-77: Chat runtime reliability
 
-Status: in progress (US-77.2). Source: [codebase review](../../codebase_review.md), verified 2026-11-14 (items 1, 2, 3, 7, 8, 12).
+Status: in progress (US-77.2 and US-77.1 done). Source: [codebase review](../../codebase_review.md), verified 2026-11-14 (items 1, 2, 3, 7, 8, 12).
 
 ## Objective
 
@@ -15,8 +15,8 @@ and job and shutdown races.
 `Agent.run` calls `authorization_check` on every streamed event, and each call opens a
 database session (persona, skills, sub-agents).
 
-- [ ] Run the check at the start of each loop step, on `LLMEventType.START` and on `LLMEventType.COMPLETE` (before recording steps or running tools); not on `TEXT_DELTA` / `THINKING_DELTA`.
-- [ ] Test that a streamed response of N deltas performs a constant number of checks, and that revoked access still stops a turn before tools run.
+- [x] Run the check at the start of each loop step, on `LLMEventType.START` and on `LLMEventType.COMPLETE` (before recording steps or running tools); not on `TEXT_DELTA` / `THINKING_DELTA`.
+- [x] Test that a streamed response of N deltas performs a constant number of checks, and that revoked access still stops a turn before tools run.
 
 ### US-77.2: Failed turns leave `PENDING`
 
