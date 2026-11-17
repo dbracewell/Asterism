@@ -435,7 +435,7 @@ async def test_an_injected_start_carries_the_comparison_tag(monkeypatch):
     from types import SimpleNamespace
 
     from asterism.domains.chat.controller import ChatController
-    from asterism.domains.chat.message_queue import get_message_queue
+    from asterism.domains.chat.message_queue import get_message_queue, subscribe, unsubscribe
 
     sent: list[dict] = []
 
@@ -453,10 +453,14 @@ async def test_an_injected_start_carries_the_comparison_tag(monkeypatch):
     await queue.put({"type": "complete", "last_messages": [], "comparison": tag})
     await queue.put({"type": "delta", "content": "Plain", "thinking": ""})
 
+    # The first controller to attach is replayed the buffered packets (US-77.3).
+    controller.outbound, replayed = subscribe(chat_id)
+    assert replayed == 3
     loop = asyncio.create_task(controller._message_queue_processing_loop())
     while len(sent) < 5:
         await asyncio.sleep(0)
     loop.cancel()
+    unsubscribe(chat_id, controller.outbound)
 
     assert [packet["type"] for packet in sent] == ["start", "delta", "complete", "start", "delta"]
     assert sent[0]["comparison"] == tag
