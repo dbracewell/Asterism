@@ -58,10 +58,11 @@ Source: user request and the [feature overlap review](docs/reviews/2026-11-17-fe
 
 ### US-84.2: Progress panel (frontend)
 
-- [ ] `ProjectProgress` replaces topic mastery and weak spots panels, with topic filter
-- [ ] Add card flow moves from the reflection dialog into the panel; reflection list links to it
-- [ ] Empty states
-- [ ] Study harness, unit and Playwright tests updated
+- [x] `ProjectProgress` replaces topic mastery and weak spots panels, with topic filter
+- [x] Add card flow moves from the reflection dialog into the panel; reflection list links to it
+- [x] Empty states
+- [x] Study harness, unit and Playwright tests updated
+- [x] Add card sends the original `item`; reworded cards still clear it (ADR-0067)
 
 ### US-84.3: Help and docs
 

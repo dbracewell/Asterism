@@ -30,8 +30,7 @@ import { ProjectAreaSwitches } from "./project-areas";
 import { ProjectStudyDecks } from "@/features/study/components/project-study-decks";
 import { ProjectStudyQuizzes } from "@/features/study/components/project-study-quizzes";
 import { ProjectStudyNotes } from "@/features/study/components/project-study-notes";
-import { ProjectWeakSpots } from "@/features/study/components/project-weak-spots";
-import { ProjectTopicMastery } from "@/features/study/components/project-topic-mastery";
+import { ProjectProgress } from "@/features/study/components/project-progress";
 
 // `area` names the feature area that can hide a tab (US-65.2); others always show.
 export const PROJECT_TABS = [
@@ -203,12 +202,8 @@ export function ProjectWorkspace({ projectId }: { projectId: string }) {
                   key={`study-${projectId}`}
                   projectId={projectId}
                 />
-                <ProjectTopicMastery
-                  key={`mastery-${projectId}`}
-                  projectId={projectId}
-                />
-                <ProjectWeakSpots
-                  key={`weak-${projectId}`}
+                <ProjectProgress
+                  key={`progress-${projectId}`}
                   projectId={projectId}
                 />
                 <ProjectStudyQuizzes

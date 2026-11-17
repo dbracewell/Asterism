@@ -68,6 +68,8 @@ class StudyCardModel(Base, UuidPrimaryKeyMixin, TimestampMixin):
     # Set when the card came from a reflection's "still unclear" item (US-58.4).
     # A plain id, not a foreign key: deleting the reflection keeps the card.
     source_reflection_id: Mapped[uuid.UUID | None] = mapped_column(nullable=True)
+    # The reflection item it was made from, as split (ADR-0067); the front may be reworded.
+    source_unclear_item: Mapped[str | None] = mapped_column(Text, nullable=True)
     # When the learner asked for it in weak-spot practice; a miss-like event, not a review.
     flagged_unclear_at: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
@@ -76,6 +78,9 @@ class StudyCardModel(Base, UuidPrimaryKeyMixin, TimestampMixin):
         UniqueConstraint("id", "user_id", name="uq_study_cards_id_user"),
         CheckConstraint("state IN ('learning', 'review', 'relearning')", name="ck_study_cards_state"),
         CheckConstraint("reps >= 0 AND lapses >= 0", name="ck_study_cards_counts"),
+        CheckConstraint(
+            "source_unclear_item IS NULL OR source_reflection_id IS NOT NULL", name="ck_study_cards_unclear_source"
+        ),
         CheckConstraint("difficulty IS NULL OR difficulty BETWEEN 1 AND 10", name="ck_study_cards_difficulty"),
         CheckConstraint("stability IS NULL OR stability > 0", name="ck_study_cards_stability"),
         ForeignKeyConstraint(

@@ -4,7 +4,7 @@ import type { User } from "@/features/auth/types";
 import { CardDraftReview } from "@/features/study/components/card-draft-review";
 import { GuideGenerate } from "@/features/study/components/guide-generate";
 import { NotePage } from "@/features/study/components/note-page";
-import { ProjectWeakSpots } from "@/features/study/components/project-weak-spots";
+import { ProjectProgress } from "@/features/study/components/project-progress";
 import { QuizGenerate } from "@/features/study/components/quiz-generate";
 import { QuizResults } from "@/features/study/components/quiz-results";
 import { QuizTake } from "@/features/study/components/quiz-take";
@@ -65,9 +65,9 @@ export function StudyHarness({ view }: { view: string }) {
           <GuideGenerate projectId={STUDY_PROJECT_ID} />
         ) : view === "note" ? (
           <NotePage projectId={STUDY_PROJECT_ID} noteId={STUDY_NOTE_ID} />
-        ) : view === "weak-spots" ? (
+        ) : view === "progress" ? (
           <main className="mx-auto max-w-4xl p-6">
-            <ProjectWeakSpots projectId={STUDY_PROJECT_ID} />
+            <ProjectProgress projectId={STUDY_PROJECT_ID} />
           </main>
         ) : view === "quiz-new" ? (
           <QuizGenerate projectId={STUDY_PROJECT_ID} />

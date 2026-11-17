@@ -8821,14 +8821,19 @@ export type StudyTrendPoint = {
  *
  * One confirmed "still unclear" item; the learner reviewed both sides.
  *
- * ``deck_id`` null files it in the project's "Unclear items" deck. ``weak_spot``
- * also lists the card under weak spots until it is recalled.
+ * ``item`` is the item as listed in progress (ADR-0067); ``front`` may reword
+ * it. ``deck_id`` null files it in the project's "Unclear items" deck.
+ * ``weak_spot`` also lists the card under weak spots until it is recalled.
  */
 export type StudyUnclearCardCreate = {
   /**
    * Reflection Id
    */
   reflection_id: string;
+  /**
+   * Item
+   */
+  item: string;
   /**
    * Deck Id
    */

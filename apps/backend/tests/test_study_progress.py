@@ -60,11 +60,12 @@ async def test_pending_items_are_split_and_drop_once_they_are_cards(drafts_api, 
     # Newest reflection first; the same text in two reflections is two items.
     assert await unclear_texts(api, project_id) == (4, ["Why cells burst", "Osmosis", "Osmosis", "Tonicity"])
 
-    assert (await convert(api, project_id, older, front="Osmosis")).status_code == 201
+    assert (await convert(api, project_id, older, item="Osmosis", front="Osmosis")).status_code == 201
     assert await unclear_texts(api, project_id) == (3, ["Why cells burst", "Osmosis", "Tonicity"])
-    # A reworded front does not match the item, so it stays pending.
-    assert (await convert(api, project_id, newer, front="Why do cells burst?")).status_code == 201
-    assert await unclear_texts(api, project_id) == (3, ["Why cells burst", "Osmosis", "Tonicity"])
+    # The card keeps its item, so a reworded front still clears it.
+    reworded = await convert(api, project_id, newer, item="Why cells burst", front="Why do cells burst?")
+    assert reworded.status_code == 201
+    assert await unclear_texts(api, project_id) == (2, ["Osmosis", "Tonicity"])
 
 
 @pytest.mark.asyncio

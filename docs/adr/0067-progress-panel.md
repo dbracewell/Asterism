@@ -1,6 +1,7 @@
 # ADR-0067 — Progress panel
 
-Status: accepted; backend implemented in US-84.1 on 2026-11-17
+Status: accepted; backend implemented in US-84.1 and the panel in US-84.2 on
+2026-11-17
 ([EPIC-84](../epics/EPIC-84-ONE-PROGRESS-PANEL.md)). Amends
 [ADR-0036](0036-weak-spots-and-practice.md),
 [ADR-0049](0049-topic-mastery.md) and
@@ -39,13 +40,16 @@ The project's reflections with unclear text, newest first, are split into
 items on the server: one item per line, list markers (`-`, `*`, `•`, `1.`,
 `1)`) removed, blank lines and repeats within a reflection dropped. An item is
 pending until a card exists with that reflection as `source_reflection_id` and
-the item as its front, which is the duplicate check `POST …/unclear-cards`
-already uses. A card added with a reworded front leaves the item pending; the
-learner can add it again under the original wording or ignore it. Each item
-returns its `reflection_id`, `chat_id`, `reflected_at` and `text`. Reflection
-text is untrusted and grants nothing.
+the item as `source_unclear_item`. Each item returns its `reflection_id`,
+`chat_id`, `reflected_at` and `text`. Reflection text is untrusted and grants
+nothing.
 
-The Add card flow (`POST …/unclear-cards`) is unchanged.
+`POST …/unclear-cards` takes the item as `item` alongside the card's `front`
+and `back`, so the learner can reword the question and the item still clears.
+The item must be one of the reflection's current items (400 otherwise), and a
+second card for the same item is a 409, whatever its front. The card keeps the
+item in `study_cards.source_unclear_item` (amended in US-84.2). Editing a
+reflection changes its items; a changed line is a new pending item.
 
 ### One practice route and origin
 

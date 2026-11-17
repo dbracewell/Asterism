@@ -386,18 +386,18 @@ def select_deck_by_name(*, user_id: str, project_id: uuid.UUID, name: str):
     return select_owned_decks(user_id=user_id, project_id=project_id).where(StudyDeckModel.name == name)
 
 
-def select_reflection_card(*, user_id: str, reflection_id: uuid.UUID, front: str):
-    """A card already made from this reflection with this front, in any deck."""
+def select_reflection_card(*, user_id: str, reflection_id: uuid.UUID, item: str):
+    """A card already made from this reflection item, in any deck."""
     return select(StudyCardModel.id).where(
         StudyCardModel.user_id == user_id,
         StudyCardModel.source_reflection_id == reflection_id,
-        StudyCardModel.front == front,
+        StudyCardModel.source_unclear_item == item,
     )
 
 
-def select_reflection_card_fronts(*, user_id: str, reflection_ids: list[uuid.UUID]):
-    """``(reflection id, front)`` of cards made from these reflections, in any deck."""
-    return select(StudyCardModel.source_reflection_id, StudyCardModel.front).where(
+def select_reflection_card_items(*, user_id: str, reflection_ids: list[uuid.UUID]):
+    """``(reflection id, item)`` of cards made from these reflections, in any deck."""
+    return select(StudyCardModel.source_reflection_id, StudyCardModel.source_unclear_item).where(
         StudyCardModel.user_id == user_id, StudyCardModel.source_reflection_id.in_(reflection_ids)
     )
 

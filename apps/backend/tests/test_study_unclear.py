@@ -33,7 +33,13 @@ async def reflection_in(api, project_id, unclear="Why do cells burst?", user="a"
 
 
 async def convert(api, project_id, reflection, user="a", **body):
-    payload = {"reflection_id": reflection["id"], "front": "Why do cells burst?", "back": "Water rushes in.", **body}
+    payload = {
+        "reflection_id": reflection["id"],
+        "item": "Why do cells burst?",
+        "front": "Why do cells burst?",
+        "back": "Water rushes in.",
+        **body,
+    }
     return await api.client.post(f"/projects/{project_id}/study/unclear-cards", headers=auth(user), json=payload)
 
 
@@ -92,13 +98,13 @@ async def test_cards_can_skip_weak_spots_and_go_to_a_chosen_deck(drafts_api, tic
     path = f"/projects/{project_id}/study/decks"
     chosen = (await api.client.post(path, headers=auth(), json={"name": "Biology"})).json()
 
-    response = await convert(api, project_id, reflection, deck_id=chosen["id"], weak_spot=False, front="A")
+    response = await convert(api, project_id, reflection, deck_id=chosen["id"], weak_spot=False, item="A", front="A")
     assert response.status_code == 201, response.text
     assert (await weak(api, project_id))["total"] == 0
     assert [deck["name"] for deck in await decks(api, project_id)] == ["Biology"]
     # The default deck is reused, not duplicated.
-    await convert(api, project_id, reflection, front="B")
-    await convert(api, project_id, reflection, front="C")
+    await convert(api, project_id, reflection, item="B", front="B")
+    assert (await convert(api, project_id, reflection, item="C", front="C")).status_code == 400
     names = [deck["name"] for deck in await decks(api, project_id)]
     assert sorted(names) == ["Biology", "Unclear items"]
 
@@ -110,11 +116,15 @@ async def test_conversion_is_scoped_and_rejects_repeats(drafts_api, ticking):
     other = (await create(api.client, name="Other"))["id"]
     reflection = await reflection_in(api, project_id)
     assert (await convert(api, project_id, reflection)).status_code == 201
-    # Confirming the same item twice never makes a second card.
+    # Confirming the same item twice never makes a second card, even reworded.
     assert (await convert(api, project_id, reflection)).status_code == 409
+    assert (await convert(api, project_id, reflection, front="Reworded?")).status_code == 409
+    assert (await convert(api, project_id, reflection, item="Not in it")).status_code == 400
+    assert (await convert(api, project_id, reflection, item="")).status_code == 422
     assert (await convert(api, other, reflection, front="New")).status_code == 400
     assert (await convert(api, project_id, reflection, user="b", front="New")).status_code == 404
-    assert (await convert(api, project_id, reflection, deck_id=str(uuid.uuid4()), front="New")).status_code == 404
+    fresh = await reflection_in(api, project_id)
+    assert (await convert(api, project_id, fresh, deck_id=str(uuid.uuid4()))).status_code == 404
     assert (await convert(api, project_id, reflection, front="  ")).status_code == 422
     assert (await convert(api, project_id, reflection, back="")).status_code == 422
     missing = {"id": str(uuid.uuid4())}
