@@ -5,6 +5,7 @@ import base64
 import hashlib
 import json
 import time
+import weakref
 from typing import Any
 from urllib.parse import parse_qs, urlsplit
 
@@ -135,7 +136,7 @@ def chatgpt(project_api, monkeypatch):
             yield new_session
 
     monkeypatch.setattr("asterism.domains.chatgpt.service.get_async_db_session", session_context)
-    monkeypatch.setattr(service, "_refresh_locks", __import__("collections").defaultdict(asyncio.Lock))
+    monkeypatch.setattr(service, "_refresh_locks", weakref.WeakValueDictionary())
     return client, sessions, double
 
 
@@ -378,6 +379,7 @@ async def test_concurrent_refreshes_are_serialized_and_rotate_the_token_set(chat
         "resource": "https://api.openai.com/v1",
     }
     assert {credential.access_token for credential in credentials} == {"access-2"}
+    assert len(service._refresh_locks) == 0
 
     await expire(sessions)
     assert (await service.access_token("a")).access_token == "access-3"
