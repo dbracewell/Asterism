@@ -77,6 +77,9 @@ class ChatOrchestrator:
         self.is_processing_messages: bool = False
         self.pending_approvals: dict[str, asyncio.Future] = {}
         self._active_parent_id: uuid.UUID | None = None
+        # The message the next step of the active turn answers: the request,
+        # then each recorded tool step in turn.
+        self._step_parent_id: uuid.UUID | None = None
         self._streaming_content: str = ""
         self._streaming_thinking: str = ""
         self._execution: MessageExecution | None = None
@@ -166,7 +169,7 @@ class ChatOrchestrator:
             return
 
         if self._fork_step is not None:
-            await self._cancel_fork_step()
+            await self._finish_fork_step(MessageStatus.CANCELLED)
             self._active_parent_id = None
             return
 
@@ -186,7 +189,7 @@ class ChatOrchestrator:
                     status=MessageStatus.CANCELLED,
                     delegations=delegations or None,
                     context=self._context,
-                    parent_message_id=parent_id,
+                    parent_message_id=self._step_parent_id or parent_id,
                     execution=self._execution,
                     model_id=self.agent.model_id,  # type: ignore
                 ),
@@ -212,8 +215,65 @@ class ChatOrchestrator:
         )
         self._active_parent_id = None
 
-    async def _cancel_fork_step(self) -> None:
-        """Record a cancelled fork step with the work it finished (ADR-0038).
+    async def fail_active_generation(self, error: str, error_code: str | None = None) -> None:
+        """Finalize a turn that ended in an error so reconnecting never re-runs it (US-77.2).
+
+        Like cancellation, the streamed output so far is kept, here on a failed
+        step that carries the error, and the request is marked failed. The
+        error packet is sent even if recording fails.
+        """
+        parent_id = self._active_parent_id
+        self._active_parent_id = None
+        try:
+            if parent_id is None:
+                pass
+            elif self._fork_step is not None:
+                await self._finish_fork_step(MessageStatus.FAILED, error=error)
+            else:
+                await self._record_failed_turn(parent_id, error)
+        except Exception:
+            self.logger.exception("Could not record the failed turn for chat %s", self.chat_id)
+        await self._emit({"type": AgentEventType.ERROR.value, "content": error, "error_code": error_code})
+
+    async def _record_failed_turn(self, parent_id: uuid.UUID, error: str) -> None:
+        request_index = index_of(self.chat.messages, lambda message: message.id == parent_id)
+        failed = await chat_service.add_message(
+            user_id=self.user_id,
+            chat_id=self.chat_id,
+            message=NewMessageRequest(
+                role="assistant",
+                content=self._streaming_content,
+                thinking=self._streaming_thinking,
+                status=MessageStatus.FAILED,
+                error=error,
+                delegations=self._delegations.drain(unfinished="error") or None,
+                context=self._context,
+                parent_message_id=self._step_parent_id or parent_id,
+                execution=self._execution,
+                model_id=self.agent.model_id,  # type: ignore
+            ),
+        )
+        self.chat.messages.append(failed)
+        # add_message marks its parent complete, so write the request's state last.
+        request = await chat_service.write_message_update(
+            user_id=self.user_id,
+            chat_id=self.chat_id,
+            message_id=parent_id,
+            payload=UpdateMessageRequest(status=MessageStatus.FAILED),
+        )
+        if request_index >= 0:
+            self.chat.messages[request_index] = request
+        await self._emit(
+            {
+                "type": AgentEventType.COMPLETE.value,
+                "last_messages": [
+                    message.model_dump(mode="json") for message in self.chat.messages[max(request_index, 0) :]
+                ],
+            },
+        )
+
+    async def _finish_fork_step(self, status: MessageStatus, *, error: str | None = None) -> None:
+        """Record a cancelled or failed fork step with the work it finished (ADR-0038).
 
         Calls that did not finish get a cancelled result so the branch stays a
         valid conversation if the user continues from it.
@@ -231,10 +291,11 @@ class ChatOrchestrator:
             user_id=self.user_id,
             chat_id=self.chat_id,
             message_id=step.id,
-            status=MessageStatus.CANCELLED,
+            status=status,
             tool_call_results=results or None,
             delegations=[*(step.delegations or []), *self._delegations.drain(unfinished="cancelled")] or None,
             context=self._context,
+            error=error,
         )
         self.chat.messages.append(cancelled)
         await self._emit(
@@ -455,6 +516,9 @@ class ChatOrchestrator:
 
         messages: list[LLMMessage] = [self._compaction.message()] if self._compaction else []
         for message in history:
+            if message.status == MessageStatus.FAILED and message.role == "assistant" and not message.content.strip():
+                # A failed step with no output says nothing to the model (US-77.2).
+                continue
             if message.role == "assistant" and message.exercise is not None:
                 # Later turns, in any mode, must not rely on an exercise answer.
                 messages.append(LLMMessage(**{**message.model_dump(), "content": message.content + HISTORY_NOTE}))
@@ -686,6 +750,7 @@ class ChatOrchestrator:
             self._comparison = self._column_of_current_turn()
             self.agent.parent_message_id = parent_message.id
             self._active_parent_id = parent_message.id
+            self._step_parent_id = parent_message.id
             self._streaming_content = ""
             self._streaming_thinking = ""
             self._delegations = DelegationCollector()
@@ -721,20 +786,20 @@ class ChatOrchestrator:
                 else None
             )
             self.agent.image_request = bool(request is not None and getattr(request, "image_request", False))
+            failure: AgentEvent | None = None
             async for event in self.agent.run(messages=messages, replay=replay):
                 match event:
+                    case AgentEvent(type=AgentEventType.ERROR):
+                        # The agent ends its run after an error event.
+                        failure = event
+
                     case AgentEvent(type=AgentEventType.COMPLETE):
                         # An OpenAI-compatible provider can occasionally end a
                         # stream without text or tool calls.  Treating that as
                         # a normal completion used to persist one blank assistant
                         # message per agent step, leaving the chat unusable.
                         if not event.content.strip() and not event.has_tool_calls():
-                            await self._emit(
-                                {
-                                    "type": AgentEventType.ERROR.value,
-                                    "content": "The model returned an empty response. Please try again.",
-                                },
-                            )
+                            await self.fail_active_generation("The model returned an empty response. Please try again.")
                             return
 
                         if self._fork_step is not None:
@@ -767,6 +832,10 @@ class ChatOrchestrator:
 
                         parent_message = new_message
                         parent_message_index = len(self.chat.messages) - 1
+                        self._step_parent_id = new_message.id
+                        # A later step streams from scratch; never keep this step's text as partial output.
+                        self._streaming_content = ""
+                        self._streaming_thinking = ""
 
                         await self._emit(
                             {
@@ -811,14 +880,18 @@ class ChatOrchestrator:
                     case _:
                         await self._emit(event.model_dump())
 
+            if failure is not None:
+                await self.fail_active_generation(failure.content, failure.error_code)
+
         except asyncio.CancelledError:
             await self.cancel_active_generation()
             raise
         except Exception as e:
-            self.logger.error(f"Error processing messages: {e}", stack_info=True)
-            await self._emit({"type": AgentEventType.ERROR.value, "content": str(e)})
+            self.logger.exception("Error processing messages: %s", e)
+            await self.fail_active_generation(str(e))
         finally:
             self._active_parent_id = None
+            self._step_parent_id = None
             self._comparison = None
             self._fork_step = None
             self.is_processing_messages = False

@@ -39,3 +39,50 @@ EPIC-76 (US-76.1 through US-76.5) is confirmed complete and archived in the [202
 ## User-requested epics (proposed 2026-11-08)
 
 Source: user request (2026-11-08). Suggested order: EPIC-74 → 67 → 70 → 68 → 69 → 73 → 71 → 72. EPIC-71 depends on EPIC-68. EPIC-73 should leave a place for canvas (EPIC-72). EPIC-74, EPIC-67, EPIC-70, EPIC-68, EPIC-69, EPIC-73, EPIC-71, EPIC-75 (skills follow-ups, added 2026-11-09) and EPIC-72 are complete and archived in the [2026-11-08 checklist](docs/archive/todo-completed-2026-11-08.md).
+
+## Codebase review follow-ups (proposed 2026-11-14)
+
+Source: [codebase review](codebase_review.md), verified against the code on 2026-11-14. Suggested order: EPIC-77 → 79 → 78 → 80 → 81 → 82. Work one story at a time.
+
+### EPIC-77: Chat runtime reliability ([epic](docs/epics/EPIC-77-CHAT-RUNTIME-RELIABILITY.md))
+
+- [ ] US-77.1: Authorization checks stop running per token
+- [x] US-77.2: Failed turns leave `PENDING`
+- [ ] US-77.3: Several tabs on one chat each get the full stream
+- [ ] US-77.4: Job and shutdown races
+- [ ] US-77.5: WebSocket rejects cleanly before accept
+
+### EPIC-78: User and knowledge job lifecycle ([epic](docs/epics/EPIC-78-USER-AND-KNOWLEDGE-LIFECYCLE.md))
+
+- [ ] US-78.1: Interrupted captioning resumes after a restart
+- [ ] US-78.2: Deleting a user stops their work
+
+### EPIC-79: Frontend runtime fixes ([epic](docs/epics/EPIC-79-FRONTEND-RUNTIME-FIXES.md))
+
+- [ ] US-79.1: Full-size images load
+- [ ] US-79.2: Admin "Test" does not erase unsaved edits
+- [ ] US-79.3: System webhooks are not rate limited as one client
+- [ ] US-79.4: Sign-in and auth robustness
+- [ ] US-79.5: SSE worker does not reconnect with no tabs
+- [ ] US-79.6: Pickers and image settings stop refetching the app
+
+### EPIC-80: Fetch tool hardening ([epic](docs/epics/EPIC-80-FETCH-TOOL-HARDENING.md))
+
+- [ ] US-80.1: Bounded, streamed fetch
+- [ ] US-80.2: Pin the resolved address
+- [ ] US-80.3: Parse once, off the event loop
+
+### EPIC-81: Backend data layer and storage ([epic](docs/epics/EPIC-81-BACKEND-DATA-LAYER.md))
+
+- [ ] US-81.1: Cheaper search index maintenance
+- [ ] US-81.2: `paginate_select` counts correctly
+- [ ] US-81.3: Remove targeted N+1 queries
+- [ ] US-81.4: Async file store reads
+- [ ] US-81.5: `files/service.py` structure
+
+### EPIC-82: Code cleanup and deduplication ([epic](docs/epics/EPIC-82-CODE-CLEANUP.md))
+
+- [ ] US-82.1: Shared utilities
+- [ ] US-82.2: One boolean admin policy panel
+- [ ] US-82.3: Dead code and small leaks
+- [ ] US-82.4: Split oversized components

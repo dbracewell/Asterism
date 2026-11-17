@@ -164,6 +164,8 @@ def _status(column: MessageModel, replies: list[Message]) -> str:
         return "pending"
     if column.status == MessageStatus.CANCELLED or (replies and replies[-1].status == MessageStatus.CANCELLED):
         return "cancelled"
+    if column.status == MessageStatus.FAILED or (replies and replies[-1].status == MessageStatus.FAILED):
+        return "failed"
     return "completed" if replies else "pending"
 
 

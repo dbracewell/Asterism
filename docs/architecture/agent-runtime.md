@@ -377,6 +377,15 @@ it does not continue an interrupted provider connection. A revoked or changed mo
 fails explicitly. Regeneration validates current selection and captures a new
 snapshot without changing earlier turns' model labels.
 
+A turn that ends in an error (an agent `ERROR` event, an empty model response, or
+an unhandled exception) is finalized like a cancellation, so resume never re-runs
+it (US-77.2). The orchestrator records a `failed` assistant step with any streamed
+output and the error text under the step it was answering, then marks the request
+`failed`. A failed fork step is recorded `failed` with its finished results. The
+client gets a `complete` packet with the recorded messages and then the `error`
+packet. A comparison column that fails shows `failed`, and later columns still run.
+Failed steps with no output are left out of later model history.
+
 Delegated traces persist content-free task/context/result digests, message roles,
 status, timing, token/step counts, and prompt/context provenance. They exclude raw
 task text, parent notes, message bodies, tool results, and generated answers. Normal

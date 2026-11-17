@@ -1,4 +1,5 @@
 "use client";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useUser } from "@/features/auth/components/user-context";
 import { AgentTimeline } from "@/features/chat/components/agent-timeline";
 import { DelegationSummary } from "@/features/chat/components/delegation-summary";
@@ -82,7 +83,9 @@ export const MessageItem = React.memo(
     );
     const settled =
       message.tool_calls == null &&
-      (message.status === "completed" || message.status === "cancelled");
+      (message.status === "completed" ||
+        message.status === "cancelled" ||
+        message.status === "failed");
 
     return (
       <article
@@ -144,6 +147,13 @@ export const MessageItem = React.memo(
             <div ref={answerRef} className="contents">
               <MessageBody message={message} />
             </div>
+            {!fromUser && message.status === "failed" && (
+              <Alert variant="destructive">
+                <AlertDescription>
+                  {message.error || "This reply failed."}
+                </AlertDescription>
+              </Alert>
+            )}
           </InlineFilesProvider>
           {!fromUser && message.exercise && (
             <ExerciseBar

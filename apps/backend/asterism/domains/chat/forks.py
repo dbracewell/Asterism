@@ -376,8 +376,9 @@ async def write_fork_step(
     tool_call_results: Sequence[ToolResult] | None,
     delegations: list[DelegationRecord] | None,
     context: ContextManifest | None,
+    error: str | None = None,
 ) -> Message:
-    """Record a fork step's results once it has run (or been cancelled)."""
+    """Record a fork step's results once it has run (or been cancelled, or failed)."""
     async with get_async_db_session() as session:
         await _lock_chat(user_id=user_id, chat_id=chat_id, session=session)
         message = await session.scalar(
@@ -386,6 +387,7 @@ async def write_fork_step(
         if message is None:
             raise NotFoundException("Message not found")
         message.status = status
+        message.error = error
         message.tool_call_results = [*tool_call_results] if tool_call_results is not None else []
         # A fork resolves its references again against live access (ADR-0039 §4).
         message.inline_files, message.delegations = await resolve_step(
