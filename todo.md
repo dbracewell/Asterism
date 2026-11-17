@@ -48,7 +48,7 @@ Source: [codebase review](codebase_review.md), verified against the code on 2026
 
 - [ ] US-82.1: Shared utilities
 - [ ] US-82.2: One boolean admin policy panel
-- [ ] US-82.3: Dead code and small leaks (in progress)
+- [x] US-82.3: Dead code and small leaks
   - [x] Delete `use-clickoutside.ts`, `formatURL`, the `chat-session:scroll` event and `useSubscribeEventState`
   - [x] `chatgpt/service.py`: per-user refresh locks in a `WeakValueDictionary`
 - [ ] US-82.4: Split oversized components
