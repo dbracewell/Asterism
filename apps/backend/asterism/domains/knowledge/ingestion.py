@@ -115,7 +115,9 @@ async def embed_file(
 ) -> tuple[list[list[float]], list[str], bool]:
     if source.file.is_image:
         contents = [f"Image file: {source.file.name}"]
-        vectors = await provider.embed_image([source.file.path])
+        if source.image is None:
+            raise KnowledgeIngestionError("The image source bytes are unavailable")
+        vectors = await provider.embed_image([source.image])
         visual_ready = True
     else:
         contents = chunk_text(source.text or "")

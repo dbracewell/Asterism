@@ -606,7 +606,7 @@ async def test_dispatch_failure_preserves_source_and_collision_retry_reuses_id(p
         retained = next(row for row in records if str(row.id) != original["id"])
         from asterism.domains.files.store import get_file_store
 
-        assert get_file_store().open("a", retained.storage_key).read_bytes() == b"different"
+        assert get_file_store().local_path("a", retained.storage_key).read_bytes() == b"different"
         retry = await upload_files(
             user_id="a",
             uploads=[UploadFile(filename="collision.txt", file=BytesIO(b"different"))],

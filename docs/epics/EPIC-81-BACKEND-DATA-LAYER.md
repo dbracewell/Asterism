@@ -30,9 +30,9 @@ The message update trigger already fires only on `content`; the cost is on delet
 
 ### US-81.4: Async file store reads
 
-- [ ] Add `async read_bytes` and `async exists` to `FileStore` (`asyncio.to_thread` in `LocalFileStore`); stop returning `Path` to the courses, captioning and files callers (8 `open()` callers).
-- [ ] Handle `FileNotFoundError` in `courses/copies.py`; catch `asyncio.CancelledError` in the course file rollback blocks (`copies.py`, `publish.py`).
-- [ ] Tests for a missing source file and a cancelled publish leaving no files.
+- [x] Add `async read_bytes` and `async exists` to `FileStore` (`asyncio.to_thread` in `LocalFileStore`); stop returning `Path` to the courses, captioning and files callers (8 `open()` callers).
+- [x] Handle `FileNotFoundError` in `courses/copies.py`; catch `asyncio.CancelledError` in the course file rollback blocks (`copies.py`, `publish.py`).
+- [x] Tests for a missing source file and a cancelled publish leaving no files.
 
 ### US-81.5: `files/service.py` structure
 
@@ -47,3 +47,5 @@ US-81.5 is a refactor; do it last and keep it separate from bug fixes.
 US-81.1: SQLite runs cascaded message deletes after the chat row is gone, so the `EXISTS` guard skips them (checked with a probe; both `delete_chat` and `delete_chats` rely on the DB cascade). The update trigger now fires on `content, chat_id` and rebuilds the old chat too when a message moves. `initialize_search_index` drops and recreates the triggers on every start, so existing databases pick up new definitions.
 
 US-81.3: `files_by_version` loads a page's course files in one query; `available_skill_ids` reads the skills policy once and checks eligibility in one query (per-item size limits unchanged); `delete_user_files` loads the files once and describes them in one batch. Per-file knowledge cleanup and row deletes in `delete_user_files` remain per file. Tests assert counts stay constant as items grow, rather than pinning exact numbers.
+
+US-81.4: `FileStore.open()` became `local_path()`, kept only for consumers that need a real file (the two `FileResponse` downloads, the converter/digest in `processor.py`, `document_counts` in preview); every other read uses `read_bytes`/`exists`. The knowledge contract now carries image bytes (`SourceContent.image`) instead of a path, so captioning and `embed_image` work on bytes; `CaptionRequest.image` is excluded from its repr. A missing course source raises a 409 naming the file; publish and apply also roll back on `CancelledError` (a cancelled apply is tested too).

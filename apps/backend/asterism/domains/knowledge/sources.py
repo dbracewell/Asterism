@@ -10,7 +10,6 @@ are composed.
 
 import uuid
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Protocol
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -31,7 +30,6 @@ class SourceFile:
         mime_type: The file's detected MIME type.
         is_image: Whether the file is an image, so its bytes are embedded
             visually instead of being converted to text.
-        path: The source bytes path.
     """
 
     id: uuid.UUID
@@ -39,7 +37,6 @@ class SourceFile:
     name: str
     mime_type: str
     is_image: bool
-    path: Path
 
 
 @dataclass(frozen=True)
@@ -49,10 +46,12 @@ class SourceContent:
     Attributes:
         file: The source file.
         text: The converted plain text, or ``None`` when the file has none.
+        image: The source bytes of an image file, or ``None`` for other files.
     """
 
     file: SourceFile
     text: str | None
+    image: bytes | None = None
 
 
 class SourceReader(Protocol):

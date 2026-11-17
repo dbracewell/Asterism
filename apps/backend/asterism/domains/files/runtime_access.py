@@ -135,12 +135,8 @@ class RuntimeFileReader:
         if size > self.max_image_bytes:
             return FileModelInput(reason="file is too large or unavailable")
         try:
-            path = self.store.open(scope.user_id, key)
-            if not path.is_file() or path.stat().st_size > self.max_image_bytes:
-                return FileModelInput(reason="file is too large or unavailable")
-            # Bound the actual read too; metadata must not allow an oversized image.
-            with path.open("rb") as source:
-                content = source.read(self.max_image_bytes + 1)
+            # Bound the actual read; metadata must not allow an oversized image.
+            content = await self.store.read_bytes(scope.user_id, key, limit=self.max_image_bytes + 1)
             if len(content) > self.max_image_bytes:
                 return FileModelInput(reason="file is too large or unavailable")
             encoded = base64.b64encode(content).decode("ascii")

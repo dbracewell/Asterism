@@ -345,7 +345,7 @@ async def test_generating_saves_chat_files_streams_progress_and_records(images):
     # Re-encoded: provider metadata (e.g. a ComfyUI workflow) is dropped.
     from asterism.domains.files import produced
 
-    data = produced.get_file_store().open("a", saved.storage_key).read_bytes()
+    data = produced.get_file_store().local_path("a", saved.storage_key).read_bytes()
     assert data.startswith(b"\x89PNG") and b"workflow" not in data
     [record] = await records(sessions)
     assert (record.status, record.prompt, record.model, record.revision, record.steps) == (

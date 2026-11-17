@@ -1,6 +1,5 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import StrEnum
-from pathlib import Path
 from uuid import UUID
 
 from asterism.domains.settings.provider_types import ModelCapabilitySource
@@ -12,7 +11,8 @@ from .sources import SourceFile
 @dataclass(frozen=True)
 class CaptionRequest:
     revision_id: UUID
-    image_path: Path
+    # Never shown in reprs or logs; see CaptioningError.
+    image: bytes = field(repr=False)
     file: SourceFile
     max_image_bytes: int
     max_caption_chars: int

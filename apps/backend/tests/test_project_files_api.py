@@ -40,7 +40,7 @@ async def test_shared_sources_no_copy_no_processing_and_membership_summaries(pro
     async with sessions() as session:
         source = await session.get(UserFileModel, uuid.UUID(file["id"]))
         key = source.storage_key
-        path = get_file_store().open("a", key)
+        path = get_file_store().local_path("a", key)
         artifacts = list(await session.scalars(select(FileKnowledgeArtifactModel.id)))
     # Membership operations must not access bytes or enqueue extraction.
     monkeypatch.setattr(
@@ -141,7 +141,7 @@ async def test_listing_pagination_search_owner_auth_validation_and_deletion_clea
     assert (await client.get(path, headers=auth(), params={"query": "%_"})).json()["total"] == 1
     async with sessions() as session:
         source = await session.get(UserFileModel, uuid.UUID(ids[0]))
-        source_path = get_file_store().open("a", source.storage_key)
+        source_path = get_file_store().local_path("a", source.storage_key)
     download = await client.get(f"/files/{files[0]['filename']}", headers=auth())
     assert download.content == b"original bytes"
     deletion = await client.delete(f"/files/{files[0]['filename']}", headers=auth())

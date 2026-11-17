@@ -6,6 +6,7 @@ course files are copied too, so later edits by the educator don't change what
 students get until the next version.
 """
 
+import asyncio
 import hashlib
 import json
 import uuid
@@ -174,7 +175,7 @@ async def publish(user_id: str, class_id: uuid.UUID, payload: CoursePublish, ses
         kept: set[uuid.UUID] = set()
         for source in files:
             try:
-                content = store.open(user_id, source.storage_key).read_bytes()
+                content = await store.read_bytes(user_id, source.storage_key)
             except OSError as exc:
                 raise BadDataException(f'File "{source.filename}" is missing; upload it again') from exc
             sha256 = hashlib.sha256(content).hexdigest()
@@ -203,7 +204,8 @@ async def publish(user_id: str, class_id: uuid.UUID, payload: CoursePublish, ses
         for key in saved:
             store.delete(user_id, key)
         raise ConflictException("Another version was published at the same time; try again") from exc
-    except Exception:
+    except (Exception, asyncio.CancelledError):
+        # A cancelled publish (client gone, shutdown) must not leave orphaned bytes.
         await session.rollback()
         for key in saved:
             store.delete(user_id, key)

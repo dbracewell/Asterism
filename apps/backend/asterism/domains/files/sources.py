@@ -3,11 +3,10 @@
 The knowledge domain never imports the files domain. It reads its sources
 through the narrow contract in :mod:`asterism.domains.knowledge.sources`, and
 this module provides the implementation: it converts the stored bytes to plain
-text and resolves the source path.
+text and reads image bytes.
 """
 
 import uuid
-from pathlib import Path
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -58,18 +57,18 @@ class FileSourceReader:
                 name=processed.original_name,
                 mime_type=processed.mime_type,
                 is_image=processed.kind is FileKind.IMAGE,
-                path=self._source_path(processed),
             ),
             text=processed.content_cache,
+            image=await self._image_bytes(processed) if processed.kind is FileKind.IMAGE else None,
         )
 
-    def _source_path(self, file: UserFileModel) -> Path:
-        """Resolve the stored source bytes of one file.
+    async def _image_bytes(self, file: UserFileModel) -> bytes:
+        """Read an image's stored source bytes.
 
-        Args:
-            file: The source file row.
-
-        Returns:
-            The path of the stored source.
+        Raises:
+            SourceUnavailableError: If the stored bytes are gone.
         """
-        return get_file_store().open(file.user_id, file.storage_key)
+        try:
+            return await get_file_store().read_bytes(file.user_id, file.storage_key)
+        except FileNotFoundError as exc:
+            raise SourceUnavailableError("The source file is unavailable") from exc

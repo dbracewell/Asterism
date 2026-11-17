@@ -64,8 +64,8 @@ queries, or the ingestion runtime.
 
 The knowledge domain never imports the files domain. It reads its sources
 through the narrow contract in `knowledge/sources.py` — a source file's
-identity, its MIME type, whether it is an image, its bytes path, and its
-converted text. The files domain provides the implementation
+identity, its MIME type, whether it is an image, its converted text, and,
+for an image, its bytes (read through the async `FileStore.read_bytes`). The files domain provides the implementation
 (`files/sources.py`), and the application installs it at startup, where the two
 domains are composed. An import-boundary test enforces both directions.
 
@@ -106,8 +106,8 @@ sequenceDiagram
         Ingest->>Ingest: chunk_text(content_cache)
         Ingest->>Embed: embed_text(chunks)
     else image file
-        Ingest->>Store: open image path
-        Ingest->>Embed: embed_image([path])
+        Ingest->>Store: read_bytes(image)
+        Ingest->>Embed: embed_image([bytes])
     end
     Ingest->>Vectors: delete_file_generation(...)
     Ingest->>Vectors: add(VectorChunk[])
@@ -162,7 +162,7 @@ serve stale content to a model, and the download `ETag` always describes the
 bytes that are actually stored.
 
 For image files, the artifact does not need text conversion. `ingest_file_artifact()`
-embeds the local file path as one visual vector and records the display string
+embeds the image bytes as one visual vector and records the display string
 `Image file: {original_name}` as its vector content. It also determines whether
 captioning should be requested from the nested captioning configuration in
 `knowledge.processing`.

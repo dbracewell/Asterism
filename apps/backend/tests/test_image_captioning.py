@@ -92,15 +92,16 @@ def test_caption_output_is_normalized_and_bounded():
     assert error.value.code is CaptionErrorCode.OUTPUT_INVALID
 
 
-def test_local_caption_request_is_a_path_reference_not_image_bytes(tmp_path: Path):
+def test_caption_request_never_shows_image_bytes_in_its_repr():
     request = CaptionRequest(
         file=None,  # type: ignore[arg-type]
         revision_id=uuid.uuid4(),
-        image_path=tmp_path / "image.png",
+        image=b"SECRET-IMAGE-BYTES",
         max_image_bytes=1,
         max_caption_chars=1,
     )
-    assert request.image_path.name == "image.png"
+    assert request.image == b"SECRET-IMAGE-BYTES"
+    assert "SECRET-IMAGE-BYTES" not in repr(request)
 
 
 @pytest.mark.asyncio

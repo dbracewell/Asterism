@@ -1,6 +1,7 @@
 """Local, pinned multimodal embedding providers without model remote code."""
 
 import asyncio
+import io
 from collections.abc import Callable, Sequence
 from pathlib import Path
 from typing import Protocol
@@ -28,7 +29,7 @@ class EmbeddingProvider(Protocol):
     def dimension(self) -> int: ...
     async def initialize(self) -> None: ...
     async def embed_text(self, texts: Sequence[str]) -> list[list[float]]: ...
-    async def embed_image(self, images: Sequence[Path]) -> list[list[float]]: ...
+    async def embed_image(self, images: Sequence[bytes]) -> list[list[float]]: ...
     async def close(self) -> None: ...
 
 
@@ -140,7 +141,7 @@ class OnnxClipEmbeddingProvider:
                 await asyncio.to_thread(prepare),
             )
 
-    async def embed_image(self, images: Sequence[Path]) -> list[list[float]]:
+    async def embed_image(self, images: Sequence[bytes]) -> list[list[float]]:
         if not images:
             return []
 
@@ -150,8 +151,8 @@ class OnnxClipEmbeddingProvider:
         def prepare() -> dict[str, np.ndarray]:
             try:
                 opened: list[Image.Image] = []
-                for path in images:
-                    with Image.open(path) as image:
+                for content in images:
+                    with Image.open(io.BytesIO(content)) as image:
                         opened.append(image.convert("RGB"))
                 pixels = processor(images=opened, return_tensors="np")
                 tokens = tokenizer([""] * len(opened), padding=True, return_tensors="np")
