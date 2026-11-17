@@ -33,3 +33,14 @@ transport).
 - [x] US-80.1: Bounded, streamed fetch
 - [x] US-80.2: Pin the resolved address
 - [x] US-80.3: Parse once, off the event loop
+
+The user confirmed EPIC-81 completion on 2026-11-17. Each story was confirmed
+and merged with `--no-ff` before the next began.
+
+### [EPIC-81: Backend data layer and storage](../epics/EPIC-81-BACKEND-DATA-LAYER.md)
+
+- [x] US-81.2: `paginate_select` counts correctly (merged 2026-11-17)
+- [x] US-81.1: Cheaper search index maintenance (merged 2026-11-17)
+- [x] US-81.3: Remove targeted N+1 queries (merged 2026-11-17)
+- [x] US-81.4: Async file store reads (merged 2026-11-17)
+- [x] US-81.5: `files/service.py` structure (merged 2026-11-17)

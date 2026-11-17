@@ -42,15 +42,7 @@ Source: user request (2026-11-08). Suggested order: EPIC-74 → 67 → 70 → 68
 
 ## Codebase review follow-ups (proposed 2026-11-14)
 
-Source: [codebase review](codebase_review.md), verified against the code on 2026-11-14. Suggested order: EPIC-77 → 79 → 78 → 80 → 81 → 82. Work one story at a time. EPIC-77, EPIC-78, EPIC-79 and EPIC-80 are complete and archived in the [2026-11-17 checklist](docs/archive/todo-completed-2026-11-17.md).
-
-### EPIC-81: Backend data layer and storage ([epic](docs/epics/EPIC-81-BACKEND-DATA-LAYER.md))
-
-- [x] US-81.1: Cheaper search index maintenance
-- [x] US-81.2: `paginate_select` counts correctly
-- [x] US-81.3: Remove targeted N+1 queries
-- [x] US-81.4: Async file store reads
-- [x] US-81.5: `files/service.py` structure
+Source: [codebase review](codebase_review.md), verified against the code on 2026-11-14. Suggested order: EPIC-77 → 79 → 78 → 80 → 81 → 82. Work one story at a time. EPIC-77, EPIC-78, EPIC-79, EPIC-80 and EPIC-81 are complete and archived in the [2026-11-17 checklist](docs/archive/todo-completed-2026-11-17.md). EPIC-82 is next.
 
 ### EPIC-82: Code cleanup and deduplication ([epic](docs/epics/EPIC-82-CODE-CLEANUP.md))
 
