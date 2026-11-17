@@ -32,7 +32,7 @@ export const MAX_REFLECTION_CHARS = 2000;
 /**
  * Reflect at the end of a session (US-58.2): two short prompts, an optional
  * suggested draft from the chat that the learner edits, then save. The
- * reflection is filed under the chat's project and persona.
+ * reflection is filed under the chat's project.
  */
 export function ReflectDialog({
   chatId,
@@ -107,7 +107,7 @@ function ReflectForm({
         </div>
         <DialogDescription>
           A few sentences are enough. Your reflection is saved with this
-          chat&apos;s project and persona, and only you can see it.
+          chat&apos;s project, and only you can see it.
         </DialogDescription>
       </DialogHeader>
       <Field>

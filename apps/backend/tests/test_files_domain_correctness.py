@@ -141,7 +141,6 @@ async def test_empty_text_source_is_read_as_content_not_as_unsupported(file_sess
     )
     scope = ExecutionScope(
         user_id="user-a",
-        user_profile_id=None,
         agent_id=uuid.uuid4(),
         is_sub_agent=False,
         chat_id=uuid.uuid4(),

@@ -246,8 +246,7 @@ async def verification_scope(
     main = context.configurations[0]
     return ExecutionScope(
         user_id=user_id,
-        user_profile_id=context.user_profile_id,
-        user_profile_revision=context.user_profile_revision,
+        about_revision=context.about_revision,
         agent_id=main.agent_id,
         is_sub_agent=False,
         chat_id=chat_id,

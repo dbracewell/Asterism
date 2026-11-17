@@ -29,7 +29,7 @@ export type PageGuideId =
   | "study.guide-new"
   | "study.note"
   | "settings.general"
-  | "settings.personas"
+  | "settings.your-asterism"
   | "settings.skills"
   | "settings.templates"
   | "settings.rubrics"
@@ -78,7 +78,7 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
       {
         name: "Message box",
         description:
-          "Write your message here. The chips above it choose the model, persona and learning mode. The + menu adds files, templates, skills and model comparison.",
+          "Write your message here. The chips above it choose the model and learning mode. The + menu adds files, templates, skills and model comparison.",
       },
     ],
     tasks: [
@@ -89,7 +89,7 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
     terms: [
       "composer.controls",
       "concept.learning-mode",
-      "concept.persona",
+      "concept.about-you",
       "concept.model",
       "concept.general-chat",
       "concept.project",
@@ -104,12 +104,12 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
       {
         name: "Header",
         description:
-          "Shows where the chat lives, its model and persona, the mode lock in a learning mode, and a menu to rename or move the chat, reflect on the session, export an AI-use log or delete the chat.",
+          "Shows where the chat lives, its model, the mode lock in a learning mode, and a menu to rename or move the chat, reflect on the session, export an AI-use log or delete the chat.",
       },
       {
         name: "Conversation",
         description:
-          "Your messages and the replies. Messages show the model, persona and learning mode used, and replies show any tools they used and the sources they relied on.",
+          "Your messages and the replies. Messages show the model and learning mode used, and replies show any tools they used and the sources they relied on.",
       },
       {
         name: "Hint controls",
@@ -119,7 +119,7 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
       {
         name: "Message box",
         description:
-          "Write your next message. Select a chip above the box to change the model, persona or mode; changes apply from your next message.",
+          "Write your next message. Select a chip above the box to change the model or mode; changes apply from your next message.",
       },
     ],
     tasks: [
@@ -712,21 +712,22 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
     ],
     audience: "everyone",
   },
-  "settings.personas": {
-    title: "Personas",
+  "settings.your-asterism": {
+    title: "Your Asterism",
     purpose:
-      "Describe yourself and how you'd like the assistant to respond. You can keep several personas and choose one as your default.",
+      "Tell Asterism about yourself so its answers fit you. What you write is used in every chat.",
     areas: [
       {
-        name: "Persona list",
+        name: "About you",
         description:
-          "Each persona has a name and a USER.md document. Your default persona is used for new chats unless you pick another.",
+          "One text about who you are, what you're studying or working on, and what you already know. New messages use the latest saved text; messages already sent keep the text they were sent with.",
       },
     ],
     tasks: [
-      'Write your level, goals and preferred explanation style, for example "first-year biology student; explain with everyday examples".',
+      'Write a few facts about yourself, for example "second-year nursing student; I know basic chemistry".',
+      "To change how Asterism responds, pick a learning mode in the chat or edit your main agent's instructions instead.",
     ],
-    terms: ["concept.persona", "concept.learning-mode"],
+    terms: ["concept.about-you", "concept.learning-mode"],
     audience: "everyone",
   },
   "settings.skills": {
@@ -1090,7 +1091,7 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
 
 const userSettingsGuides: Record<string, PageGuideId> = {
   general: "settings.general",
-  personas: "settings.personas",
+  "your-asterism": "settings.your-asterism",
   skills: "settings.skills",
   templates: "settings.templates",
   rubrics: "settings.rubrics",

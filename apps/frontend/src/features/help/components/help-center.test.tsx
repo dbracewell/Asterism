@@ -44,8 +44,8 @@ describe("HelpCenter", () => {
     renderCenter();
     const search = screen.getByRole("searchbox", { name: "Search help" });
 
-    await user.type(search, "persona");
-    expect(document.getElementById("concept.persona")).not.toBeNull();
+    await user.type(search, "nursing");
+    expect(document.getElementById("concept.about-you")).not.toBeNull();
     expect(document.getElementById("concept.citation")).toBeNull();
     expect(screen.getByText(/^\d+ results?$/)).toBeInTheDocument();
 
@@ -64,7 +64,7 @@ describe("HelpCenter", () => {
       screen.getByRole("searchbox", { name: "Search help" }),
       "isn't a memory",
     );
-    const persona = document.getElementById("concept.persona")!;
+    const persona = document.getElementById("concept.about-you")!;
     const related = within(persona).getByRole("navigation", {
       name: "Related",
     });
@@ -83,7 +83,7 @@ describe("HelpCenter", () => {
       name: "Terms used here",
     });
     expect(
-      within(terms).getByRole("link", { name: "Persona" }),
-    ).toHaveAttribute("href", "#concept.persona");
+      within(terms).getByRole("link", { name: "About you" }),
+    ).toHaveAttribute("href", "#concept.about-you");
   });
 });

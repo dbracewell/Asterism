@@ -1,5 +1,5 @@
 import AxeBuilder from "@axe-core/playwright";
-import { defaultPersonaProvenance } from "../src/test/personas";
+import { defaultAboutProvenance } from "../src/test/about";
 import { standardLearningMode } from "../src/test/learning-modes";
 import type {
   Chat,
@@ -8,7 +8,7 @@ import type {
   Message,
   MessageExecution,
 } from "../src/lib/client";
-import { mockDefaultPersonas } from "./support/personas";
+import { mockLearningModes } from "./support/learning-modes";
 import { expect, test, type Page } from "./support/test";
 
 const A = "11111111-1111-4111-8111-111111111111";
@@ -33,7 +33,7 @@ const model = (id: string, name: string): ChatModelChoice => ({
 });
 const models = [model(A, "Alpha"), model(B, "Beta")];
 const execution = (target: ChatModelChoice): MessageExecution => ({
-  persona: defaultPersonaProvenance,
+  about: defaultAboutProvenance,
   learning_mode: standardLearningMode,
   id: "44444444-4444-4444-8444-444444444444",
   request_message_id: U,
@@ -147,7 +147,7 @@ async function mockChat(page: Page) {
     return { info, messages: [active.request, ...(active.replies ?? [])] };
   };
 
-  await mockDefaultPersonas(page);
+  await mockLearningModes(page);
   await page.route("**/api/py/chat/models", (route) =>
     route.fulfill({ json: models }),
   );

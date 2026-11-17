@@ -1,5 +1,5 @@
 "use client";
-import { defaultPersonaProvenance } from "@/test/personas";
+import { defaultAboutProvenance } from "@/test/about";
 import { standardLearningMode } from "@/test/learning-modes";
 
 import { Button } from "@/components/ui/button";
@@ -18,7 +18,7 @@ const model = {
   available: true,
 };
 const historical: MessageExecution = {
-  persona: defaultPersonaProvenance,
+  about: defaultAboutProvenance,
   learning_mode: standardLearningMode,
   id: "44444444-4444-4444-8444-444444444444",
   request_message_id: "55555555-5555-4555-8555-555555555555",

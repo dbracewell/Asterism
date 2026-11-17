@@ -37,7 +37,6 @@ def search_result(**response) -> ToolResult:
         "scope": {},
         "provenance": {
             "user_id": "a",
-            "user_profile_id": None,
             "chat_id": str(uuid.uuid4()),
             "project_id": None,
             "execution_id": None,

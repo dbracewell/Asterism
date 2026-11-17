@@ -1,12 +1,8 @@
-"""User query composition: owned personas and the owner-neutral admin user list."""
+"""User query composition: the owner-neutral admin user list."""
 
 from sqlalchemy import func, or_, select
 
-from .models import PersonaProfileModel, UserModel
-
-
-def select_owned_personas(*, user_id: str):
-    return select(PersonaProfileModel).where(PersonaProfileModel.user_id == user_id)
+from .models import UserModel
 
 
 def select_users(*, search: str | None = None):

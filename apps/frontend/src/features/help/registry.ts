@@ -1,7 +1,7 @@
 /**
  * In-app help content (ADR-0032).
  *
- * Help text describes only implemented behavior. Persona, skill, mode and
+ * Help text describes only implemented behavior. About you, skill, mode and
  * template text never grants tools, files or delegation, there is no long-term
  * memory, and planned features get no entry until they ship.
  */
@@ -12,7 +12,7 @@ export type HelpId =
   | "concept.chat"
   | "concept.general-chat"
   | "concept.project"
-  | "concept.persona"
+  | "concept.about-you"
   | "concept.main-agent"
   | "concept.sub-agent"
   | "concept.skill"
@@ -119,14 +119,14 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
     ],
     audience: "everyone",
   },
-  "concept.persona": {
-    title: "Persona",
+  "concept.about-you": {
+    title: "About you",
     summary:
-      "A short description of you and how you'd like the assistant to respond, such as your level, goals or preferred style.",
+      "A few facts about you that the assistant keeps in mind in every chat, such as what you're studying and what you already know. You write it in Settings → Your Asterism.",
     details: [
-      "You can keep several personas, for example one for studying and one for work. One of them is your default, and new chats use it unless you pick another.",
-      "The persona is recorded with each message you send, so changing it later doesn't change earlier replies.",
-      "A persona only shapes how the assistant writes. It doesn't give the assistant extra tools or access to files, and it isn't a memory: the assistant doesn't store new facts about you in it.",
+      'Write facts about yourself, for example "second-year nursing student; I know basic chemistry". To change how the assistant responds, pick a learning mode or edit your main agent\'s instructions instead.',
+      "The text is recorded with each message you send, so changing it later doesn't change earlier replies. Regenerating a reply uses your latest text.",
+      "About you is information, not instructions. It doesn't give the assistant extra tools or access to files, and it isn't a memory: the assistant doesn't store new facts about you in it.",
     ],
     related: ["concept.main-agent", "concept.skill", "concept.learning-mode"],
     audience: "everyone",
@@ -204,7 +204,7 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
     ],
     related: [
       "concept.skill-draft",
-      "concept.persona",
+      "concept.about-you",
       "concept.template",
       "concept.main-agent",
     ],
@@ -333,10 +333,10 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
       "A short note at the end of a session about what you learned and what's still unclear. They're listed in the project's Reflections tab, or on the General page for General chats.",
     details: [
       "Choose Reflect on this session in a chat's menu. Suggest a draft fills both answers from the chat; edit it so it says what you think before saving.",
-      "Reflections are yours only. Each is filed under the chat's project and persona, and the assistant doesn't read them automatically.",
+      "Reflections are yours only. Each is filed under the chat's project, and the assistant doesn't read them automatically.",
       "In a project, Practice unclear items turns what's still unclear into flashcards, one at a time. You write each answer and confirm each card, and it can also appear in your weak spots until you recall it.",
     ],
-    related: ["concept.project", "concept.persona", "concept.weak-spot"],
+    related: ["concept.project", "concept.about-you", "concept.weak-spot"],
     audience: "everyone",
   },
   "concept.ai-use-log": {
@@ -440,7 +440,7 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
     details: [
       "A divider marks where the summary starts. Open it to read the summary. From then on the model reads the summary instead of the messages above the divider, plus your most recent turns in full.",
       "The status ring beside the send button shows how full the next request is. Open it and choose Compact now to summarize earlier turns yourself.",
-      "The summary is written by a model and can miss details. It never changes your persona, skills or instructions, and it grants no tools or files.",
+      "The summary is written by a model and can miss details. It never changes your About you, skills or instructions, and it grants no tools or files.",
       "Each branch keeps its own history: a reply regenerated from before the divider uses the full conversation as it was.",
     ],
     related: ["concept.chat", "concept.model"],
@@ -681,7 +681,7 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
     summary:
       "The chips above the message box and the + menu beside it change what you send and how the assistant answers. Pick a term below to learn more.",
     details: [
-      "Chips above the box: the model, persona and learning mode are always shown. Goal, rubric, compare, skills and a template label appear only when they apply. Select a chip to change it.",
+      "Chips above the box: the model and learning mode are always shown. Goal, rubric, compare, skills and a template label appear only when they apply. Select a chip to change it.",
       "The + menu: attach files or see which files this chat can use; open prompt templates; review your draft before sending; add a skill; create an image; compare models side by side; open this help.",
       "Type / in the message box to add a skill or a prompt template.",
       "The status ring beside the send button shows how full the context is and whether the chat is connected. Open it to compact the chat, see your General chat sub-agents or check ChatGPT plan usage.",
@@ -694,7 +694,7 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
       "concept.model",
       "concept.comparison",
       "concept.image-generation",
-      "concept.persona",
+      "concept.about-you",
       "concept.learning-mode",
       "concept.skill",
       "concept.sub-agent",

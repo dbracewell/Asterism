@@ -8,7 +8,7 @@ from asterism.db.database import get_async_db_session
 from asterism.domains.agent.execution_scope import ChatScopeSnapshot, ProjectScopeSnapshot
 from asterism.domains.agent.learning_inputs import LearningModeSnapshot
 from asterism.domains.agent.prompts import (
-    PersonaSnapshot,
+    AboutSnapshot,
     PromptComposer,
     PromptLayer,
     PromptSnapshot,
@@ -19,8 +19,8 @@ from asterism.domains.agent.skill_inputs import SkillCatalogEntry, SkillSnapshot
 from asterism.domains.tools.catalog import CANVAS_TOOL_NAMES, IMAGE_TOOL_NAME, SKILL_TOOL_NAME
 from asterism.domains.tools.context import ContextToolScope
 
+from .about import read_pending_or_current_about
 from .delegation import eligible_delegation_targets
-from .personas import read_pending_or_current_persona
 from .scope import read_chat_scope_snapshot, read_project_scope_snapshot
 from .tool_policy import resolve_effective_tools
 
@@ -34,7 +34,7 @@ async def build_prompt_snapshot(
     session: AsyncSession | None = None,
     ceiling: ContextToolScope | None = None,
     skills: tuple[SkillSnapshot, ...] | None = None,
-    persona_snapshot: PersonaSnapshot | None = None,
+    about_snapshot: AboutSnapshot | None = None,
     learning_mode: LearningModeSnapshot | None = None,
     chat_snapshot: ChatScopeSnapshot | None = None,
     project_snapshot: ProjectScopeSnapshot | None = None,
@@ -77,7 +77,7 @@ async def build_prompt_snapshot(
             scope=scope,
             session=db,
         )
-        persona = persona_snapshot or await read_pending_or_current_persona(
+        about = about_snapshot or await read_pending_or_current_about(
             user_id=user_id,
             chat_id=chat_id,
             branch_ids=chat.active_branch_message_ids,
@@ -100,7 +100,7 @@ async def build_prompt_snapshot(
         return PromptComposer().snapshot(
             skills=skills,
             skill_catalog_layer=catalog_layer,
-            profile_layer=persona.layer,
+            profile_layer=about.layer,
             # Delegated agents never inherit the learner-facing mode layer.
             mode_layer=(
                 learning_mode.layer if learning_mode is not None and not profile.sub_agent and not drafting else None

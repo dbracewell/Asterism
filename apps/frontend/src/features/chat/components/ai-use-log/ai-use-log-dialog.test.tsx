@@ -29,7 +29,7 @@ const turn = (id: string, prompt: string, exercise = false) => ({
   at: 1_700_000_000,
   prompt,
   learning_mode: null,
-  persona: null,
+  about_revision: null,
   template: null,
   rubric: null,
   skills: [],

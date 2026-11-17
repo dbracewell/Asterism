@@ -1,5 +1,5 @@
-import { defaultPersonaProvenance } from "../src/test/personas";
-import { mockDefaultPersonas } from "./support/personas";
+import { defaultAboutProvenance } from "../src/test/about";
+import { mockLearningModes } from "./support/learning-modes";
 import { expect, test } from "./support/test";
 import type {
   Chat,
@@ -9,7 +9,7 @@ import type {
 } from "../src/lib/client";
 
 test.beforeEach(async ({ page }) => {
-  await mockDefaultPersonas(page);
+  await mockLearningModes(page);
 });
 
 const A = "11111111-1111-4111-8111-111111111111";
@@ -94,7 +94,7 @@ test("reviews an attached attempt and confirms before showing a corrected soluti
         content: "Sure. Paste or attach your attempt.",
         parent_message_id: U,
         execution: {
-          persona: defaultPersonaProvenance,
+          about: defaultAboutProvenance,
           learning_mode: review("none"),
           id: "44444444-4444-4444-8444-444444444444",
           request_message_id: U,

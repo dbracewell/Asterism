@@ -159,12 +159,10 @@ test("authenticated project and General chats preserve scope, provenance, and ow
       ).toBeTruthy();
       return response.json();
     };
-    const personaState = await api("GET", "/users/personas");
-    const firstPersona = personaState.profiles[0];
-    await api("PATCH", `/users/personas/${firstPersona.id}`, {
-      name: "Integrated persona",
-      user_md: "PERSONA_INSTRUCTIONS_352",
-      expected_revision: firstPersona.revision,
+    const aboutState = await api("GET", "/users/me/about");
+    const firstAbout = await api("PUT", "/users/me/about", {
+      about_md: "ABOUT_YOU_832",
+      expected_revision: aboutState.revision,
     });
     const providerId = randomUUID();
     await api("PUT", "/settings/app/providers", {
@@ -305,19 +303,13 @@ test("authenticated project and General chats preserve scope, provenance, and ow
     expect(JSON.stringify(calls[0].messages)).toContain(
       "PROJECT_INSTRUCTIONS_283",
     );
-    expect(JSON.stringify(calls[0].messages)).toContain(
-      "PERSONA_INSTRUCTIONS_352",
-    );
+    expect(JSON.stringify(calls[0].messages)).toContain("ABOUT_YOU_832");
     expect(
       saved.messages.find(
         (message: { role: string }) => message.role === "assistant",
-      ).execution.persona,
-    ).toMatchObject({
-      id: firstPersona.id,
-      name: "Integrated persona",
-      revision: firstPersona.revision + 1,
-    });
-    expect(JSON.stringify(saved)).not.toContain("PERSONA_INSTRUCTIONS_352");
+      ).execution.about,
+    ).toEqual({ revision: firstAbout.revision });
+    expect(JSON.stringify(saved)).not.toContain("ABOUT_YOU_832");
     const projectScope = await api("GET", `/chat/${projectChat}/files/context`);
     expect(projectScope.allowed_file_ids).toContain(file.id);
     const scopedSource = await context.request.get(
@@ -345,21 +337,16 @@ test("authenticated project and General chats preserve scope, provenance, and ow
         .getByText("Verified reply from Integrated A", { exact: true })
         .first(),
     ).toBeVisible();
-    const nextPersona = await api("POST", "/users/personas", {
-      name: "Later persona",
-      user_md: "PERSONA_LATER_352",
-    });
-    const beforeDefault = await api("GET", "/users/personas");
-    await api("PUT", "/users/personas/default", {
-      persona_id: nextPersona.id,
-      expected_default_revision: beforeDefault.default_revision,
+    const laterAbout = await api("PUT", "/users/me/about", {
+      about_md: "ABOUT_YOU_LATER_832",
+      expected_revision: firstAbout.revision,
     });
     const workerCalls = calls.filter((call) =>
       JSON.stringify(call.messages).includes("Specialist role"),
     );
     expect(
       workerCalls.every((call) =>
-        JSON.stringify(call.messages).includes("PERSONA_INSTRUCTIONS_352"),
+        JSON.stringify(call.messages).includes("ABOUT_YOU_832"),
       ),
     ).toBeTruthy();
     await page.reload();
@@ -383,19 +370,19 @@ test("authenticated project and General chats preserve scope, provenance, and ow
         (message: { execution: { model: { name: string } } }) =>
           message.execution.model.name,
       );
-    const historyPersonas = saved.messages
+    const historyAbout = saved.messages
       .filter((message: { role: string }) => message.role === "assistant")
       .map(
-        (message: { execution: { persona: { id: string } } }) =>
-          message.execution.persona.id,
+        (message: { execution: { about: { revision: number } } }) =>
+          message.execution.about.revision,
       );
-    expect(historyPersonas.at(-1)).toBe(nextPersona.id);
+    expect(historyAbout.at(-1)).toBe(laterAbout.revision);
     expect(
-      historyPersonas
+      historyAbout
         .slice(0, -1)
-        .every((id: string) => id === firstPersona.id),
+        .every((revision: number) => revision === firstAbout.revision),
     ).toBeTruthy();
-    expect(JSON.stringify(saved)).not.toContain("PERSONA_LATER_352");
+    expect(JSON.stringify(saved)).not.toContain("ABOUT_YOU_LATER_832");
     expect(historyModels.at(-1)).toBe("Integrated B");
     expect(
       historyModels
@@ -464,13 +451,17 @@ test("authenticated project and General chats preserve scope, provenance, and ow
       `/chat/${projectChat}`,
       `/chat/${generalChat}/files/context`,
       `/files/${file.filename}`,
-      `/users/personas/${firstPersona.id}`,
     ]) {
       const denied = await second.request.get(`/api/py${path}`, {
         headers: otherHeaders,
       });
       expect(denied.status(), `${path}: ${await denied.text()}`).toBe(404);
     }
+    // Another user's About you is their own, never the first user's text.
+    const otherAbout = await second.request.get("/api/py/users/me/about", {
+      headers: otherHeaders,
+    });
+    expect(await otherAbout.json()).toEqual({ about_md: "", revision: 1 });
     project = await api("GET", `/projects/${projectId}`);
     await api("DELETE", `/projects/${projectId}/sub-agents`, {
       agent_ids: [worker.id],

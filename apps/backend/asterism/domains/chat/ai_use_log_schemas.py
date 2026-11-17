@@ -69,7 +69,8 @@ class LoggedTurn(BaseModel):
     at: int
     prompt: str
     learning_mode: LearningModeProvenance | None
-    persona: str | None
+    # The About you revision sent with the turn; None when About you was empty.
+    about_revision: int | None
     template: LoggedTemplate | None
     rubric: str | None
     # The project learning goal the learner included in this turn.

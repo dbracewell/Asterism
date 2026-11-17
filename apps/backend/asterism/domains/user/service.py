@@ -3,7 +3,7 @@
 Design notes:
 
 - Creation is self-healing. The primary path inserts the user row and
-  creates its default persona and main-agent configuration in one transaction; if a concurrent
+  creates its main-agent configuration in one transaction; if a concurrent
   caller wins the insert race (IntegrityError), we fall back to re-provisioning
   settings on the existing row instead of failing. ``provision_main_agent``
   is itself idempotent via a unique index, so double provisioning is safe.
@@ -128,7 +128,7 @@ async def create_user(
     session: AsyncSession | None = None,
     identity: UserIdentity | None = None,
 ) -> UserCreateOutcome:
-    """Create a user, its default persona and main-agent configuration atomically.
+    """Create a user and its main-agent configuration atomically.
 
     The insert and provisioning share one transaction, so a user can never be
     left without their singleton main-agent configuration. Deleted ids are

@@ -66,7 +66,6 @@ class ProjectScopeSnapshot:
 @dataclass(frozen=True)
 class ExecutionScope:
     user_id: str
-    user_profile_id: uuid.UUID | None
     agent_id: uuid.UUID
     is_sub_agent: bool
     chat_id: uuid.UUID
@@ -81,8 +80,9 @@ class ExecutionScope:
     allowed_file_ids: frozenset[uuid.UUID]
     file_provenance: tuple[FileProvenance, ...]
 
-    user_profile_revision: int | None = None
-    persona_layer: PromptLayer | None = field(default=None, repr=False)
+    # The About you revision pinned on the turn and its profile layer (None when blank).
+    about_revision: int | None = None
+    about_layer: PromptLayer | None = field(default=None, repr=False)
     configuration_provenance: tuple[ConfigurationProvenance, ...] = ()
     selected_sub_agent_ids: frozenset[uuid.UUID] = frozenset()
     project_instructions: str = ""
@@ -115,9 +115,8 @@ class ExecutionScope:
             + (ConfigurationProvenance(agent_id=agent_id, revision=configuration_revision, is_sub_agent=True),),
             selected_sub_agent_ids=self.selected_sub_agent_ids or self.eligible_sub_agent_ids,
             user_id=self.user_id,
-            user_profile_id=self.user_profile_id,
-            user_profile_revision=self.user_profile_revision,
-            persona_layer=self.persona_layer,
+            about_revision=self.about_revision,
+            about_layer=self.about_layer,
             agent_id=agent_id,
             is_sub_agent=True,
             chat_id=self.chat_id,
@@ -141,7 +140,6 @@ class ExecutionScope:
 async def resolve_execution_scope(
     *,
     user_id: str,
-    user_profile_id: uuid.UUID | None,
     agent_id: uuid.UUID,
     is_sub_agent: bool,
     chat_id: uuid.UUID,
@@ -176,7 +174,6 @@ async def resolve_execution_scope(
 
     return ExecutionScope(
         user_id=user_id,
-        user_profile_id=user_profile_id,
         agent_id=agent_id,
         is_sub_agent=is_sub_agent,
         chat_id=chat_id,

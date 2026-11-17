@@ -51,7 +51,7 @@ describe("PageHelp", () => {
     expect(
       screen.getByRole("heading", { name: "Terms used here" }),
     ).toBeInTheDocument();
-    expect(sheet).toHaveTextContent(helpEntries["concept.persona"].summary);
+    expect(sheet).toHaveTextContent(helpEntries["concept.about-you"].summary);
 
     await user.keyboard("{Escape}");
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
@@ -79,18 +79,18 @@ describe("PageHelp", () => {
 
   it("expands a term's details in place", async () => {
     const user = userEvent.setup();
-    renderAt("/settings", "t=user&setting=personas");
+    renderAt("/settings", "t=user&setting=your-asterism");
     await user.click(
       screen.getByRole("button", { name: "Help for this page" }),
     );
     const more = screen.getByRole("button", {
-      name: "Learn more about Persona",
+      name: "Learn more about Learning mode",
     });
     expect(more).toHaveAttribute("aria-expanded", "false");
     await user.click(more);
     expect(more).toHaveAttribute("aria-expanded", "true");
     expect(
-      screen.getByText(helpEntries["concept.persona"].details[0]),
+      screen.getByText(helpEntries["concept.learning-mode"].details[0]),
     ).toBeVisible();
   });
 

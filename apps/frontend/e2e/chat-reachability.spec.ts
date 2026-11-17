@@ -1,4 +1,4 @@
-import { mockDefaultPersonas } from "./support/personas";
+import { mockLearningModes } from "./support/learning-modes";
 import { knowledgeArtifact } from "./support/knowledge-artifact";
 import {
   expect,
@@ -10,7 +10,7 @@ import {
 import type { Chat, ChatFileScope, ChatModelChoice } from "../src/lib/client";
 
 test.beforeEach(async ({ page }) => {
-  await mockDefaultPersonas(page);
+  await mockLearningModes(page);
 });
 
 const C = "77777777-7777-4777-8777-777777777777";

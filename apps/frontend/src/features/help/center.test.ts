@@ -22,7 +22,7 @@ describe("help center anchors", () => {
   });
 
   it("links into the help center page", () => {
-    expect(helpCenterHref("concept.persona")).toBe("/help#concept.persona");
+    expect(helpCenterHref("concept.about-you")).toBe("/help#concept.about-you");
     expect(pageGuideHref("admin.tools")).toBe("/help#page-admin.tools");
   });
 });
@@ -66,10 +66,10 @@ describe("searchHelp", () => {
   });
 
   it("matches every word, case-insensitively, across the details", () => {
-    expect(all("PERSONA", false)).toContain("concept.persona");
-    // Only in the persona's details.
-    expect(all("isn't a memory", false)).toContain("concept.persona");
-    expect(all("persona zzzz", false)).toEqual([]);
+    expect(all("NURSING", false)).toContain("concept.about-you");
+    // Only in About you's details.
+    expect(all("isn't a memory", false)).toContain("concept.about-you");
+    expect(all("nursing zzzz", false)).toEqual([]);
   });
 
   it("finds page guides by their areas and tips", () => {

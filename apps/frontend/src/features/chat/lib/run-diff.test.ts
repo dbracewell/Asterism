@@ -1,7 +1,7 @@
 import type { Message, MessageExecution, RecordedRun } from "@/lib/client";
 import { record } from "@/test/delegation-records";
 import { standardLearningMode } from "@/test/learning-modes";
-import { defaultPersonaProvenance } from "@/test/personas";
+import { defaultAboutProvenance } from "@/test/about";
 import { describe, expect, it } from "vitest";
 import {
   agentRows,
@@ -13,7 +13,7 @@ import {
 } from "./run-diff";
 
 const execution = (name: string): MessageExecution => ({
-  persona: defaultPersonaProvenance,
+  about: defaultAboutProvenance,
   learning_mode: standardLearningMode,
   id: "e",
   request_message_id: "r",

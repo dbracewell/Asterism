@@ -6,21 +6,21 @@ import { describe, expect, it } from "vitest";
 import { HelpAudienceProvider } from "./help-audience";
 import { HelpTopic } from "./help-topic";
 
-const persona = helpEntries["concept.persona"];
+const about = helpEntries["concept.about-you"];
 
 describe("HelpTopic", () => {
   it("opens from the keyboard and returns focus on Escape", async () => {
     const user = userEvent.setup();
-    render(<HelpTopic id="concept.persona" />);
+    render(<HelpTopic id="concept.about-you" />);
 
     await user.tab();
-    const trigger = screen.getByRole("button", { name: "Help: Persona" });
+    const trigger = screen.getByRole("button", { name: "Help: About you" });
     expect(trigger).toHaveFocus();
     await user.keyboard("{Enter}");
 
-    const dialog = screen.getByRole("dialog", { name: "Help: Persona" });
-    expect(dialog).toHaveTextContent(persona.summary);
-    expect(dialog).not.toHaveTextContent(persona.details[0]);
+    const dialog = screen.getByRole("dialog", { name: "Help: About you" });
+    expect(dialog).toHaveTextContent(about.summary);
+    expect(dialog).not.toHaveTextContent(about.details[0]);
 
     await user.keyboard("{Escape}");
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
@@ -29,9 +29,9 @@ describe("HelpTopic", () => {
 
   it("opens with a tap or click and expands details on Learn more", async () => {
     const user = userEvent.setup();
-    render(<HelpTopic id="concept.persona" />);
+    render(<HelpTopic id="concept.about-you" />);
 
-    await user.click(screen.getByRole("button", { name: "Help: Persona" }));
+    await user.click(screen.getByRole("button", { name: "Help: About you" }));
     const more = screen.getByRole("button", { name: "Learn more" });
     expect(more).toHaveAttribute("aria-expanded", "false");
     await user.click(more);
@@ -40,17 +40,17 @@ describe("HelpTopic", () => {
       "aria-expanded",
       "true",
     );
-    for (const paragraph of persona.details) {
+    for (const paragraph of about.details) {
       expect(screen.getByText(paragraph)).toBeInTheDocument();
     }
   });
 
   it("links the current entry to the help center and closes on follow", async () => {
     const user = userEvent.setup();
-    render(<HelpTopic id="concept.persona" />);
-    await user.click(screen.getByRole("button", { name: "Help: Persona" }));
+    render(<HelpTopic id="concept.about-you" />);
+    await user.click(screen.getByRole("button", { name: "Help: About you" }));
     const link = screen.getByRole("link", { name: "Open in help center" });
-    expect(link).toHaveAttribute("href", "/help#concept.persona");
+    expect(link).toHaveAttribute("href", "/help#concept.about-you");
 
     // The link follows related navigation inside the popover.
     await user.click(screen.getByRole("button", { name: "Skill" }));
@@ -62,8 +62,8 @@ describe("HelpTopic", () => {
 
   it("follows related terms and comes back", async () => {
     const user = userEvent.setup();
-    render(<HelpTopic id="concept.persona" />);
-    await user.click(screen.getByRole("button", { name: "Help: Persona" }));
+    render(<HelpTopic id="concept.about-you" />);
+    await user.click(screen.getByRole("button", { name: "Help: About you" }));
 
     await user.click(
       screen.getByRole("button", { name: helpEntries["concept.skill"].title }),
@@ -75,21 +75,21 @@ describe("HelpTopic", () => {
 
     await user.click(screen.getByRole("button", { name: "Back" }));
     expect(
-      screen.getByRole("heading", { name: "Persona" }),
+      screen.getByRole("heading", { name: "About you" }),
     ).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Back" })).toBeNull();
   });
 
   it("restarts at its own entry when reopened", async () => {
     const user = userEvent.setup();
-    render(<HelpTopic id="concept.persona" />);
-    const trigger = screen.getByRole("button", { name: "Help: Persona" });
+    render(<HelpTopic id="concept.about-you" />);
+    const trigger = screen.getByRole("button", { name: "Help: About you" });
     await user.click(trigger);
     await user.click(screen.getByRole("button", { name: "Skill" }));
     await user.keyboard("{Escape}");
     await user.click(trigger);
     expect(
-      screen.getByRole("heading", { name: "Persona" }),
+      screen.getByRole("heading", { name: "About you" }),
     ).toBeInTheDocument();
   });
 

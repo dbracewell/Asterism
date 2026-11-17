@@ -3,6 +3,35 @@
 import * as z from "zod";
 
 /**
+ * AboutProvenance
+ *
+ * Which About you revision a turn was accepted with; carries no text.
+ */
+export const zAboutProvenance = z.object({
+  revision: z.int().gte(1),
+});
+
+/**
+ * AboutYou
+ *
+ * What the user wrote about themselves, and its current revision.
+ */
+export const zAboutYou = z.object({
+  about_md: z.string(),
+  revision: z.int().gte(1),
+});
+
+/**
+ * AboutYouUpdate
+ *
+ * Replace the About you text; fails with 409 when ``expected_revision`` is stale.
+ */
+export const zAboutYouUpdate = z.object({
+  about_md: z.string().max(16000).optional().default(""),
+  expected_revision: z.int().gte(1),
+});
+
+/**
  * ActiveSkill
  */
 export const zActiveSkill = z.object({
@@ -379,14 +408,6 @@ export const zChatModelUpdate = z.object({
  */
 export const zChatMoveRequest = z.object({
   project_id: z.uuid().nullable(),
-});
-
-/**
- * ChatPersonaUpdate
- */
-export const zChatPersonaUpdate = z.object({
-  persona_id: z.uuid().nullable(),
-  expected_persona_revision: z.int().gte(1),
 });
 
 /**
@@ -1884,7 +1905,7 @@ export const zLoggedTurn = z.object({
   at: z.int(),
   prompt: z.string(),
   learning_mode: zLearningModeProvenance.nullable(),
-  persona: z.string().nullable(),
+  about_revision: z.int().nullable(),
   template: zLoggedTemplate.nullable(),
   rubric: z.string().nullable(),
   goal: z.string().nullish(),
@@ -1958,7 +1979,7 @@ export const zMainAgentUpdate = z.object({
  * Compare an answered turn with one or two more targets (US-54.4).
  *
  * The existing turn becomes column 0; each target adds a column that reruns
- * the same accepted inputs (prompt, files, skills, persona, learning mode,
+ * the same accepted inputs (prompt, files, skills, About you, learning mode,
  * template).
  */
 export const zMessageCompareRequest = z.object({
@@ -2066,8 +2087,7 @@ export const zModelProvenance = z.object({
  */
 export const zContextProvenance = z.object({
   user_id: z.string(),
-  user_profile_id: z.uuid().nullable(),
-  user_profile_revision: z.int().nullish(),
+  about_revision: z.int().nullish(),
   chat_id: z.uuid(),
   project_id: z.uuid().nullable(),
   execution_id: z.uuid().nullable(),
@@ -2318,62 +2338,6 @@ export const zPackSubAgentReview = z.object({
   model_requirements: zModelRequirements,
   model_options: z.array(zPackModelOption),
   name_conflict: z.boolean(),
-});
-
-/**
- * PersonaDefaultUpdate
- */
-export const zPersonaDefaultUpdate = z.object({
-  persona_id: z.uuid(),
-  expected_default_revision: z.int().gte(1),
-});
-
-/**
- * PersonaInput
- */
-export const zPersonaInput = z.object({
-  name: z.string().min(1).max(80),
-  user_md: z.string().max(16000).optional().default(""),
-});
-
-/**
- * PersonaProfile
- */
-export const zPersonaProfile = z.object({
-  id: z.uuid(),
-  name: z.string(),
-  user_md: z.string(),
-  revision: z.int(),
-  created_at: z.int(),
-  updated_at: z.int(),
-  is_default: z.boolean(),
-});
-
-/**
- * PersonaCollection
- */
-export const zPersonaCollection = z.object({
-  profiles: z.array(zPersonaProfile),
-  default_persona_id: z.uuid(),
-  default_revision: z.int(),
-});
-
-/**
- * PersonaProvenance
- */
-export const zPersonaProvenance = z.object({
-  id: z.uuid(),
-  name: z.string(),
-  revision: z.int().gte(1),
-});
-
-/**
- * PersonaUpdate
- */
-export const zPersonaUpdate = z.object({
-  name: z.string().min(1).max(80),
-  user_md: z.string().max(16000).optional().default(""),
-  expected_revision: z.int().gte(1),
 });
 
 /**
@@ -2893,7 +2857,6 @@ export const zProviderSettings = z.object({
  */
 export const zReflection = z.object({
   id: z.uuid(),
-  persona_id: z.uuid(),
   project_id: z.uuid().nullable(),
   chat_id: z.uuid().nullable(),
   learned: z.string(),
@@ -2906,7 +2869,7 @@ export const zReflection = z.object({
 /**
  * ReflectionCreate
  *
- * A reflection on one owned chat; its project and persona come from the chat.
+ * A reflection on one owned chat; its project comes from the chat.
  */
 export const zReflectionCreate = z.object({
   learned: z.string().max(2000).optional().default(""),
@@ -3327,7 +3290,6 @@ export const zSkillDraft = z.object({
 export const zSkillDraftStart = z.object({
   request_id: z.uuid(),
   model_id: z.uuid(),
-  persona_id: z.uuid().nullish(),
   description: z.string().min(1).max(4000),
   examples: z.string().max(8000).nullish(),
 });
@@ -3347,7 +3309,7 @@ export const zSkillIdentity = z.object({
  */
 export const zMessageExecution = z.object({
   skills: z.array(zSkillIdentity).optional(),
-  persona: zPersonaProvenance,
+  about: zAboutProvenance,
   learning_mode: zLearningModeProvenance,
   rubric: zRubricProvenance.nullish(),
   context: zContextProvenance.nullish(),
@@ -3377,8 +3339,6 @@ export const zChatInfo = z.object({
   preview: z.string().nullish(),
   message_count: z.int().nullish(),
   context_model: zChatContextModel.nullish(),
-  persona_id: z.uuid().nullish(),
-  persona_revision: z.int().gte(1).optional().default(1),
   learning_mode: zLearningModeId.optional().default("standard"),
   learning_mode_revision: z.int().gte(1).optional().default(1),
   learning_mode_locked: z.boolean().optional().default(false),
@@ -3391,7 +3351,6 @@ export const zChatInfo = z.object({
   model_revision: z.int().gte(1).optional().default(1),
   selected_model: zChatModelChoice.nullish(),
   pending_execution: zMessageExecution.nullish(),
-  pending_persona: zPersonaProvenance.nullish(),
   pending_learning_mode: zLearningModeProvenance.nullish(),
   resume_error: z.string().nullish(),
 });
@@ -4569,7 +4528,6 @@ export const zNewChatRequest = z.object({
   rubric: zRubricUse.nullish(),
   include_goal: z.boolean().optional().default(false),
   create_image: z.boolean().optional().default(false),
-  persona_id: z.uuid().nullish(),
   learning_mode: zLearningModeId.optional().default("standard"),
   hint: zHintRequest.nullish(),
   model_id: z.uuid(),
@@ -5291,17 +5249,6 @@ export const zChatDraftModelUpdatePath = z.object({
  * Successful Response
  */
 export const zChatDraftModelUpdateResponse = zChatDraft;
-
-export const zChatPersonaUpdateBody = zChatPersonaUpdate;
-
-export const zChatPersonaUpdatePath = z.object({
-  chat_id: z.uuid(),
-});
-
-/**
- * Successful Response
- */
-export const zChatPersonaUpdateResponse = zChatInfo;
 
 export const zChatLearningModeUpdateBody = zChatLearningModeUpdate;
 
@@ -7075,7 +7022,6 @@ export const zReflectionDraftCreateResponse = zReflectionDraft;
 
 export const zReflectionGetManyQuery = z.object({
   project_id: z.uuid().nullish(),
-  persona_id: z.uuid().nullish(),
   page: z.int().gte(1).optional().default(1),
   page_size: z.int().gte(1).lte(100).optional().default(10),
 });
@@ -7347,6 +7293,18 @@ export const zUserCreateUserBody = zCreateUserRequest;
  */
 export const zUserCreateUserResponse = z.boolean();
 
+/**
+ * Successful Response
+ */
+export const zUserAboutGetResponse = zAboutYou;
+
+export const zUserAboutUpdateBody = zAboutYouUpdate;
+
+/**
+ * Successful Response
+ */
+export const zUserAboutUpdateResponse = zAboutYou;
+
 export const zUserDeletePath = z.object({
   user_id: z.string(),
 });
@@ -7418,58 +7376,6 @@ export const zGroupMemberMovePath = z.object({
  * Successful Response
  */
 export const zGroupMemberMoveResponse = zGroupRef;
-
-/**
- * Successful Response
- */
-export const zUserPersonaListResponse = zPersonaCollection;
-
-export const zUserPersonaCreateBody = zPersonaInput;
-
-/**
- * Successful Response
- */
-export const zUserPersonaCreateResponse = zPersonaProfile;
-
-export const zUserPersonaSetDefaultBody = zPersonaDefaultUpdate;
-
-/**
- * Successful Response
- */
-export const zUserPersonaSetDefaultResponse = zPersonaCollection;
-
-export const zUserPersonaDeletePath = z.object({
-  persona_id: z.uuid(),
-});
-
-export const zUserPersonaDeleteQuery = z.object({
-  expected_revision: z.int().gte(1),
-});
-
-/**
- * Successful Response
- */
-export const zUserPersonaDeleteResponse = zPersonaCollection;
-
-export const zUserPersonaGetPath = z.object({
-  persona_id: z.uuid(),
-});
-
-/**
- * Successful Response
- */
-export const zUserPersonaGetResponse = zPersonaProfile;
-
-export const zUserPersonaUpdateBody = zPersonaUpdate;
-
-export const zUserPersonaUpdatePath = z.object({
-  persona_id: z.uuid(),
-});
-
-/**
- * Successful Response
- */
-export const zUserPersonaUpdateResponse = zPersonaProfile;
 
 /**
  * Successful Response

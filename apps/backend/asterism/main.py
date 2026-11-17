@@ -39,7 +39,6 @@ from asterism.domains.settings_transfer.router import settings_transfer_router
 from asterism.domains.skills.router import skills_router
 from asterism.domains.study.router import study_router
 from asterism.domains.tools.router import tools_router
-from asterism.domains.user.persona_router import persona_router
 from asterism.domains.user.router import user_router
 
 truststore.inject_into_ssl()
@@ -171,7 +170,6 @@ app.include_router(chatgpt_router)
 app.include_router(settings_router)
 app.include_router(user_router)
 app.include_router(groups_router)
-app.include_router(persona_router)
 app.include_router(tools_router)
 app.include_router(components_router)
 app.include_router(agents_router)

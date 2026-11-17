@@ -359,11 +359,6 @@ test("moves a chat to General with explicit history transfer and updates its ide
       },
     });
   });
-  await page.route("**/api/py/users/personas", (route) =>
-    route.fulfill({
-      json: { profiles: [], default_persona_id: "none", default_revision: 1 },
-    }),
-  );
   await page.goto("/e2e/projects?view=chat");
   const header = page.locator('[data-slot="app-header"]');
   await expect(header.getByRole("link", { name: "Research" })).toBeVisible();

@@ -13,7 +13,7 @@ import {
 
 export const HELP_CENTER_PATH = "/help";
 
-/** Glossary anchors are the help ID itself, for example `concept.persona`. */
+/** Glossary anchors are the help ID itself, for example `concept.about-you`. */
 export function helpAnchor(id: HelpId): string {
   return id;
 }

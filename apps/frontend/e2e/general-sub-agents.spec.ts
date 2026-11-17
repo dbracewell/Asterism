@@ -1,4 +1,4 @@
-import { mockDefaultPersonas } from "./support/personas";
+import { mockLearningModes } from "./support/learning-modes";
 import { expect, test, type Page, type WebSocketRoute } from "./support/test";
 import type {
   Chat,
@@ -173,7 +173,7 @@ const answer: Message = {
 };
 
 async function openGeneralChat(page: Page, set: GeneralSubAgents) {
-  await mockDefaultPersonas(page);
+  await mockLearningModes(page);
   const chat: Chat = {
     info: {
       id: C,

@@ -20,7 +20,6 @@ def make_scope() -> tuple[ExecutionScope, uuid.UUID, ModelIdentity]:
     return (
         ExecutionScope(
             user_id="user",
-            user_profile_id=None,
             agent_id=main_id,
             is_sub_agent=False,
             chat_id=uuid.uuid4(),
@@ -78,7 +77,6 @@ async def resolve(chat_id, chat_snapshot, project_snapshot=None, agent_id=None):
 
     return await resolve_execution_scope(
         user_id="user",
-        user_profile_id=None,
         agent_id=agent_id or uuid.uuid4(),
         is_sub_agent=False,
         chat_id=chat_id,

@@ -294,7 +294,6 @@ async def test_retrieval_reads_only_the_artifact_row(extraction_session):
 
     scope = ExecutionScope(
         user_id="user-a",
-        user_profile_id=None,
         agent_id=uuid.UUID(int=1),
         is_sub_agent=False,
         chat_id=uuid.UUID(int=2),

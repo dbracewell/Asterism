@@ -9,19 +9,18 @@ from asterism.core.exceptions import CodedException, NotFoundException
 from asterism.db.database import get_async_db_session
 from asterism.domains.agent.execution_scope import ChatScopeSnapshot, ProjectScopeSnapshot
 from asterism.domains.agent.instruction_overrides import InstructionOverride
-from asterism.domains.agent.prompts import PromptSnapshot
+from asterism.domains.agent.prompts import ABOUT_SOURCE_ID, PromptSnapshot
 from asterism.domains.agent.schemas import AgentProfile, MainAgentConfiguration
 from asterism.domains.agent.service import get_main_agent_profile
 from asterism.domains.learning.catalog import require_mode
 from asterism.domains.skills.activation import validate_snapshots
-from asterism.domains.user.personas import require_owned_persona
+from asterism.domains.user.about import read_about_snapshot
 
 from .execution_context import build_execution_provenance
 from .execution_models import ChatExecutionModel
 from .learning_modes import accepted_mode_snapshot, current_mode_snapshot, require_class_policy, turn_hint_level
 from .model_selection import require_chat_model
 from .models import ChatModel, MessageModel
-from .personas import read_chat_persona_snapshot
 from .prompt_composition import build_prompt_snapshot
 from .queries import select_owned_messages
 from .schemas import MessageExecution
@@ -96,17 +95,12 @@ async def prepare_execution(
                         else None
                     )
                 )
-                persona = (
-                    await read_chat_persona_snapshot(user_id=user_id, chat_id=chat_id, session=session)
-                    if restart
-                    else message.accepted_persona
+                # Regeneration uses the current About you; a first run uses the pinned text.
+                about = (
+                    await read_about_snapshot(user_id=user_id, session=session) if restart else message.accepted_about
                 )
-                if persona is None:
-                    raise CodedException(409, "Accepted persona input is unavailable; regenerate")
-                try:
-                    await require_owned_persona(user_id=user_id, persona_id=persona.id, session=session)
-                except NotFoundException as error:
-                    raise CodedException(409, "Accepted persona is unavailable; regenerate") from error
+                if about is None:
+                    raise CodedException(409, "Accepted About you input is unavailable; regenerate")
                 # Regeneration captures the current selection; a first run uses the pinned mode.
                 # The turn's hint level is part of its request, so regeneration keeps it.
                 learning_mode = (
@@ -125,7 +119,7 @@ async def prepare_execution(
                 await validate_snapshots(user_id, skills, session)
                 prompt = await build_prompt_snapshot(
                     skills=skills,
-                    persona_snapshot=persona,
+                    about_snapshot=about,
                     learning_mode=learning_mode,
                     user_id=user_id,
                     chat_id=chat_id,
@@ -139,7 +133,7 @@ async def prepare_execution(
                 )
                 execution = MessageExecution(
                     skills=[item.identity for item in skills],
-                    persona=persona.identity,
+                    about=about.identity,
                     learning_mode=learning_mode.identity,
                     # The rubric is part of the turn's request, so regeneration keeps it.
                     rubric=message.accepted_rubric.provenance if message.accepted_rubric else None,
@@ -185,10 +179,6 @@ async def validate_recorded_execution(
     *,
     user_id: str,
 ):
-    try:
-        await require_owned_persona(user_id=user_id, persona_id=recorded.persona.id, session=session)
-    except NotFoundException as error:
-        raise CodedException(409, "Recorded persona is unavailable; regenerate with an available persona") from error
     # Resume replays the recorded mode text, but the mode must still be offered.
     require_mode(recorded.learning_mode.id)
     from .skills import recorded_skill_snapshots
@@ -248,15 +238,17 @@ def validate_prompt_snapshot(
     if snapshot.project_id != project_id:
         raise CodedException(409, "Recorded prompt project changed; regenerate")
 
+    # A blank About you adds no profile layer; a present one must match the record.
     profile_layers = [layer for layer in snapshot.layers if layer.kind == "profile"]
-    if len(profile_layers) != 1 or (
-        profile_layers[0].source_id != str(execution.persona.id)
-        or profile_layers[0].revision != execution.persona.revision
+    if (
+        len(profile_layers) > 1
+        or any(
+            layer.source_id != ABOUT_SOURCE_ID or layer.revision != execution.about.revision for layer in profile_layers
+        )
         or execution.context is None
-        or execution.context.user_profile_id != execution.persona.id
-        or execution.context.user_profile_revision != execution.persona.revision
+        or execution.context.about_revision != execution.about.revision
     ):
-        raise CodedException(409, "Recorded persona input is unavailable or changed; regenerate")
+        raise CodedException(409, "Recorded About you input is unavailable or changed; regenerate")
     mode_layers = [layer for layer in snapshot.layers if layer.kind == "mode"]
     if len(mode_layers) != 1 or (
         mode_layers[0].source_id != execution.learning_mode.id.value

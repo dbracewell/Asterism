@@ -9,9 +9,7 @@ from asterism.common.log import get_logger
 from asterism.core.exceptions import ConflictException, NotFoundException
 from asterism.db.queries import paginate_select
 from asterism.domains.chat.models import ChatModel
-from asterism.domains.chat.personas import read_chat_persona_snapshot
 from asterism.domains.chat.queries import select_owned_chats
-from asterism.domains.user.personas import require_owned_persona
 
 from .models import ReflectionModel
 from .queries import select_owned_reflections, select_scoped_reflections
@@ -35,12 +33,10 @@ async def _require(user_id: str, reflection_id: uuid.UUID, session: AsyncSession
 
 
 async def create_reflection(user_id: str, payload: ReflectionCreate, session: AsyncSession) -> Reflection:
-    """Record a reflection under the chat's project and its current persona."""
+    """Record a reflection under the chat's project."""
     chat = await require_owned_chat(user_id, payload.chat_id, session)
-    persona = await read_chat_persona_snapshot(user_id=user_id, chat_id=chat.id, session=session)
     row = ReflectionModel(
         user_id=user_id,
-        persona_id=persona.id,
         project_id=chat.project_id,
         chat_id=chat.id,
         learned=payload.learned.strip(),
@@ -58,15 +54,11 @@ async def list_reflections(
     session: AsyncSession,
     *,
     project_id: uuid.UUID | None,
-    persona_id: uuid.UUID | None,
     page: int,
     page_size: int,
 ) -> ReflectionPage:
-    if persona_id is not None:
-        # A foreign persona must not reveal whether it exists.
-        await require_owned_persona(user_id=user_id, persona_id=persona_id, session=session)
     result = await paginate_select(
-        statement=select_scoped_reflections(user_id, project_id=project_id, persona_id=persona_id),
+        statement=select_scoped_reflections(user_id, project_id=project_id),
         session=session,
         page=page,
         page_size=page_size,

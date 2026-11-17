@@ -1,4 +1,4 @@
-import { mockDefaultPersonas } from "./support/personas";
+import { mockLearningModes } from "./support/learning-modes";
 import { expect, test, type Page, type WebSocketRoute } from "./support/test";
 import type { Chat, ChatModelChoice, Message } from "../src/lib/client";
 
@@ -28,7 +28,7 @@ const message = (
 ) => ({ id: uuid(id), role, content, status, created_at: 0 }) as Message;
 
 async function fixtures(page: Page) {
-  await mockDefaultPersonas(page);
+  await mockLearningModes(page);
   const chat: Chat = {
     info: {
       id: C,

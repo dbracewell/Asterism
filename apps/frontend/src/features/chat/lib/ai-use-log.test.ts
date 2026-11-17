@@ -22,7 +22,7 @@ const log: AiUseLog = {
             name: "Draft feedback",
             version: 2,
           },
-          persona: "Student",
+          about_revision: 3,
           template: { name: "RTF", level: "standard", available: false },
           rubric: "Argumentative essay",
           goal: "Publish a reef survey",
@@ -56,7 +56,7 @@ const log: AiUseLog = {
           at: 5,
           prompt: "Quiz me",
           learning_mode: null,
-          persona: null,
+          about_revision: null,
           template: null,
           rubric: null,
           skills: [],
@@ -87,7 +87,7 @@ const log: AiUseLog = {
           at: 8,
           prompt: "",
           learning_mode: null,
-          persona: null,
+          about_revision: null,
           template: null,
           rubric: null,
           skills: [],
@@ -110,7 +110,7 @@ it("lists every recorded detail of the included turns", () => {
   // The prompt is quoted so its own Markdown stays text.
   expect(markdown).toContain("> # My draft\n> Uniforms should be required.");
   for (const line of [
-    "- Persona: Student",
+    "- About you (revision 3)",
     "- Template: RTF (no longer available), standard level",
     "- Rubric: Argumentative essay",
     "- Learning goal included: Publish a reef survey",

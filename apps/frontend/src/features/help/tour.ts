@@ -9,7 +9,6 @@
 
 export type TourStepId =
   | "composer"
-  | "persona"
   | "skills"
   | "learning-mode"
   | "model"
@@ -33,10 +32,10 @@ export const firstChatTourSteps: readonly TourStep[] = [
     body: "Type your question or task here. Press Enter to send, or Shift+Enter for a new line. The chips above the box and the + menu change how the assistant answers.",
   },
   {
-    id: "persona",
-    target: "persona",
-    title: "Persona",
-    body: "Pick which description of you the assistant keeps in mind, such as your level and goals. It shapes how replies are written; it doesn't give the assistant extra tools or files.",
+    id: "learning-mode",
+    target: "learning-mode",
+    title: "Learning mode",
+    body: "Choose how the assistant helps. Standard gives direct answers. The other modes, such as Tutor, Explain-back and Draft feedback, help you work things out yourself.",
   },
   {
     id: "skills",
@@ -44,12 +43,6 @@ export const firstChatTourSteps: readonly TourStep[] = [
     title: "Skills",
     body: "Type / in the message box to add one of your skills. Active skills appear as chips above the box. A skill only adds instructions.",
     needsSkills: true,
-  },
-  {
-    id: "learning-mode",
-    target: "learning-mode",
-    title: "Learning mode",
-    body: "Standard gives direct answers. The other modes, such as Tutor, Explain-back and Draft feedback, help you work things out yourself.",
   },
   {
     id: "model",

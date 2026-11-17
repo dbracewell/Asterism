@@ -8,7 +8,7 @@ const requiredGlossary: HelpId[] = [
   "concept.chat",
   "concept.general-chat",
   "concept.project",
-  "concept.persona",
+  "concept.about-you",
   "concept.main-agent",
   "concept.sub-agent",
   "concept.skill",
@@ -125,7 +125,7 @@ describe("help registry", () => {
   it("hides admin entries from non-admins", () => {
     expect(isVisibleTo(helpEntries["admin.tools"], false)).toBe(false);
     expect(isVisibleTo(helpEntries["admin.tools"], true)).toBe(true);
-    expect(isVisibleTo(helpEntries["concept.persona"], false)).toBe(true);
+    expect(isVisibleTo(helpEntries["concept.about-you"], false)).toBe(true);
   });
 
   it("does not describe unimplemented features or grants (ADR-0032)", () => {
@@ -142,7 +142,7 @@ describe("help registry", () => {
     expect(text).not.toMatch(/long-term memory/);
     // Prompt-layer features never grant tools or files.
     expect(text).not.toMatch(
-      /(persona|skill|template|mode)s? (gives?|grants?)/,
+      /(about you|persona|skill|template|mode)s? (gives?|grants?)/,
     );
   });
 });

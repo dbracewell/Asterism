@@ -7,16 +7,15 @@ import { queryOptions } from "@tanstack/react-query";
 
 export const REFLECTION_PAGE_SIZE = 10;
 
-/** One page of the owner's reflections in a project (or General), optionally one persona's. */
+/** One page of the owner's reflections in a project (or General). */
 export function reflectionListOptions(
   owner: string,
-  scope: { projectId: string | null; personaId: string | null; page: number },
+  scope: { projectId: string | null; page: number },
 ) {
   const options = reflectionGetManyOptions({
     client,
     query: {
       ...(scope.projectId ? { project_id: scope.projectId } : {}),
-      ...(scope.personaId ? { persona_id: scope.personaId } : {}),
       page: scope.page,
       page_size: REFLECTION_PAGE_SIZE,
     },

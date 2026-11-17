@@ -60,7 +60,6 @@ async def build_execution_provenance(
 
     scope = await resolve_execution_scope(
         user_id=user_id,
-        user_profile_id=execution.persona.id,
         agent_id=execution.configuration.id,
         is_sub_agent=False,
         chat_id=chat_id,
@@ -76,7 +75,7 @@ async def build_execution_provenance(
             scope,
             execution_id=execution.id,
             request_message_id=execution.request_message_id,
-            user_profile_revision=execution.persona.revision,
+            about_revision=execution.about.revision,
         )
     )
     capabilities = await build_capability_manifest(

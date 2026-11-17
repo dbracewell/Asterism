@@ -29,7 +29,7 @@ from asterism.domains.agent.learning_inputs import (
     LearningModeProvenance,
     LearningModeSnapshot,
 )
-from asterism.domains.agent.prompts import PersonaSnapshot, PromptSnapshot
+from asterism.domains.agent.prompts import AboutSnapshot, PromptSnapshot
 from asterism.domains.agent.skill_inputs import AcceptedSkills, SkillIdentity
 from asterism.domains.llm.schemas import ToolCall, ToolResult
 from asterism.domains.projects.goals import GoalSnapshot
@@ -60,9 +60,7 @@ class ChatModel(Base, TimestampMixin, UuidPrimaryKeyMixin):
         index=True,
         nullable=False,
     )
-    persona_id: Mapped[uuid.UUID | None] = mapped_column(nullable=True, index=True)
     skill_revision: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
-    persona_revision: Mapped[int] = mapped_column(Integer, nullable=False, default=1, server_default="1")
     # Current learning-mode selection; accepted turns pin their own snapshot.
     learning_mode: Mapped[LearningModeId] = mapped_column(
         Enum(LearningModeId, values_callable=enum_values, native_enum=False, create_constraint=True),
@@ -115,16 +113,10 @@ class ChatModel(Base, TimestampMixin, UuidPrimaryKeyMixin):
         CheckConstraint("purpose IN ('conversation', 'skill_draft')", name="chat_purpose_known"),
         CheckConstraint("skill_revision >= 0", name="chat_skill_revision_nonnegative"),
         CheckConstraint("model_revision >= 1", name="chat_model_revision_positive"),
-        CheckConstraint("persona_revision >= 1", name="chat_persona_revision_positive"),
         CheckConstraint("learning_mode_revision >= 1", name="chat_learning_mode_revision_positive"),
         CheckConstraint(
             "NOT learning_mode_locked OR learning_mode != 'standard'",
             name="chat_standard_mode_unlocked",
-        ),
-        ForeignKeyConstraint(
-            ["persona_id", "user_id"],
-            ["user_personas.id", "user_personas.user_id"],
-            name="fk_chat_persona_owner",
         ),
         UniqueConstraint("id", "user_id", name="uq_chats_id_user"),
         ForeignKeyConstraint(
@@ -179,8 +171,9 @@ class MessageModel(Base, TimestampMixin, UuidPrimaryKeyMixin):
         nullable=False,
         default=AcceptedSkills,
     )
-    accepted_persona: Mapped[PersonaSnapshot | None] = mapped_column(
-        jsonb_type(TypeAdapter(PersonaSnapshot)),
+    # Private pinned About you text and revision (ADR-0066); set on user turns only.
+    accepted_about: Mapped[AboutSnapshot | None] = mapped_column(
+        jsonb_type(TypeAdapter(AboutSnapshot)),
         nullable=True,
     )
     # Private pinned learning-mode instructions; set on user turns only.

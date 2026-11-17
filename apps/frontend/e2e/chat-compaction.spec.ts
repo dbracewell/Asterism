@@ -1,5 +1,5 @@
 import AxeBuilder from "@axe-core/playwright";
-import { mockDefaultPersonas } from "./support/personas";
+import { mockLearningModes } from "./support/learning-modes";
 import { expect, test, type Page } from "./support/test";
 import type {
   Chat,
@@ -78,7 +78,7 @@ const baseChat = (messages: Message[], usage: number): Chat => ({
 });
 
 async function mockChat(page: Page, read: () => Chat) {
-  await mockDefaultPersonas(page);
+  await mockLearningModes(page);
   await page.route("**/api/py/chat/models", (route) =>
     route.fulfill({ json: [model] }),
   );

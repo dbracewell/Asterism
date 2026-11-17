@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "./support/test";
-import { mockDefaultPersonas } from "./support/personas";
+import { mockLearningModes } from "./support/learning-modes";
 test.use({ hasTouch: true });
 const skills = [
   {
@@ -160,7 +160,7 @@ for (const project of [null, "00000000-0000-4000-8000-000000000099"]) {
   test(`real chat component keeps accepted skills across followups and removes them in ${project ? "project" : "General"}`, async ({
     page,
   }) => {
-    await mockDefaultPersonas(page);
+    await mockLearningModes(page);
     await mock(page);
     const C = "77777777-7777-4777-8777-777777777777";
     const M = "11111111-1111-4111-8111-111111111111";
@@ -311,7 +311,7 @@ for (const project of [null, "00000000-0000-4000-8000-000000000099"]) {
 test("new project chat forwards ordered skill IDs and stripped prompt through the generated API", async ({
   page,
 }) => {
-  await mockDefaultPersonas(page);
+  await mockLearningModes(page);
   await mock(page);
   const project = "00000000-0000-4000-8000-000000000099";
   await page.route("**/api/py/chat/models", (route) =>

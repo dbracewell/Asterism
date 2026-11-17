@@ -58,10 +58,10 @@ event.listen(
     Base.metadata,
     "after_create",
     DDL("""
-CREATE TRIGGER IF NOT EXISTS accepted_persona_immutable
-BEFORE UPDATE OF accepted_persona ON messages
-WHEN NEW.accepted_persona IS NOT OLD.accepted_persona
-BEGIN SELECT RAISE(ABORT, 'Accepted persona input is immutable'); END
+CREATE TRIGGER IF NOT EXISTS accepted_about_immutable
+BEFORE UPDATE OF accepted_about ON messages
+WHEN NEW.accepted_about IS NOT OLD.accepted_about
+BEGIN SELECT RAISE(ABORT, 'Accepted About you input is immutable'); END
 """).execute_if(dialect="sqlite"),
 )
 

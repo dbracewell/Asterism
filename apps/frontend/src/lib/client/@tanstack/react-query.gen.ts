@@ -234,9 +234,6 @@ import type {
   ChatModelUpdateData,
   ChatModelUpdateError,
   ChatModelUpdateResponse,
-  ChatPersonaUpdateData,
-  ChatPersonaUpdateError,
-  ChatPersonaUpdateResponse,
   ChatRunGetData,
   ChatRunGetError,
   ChatRunGetResponse,
@@ -735,6 +732,12 @@ import type {
   ToolsGetAllData,
   ToolsGetAllError,
   ToolsGetAllResponse,
+  UserAboutGetData,
+  UserAboutGetError,
+  UserAboutGetResponse,
+  UserAboutUpdateData,
+  UserAboutUpdateError,
+  UserAboutUpdateResponse,
   UserCreateUserData,
   UserCreateUserError,
   UserCreateUserResponse,
@@ -744,24 +747,6 @@ import type {
   UserGetManyData,
   UserGetManyError,
   UserGetManyResponse,
-  UserPersonaCreateData,
-  UserPersonaCreateError,
-  UserPersonaCreateResponse,
-  UserPersonaDeleteData,
-  UserPersonaDeleteError,
-  UserPersonaDeleteResponse,
-  UserPersonaGetData,
-  UserPersonaGetError,
-  UserPersonaGetResponse,
-  UserPersonaListData,
-  UserPersonaListError,
-  UserPersonaListResponse,
-  UserPersonaSetDefaultData,
-  UserPersonaSetDefaultError,
-  UserPersonaSetDefaultResponse,
-  UserPersonaUpdateData,
-  UserPersonaUpdateError,
-  UserPersonaUpdateResponse,
   UserSettingDeleteData,
   UserSettingDeleteError,
   UserSettingsBulkUpdateData,
@@ -1359,33 +1344,6 @@ export const chatDraftModelUpdateMutation = (
   > = {
     mutationFn: async (fnOptions) => {
       const { data } = await ApiClient.__registry.get().chatDraftModelUpdate({
-        ...options,
-        ...fnOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
-/**
- * Select Chat Persona
- */
-export const chatPersonaUpdateMutation = (
-  options?: Partial<Options<ChatPersonaUpdateData>>,
-): UseMutationOptions<
-  ChatPersonaUpdateResponse,
-  ChatPersonaUpdateError,
-  Options<ChatPersonaUpdateData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    ChatPersonaUpdateResponse,
-    ChatPersonaUpdateError,
-    Options<ChatPersonaUpdateData>
-  > = {
-    mutationFn: async (fnOptions) => {
-      const { data } = await ApiClient.__registry.get().chatPersonaUpdate({
         ...options,
         ...fnOptions,
         throwOnError: true,
@@ -7583,7 +7541,7 @@ export const reflectionGetManyQueryKey = (
 /**
  * List Reflections
  *
- * One project's reflections (General without ``project_id``), optionally one persona's.
+ * One project's reflections (General without ``project_id``).
  */
 export const reflectionGetManyOptions = (
   options?: Options<ReflectionGetManyData>,
@@ -7614,7 +7572,7 @@ export const reflectionGetManyInfiniteQueryKey = (
 /**
  * List Reflections
  *
- * One project's reflections (General without ``project_id``), optionally one persona's.
+ * One project's reflections (General without ``project_id``).
  */
 export const reflectionGetManyInfiniteOptions = (
   options?: Options<ReflectionGetManyData>,
@@ -8838,6 +8796,65 @@ export const userCreateUserMutation = (
   return mutationOptions;
 };
 
+export const userAboutGetQueryKey = (options?: Options<UserAboutGetData>) =>
+  createQueryKey("userAboutGet", options);
+
+/**
+ * Read your About you text
+ *
+ * What you wrote about yourself, and its revision. Empty until you write it.
+ */
+export const userAboutGetOptions = (options?: Options<UserAboutGetData>) =>
+  queryOptions<
+    UserAboutGetResponse,
+    UserAboutGetError,
+    UserAboutGetResponse,
+    ReturnType<typeof userAboutGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry.get().userAboutGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: userAboutGetQueryKey(options),
+  });
+
+/**
+ * Replace your About you text
+ *
+ * Replace your About you text if ``expected_revision`` is still current.
+ *
+ * About you is information about you that Asterism uses when it answers.
+ * It grants nothing: no tools, files, delegation, role or memory access.
+ */
+export const userAboutUpdateMutation = (
+  options?: Partial<Options<UserAboutUpdateData>>,
+): UseMutationOptions<
+  UserAboutUpdateResponse,
+  UserAboutUpdateError,
+  Options<UserAboutUpdateData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UserAboutUpdateResponse,
+    UserAboutUpdateError,
+    Options<UserAboutUpdateData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().userAboutUpdate({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
 /**
  * Delete a user
  *
@@ -9073,167 +9090,6 @@ export const groupMemberMoveMutation = (
   > = {
     mutationFn: async (fnOptions) => {
       const { data } = await ApiClient.__registry.get().groupMemberMove({
-        ...options,
-        ...fnOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
-export const userPersonaListQueryKey = (
-  options?: Options<UserPersonaListData>,
-) => createQueryKey("userPersonaList", options);
-
-/**
- * List Personas
- */
-export const userPersonaListOptions = (
-  options?: Options<UserPersonaListData>,
-) =>
-  queryOptions<
-    UserPersonaListResponse,
-    UserPersonaListError,
-    UserPersonaListResponse,
-    ReturnType<typeof userPersonaListQueryKey>
-  >({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await ApiClient.__registry.get().userPersonaList({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: userPersonaListQueryKey(options),
-  });
-
-/**
- * Create Persona
- */
-export const userPersonaCreateMutation = (
-  options?: Partial<Options<UserPersonaCreateData>>,
-): UseMutationOptions<
-  UserPersonaCreateResponse,
-  UserPersonaCreateError,
-  Options<UserPersonaCreateData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    UserPersonaCreateResponse,
-    UserPersonaCreateError,
-    Options<UserPersonaCreateData>
-  > = {
-    mutationFn: async (fnOptions) => {
-      const { data } = await ApiClient.__registry.get().userPersonaCreate({
-        ...options,
-        ...fnOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
-/**
- * Default Persona
- */
-export const userPersonaSetDefaultMutation = (
-  options?: Partial<Options<UserPersonaSetDefaultData>>,
-): UseMutationOptions<
-  UserPersonaSetDefaultResponse,
-  UserPersonaSetDefaultError,
-  Options<UserPersonaSetDefaultData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    UserPersonaSetDefaultResponse,
-    UserPersonaSetDefaultError,
-    Options<UserPersonaSetDefaultData>
-  > = {
-    mutationFn: async (fnOptions) => {
-      const { data } = await ApiClient.__registry.get().userPersonaSetDefault({
-        ...options,
-        ...fnOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
-/**
- * Delete Persona
- */
-export const userPersonaDeleteMutation = (
-  options?: Partial<Options<UserPersonaDeleteData>>,
-): UseMutationOptions<
-  UserPersonaDeleteResponse,
-  UserPersonaDeleteError,
-  Options<UserPersonaDeleteData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    UserPersonaDeleteResponse,
-    UserPersonaDeleteError,
-    Options<UserPersonaDeleteData>
-  > = {
-    mutationFn: async (fnOptions) => {
-      const { data } = await ApiClient.__registry.get().userPersonaDelete({
-        ...options,
-        ...fnOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
-export const userPersonaGetQueryKey = (options: Options<UserPersonaGetData>) =>
-  createQueryKey("userPersonaGet", options);
-
-/**
- * Get Persona
- */
-export const userPersonaGetOptions = (options: Options<UserPersonaGetData>) =>
-  queryOptions<
-    UserPersonaGetResponse,
-    UserPersonaGetError,
-    UserPersonaGetResponse,
-    ReturnType<typeof userPersonaGetQueryKey>
-  >({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await ApiClient.__registry.get().userPersonaGet({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: userPersonaGetQueryKey(options),
-  });
-
-/**
- * Update Persona
- */
-export const userPersonaUpdateMutation = (
-  options?: Partial<Options<UserPersonaUpdateData>>,
-): UseMutationOptions<
-  UserPersonaUpdateResponse,
-  UserPersonaUpdateError,
-  Options<UserPersonaUpdateData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    UserPersonaUpdateResponse,
-    UserPersonaUpdateError,
-    Options<UserPersonaUpdateData>
-  > = {
-    mutationFn: async (fnOptions) => {
-      const { data } = await ApiClient.__registry.get().userPersonaUpdate({
         ...options,
         ...fnOptions,
         throwOnError: true,

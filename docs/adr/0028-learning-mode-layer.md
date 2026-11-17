@@ -1,6 +1,9 @@
 # ADR-0028 — Learning modes as a pinned, server-owned prompt layer
 
-Status: accepted for US-52.1 on 2026-10-31.
+Status: accepted for US-52.1 on 2026-10-31. Amended by
+[ADR-0066](0066-about-you.md) on 2026-11-17: the `profile` layer is now the
+user's About you, framed as information about the user; it still outranks the
+mode.
 
 ## Context
 
@@ -50,8 +53,9 @@ readable.
 `platform → agent → profile → mode → project → skills → runtime`
 
 Platform rules list the selected learning mode in the conflict order and state
-that a user's request to skip the mode does not switch it off. The persona still
-outranks the mode, so a persona's explicit constraints (such as "be brief") hold.
+that a user's request to skip the mode does not switch it off. The profile layer
+(About you since ADR-0066; a persona before it) still outranks the mode, so what
+the user says about themselves holds.
 The mode outranks project task text and skills, so a skill that says "write the
 full solution" cannot undo Tutor mode.
 

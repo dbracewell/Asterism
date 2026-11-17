@@ -1,4 +1,4 @@
-import { mockDefaultPersonas } from "./support/personas";
+import { mockLearningModes } from "./support/learning-modes";
 import { expect, test, type Page, type WebSocketRoute } from "./support/test";
 import type { Chat, ChatModelChoice, Message } from "../src/lib/client";
 
@@ -47,7 +47,7 @@ const hello: Message[] = [
 ];
 
 async function openChat(page: Page, available = true) {
-  await mockDefaultPersonas(page);
+  await mockLearningModes(page);
   const chat: Chat = {
     info: {
       id: CHAT,

@@ -50,31 +50,31 @@ Source: user request and the [feature overlap review](docs/reviews/2026-11-17-fe
 
 ### US-83.1: About you replaces personas (backend)
 
-- [ ] ADR-0066 "About you" superseding ADR-0021; amend ADR-0016/0028/0048/0061
-- [ ] `users.about_md` / `about_revision`; remove persona table, default pointer, trigger and FK
-- [ ] `GET`/`PUT /users/me/about` with expected revision; delete persona router, schemas, service
-- [ ] Profile layer from About you, framed as user information (skip when blank); pin `accepted_about` on acceptance
-- [ ] Remove chat persona override, route and `pending_persona`
-- [ ] `ExecutionScope` and `MemoryNamespace` drop the profile/persona segment
-- [ ] Reflections drop `persona_id`, FK, index segment and filter
-- [ ] Skill drafting drops `persona_id`
-- [ ] AI-use log, context inspection, comparisons report About you revision
-- [ ] Replace persona tests; regenerate OpenAPI and Hey API client
+- [x] ADR-0066 "About you" superseding ADR-0021; amend ADR-0028/0048/0061 (ADR-0016 covers process resources, no persona content)
+- [x] `users.about_md` / `about_revision`; remove persona table, default pointer, trigger and FK
+- [x] `GET`/`PUT /users/me/about` with expected revision; delete persona router, schemas, service
+- [x] Profile layer from About you, framed as user information (skip when blank); pin `accepted_about` on acceptance
+- [x] Remove chat persona override, route and `pending_persona`
+- [x] `ExecutionScope` and `MemoryNamespace` drop the profile/persona segment
+- [x] Reflections drop `persona_id`, FK, index segment and filter
+- [x] Skill drafting drops `persona_id`
+- [x] AI-use log, context inspection, comparisons report About you revision
+- [x] Replace persona tests; regenerate OpenAPI and Hey API client
 
 ### US-83.2: Your Asterism settings section (frontend)
 
-- [ ] Your Asterism section after General with an About you card (revision-safe save)
-- [ ] No memory placeholder; leave room for a Memory card
-- [ ] Delete persona settings, queries and tests
-- [ ] Repoint `personas` links to `your-asterism`
+- [x] Your Asterism section after General with an About you card (revision-safe save)
+- [x] No memory placeholder; leave room for a Memory card
+- [x] Delete persona settings, queries and tests
+- [x] Repoint `personas` links to `your-asterism`
 
 ### US-83.3: Remove persona from chat and the rest of the UI
 
-- [ ] Remove persona picker, composer chip, header label and new-chat persona state
-- [ ] Message provenance, context manifest and AI-use log show About you
-- [ ] Reflections UI drops persona filter and labels
-- [ ] Help pages, composer/header/transcript text and guided tour updated
-- [ ] Unit and Playwright tests updated; lint, typecheck, test, format:check pass
+- [x] Remove persona picker, composer chip, header label and new-chat persona state
+- [x] Message provenance, context manifest and AI-use log show About you
+- [x] Reflections UI drops persona filter and labels
+- [x] Help pages, composer/header/transcript text and guided tour updated
+- [x] Unit and Playwright tests updated; lint, typecheck, test, format:check pass
 
 ### US-83.4: Docs and invariants
 

@@ -1,6 +1,6 @@
 import type { Message, MessageExecution } from "@/lib/client";
 import { record } from "@/test/delegation-records";
-import { defaultPersonaProvenance } from "@/test/personas";
+import { defaultAboutProvenance } from "@/test/about";
 import { standardLearningMode } from "@/test/learning-modes";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -10,7 +10,7 @@ import { RunUsageSummary } from "./run-usage-summary";
 const execution = (
   model: Partial<MessageExecution["model"]> = {},
 ): MessageExecution => ({
-  persona: defaultPersonaProvenance,
+  about: defaultAboutProvenance,
   learning_mode: standardLearningMode,
   id: "e",
   request_message_id: "r",

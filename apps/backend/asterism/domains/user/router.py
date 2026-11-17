@@ -1,8 +1,8 @@
 """HTTP endpoints for user lifecycle management (``/users``).
 
-Persona lifecycle routes are defined separately in ``persona_router``.
-This router handles three operations: the admin user list, provisioning a new one, and deleting
-one. Creation is the only endpoint that can be reached without a JWT — it
+This router handles the admin user list, provisioning a new user, deleting
+one, and the signed-in user's About you text (ADR-0066). Creation is the only
+endpoint that can be reached without a JWT — it
 additionally accepts the shared ``SYSTEM_KEY`` secret so external tooling
 (e.g. the frontend's BetterAuth flow) can provision users out of band.
 
@@ -21,8 +21,9 @@ from asterism.core.exceptions import ForbiddenException, UnauthorizedException
 from asterism.core.schemas import ErrorDetail
 from asterism.db.dependencies import DBSessionDep
 
-from . import admin
-from .dependencies import AdminUserDep, OptionalAuthedUser
+from . import about, admin
+from .about_schemas import AboutYou, AboutYouUpdate
+from .dependencies import AdminUserDep, AuthedUserDep, OptionalAuthedUser
 from .schemas import CreateUserRequest, UserSummaryPage
 
 user_router = APIRouter(
@@ -103,6 +104,33 @@ async def create_user(
         )
         is user_service.UserCreateOutcome.CREATED
     )
+
+
+@user_router.get(
+    "/me/about",
+    response_model=AboutYou,
+    operation_id="userAboutGet",
+    summary="Read your About you text",
+)
+async def get_about(user: AuthedUserDep, session: DBSessionDep) -> AboutYou:
+    """What you wrote about yourself, and its revision. Empty until you write it."""
+    return await about.get_about(user_id=user.id, session=session)
+
+
+@user_router.put(
+    "/me/about",
+    response_model=AboutYou,
+    operation_id="userAboutUpdate",
+    summary="Replace your About you text",
+    responses={409: {"description": "The text changed since you read it", "model": ErrorDetail}},
+)
+async def update_about(payload: AboutYouUpdate, user: AuthedUserDep, session: DBSessionDep) -> AboutYou:
+    """Replace your About you text if ``expected_revision`` is still current.
+
+    About you is information about you that Asterism uses when it answers.
+    It grants nothing: no tools, files, delegation, role or memory access.
+    """
+    return await about.update_about(user_id=user.id, payload=payload, session=session)
 
 
 @user_router.delete(

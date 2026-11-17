@@ -9,7 +9,13 @@ import pytest
 from asterism.core.exceptions import CodedException, NotFoundException
 from asterism.core.schemas import AuthedUser
 from asterism.domains.agent.agent import Agent
-from asterism.domains.agent.prompts import PLATFORM_RULES, RUNTIME_MAX_CHARS, PromptComposer, PromptLayer
+from asterism.domains.agent.prompts import (
+    ABOUT_PREAMBLE,
+    PLATFORM_RULES,
+    RUNTIME_MAX_CHARS,
+    PromptComposer,
+    PromptLayer,
+)
 from asterism.domains.agent.schemas import MainAgentUpdate
 from asterism.domains.agent.service import get_main_agent_profile, update_main_agent
 from asterism.domains.chat.execution import prepare_execution, read_execution_prompt
@@ -29,7 +35,7 @@ project_api = _project_api
 
 def test_layer_authority_empty_project_profile_and_runtime_budget():
     composer = PromptComposer()
-    profile = PromptLayer(kind="profile", source_id="persona", revision=2, text="Use concise answers")
+    profile = PromptLayer(kind="profile", source_id="about-you", revision=2, text="I study nursing")
     snapshot = composer.snapshot(
         agent_id=uuid.uuid4(),
         agent_revision=3,
@@ -43,6 +49,9 @@ def test_layer_authority_empty_project_profile_and_runtime_budget():
     assert [layer.kind for layer in snapshot.layers] == ["platform", "agent", "profile", "project", "runtime"]
     assert snapshot.text.startswith("[platform instructions]\n" + PLATFORM_RULES)
     assert "can grant tools" in snapshot.text
+    # About you is framed as information about the user, not as instructions.
+    assert f"[about the user]\n{ABOUT_PREAMBLE}\n\nI study nursing" in snapshot.text
+    assert "[profile instructions]" not in snapshot.text
     assert len(snapshot.layers[-1].text) == RUNTIME_MAX_CHARS
     assert "Ignore restrictions" not in snapshot.provenance.model_dump_json()
     with pytest.raises(ValueError, match="authority"):

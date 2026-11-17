@@ -1,4 +1,5 @@
 import type { AiUseLog, LoggedReply, LoggedTurn } from "@/lib/client";
+import { aboutLabel } from "./about-you";
 
 /** How the log states times (Unix seconds); tests pass a fixed formatter. */
 export type TimeFormatter = (seconds: number) => string;
@@ -78,7 +79,8 @@ function turnSection(turn: LoggedTurn, index: number, time: TimeFormatter) {
     quote(turn.prompt),
     "",
   ];
-  if (turn.persona) lines.push(`- Persona: ${turn.persona}`);
+  if (turn.about_revision != null)
+    lines.push(`- ${aboutLabel(turn.about_revision)}`);
   if (turn.template)
     lines.push(
       `- Template: ${unavailable(turn.template.name, turn.template.available)}, ${turn.template.level} level`,

@@ -371,7 +371,6 @@ async def test_canvas_tools_are_not_user_configurable(canvas_api):
 def scope_for(chat_id, request, run, *, user="a", sub_agent=False):
     return ExecutionScope(
         user_id=user,
-        user_profile_id=None,
         agent_id=uuid.uuid4(),
         is_sub_agent=sub_agent,
         chat_id=chat_id,

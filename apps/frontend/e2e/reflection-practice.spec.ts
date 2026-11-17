@@ -1,4 +1,4 @@
-import { mockDefaultPersonas } from "./support/personas";
+import { mockLearningModes } from "./support/learning-modes";
 import { expect, test } from "./support/test";
 
 const P = "11111111-1111-4111-8111-111111111111";
@@ -23,7 +23,7 @@ test("turns one confirmed unclear item into a card and a weak spot", async ({
 }) => {
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
-  await mockDefaultPersonas(page);
+  await mockLearningModes(page);
   const created: unknown[] = [];
   await page.route(
     (url) => url.pathname === `/api/py/projects/${P}`,
@@ -89,7 +89,6 @@ test("turns one confirmed unclear item into a card and a weak spot", async ({
         items: [
           {
             id: R,
-            persona_id: "55555555-5555-4555-8555-555555555555",
             project_id: P,
             chat_id: null,
             learned: "Osmosis moves water.",

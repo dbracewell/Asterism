@@ -28,7 +28,6 @@ from .draft_comment_schemas import DraftCommentSummary, DraftCommentUpdate, Draf
 from .exercise_schemas import ExerciseAttemptRequest, ExerciseView
 from .learning_modes import change_chat_learning_mode
 from .model_selection import change_chat_model, list_chat_models
-from .personas import change_chat_persona
 from .schemas import (
     BulkDeleteChatRequest,
     BulkDeleteChatResponse,
@@ -45,7 +44,6 @@ from .schemas import (
     ChatModelChoice,
     ChatModelUpdate,
     ChatMoveRequest,
-    ChatPersonaUpdate,
     ChatSendRequest,
     ChatUpdateRequest,
     ComparisonActivate,
@@ -98,21 +96,6 @@ async def select_draft_model(
     from .drafts import change_draft_model
 
     return await change_draft_model(user_id=user.id, draft_id=draft_id, payload=payload, session=session)
-
-
-@chat_router.put(
-    "/{chat_id}/persona",
-    operation_id="chatPersonaUpdate",
-    response_model=ChatInfo,
-    responses={404: {"model": ErrorDetail}, 409: {"model": ErrorDetail}},
-)
-async def select_chat_persona(
-    chat_id: uuid.UUID,
-    payload: ChatPersonaUpdate,
-    user: AuthedUserDep,
-    db: DBSessionDep,
-):
-    return await change_chat_persona(user_id=user.id, chat_id=chat_id, payload=payload, session=db)
 
 
 @chat_router.put(

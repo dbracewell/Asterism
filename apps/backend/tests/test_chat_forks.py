@@ -474,7 +474,6 @@ async def test_agent_replay_runs_only_unreused_calls_then_uses_the_remaining_bud
 def _scope(target: uuid.UUID, overrides=()) -> ExecutionScope:
     return ExecutionScope(
         user_id="a",
-        user_profile_id=None,
         agent_id=uuid.uuid4(),
         is_sub_agent=False,
         chat_id=uuid.uuid4(),
