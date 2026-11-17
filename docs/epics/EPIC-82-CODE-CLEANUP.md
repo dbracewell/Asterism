@@ -16,7 +16,7 @@ Remove duplicated utilities and dead code, and split the largest components.
 
 ### US-82.2: One boolean admin policy panel
 
-- [ ] Share one `BooleanAdminPolicySettings` among the ChatGPT, canvas and skills policy panels (about 410 lines now); keep their tests passing.
+- [x] Share one `BooleanAdminPolicySettings` among the ChatGPT, canvas and skills policy panels (about 410 lines now); keep their tests passing.
 
 ### US-82.3: Dead code and small leaks
 
