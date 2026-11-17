@@ -55,7 +55,7 @@ Source: [codebase review](codebase_review.md), verified against the code on 2026
 ### EPIC-78: User and knowledge job lifecycle ([epic](docs/epics/EPIC-78-USER-AND-KNOWLEDGE-LIFECYCLE.md))
 
 - [x] US-78.1: Interrupted captioning resumes after a restart
-- [ ] US-78.2: Deleting a user stops their work
+- [x] US-78.2: Deleting a user stops their work
 
 ### EPIC-79: Frontend runtime fixes ([epic](docs/epics/EPIC-79-FRONTEND-RUNTIME-FIXES.md))
 

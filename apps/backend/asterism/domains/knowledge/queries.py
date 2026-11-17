@@ -29,6 +29,22 @@ def select_current_owned_artifacts(user_id: str):
     )
 
 
+def select_owned_artifact_ids(user_id: str):
+    """Select the id of every artifact generation owned by *user_id*, in a stable order.
+
+    Args:
+        user_id: Owner whose artifact ids are selected.
+
+    Returns:
+        A select over artifact ids, current and superseded alike.
+    """
+    return (
+        select(FileKnowledgeArtifactModel.id)
+        .where(FileKnowledgeArtifactModel.user_id == user_id)
+        .order_by(FileKnowledgeArtifactModel.id)
+    )
+
+
 def select_file_artifacts(file_ids: Sequence[uuid.UUID]) -> Select[tuple[FileKnowledgeArtifactModel]]:
     """Select every artifact generation of the given files, newest first.
 
