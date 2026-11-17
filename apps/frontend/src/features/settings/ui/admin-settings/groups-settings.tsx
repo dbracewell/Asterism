@@ -14,7 +14,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { errorDetail } from "@/features/classes/error-detail";
 import { HelpTopic } from "@/features/help/components/help-topic";
 import { client } from "@/lib/api";
 import type { Group, GroupAccessOptions } from "@/lib/client";
@@ -28,6 +27,7 @@ import {
 } from "@/lib/client/@tanstack/react-query.gen";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useId, useState } from "react";
+import { errorDetail } from "@/lib/utils";
 
 const MAX_NAME = 80;
 

@@ -8,7 +8,6 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { Skeleton } from "@/components/ui/skeleton";
-import { errorDetail } from "@/features/classes/error-detail";
 import { client } from "@/lib/api";
 import type { CourseChange, CourseOffer } from "@/lib/client";
 import {
@@ -19,6 +18,7 @@ import { formatFileSize } from "@/lib/formatters";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { HelpTopic } from "@/features/help/components/help-topic";
 import Link from "next/link";
+import { errorDetail } from "@/lib/utils";
 
 const CHANGE_VERB: Record<CourseChange["kind"], string> = {
   added: "Added",

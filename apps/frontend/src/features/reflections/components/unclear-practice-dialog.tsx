@@ -28,18 +28,10 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { CheckIcon } from "lucide-react";
 import { useId, useState } from "react";
 import { unclearItems } from "../lib/unclear-items";
+import { errorDetail } from "@/lib/utils";
 
 const NEW_DECK = "new";
 const CARD_SIDE_MAX = 4000;
-
-function detail(error: unknown) {
-  return error &&
-    typeof error === "object" &&
-    "detail" in error &&
-    typeof error.detail === "string"
-    ? error.detail
-    : "Could not add this card. Retry.";
-}
 
 /**
  * Turns a reflection's "still unclear" items into practice (US-58.4). Each
@@ -225,7 +217,7 @@ function UnclearItem({
           </div>
           {add.error && (
             <p role="alert" className="text-destructive text-sm">
-              {detail(add.error)}
+              {errorDetail(add.error, "Could not add this card. Retry.")}
             </p>
           )}
         </form>

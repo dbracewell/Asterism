@@ -18,7 +18,6 @@ import { studySummaryGenerateMutation } from "@/lib/client/@tanstack/react-query
 import { useMutation } from "@tanstack/react-query";
 import Link from "next/link";
 import { useState } from "react";
-import { studyErrorDetail } from "../lib/error-detail";
 import { CardCitations } from "./card-citations";
 import { SaveNote } from "./save-note";
 import {
@@ -28,6 +27,7 @@ import {
   useStudyModel,
 } from "./source-fields";
 import { PendingStatus } from "./pending-status";
+import { errorDetail } from "@/lib/utils";
 
 type Depth = StudySummaryRequest["depth"];
 
@@ -94,7 +94,7 @@ export function SummaryGenerate({ projectId }: { projectId: string }) {
       )}
       {generate.error && (
         <p role="alert" className="text-destructive text-sm">
-          {studyErrorDetail(generate.error, "Could not summarize. Try again.")}
+          {errorDetail(generate.error, "Could not summarize. Try again.")}
         </p>
       )}
       {draft && !generate.isPending && (

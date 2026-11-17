@@ -20,7 +20,6 @@ import { ClassInsights } from "@/features/classes/components/class-insights";
 import { ClassModePolicy } from "@/features/classes/components/class-mode-policy";
 import { CoursePublisher } from "@/features/classes/components/course-publisher";
 import { StudentInvites } from "@/features/classes/components/student-invites";
-import { errorDetail } from "@/features/classes/error-detail";
 import { client } from "@/lib/api";
 import type { ClassMember, TaughtClass } from "@/lib/client";
 import {
@@ -36,6 +35,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useId, useState } from "react";
 import { HelpHeading } from "@/features/help/components/help-heading";
+import { errorDetail } from "@/lib/utils";
 
 function Invite({ item }: { item: TaughtClass }) {
   const switchId = useId();

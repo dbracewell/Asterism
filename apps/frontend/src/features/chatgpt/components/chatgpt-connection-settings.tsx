@@ -35,6 +35,7 @@ import {
 import type { ChatGptConnection } from "@/lib/client/types.gen";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useRef, useState } from "react";
+import { errorMessage } from "@/lib/utils";
 
 // Outcomes the OAuth callback reports back through `?chatgpt=`.
 const CALLBACK_MESSAGES: Record<string, { text: string; error: boolean }> = {
@@ -67,13 +68,6 @@ type PendingDisconnect = "disconnect" | "forget" | null;
 export function ChatGptConnectionSettings() {
   const user = useUser();
   return <ChatGptConnectionPane key={user.id} owner={user.id} />;
-}
-
-function errorText(error: unknown, fallback: string) {
-  if (error instanceof Error) return error.message;
-  if (error && typeof error === "object" && "detail" in error)
-    return String(error.detail);
-  return fallback;
 }
 
 function ChatGptConnectionPane({ owner }: { owner: string }) {
@@ -176,7 +170,7 @@ function ChatGptConnectionPane({ owner }: { owner: string }) {
           </p>
           {syncModels.isError && (
             <p role="alert" className="text-destructive text-sm">
-              {errorText(
+              {errorMessage(
                 syncModels.error,
                 "ChatGPT plan models could not be refreshed. Try again.",
               )}
@@ -186,7 +180,7 @@ function ChatGptConnectionPane({ owner }: { owner: string }) {
       )}
       {authorize.isError && (
         <p role="alert" className="text-destructive text-sm">
-          {errorText(
+          {errorMessage(
             authorize.error,
             "ChatGPT sign-in could not start. Try again.",
           )}
@@ -194,7 +188,7 @@ function ChatGptConnectionPane({ owner }: { owner: string }) {
       )}
       {disconnect.isError && (
         <p role="alert" className="text-destructive text-sm">
-          {errorText(
+          {errorMessage(
             disconnect.error,
             "ChatGPT could not be disconnected. Try again.",
           )}

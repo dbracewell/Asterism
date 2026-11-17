@@ -27,7 +27,7 @@ import {
   chatMessageCompareMutation,
   chatModelsListOptions,
 } from "@/lib/client/@tanstack/react-query.gen";
-import { cn } from "@/lib/utils";
+import { cn, errorDetail } from "@/lib/utils";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { ColumnsIcon } from "lucide-react";
 import { useId, useState } from "react";
@@ -35,14 +35,6 @@ import { MAX_COMPARE, MIN_COMPARE, toggleTarget } from "../lib/comparison";
 import { COMPOSER_CHIP } from "../lib/composer-chip";
 
 const modelName = (model: ChatModelChoice) => model.display_name || model.name;
-
-const errorDetail = (error: unknown) =>
-  error &&
-  typeof error === "object" &&
-  "detail" in error &&
-  typeof error.detail === "string"
-    ? error.detail
-    : "The comparison could not be started. Try again.";
 
 /** Available chat models as checkboxes; at most `max` can be chosen. */
 function ModelChecklist({
@@ -253,7 +245,10 @@ export function CompareMessageDialog({
           />
           {compare.error && (
             <p role="alert" className="text-destructive">
-              {errorDetail(compare.error)}
+              {errorDetail(
+                compare.error,
+                "The comparison could not be started. Try again.",
+              )}
             </p>
           )}
         </div>

@@ -29,11 +29,11 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { studyErrorDetail } from "../lib/error-detail";
 import { QUIZ_RESPONSE_MAX, optionLetter } from "../lib/quiz";
 import { quizDescription } from "./quiz-page";
 import { StudyModelField, useStudyModel } from "./source-fields";
 import { PendingStatus } from "./pending-status";
+import { errorDetail } from "@/lib/utils";
 
 type Answer = { choice?: number; text?: string };
 
@@ -167,7 +167,7 @@ function QuizForm({ projectId, quiz }: { projectId: string; quiz: StudyQuiz }) {
         </p>
         {submit.error && (
           <p role="alert" className="text-destructive text-sm">
-            {studyErrorDetail(
+            {errorDetail(
               submit.error,
               "Could not submit your answers. Try again.",
             )}

@@ -22,7 +22,6 @@ import { studyQuizGenerateMutation } from "@/lib/client/@tanstack/react-query.ge
 import { useMutation } from "@tanstack/react-query";
 import Link from "next/link";
 import { useState } from "react";
-import { studyErrorDetail } from "../lib/error-detail";
 import {
   MAX_QUIZ_QUESTIONS,
   QUIZ_TITLE_MAX,
@@ -35,6 +34,7 @@ import {
   useStudyModel,
 } from "./source-fields";
 import { PendingStatus } from "./pending-status";
+import { errorDetail } from "@/lib/utils";
 
 type StudyQuestionKind = StudyQuizGenerateRequest["kinds"][number];
 
@@ -76,10 +76,7 @@ export function QuizGenerate({ projectId }: { projectId: string }) {
       )}
       {generate.error && (
         <p role="alert" className="text-destructive text-sm">
-          {studyErrorDetail(
-            generate.error,
-            "Could not generate a quiz. Try again.",
-          )}
+          {errorDetail(generate.error, "Could not generate a quiz. Try again.")}
         </p>
       )}
       {result && !generate.isPending && (

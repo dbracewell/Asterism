@@ -15,7 +15,6 @@ import {
   StudyModelField,
   useStudyModel,
 } from "@/features/study/components/source-fields";
-import { studyErrorDetail } from "@/features/study/lib/error-detail";
 import type { StreamingMessage } from "@/features/chat/types";
 import { client } from "@/lib/api";
 import { chatMessageVerifyMutation } from "@/lib/client/@tanstack/react-query.gen";
@@ -23,6 +22,7 @@ import { formatPlural } from "@/lib/formatters";
 import { useMutation } from "@tanstack/react-query";
 import { ShieldCheckIcon } from "lucide-react";
 import { useState } from "react";
+import { errorDetail } from "@/lib/utils";
 
 /** Claims checked per pass; mirrors the server limit (MAX_VERIFY_CLAIMS). */
 export const VERIFY_CLAIM_LIMIT = 12;
@@ -144,7 +144,7 @@ function VerifyForm({
       )}
       {verify.error && (
         <p role="alert" className="text-destructive text-sm">
-          {studyErrorDetail(verify.error, "Could not verify. Try again.")}
+          {errorDetail(verify.error, "Could not verify. Try again.")}
         </p>
       )}
       <DialogFooter>

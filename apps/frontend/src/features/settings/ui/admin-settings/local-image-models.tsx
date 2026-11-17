@@ -36,6 +36,7 @@ import {
 } from "@/lib/client/@tanstack/react-query.gen";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import { errorMessage } from "@/lib/utils";
 
 const DEVICE_LABELS: Record<string, string> = {
   auto: "Automatic",
@@ -50,13 +51,6 @@ const gb = (value: number) =>
 const busy = (model: LocalModel) =>
   model.download.status === "downloading" ||
   model.download.status === "verifying";
-
-export function errorText(error: unknown, fallback: string): string {
-  if (error instanceof Error) return error.message;
-  if (error && typeof error === "object" && "detail" in error)
-    return String((error as { detail: unknown }).detail);
-  return fallback;
-}
 
 /** Hardware, the model catalog and downloads for the local diffusers generator. */
 export function LocalImageModels() {
@@ -170,7 +164,7 @@ export function LocalImageModels() {
       )}
       {failure && (
         <p role="alert" className="text-destructive text-sm">
-          {errorText(failure, "The local model could not be changed.")}
+          {errorMessage(failure, "The local model could not be changed.")}
         </p>
       )}
       <ul aria-label="Local models" className="min-w-0 divide-y border-y">

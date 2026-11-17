@@ -24,11 +24,11 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
-import { studyErrorDetail } from "../lib/error-detail";
 import { CardCitations } from "./card-citations";
 import { CardFormDialog } from "./card-form-dialog";
 import { DeckFormDialog } from "./deck-form-dialog";
 import { cardCountLabel } from "./project-study-decks";
+import { errorDetail } from "@/lib/utils";
 
 const PAGE_SIZE = 25;
 
@@ -118,7 +118,7 @@ export function StudyDeckPage({
           <TagList tags={deck.data.tags} />
           {remove.error && (
             <p role="alert" className="text-destructive text-sm">
-              {studyErrorDetail(remove.error, "Could not delete the deck.")}
+              {errorDetail(remove.error, "Could not delete the deck.")}
             </p>
           )}
           <DeckCards projectId={projectId} deckId={deckId} />
@@ -256,7 +256,7 @@ function CardItem({
   const remove = useMutation({
     ...studyCardDeleteMutation({ client }),
     onError: (error) =>
-      toast.error(studyErrorDetail(error, "Could not delete the card.")),
+      toast.error(errorDetail(error, "Could not delete the card.")),
   });
   const label =
     card.front.length > 60 ? `${card.front.slice(0, 60)}…` : card.front;

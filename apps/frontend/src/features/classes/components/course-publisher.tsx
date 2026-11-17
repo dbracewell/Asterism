@@ -11,7 +11,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { errorDetail } from "@/features/classes/error-detail";
 import { client } from "@/lib/api";
 import {
   classCoursePublishMutation,
@@ -21,6 +20,7 @@ import {
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useId, useState } from "react";
 import { HelpHeading } from "@/features/help/components/help-heading";
+import { errorDetail } from "@/lib/utils";
 
 function count(n: number, word: string) {
   return `${n} ${word}${n === 1 ? "" : "s"}`;

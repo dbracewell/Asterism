@@ -4,6 +4,7 @@ import { FormSkeleton } from "@/components/loading-skeletons";
 import { Button } from "@/components/ui/button";
 import { FieldLegend, FieldSet } from "@/components/ui/field";
 import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Select,
   SelectContent,
@@ -27,9 +28,11 @@ import {
 } from "@/lib/client/@tanstack/react-query.gen";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { TriangleAlertIcon } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
+import { errorMessage } from "@/lib/utils";
 
 function CaptioningSettingsPane() {
+  const modeId = useId();
   const configuration = useQuery(appCaptioningGetOptions({ client }));
   const visionModelsQuery = useQuery(
     appCaptioningProviderModelsGetOptions({ client }),
@@ -62,14 +65,10 @@ function CaptioningSettingsPane() {
 
   const localStatus = modelStatus.data;
   const updateError = update.error;
-  const updateErrorMessage =
-    updateError instanceof Error
-      ? updateError.message
-      : typeof updateError === "object" &&
-          updateError &&
-          "detail" in updateError
-        ? String(updateError.detail)
-        : "The captioning configuration could not be saved.";
+  const updateErrorMessage = errorMessage(
+    updateError,
+    "The captioning configuration could not be saved.",
+  );
 
   if (configuration.isLoading)
     return <FormSkeleton label="Loading knowledge processing settings…" />;
@@ -112,34 +111,37 @@ function CaptioningSettingsPane() {
       <SettingsSection title="Image captioning">
         <FieldSet className="gap-2" disabled={update.isPending}>
           <FieldLegend>Mode</FieldLegend>
-          {[
-            ["disabled", "Disabled"],
-            ["provider", "Configured vision provider"],
-            ["local", "Local SmolVLM2 (CPU)"],
-          ].map(([mode, label]) => (
-            <Label
-              className="flex cursor-pointer items-center gap-2 font-normal"
-              key={mode}
-            >
-              <input
-                type="radio"
-                name="captioning-mode"
-                checked={draftMode === mode}
-                onChange={() => {
-                  setDraftMode(mode);
-                  if (mode !== "provider") {
-                    update.mutate({
-                      body: {
-                        mode: mode as "disabled" | "local",
-                        provider_model_id: null,
-                      },
-                    });
-                  }
-                }}
-              />
-              {label}
-            </Label>
-          ))}
+          <RadioGroup
+            value={draftMode}
+            disabled={update.isPending}
+            onValueChange={(mode) => {
+              setDraftMode(mode);
+              if (mode !== "provider") {
+                update.mutate({
+                  body: {
+                    mode: mode as "disabled" | "local",
+                    provider_model_id: null,
+                  },
+                });
+              }
+            }}
+          >
+            {[
+              ["disabled", "Disabled"],
+              ["provider", "Configured vision provider"],
+              ["local", "Local SmolVLM2 (CPU)"],
+            ].map(([mode, label]) => (
+              <div className="flex items-center gap-2" key={mode}>
+                <RadioGroupItem id={`${modeId}-${mode}`} value={mode} />
+                <Label
+                  htmlFor={`${modeId}-${mode}`}
+                  className="cursor-pointer font-normal"
+                >
+                  {label}
+                </Label>
+              </div>
+            ))}
+          </RadioGroup>
         </FieldSet>
 
         {draftMode === "provider" && (

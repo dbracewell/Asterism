@@ -21,10 +21,10 @@ import { useMutation } from "@tanstack/react-query";
 import Link from "next/link";
 import { useState } from "react";
 import { addDays, daySpan, formatDay, isoDate } from "../lib/dates";
-import { studyErrorDetail } from "../lib/error-detail";
 import { SaveNote } from "./save-note";
 import { StudyModelField, useStudyModel } from "./source-fields";
 import { PendingStatus } from "./pending-status";
+import { errorDetail } from "@/lib/utils";
 
 export const MAX_GUIDE_DAYS = 60;
 
@@ -75,7 +75,7 @@ export function GuideGenerate({ projectId }: { projectId: string }) {
       )}
       {generate.error && (
         <p role="alert" className="text-destructive text-sm">
-          {studyErrorDetail(
+          {errorDetail(
             generate.error,
             "Could not write a study plan. Try again.",
           )}

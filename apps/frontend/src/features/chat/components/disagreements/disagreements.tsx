@@ -16,7 +16,6 @@ import {
   StudyModelField,
   useStudyModel,
 } from "@/features/study/components/source-fields";
-import { studyErrorDetail } from "@/features/study/lib/error-detail";
 import { client } from "@/lib/api";
 import type { DisagreementSource, DisagreementSummary } from "@/lib/client";
 import {
@@ -27,6 +26,7 @@ import { formatPlural } from "@/lib/formatters";
 import { useMutation } from "@tanstack/react-query";
 import { ArrowUpRightIcon, SplitIcon } from "lucide-react";
 import { useState } from "react";
+import { errorDetail } from "@/lib/utils";
 
 /** What a disagreement pass compares: a comparison's columns or a step's agents. */
 export type DisagreementTarget =
@@ -162,7 +162,7 @@ function FindForm({
       )}
       {find.error && (
         <p role="alert" className="text-destructive text-sm">
-          {studyErrorDetail(find.error, "Could not compare. Try again.")}
+          {errorDetail(find.error, "Could not compare. Try again.")}
         </p>
       )}
       <DialogFooter>

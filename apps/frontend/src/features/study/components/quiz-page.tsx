@@ -33,13 +33,13 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { formatTags, parseTags, tagProblem } from "../lib/tags";
 import { TagList, TagsField } from "./tags";
-import { studyErrorDetail } from "../lib/error-detail";
 import {
   QUIZ_TITLE_MAX,
   percentLabel,
   pointsLabel,
   questionCountLabel,
 } from "../lib/quiz";
+import { errorDetail } from "@/lib/utils";
 
 const PAGE_SIZE = 20;
 
@@ -130,7 +130,7 @@ export function QuizPage({
           />
           {remove.error && (
             <p role="alert" className="text-destructive text-sm">
-              {studyErrorDetail(remove.error, "Could not delete the quiz.")}
+              {errorDetail(remove.error, "Could not delete the quiz.")}
             </p>
           )}
           <TagList tags={quiz.data.tags} />
@@ -326,7 +326,7 @@ function RenameForm({
       />
       {update.error && (
         <p role="alert" className="text-destructive text-sm">
-          {studyErrorDetail(update.error, "Could not save the quiz.")}
+          {errorDetail(update.error, "Could not save the quiz.")}
         </p>
       )}
       <DialogFooter>

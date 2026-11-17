@@ -11,7 +11,7 @@ import type {
   TemplateUse,
   UserFile,
 } from "@/lib/client";
-import { cn } from "@/lib/utils";
+import { cn, errorMessage } from "@/lib/utils";
 import {
   AlertCircleIcon,
   ArrowUpIcon,
@@ -63,18 +63,6 @@ import {
 } from "@/features/templates/components/prompt-coach";
 
 type UploadState = "queued" | "uploading" | "ready" | "failed";
-
-const uploadErrorMessage = (error: unknown) => {
-  if (error instanceof Error) return error.message;
-  if (
-    typeof error === "object" &&
-    error &&
-    "detail" in error &&
-    typeof error.detail === "string"
-  )
-    return error.detail;
-  return "Upload failed. Please retry.";
-};
 
 interface AttachedFile {
   id: string;
@@ -321,7 +309,7 @@ const ChatInputCore = ({
           return files.filter((item) => item.id !== id);
         });
       } catch (error) {
-        setSendError(uploadErrorMessage(error));
+        setSendError(errorMessage(error, "Upload failed. Please retry."));
       } finally {
         setIsStaging(false);
       }
@@ -372,7 +360,7 @@ const ChatInputCore = ({
           });
           return uploaded.id;
         } catch (error) {
-          const message = uploadErrorMessage(error);
+          const message = errorMessage(error, "Upload failed. Please retry.");
           toast.error(`Upload failed for ${attachment.name}: ${message}`);
           updateFile(attachment.id, {
             state: "failed",
@@ -471,7 +459,7 @@ const ChatInputCore = ({
       skillComposer?.accepted();
       requestRef.current = null;
     } catch (error) {
-      setSendError(uploadErrorMessage(error));
+      setSendError(errorMessage(error, "Upload failed. Please retry."));
     } finally {
       submittingRef.current = false;
       setIsSubmitting(false);

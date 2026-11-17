@@ -4,6 +4,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useQuery } from "@tanstack/react-query";
 import { InfoIcon, TriangleAlertIcon } from "lucide-react";
 import { skillAvailabilityOptions } from "../queries";
+import { errorDetail } from "@/lib/utils";
 
 /** The full-width activation notice above skill lists (US-75.2). */
 export function SkillAvailability({ owner }: { owner: string }) {
@@ -44,13 +45,10 @@ export function SkillFailure({
   error: unknown;
   title: string;
 }) {
-  const detail =
-    error &&
-    typeof error === "object" &&
-    "detail" in error &&
-    typeof error.detail === "string"
-      ? error.detail
-      : "Retry, or reload the page if it keeps failing.";
+  const detail = errorDetail(
+    error,
+    "Retry, or reload the page if it keeps failing.",
+  );
   return (
     <EmptyState
       role="alert"

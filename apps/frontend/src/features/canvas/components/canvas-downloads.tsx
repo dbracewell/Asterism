@@ -12,7 +12,7 @@ import {
 import { api, client } from "@/lib/api";
 import type { CanvasVersion } from "@/lib/client";
 import { canvasVersionSaveToLibraryMutation } from "@/lib/client/@tanstack/react-query.gen";
-import { isErrorDetail } from "@/lib/utils";
+import { errorDetail } from "@/lib/utils";
 import { useMutation } from "@tanstack/react-query";
 import { DownloadIcon } from "lucide-react";
 import React from "react";
@@ -24,11 +24,6 @@ import {
   saveBlob,
   type CanvasExportFormat,
 } from "../lib/canvas";
-
-const failure = (error: unknown, fallback: string) =>
-  isErrorDetail(error) && typeof error.detail === "string"
-    ? error.detail
-    : fallback;
 
 async function download(
   request: () => Promise<{ data?: unknown; response?: Response }>,
@@ -67,7 +62,7 @@ export function CanvasDownloads({
     try {
       await task();
     } catch (cause) {
-      toast.error(failure(cause, error));
+      toast.error(errorDetail(cause, error));
     } finally {
       setBusy(false);
     }
@@ -129,7 +124,7 @@ export function CanvasDownloads({
                       toast.success(`Saved ${file.filename} to your files`),
                     onError: (error) =>
                       toast.error(
-                        failure(error, "Could not save to your files."),
+                        errorDetail(error, "Could not save to your files."),
                       ),
                   },
                 )

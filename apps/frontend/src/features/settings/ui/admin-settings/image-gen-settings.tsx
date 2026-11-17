@@ -17,10 +17,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { Switch } from "@/components/ui/switch";
 import { useUser } from "@/features/auth/components/user-context";
 import { ComponentSettings } from "@/features/settings/ui/admin-settings/component-settings";
-import {
-  LocalImageModels,
-  errorText,
-} from "@/features/settings/ui/admin-settings/local-image-models";
+import { LocalImageModels } from "@/features/settings/ui/admin-settings/local-image-models";
 import {
   SettingsPane,
   SettingsSection,
@@ -48,6 +45,7 @@ import {
 } from "@/lib/client/@tanstack/react-query.gen";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import { errorMessage } from "@/lib/utils";
 
 const SETTING_KEY = "image_generator_provider";
 const LOCAL_GENERATOR = "Diffusers";
@@ -160,7 +158,7 @@ function GeneratorSection() {
         />
         {save.isError && (
           <p role="alert" className="text-destructive text-sm">
-            {errorText(save.error, "The generator could not be saved.")}
+            {errorMessage(save.error, "The generator could not be saved.")}
           </p>
         )}
         <p role="status" className="text-sm">
@@ -226,7 +224,7 @@ function TestSection() {
       {test.isError && (
         <Alert variant="destructive">
           <AlertDescription>
-            {errorText(test.error, "The test image could not be generated.")}
+            {errorMessage(test.error, "The test image could not be generated.")}
           </AlertDescription>
         </Alert>
       )}
@@ -378,7 +376,7 @@ function PolicySection() {
       )}
       {update.isError && (
         <p role="alert" className="text-destructive text-sm">
-          {errorText(update.error, "The policy could not be saved.")}
+          {errorMessage(update.error, "The policy could not be saved.")}
         </p>
       )}
       <p role="status" className="text-muted-foreground text-sm">

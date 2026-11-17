@@ -47,7 +47,7 @@ import {
   imageGenerationAvailabilityOptions,
   chatSessionGetOneQueryKey,
 } from "@/lib/client/@tanstack/react-query.gen";
-import { cn, isErrorDetail } from "@/lib/utils";
+import { cn, errorDetail } from "@/lib/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowDownIcon, XIcon } from "lucide-react";
 import React from "react";
@@ -596,9 +596,10 @@ export const ChatSession = ({
           createImage: true,
         }).catch((error: unknown) =>
           setSocketError({
-            message: isErrorDetail(error)
-              ? String(error.detail)
-              : "Could not request another image. Reload the chat and retry.",
+            message: errorDetail(
+              error,
+              "Could not request another image. Reload the chat and retry.",
+            ),
           }),
         );
       };
@@ -892,9 +893,10 @@ export const ChatSession = ({
                         hint,
                       }).catch((error: unknown) =>
                         setSocketError({
-                          message: isErrorDetail(error)
-                            ? String(error.detail)
-                            : "Could not request help. Reload the chat and retry.",
+                          message: errorDetail(
+                            error,
+                            "Could not request help. Reload the chat and retry.",
+                          ),
                         }),
                       );
                     }}

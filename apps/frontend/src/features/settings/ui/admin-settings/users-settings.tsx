@@ -14,7 +14,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { errorDetail } from "@/features/classes/error-detail";
 import type { Group, UserSummary } from "@/lib/client";
 import {
   groupGetManyOptions,
@@ -23,6 +22,7 @@ import {
 } from "@/lib/client/@tanstack/react-query.gen";
 import { keepPreviousData, useMutation, useQuery } from "@tanstack/react-query";
 import { useDeferredValue, useState } from "react";
+import { errorDetail } from "@/lib/utils";
 
 const PAGE_SIZE = 50;
 

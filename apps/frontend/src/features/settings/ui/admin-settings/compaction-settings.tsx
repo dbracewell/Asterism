@@ -32,6 +32,7 @@ import {
 } from "@/lib/client/@tanstack/react-query.gen";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import { errorDetail } from "@/lib/utils";
 
 const CHAT_MODEL = "chat-model";
 
@@ -128,10 +129,10 @@ function CompactionForm() {
     update.reset();
   };
   const error = update.error;
-  const errorText =
-    error && "detail" in error
-      ? String(error.detail)
-      : "Context compaction settings could not be saved. Retry when administrator access is available.";
+  const errorText = errorDetail(
+    error,
+    "Context compaction settings could not be saved. Retry when administrator access is available.",
+  );
   const models = policy.data.models ?? [];
   // A saved model that is no longer active stays visible until replaced.
   const missingModel =

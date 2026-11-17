@@ -30,15 +30,13 @@ import {
   SettingsSaveBar,
   SettingsSection,
 } from "@/features/settings/ui/settings-section";
+import { errorDetail } from "@/lib/utils";
 
 function Failure({ title, error }: { title: string; error: unknown }) {
-  const detail =
-    error &&
-    typeof error === "object" &&
-    "detail" in error &&
-    typeof error.detail === "string"
-      ? error.detail
-      : "Please retry after checking your changes.";
+  const detail = errorDetail(
+    error,
+    "Please retry after checking your changes.",
+  );
   return (
     <p role="alert" className="text-destructive text-sm">
       {title}: {detail}

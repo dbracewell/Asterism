@@ -2,7 +2,7 @@ import {
   resetSseListenersForTests,
   subscribeSse,
 } from "@/features/sse/lib/event-emitter";
-import { clearRateLimitStore } from "@/features/sse/lib/rate-limiter";
+import { streamLimiter } from "@/features/sse/lib/stream-limit";
 import { EventMessage } from "@/features/sse/schemas";
 import { NextRequest } from "next/server";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -33,7 +33,7 @@ vi.mock("@/lib/server-config", () => ({
 
 afterEach(() => {
   resetSseListenersForTests();
-  clearRateLimitStore();
+  streamLimiter.clear();
   vi.clearAllMocks();
   getSessionMock.mockReset();
 });
