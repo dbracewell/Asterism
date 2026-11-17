@@ -42,12 +42,4 @@ Source: user request (2026-11-08). Suggested order: EPIC-74 → 67 → 70 → 68
 
 ## Codebase review follow-ups (proposed 2026-11-14)
 
-Source: [codebase review](codebase_review.md), verified against the code on 2026-11-14. Suggested order: EPIC-77 → 79 → 78 → 80 → 81 → 82. Work one story at a time. EPIC-77, EPIC-78, EPIC-79, EPIC-80 and EPIC-81 are complete and archived in the [2026-11-17 checklist](docs/archive/todo-completed-2026-11-17.md). EPIC-82 is next.
-
-### EPIC-82: Code cleanup and deduplication ([epic](docs/epics/EPIC-82-CODE-CLEANUP.md))
-
-- [x] US-82.1: Shared utilities
-- [x] US-82.2: One boolean admin policy panel
-- [x] US-82.3: Dead code and small leaks
-- [ ] US-82.4: Split oversized components (in progress)
-  - [x] `chat-session.tsx`, `chat-input.tsx` and `provider-setup-step.tsx` split into hooks and step/part components
+Source: [codebase review](codebase_review.md), verified against the code on 2026-11-14. Suggested order: EPIC-77 → 79 → 78 → 80 → 81 → 82. Work one story at a time. EPIC-77 through EPIC-82 are complete and archived in the [2026-11-17 checklist](docs/archive/todo-completed-2026-11-17.md).

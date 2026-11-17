@@ -1,6 +1,6 @@
 # EPIC-82: Code cleanup and deduplication
 
-Status: in progress. Source: [codebase review](../../codebase_review.md), verified 2026-11-14 (items 18, 19).
+Status: complete (2026-11-17). Source: [codebase review](../../codebase_review.md), verified 2026-11-14 (items 18, 19).
 
 ## Objective
 

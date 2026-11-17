@@ -44,3 +44,13 @@ and merged with `--no-ff` before the next began.
 - [x] US-81.3: Remove targeted N+1 queries (merged 2026-11-17)
 - [x] US-81.4: Async file store reads (merged 2026-11-17)
 - [x] US-81.5: `files/service.py` structure (merged 2026-11-17)
+
+The user confirmed EPIC-82 completion on 2026-11-17. Each story was confirmed
+and merged with `--no-ff` before the next began.
+
+### [EPIC-82: Code cleanup and deduplication](../epics/EPIC-82-CODE-CLEANUP.md)
+
+- [x] US-82.3: Dead code and small leaks (merged 2026-11-17)
+- [x] US-82.1: Shared utilities (merged 2026-11-17)
+- [x] US-82.2: One boolean admin policy panel (merged 2026-11-17)
+- [x] US-82.4: Split oversized components (merged 2026-11-17)
