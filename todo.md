@@ -46,7 +46,7 @@ Source: [codebase review](codebase_review.md), verified against the code on 2026
 
 ### EPIC-81: Backend data layer and storage ([epic](docs/epics/EPIC-81-BACKEND-DATA-LAYER.md))
 
-- [ ] US-81.1: Cheaper search index maintenance
+- [x] US-81.1: Cheaper search index maintenance
 - [x] US-81.2: `paginate_select` counts correctly
 - [ ] US-81.3: Remove targeted N+1 queries
 - [ ] US-81.4: Async file store reads
