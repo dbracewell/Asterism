@@ -6,7 +6,7 @@ import {
   sseListenerCount,
   subscribeSse,
 } from "@/features/sse/lib/event-emitter";
-import { checkRateLimit, clientIpKey } from "@/features/sse/lib/rate-limiter";
+import { checkRateLimit } from "@/features/sse/lib/rate-limiter";
 import { EventMessage, EventMessageSchema } from "@/features/sse/schemas";
 import { getAuth } from "@/lib/auth";
 import { hashMatch } from "@/lib/auth-core";
@@ -27,22 +27,22 @@ export async function OPTIONS() {
 }
 
 export async function POST(req: NextRequest) {
-  const session = await getAuth().api.getSession({ headers: req.headers });
-  const systemKey = req.headers.get("x-asterism-system-key");
   const isAuthorizedSystem = hashMatch(
-    systemKey,
+    req.headers.get("x-asterism-system-key"),
     getFrontendServerConfig().systemKey,
   );
+  const session = isAuthorizedSystem
+    ? null
+    : await getAuth().api.getSession({ headers: req.headers });
 
   if (!session?.user && !isAuthorizedSystem) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 
-  const rateKey = isAuthorizedSystem
-    ? clientIpKey(req.headers.get("x-forwarded-for"))
-    : `user:${session!.user.id}`;
-
-  if (!checkRateLimit(rateKey)) {
+  // The backend's event webhook is trusted and sends no client address, so
+  // limiting it would throttle every user's events as one client. Only
+  // browser callers are limited, per user.
+  if (session?.user && !checkRateLimit(`user:${session.user.id}`)) {
     return NextResponse.json(
       { message: "Too many requests" },
       { status: 429, headers: { "Retry-After": "60" } },
