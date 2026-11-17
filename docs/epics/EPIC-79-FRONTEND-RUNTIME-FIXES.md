@@ -1,6 +1,6 @@
 # EPIC-79: Frontend runtime fixes
 
-Status: proposed. Source: [codebase review](../../codebase_review.md), verified 2026-11-14 (items 4, 5, 6, 12, 18).
+Status: in progress (US-79.1 done). Source: [codebase review](../../codebase_review.md), verified 2026-11-14 (items 4, 5, 6, 12, 18).
 
 ## Objective
 
@@ -13,9 +13,9 @@ event webhooks, sign-in failures, and needless full-app refetches.
 
 `APIImage` revokes its `blob:` URL as soon as it is stored, because `fullImageUrl` is a dependency of the effect that created it.
 
-- [ ] Fetch with `useQuery` (`enabled: isOpen`, `staleTime: Infinity`); create and revoke the object URL in a separate effect keyed on the data (as in `inline-files.tsx`).
-- [ ] Reset when `fileId` / `filename` changes.
-- [ ] Component test: opening shows the image and the URL is revoked only on unmount or change.
+- [x] Fetch with `useQuery` (`enabled: isOpen`, `staleTime: Infinity`); create and revoke the object URL in a separate effect keyed on the data (as in `inline-files.tsx`).
+- [x] Reset when `fileId` / `filename` changes.
+- [x] Component test: opening shows the image and the URL is revoked only on unmount or change.
 
 ### US-79.2: Admin "Test" does not erase unsaved edits
 
