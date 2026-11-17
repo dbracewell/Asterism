@@ -361,3 +361,46 @@ async def test_skill_only_send_and_failed_selection_preserves_draft(skills_api):
     accepted = await client.post(f"/chat/{cid}/message", headers=auth(), json=request)
     assert accepted.status_code == 200, accepted.text
     assert (await client.get(f"/chat/drafts/{draft.json()['id']}", headers=auth())).status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_describing_active_skills_checks_availability_in_constant_queries(skills_api):
+    from asterism.domains.agent.skill_inputs import MAX_SKILL_BYTES, AcceptedSkills, SkillSnapshot
+    from asterism.domains.chat.skills import describe_skills
+    from sqlalchemy import event
+
+    client, sessions, _ = skills_api
+    assigned = await setup(client, 3)
+    unassigned = await create(client, "not-assigned")
+
+    def snapshot(skill, content=None):
+        return SkillSnapshot(
+            id=uuid.UUID(skill["id"]), name=skill["name"], revision=1, content=content or skill["content"]
+        )
+
+    oversized = snapshot(assigned[2], content="x" * (MAX_SKILL_BYTES + 1))
+    engine = sessions.kw["bind"].sync_engine
+
+    async def describe(snapshots):
+        statements = []
+
+        def record(_connection, _cursor, statement, *_):
+            statements.append(statement)
+
+        async with sessions() as db:
+            event.listen(engine, "before_cursor_execute", record)
+            try:
+                state = await describe_skills("a", AcceptedSkills(revision=1, snapshots=snapshots), db)
+            finally:
+                event.remove(engine, "before_cursor_execute", record)
+        return state, len(statements)
+
+    _, one = await describe((snapshot(assigned[0]),))
+    state, four = await describe((snapshot(assigned[0]), snapshot(assigned[1]), snapshot(unassigned), oversized))
+
+    assert four == one
+    assert [skill.available for skill in state.skills] == [True, True, False, False]
+
+    await client.put(POLICY, headers=auth("admin"), json={"enabled": False})
+    disabled, _ = await describe((snapshot(assigned[0]),))
+    assert [skill.available for skill in disabled.skills] == [False]

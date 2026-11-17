@@ -12,7 +12,7 @@ from asterism.domains.files.store import LocalFileStore
 from asterism.domains.projects.models import ProjectFileModel, ProjectModel, ProjectSubAgentModel
 from asterism.domains.settings.models import ApplicationSettingsModel, LLMModel
 from asterism.domains.tools.registry import tool_registry
-from sqlalchemy import select, update
+from sqlalchemy import event, select, update
 from test_classes import api as _api
 from test_classes import join, make_class
 from test_projects_api import auth
@@ -368,3 +368,35 @@ async def test_course_projects_carry_the_feature_areas(course):
     await apply(course, 2)
     [project], *_ = await student_records(course)
     assert project.areas.goal is False
+
+
+async def test_listing_versions_loads_files_in_one_query(course):
+    engine = course["sessions"].kw["bind"].sync_engine
+    url = f"/classes/{course['class']['id']}/course/versions"
+
+    async def count_statements():
+        statements = []
+
+        def record(_connection, _cursor, statement, *_):
+            statements.append(statement)
+
+        event.listen(engine, "before_cursor_execute", record)
+        try:
+            page = (await course["client"].get(url, headers=auth("teach"))).json()
+        finally:
+            event.remove(engine, "before_cursor_execute", record)
+        return page, len(statements)
+
+    await publish(course, note="one")
+    _, one_version = await count_statements()
+    await add_file(course, "extra.txt", b"more cells")
+    await publish(course, note="two")
+    await publish(course, note="three")
+    page, three_versions = await count_statements()
+
+    assert three_versions == one_version
+    assert [(item["number"], item["file_names"]) for item in page["items"]] == [
+        (3, ["extra.txt", "notes.txt"]),
+        (2, ["extra.txt", "notes.txt"]),
+        (1, ["notes.txt"]),
+    ]
