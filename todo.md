@@ -68,7 +68,7 @@ Source: [codebase review](codebase_review.md), verified against the code on 2026
 
 ### EPIC-80: Fetch tool hardening ([epic](docs/epics/EPIC-80-FETCH-TOOL-HARDENING.md))
 
-- [ ] US-80.1: Bounded, streamed fetch
+- [x] US-80.1: Bounded, streamed fetch
 - [ ] US-80.2: Pin the resolved address
 - [ ] US-80.3: Parse once, off the event loop
 
