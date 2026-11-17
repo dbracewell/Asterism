@@ -44,7 +44,7 @@ Open `http://localhost:3000`. Next.js allows only one dev process per app direct
 The admin navigation marks **Groups, Users, Image Generation, Code Execution and
 Export** as **Planned**. Their panes explain future scope and offer no configuration
 actions. Providers, Theme Editor, Tools and Image Captioning remain available;
-user settings expose General, Personas, Skills, and Agents.
+user settings expose General, Your Asterism, Skills, and Agents.
 
 | Capability           | Available now                                                                                                                                            | Planned                                                    |
 | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
@@ -58,13 +58,12 @@ user settings expose General, Personas, Skills, and Agents.
 | Image Generation     | Image search and captioning are separate existing capabilities                                                                                           | Image-generation providers, models and generation workflow |
 | Code Execution       | —                                                                                                                                                        | Sandboxed execution and runtime settings                   |
 | Export               | Individual file downloads                                                                                                                                | Data/conversation export tools                             |
-| Personas and memory  | Persona CRUD/defaults, chat selection and immutable execution inputs                                                                                     | Long-term memory engine                                    |
+| About you and memory | About you text in Your Asterism, pinned on each accepted turn                                                                                            | Long-term memory engine                                    |
 
 The Users badge describes unfinished administration screens, not missing access
 control. Backend list/provision/delete routes already have authorization and
-lifecycle checks. Navigation visibility does not grant access. Persona settings manage separate USER.md instructions and one default; chats can
-follow that default or select a fixed persona. Accepted turns preserve their
-instructions and provenance. Long-term memory remains future work. See the [product-surface inventory](../../docs/architecture/frontend-and-themes.md#current-versus-planned-product-surface) for ownership
+lifecycle checks. Navigation visibility does not grant access. Your Asterism holds one About you
+text per user; each accepted turn pins the text and revision it was sent with. Long-term memory remains future work. See the [product-surface inventory](../../docs/architecture/frontend-and-themes.md#current-versus-planned-product-surface) for ownership
 and limits.
 
 ## Authentication layout
@@ -92,7 +91,7 @@ content to their footer and close actions. See the
 
 Every user has exactly one main agent, configured under **User Settings → Agents**.
 It has no model of its own and there is nothing to choose: every new chat uses it,
-with the model and persona picked in the composer. Users may define any number of
+with the model and learning mode picked in the composer. Users may define any number of
 sub-agents, each bound to one fixed model; a project selects which of them its chats
 may delegate to, and General chats never delegate. The new-chat page therefore shows
 only the workspace (General or a linked project) and up to four suggested prompts
@@ -143,7 +142,7 @@ a glossary entry with a `HelpTopic` beside the main control, and a page guide
 for a new page or section. A change to existing behavior updates the entries
 and guides that describe it, including where things are (a tab, menu or
 section name). Help describes only implemented behavior: no planned features,
-no long-term memory, and no suggestion that persona, skill, mode or template
+no long-term memory, and no suggestion that About you, skill, mode or template
 text grants tools or files. Admin-only content uses the `admin.*` namespace and
 the admin audience. See
 [ADR-0032](../../docs/adr/0032-in-app-help-content.md).
@@ -151,7 +150,7 @@ the admin audience. See
 ## Chat content and composer layout
 
 The composer (`features/chat/components/chat-input.tsx`, US-73.2) has three
-bands. The top row holds chips: model, persona and learning mode always; goal,
+bands. The top row holds chips: model and learning mode always; goal,
 rubric, compare, skills and a template label only when they apply. Picker
 notices render below the row through `ComposerNotice`, so the row can scroll
 sideways on narrow screens without growing. Below it are the message box and an
@@ -344,16 +343,16 @@ manifest and the Open Graph image are generated from `src/app/icon.svg` with
 `pnpm --filter @asterism/frontend generate:icons`; see
 [brand assets](../../docs/architecture/frontend-and-themes.md#brand-assets-us-416).
 
-## Personas
+## About you
 
-User Settings → Personas manages up to 20 owned personas, each with a name and
-USER.md instructions. Choose one default; chats can follow it for each new message
-or keep an explicit selection. Save uses revision checks and retains drafts after
-conflicts. Choose another default and switch explicitly selected chats before
-deleting a persona. Accepted turns preserve their instructions; resume reuses them
-and regeneration captures current settings. Delegates inherit the recorded persona
-within their existing capability ceilings. No long-term memory engine is active.
-See [binding and storage limits](../../docs/adr/0021-personas-and-execution-binding.md).
+User Settings → Your Asterism holds one **About you** text per user: facts about
+who they are and what they know, used when Asterism answers. It starts empty, is
+limited to 16,000 characters, and saves with a revision check that keeps the draft
+after a conflict. Each accepted turn pins the text and revision; resume reuses
+them and regeneration uses the current text. A blank text adds nothing to the
+prompt. Delegates inherit the recorded text within their existing capability
+ceilings. About you grants no tools or files, and no long-term memory engine is
+active. See [ADR-0066](../../docs/adr/0066-about-you.md).
 
 This schema requires fresh initialization. For an older development database, use
 the explicit reset workflow when ready to discard its data; story tests use

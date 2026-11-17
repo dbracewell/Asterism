@@ -593,7 +593,7 @@ container's horizontal/vertical orientation and preserve unrelated URL parameter
 | Image Generation     | Image search and captioning are separate existing capabilities                        | Image-generation providers, models and generation workflow |
 | Code Execution       | —                                                                                     | Sandboxed execution and runtime settings                   |
 | Export               | Individual file downloads                                                             | Data/conversation export tools                             |
-| Personas and memory  | Persona CRUD/defaults, chat selection and immutable execution inputs                  | Long-term memory engine                                    |
+| About you and memory | About you text in Your Asterism, pinned on each turn                                  | Long-term memory engine                                    |
 
 The Users pane says that admin/user access checks already exist. Better Auth
 carries the role; verified JWTs and backend `AdminUserDep` enforce protected
@@ -610,12 +610,12 @@ assignment or execution permission is introduced by these placeholder panes.
 [US-35.1 verification](../reviews/us-35.1-verification-2026-10-24.md) records the
 pane, role-visibility and keyboard/browser checks.
 
-User Settings → Personas manages owned USER.md documents and the user default,
-separately from `agent_profiles`. Chat selectors support the current default or a
-fixed persona. Save uses revision checks; conflicts retain drafts until an explicit
-reload. Default and selected-chat deletion protections are enforced server-side.
-Accepted turns and historical execution labels preserve persona identity/revision.
-See [persona binding](../adr/0021-personas-and-execution-binding.md). Typed memory
+User Settings → Your Asterism holds one About you text per user, separately from
+`agent_profiles`, with a character count and fact-focused guidance. Save uses the
+revision; a conflict keeps the draft until an explicit reload. There is no chat
+picker: learning modes change how Asterism responds. Message provenance and
+context inspection show "About you (revision N)" when a turn sent it. See
+[About you](../adr/0066-about-you.md). Typed memory
 namespaces remain future contracts; no long-term memory engine or automatic
 cross-chat summaries are active.
 

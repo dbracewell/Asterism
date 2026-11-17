@@ -13,7 +13,7 @@ The platform supports:
 - Agentic loops
 - Image generation
 - Memory (short-term and long-term)
-- Multi-profile users with profile-specific behavior and memory
+- One About you text per user, kept in Your Asterism settings
 - Admin-managed capability configuration
 
 This document defines the expected architecture, delivery process, and implementation guardrails for all contributors and coding agents.
@@ -45,19 +45,19 @@ This project is in active development and has no production users.
   admin checks still read the token role. Educator access is membership of the
   educator group (admins may also run classes). Admins manage custom groups.
 
-## 2.2 Profiles
+## 2.2 About you
 
-Each user must always have:
+Each user has exactly one **About you** text (`users.about_md` with
+`users.about_revision`), edited in User Settings → Your Asterism
+([ADR-0066](docs/adr/0066-about-you.md)). It starts empty, and empty is valid.
 
-- **At least one profile**
-- **Exactly one default profile**
-
-A profile includes:
-
-- A custom `USER.md` persona/instruction document, stored in the database
-- A typed future profile memory namespace; no active long-term memory engine
-
-Users can create additional profiles, but the invariant above must always hold.
+- About you is information about the user (who they are, what they know), used
+  when answering. It is not instructions: response style belongs in main-agent
+  instructions or a learning mode.
+- Limits: 16,000 characters / 64,000 UTF-8 bytes, no NUL or control characters
+  other than tab and newlines. Edits require the expected revision (409 on conflict).
+- There are no personas, profiles or per-chat overrides. Your Asterism is where
+  future memory settings will live; no long-term memory engine exists.
 
 ## 2.3 Agents
 
@@ -71,7 +71,7 @@ has a name, description, instructions, explicit capabilities, and exactly one fi
 model binding. Disabled models retain their bindings and are explicitly unavailable;
 model/provider deletion must not silently select a replacement.
 
-Persona/profile defaults remain a separate invariant. Chats persist their model
+About you is separate from agent configuration. Chats persist their model
 selection independently of main configuration and preserve per-execution provenance.
 Projects explicitly select an owner-consistent subset of sub-agent definitions; new
 projects start with no selections. General chats delegate only to the user's
@@ -214,19 +214,19 @@ Current runtime behavior includes:
 - Typed future memory namespaces and derived-context keys; no active long-term
   memory store, automatic memory reads/writes, or sibling-chat summaries
 
-The persona/default-profile invariant is distinct from singleton agent settings.
-Chat composition includes the persona captured when a message was accepted.
-Resume preserves recorded instructions; regeneration captures the current selection.
-Children inherit the recorded layer. Persona access is rechecked live, and persona
-text grants no capabilities. Do not claim a persona memory engine is implemented.
-Future project-derived memory must partition by user/profile/project; General-derived
-memory partitions by user/profile/chat. Derived local summaries additionally key by
+About you is distinct from singleton agent settings. Each accepted message pins
+the About you text and revision it was sent with (`accepted_about`); a blank text
+adds no profile layer, and the profile layer is framed as information about the
+user. Resume uses the recorded text and checks only ownership; regeneration uses
+the current text. Children inherit the recorded layer. About you text grants no
+capabilities. Do not claim a memory engine is implemented.
+Future project-derived memory must partition by user/project; General-derived
+memory partitions by user/chat. Derived local summaries additionally key by
 source chat and scope revision. Keys never grant access; reauthorize reads/writes.
 
 Future memory writes and retrieval must be traceable to:
 
 - User
-- Profile
 - Agent
 - Conversation/session
 - Timestamp and source
@@ -236,7 +236,7 @@ Future memory writes and retrieval must be traceable to:
 ## 4) Domain and Data Design Principles
 
 1. **Invariants enforced at service + DB layers**
-   - At least one profile and exactly one default profile per user
+   - Exactly one About you text and revision per user (may be empty)
    - Exactly one model-free main-agent configuration per user
    - Zero or more separately owned, fixed-model sub-agent definitions
 2. **Capability scoping by allowlist**
@@ -350,7 +350,7 @@ Keep documentation updated when behavior changes:
 
 ## 10) Non-Negotiable Invariants Summary
 
-- Each user always has at least one profile and one default profile.
+- Each user has exactly one About you text; it is information, not instructions, and grants nothing.
 - Each user always has exactly one main-agent configuration; sub-agent definitions bind one fixed model.
 - Ordinary capabilities require explicit assignment; internal tools require live server-derived context and admin policy.
 - Story completion requires task completion + passing tests + user confirmation before merge.

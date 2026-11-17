@@ -67,7 +67,7 @@ and owner information, not instruction content.
 
 A user can describe a skill and have their main agent write the SKILL.md
 ([ADR-0061](../adr/0061-skill-drafting-runs.md)). `POST /skills/drafts` takes
-`{request_id, model_id, persona_id?, description, examples?}` and starts a chat
+`{request_id, model_id, description, examples?}` and starts a chat
 with `purpose = "skill_draft"`. It is hidden from the chat list and search but
 streams, cancels, revises (ordinary follow-up messages) and records runs through
 the normal chat API. The writer runs under a fixed `task` prompt layer, with no

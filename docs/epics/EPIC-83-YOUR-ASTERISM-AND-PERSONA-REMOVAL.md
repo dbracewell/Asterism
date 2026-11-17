@@ -1,6 +1,6 @@
 # EPIC-83: Your Asterism (replace personas with one "About you")
 
-Status: proposed (2026-11-17). Source: user request (2026-11-17) and the
+Status: implemented (2026-11-17); awaiting confirmation. Source: user request (2026-11-17) and the
 [feature overlap review](../reviews/2026-11-17-feature-overlap-review.md).
 
 ## Objective
@@ -62,68 +62,68 @@ settings.
 
 ### US-83.1: About you replaces personas (backend)
 
-- [ ] ADR-0066 "About you": storage, limits, revisioning, pinning, layer order,
+- [x] ADR-0066 "About you": storage, limits, revisioning, pinning, layer order,
       supersedes ADR-0021; amend ADR-0028/0048/0061 and ADR-0016 (memory contracts).
-- [ ] Add `about_md` / `about_revision` to `UserModel` with check constraints;
+- [x] Add `about_md` / `about_revision` to `UserModel` with check constraints;
       remove `PersonaProfileModel`, `default_persona_id`, `persona_revision`,
       the Default-persona insert trigger and the deferred FK.
-- [ ] `GET /users/me/about` and `PUT /users/me/about` (with `expected_revision`);
+- [x] `GET /users/me/about` and `PUT /users/me/about` (with `expected_revision`);
       delete `persona_router` and its schemas/service.
-- [ ] Prompt composition: build the profile layer from the user's About you
+- [x] Prompt composition: build the profile layer from the user's About you
       (skip when blank), framed as information about the user rather than
       instructions; pin `accepted_about` (text + revision) on message
       acceptance; keep the immutability trigger; resume rechecks nothing beyond
       ownership.
-- [ ] Remove `chats.persona_id` / `persona_revision`, `change_chat_persona` and
+- [x] Remove `chats.persona_id` / `persona_revision`, `change_chat_persona` and
       the chat persona route; drop `pending_persona` from `ChatInfo`.
-- [ ] `ExecutionScope`: replace `user_profile_id` / `user_profile_revision` /
+- [x] `ExecutionScope`: replace `user_profile_id` / `user_profile_revision` /
       `persona_layer` with the About you revision and layer; update
       `MemoryNamespace` to user + project/chat.
-- [ ] Reflections: drop `persona_id`, its FK, index segment and list filter.
-- [ ] Skill drafting: drop `persona_id` from the run payload.
-- [ ] AI-use log, context inspection, comparisons: report "About you
+- [x] Reflections: drop `persona_id`, its FK, index segment and list filter.
+- [x] Skill drafting: drop `persona_id` from the run payload.
+- [x] AI-use log, context inspection, comparisons: report "About you
       (revision N)" instead of persona name/ID.
-- [ ] Tests: replace persona suites with About you tests (revision conflict,
+- [x] Tests: replace persona suites with About you tests (revision conflict,
       limits, blank → no layer, pinning on accept, resume vs regenerate,
       reflections without persona). Regenerate OpenAPI and the Hey API client.
 
 ### US-83.2: Your Asterism settings section (frontend)
 
-- [ ] Add a **Your Asterism** User Settings section directly after General,
+- [x] Add a **Your Asterism** User Settings section directly after General,
       replacing Personas. One card, **About you**: a textarea with character
       count, guidance text and examples of facts about the user ("What should
       Asterism know about you?"; no "how should it respond" prompt, since that
       belongs in main-agent instructions), Save with revision-conflict handling.
-- [ ] Do not add a memory placeholder card; the section is structured so a
+- [x] Do not add a memory placeholder card; the section is structured so a
       Memory card can be added later.
-- [ ] Delete `persona-settings.tsx`, `persona-queries.ts` and their tests.
-- [ ] Settings links/deep links that pointed to `personas` point to `your-asterism`.
+- [x] Delete `persona-settings.tsx`, `persona-queries.ts` and their tests.
+- [x] Settings links/deep links that pointed to `personas` point to `your-asterism`.
 
 ### US-83.3: Remove persona from chat and the rest of the UI
 
-- [ ] Remove `chat-persona-picker.tsx`, the persona composer chip
+- [x] Remove `chat-persona-picker.tsx`, the persona composer chip
       (`composer-chip.ts`), the header persona label and new-chat persona state.
-- [ ] Message provenance shows "About you" (with revision) when the profile
+- [x] Message provenance shows "About you" (with revision) when the profile
       layer was present, instead of the persona name; update `context-manifest.ts`
       and `ai-use-log.ts`.
-- [ ] Reflections UI: remove the persona filter and persona labels.
-- [ ] Help: replace `settings.personas` and `concept.persona` with
+- [x] Reflections UI: remove the persona filter and persona labels.
+- [x] Help: replace `settings.personas` and `concept.persona` with
       `settings.your-asterism` / `concept.about-you`; update the composer, header
       and transcript help text that mentions personas; remove the `persona` tour
       step (point the tour at the learning-mode chip instead).
-- [ ] Update unit tests and Playwright specs; `pnpm lint`, `typecheck`, `test`,
+- [x] Update unit tests and Playwright specs; `pnpm lint`, `typecheck`, `test`,
       `format:check` pass.
 
 ### US-83.4: Docs and invariants
 
-- [ ] `CLAUDE.md`/AGENTS.md: rewrite §2.2 (Profiles → About you), the persona
+- [x] `CLAUDE.md`/AGENTS.md: rewrite §2.2 (Profiles → About you), the persona
       paragraph in §3.3, §4 invariant 1 and §10; remove "multi-profile users"
       from the overview.
-- [ ] Architecture docs: `execution-context.md`, `context-isolation.md`,
+- [x] Architecture docs: `execution-context.md`, `context-isolation.md`,
       `agent-runtime.md`, `chat-and-websocket.md`, `data-and-storage.md`,
       `skills.md`, `project-workspaces.md`, `auth-and-security.md`,
       `frontend-and-themes.md`.
-- [ ] Backend and frontend READMEs where they mention personas.
+- [x] Backend and frontend READMEs where they mention personas.
 
 ## Settled questions
 

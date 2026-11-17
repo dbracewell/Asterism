@@ -78,9 +78,9 @@ Source: user request and the [feature overlap review](docs/reviews/2026-11-17-fe
 
 ### US-83.4: Docs and invariants
 
-- [ ] CLAUDE.md/AGENTS.md §1, §2.2, §3.3, §4, §10
-- [ ] Architecture docs that mention personas/profiles
-- [ ] Backend and frontend READMEs
+- [x] CLAUDE.md/AGENTS.md §1, §2.2, §3.3, §4, §10
+- [x] Architecture docs that mention personas/profiles
+- [x] Backend and frontend READMEs
 
 ### US-84.1: Progress read and one practice route (backend)
 

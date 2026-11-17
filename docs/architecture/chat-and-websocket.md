@@ -199,8 +199,8 @@ See [execution context](execution-context.md), [agent runtime](agent-runtime.md)
 ## AI-use log (US-57.4)
 
 `POST /chat/ai-use-log` returns recorded provenance for up to 50 of the
-owner's chats: each active-branch turn's prompt, time, mode, persona,
-template, rubric, skills and files, and its reply's model, tools, cited files,
+owner's chats: each active-branch turn's prompt, time, mode, About you revision
+(null when the text was blank), template, rubric, skills and files, and its reply's model, tools, cited files,
 exercise flag, verification counts and draft-comment summary. It never returns
 answer text. The client chooses turns and renders Markdown, or prints it as a
 PDF through the browser. See [ADR-0046](../adr/0046-ai-use-log.md).

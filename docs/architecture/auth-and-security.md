@@ -57,7 +57,7 @@ See [ADR-0057](../adr/0057-user-identity-copy.md).
 ### User and administrator boundaries
 
 Backend services pass the authenticated user ID into queries for user-owned chats,
-messages, projects, files, personas, main-agent configurations, sub-agent definitions, and settings. File routes additionally
+messages, projects, files, About you text, main-agent configurations, sub-agent definitions, and settings. File routes additionally
 resolve stored paths below that user's file root. Provider administration and other
 administrator operations use the user's authenticated role; provider credentials are
 write-only in API responses.
@@ -137,9 +137,8 @@ success, then revalidate the layout. Failures retain editable drafts with retry.
 See [theme storage and lifecycle](theme-storage.md) for ownership, freshness,
 backup/reset and container permissions.
 
-Persona lifecycle APIs always use the authenticated owner's ID, including for
-administrators. Foreign and missing identities return the same 404. Accepted
-persona snapshots guide output but grant no capabilities. Execution rechecks live
-owner/profile access before work and while releasing output, including delegated
-results. Public history contains identity/revision/digests; USER.md remains in
-owner-only persona settings and private server snapshots.
+`/users/me/about` always reads and writes the authenticated user's own About you
+text, including for administrators; there is no route to another user's text.
+Pinned About you text is information for the answer and grants no capabilities.
+Public history contains only its revision and digest; the text stays in the
+owner's settings and private server snapshots.
