@@ -27,7 +27,7 @@ export type HelpId =
   | "concept.rubric"
   | "concept.ai-use-log"
   | "concept.reflection"
-  | "concept.topic-mastery"
+  | "concept.progress"
   | "concept.hint-levels"
   | "concept.answer-reveal"
   | "concept.mode-lock"
@@ -44,7 +44,6 @@ export type HelpId =
   | "concept.citation"
   | "concept.flashcard"
   | "concept.quiz"
-  | "concept.weak-spot"
   | "concept.study-note"
   | "concept.class"
   | "concept.educator"
@@ -316,15 +315,18 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
     related: ["concept.learning-mode", "concept.citation"],
     audience: "everyone",
   },
-  "concept.topic-mastery": {
-    title: "Topic mastery",
+  "concept.progress": {
+    title: "Progress",
     summary:
-      "How well you know each topic, from your latest review rating or quiz answer on each card and question tagged with it.",
+      "How a project's studying is going, in one panel on the Study tab: your topics, what needs practice, and what your reflections said is still unclear.",
     details: [
-      "Add topics to a deck or quiz when you create or edit it. The project's Study tab then shows each topic's level (Not started, Needs work, Developing or Mastered), how many items you've practiced, and how it changed over the last 8 weeks.",
-      "Mastered needs at least 80% and at least 80% of the topic's items practiced. Practice builds a quiz from the topic's weakest and unpracticed items. Mastery comes only from your study results, never from chats.",
+      "Topics come from the tags on decks and quizzes. Each shows a level (Not started, Needs work, Developing or Mastered) from your latest review rating or quiz answer on each item, how many items you've practiced, and how it changed over the last 8 weeks. Mastered needs at least 80% and at least 80% of the topic's items practiced.",
+      "Needs practice lists quiz questions you missed or got partly right and cards you rated Again, most recent first. Answering an item correctly there, in another quiz or in a review clears it.",
+      "Practice builds a quiz of up to 10 items: the most recent ones that need practice, or, with a topic chosen in the Topic filter, that topic's weakest and unpracticed items.",
+      "From your reflections lists each unclear item that isn't a flashcard yet. Write the answer and choose Add card; you can reword the question. The card can also count under Needs practice until you recall it.",
+      "Progress comes only from your study results and reflections, never from chats, and only you can see it.",
     ],
-    related: ["concept.flashcard", "concept.quiz", "concept.weak-spot"],
+    related: ["concept.flashcard", "concept.quiz", "concept.reflection"],
     audience: "everyone",
   },
   "concept.reflection": {
@@ -334,9 +336,9 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
     details: [
       "Choose Reflect on this session in a chat's menu. Suggest a draft fills both answers from the chat; edit it so it says what you think before saving.",
       "Reflections are yours only. Each is filed under the chat's project, and the assistant doesn't read them automatically.",
-      "In a project, Practice unclear items turns what's still unclear into flashcards, one at a time. You write each answer and confirm each card, and it can also appear in your weak spots until you recall it.",
+      "In a project, Practice in Progress opens the Study tab's Progress panel, which lists each unclear item. You write each answer and confirm each card, and it can also count under Needs practice until you recall it.",
     ],
-    related: ["concept.project", "concept.about-you", "concept.weak-spot"],
+    related: ["concept.project", "concept.about-you", "concept.progress"],
     audience: "everyone",
   },
   "concept.ai-use-log": {
@@ -505,9 +507,9 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
     details: [
       "In a review you recall the answer, show it, then rate how it went: Again, Hard, Good or Easy. Your rating decides when the card is due next, so cards you know well come back less often.",
       "Write cards yourself, or use Draft from files to have a model suggest cards from the project's files. Nothing is saved until you accept a draft.",
-      "Tag a deck with topics to follow your progress under Topic mastery.",
+      "Tag a deck with topics to follow it under Topics in the Progress panel.",
     ],
-    related: ["concept.weak-spot", "concept.topic-mastery", "concept.quiz"],
+    related: ["concept.progress", "concept.quiz"],
     audience: "everyone",
   },
   "concept.quiz": {
@@ -520,26 +522,9 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
       "Practice quizzes are for your own practice. Scores are only shared with an educator as class totals, and only if you choose to share.",
     ],
     related: [
-      "concept.weak-spot",
-      "concept.topic-mastery",
+      "concept.progress",
       "concept.flashcard",
       "concept.class-insights",
-    ],
-    audience: "everyone",
-  },
-  "concept.weak-spot": {
-    title: "Weak spots",
-    summary:
-      "Quiz questions you missed or got partly right, and cards you rated Again. They're listed on the Study tab, most recent first.",
-    details: [
-      "Practice weak spots builds a quiz of up to 10 of them. Answering an item correctly there, in another quiz or in a review clears it.",
-      "Cards made from a reflection's unclear points also count until you recall them.",
-    ],
-    related: [
-      "concept.quiz",
-      "concept.flashcard",
-      "concept.reflection",
-      "concept.topic-mastery",
     ],
     audience: "everyone",
   },

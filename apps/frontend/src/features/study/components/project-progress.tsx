@@ -88,7 +88,9 @@ export function ProjectProgress({ projectId }: { projectId: string }) {
     >
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div className="flex flex-col gap-1">
-          <h2 className="text-heading">Progress</h2>
+          <HelpHeading help="concept.progress" className="text-heading">
+            Progress
+          </HelpHeading>
           <p className="text-muted-foreground text-sm">
             From your review ratings, quiz answers and reflections in this
             project.
@@ -190,13 +192,7 @@ function Topics({
 }) {
   return (
     <section aria-label="Topics" className="flex flex-col gap-2">
-      <HelpHeading
-        help="concept.topic-mastery"
-        className="text-sm font-medium"
-        as="h3"
-      >
-        Topics
-      </HelpHeading>
+      <h3 className="text-sm font-medium">Topics</h3>
       {topics.length === 0 ? (
         <p className="text-muted-foreground text-sm">
           No topics yet. Add a topic to a deck or quiz to see how well you know
@@ -234,13 +230,7 @@ function NeedsPractice({
   return (
     <section aria-label="Needs practice" className="flex flex-col gap-2">
       <div className="flex flex-wrap items-baseline gap-x-3">
-        <HelpHeading
-          help="concept.weak-spot"
-          className="text-sm font-medium"
-          as="h3"
-        >
-          Needs practice
-        </HelpHeading>
+        <h3 className="text-sm font-medium">Needs practice</h3>
         {items.length > 0 && (
           <span className="text-muted-foreground text-sm">
             {topic

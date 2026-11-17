@@ -165,7 +165,7 @@ it("shows each topic's level, score, coverage and trend", async () => {
   expect(energy).toHaveTextContent("0 of 2 practiced");
   expect(energy).not.toHaveTextContent("%");
   expect(
-    screen.getByRole("button", { name: "Help: Topic mastery" }),
+    screen.getByRole("button", { name: "Help: Progress" }),
   ).toBeInTheDocument();
 });
 

@@ -43,8 +43,8 @@ text, including “No chats yet.”, and removes those controls from keyboard ac
 | `/c/[chatId]`                     | Existing chat with linked workspace identity and move dialog                 |
 
 The workspace is organized into tabs (US-65.1): Overview (goal and the five
-latest chats, linking to all), Chats, Files, Study (decks, topic mastery, weak
-spots, quizzes and notes), Reflections, Sub-agents and Settings (details, team
+latest chats, linking to all), Chats, Files, Study (decks, the Progress panel,
+quizzes and notes), Reflections, Sub-agents and Settings (details, team
 pack export and deletion). The active tab is the `tab` search parameter. Tab
 changes use native `history.pushState`, which Next.js syncs with
 `useSearchParams` without a server round trip, so Back returns to the previous
