@@ -50,7 +50,7 @@ Source: [codebase review](codebase_review.md), verified against the code on 2026
 - [x] US-81.2: `paginate_select` counts correctly
 - [x] US-81.3: Remove targeted N+1 queries
 - [x] US-81.4: Async file store reads
-- [ ] US-81.5: `files/service.py` structure
+- [x] US-81.5: `files/service.py` structure
 
 ### EPIC-82: Code cleanup and deduplication ([epic](docs/epics/EPIC-82-CODE-CLEANUP.md))
 

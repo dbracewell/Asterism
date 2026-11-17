@@ -23,7 +23,6 @@ from typing import Literal
 import filetype
 from fastapi import UploadFile
 from fastapi.responses import FileResponse, Response
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from asterism.common.images import generate_thumbnail
@@ -46,7 +45,15 @@ from asterism.domains.knowledge.artifacts import (
 from .listing import describe_files, file_knowledge_summaries, list_file_page
 from .models import FileContentStatus, FileKind, UserFileModel
 from .processor import ensure_file_processed as ensure_file_processed
-from .queries import select_owned_files
+from .queries import (
+    select_file_by_content,
+    select_file_by_name,
+    select_file_id_by_name,
+    select_files_by_ids,
+    select_files_by_names,
+    select_owned_file_ids,
+    select_owned_files,
+)
 from .schemas import SimilarFile, SimilarFileList, UserFile, UserFileList
 from .store import get_file_store as get_file_store
 
@@ -204,11 +211,7 @@ async def get_user_file_info(
         NotFoundException: If the file does not exist.
     """
     async with get_async_db_session(session) as session:
-        statement = select(UserFileModel).where(
-            UserFileModel.user_id == user_id,
-            UserFileModel.filename == filename,
-        )
-        file = await session.scalar(statement)
+        file = await session.scalar(select_file_by_name(user_id=user_id, filename=filename))
         if file is None:
             raise NotFoundException("File does not exist")
 
@@ -301,12 +304,7 @@ async def _deduplicated_filename(
     """
     stem, extension = Path(filename).stem, Path(filename).suffix
     candidate, counter = filename, 2
-    while await session.scalar(
-        select(UserFileModel.id).where(
-            UserFileModel.user_id == user_id,
-            UserFileModel.filename == candidate,
-        ),
-    ):
+    while await session.scalar(select_file_id_by_name(user_id=user_id, filename=candidate)):
         candidate = f"{stem}({counter}){extension}"
         counter += 1
     return candidate
@@ -408,11 +406,7 @@ async def upload_files(
                 )
             sha256 = hashlib.sha256(content).hexdigest()
             existing = await session.scalar(
-                select(UserFileModel).where(
-                    UserFileModel.user_id == user_id,
-                    UserFileModel.original_name == original_name,
-                    UserFileModel.sha256 == sha256,
-                ),
+                select_file_by_content(user_id=user_id, original_name=original_name, sha256=sha256)
             )
             # Reuse only an intact, same-name object. Different content retains the
             # existing name-collision behavior, and ownership is always user-scoped.
@@ -623,10 +617,7 @@ async def get_similar_files(*, user_id: str, filename: str, session: AsyncSessio
     models = {
         str(model.id): model
         for model in await session.scalars(
-            select(UserFileModel).where(
-                UserFileModel.user_id == user_id,
-                UserFileModel.id.in_([candidate for candidate, _ in ranked]),
-            ),
+            select_files_by_ids(user_id=user_id, file_ids=[candidate for candidate, _ in ranked])
         )
     }
     summaries = {
@@ -660,9 +651,7 @@ async def _owned_file(*, user_id: str, filename: str, session: AsyncSession) -> 
     Raises:
         NotFoundException: If the caller owns no file with that name.
     """
-    file = await session.scalar(
-        select(UserFileModel).where(UserFileModel.user_id == user_id, UserFileModel.filename == filename),
-    )
+    file = await session.scalar(select_file_by_name(user_id=user_id, filename=filename))
     if file is None:
         raise NotFoundException("File not found")
     return file
@@ -685,11 +674,7 @@ async def delete_user_file(*, user_id: str, filename: str, session: AsyncSession
     Raises:
         NotFoundException: If the caller owns no file with that name.
     """
-    file = await session.scalar(
-        select(UserFileModel).where(UserFileModel.user_id == user_id, UserFileModel.filename == filename),
-    )
-    if file is None:
-        raise NotFoundException("File not found")
+    file = await _owned_file(user_id=user_id, filename=filename, session=session)
     await require_not_course_managed(user_id=user_id, record_ids=[file.id], session=session)
     response = (await describe_files(user_id=user_id, files=[file], session=session))[0]
     await _remove_file_knowledge_records(file_id=file.id, session=session)
@@ -758,9 +743,7 @@ async def delete_user_files(
         async with get_async_db_session(session) as session:
             by_name = {
                 file.filename: file
-                for file in await session.scalars(
-                    select(UserFileModel).where(UserFileModel.user_id == user_id, UserFileModel.filename.in_(filenames))
-                )
+                for file in await session.scalars(select_files_by_names(user_id=user_id, filenames=filenames))
             }
             # Request order, each file once; unknown names are skipped.
             files = [by_name[name] for name in dict.fromkeys(filenames) if name in by_name]
@@ -804,12 +787,7 @@ async def validate_owned_file_ids(*, user_id: str, file_ids: list[uuid.UUID], se
         NotFoundException: If any id is not owned by the caller.
     """
     owned = set(
-        await session.scalars(
-            select(UserFileModel.id).where(
-                UserFileModel.user_id == user_id,
-                UserFileModel.id.in_(file_ids),
-            ),
-        ),
+        await session.scalars(select_owned_file_ids(user_id=user_id, file_ids=file_ids)),
     )
     if owned != set(file_ids):
         raise NotFoundException("File not found")
@@ -829,7 +807,7 @@ async def get_file_info_by_id(*, user_id: str, file_id: uuid.UUID, session: Asyn
     Raises:
         NotFoundException: If the caller owns no file with that id.
     """
-    file = await session.scalar(select_owned_files(user_id=user_id).where(UserFileModel.id == file_id))
+    file = await session.scalar(select_files_by_ids(user_id=user_id, file_ids=[file_id]))
     if file is None:
         raise NotFoundException("File not found")
     return (await describe_files(user_id=user_id, files=[file], session=session))[0]
@@ -849,7 +827,7 @@ async def download_file_by_id(*, user_id: str, file_id: uuid.UUID, session: Asyn
     Raises:
         NotFoundException: If the file does not exist or its bytes are gone.
     """
-    file = await session.scalar(select_owned_files(user_id=user_id).where(UserFileModel.id == file_id))
+    file = await session.scalar(select_files_by_ids(user_id=user_id, file_ids=[file_id]))
     if file is None:
         raise NotFoundException("File not found")
     store = get_file_store()

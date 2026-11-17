@@ -85,3 +85,38 @@ def select_produced_files(
         UserFileModel.produced_chat_id == chat_id,
         UserFileModel.produced_execution_id.in_(list(run_ids)),
     )
+
+
+def _owned(user_id: str) -> Select[tuple[UserFileModel]]:
+    """Unordered owner-scoped base for point lookups; listings use ``select_owned_files``."""
+    return select(UserFileModel).where(UserFileModel.user_id == user_id)
+
+
+def select_file_by_name(*, user_id: str, filename: str) -> Select[tuple[UserFileModel]]:
+    """Select the caller's file with this display name (names are unique per owner)."""
+    return _owned(user_id).where(UserFileModel.filename == filename)
+
+
+def select_files_by_names(*, user_id: str, filenames: Iterable[str]) -> Select[tuple[UserFileModel]]:
+    """Select the caller's files with any of these display names; unknown names match nothing."""
+    return _owned(user_id).where(UserFileModel.filename.in_(list(filenames)))
+
+
+def select_files_by_ids(*, user_id: str, file_ids: Iterable[uuid.UUID]) -> Select[tuple[UserFileModel]]:
+    """Select the caller's files among these ids; foreign ids match nothing."""
+    return _owned(user_id).where(UserFileModel.id.in_(list(file_ids)))
+
+
+def select_owned_file_ids(*, user_id: str, file_ids: Iterable[uuid.UUID]) -> Select[tuple[uuid.UUID]]:
+    """Select which of these ids the caller owns, without loading the rows."""
+    return select_files_by_ids(user_id=user_id, file_ids=file_ids).with_only_columns(UserFileModel.id)
+
+
+def select_file_id_by_name(*, user_id: str, filename: str) -> Select[tuple[uuid.UUID]]:
+    """Select the id of the caller's file with this display name, if any."""
+    return select_file_by_name(user_id=user_id, filename=filename).with_only_columns(UserFileModel.id)
+
+
+def select_file_by_content(*, user_id: str, original_name: str, sha256: str) -> Select[tuple[UserFileModel]]:
+    """Select the caller's earlier upload of the same name and bytes, for upload reuse."""
+    return _owned(user_id).where(UserFileModel.original_name == original_name, UserFileModel.sha256 == sha256)

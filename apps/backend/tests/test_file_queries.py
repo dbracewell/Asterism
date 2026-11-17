@@ -95,3 +95,14 @@ def test_query_layer_dependency_boundaries():
         tree = ast.parse(path.read_text())
         imports = [node.module or "" for node in ast.walk(tree) if isinstance(node, ast.ImportFrom)]
         assert not any(name.startswith(forbidden) for name in imports)
+
+
+def test_file_service_composes_queries_instead_of_building_selects():
+    path = Path(__file__).resolve().parents[1] / "asterism/domains/files/service.py"
+    tree = ast.parse(path.read_text())
+    calls = [
+        node.lineno
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id == "select"
+    ]
+    assert calls == [], f"build file selects in domains/files/queries.py (service.py lines {calls})"
