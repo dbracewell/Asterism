@@ -1,6 +1,6 @@
 # EPIC-84: One progress panel
 
-Status: proposed (2026-11-17). Source: user decision on the
+Status: complete (2026-11-17); awaiting archive. Source: user decision on the
 [feature overlap review](../reviews/2026-11-17-feature-overlap-review.md), finding 4.
 
 ## Objective
@@ -58,28 +58,28 @@ action.
 
 ### US-84.1: Progress read and one practice route (backend)
 
-- [ ] ADR-0067 "Progress panel": the combined read, pending unclear items, one
+- [x] ADR-0067 "Progress panel": the combined read, pending unclear items, one
       practice route and origin; amend ADR-0036/0049/0050.
-- [ ] `GET …/study/progress`: topics, weak spots with topic tags, pending unclear
+- [x] `GET …/study/progress`: topics, weak spots with topic tags, pending unclear
       items; build from the existing owner-scoped selects in `study/queries.py`.
-- [ ] Move the unclear-item splitting rule to the server and cover it with tests.
-- [ ] `POST …/study/practice {topic?}` reusing the copy helpers; replace the
+- [x] Move the unclear-item splitting rule to the server and cover it with tests.
+- [x] `POST …/study/practice {topic?}` reusing the copy helpers; replace the
       `weak_spots` and `topic` origins with `practice`.
-- [ ] Remove `GET …/study/topics`, `GET …/study/weak-spots` and both old practice
+- [x] Remove `GET …/study/topics`, `GET …/study/weak-spots` and both old practice
       routes; update tests; regenerate OpenAPI and the Hey API client.
 
 ### US-84.2: Progress panel (frontend)
 
-- [ ] `ProjectProgress` replaces `ProjectTopicMastery` and `ProjectWeakSpots` in
+- [x] `ProjectProgress` replaces `ProjectTopicMastery` and `ProjectWeakSpots` in
       the project Study tab, with the three parts above and a topic filter that
       also scopes **Practice**.
-- [ ] Move the Add card flow from `UnclearPracticeDialog` into the panel; the
+- [x] Move the Add card flow from `UnclearPracticeDialog` into the panel; the
       reflection list links to it instead.
-- [ ] Empty states: no practice yet, nothing weak, no unclear items.
-- [ ] Update the study e2e harness, unit tests and Playwright specs.
+- [x] Empty states: no practice yet, nothing weak, no unclear items.
+- [x] Update the study e2e harness, unit tests and Playwright specs.
 
 ### US-84.3: Help and docs
 
-- [ ] Replace the weak-spots and topic-mastery help entries with one Progress
+- [x] Replace the weak-spots and topic-mastery help entries with one Progress
       entry; update the reflections help text.
-- [ ] Update architecture and README sections that describe study progress.
+- [x] Update architecture and README sections that describe study progress.

@@ -263,7 +263,7 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
       {
         name: "Study",
         description:
-          "Flashcard decks, topic mastery, weak spots, quizzes and notes made from this project.",
+          "Flashcard decks, the Progress panel (topics, what needs practice and unclear items from reflections), quizzes and notes made from this project.",
       },
       {
         name: "Reflections",
@@ -296,7 +296,7 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
       "concept.sub-agent",
       "concept.flashcard",
       "concept.quiz",
-      "concept.weak-spot",
+      "concept.progress",
       "concept.reflection",
       "concept.team-pack",
     ],
@@ -487,10 +487,8 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
           "Each card's front, back, sources and next review date. Add card, or edit and delete existing cards.",
       },
     ],
-    tasks: [
-      "Tag the deck with topics to see your progress under Topic mastery.",
-    ],
-    terms: ["concept.flashcard", "concept.topic-mastery", "concept.citation"],
+    tasks: ["Tag the deck with topics to follow it in the Progress panel."],
+    terms: ["concept.flashcard", "concept.progress", "concept.citation"],
     audience: "everyone",
   },
   "study.drafts": {
@@ -534,9 +532,9 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
       },
     ],
     tasks: [
-      "Rate honestly: Again brings the card back soon and marks it as a weak spot.",
+      "Rate honestly: Again brings the card back soon and lists it under Needs practice.",
     ],
-    terms: ["concept.flashcard", "concept.weak-spot", "concept.topic-mastery"],
+    terms: ["concept.flashcard", "concept.progress"],
     audience: "everyone",
   },
   "study.quiz-new": {
@@ -574,10 +572,8 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
           "Your best and last scores, and each attempt. Open one to see its answers.",
       },
     ],
-    tasks: [
-      "Tag the quiz with topics to see your progress under Topic mastery.",
-    ],
-    terms: ["concept.quiz", "concept.weak-spot", "concept.topic-mastery"],
+    tasks: ["Tag the quiz with topics to follow it in the Progress panel."],
+    terms: ["concept.quiz", "concept.progress"],
     audience: "everyone",
   },
   "study.quiz-take": {
@@ -611,11 +607,13 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
       {
         name: "Answers",
         description:
-          "Each answer's verdict, the correct option or rubric, an explanation and the source. Missed questions become weak spots.",
+          "Each answer's verdict, the correct option or rubric, an explanation and the source. Missed questions are listed under Needs practice.",
       },
     ],
-    tasks: ["Retake the quiz, or practice weak spots from the Study tab."],
-    terms: ["concept.quiz", "concept.weak-spot", "concept.citation"],
+    tasks: [
+      "Retake the quiz, or use Practice in the Study tab's Progress panel.",
+    ],
+    terms: ["concept.quiz", "concept.progress", "concept.citation"],
     audience: "everyone",
   },
   "study.summary-new": {

@@ -66,8 +66,8 @@ Source: user request and the [feature overlap review](docs/reviews/2026-11-17-fe
 
 ### US-84.3: Help and docs
 
-- [ ] One Progress help entry; reflections help updated
-- [ ] Architecture and README study sections
+- [x] One Progress help entry; reflections help updated
+- [x] Architecture and README study sections
 
 ### US-85.1: Effective policy and one check (backend)
 

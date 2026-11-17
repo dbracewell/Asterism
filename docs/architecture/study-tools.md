@@ -112,15 +112,41 @@ defaults to the generating model. Submitting opens the results at
 rubric, explanation, feedback and source citations. Question, option, rubric
 and feedback text are untrusted and render through `MarkdownViewer`.
 
-## Weak spots (US-53.5)
+## Progress panel (ADR-0067)
 
-Decisions are recorded in [ADR-0036](../adr/0036-weak-spots-and-practice.md)
-and [ADR-0067](../adr/0067-progress-panel.md).
+Weak spots, topics and unclear items are three views of one study record. They
+are read together and practised through one route
+([ADR-0067](../adr/0067-progress-panel.md)); the rules for each are below.
 
 | Route                                        | Behavior                                                                                                                    |
 | -------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
 | `GET /projects/{project_id}/study/progress`  | Topics, up to 50 weak spots newest miss first (with `total` and topic keys), and up to 50 pending unclear items; `no-store` |
 | `POST /projects/{project_id}/study/practice` | `{topic?, question_count}` (1–20, default 10); saves and returns a `practice` quiz (201)                                    |
+
+The project's Study tab shows one **Progress** panel (`ProjectProgress`) with
+three parts:
+
+1. **Topics:** each topic's level, score, coverage and a weekly sparkline with
+   a text summary.
+2. **Needs practice:** weak spots, the five most recent with **Show all**, each
+   linked to its quiz or deck and labelled Missed, Partly correct, Rated Again
+   or Flagged as unclear.
+3. **From your reflections:** each pending unclear item with its own Add card
+   form and a deck picker.
+
+A **Topic** filter (shown once any deck or quiz has a topic) narrows the topic
+list and Needs practice to one topic, and scopes **Practice**: with no topic it
+practises the most recent weak spots, with one it practises that topic. Either
+way it builds a quiz of up to 10 questions and opens it for taking. Practice
+quizzes are listed with the other quizzes and described as built for practice.
+Each part has an empty state: no topics yet, no practice yet or nothing needs
+practice right now, and no unclear items. Prompts and reflection text are
+untrusted; prompts render through `MarkdownViewer` and items as plain text.
+
+## Weak spots (US-53.5)
+
+Decisions are recorded in [ADR-0036](../adr/0036-weak-spots-and-practice.md),
+amended by [ADR-0067](../adr/0067-progress-panel.md).
 
 A question or card is a weak spot when its latest outcome in the project was a
 miss: an incorrect or partly correct quiz answer, or an Again rating. Any later
@@ -130,15 +156,10 @@ source's quiz or deck (`container_*`), plus `topics`, the keys of the original's
 topics. Nothing is stored.
 
 Practice without a topic copies the most recent weak spots into a quiz titled
-"Practice: weak spots" with `origin: "practice"` and no model: missed questions keep their answer key (options
-reshuffled), and weak cards become short-answer questions graded against the
-card's back. Answering a copy counts towards its original. With no weak spots
-the route returns 400.
-
-The project page shows **Weak spots** once there are any: the five most recent,
-each linked to its quiz or deck, and **Practice weak spots**, which builds a
-quiz of up to 10 questions and opens it for taking. Practice quizzes are listed
-with the other quizzes and described as built from weak spots.
+"Practice: weak spots" with `origin: "practice"` and no model: missed
+questions keep their answer key (options reshuffled), and weak cards become
+short-answer questions graded against the card's back. Answering a copy counts
+towards its original. With no weak spots the route returns 400.
 
 ## Summaries, study guides and notes (US-53.6)
 
@@ -169,7 +190,8 @@ asks for confirmation.
 
 ## Topics and mastery (US-58.3)
 
-Decisions are recorded in [ADR-0049](../adr/0049-topic-mastery.md).
+Decisions are recorded in [ADR-0049](../adr/0049-topic-mastery.md), amended by
+[ADR-0067](../adr/0067-progress-panel.md).
 
 Decks and quizzes have `tags` (up to 8, each 1–40 characters, single line).
 Tags are trimmed, inner whitespace is collapsed, and case-insensitive repeats
@@ -178,8 +200,7 @@ generation and quiz update (`{title?, tags?}`; explicit null is a 422) accept
 them.
 
 Topics are returned by `GET …/study/progress` (by label; nothing stored) and
-practised with `POST …/study/practice` and a `topic`
-([ADR-0067](../adr/0067-progress-panel.md)).
+practised with `POST …/study/practice` and a `topic`.
 
 A topic is a case-folded tag. Its items are the cards of decks with the tag and
 the original questions of quizzes with it; practice copies
@@ -197,22 +218,29 @@ copies them into a quiz with `origin: "practice"`, the topic as its tag and no
 model, exactly like weak-spot practice. An unknown topic is 404 and a topic
 without items is 400.
 
-The project page shows **Topic mastery** once any deck or quiz has a topic:
-each topic's level, score, coverage, a weekly sparkline with a text summary,
-and **Practice**, which opens the new quiz for taking. Deck forms and the quiz
-**Edit details** dialog edit topics as comma-separated text.
+Deck forms and the quiz **Edit details** dialog edit topics as
+comma-separated text.
 
 ## Unclear items (US-58.4)
 
-Decisions are recorded in [ADR-0050](../adr/0050-unclear-items-feed-review.md).
+Decisions are recorded in [ADR-0050](../adr/0050-unclear-items-feed-review.md),
+amended by [ADR-0067](../adr/0067-progress-panel.md).
 
-| Route                                             | Behavior                                                                             |
-| ------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| `POST /projects/{project_id}/study/unclear-cards` | `{reflection_id, deck_id?, front, back, weak_spot}`; one card (201), 409 if repeated |
+| Route                                             | Behavior                                                                                                   |
+| ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `POST /projects/{project_id}/study/unclear-cards` | `{reflection_id, item, deck_id?, front, back, weak_spot}`; one card (201), 400 for an unknown item, 409 if repeated |
 
-**Practice unclear items** on a project reflection lists each "still unclear"
-line. The learner edits the question, writes the answer and adds each card
-separately, into a chosen deck or the "Unclear items" deck. With **Also add to
-weak spots** (on by default) the card appears under weak spots as "Flagged as
-unclear" until it is recalled. The flag is not a review, so it changes neither
-scheduling nor mastery.
+The server splits each project reflection's unclear text into items: one per
+line, list markers (`-`, `*`, `•`, `1.`, `1)`) removed, blanks and repeats
+dropped. An item is pending until a card made from it exists; the card keeps
+the item in `source_unclear_item`, so the learner can reword the question and
+the item still counts as done. Pending items come newest reflection first in
+`GET …/study/progress`.
+
+In **From your reflections** the learner edits the question, writes the answer
+and adds each card separately, into a chosen deck or the "Unclear items" deck.
+With **Also add to Needs practice** (on by default) the card appears under Needs
+practice as "Flagged as unclear" until it is recalled. The flag is not a
+review, so it changes neither scheduling nor mastery. Each project reflection
+with unclear text links to the panel with **Practice in Progress**
+(`/projects/{id}?tab=study#progress`).
