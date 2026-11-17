@@ -684,17 +684,22 @@ class StudyTopicMastery(BaseModel):
 
 # --- Unclear items (US-58.4) ---------------------------------------------------
 
+# Reflection text is at most 2,000 characters, so an item is too.
+MAX_UNCLEAR_ITEM_CHARS = 2_000
+
 
 class StudyUnclearCardCreate(BaseModel):
     """One confirmed "still unclear" item; the learner reviewed both sides.
 
-    ``deck_id`` null files it in the project's "Unclear items" deck. ``weak_spot``
-    also lists the card under weak spots until it is recalled.
+    ``item`` is the item as listed in progress (ADR-0067); ``front`` may reword
+    it. ``deck_id`` null files it in the project's "Unclear items" deck.
+    ``weak_spot`` also lists the card under weak spots until it is recalled.
     """
 
     model_config = ConfigDict(extra="forbid")
 
     reflection_id: uuid.UUID
+    item: str = Field(min_length=1, max_length=MAX_UNCLEAR_ITEM_CHARS)
     deck_id: uuid.UUID | None = None
     front: CardSide
     back: CardSide

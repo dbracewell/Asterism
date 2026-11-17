@@ -27,7 +27,6 @@ import {
   MAX_REFLECTION_CHARS,
   UNCLEAR_PROMPT,
 } from "./reflect-dialog";
-import { UnclearPracticeDialog } from "./unclear-practice-dialog";
 import { HelpHeading } from "@/features/help/components/help-heading";
 
 /** A project's (or General's) reflections (US-58.2). */
@@ -115,7 +114,6 @@ function OwnedReflectionList({
 function ReflectionItem({ reflection }: { reflection: Reflection }) {
   const id = useId();
   const [editing, setEditing] = useState(false);
-  const [practicing, setPracticing] = useState(false);
   const [learned, setLearned] = useState(reflection.learned);
   const [unclear, setUnclear] = useState(reflection.unclear);
   const update = useMutation({
@@ -144,14 +142,6 @@ function ReflectionItem({ reflection }: { reflection: Reflection }) {
       className="border-border rounded-surface flex min-w-0 flex-col gap-2 border p-3"
     >
       {deletion.dialog}
-      {reflection.project_id && (
-        <UnclearPracticeDialog
-          reflection={reflection}
-          projectId={reflection.project_id}
-          open={practicing}
-          onOpenChange={setPracticing}
-        />
-      )}
       <p className="text-muted-foreground text-xs">
         {when}
         {reflection.chat_id && (
@@ -249,13 +239,13 @@ function ReflectionItem({ reflection }: { reflection: Reflection }) {
       {!editing && (
         <div className="flex flex-wrap justify-end gap-2">
           {reflection.project_id && reflection.unclear && (
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={pending}
-              onClick={() => setPracticing(true)}
-            >
-              Practice unclear items
+            <Button variant="outline" size="sm" asChild>
+              {/* The Study tab's Progress panel lists each unclear item (ADR-0067). */}
+              <Link
+                href={`/projects/${reflection.project_id}?tab=study#progress`}
+              >
+                Practice in Progress
+              </Link>
             </Button>
           )}
           <Button

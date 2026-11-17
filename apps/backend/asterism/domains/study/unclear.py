@@ -1,7 +1,7 @@
 """Turning a reflection's "still unclear" items into practice (US-58.4, ADR-0050, ADR-0067).
 
-Items are split on the server and listed as pending until a card from that
-reflection has the item as its front.
+Items are split on the server and listed as pending until a card is made from
+that item; the card keeps the item, so its front may be reworded.
 
 Each request creates one card the learner confirmed; nothing is converted in
 bulk or by a model. The card is due for review at once. With ``weak_spot`` it
@@ -23,7 +23,7 @@ from asterism.domains.reflections.queries import select_owned_reflections, selec
 
 from . import clock
 from .models import StudyCardModel, StudyDeckModel
-from .queries import select_deck_by_name, select_reflection_card, select_reflection_card_fronts
+from .queries import select_deck_by_name, select_reflection_card, select_reflection_card_items
 from .schemas import StudyCard, StudyUnclearCardCreate, StudyUnclearItem, StudyUnclearItems
 from .service import require_deck, to_cards
 
@@ -50,10 +50,10 @@ async def pending_unclear_items(
             )
         )
     )
-    done: set[tuple[uuid.UUID | None, str]] = set()
+    done: set[tuple[uuid.UUID | None, str | None]] = set()
     if reflections:
         result = await session.execute(
-            select_reflection_card_fronts(user_id=user_id, reflection_ids=[r.id for r in reflections])
+            select_reflection_card_items(user_id=user_id, reflection_ids=[r.id for r in reflections])
         )
         done = set(result.tuples())
     pending = [
@@ -97,10 +97,10 @@ async def create_unclear_card(
         raise NotFoundException("Reflection not found")
     if reflection.project_id != project_id:
         raise BadDataException("This reflection belongs to another project")
-    if not reflection.unclear.strip():
-        raise BadDataException("This reflection has no unclear items")
+    if payload.item not in split_unclear(reflection.unclear):
+        raise BadDataException("This item is not in the reflection")
     duplicate = await session.scalar(
-        select_reflection_card(user_id=user_id, reflection_id=reflection.id, front=payload.front)
+        select_reflection_card(user_id=user_id, reflection_id=reflection.id, item=payload.item)
     )
     if duplicate is not None:
         raise ConflictException("This item is already a card")
@@ -111,6 +111,7 @@ async def create_unclear_card(
         front=payload.front,
         back=payload.back,
         source_reflection_id=reflection.id,
+        source_unclear_item=payload.item,
         flagged_unclear_at=clock.now_seconds() if payload.weak_spot else None,
     )
     session.add(card)

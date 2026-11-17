@@ -27,11 +27,6 @@ vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
   reflectionGetManyQueryKey: () => [{ _id: "reflectionGetMany" }],
   reflectionUpdateMutation: () => ({ mutationFn: mocks.update }),
   reflectionDeleteMutation: () => ({ mutationFn: mocks.remove }),
-  studyDeckGetManyOptions: () => ({
-    queryKey: [{ _id: "studyDeckGetMany" }],
-    queryFn: async () => ({ items: [], total: 0, page: 1, page_size: 100 }),
-  }),
-  studyUnclearCardCreateMutation: () => ({ mutationFn: vi.fn() }),
 }));
 
 const reflection = {
@@ -127,18 +122,14 @@ it("edits and deletes with the loaded revision", async () => {
   );
 });
 
-it("offers unclear-item practice only for project reflections with unclear text", async () => {
-  const user = userEvent.setup();
+it("links unclear items to the project's Progress panel", async () => {
   render(<ReflectionList projectId="proj" />, { wrapper: Wrapper });
   const item = await screen.findByRole("listitem", {
     name: /Reflection from/,
   });
-  await user.click(
-    within(item).getByRole("button", { name: "Practice unclear items" }),
-  );
   expect(
-    await screen.findByRole("dialog", { name: "Practice what's unclear" }),
-  ).toBeInTheDocument();
+    within(item).getByRole("link", { name: "Practice in Progress" }),
+  ).toHaveAttribute("href", "/projects/proj?tab=study#progress");
 });
 
 it.each([
@@ -156,6 +147,6 @@ it.each([
     name: /Reflection from/,
   });
   expect(
-    within(item).queryByRole("button", { name: "Practice unclear items" }),
+    within(item).queryByRole("link", { name: "Practice in Progress" }),
   ).toBeNull();
 });

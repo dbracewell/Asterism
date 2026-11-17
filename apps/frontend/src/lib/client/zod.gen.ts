@@ -4127,11 +4127,13 @@ export const zStudyTopicMastery = z.object({
  *
  * One confirmed "still unclear" item; the learner reviewed both sides.
  *
- * ``deck_id`` null files it in the project's "Unclear items" deck. ``weak_spot``
- * also lists the card under weak spots until it is recalled.
+ * ``item`` is the item as listed in progress (ADR-0067); ``front`` may reword
+ * it. ``deck_id`` null files it in the project's "Unclear items" deck.
+ * ``weak_spot`` also lists the card under weak spots until it is recalled.
  */
 export const zStudyUnclearCardCreate = z.object({
   reflection_id: z.uuid(),
+  item: z.string().min(1).max(2000),
   deck_id: z.uuid().nullish(),
   front: z.string().min(1).max(4000),
   back: z.string().min(1).max(4000),

@@ -19,7 +19,7 @@ const spot = {
   topics: [],
 };
 
-test("turns one confirmed unclear item into a card and a weak spot", async ({
+test("turns one confirmed unclear item into a card that needs practice", async ({
   page,
 }) => {
   const errors: string[] = [];
@@ -81,7 +81,27 @@ test("turns one confirmed unclear item into a card and a weak spot", async ({
         weak_spots: created.length
           ? { items: [spot], total: 1 }
           : { items: [], total: 0 },
-        unclear: { items: [], total: 0 },
+        unclear: {
+          items: [
+            ...(created.length
+              ? []
+              : [
+                  {
+                    reflection_id: R,
+                    chat_id: null,
+                    reflected_at: 1_700_000_000,
+                    text: "Tonicity",
+                  },
+                ]),
+            {
+              reflection_id: R,
+              chat_id: null,
+              reflected_at: 1_700_000_000,
+              text: "Why cells burst",
+            },
+          ],
+          total: created.length ? 1 : 2,
+        },
         computed_at: 1,
       },
     }),
@@ -109,37 +129,47 @@ test("turns one confirmed unclear item into a card and a weak spot", async ({
   );
   await page.route(`**/api/py/projects/${P}/study/unclear-cards`, (route) => {
     created.push(route.request().postDataJSON());
-    return route.fulfill({ status: 201, json: { id: spot.root_id } });
+    return route.fulfill({
+      status: 201,
+      json: { id: spot.root_id, front: "What is tonicity?" },
+    });
   });
 
   await page.goto("/e2e/projects?view=project&tab=reflections");
-  await page.getByRole("button", { name: "Practice unclear items" }).click();
-  const dialog = page.getByRole("dialog", { name: "Practice what's unclear" });
-  const first = dialog.getByRole("listitem", { name: "Item 1" });
+  // The reflection links to the Study tab's Progress panel.
+  await expect(
+    page.getByRole("link", { name: "Practice in Progress" }),
+  ).toHaveAttribute("href", `/projects/${P}?tab=study#progress`);
+  await page.getByRole("tab", { name: "Study" }).click();
+  const panel = page.getByRole("region", { name: "From your reflections" });
+  const first = panel.getByRole("listitem", { name: "Unclear: Tonicity" });
   await expect(first.getByLabel("Question")).toHaveValue("Tonicity");
   await expect(first.getByRole("button", { name: "Add card" })).toBeDisabled();
   await first.getByLabel("Question").fill("What is tonicity?");
   await first.getByLabel("Answer").fill("Relative solute concentration");
   await first.getByRole("button", { name: "Add card" }).click();
-  await expect(first.getByRole("status")).toContainText(
+  await expect(panel.getByRole("status")).toContainText(
     "Card added: What is tonicity?",
   );
+  // The added item leaves the list; the other still needs its own confirmation.
+  await expect(first).toHaveCount(0);
   await expect(
-    dialog.getByRole("listitem", { name: "Item 2" }).getByLabel("Question"),
+    panel
+      .getByRole("listitem", { name: "Unclear: Why cells burst" })
+      .getByLabel("Question"),
   ).toHaveValue("Why cells burst");
   expect(created).toEqual([
     {
       reflection_id: R,
+      item: "Tonicity",
       deck_id: null,
       front: "What is tonicity?",
       back: "Relative solute concentration",
       weak_spot: true,
     },
   ]);
-  await page.keyboard.press("Escape");
-  // The new weak spot shows in the Study tab.
-  await page.getByRole("tab", { name: "Study" }).click();
-  const weak = page.getByRole("region", { name: "Weak spots" });
+  // The new card needs practice until it is recalled.
+  const weak = page.getByRole("region", { name: "Needs practice" });
   await expect(weak).toContainText("Flagged as unclear");
   expect(errors).toEqual([]);
 });
