@@ -1,0 +1,29 @@
+# EPIC-80: Fetch tool hardening
+
+Status: proposed. Source: [codebase review](../../codebase_review.md), verified 2026-11-14 (item 11).
+
+## Objective
+
+Bound the memory, network and CPU cost of `web_fetch` / `web_search`, and close the DNS rebinding gap.
+
+## User stories
+
+### US-80.1: Bounded, streamed fetch
+
+- [ ] Stream the response in `fetch_page`, stop at a byte cap, and reject non-textual `Content-Type` before reading the body.
+- [ ] Tests: large binary, oversized text, redirect to an internal host still rejected.
+
+### US-80.2: Pin the resolved address
+
+- [ ] Connect to the address that passed validation (custom transport or resolver), including each redirect hop; keep the Host header and TLS name.
+- [ ] Decide and document the Playwright path (route guard re-validates, but resolution is separate).
+- [ ] Test with a resolver that returns a public address first and a private one second.
+
+### US-80.3: Parse once, off the event loop
+
+- [ ] Parse HTML once; run `extract_clean_markdown` with `asyncio.to_thread`.
+- [ ] Test `web_search` over 10 URLs does not block the loop.
+
+## Notes
+
+US-80.2 needs a short design note (ADR if the transport approach is non-trivial).

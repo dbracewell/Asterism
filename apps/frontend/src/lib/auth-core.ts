@@ -8,10 +8,7 @@ import Database from "better-sqlite3";
 
 import { getFrontendServerConfig } from "./server-config-core";
 
-export function matchesAdminPassphrase(
-  candidate: unknown,
-  configured: string,
-): boolean {
+export function hashMatch(candidate: unknown, configured: string): boolean {
   if (typeof candidate !== "string" || !candidate || !configured) {
     return false;
   }
@@ -42,14 +39,11 @@ export function decideSignupRole({
 }): "admin" | "user" {
   if (
     typeof query.inviteToken === "string" &&
-    matchesAdminPassphrase(query.systemKey, systemKey)
+    hashMatch(query.systemKey, systemKey)
   ) {
     return "user";
   }
-  const hasValidAdminKey = matchesAdminPassphrase(
-    query.adminKey,
-    adminPassphrase,
-  );
+  const hasValidAdminKey = hashMatch(query.adminKey, adminPassphrase);
   if (!hasValidAdminKey && sessionRole !== "admin") {
     throw new Error("Invalid admin key");
   }

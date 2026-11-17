@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { BaseUserSchema } from "@/features/auth/schemas";
-import { decideSignupRole, matchesAdminPassphrase } from "@/lib/auth-core";
+import { decideSignupRole, hashMatch } from "@/lib/auth-core";
 import { installApp, signUpWithInvite } from "./actions";
 import { INVALID_INVITE, inviteSignupLimiter } from "./invites";
 
@@ -75,19 +75,17 @@ describe("BaseUserSchema password validation", () => {
   });
 });
 
-describe("matchesAdminPassphrase", () => {
+describe("hashMatch", () => {
   it("rejects empty passphrases and mismatched candidates", () => {
-    expect(matchesAdminPassphrase("", "")).toBe(false);
-    expect(matchesAdminPassphrase("", "valid-passphrase")).toBe(false);
-    expect(matchesAdminPassphrase("valid-passphrase", "")).toBe(false);
-    expect(matchesAdminPassphrase(undefined, "valid-passphrase")).toBe(false);
-    expect(matchesAdminPassphrase("wrong", "valid-passphrase")).toBe(false);
+    expect(hashMatch("", "")).toBe(false);
+    expect(hashMatch("", "valid-passphrase")).toBe(false);
+    expect(hashMatch("valid-passphrase", "")).toBe(false);
+    expect(hashMatch(undefined, "valid-passphrase")).toBe(false);
+    expect(hashMatch("wrong", "valid-passphrase")).toBe(false);
   });
 
   it("accepts matching non-empty passphrases", () => {
-    expect(matchesAdminPassphrase("valid-passphrase", "valid-passphrase")).toBe(
-      true,
-    );
+    expect(hashMatch("valid-passphrase", "valid-passphrase")).toBe(true);
   });
 });
 
