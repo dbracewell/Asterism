@@ -7,6 +7,7 @@ import {
 } from "@tanstack/react-query";
 import { beforeEach, expect, it, vi } from "vitest";
 import { handleMutationSuccess } from "@/lib/mutation-cache";
+import { seedUnrelatedQuery } from "@/test/query-client";
 import { ImageGenSettings } from "./image-gen-settings";
 
 const mocks = vi.hoisted(() => ({
@@ -31,6 +32,7 @@ vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
   appSettingUpdateMutation: () => ({ mutationFn: mocks.saveSetting }),
   fileGetManyQueryKey: () => [{ _id: "fileGetMany" }],
   fileGetManyInfiniteQueryKey: () => [{ _id: "fileGetMany", infinite: true }],
+  imageGenerationAvailabilityQueryKey: () => [{ _id: "availability" }],
   groupGetManyOptions: () => ({
     queryKey: [{ _id: "groups" }],
     queryFn: () =>
@@ -135,7 +137,9 @@ it("is for administrators only", () => {
 });
 
 it("shows the generator's status and saves an edited generator", async () => {
-  setup();
+  const cache = setup();
+  const unrelatedInvalidated = seedUnrelatedQuery(cache);
+  cache.setQueryData([{ _id: "availability" }], { available: false });
   const user = userEvent.setup();
   expect(await screen.findByTestId("generator-status")).toHaveTextContent(
     "Ready: ComfyUI at http://comfy",
@@ -158,6 +162,15 @@ it("shows the generator's status and saves an edited generator", async () => {
     },
   });
   expect(await screen.findByText(/Generator saved/)).toBeVisible();
+
+  // Only what the generator affects is refreshed, not the whole app.
+  await waitFor(() => expect(mocks.settings).toHaveBeenCalledTimes(2));
+  await waitFor(() => expect(mocks.status).toHaveBeenCalledTimes(2));
+  expect(cache.getQueryState([{ _id: "availability" }])?.isInvalidated).toBe(
+    true,
+  );
+  expect(mocks.policy).toHaveBeenCalledTimes(1);
+  expect(unrelatedInvalidated()).toBe(false);
 });
 
 it("shows local models as soon as Diffusers is picked and reports save errors", async () => {
@@ -176,7 +189,9 @@ it("shows local models as soon as Diffusers is picked and reports save errors", 
 });
 
 it("turns generation on for selected groups", async () => {
-  setup();
+  const cache = setup();
+  const unrelatedInvalidated = seedUnrelatedQuery(cache);
+  cache.setQueryData([{ _id: "availability" }], { available: false });
   const user = userEvent.setup();
   const save = await screen.findByRole("button", { name: "Save availability" });
   expect(save).toBeDisabled();
@@ -196,6 +211,14 @@ it("turns generation on for selected groups", async () => {
     }),
   );
   expect(await screen.findByText("Availability saved.")).toBeVisible();
+
+  // The saved policy is written to the cache; only availability refreshes.
+  expect(cache.getQueryState([{ _id: "availability" }])?.isInvalidated).toBe(
+    true,
+  );
+  expect(mocks.policy).toHaveBeenCalledTimes(1);
+  expect(mocks.settings).toHaveBeenCalledTimes(1);
+  expect(unrelatedInvalidated()).toBe(false);
 });
 
 it("generates a test image and shows failures", async () => {

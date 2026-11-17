@@ -135,6 +135,8 @@ export function ExistingChatPersonaPicker({
   });
   const mutation = useMutation({
     ...chatPersonaUpdateMutation({ client }),
+    // onSelected writes the updated chat into the cache; nothing else changes.
+    meta: { skipGlobalInvalidation: true },
     onMutate: () => onPendingChange(true),
     onSettled: () => onPendingChange(false),
     onSuccess: onSelected,

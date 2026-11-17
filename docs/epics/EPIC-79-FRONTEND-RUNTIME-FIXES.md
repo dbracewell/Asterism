@@ -1,6 +1,6 @@
 # EPIC-79: Frontend runtime fixes
 
-Status: in progress (US-79.1–US-79.5 done). Source: [codebase review](../../codebase_review.md), verified 2026-11-14 (items 4, 5, 6, 12, 18).
+Status: complete (2026-11-17). Source: [codebase review](../../codebase_review.md), verified 2026-11-14 (items 4, 5, 6, 12, 18).
 
 ## Objective
 
@@ -43,9 +43,10 @@ event webhooks, sign-in failures, and needless full-app refetches.
 
 ### US-79.6: Pickers and image settings stop refetching the app
 
-- [ ] `image-gen-settings.tsx` save: use `meta.invalidates` instead of manual `invalidateQueries`.
-- [ ] Model, persona and learning-mode pickers: add `skipGlobalInvalidation` where `setQueryData` already updates the cache.
-- [ ] Test that a picker change does not refetch unrelated queries.
+- [x] `image-gen-settings.tsx` save: use `meta.invalidates` instead of manual `invalidateQueries`.
+- [x] Model, persona and learning-mode pickers: add `skipGlobalInvalidation` where `setQueryData` already updates the cache.
+- [x] Image generation policy save: invalidate only chat image availability (the policy itself is written with `setQueryData`); generator save also refreshes availability.
+- [x] Test that a picker change does not refetch unrelated queries (`src/test/query-client.ts` wires the app's global invalidation for tests).
 
 ## Notes
 

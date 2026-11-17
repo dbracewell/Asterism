@@ -37,6 +37,7 @@ import {
   fileGetManyInfiniteQueryKey,
   fileGetManyQueryKey,
   groupGetManyOptions,
+  imageGenerationAvailabilityQueryKey,
   imageGenerationPolicyGetOptions,
   imageGenerationPolicyGetQueryKey,
   imageGenerationPolicyUpdateMutation,
@@ -70,7 +71,6 @@ export function ImageGenSettings() {
 }
 
 function GeneratorSection() {
-  const queryClient = useQueryClient();
   const settings = useQuery({
     ...appSettingsGetOptions({ client }),
     staleTime: 0,
@@ -85,16 +85,17 @@ function GeneratorSection() {
   const [saved, setSaved] = useState(false);
   const save = useMutation({
     ...appSettingUpdateMutation({ client }),
-    async onSuccess() {
+    meta: {
+      invalidates: [
+        appSettingsGetQueryKey({ client }),
+        imageGenerationProviderStatusQueryKey({ client }),
+        localImageOverviewQueryKey({ client }),
+        imageGenerationAvailabilityQueryKey({ client }),
+      ],
+    },
+    onSuccess() {
       setDraft(null);
       setSaved(true);
-      await Promise.all(
-        [
-          appSettingsGetQueryKey({ client }),
-          imageGenerationProviderStatusQueryKey({ client }),
-          localImageOverviewQueryKey({ client }),
-        ].map((queryKey) => queryClient.invalidateQueries({ queryKey })),
-      );
     },
   });
 
@@ -259,6 +260,8 @@ function PolicySection() {
   const [saved, setSaved] = useState(false);
   const update = useMutation({
     ...imageGenerationPolicyUpdateMutation({ client }),
+    // The policy is written below; only chat availability depends on it.
+    meta: { invalidates: [imageGenerationAvailabilityQueryKey({ client })] },
     onSuccess(data) {
       queryClient.setQueryData(
         imageGenerationPolicyGetQueryKey({ client }),

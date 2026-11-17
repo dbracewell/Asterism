@@ -12,6 +12,7 @@ import {
 } from "./chat-model-picker";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { MessageExecution } from "@/lib/client";
+import { appQueryClient, seedUnrelatedQuery } from "@/test/query-client";
 const mocks = vi.hoisted(() => ({
   list: vi.fn(),
   update: vi.fn(),
@@ -93,6 +94,42 @@ it("changes a chat using the observed revision and never edits main settings", a
     expect.objectContaining({ model_revision: 4 }),
   );
 });
+it("refetches nothing else after changing a chat's model", async () => {
+  mocks.update.mockResolvedValue({
+    id: "chat",
+    selected_model_id: "b",
+    model_revision: 4,
+  });
+  const client = appQueryClient();
+  const unrelatedInvalidated = seedUnrelatedQuery(client);
+  const onSelected = vi.fn();
+  render(
+    <ExistingChatModelPicker
+      info={{
+        id: "chat",
+        user_id: "owner",
+        created_at: 0,
+        updated_at: 0,
+        selected_model_id: "a",
+        model_revision: 3,
+      }}
+      disabled={false}
+      onSelected={onSelected}
+    />,
+    { wrapper: wrapper(client) },
+  );
+  await waitFor(() =>
+    expect(screen.getByLabelText("Chat model")).toBeEnabled(),
+  );
+  await userEvent.click(screen.getByLabelText("Chat model"));
+  await userEvent.click(
+    await screen.findByRole("option", { name: "Beta (Provider)" }),
+  );
+  await waitFor(() => expect(onSelected).toHaveBeenCalled());
+  expect(unrelatedInvalidated()).toBe(false);
+  expect(mocks.list).toHaveBeenCalledTimes(1);
+});
+
 it("keeps the picker disabled during generation", async () => {
   render(<ChatModelPicker value="a" onChange={vi.fn()} disabled />, {
     wrapper: wrapper(),

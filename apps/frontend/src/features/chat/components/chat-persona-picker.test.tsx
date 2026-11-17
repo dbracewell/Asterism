@@ -1,5 +1,6 @@
 import { ApiClient, type Chat, type ChatInfo } from "@/lib/client";
 import { defaultPersonas } from "@/test/personas";
+import { appQueryClient, seedUnrelatedQuery } from "@/test/query-client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -211,4 +212,44 @@ it("uses the selection revision and requires a fresh chat read after a conflict"
   );
   await waitFor(() => expect(selector).toHaveTextContent("Teaching"));
   expect(changed).toHaveBeenCalledWith(current.info);
+});
+
+it("refetches nothing else after changing a chat's persona", async () => {
+  const info: ChatInfo = {
+    id: "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
+    user_id: "a",
+    created_at: 0,
+    updated_at: 0,
+    persona_id: null,
+    persona_revision: 1,
+  };
+  api.chatPersonaUpdate.mockResolvedValueOnce({
+    data: { ...info, persona_id: teacher.id, persona_revision: 2 },
+  });
+  const cache = appQueryClient();
+  const unrelatedInvalidated = seedUnrelatedQuery(cache);
+  const user = userEvent.setup();
+  render(
+    <QueryClientProvider client={cache}>
+      <ExistingChatPersonaPicker
+        info={info}
+        disabled={false}
+        onPendingChange={() => {}}
+        onSelected={changed}
+      />
+    </QueryClientProvider>,
+  );
+  const selector = await screen.findByRole("combobox", {
+    name: "Chat persona",
+  });
+  await waitFor(() => expect(selector).toBeEnabled());
+  await user.click(selector);
+  await user.click(await screen.findByRole("option", { name: "Teaching" }));
+  await waitFor(() =>
+    expect(changed.mock.calls[0]?.[0]).toMatchObject({
+      persona_id: teacher.id,
+    }),
+  );
+  expect(unrelatedInvalidated()).toBe(false);
+  expect(api.userPersonaList).toHaveBeenCalledTimes(1);
 });
