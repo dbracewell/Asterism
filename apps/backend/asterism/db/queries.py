@@ -33,9 +33,13 @@ def _simple_count(statement: Select) -> Select | None:
     table with a single-column primary key and no joins; the original
     where-clause is reused verbatim so the count sees exactly the rows the
     page query would. Anything more complex (joins, subqueries, composite or
-    missing PKs) returns ``None`` and the caller falls back to counting the
-    full statement subquery.
+    missing PKs, or ``DISTINCT`` / ``GROUP BY`` / ``HAVING``, where the page
+    holds fewer rows than the table) returns ``None`` and the caller falls back
+    to counting the full statement subquery.
     """
+    # SQLAlchemy exposes no public accessors for these clauses on Select.
+    if statement._distinct or statement._group_by_clauses or statement._having_criteria:
+        return None
     froms = statement.get_final_froms()
     if len(froms) != 1:
         return None
@@ -63,10 +67,10 @@ async def paginate_select[T](
     Callers supply ownership, filters, and ordering before pagination. This helper
     neither commits nor adds authorization policy or domain response enrichment.
 
-    For single-table selects the count is a plain ``COUNT(pk)`` with the same
-    where-clause (no subquery materialization of wide columns). For joins and
-    other complex statements it falls back to counting the statement as a
-    subquery; note that for joined statements both the count and the page then
+    For plain single-table selects the count is a ``COUNT(pk)`` with the same
+    where-clause (no subquery materialization of wide columns). For joins,
+    ``DISTINCT``, ``GROUP BY``/``HAVING`` and other complex statements it falls
+    back to counting the statement as a subquery; note that for joined statements both the count and the page then
     count *joined rows*, not distinct entities.
 
     Args:
