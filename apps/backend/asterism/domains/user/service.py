@@ -32,6 +32,7 @@ Design notes:
   and never a write. Missing or blank values never overwrite a stored one.
 """
 
+import uuid
 from collections.abc import Iterable
 from dataclasses import dataclass
 from enum import StrEnum
@@ -327,6 +328,40 @@ async def initialize_user_settings(
             await session.commit()
 
 
+@dataclass(frozen=True)
+class _UserWork:
+    chat_ids: list[uuid.UUID]
+    artifact_ids: list[uuid.UUID]
+
+
+async def _find_user_work(user_id: str, session: AsyncSession) -> _UserWork:
+    """Collect the ids that key a user's chat runs and file knowledge jobs."""
+    from asterism.domains.chat.queries import select_owned_chat_ids
+    from asterism.domains.knowledge.queries import select_owned_artifact_ids
+
+    return _UserWork(
+        chat_ids=list(await session.scalars(select_owned_chat_ids(user_id=user_id))),
+        artifact_ids=list(await session.scalars(select_owned_artifact_ids(user_id))),
+    )
+
+
+async def _stop_user_work(user_id: str, work: _UserWork) -> None:
+    """Cancel and await the user's chat runs and file ingestion/captioning jobs.
+
+    Best-effort: a failure is logged and the deletion goes on.
+    """
+    from asterism.domains.chat.jobs import chat_jobs
+    from asterism.domains.knowledge.runtime import cancel_file_jobs
+
+    try:
+        for chat_id in work.chat_ids:
+            await chat_jobs.retire(chat_id)
+        for artifact_id in work.artifact_ids:
+            await cancel_file_jobs(artifact_id)
+    except Exception:  # noqa: BLE001 - stopping work must not block deletion
+        logger.exception("Failed to stop background work for deleted user %s", user_id)
+
+
 async def delete_user(
     user_id: str,
     session: AsyncSession | None = None,
@@ -340,6 +375,11 @@ async def delete_user(
     instead of aborting, consistent with the files domain's policy that the
     database remains authoritative for what a deleted user may access.
 
+    The user's chat runs and file knowledge jobs are stopped first, while
+    their rows still exist, so they cancel cleanly; work started in the
+    meantime is stopped again after the commit. Both happen before vector
+    cleanup, so no late job can write vectors for a deleted user.
+
     Args:
         user_id: The identifier to delete.
 
@@ -349,6 +389,9 @@ async def delete_user(
     async with get_async_db_session(session) as session:
         if await session.get(UserModel, user_id) is None:
             raise NotFoundException("User not found")
+        await _stop_user_work(user_id, await _find_user_work(user_id, session))
+        # Ids read inside the delete transaction catch work started meanwhile.
+        work = await _find_user_work(user_id, session)
         try:
             await session.execute(delete(UserModel).where(UserModel.id == user_id))
             await session.execute(insert(DeletedUserModel).values(id=user_id))
@@ -364,6 +407,7 @@ async def delete_user(
     _user_initialized_cache.pop(user_id, None)
     _identity_cache.pop(user_id, None)
     _deleted_cache[user_id] = True
+    await _stop_user_work(user_id, work)
 
     # Non-relational cleanup is best-effort: a failure here orphans storage
     # but must not undo the authoritative relational deletion.

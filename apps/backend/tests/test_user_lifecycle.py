@@ -382,3 +382,87 @@ async def test_admin_and_system_key_creates_store_identity(user_api, user_api_db
     # Blank values are refused rather than stored.
     blank = {"user_id": "blank", "name": " ", "system_key": "s3cret-key"}
     assert (await client.post("/users/", json=blank)).status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_delete_stops_in_flight_work_before_vector_cleanup(user_service_env, monkeypatch):
+    import asyncio
+
+    from asterism.common.job_queue import JobManager
+    from asterism.domains.chat.models import ChatModel
+    from asterism.domains.files.models import FileKind, UserFileModel
+    from asterism.domains.knowledge import runtime
+    from asterism.domains.knowledge.models import FileKnowledgeArtifactModel, KnowledgeExtractionStatus
+
+    sessions, vectors, _ = user_service_env
+    written: list[str] = []
+    vectors.delete_user = _clearing(vectors.delete_user, written)
+
+    async with sessions() as session:
+        await create_user("a", session)
+        file = UserFileModel(
+            storage_key=str(uuid.uuid4()),
+            user_id="a",
+            filename="late.png",
+            original_name="late.png",
+            size=1,
+            mime_type="image/png",
+            kind=FileKind.IMAGE,
+            sha256="a" * 64,
+        )
+        session.add(file)
+        await session.flush()
+        artifact = FileKnowledgeArtifactModel(
+            user_id="a",
+            file_id=file.id,
+            generation=1,
+            processing_profile_generation=1,
+            status=KnowledgeExtractionStatus.RUNNING,
+        )
+        chat = ChatModel(user_id="a")
+        session.add_all([artifact, chat])
+        await session.commit()
+
+    # An ingestion job mid-flight: it writes a vector once it is let go.
+    jobs = JobManager(max_concurrency=2)
+    monkeypatch.setattr(runtime, "job_manager", jobs)
+    release = asyncio.Event()
+    started = asyncio.Event()
+
+    async def late_ingest(*, user_id):
+        started.set()
+        await release.wait()
+        written.append(user_id)
+
+    jobs.enqueue(key=f"ingestion-{artifact.id}", runnable=late_ingest, user_id="a")
+    await started.wait()
+
+    retired: list[uuid.UUID] = []
+
+    async def record_retire(chat_id):
+        retired.append(chat_id)
+
+    monkeypatch.setattr("asterism.domains.chat.jobs.chat_jobs.retire", record_retire)
+
+    async with sessions() as session:
+        await delete_user("a", session)
+
+    release.set()
+    await asyncio.sleep(0.05)
+    await jobs.shutdown()
+
+    # The job was cancelled before cleanup, so no vector outlives the user.
+    assert written == []
+    assert vectors.deleted_users == ["a"]
+    # Each chat is retired before the delete and again after it commits.
+    assert retired == [chat.id, chat.id]
+
+
+def _clearing(delete_user, written):
+    """Wrap the fake vector delete so it also clears vectors already written."""
+
+    async def wrapped(*, user_id):
+        written[:] = [owner for owner in written if owner != user_id]
+        await delete_user(user_id=user_id)
+
+    return wrapped
