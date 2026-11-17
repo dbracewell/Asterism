@@ -1,8 +1,4 @@
 "use client";
-import {
-  isPlanErrorCode,
-  PlanRecoveryNotice,
-} from "@/features/chatgpt/components/plan-usage";
 import { EmptyState } from "@/components/empty-state";
 import { QueryError } from "@/components/query-error";
 import { Button } from "@/components/ui/button";
@@ -13,7 +9,6 @@ import {
   ChatInput,
   ChatInputContainer,
 } from "@/features/chat/components/chat-input";
-import { MessageItem } from "@/features/chat/components/message/message-item";
 import {
   CanvasProvider,
   type CanvasContextValue,
@@ -21,24 +16,13 @@ import {
 import { CanvasChip } from "@/features/canvas/components/canvas-chip";
 import { CanvasLayout } from "@/features/canvas/components/canvas-layout";
 import { canvasRefs } from "@/features/canvas/lib/canvas";
-import { StreamingIndicator } from "@/features/chat/components/message/streaming-indicator";
-import { SubAgentActivityPanel } from "@/features/chat/components/sub-agent-activity";
-import { useChatWebSocket } from "@/features/chat/hooks/use-chat-websocket";
-import {
-  connectionStatusMap,
-  StreamingMessage,
-  SubAgentActivity,
-  updateSubAgentActivities,
-} from "@/features/chat/types";
+import { useChatAutoScroll } from "@/features/chat/hooks/use-chat-auto-scroll";
+import { useChatStream } from "@/features/chat/hooks/use-chat-stream";
+import { connectionStatusMap } from "@/features/chat/types";
 import { personaQueryOptions } from "@/features/settings/persona-queries";
 import { useSubscribeEvent } from "@/features/sse/hooks/use-subscribe-event";
 import { client } from "@/lib/api";
-import {
-  Chat,
-  ChatCompactionView,
-  DelegationRecord,
-  Message,
-} from "@/lib/client";
+import { Chat, DelegationRecord } from "@/lib/client";
 import {
   chatFileGetScopeOptions,
   chatMessageSendMutation,
@@ -49,19 +33,16 @@ import {
 } from "@/lib/client/@tanstack/react-query.gen";
 import { cn, errorDetail } from "@/lib/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowDownIcon, XIcon } from "lucide-react";
 import React from "react";
 import { ExistingChatModelPicker } from "./chat-model-picker";
-import { CompactionDivider } from "./compaction-divider";
 import { ComposerStatus } from "./composer-status";
-import { ComparisonBlock, invalidateComparisons } from "./comparison-block";
+import { ChatSocketError } from "./chat-socket-error";
+import { ChatTranscript } from "./chat-transcript";
+import { JumpToLatest } from "./jump-to-latest";
 import { ForkStepDialog, type ForkSource } from "./fork-step-dialog";
 import { CompareMessageDialog, comparePayload } from "./compare-targets";
-import { groupTranscript } from "../lib/comparison";
 import { imagePrompts } from "../lib/image-generation";
-import { ImageProgressStatus } from "./image-progress-status";
 import { ImageActionsContext } from "@/components/markdown-viewer/inline-files";
-import { turnStepsEndingAt } from "../lib/run-usage";
 import { ExistingChatLearningModePicker } from "./chat-learning-mode-picker";
 import { ChatHintControls } from "./chat-hint-controls";
 import { ChatRubricPicker, useModeTakesRubric } from "./chat-rubric-picker";
@@ -70,11 +51,6 @@ import {
   ExistingChatPersonaPicker,
   personaAvailable,
 } from "./chat-persona-picker";
-
-// Far enough from the bottom to offer "jump to latest" even when idle.
-const SCROLL_BOTTOM_THRESHOLD = 200;
-// Scrolling up past this stops following the conversation.
-const AUTO_SCROLL_LOCK_THRESHOLD = 16;
 
 export const ChatSession = ({
   chatId,
@@ -135,13 +111,6 @@ export const ChatSession = ({
   });
 
   const loadedSessionIdRef = React.useRef<string | null>(null);
-  const messageListRef = React.useRef<HTMLDivElement | null>(null);
-  const [incomingMessage, setIncomingMessage] =
-    React.useState<StreamingMessage | null>(null);
-  const [isProcessing, setIsProcessing] = React.useState(false);
-  // US-54.4: a run answering a comparison column streams into its column.
-  const [comparisonStream, setComparisonStream] =
-    React.useState<StreamingMessage | null>(null);
   const [compareModels, setCompareModels] = React.useState<string[]>([]);
   // `undefined` follows the latest turn's rubric; the learner's choice sticks.
   const [rubricChoice, setRubricChoice] = React.useState<
@@ -175,19 +144,42 @@ export const ChatSession = ({
   const [openCanvasItem, setOpenCanvasItem] = React.useState<string | null>(
     null,
   );
-  const [subAgentActivities, setSubAgentActivities] = React.useState<
-    SubAgentActivity[]
-  >([]);
-  const preventAutoScrollRef = React.useRef(false);
-  const lastScrollTopRef = React.useRef(0);
-  const [isScrollable, setIsScrollable] = React.useState(false);
-  const [isScrolledAway, setIsScrolledAway] = React.useState(false);
-  // ADR-0060: a compaction (automatic or requested) is running.
-  const [isCompacting, setIsCompacting] = React.useState(false);
-  const [socketError, setSocketError] = React.useState<{
-    message: string;
-    code?: string | null;
-  } | null>(null);
+  const stream = useChatStream({
+    chatId,
+    jwtToken,
+    refetch,
+    onStreamStart: () => follow(),
+  });
+  const {
+    sendJsonMessage,
+    readyState,
+    toolTimings,
+    toolProgress,
+    incomingMessage,
+    setIncomingMessage,
+    isProcessing,
+    setIsProcessing,
+    comparisonStream,
+    subAgentActivities,
+    isCompacting,
+    setIsCompacting,
+    socketError,
+    setSocketError,
+  } = stream;
+  const {
+    messageListRef,
+    isScrollable,
+    isScrolledAway,
+    onScroll,
+    follow,
+    jumpToLatest,
+  } = useChatAutoScroll({
+    messages: session?.messages,
+    incomingMessage,
+    comparisonStream,
+    subAgentActivities,
+    isProcessing,
+  });
 
   React.useEffect(() => {
     if (!session) return;
@@ -196,7 +188,7 @@ export const ChatSession = ({
       messageListRef.current?.scrollIntoView({ behavior: "instant" });
       setIncomingMessage(null);
     }
-  }, [session]);
+  }, [session, messageListRef, setIncomingMessage]);
 
   React.useEffect(() => {
     return () => {
@@ -222,139 +214,6 @@ export const ChatSession = ({
       );
     },
   });
-
-  // Before paint, so a scroll event never measures growth not yet followed.
-  React.useLayoutEffect(() => {
-    if (preventAutoScrollRef.current) return;
-    messageListRef.current?.scrollIntoView({ behavior: "instant" });
-  }, [
-    session?.messages,
-    incomingMessage,
-    comparisonStream,
-    subAgentActivities,
-    isProcessing,
-  ]);
-
-  const { sendJsonMessage, readyState, toolTimings, toolProgress } =
-    useChatWebSocket({
-      chatId,
-      jwtToken,
-      onStatusChange: (isProcessing) => {
-        setIsProcessing(isProcessing);
-        if (!isProcessing) setIsCompacting(false);
-      },
-      onStreamStart: (pendingMessage) => {
-        preventAutoScrollRef.current = false;
-        setIsCompacting(false);
-        if (pendingMessage.comparison) {
-          setIncomingMessage(null);
-          setComparisonStream(pendingMessage);
-          return;
-        }
-        setIncomingMessage(pendingMessage);
-        queryClient.setQueryData(queryKey, (prev?: Chat) => {
-          if (!prev || prev.messages.length === 0) return prev;
-          const last = prev.messages[prev.messages.length - 1];
-          if (last.status === "completed") return prev;
-          return {
-            ...prev,
-            messages: [
-              ...prev.messages.slice(0, -1),
-              { ...last, status: "completed" },
-            ],
-          };
-        });
-      },
-      onStreamError: (error, code, comparison) => {
-        setIsProcessing(false);
-        setIsCompacting(false);
-        setIncomingMessage(null);
-        setComparisonStream(null);
-        if (comparison) void invalidateComparisons(queryClient);
-        setSocketError({ message: error, code });
-      },
-      onRegenerate: () => {
-        refetch();
-      },
-      onStreamUpdate: (nextIncomingMessage) => {
-        if (nextIncomingMessage.comparison) {
-          // Never also render a column's run at the end of the transcript.
-          setIncomingMessage(null);
-          setComparisonStream(nextIncomingMessage);
-          return;
-        }
-        setIncomingMessage(nextIncomingMessage);
-      },
-      onSubAgentEvent: (packet) => {
-        setSubAgentActivities((activities) =>
-          updateSubAgentActivities(activities, packet),
-        );
-      },
-      onCompaction: (packet) => {
-        if (packet.status === "started") {
-          setIsCompacting(true);
-          return;
-        }
-        setIsCompacting(false);
-        if (packet.status === "failed") {
-          setSocketError({
-            message:
-              packet.content ?? "The conversation could not be compacted.",
-          });
-          return;
-        }
-        const compaction = packet.compaction;
-        if (!compaction) return;
-        queryClient.setQueryData(queryKey, (prev?: Chat) =>
-          prev
-            ? {
-                ...prev,
-                compactions: [
-                  ...(prev.compactions ?? []).filter(
-                    (item) => item.id !== compaction.id,
-                  ),
-                  compaction,
-                ],
-              }
-            : prev,
-        );
-        // The context meter now counts the summary instead.
-        queryClient.invalidateQueries({ queryKey });
-      },
-      onStreamComplete: (updatedMessages, comparison) => {
-        if (comparison) {
-          // Columns run one after another; the next column's start follows.
-          setComparisonStream(null);
-          setIncomingMessage(null);
-          setSubAgentActivities([]);
-          void invalidateComparisons(queryClient);
-          queryClient.invalidateQueries({ queryKey });
-          return;
-        }
-        setIsProcessing(false);
-        setIncomingMessage(null);
-        if (!updatedMessages.length) return;
-        setSubAgentActivities([]);
-        queryClient.invalidateQueries({ queryKey });
-        queryClient.setQueryData(queryKey, (prev?: Chat) => {
-          if (!prev) return;
-          const index = prev.messages.findLastIndex((m) => {
-            return m.id === updatedMessages[0].id;
-          });
-          let new_messages: Message[];
-          if (index >= 0) {
-            new_messages = [
-              ...prev.messages.slice(0, index),
-              ...updatedMessages,
-            ];
-          } else {
-            new_messages = [...prev.messages, ...updatedMessages];
-          }
-
-          return { ...prev, messages: new_messages };
-        });
-      },
-    });
 
   const sendMessage = useMutation(chatMessageSendMutation({ client }));
   const pendingSend = React.useRef<{
@@ -386,7 +245,7 @@ export const ChatSession = ({
     if (!session) throw new Error("Chat is not loaded. Please retry.");
     setSocketError(null);
     // Sending returns to the conversation's end, wherever the user had read to.
-    preventAutoScrollRef.current = false;
+    follow();
     if (pendingSend.current?.requestId !== requestId) {
       pendingSend.current = {
         requestId,
@@ -423,24 +282,9 @@ export const ChatSession = ({
     setCompareModels([]);
     setResetHints(false);
     // Read the authoritative accepted branch state, including its allocated skill revision.
-    await queryClient.fetchQuery({
-      ...chatSessionGetOneOptions({ client, path: { chat_id: chatId } }),
-      staleTime: 0,
-    });
-    setSubAgentActivities([]);
-    setIsProcessing(true);
-    // Persistence acknowledgement precedes generation; reconnect can resume this same pending turn.
-    sendJsonMessage({ type: "resume" });
+    await stream.resume();
   };
 
-  // Each settled final step's turn, for its usage summary (US-54.1).
-  const turnSteps = React.useMemo(
-    () =>
-      (session?.messages ?? []).map((_, index, messages) =>
-        turnStepsEndingAt(messages, index),
-      ),
-    [session?.messages],
-  );
   // The prompt behind each generated image, for "More like this".
   const promptsByImage = React.useMemo(
     () => imagePrompts(session?.messages ?? []),
@@ -555,15 +399,6 @@ export const ChatSession = ({
     !session.info.resume_error &&
     (isProcessing ||
       (lastMessage?.role === "user" && lastMessage.status === "pending"));
-  // Dividers sit after the last message each summary replaced.
-  const compactionsByAnchor = new Map<string, ChatCompactionView[]>();
-  for (const compaction of session.compactions ?? []) {
-    const list = compactionsByAnchor.get(compaction.through_message_id) ?? [];
-    compactionsByAnchor.set(compaction.through_message_id, [
-      ...list,
-      compaction,
-    ]);
-  }
   const contextWindow =
     session.info.context_model?.context_window ??
     user.settings.models?.find(
@@ -605,6 +440,13 @@ export const ChatSession = ({
       };
     },
   };
+  /** A picker's saved change, merged into the cached chat. */
+  const mergeInfo = (info: Partial<Chat["info"]>) =>
+    queryClient.setQueryData(queryKey, (previous?: Chat) =>
+      previous
+        ? { ...previous, info: { ...previous.info, ...info } }
+        : previous,
+    );
   const canvas: CanvasContextValue = {
     openItemId: openCanvasItem,
     open: setOpenCanvasItem,
@@ -638,28 +480,7 @@ export const ChatSession = ({
                 showJump && "scroll-pb-14",
               )}
               style={{ overflowAnchor: "auto" }}
-              onScroll={(e) => {
-                const { scrollTop } = e.currentTarget;
-                const scrollPosition =
-                  e.currentTarget.scrollHeight -
-                  (scrollTop + e.currentTarget.clientHeight);
-
-                // Only scrolling up locks: content growing below is not a choice to
-                // stop following, even when this event lands after it.
-                const scrolledUp = scrollTop < lastScrollTopRef.current;
-                lastScrollTopRef.current = scrollTop;
-                const isLocked =
-                  scrollPosition > AUTO_SCROLL_LOCK_THRESHOLD &&
-                  (scrolledUp || preventAutoScrollRef.current);
-                preventAutoScrollRef.current = isLocked;
-                if (isLocked !== isScrolledAway) setIsScrolledAway(isLocked);
-
-                const isNowScrollable =
-                  scrollPosition > SCROLL_BOTTOM_THRESHOLD;
-                if (isNowScrollable !== isScrollable) {
-                  setIsScrollable(isNowScrollable);
-                }
-              }}
+              onScroll={onScroll}
             >
               {error && (
                 <QueryError
@@ -712,100 +533,26 @@ export const ChatSession = ({
                   keep their original model.
                 </p>
               )}
-              <div className="mx-auto w-full max-w-5xl">
-                {groupTranscript(session.messages).map((item) =>
-                  item.kind === "comparison" ? (
-                    <ComparisonBlock
-                      key={item.comparisonId}
-                      chatId={chatId}
-                      comparisonId={item.comparisonId}
-                      stream={comparisonStream}
-                      isProcessing={interactionBusy}
-                      canRegenerate={
-                        selectedModelAvailable &&
-                        connectionStatus === "Connected"
-                      }
-                      onRegenerate={requestRegeneration}
-                      toolTimings={toolTimings}
-                      sendJsonMessage={sendJsonMessage}
-                    />
-                  ) : (
-                    <React.Fragment key={item.message.id}>
-                      <MessageItem
-                        chatId={chatId}
-                        message={item.message}
-                        startsTurn={
-                          session.messages[item.index - 1]?.role !== "assistant"
-                        }
-                        isProcessing={interactionBusy}
-                        canRegenerate={
-                          selectedModelAvailable &&
-                          connectionStatus === "Connected"
-                        }
-                        onRegenerate={requestRegeneration}
-                        onCompare={compareAction(item.index)}
-                        onFork={forkAction(item.index)}
-                        toolTimings={toolTimings}
-                        turnSteps={turnSteps[item.index]}
-                        turnRequest={
-                          turnSteps[item.index]
-                            ? session.messages[
-                                item.index -
-                                  (turnSteps[item.index]?.length ?? 0)
-                              ]
-                            : null
-                        }
-                        sendJsonMessage={sendJsonMessage}
-                      />
-                      {compactionsByAnchor
-                        .get(item.message.id)
-                        ?.map((compaction) => (
-                          <CompactionDivider
-                            key={compaction.id}
-                            compaction={compaction}
-                          />
-                        ))}
-                    </React.Fragment>
-                  ),
-                )}
-
-                {isCompacting ? (
-                  <StreamingIndicator
-                    variant="turn"
-                    label="Compacting conversation…"
-                  />
-                ) : (
-                  awaitingReply &&
-                  (lastMessage?.role === "assistant" ? (
-                    // Between agent steps: trail the turn under its existing marker.
-                    <div className="mb-5 pl-10">
-                      <StreamingIndicator />
-                    </div>
-                  ) : (
-                    <StreamingIndicator variant="turn" />
-                  ))
-                )}
-                {isProcessing && (
-                  <ImageProgressStatus progress={toolProgress} />
-                )}
-                <SubAgentActivityPanel
-                  activities={subAgentActivities}
-                  mainModel={session.info.selected_model?.name}
-                />
-                {incomingMessage && (
-                  <MessageItem
-                    chatId={chatId}
-                    message={incomingMessage}
-                    startsTurn={session.messages.at(-1)?.role !== "assistant"}
-                    isProcessing={interactionBusy}
-                    canRegenerate={false}
-                    onRegenerate={requestRegeneration}
-                    streaming
-                    toolTimings={toolTimings}
-                    sendJsonMessage={sendJsonMessage}
-                  />
-                )}
-              </div>
+              <ChatTranscript
+                chatId={chatId}
+                session={session}
+                incomingMessage={incomingMessage}
+                comparisonStream={comparisonStream}
+                subAgentActivities={subAgentActivities}
+                isProcessing={isProcessing}
+                isCompacting={isCompacting}
+                awaitingReply={awaitingReply}
+                interactionBusy={interactionBusy}
+                canRegenerate={
+                  selectedModelAvailable && connectionStatus === "Connected"
+                }
+                onRegenerate={requestRegeneration}
+                compareAction={compareAction}
+                forkAction={forkAction}
+                toolTimings={toolTimings}
+                toolProgress={toolProgress}
+                sendJsonMessage={sendJsonMessage}
+              />
               <div
                 ref={messageListRef}
                 className="shrink-0"
@@ -821,56 +568,13 @@ export const ChatSession = ({
               className="relative flex max-h-[60%] min-h-0 shrink-0 flex-col gap-2 bg-transparent p-2"
             >
               {showJump && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  data-slot="jump-to-latest"
-                  className="rounded-dot shadow-overlay bg-background absolute bottom-full left-1/2 z-10 mb-2 -translate-x-1/2"
-                  aria-label="Jump to latest message"
-                  onClick={() => {
-                    preventAutoScrollRef.current = false;
-                    setIsScrollable(false);
-                    setIsScrolledAway(false);
-                    messageListRef.current?.scrollIntoView({
-                      behavior: "instant",
-                    });
-                  }}
-                >
-                  {generating ? (
-                    <span
-                      aria-hidden="true"
-                      className="bg-primary rounded-dot size-1.5 animate-pulse motion-reduce:animate-none"
-                    />
-                  ) : (
-                    <ArrowDownIcon />
-                  )}
-                  Jump to latest
-                </Button>
+                <JumpToLatest generating={generating} onClick={jumpToLatest} />
               )}
-              {socketError && isPlanErrorCode(socketError.code) && (
-                <PlanRecoveryNotice
-                  code={socketError.code}
-                  message={socketError.message}
+              {socketError && (
+                <ChatSocketError
+                  error={socketError}
                   onDismiss={() => setSocketError(null)}
-                  className="mx-auto mb-2 max-w-5xl"
                 />
-              )}
-              {socketError && !isPlanErrorCode(socketError.code) && (
-                <div
-                  role="alert"
-                  className="bg-destructive/10 border-destructive text-destructive rounded-surface mx-auto mb-2 flex w-full max-w-5xl items-center justify-between gap-2 border px-3 py-2 text-sm"
-                >
-                  <p className="min-w-0 flex-1">{socketError.message}</p>
-                  <Button
-                    variant="ghost"
-                    size="icon-xs"
-                    onClick={() => setSocketError(null)}
-                    aria-label="Dismiss error"
-                    className="text-destructive hover:bg-destructive/20 h-6 w-6 shrink-0"
-                  >
-                    <XIcon className="size-4" />
-                  </Button>
-                </div>
               )}
               <ChatInputContainer className="max-w-5xl scroll-p-2 overflow-y-auto overscroll-contain">
                 {session.messages.length > 0 && (
@@ -947,52 +651,19 @@ export const ChatSession = ({
                         info={session.info}
                         disabled={interactionBusy}
                         onPendingChange={setIsChangingModel}
-                        onSelected={(info) =>
-                          queryClient.setQueryData(
-                            queryKey,
-                            (previous?: Chat) =>
-                              previous
-                                ? {
-                                    ...previous,
-                                    info: { ...previous.info, ...info },
-                                  }
-                                : previous,
-                          )
-                        }
+                        onSelected={mergeInfo}
                       />
                       <ExistingChatPersonaPicker
                         info={session.info}
                         disabled={interactionBusy}
                         onPendingChange={setIsChangingPersona}
-                        onSelected={(info) =>
-                          queryClient.setQueryData(
-                            queryKey,
-                            (previous?: Chat) =>
-                              previous
-                                ? {
-                                    ...previous,
-                                    info: { ...previous.info, ...info },
-                                  }
-                                : previous,
-                          )
-                        }
+                        onSelected={mergeInfo}
                       />
                       <ExistingChatLearningModePicker
                         info={session.info}
                         disabled={interactionBusy}
                         onPendingChange={setIsChangingMode}
-                        onSelected={(info) =>
-                          queryClient.setQueryData(
-                            queryKey,
-                            (previous?: Chat) =>
-                              previous
-                                ? {
-                                    ...previous,
-                                    info: { ...previous.info, ...info },
-                                  }
-                                : previous,
-                          )
-                        }
+                        onSelected={mergeInfo}
                       />
                       <CanvasChip
                         chatId={chatId}
@@ -1043,17 +714,8 @@ export const ChatSession = ({
                 }}
                 onForked={async () => {
                   setSocketError(null);
-                  await queryClient.fetchQuery({
-                    ...chatSessionGetOneOptions({
-                      client,
-                      path: { chat_id: chatId },
-                    }),
-                    staleTime: 0,
-                  });
-                  setSubAgentActivities([]);
-                  setIsProcessing(true);
                   // The fork step is pending; resuming replays it on the new branch.
-                  sendJsonMessage({ type: "resume" });
+                  await stream.resume();
                 }}
               />
               <CompareMessageDialog
@@ -1066,17 +728,8 @@ export const ChatSession = ({
                 }}
                 onCompared={async () => {
                   setSocketError(null);
-                  await queryClient.fetchQuery({
-                    ...chatSessionGetOneOptions({
-                      client,
-                      path: { chat_id: chatId },
-                    }),
-                    staleTime: 0,
-                  });
-                  setSubAgentActivities([]);
-                  setIsProcessing(true);
                   // The new columns are pending; the job answers them one after another.
-                  sendJsonMessage({ type: "resume" });
+                  await stream.resume();
                 }}
               />
             </div>
