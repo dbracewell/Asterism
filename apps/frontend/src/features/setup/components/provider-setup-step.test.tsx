@@ -10,7 +10,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { OPENAI_BASE_URL } from "@/features/settings/provider-schema";
 import type { Llm, ProviderSettings } from "@/lib/client";
-import { capabilityUpdate, ProviderSetupStep } from "./provider-setup-step";
+import { capabilityUpdate } from "./provider-model-step";
+import { ProviderSetupStep } from "./provider-setup-step";
 
 const providerId = "20000000-0000-4000-8000-000000000001";
 

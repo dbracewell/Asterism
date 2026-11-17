@@ -1,39 +1,25 @@
-/* eslint-disable @next/next/no-img-element */
 import { LibraryFilePickerDialog } from "@/components/file-manager/library-file-picker";
 import { Button } from "@/components/ui/button";
 import { FieldSet } from "@/components/ui/field";
-import { Hint } from "@/components/ui/hint";
 import { Textarea } from "@/components/ui/textarea";
 import type {
   ActiveSkillState,
   ComparisonTarget,
   SkillSelection,
   TemplateUse,
-  UserFile,
 } from "@/lib/client";
 import { cn, errorMessage } from "@/lib/utils";
 import {
   AlertCircleIcon,
   ArrowUpIcon,
-  FileTextIcon,
-  ImagePlusIcon,
-  LayoutTemplateIcon,
-  LoaderCircleIcon,
-  RefreshCwIcon,
   SquareIcon,
-  Trash2Icon,
   UploadCloudIcon,
-  XIcon,
 } from "lucide-react";
-import {
-  useCallback,
-  useEffect,
-  useImperativeHandle,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useImperativeHandle, useRef, useState } from "react";
 import { toast } from "sonner";
-import { useAttachmentDraft } from "../hooks/use-attachment-draft";
+import { useComposerAttachments } from "../hooks/use-composer-attachments";
+import { ComposerAttachments } from "./composer-attachments";
+import { ImageRequestChip, TemplateLabelChip } from "./composer-label-chips";
 import {
   canReadClipboard,
   captureScreenshot,
@@ -45,7 +31,6 @@ import { HelpTopic } from "@/features/help/components/help-topic";
 import { ComposerMenu, type ComposerAction } from "./composer-menu";
 import { ComposerNoticeSlot } from "./composer-notice";
 import { CompareModelsPicker } from "./compare-targets";
-import { COMPOSER_CHIP } from "../lib/composer-chip";
 import { ChatFileContext } from "./chat-file-context";
 import { SkillComposer, type SkillComposerControl } from "./skill-composer";
 import {
@@ -53,7 +38,6 @@ import {
   type AppliedTemplate,
   type TemplateSelection,
 } from "@/features/templates/components/template-picker-dialog";
-import { levelLabel } from "@/features/templates/lib/levels";
 import { beforeAfterTargets, originalBody } from "../lib/comparison";
 import {
   PromptCoachPanel,
@@ -61,19 +45,6 @@ import {
   reviewOffer,
   type PromptCoachControl,
 } from "@/features/templates/components/prompt-coach";
-
-type UploadState = "queued" | "uploading" | "ready" | "failed";
-
-interface AttachedFile {
-  id: string;
-  name: string;
-  file?: File;
-  source?: UserFile;
-  preview?: string;
-  state: UploadState;
-  error?: string;
-  sourceId?: string;
-}
 
 export type ChatInputHandle = {
   /** Replaces the draft message and focuses it; never sends. */
@@ -234,8 +205,6 @@ const ChatInputCore = ({
   placeholder,
   className,
 }: ChatInputProps) => {
-  const draft = useAttachmentDraft(chatId);
-  const [isStaging, setIsStaging] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
   const [libraryOpen, setLibraryOpen] = useState(false);
   const [contextOpen, setContextOpen] = useState(false);
@@ -251,146 +220,32 @@ const ChatInputCore = ({
   const appliedTemplate = skillComposer?.template ?? null;
   const [localPrompt, setPrompt] = useState("");
   const prompt = skillComposer?.prompt ?? localPrompt;
-  const [attachedFiles, setAttachedFiles] = useState<AttachedFile[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [sendError, setSendError] = useState<string>();
   const submittingRef = useRef(false);
   const requestRef = useRef<{ signature: string; id: string } | null>(null);
-  const previewUrls = useRef(new Set<string>());
-  useEffect(() => {
-    const urls = previewUrls.current;
-    return () => {
-      urls.forEach((url) => URL.revokeObjectURL(url));
-      urls.clear();
-    };
+  const resetRequest = useCallback(() => {
+    requestRef.current = null;
   }, []);
+  const {
+    draft,
+    attachedFiles,
+    isStaging,
+    addFiles,
+    removeFile,
+    clearAttachments,
+    discardAttachments,
+    stageUploads,
+    retryUploads,
+    pickFiles,
+  } = useComposerAttachments({
+    chatId,
+    onChange: resetRequest,
+    onError: setSendError,
+  });
   const numberOfLinesRef = useRef(1);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-
-  const addFiles = useCallback((files: File[]) => {
-    requestRef.current = null;
-    const additions = files.map((file) => ({
-      id: crypto.randomUUID(),
-      name: file.name,
-      file,
-      state: "queued" as const,
-      preview: file.type.startsWith("image/")
-        ? URL.createObjectURL(file)
-        : undefined,
-    }));
-    additions.forEach((file) => {
-      if (file.preview) previewUrls.current.add(file.preview);
-    });
-    setAttachedFiles((previous) => [...previous, ...additions]);
-  }, []);
-
-  const updateFile = useCallback(
-    (id: string, update: Partial<AttachedFile>) =>
-      setAttachedFiles((files) =>
-        files.map((file) => (file.id === id ? { ...file, ...update } : file)),
-      ),
-    [],
-  );
-
-  const removeFile = useCallback(
-    async (id: string) => {
-      requestRef.current = null;
-      const selected = attachedFiles.find((item) => item.id === id);
-      setIsStaging(true);
-      try {
-        if (selected?.sourceId) await draft.remove(selected.sourceId);
-        setAttachedFiles((files) => {
-          const file = files.find((item) => item.id === id);
-          if (file?.preview) {
-            URL.revokeObjectURL(file.preview);
-            previewUrls.current.delete(file.preview);
-          }
-          return files.filter((item) => item.id !== id);
-        });
-      } catch (error) {
-        setSendError(errorMessage(error, "Upload failed. Please retry."));
-      } finally {
-        setIsStaging(false);
-      }
-    },
-    [attachedFiles, draft],
-  );
-
-  function clearAttachments() {
-    attachedFiles.forEach((file) => {
-      if (file.preview) {
-        URL.revokeObjectURL(file.preview);
-        previewUrls.current.delete(file.preview);
-      }
-    });
-    setAttachedFiles([]);
-    requestRef.current = null;
-  }
-  async function discardAttachments() {
-    setIsStaging(true);
-    setSendError(undefined);
-    try {
-      await draft.discard();
-    } catch {
-      setSendError(
-        "Attachments cleared here. If server cleanup failed, staged references expire automatically; library files remain.",
-      );
-    } finally {
-      clearAttachments();
-      setIsStaging(false);
-    }
-  }
-
-  const stageUploads = async () =>
-    Promise.all(
-      attachedFiles.map(async (attachment) => {
-        if (attachment.sourceId) return attachment.sourceId;
-        if (!attachment.file) return null;
-        updateFile(attachment.id, { state: "uploading", error: undefined });
-        try {
-          const data = await draft.upload(attachment.file);
-          const uploaded = data.files[0];
-          if (!uploaded)
-            throw new Error("The server did not return an uploaded file.");
-          updateFile(attachment.id, {
-            state: "ready",
-            sourceId: uploaded.id,
-            source: uploaded,
-          });
-          return uploaded.id;
-        } catch (error) {
-          const message = errorMessage(error, "Upload failed. Please retry.");
-          toast.error(`Upload failed for ${attachment.name}: ${message}`);
-          updateFile(attachment.id, {
-            state: "failed",
-            error: message,
-          });
-          return null;
-        }
-      }),
-    );
-  const pickFiles = async (files: UserFile[]) => {
-    requestRef.current = null;
-    setIsStaging(true);
-    try {
-      await draft.add(files.map((file) => file.id));
-      setAttachedFiles((current) => [
-        ...current,
-        ...files
-          .filter((file) => !current.some((item) => item.sourceId === file.id))
-          .map((source) => ({
-            id: source.id,
-            sourceId: source.id,
-            name: source.original_name,
-            source,
-            state: "ready" as const,
-          })),
-      ]);
-    } finally {
-      setIsStaging(false);
-    }
-  };
 
   /**
    * Sends the draft; with `beforeAfter`, sends the coach's original and the
@@ -542,10 +397,6 @@ const ChatInputCore = ({
   const hasPrompt = prompt.trim().length > 0 || !!skillComposer?.hasSkills;
   const isDisabled = controlsDisabled || !hasPrompt;
 
-  const retryable = attachedFiles.some(
-    (file) => file.state === "queued" || file.state === "failed",
-  );
-
   return (
     <>
       <form
@@ -591,70 +442,13 @@ const ChatInputCore = ({
               textareaRef.current?.focus();
           }}
         >
-          {!!attachedFiles.length && (
-            <div
-              className="flex min-w-0 flex-wrap items-center gap-2 px-3 pt-3"
-              aria-live="polite"
-            >
-              {attachedFiles.map((file) => (
-                <AttachmentChip
-                  key={file.id}
-                  file={file}
-                  disabled={controlsDisabled}
-                  onRemove={() => removeFile(file.id)}
-                />
-              ))}
-              <div className="ml-auto flex items-center gap-0.5">
-                {retryable && (
-                  <Hint hint="Upload now">
-                    <Button
-                      type="button"
-                      size="icon-sm"
-                      variant="ghost"
-                      aria-label="Upload / retry attachments"
-                      disabled={controlsDisabled}
-                      onClick={async () => {
-                        setIsStaging(true);
-                        try {
-                          await stageUploads();
-                        } finally {
-                          setIsStaging(false);
-                        }
-                      }}
-                    >
-                      <RefreshCwIcon />
-                    </Button>
-                  </Hint>
-                )}
-                <Hint hint="Discard attachments">
-                  <Button
-                    type="button"
-                    size="icon-sm"
-                    variant="ghost"
-                    aria-label="Discard attachments"
-                    disabled={controlsDisabled}
-                    onClick={discardAttachments}
-                  >
-                    <Trash2Icon />
-                  </Button>
-                </Hint>
-              </div>
-            </div>
-          )}
-          {attachedFiles
-            .filter((file) => file.state === "failed")
-            .map((file) => (
-              <p
-                className="text-destructive flex items-start gap-1.5 px-3 pt-2 text-xs"
-                key={`${file.id}-error`}
-                role="alert"
-              >
-                <AlertCircleIcon className="mt-px size-3.5 shrink-0" />
-                <span>
-                  {file.name}: {file.error}
-                </span>
-              </p>
-            ))}
+          <ComposerAttachments
+            files={attachedFiles}
+            disabled={controlsDisabled}
+            onRemove={removeFile}
+            onRetry={retryUploads}
+            onDiscard={discardAttachments}
+          />
           {sendError && (
             <p
               role="alert"
@@ -691,61 +485,17 @@ const ChatInputCore = ({
                   </fieldset>
                 )}
                 {imageMode && (
-                  <span
-                    className={cn(
-                      COMPOSER_CHIP,
-                      "bg-secondary text-secondary-foreground inline-flex items-center pr-0.5",
-                    )}
-                    title="Your next message describes an image to create."
-                  >
-                    <ImagePlusIcon
-                      aria-hidden="true"
-                      className="size-3.5 shrink-0"
-                    />
-                    <span className="truncate">Image</span>
-                    <Button
-                      type="button"
-                      size="icon-xs"
-                      variant="ghost"
-                      className="rounded-chip"
-                      disabled={controlsDisabled}
-                      aria-label="Don't create an image"
-                      onClick={() => setImageRequested(false)}
-                    >
-                      <XIcon />
-                    </Button>
-                  </span>
+                  <ImageRequestChip
+                    disabled={controlsDisabled}
+                    onRemove={() => setImageRequested(false)}
+                  />
                 )}
                 {appliedTemplate && (
-                  <span
-                    className={cn(
-                      COMPOSER_CHIP,
-                      "bg-secondary text-secondary-foreground inline-flex items-center pr-0.5",
-                    )}
-                    title={`This message records that it was built with ${appliedTemplate.name} at the ${appliedTemplate.use.level} level.`}
-                  >
-                    <LayoutTemplateIcon
-                      aria-hidden="true"
-                      className="size-3.5 shrink-0"
-                    />
-                    <span className="truncate">
-                      Built with {appliedTemplate.name}
-                    </span>
-                    <span className="text-muted-foreground shrink-0">
-                      · {levelLabel(appliedTemplate.use.level)}
-                    </span>
-                    <Button
-                      type="button"
-                      size="icon-xs"
-                      variant="ghost"
-                      className="rounded-chip"
-                      disabled={controlsDisabled}
-                      aria-label={`Remove ${appliedTemplate.name} template label`}
-                      onClick={() => skillComposer?.changeTemplate(null)}
-                    >
-                      <XIcon />
-                    </Button>
-                  </span>
+                  <TemplateLabelChip
+                    template={appliedTemplate}
+                    disabled={controlsDisabled}
+                    onRemove={() => skillComposer?.changeTemplate(null)}
+                  />
                 )}
               </div>
               <div
@@ -940,64 +690,3 @@ const ChatInputCore = ({
     </>
   );
 };
-
-const statusLabel: Record<UploadState, string> = {
-  queued: "Queued",
-  uploading: "Uploading…",
-  ready: "Ready",
-  failed: "Failed",
-};
-
-const AttachmentChip = ({
-  file,
-  disabled,
-  onRemove,
-}: {
-  file: AttachedFile;
-  disabled: boolean;
-  onRemove: () => void;
-}) => (
-  <div
-    className={cn(
-      "rounded-surface flex max-w-full min-w-0 items-center gap-2 border p-1 pr-1.5 text-xs",
-      file.state === "failed" ? "border-destructive" : "border-border",
-    )}
-  >
-    <span className="bg-background text-foreground rounded-control flex size-8 shrink-0 items-center justify-center overflow-hidden border">
-      {file.preview ? (
-        <img alt="" className="size-full object-cover" src={file.preview} />
-      ) : (
-        <FileTextIcon className="size-4" />
-      )}
-    </span>
-    <span className="flex min-w-0 flex-col leading-tight">
-      <span className="max-w-40 truncate font-medium sm:max-w-56">
-        {file.name}
-      </span>
-      <span
-        className={cn(
-          "flex items-center gap-1",
-          file.state === "failed"
-            ? "text-destructive"
-            : "text-muted-foreground",
-        )}
-      >
-        {file.state === "uploading" && (
-          <LoaderCircleIcon className="size-3 animate-spin" />
-        )}
-        {statusLabel[file.state]}
-      </span>
-    </span>
-    <Button
-      variant="ghost"
-      size="icon-xs"
-      aria-label={`Remove ${file.name}`}
-      className="rounded-control"
-      disabled={disabled}
-      onClick={onRemove}
-      type="button"
-    >
-      <XIcon />
-    </Button>
-  </div>
-);

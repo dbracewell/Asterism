@@ -25,7 +25,7 @@ Remove duplicated utilities and dead code, and split the largest components.
 
 ### US-82.4: Split oversized components
 
-- [ ] Extract hooks and subcomponents from `chat-session.tsx` (1,099 lines), `provider-setup-step.tsx` (1,059) and `chat-input.tsx` (1,015); one component per story step, no behavior change.
+- [x] Extract hooks and subcomponents from `chat-session.tsx` (1,099 lines), `provider-setup-step.tsx` (1,059) and `chat-input.tsx` (1,015); one component per story step, no behavior change.
 
 ## Notes
 

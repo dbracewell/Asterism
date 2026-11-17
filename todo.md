@@ -49,4 +49,5 @@ Source: [codebase review](codebase_review.md), verified against the code on 2026
 - [x] US-82.1: Shared utilities
 - [x] US-82.2: One boolean admin policy panel
 - [x] US-82.3: Dead code and small leaks
-- [ ] US-82.4: Split oversized components
+- [ ] US-82.4: Split oversized components (in progress)
+  - [x] `chat-session.tsx`, `chat-input.tsx` and `provider-setup-step.tsx` split into hooks and step/part components
