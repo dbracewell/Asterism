@@ -2,7 +2,6 @@ import {
   MAX_RATE_LIMIT_ENTRIES,
   checkRateLimit,
   clearRateLimitStore,
-  clientIpKey,
   rateLimitEntryCount,
 } from "@/features/sse/lib/rate-limiter";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -13,11 +12,6 @@ afterEach(() => {
 });
 
 describe("SSE rate limiter", () => {
-  it("normalizes forwarded addresses and rejects oversized keys", () => {
-    expect(clientIpKey("203.0.113.4, proxy")).toBe("203.0.113.4");
-    expect(clientIpKey("x".repeat(65))).toBe("unknown");
-  });
-
   it("expires entries lazily without a process-global interval", () => {
     vi.useFakeTimers();
     vi.setSystemTime(0);

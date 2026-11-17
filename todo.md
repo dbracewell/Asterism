@@ -61,7 +61,7 @@ Source: [codebase review](codebase_review.md), verified against the code on 2026
 
 - [x] US-79.1: Full-size images load
 - [x] US-79.2: Admin "Test" does not erase unsaved edits
-- [ ] US-79.3: System webhooks are not rate limited as one client
+- [x] US-79.3: System webhooks are not rate limited as one client
 - [x] US-79.4: Sign-in and auth robustness
 - [ ] US-79.5: SSE worker does not reconnect with no tabs
 - [ ] US-79.6: Pickers and image settings stop refetching the app

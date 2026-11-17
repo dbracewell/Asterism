@@ -1,6 +1,6 @@
 # EPIC-79: Frontend runtime fixes
 
-Status: in progress (US-79.1, US-79.2, US-79.4 done). Source: [codebase review](../../codebase_review.md), verified 2026-11-14 (items 4, 5, 6, 12, 18).
+Status: in progress (US-79.1–US-79.4 done). Source: [codebase review](../../codebase_review.md), verified 2026-11-14 (items 4, 5, 6, 12, 18).
 
 ## Objective
 
@@ -25,8 +25,8 @@ event webhooks, sign-in failures, and needless full-app refetches.
 
 ### US-79.3: System webhooks are not rate limited as one client
 
-- [ ] In `POST /api/stream`, do not apply the per-IP limit to requests authorized by the system key.
-- [ ] Test many system calls without `x-forwarded-for` succeed, and user requests are still limited.
+- [x] In `POST /api/stream`, do not apply the per-IP limit to requests authorized by the system key.
+- [x] Test many system calls without `x-forwarded-for` succeed, and user requests are still limited.
 
 ### US-79.4: Sign-in and auth robustness
 

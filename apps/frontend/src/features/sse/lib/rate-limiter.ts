@@ -12,12 +12,6 @@ function evictExpired(now: number): void {
   }
 }
 
-export function clientIpKey(forwardedFor: string | null): string {
-  const candidate = forwardedFor?.split(",", 1)[0]?.trim();
-  // Avoid retaining arbitrary-sized/high-cardinality header values as keys.
-  return candidate && candidate.length <= 64 ? candidate : "unknown";
-}
-
 export function checkRateLimit(key: string): boolean {
   const now = Date.now();
   const entry = rateLimitStore.get(key);
