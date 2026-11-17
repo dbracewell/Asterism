@@ -1,6 +1,6 @@
 # EPIC-82: Code cleanup and deduplication
 
-Status: proposed. Source: [codebase review](../../codebase_review.md), verified 2026-11-14 (items 18, 19).
+Status: in progress. Source: [codebase review](../../codebase_review.md), verified 2026-11-14 (items 18, 19).
 
 ## Objective
 
@@ -20,8 +20,8 @@ Remove duplicated utilities and dead code, and split the largest components.
 
 ### US-82.3: Dead code and small leaks
 
-- [ ] Delete `use-clickoutside.ts`, `formatURL`, the `chat-session:scroll` event and `useSubscribeEventState` (with its `console.log`).
-- [ ] `chatgpt/service.py`: replace `defaultdict(asyncio.Lock)` with a `WeakValueDictionary`, as in `files/produced.py`.
+- [x] Delete `use-clickoutside.ts`, `formatURL`, the `chat-session:scroll` event and `useSubscribeEventState` (with its `console.log`).
+- [x] `chatgpt/service.py`: replace `defaultdict(asyncio.Lock)` with a `WeakValueDictionary`, as in `files/produced.py`.
 
 ### US-82.4: Split oversized components
 

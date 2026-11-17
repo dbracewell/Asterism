@@ -16,11 +16,6 @@ export const EventPayloadSchemas = {
     project_id: z.string().nullable(),
   }),
   "connection:status": z.object({ status: z.boolean() }),
-  "chat-session:scroll": z.object({
-    session_id: z.string(),
-    canScroll: z.boolean(),
-    scrollToBottom: z.boolean(),
-  }),
 } as const;
 
 export type EventPayloadMap = {

@@ -14,7 +14,7 @@ from __future__ import annotations
 import asyncio
 import time
 import uuid
-from collections import defaultdict
+import weakref
 from dataclasses import dataclass
 from urllib.parse import urlencode, urlsplit
 
@@ -61,8 +61,17 @@ AUTHORIZATION_TTL_SECONDS = 600
 REFRESH_MARGIN_SECONDS = 300
 _REVOKE_ATTEMPTS = 3
 
-_refresh_locks: defaultdict[str, asyncio.Lock] = defaultdict(asyncio.Lock)
+_refresh_locks: weakref.WeakValueDictionary[str, asyncio.Lock] = weakref.WeakValueDictionary()
+"""Serializes token changes per user. Entries vanish when no caller holds them."""
 _oauth_client: ChatGPTOAuthClient | None = None
+
+
+def _refresh_lock(user_id: str) -> asyncio.Lock:
+    """Return the user's token lock, creating it when no caller holds one."""
+    lock = _refresh_locks.get(user_id)
+    if lock is None:
+        lock = _refresh_locks[user_id] = asyncio.Lock()
+    return lock
 
 
 def oauth_client() -> ChatGPTOAuthClient:
@@ -293,7 +302,7 @@ async def complete_authorization(
         logger.warning("ChatGPT authorization failed user=%s error=%s", user_id, type(error).__name__)
         return ChatGPTCallbackResult.FAILED
 
-    async with _refresh_locks[user_id]:
+    async with _refresh_lock(user_id):
         connection = await session.get(ChatGPTConnectionModel, user_id)
         if connection is not None and connection.subject != identity.subject:
             return ChatGPTCallbackResult.ACCOUNT_MISMATCH
@@ -344,7 +353,7 @@ async def disconnect(
     """
     oauth = oauth or oauth_client()
     confirmed = True
-    async with _refresh_locks[user_id]:
+    async with _refresh_lock(user_id):
         connection = await session.get(ChatGPTConnectionModel, user_id)
         if connection is not None and connection.refresh_token:
             confirmed = False
@@ -422,7 +431,7 @@ async def access_token(
         ChatGPTPlanUnavailable: With the reason the plan cannot be used.
     """
     oauth = oauth or oauth_client()
-    async with _refresh_locks[user_id], get_async_db_session() as session:
+    async with _refresh_lock(user_id), get_async_db_session() as session:
         reason = await plan_status(user_id, session)
         if reason is not None:
             raise ChatGPTPlanUnavailable(reason)
