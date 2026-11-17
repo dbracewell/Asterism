@@ -15,9 +15,9 @@ Bound the memory, network and CPU cost of `web_fetch` / `web_search`, and close 
 
 ### US-80.2: Pin the resolved address
 
-- [ ] Connect to the address that passed validation (custom transport or resolver), including each redirect hop; keep the Host header and TLS name.
-- [ ] Decide and document the Playwright path (route guard re-validates, but resolution is separate).
-- [ ] Test with a resolver that returns a public address first and a private one second.
+- [x] Connect to the address that passed validation (custom transport or resolver), including each redirect hop; keep the Host header and TLS name.
+- [x] Decide and document the Playwright path (route guard re-validates, but resolution is separate).
+- [x] Test with a resolver that returns a public address first and a private one second.
 
 ### US-80.3: Parse once, off the event loop
 
@@ -28,4 +28,4 @@ Bound the memory, network and CPU cost of `web_fetch` / `web_search`, and close 
 
 US-80.1: plain-HTTP fetches read at most 2 MiB (`_MAX_RESPONSE_BYTES`) and truncate the rest unread. Only `text/*`, XHTML, XML and JSON media types (including `+xml`/`+json`) are accepted; others raise `UnsupportedContentTypeError` before the body is read. The Playwright path applies the same type check and truncates rendered HTML to the same length.
 
-US-80.2 needs a short design note (ADR if the transport approach is non-trivial).
+US-80.2: see [ADR-0065](../adr/0065-pinned-fetch-transport.md). Plain HTTP connects to the validated IP (Host header and SNI keep the name); Chromium is locked out of the network and every browser request is served through the same pinned client. The unused `force_playwright` option was removed.
