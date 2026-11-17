@@ -89,7 +89,8 @@ async def test_event_bus_suppresses_handler_failure_and_cancels_on_shutdown():
 
     bus.emit(NoArgEvent(type=EventType.SYSTEM_STOP))
     await asyncio.sleep(0)
-    await bus.shutdown()
+    # A handler still running after the grace period is cancelled.
+    await bus.shutdown(timeout=0.01)
     assert cancelled.is_set()
     assert bus.pending_task_count == 0
 

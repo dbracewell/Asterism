@@ -4,6 +4,19 @@ import asyncio
 from collections.abc import Callable, Coroutine
 from typing import Any
 
+from asterism.common.log import get_logger
+
+logger = get_logger("JobManager")
+
+
+def log_task_failure(task: asyncio.Task[Any], name: str) -> None:
+    """Retrieve a finished task's exception so it is logged, never left unobserved."""
+    if task.cancelled():
+        return
+    error = task.exception()
+    if error is not None:
+        logger.error("Background task %s failed", name, exc_info=error)
+
 
 class JobManager[**P]:
     """Manage background asyncio jobs keyed by a unique string.
@@ -54,9 +67,14 @@ class JobManager[**P]:
 
         task = asyncio.create_task(_wrapper(self._semaphore, runnable, *args, **kwargs))
         self._tasks[key] = task
-        # Self-cleanup: drop the key when the task finishes or is cancelled.
-        task.add_done_callback(lambda _: self._tasks.pop(key, None))
+        task.add_done_callback(lambda finished: self._finished(key, finished))
         return True
+
+    def _finished(self, key: str, task: asyncio.Task[None]) -> None:
+        """Drop the key when its task ends, unless a newer job already reuses it (US-77.4)."""
+        if self._tasks.get(key) is task:
+            del self._tasks[key]
+        log_task_failure(task, key)
 
     def cancel_task(self, key: str) -> bool:
         """Cancel an active job by key (fire-and-forget; does not wait for completion).

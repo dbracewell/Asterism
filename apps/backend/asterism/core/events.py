@@ -24,6 +24,8 @@ from .config import config
 
 # Upper bound on concurrently tracked dispatch tasks; beyond this, new dispatches are dropped and counted.
 MAX_EVENT_HANDLER_TASKS = 100
+# How long shutdown lets in-flight handlers (such as SYSTEM_STOP's) finish.
+SHUTDOWN_GRACE_SECONDS = 5.0
 
 
 class EventType(StrEnum):
@@ -249,14 +251,18 @@ class EventBus:
         for handler in self.handlers[event.type].values():
             self._spawn(handler, event)
 
-    async def shutdown(self) -> None:
-        """Stop accepting new dispatches, cancel in-flight tasks, and wait for them to finish."""
+    async def shutdown(self, timeout: float = SHUTDOWN_GRACE_SECONDS) -> None:
+        """Stop accepting new dispatches, let in-flight tasks finish, then cancel the rest.
+
+        Handlers already dispatched (such as ``SYSTEM_STOP``'s) get up to
+        ``timeout`` seconds to complete before they are cancelled (US-77.4).
+        """
         self._shutting_down = True
         tasks = list(self._tasks)
-        for task in tasks:
-            if not task.done():
-                task.cancel()
         if tasks:
+            _, pending = await asyncio.wait(tasks, timeout=timeout)
+            for task in pending:
+                task.cancel()
             await asyncio.gather(*tasks, return_exceptions=True)
         self._tasks.clear()
 
