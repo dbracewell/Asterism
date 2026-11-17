@@ -1,6 +1,6 @@
 # EPIC-80: Fetch tool hardening
 
-Status: proposed. Source: [codebase review](../../codebase_review.md), verified 2026-11-14 (item 11).
+Status: in progress. Source: [codebase review](../../codebase_review.md), verified 2026-11-14 (item 11).
 
 ## Objective
 
@@ -10,8 +10,8 @@ Bound the memory, network and CPU cost of `web_fetch` / `web_search`, and close 
 
 ### US-80.1: Bounded, streamed fetch
 
-- [ ] Stream the response in `fetch_page`, stop at a byte cap, and reject non-textual `Content-Type` before reading the body.
-- [ ] Tests: large binary, oversized text, redirect to an internal host still rejected.
+- [x] Stream the response in `fetch_page`, stop at a byte cap, and reject non-textual `Content-Type` before reading the body.
+- [x] Tests: large binary, oversized text, redirect to an internal host still rejected.
 
 ### US-80.2: Pin the resolved address
 
@@ -25,5 +25,7 @@ Bound the memory, network and CPU cost of `web_fetch` / `web_search`, and close 
 - [ ] Test `web_search` over 10 URLs does not block the loop.
 
 ## Notes
+
+US-80.1: plain-HTTP fetches read at most 2 MiB (`_MAX_RESPONSE_BYTES`) and truncate the rest unread. Only `text/*`, XHTML, XML and JSON media types (including `+xml`/`+json`) are accepted; others raise `UnsupportedContentTypeError` before the body is read. The Playwright path applies the same type check and truncates rendered HTML to the same length.
 
 US-80.2 needs a short design note (ADR if the transport approach is non-trivial).

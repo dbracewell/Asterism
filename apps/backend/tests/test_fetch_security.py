@@ -1,4 +1,5 @@
-from typing import cast
+from collections.abc import AsyncIterator, Callable
+from typing import Any, cast
 from unittest.mock import AsyncMock, MagicMock
 
 import httpx
@@ -6,6 +7,7 @@ import pytest
 from asterism.domains.tools.builtin import fetch as fetch_module
 from asterism.domains.tools.builtin.fetch import (
     UnsafeFetchUrlError,
+    UnsupportedContentTypeError,
     _guard_playwright_route,
     fetch_page,
     validate_public_http_url,
@@ -61,33 +63,99 @@ async def test_validate_public_http_url_accepts_public_hostname(
     assert normalized == "http://example.com/docs?q=1"
 
 
+_REAL_ASYNC_CLIENT = httpx.AsyncClient
+
+
+def _serve(monkeypatch: pytest.MonkeyPatch, handler: Callable[[httpx.Request], httpx.Response]) -> None:
+    """Route fetch_page's HTTP client through ``handler`` and resolve every host publicly."""
+    monkeypatch.setattr(fetch_module, "_resolve_host_ips", lambda host, port: ["93.184.216.34"])
+
+    def client_factory(*args: object, **kwargs: Any) -> httpx.AsyncClient:
+        return _REAL_ASYNC_CLIENT(*args, transport=httpx.MockTransport(handler), **kwargs)
+
+    monkeypatch.setattr(fetch_module.httpx, "AsyncClient", client_factory)
+
+    async def no_browser(url: str) -> tuple[str, str]:
+        raise AssertionError(f"Playwright fallback should not run for {url}")
+
+    monkeypatch.setattr(fetch_module, "_js_site_fetch", no_browser)
+
+
+class _CountingBody(httpx.AsyncByteStream):
+    """Streamed body that records how many chunks the client consumed."""
+
+    def __init__(self, chunk: bytes, chunks: int) -> None:
+        self.chunk = chunk
+        self.chunks = chunks
+        self.consumed = 0
+
+    async def __aiter__(self) -> AsyncIterator[bytes]:
+        for _ in range(self.chunks):
+            self.consumed += 1
+            yield self.chunk
+
+
 @pytest.mark.asyncio
 async def test_fetch_page_blocks_redirect_to_internal_address(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setattr(fetch_module, "_resolve_host_ips", lambda host, port: ["93.184.216.34"])
-
-    class FakeAsyncClient:
-        def __init__(self, *args: object, **kwargs: object) -> None:
-            pass
-
-        async def __aenter__(self) -> "FakeAsyncClient":
-            return self
-
-        async def __aexit__(self, *args: object) -> None:
-            return None
-
-        async def get(self, url: str, **kwargs: object) -> httpx.Response:
-            return httpx.Response(
-                status_code=302,
-                headers={"Location": "http://127.0.0.1:8000/settings/app"},
-                request=httpx.Request("GET", url),
-            )
-
-    monkeypatch.setattr(fetch_module.httpx, "AsyncClient", FakeAsyncClient)
+    _serve(
+        monkeypatch,
+        lambda request: httpx.Response(302, headers={"Location": "http://127.0.0.1:8000/settings/app"}),
+    )
 
     with pytest.raises(UnsafeFetchUrlError, match="not a public routable address"):
         await fetch_page("https://example.com/start")
+
+
+@pytest.mark.asyncio
+async def test_fetch_page_rejects_binary_without_reading_body(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    body = _CountingBody(b"\x00" * 65536, chunks=1024)
+    _serve(
+        monkeypatch,
+        lambda request: httpx.Response(200, headers={"Content-Type": "application/octet-stream"}, stream=body),
+    )
+
+    with pytest.raises(UnsupportedContentTypeError, match="application/octet-stream"):
+        await fetch_page("https://example.com/disk.img")
+    assert body.consumed == 0
+
+
+@pytest.mark.asyncio
+async def test_fetch_page_stops_reading_oversized_text_at_byte_cap(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(fetch_module, "_MAX_RESPONSE_BYTES", 10_000)
+    body = _CountingBody(b"<p>" + b"a" * 4093 + b"</p>", chunks=1000)
+    _serve(
+        monkeypatch,
+        lambda request: httpx.Response(200, headers={"Content-Type": "text/html; charset=utf-8"}, stream=body),
+    )
+
+    page = await fetch_page("https://example.com/huge")
+
+    assert body.consumed == 3
+    assert page.mime_type == "text/html"
+    assert page.content.count("a") <= 10_000
+
+
+@pytest.mark.asyncio
+async def test_fetch_page_follows_public_redirect_and_reports_final_url(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path == "/start":
+            return httpx.Response(301, headers={"Location": "/final"})
+        return httpx.Response(200, headers={"Content-Type": "text/html"}, text="<p>" + "word " * 400 + "</p>")
+
+    _serve(monkeypatch, handler)
+
+    page = await fetch_page("https://example.com/start")
+
+    assert page.metadata["source"] == "https://example.com/final"
+    assert "word" in page.content
 
 
 @pytest.mark.asyncio
