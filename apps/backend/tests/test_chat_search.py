@@ -5,10 +5,10 @@ from asterism.db.model_registry import Base
 from asterism.domains.chat.models import ChatModel, MessageModel
 from asterism.domains.chat.schemas import MessageStatus, SearchMatchSource, SearchResultKind
 from asterism.domains.chat.search_index import initialize_search_index
-from asterism.domains.chat.service import search
+from asterism.domains.chat.service import delete_chat, delete_chats, search
 from asterism.domains.projects.models import ProjectModel
 from asterism.domains.user.models import UserModel
-from sqlalchemy import event
+from sqlalchemy import event, text
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 
@@ -447,3 +447,101 @@ async def test_search_hides_skill_drafting_chats(search_session):
     result = await search("user-a", "ocean", session=search_session)
 
     assert [item.id for item in result.results] == [chat.id]
+
+
+async def _chat_search_rowid(session, chat_id):
+    return await session.scalar(
+        text("SELECT rowid FROM chat_search WHERE chat_id = :chat_id"),
+        {"chat_id": chat_id.hex},
+    )
+
+
+async def _chat_hits(session, query):
+    result = await search("user-a", query, session=session)
+    return {item.id for item in result.results if item.kind is SearchResultKind.CHAT}
+
+
+@pytest.mark.asyncio
+async def test_search_tracks_message_edits_and_deletes(search_session):
+    chat = ChatModel(user_id="user-a", title="Notes")
+    search_session.add(chat)
+    await search_session.flush()
+    first = MessageModel(
+        user_id="user-a", chat_id=chat.id, role="user", content="glacier", status=MessageStatus.COMPLETED
+    )
+    second = MessageModel(
+        user_id="user-a", chat_id=chat.id, role="assistant", content="volcano", status=MessageStatus.COMPLETED
+    )
+    search_session.add_all([first, second])
+    await search_session.commit()
+    assert await _chat_hits(search_session, "glacier") == {chat.id}
+
+    first.content = "tundra"
+    await search_session.commit()
+    assert await _chat_hits(search_session, "glacier") == set()
+    assert await _chat_hits(search_session, "tundra") == {chat.id}
+
+    # A write that repeats the current content (as a whole-row UPDATE does)
+    # must not rebuild the chat's index row. A newer chat keeps that row from
+    # holding the highest rowid, so a rebuild would get a new one.
+    search_session.add(ChatModel(user_id="user-a", title="Later"))
+    await search_session.commit()
+    rowid = await _chat_search_rowid(search_session, chat.id)
+    await search_session.execute(
+        text("UPDATE messages SET content = content, chat_id = chat_id WHERE id = :id"), {"id": second.id.hex}
+    )
+    await search_session.commit()
+    assert await _chat_search_rowid(search_session, chat.id) == rowid
+
+    await search_session.delete(second)
+    await search_session.commit()
+    assert await _chat_hits(search_session, "volcano") == set()
+    assert await _chat_hits(search_session, "tundra") == {chat.id}
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("bulk", [False, True])
+async def test_chat_delete_clears_its_index_row_and_keeps_others(search_session, bulk):
+    doomed = ChatModel(user_id="user-a", title="Doomed")
+    kept = ChatModel(user_id="user-a", title="Kept")
+    search_session.add_all([doomed, kept])
+    await search_session.flush()
+    search_session.add_all(
+        [
+            MessageModel(
+                user_id="user-a", chat_id=chat.id, role="user", content=f"lagoon {n}", status=MessageStatus.COMPLETED
+            )
+            for chat in (doomed, kept)
+            for n in range(3)
+        ]
+    )
+    await search_session.commit()
+    assert await _chat_hits(search_session, "lagoon") == {doomed.id, kept.id}
+
+    if bulk:
+        await delete_chats("user-a", [doomed.id], session=search_session)
+    else:
+        await delete_chat("user-a", doomed.id, session=search_session)
+
+    assert await _chat_hits(search_session, "lagoon") == {kept.id}
+    remaining = await search_session.scalar(
+        text("SELECT count(*) FROM chat_search WHERE chat_id = :chat_id"), {"chat_id": doomed.id.hex}
+    )
+    assert remaining == 0
+    assert await search_session.scalar(text("SELECT count(*) FROM messages")) == 3
+
+
+@pytest.mark.asyncio
+async def test_initialize_search_index_replaces_existing_trigger_definitions(search_session):
+    connection = await search_session.connection()
+    await connection.execute(text("DROP TRIGGER chat_search_messages_ad"))
+    await connection.execute(
+        text("CREATE TRIGGER chat_search_messages_ad AFTER DELETE ON messages BEGIN SELECT 1; END")
+    )
+
+    await initialize_search_index(connection)
+
+    definition = await connection.scalar(
+        text("SELECT sql FROM sqlite_master WHERE type = 'trigger' AND name = 'chat_search_messages_ad'")
+    )
+    assert "WHEN EXISTS" in definition

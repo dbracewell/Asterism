@@ -12,9 +12,9 @@ Tighten queries, search triggers and file storage access, and bring `files/servi
 
 The message update trigger already fires only on `content`; the cost is on delete.
 
-- [ ] Guard `chat_search_messages_ad` with `WHEN EXISTS (SELECT 1 FROM chats WHERE id = OLD.chat_id)` so cascaded chat deletes skip the per-message re-index.
-- [ ] Add `WHEN OLD.content IS NOT NEW.content OR OLD.chat_id IS NOT NEW.chat_id` to the update trigger.
-- [ ] Test search stays correct after message edit, message delete and chat delete.
+- [x] Guard `chat_search_messages_ad` with `WHEN EXISTS (SELECT 1 FROM chats WHERE id = OLD.chat_id)` so cascaded chat deletes skip the per-message re-index.
+- [x] Add `WHEN OLD.content IS NOT NEW.content OR OLD.chat_id IS NOT NEW.chat_id` to the update trigger.
+- [x] Test search stays correct after message edit, message delete and chat delete.
 
 ### US-81.2: `paginate_select` counts correctly
 
@@ -43,3 +43,5 @@ The message update trigger already fires only on `content`; the cost is on delet
 ## Notes
 
 US-81.5 is a refactor; do it last and keep it separate from bug fixes.
+
+US-81.1: SQLite runs cascaded message deletes after the chat row is gone, so the `EXISTS` guard skips them (checked with a probe; both `delete_chat` and `delete_chats` rely on the DB cascade). The update trigger now fires on `content, chat_id` and rebuilds the old chat too when a message moves. `initialize_search_index` drops and recreates the triggers on every start, so existing databases pick up new definitions.
