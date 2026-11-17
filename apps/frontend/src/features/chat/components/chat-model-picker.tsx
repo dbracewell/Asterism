@@ -121,6 +121,8 @@ export function ExistingChatModelPicker({
   });
   const mutation = useMutation({
     ...chatModelUpdateMutation({ client }),
+    // onSelected writes the updated chat into the cache; nothing else changes.
+    meta: { skipGlobalInvalidation: true },
     onMutate: () => onPendingChange?.(true),
     onSuccess: onSelected,
     onSettled: () => onPendingChange?.(false),

@@ -147,6 +147,8 @@ export function ExistingChatLearningModePicker({
   });
   const mutation = useMutation({
     ...chatLearningModeUpdateMutation({ client }),
+    // onSelected writes the updated chat into the cache; nothing else changes.
+    meta: { skipGlobalInvalidation: true },
     onMutate: () => onPendingChange(true),
     onSettled: () => onPendingChange(false),
     onSuccess: onSelected,

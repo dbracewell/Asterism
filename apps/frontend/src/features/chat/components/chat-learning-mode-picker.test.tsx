@@ -10,6 +10,7 @@ import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
+import { appQueryClient, seedUnrelatedQuery } from "@/test/query-client";
 import {
   ExistingChatLearningModePicker,
   LearningModePicker,
@@ -277,4 +278,39 @@ it("makes a locked chat wait and confirm before switching to Standard", async ()
       learning_mode_locked: false,
     }),
   );
+});
+
+it("refetches nothing else after changing a chat's mode", async () => {
+  const info: ChatInfo = {
+    id: "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
+    user_id: "a",
+    created_at: 0,
+    updated_at: 0,
+    learning_mode: "standard",
+    learning_mode_revision: 3,
+  };
+  api.chatLearningModeUpdate.mockResolvedValueOnce({
+    data: { ...info, learning_mode: "tutor", learning_mode_revision: 4 },
+  });
+  const cache = appQueryClient();
+  const unrelatedInvalidated = seedUnrelatedQuery(cache);
+  const user = userEvent.setup();
+  render(
+    <QueryClientProvider client={cache}>
+      <LockedHarness info={info} />
+    </QueryClientProvider>,
+  );
+  const selector = await screen.findByRole("combobox", {
+    name: "Learning mode",
+  });
+  await waitFor(() => expect(selector).toBeEnabled());
+  await user.click(selector);
+  await user.click(await screen.findByRole("option", { name: "Tutor" }));
+  await waitFor(() =>
+    expect(changed.mock.calls[0]?.[0]).toMatchObject({
+      learning_mode: "tutor",
+    }),
+  );
+  expect(unrelatedInvalidated()).toBe(false);
+  expect(api.learningModeGetMany).toHaveBeenCalledTimes(1);
 });
