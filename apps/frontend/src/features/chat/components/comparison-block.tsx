@@ -229,7 +229,9 @@ function Column({
       ? "Waiting"
       : column.status === "cancelled"
         ? "Stopped"
-        : null;
+        : column.status === "failed"
+          ? "Failed"
+          : null;
   return (
     <article
       id={columnElementId(comparisonId, column.index)}

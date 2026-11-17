@@ -22,6 +22,7 @@ from asterism.domains.chat.schemas import (
     ChatInfo,
     Message,
     MessageStatus,
+    NewMessageRequest,
 )
 from asterism.domains.llm.schemas import ImageUrlContent, ImageUrlContentPart, LLMMessage, TextContentPart
 
@@ -227,26 +228,32 @@ async def test_empty_model_completion_is_not_persisted_as_a_blank_message(monkey
     async def assembled_messages():
         return [LLMMessage.user("Tell me something")], []
 
-    async def should_not_persist(**_kwargs):
-        raise AssertionError("empty completion must not create an assistant message")
+    saved: list[NewMessageRequest] = []
+
+    async def record_failure(*, message, **_kwargs):
+        saved.append(message)
+        return Message(id=uuid.uuid4(), created_at=2, **message.model_dump(exclude={"execution", "files"}))
+
+    async def mark_request(*, message_id, payload, **_kwargs):
+        return chat.messages[0].model_copy(update={"status": payload.status})
 
     async def fits(messages, files):
         return messages, files
 
     monkeypatch.setattr(orchestrator, "_assemble_agent_messages", assembled_messages)
     monkeypatch.setattr(orchestrator, "_fit_context", fits)
-    monkeypatch.setattr(
-        "asterism.domains.chat.orchestrator.chat_service.add_message",
-        should_not_persist,
-    )
+    monkeypatch.setattr("asterism.domains.chat.orchestrator.chat_service.add_message", record_failure)
+    monkeypatch.setattr("asterism.domains.chat.orchestrator.chat_service.write_message_update", mark_request)
 
     await orchestrator.run_agent()
 
-    assert len(chat.messages) == 1
-    assert await orchestrator.queue.get() == {
-        "type": "error",
-        "content": "The model returned an empty response. Please try again.",
-    }
+    # One failed step carries the error (US-77.2); it is never a blank completed answer.
+    error = "The model returned an empty response. Please try again."
+    [step] = saved
+    assert (step.status, step.content, step.error) == (MessageStatus.FAILED, "", error)
+    assert [message.status for message in chat.messages] == [MessageStatus.FAILED, MessageStatus.FAILED]
+    assert (await orchestrator.queue.get())["type"] == "complete"
+    assert await orchestrator.queue.get() == {"type": "error", "content": error, "error_code": None}
 
 
 @pytest.mark.asyncio

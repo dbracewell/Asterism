@@ -62,3 +62,14 @@ it("omits the model for user messages and replies without provenance", () => {
     unmount();
   }
 });
+
+it("labels stopped and failed replies", () => {
+  for (const [status, label] of [
+    ["cancelled", "Stopped · "],
+    ["failed", "Failed · "],
+  ] as const) {
+    const { container, unmount } = renderMeta(message({ status }));
+    expect(container.firstChild?.textContent).toContain(label);
+    unmount();
+  }
+});

@@ -1446,7 +1446,7 @@ export const zImageTestRequest = z.object({
  *
  * One ``asterism-file:`` reference in saved Markdown, resolved at save time (ADR-0039).
  *
- * Unavailable references carry only ``file_id``: no role, name, type or size is
+ * Unavailable references carry only ``file_id``: no role, name, filename, type or size is
  * ever recorded or returned for them, so a foreign or guessed ID reveals nothing
  * a missing ID would not. ``available`` is rechecked against live scope on read.
  */
@@ -1994,7 +1994,12 @@ export const zMessageForkRequest = z.object({
 /**
  * MessageStatus
  */
-export const zMessageStatus = z.enum(["pending", "completed", "cancelled"]);
+export const zMessageStatus = z.enum([
+  "pending",
+  "completed",
+  "cancelled",
+  "failed",
+]);
 
 /**
  * ModelCapabilitySource
@@ -4983,6 +4988,7 @@ export const zMessage = z.object({
   execution: zMessageExecution.nullish(),
   id: z.uuid(),
   status: zMessageStatus,
+  error: z.string().nullish(),
   created_at: z.int(),
   model_id: z.uuid().nullish(),
   input_tokens: z.int().optional().default(0),
@@ -5032,7 +5038,7 @@ export const zComparisonColumn = z.object({
   request: zMessage,
   replies: z.array(zMessage).optional(),
   model: zChatModelChoice.nullish(),
-  status: z.enum(["pending", "completed", "cancelled"]),
+  status: z.enum(["pending", "completed", "cancelled", "failed"]),
   input_tokens: z.int().optional().default(0),
   output_tokens: z.int().optional().default(0),
   total_tokens: z.int().optional().default(0),

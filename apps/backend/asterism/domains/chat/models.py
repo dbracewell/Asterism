@@ -259,6 +259,8 @@ class MessageModel(Base, TimestampMixin, UuidPrimaryKeyMixin):
         nullable=False,
         default="",
     )
+    # Why a failed step ended (US-77.2).
+    error: Mapped[str | None] = mapped_column(Text, nullable=True)
     tool_calls: Mapped[list[ToolCall] | None] = mapped_column(
         jsonb_type(TypeAdapter(list[ToolCall])),
         nullable=True,

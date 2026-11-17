@@ -9,7 +9,7 @@ import {
 import { checkRateLimit, clientIpKey } from "@/features/sse/lib/rate-limiter";
 import { EventMessage, EventMessageSchema } from "@/features/sse/schemas";
 import { getAuth } from "@/lib/auth";
-import { matchesAdminPassphrase } from "@/lib/auth-core";
+import { hashMatch } from "@/lib/auth-core";
 import { getFrontendServerConfig } from "@/lib/server-config";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -29,7 +29,7 @@ export async function OPTIONS() {
 export async function POST(req: NextRequest) {
   const session = await getAuth().api.getSession({ headers: req.headers });
   const systemKey = req.headers.get("x-asterism-system-key");
-  const isAuthorizedSystem = matchesAdminPassphrase(
+  const isAuthorizedSystem = hashMatch(
     systemKey,
     getFrontendServerConfig().systemKey,
   );

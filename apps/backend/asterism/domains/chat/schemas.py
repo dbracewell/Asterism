@@ -34,6 +34,8 @@ class MessageStatus(StrEnum):
     PENDING = auto()
     COMPLETED = auto()
     CANCELLED = auto()
+    # The run ended with an error (US-77.2); it is never resumed.
+    FAILED = auto()
 
 
 DelegationStatus = Literal["running", "completed", "error", "cancelled"]
@@ -232,6 +234,7 @@ class NewMessageRequest(BaseModel):
     delegations: list[DelegationRecord] | None = Field(default=None)
     context: ContextManifest | None = None
     files: list[uuid.UUID] = Field(default_factory=list, max_length=100)
+    error: str | None = None
 
 
 class Message(LLMMessage):
@@ -250,6 +253,8 @@ class Message(LLMMessage):
     content: str  # type: ignore[reportIncompatibleVariableOverride] - persisted messages are text only
     id: uuid.UUID
     status: MessageStatus
+    # Why a failed step ended (US-77.2); None otherwise.
+    error: str | None = None
     created_at: int
     model_id: uuid.UUID | None = None
     input_tokens: int = Field(default=0)
@@ -621,7 +626,7 @@ class MessageCompareRequest(BaseModel):
     targets: list[ComparisonTarget] = Field(min_length=1, max_length=MAX_COMPARISON_COLUMNS - 1)
 
 
-ComparisonColumnStatus = Literal["pending", "completed", "cancelled"]
+ComparisonColumnStatus = Literal["pending", "completed", "cancelled", "failed"]
 
 
 class ComparisonColumn(BaseModel):

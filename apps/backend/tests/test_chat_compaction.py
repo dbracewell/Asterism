@@ -358,9 +358,10 @@ async def test_a_failed_compaction_reports_an_error_and_sends_nothing(project_ap
     else:
         raise AssertionError("never tried to compact")
     assert "could not be compacted" in errors[0]["content"]
-    # The oversized request was never sent and the turn stays pending.
+    # The oversized request was never sent, and the turn failed rather than
+    # staying pending to retry on every reconnect (US-77.2).
     assert len(rig.seen) == runs and not await rig.records()
-    assert (await rig.branch())[-1].status == MessageStatus.PENDING
+    assert (await rig.branch())[-1].status == MessageStatus.FAILED
 
 
 @pytest.mark.asyncio

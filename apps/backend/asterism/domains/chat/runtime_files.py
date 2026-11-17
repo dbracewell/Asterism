@@ -67,7 +67,7 @@ async def read_execution_files(
                 request is None
                 or request.user_id != scope.user_id
                 or request.chat_id != scope.chat_id
-                or request.status == MessageStatus.CANCELLED
+                or request.status in (MessageStatus.CANCELLED, MessageStatus.FAILED)
                 or request.pending_execution is None
                 or request.pending_execution.id != scope.execution_id
             ):

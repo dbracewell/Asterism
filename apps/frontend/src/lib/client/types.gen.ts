@@ -1499,7 +1499,7 @@ export type ComparisonColumn = {
   /**
    * Status
    */
-  status: "pending" | "completed" | "cancelled";
+  status: "pending" | "completed" | "cancelled" | "failed";
   /**
    * Input Tokens
    */
@@ -3635,7 +3635,7 @@ export type ImageTestRequest = {
  *
  * One ``asterism-file:`` reference in saved Markdown, resolved at save time (ADR-0039).
  *
- * Unavailable references carry only ``file_id``: no role, name, type or size is
+ * Unavailable references carry only ``file_id``: no role, name, filename, type or size is
  * ever recorded or returned for them, so a foreign or guessed ID reveals nothing
  * a missing ID would not. ``available`` is rechecked against live scope on read.
  */
@@ -4580,6 +4580,10 @@ export type Message = {
   id: string;
   status: MessageStatus;
   /**
+   * Error
+   */
+  error?: string | null;
+  /**
    * Created At
    */
   created_at: number;
@@ -4780,7 +4784,7 @@ export type MessageForkRequest = {
 /**
  * MessageStatus
  */
-export type MessageStatus = "pending" | "completed" | "cancelled";
+export type MessageStatus = "pending" | "completed" | "cancelled" | "failed";
 
 /**
  * MessageVerification

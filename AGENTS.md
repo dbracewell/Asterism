@@ -355,3 +355,23 @@ Keep documentation updated when behavior changes:
 - Ordinary capabilities require explicit assignment; internal tools require live server-derived context and admin policy.
 - Story completion requires task completion + passing tests + user confirmation before merge.
 - Only one user story is actively implemented at a time.
+
+# Codebase Exploration & Search Rules
+
+Do NOT read entire files or scan broad directories at the start of a session. Explore code in stages to minimize context usage:
+
+1. **Map Structure First (`ast-grep outline`)**:
+   - Before reading any source file, get a cheap structural table of contents:
+     `ast-grep outline <file-or-dir>`
+   - To inspect a directory's public surface or dependencies without reading implementations:
+     `ast-grep outline <dir> --items exports` or `ast-grep outline <dir> --items imports`
+   - To view method/function signatures of a specific class or struct:
+     `ast-grep outline <file> --type class,function --view signatures`
+
+2. **Structural Search (`ast-grep run`)**:
+   - For any search involving syntax, function calls, hooks, classes, or AST structure, default to `ast-grep` over `grep`/`rg`:
+     `ast-grep run --lang <language> -p '<pattern>'`
+   - Only use plain-text search (`rg`/`Grep`) for literal strings, comments, or file names.
+
+3. **Targeted File Reads**:
+   - Only after identifying the exact symbol and line numbers via `ast-grep outline` or `ast-grep run`, use the `Read` tool with specific `offset` and `limit` line ranges instead of reading the whole file.

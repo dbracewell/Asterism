@@ -18,7 +18,7 @@ export function tokensPerSecond(message: StreamingMessage): string | null {
 }
 
 /**
- * Executed model, stopped state, relative time and generation speed. The model
+ * Executed model, stopped or failed state, relative time and generation speed. The model
  * name is the reply's recorded provenance, not the chat's current selection;
  * its title carries the provider and configuration revision. The time is focusable
  * and shows the full timestamp in the user's time zone; on touch, a tap opens
@@ -47,6 +47,7 @@ export const MessageMeta = ({ message }: { message: StreamingMessage }) => {
         </>
       )}
       {message.status === "cancelled" && "Stopped · "}
+      {message.status === "failed" && "Failed · "}
       <Tooltip open={open} onOpenChange={setOpen}>
         <TooltipTrigger asChild>
           <time
