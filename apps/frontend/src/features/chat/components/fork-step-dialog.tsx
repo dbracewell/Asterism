@@ -22,16 +22,9 @@ import {
 } from "@/lib/client/@tanstack/react-query.gen";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useId, useState } from "react";
+import { errorDetail } from "@/lib/utils";
 
 export type ForkSource = { messageId: string; record: DelegationRecord };
-
-const errorDetail = (error: unknown) =>
-  error &&
-  typeof error === "object" &&
-  "detail" in error &&
-  typeof error.detail === "string"
-    ? error.detail
-    : "Retry, or reload the page if it keeps failing.";
 
 /**
  * "Fork from here" (US-54.5, ADR-0038): edit one sub-agent's instructions for
@@ -103,7 +96,10 @@ function ForkForm({
       ) : instructions.error ? (
         <>
           <p role="alert" className="text-destructive text-sm">
-            {errorDetail(instructions.error)}
+            {errorDetail(
+              instructions.error,
+              "Retry, or reload the page if it keeps failing.",
+            )}
           </p>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>
@@ -187,7 +183,10 @@ function ForkEditor({
         )}
         {(fork.error || save.error) && (
           <p role="alert" className="text-destructive">
-            {errorDetail(fork.error ?? save.error)}
+            {errorDetail(
+              fork.error ?? save.error,
+              "Retry, or reload the page if it keeps failing.",
+            )}
           </p>
         )}
       </div>

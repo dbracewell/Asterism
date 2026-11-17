@@ -1,13 +1,13 @@
 "use client";
 
 import { Switch } from "@/components/ui/switch";
-import { errorDetail } from "@/features/classes/error-detail";
 import { client } from "@/lib/api";
 import type { JoinedClass } from "@/lib/client";
 import { classInsightsConsentUpdateMutation } from "@/lib/client/@tanstack/react-query.gen";
 import { useMutation } from "@tanstack/react-query";
 import { useId } from "react";
 import { HelpTopic } from "@/features/help/components/help-topic";
+import { errorDetail } from "@/lib/utils";
 
 /** A student's opt-in to class-wide totals (US-60.5). Off by default. */
 export function InsightsConsent({ item }: { item: JoinedClass }) {

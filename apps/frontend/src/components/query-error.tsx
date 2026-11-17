@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Empty, EmptyDescription, EmptyTitle } from "@/components/ui/empty";
+import { errorDetail } from "@/lib/utils";
 
 export function QueryError({
   error,
@@ -12,21 +13,13 @@ export function QueryError({
   retry: () => unknown;
   isRetrying: boolean;
 }) {
-  const detail =
-    error &&
-    typeof error === "object" &&
-    "detail" in error &&
-    typeof error.detail === "string"
-      ? error.detail
-      : null;
+  const detail = errorDetail(error, "Check your connection, then retry.");
 
   return (
     <Empty className="flex-none gap-2 p-4">
       <div role="alert">
         <EmptyTitle className="text-destructive">{message}</EmptyTitle>
-        <EmptyDescription>
-          {detail ?? "Check your connection, then retry."}
-        </EmptyDescription>
+        <EmptyDescription>{detail}</EmptyDescription>
       </div>
       <Button
         variant="outline"

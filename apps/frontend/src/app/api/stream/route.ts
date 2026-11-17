@@ -6,7 +6,7 @@ import {
   sseListenerCount,
   subscribeSse,
 } from "@/features/sse/lib/event-emitter";
-import { checkRateLimit } from "@/features/sse/lib/rate-limiter";
+import { streamLimiter } from "@/features/sse/lib/stream-limit";
 import { EventMessage, EventMessageSchema } from "@/features/sse/schemas";
 import { getAuth } from "@/lib/auth";
 import { hashMatch } from "@/lib/auth-core";
@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
   // The backend's event webhook is trusted and sends no client address, so
   // limiting it would throttle every user's events as one client. Only
   // browser callers are limited, per user.
-  if (session?.user && !checkRateLimit(`user:${session.user.id}`)) {
+  if (session?.user && !streamLimiter.attempt(`user:${session.user.id}`)) {
     return NextResponse.json(
       { message: "Too many requests" },
       { status: 429, headers: { "Retry-After": "60" } },

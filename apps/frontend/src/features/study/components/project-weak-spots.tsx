@@ -13,9 +13,9 @@ import {
 import { useMutation, useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { studyErrorDetail } from "../lib/error-detail";
 import { questionCountLabel } from "../lib/quiz";
 import { HelpHeading } from "@/features/help/components/help-heading";
+import { errorDetail } from "@/lib/utils";
 
 const SHOWN = 5;
 export const PRACTICE_QUESTIONS = 10;
@@ -92,7 +92,7 @@ export function ProjectWeakSpots({ projectId }: { projectId: string }) {
       </p>
       {practice.error && (
         <p role="alert" className="text-destructive text-sm">
-          {studyErrorDetail(
+          {errorDetail(
             practice.error,
             "Could not build a practice quiz. Try again.",
           )}

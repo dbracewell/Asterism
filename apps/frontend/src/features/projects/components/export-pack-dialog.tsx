@@ -27,6 +27,7 @@ import {
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useId, useState } from "react";
 import { HelpTopic } from "@/features/help/components/help-topic";
+import { errorDetail } from "@/lib/utils";
 
 const PAGE = { page: 1, page_size: 100 };
 // Mirrors the pack format limits (ADR-0051).
@@ -46,15 +47,6 @@ function downloadPack(pack: PackManifest) {
   link.download = `${pack.pack.id}-${pack.pack.version}.team-pack.json`;
   link.click();
   URL.revokeObjectURL(url);
-}
-
-function errorDetail(error: unknown) {
-  return error &&
-    typeof error === "object" &&
-    "detail" in error &&
-    typeof error.detail === "string"
-    ? error.detail
-    : "Could not build the pack. Reload and retry.";
 }
 
 /**
@@ -230,7 +222,10 @@ function ExportPackForm({
       </div>
       {exportPack.error && (
         <p role="alert" className="text-destructive text-sm">
-          {errorDetail(exportPack.error)}
+          {errorDetail(
+            exportPack.error,
+            "Could not build the pack. Reload and retry.",
+          )}
         </p>
       )}
       <DialogFooter>

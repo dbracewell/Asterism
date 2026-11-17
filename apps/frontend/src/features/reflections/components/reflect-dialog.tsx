@@ -23,19 +23,11 @@ import { useId, useState } from "react";
 import { toast } from "sonner";
 import { reflectionMutationInvalidates } from "../queries";
 import { HelpTopic } from "@/features/help/components/help-topic";
+import { errorDetail } from "@/lib/utils";
 
 export const LEARNED_PROMPT = "What did I learn?";
 export const UNCLEAR_PROMPT = "What's still unclear?";
 export const MAX_REFLECTION_CHARS = 2000;
-
-function detail(error: unknown, fallback: string) {
-  return error &&
-    typeof error === "object" &&
-    "detail" in error &&
-    typeof error.detail === "string"
-    ? error.detail
-    : fallback;
-}
 
 /**
  * Reflect at the end of a session (US-58.2): two short prompts, an optional
@@ -148,12 +140,12 @@ function ReflectForm({
       </Field>
       {suggest.error && (
         <p role="alert" className="text-destructive text-sm">
-          {detail(suggest.error, "Could not suggest a reflection.")}
+          {errorDetail(suggest.error, "Could not suggest a reflection.")}
         </p>
       )}
       {save.error && (
         <p role="alert" className="text-destructive text-sm">
-          {detail(save.error, "Could not save the reflection. Retry.")}
+          {errorDetail(save.error, "Could not save the reflection. Retry.")}
         </p>
       )}
       <DialogFooter className="sm:justify-between">

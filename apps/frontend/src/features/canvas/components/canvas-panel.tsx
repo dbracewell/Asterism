@@ -35,7 +35,7 @@ import {
   canvasVersionGetOneOptions,
   canvasVersionRestoreMutation,
 } from "@/lib/client/@tanstack/react-query.gen";
-import { cn, isErrorDetail } from "@/lib/utils";
+import { cn, errorDetail } from "@/lib/utils";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { MessageSquareTextIcon, XIcon } from "lucide-react";
 import dynamic from "next/dynamic";
@@ -49,11 +49,6 @@ const CanvasEditor = dynamic(() => import("./canvas-editor"), {
   ssr: false,
   loading: () => <Skeleton className="h-full min-h-64 w-full" />,
 });
-
-const errorText = (error: unknown, fallback: string) =>
-  isErrorDetail(error) && typeof error.detail === "string"
-    ? error.detail
-    : fallback;
 
 const authorLabel = (author: string) => (author === "user" ? "You" : "Agent");
 
@@ -103,7 +98,7 @@ export function CanvasPanel({
       <div className="flex h-full flex-col gap-3 p-4">
         {!headerless && <PanelClose />}
         <p role="alert" className="text-sm">
-          {errorText(
+          {errorDetail(
             history.error,
             "This canvas item isn't on the branch you're viewing.",
           )}
@@ -224,7 +219,7 @@ function VersionView({
       </header>
       {version.error ? (
         <p role="alert" className="p-4 text-sm">
-          {errorText(version.error, "Could not load this version.")}
+          {errorDetail(version.error, "Could not load this version.")}
         </p>
       ) : !version.data ? (
         <Skeleton className="m-3 h-full" />
@@ -240,7 +235,7 @@ function VersionView({
       <footer className="flex flex-wrap items-center gap-2 border-t px-3 py-2">
         {(save.error || restore.error) && (
           <p role="alert" className="text-destructive w-full text-xs">
-            {errorText(
+            {errorDetail(
               save.error ?? restore.error,
               "Could not save the canvas.",
             )}
@@ -448,7 +443,7 @@ function AskAboutSelection({
       setInstruction("");
       setOpen(false);
     } catch (cause) {
-      setError(errorText(cause, "Could not send the request."));
+      setError(errorDetail(cause, "Could not send the request."));
     } finally {
       setSending(false);
     }

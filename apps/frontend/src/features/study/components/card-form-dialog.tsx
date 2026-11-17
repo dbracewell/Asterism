@@ -24,7 +24,7 @@ import {
 } from "@/lib/client/@tanstack/react-query.gen";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
-import { studyErrorDetail } from "../lib/error-detail";
+import { errorDetail } from "@/lib/utils";
 
 export const CARD_SIDE_MAX = 4000;
 
@@ -137,7 +137,7 @@ function CardForm({
       </FieldGroup>
       {error && (
         <p role="alert" className="text-destructive text-sm">
-          {studyErrorDetail(error, "Could not save the card. Try again.")}
+          {errorDetail(error, "Could not save the card. Try again.")}
         </p>
       )}
       <DialogFooter>

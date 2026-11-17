@@ -28,9 +28,9 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { studyErrorDetail } from "../lib/error-detail";
 import { CardCitations } from "./card-citations";
 import { NOTE_TITLE_MAX } from "./save-note";
+import { errorDetail } from "@/lib/utils";
 
 export const NOTE_BODY_MAX = 100_000;
 
@@ -105,7 +105,7 @@ export function NotePage({
           />
           {remove.error && (
             <p role="alert" className="text-destructive text-sm">
-              {studyErrorDetail(remove.error, "Could not delete the note.")}
+              {errorDetail(remove.error, "Could not delete the note.")}
             </p>
           )}
           <article aria-label="Note" className="min-w-0">
@@ -215,10 +215,7 @@ function EditNoteForm({
       </FieldGroup>
       {update.error && (
         <p role="alert" className="text-destructive text-sm">
-          {studyErrorDetail(
-            update.error,
-            "Could not save the note. Try again.",
-          )}
+          {errorDetail(update.error, "Could not save the note. Try again.")}
         </p>
       )}
       <DialogFooter>

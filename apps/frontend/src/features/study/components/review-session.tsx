@@ -26,9 +26,9 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 import { toast } from "sonner";
-import { studyErrorDetail } from "../lib/error-detail";
 import { describeInterval, formatInterval } from "../lib/intervals";
 import { CardCitations } from "./card-citations";
+import { errorDetail } from "@/lib/utils";
 
 type StudyRating = keyof StudyReviewPreview;
 
@@ -217,7 +217,7 @@ function Session({
         );
       } else {
         toast.error(
-          studyErrorDetail(error, "Could not save your rating. Try again."),
+          errorDetail(error, "Could not save your rating. Try again."),
         );
       }
     }

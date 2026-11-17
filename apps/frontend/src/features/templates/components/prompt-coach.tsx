@@ -15,17 +15,10 @@ import {
 import { useState } from "react";
 import { applySuggestion, criterionLabel } from "../lib/coach";
 import { coachStatusOptions } from "../queries";
+import { errorDetail } from "@/lib/utils";
 
 export const COACH_UNAVAILABLE_HINT =
   "Prompt review needs a draft model or a connected ChatGPT plan";
-
-const errorDetail = (error: unknown) =>
-  error &&
-  typeof error === "object" &&
-  "detail" in error &&
-  typeof error.detail === "string"
-    ? error.detail
-    : "The prompt could not be reviewed. Try again.";
 
 /**
  * One composer's prompt-coach session. The review lives only in this state:
@@ -154,7 +147,12 @@ export function PromptCoachPanel({
               className="text-destructive flex min-w-0 items-start gap-1.5"
             >
               <AlertCircleIcon className="mt-0.5 size-3.5 shrink-0" />
-              <span>{errorDetail(coach.error)}</span>
+              <span>
+                {errorDetail(
+                  coach.error,
+                  "The prompt could not be reviewed. Try again.",
+                )}
+              </span>
             </p>
             <Button
               type="button"

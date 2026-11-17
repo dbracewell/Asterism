@@ -35,6 +35,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type ChangeEvent, type ReactNode, useId, useState } from "react";
 import { HelpTopic } from "@/features/help/components/help-topic";
+import { errorDetail } from "@/lib/utils";
 
 // Mirrors the pack format limit (ADR-0051).
 const MAX_PACK_BYTES = 1_048_576;
@@ -54,15 +55,6 @@ type AgentChoice = ItemChoice & {
 };
 type SkillChoice = ItemChoice & { assign: boolean };
 type Choices<T> = Record<string, T>;
-
-function errorDetail(error: unknown, fallback: string) {
-  return error &&
-    typeof error === "object" &&
-    "detail" in error &&
-    typeof error.detail === "string"
-    ? error.detail
-    : fallback;
-}
 
 function requirementText(agent: PackSubAgentReview) {
   const { tools, vision, min_context_window } = agent.model_requirements ?? {};

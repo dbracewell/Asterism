@@ -29,7 +29,6 @@ import {
 import { useMutation, useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useState } from "react";
-import { studyErrorDetail } from "../lib/error-detail";
 import { CardCitations } from "./card-citations";
 import { CARD_SIDE_MAX } from "./card-form-dialog";
 import {
@@ -40,6 +39,7 @@ import {
   useStudyModel,
 } from "./source-fields";
 import { PendingStatus } from "./pending-status";
+import { errorDetail } from "@/lib/utils";
 
 export const MAX_DRAFT_CARDS = 30;
 export const MAX_DRAFT_FILES = MAX_SOURCE_FILES;
@@ -165,7 +165,7 @@ function DraftWorkspace({
     } catch (error) {
       patch(draft.key, {
         status: "pending",
-        error: studyErrorDetail(error, "Could not save this card. Try again."),
+        error: errorDetail(error, "Could not save this card. Try again."),
       });
     }
   }
@@ -190,10 +190,7 @@ function DraftWorkspace({
       )}
       {generate.error && (
         <p role="alert" className="text-destructive text-sm">
-          {studyErrorDetail(
-            generate.error,
-            "Could not draft cards. Try again.",
-          )}
+          {errorDetail(generate.error, "Could not draft cards. Try again.")}
         </p>
       )}
       {batch && !generate.isPending && (

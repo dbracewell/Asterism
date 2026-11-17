@@ -63,7 +63,7 @@ import {
   chatModelsListOptions,
   userSettingUpdateMutation,
 } from "@/lib/client/@tanstack/react-query.gen";
-import { cn } from "@/lib/utils";
+import { cn, errorDetail } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   keepPreviousData,
@@ -151,14 +151,8 @@ const savedProvider = (provider: ProviderSummary): ProviderFormValues => ({
 });
 
 /** The API's safe error text, without its machine-readable category prefix. */
-function errorDetail(error: unknown) {
-  const detail =
-    error &&
-    typeof error === "object" &&
-    "detail" in error &&
-    typeof error.detail === "string"
-      ? error.detail
-      : null;
+function errorSuffix(error: unknown) {
+  const detail = errorDetail(error, "");
   return detail ? ` ${detail.replace(/^[a-z_]+: /, "")}` : "";
 }
 
@@ -491,7 +485,7 @@ function ConnectStep({
         },
       });
     } catch (cause) {
-      showError(`The provider could not be saved.${errorDetail(cause)}`);
+      showError(`The provider could not be saved.${errorSuffix(cause)}`);
       return;
     }
     try {
@@ -507,7 +501,7 @@ function ConnectStep({
       onConnected(values.id);
     } catch (cause) {
       showError(
-        `Model discovery failed.${errorDetail(cause)} Check the base URL and API key, then retry.`,
+        `Model discovery failed.${errorSuffix(cause)} Check the base URL and API key, then retry.`,
       );
     }
   };
@@ -805,7 +799,7 @@ function ModelStep({
       await saveDraftModel(draftId ?? defaultId);
     } catch (cause) {
       showError(
-        `Your model choices could not be saved.${errorDetail(cause)} Your choices are kept; retry Continue.`,
+        `Your model choices could not be saved.${errorSuffix(cause)} Your choices are kept; retry Continue.`,
       );
       return;
     }

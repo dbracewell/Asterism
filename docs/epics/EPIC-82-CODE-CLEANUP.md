@@ -10,9 +10,9 @@ Remove duplicated utilities and dead code, and split the largest components.
 
 ### US-82.1: Shared utilities
 
-- [ ] Merge `features/sse/lib/rate-limiter.ts` into `lib/rate-limit.ts` (`createRateLimiter`); update the route and tests. (They are not identical copies.)
-- [ ] One `errorDetail` in `@/lib/utils` beside `isErrorDetail`; replace the 17 local definitions and the cross-feature imports of `features/classes/error-detail.ts`.
-- [ ] Replace the raw radio inputs in `captioning-settings.tsx` with `@/components/ui/radio-group`.
+- [x] Merge `features/sse/lib/rate-limiter.ts` into `lib/rate-limit.ts` (`createRateLimiter`); update the route and tests. (They are not identical copies.)
+- [x] One `errorDetail` in `@/lib/utils` beside `isErrorDetail`; replace the 17 local definitions and the cross-feature imports of `features/classes/error-detail.ts`. (Done with `errorDetail` plus `errorMessage` for callers that show a thrown `Error`'s message first; `studyErrorDetail` folded in too.)
+- [x] Replace the raw radio inputs in `captioning-settings.tsx` with `@/components/ui/radio-group`.
 
 ### US-82.2: One boolean admin policy panel
 

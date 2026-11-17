@@ -11,9 +11,9 @@ import {
 } from "@/lib/client/@tanstack/react-query.gen";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { studyErrorDetail } from "../lib/error-detail";
 import { LEVEL_LABELS, percent, trendSummary } from "../lib/mastery";
 import { HelpHeading } from "@/features/help/components/help-heading";
+import { errorDetail } from "@/lib/utils";
 
 export const TOPIC_PRACTICE_QUESTIONS = 10;
 
@@ -59,7 +59,7 @@ export function ProjectTopicMastery({ projectId }: { projectId: string }) {
       </div>
       {practice.error && (
         <p role="alert" className="text-destructive text-sm">
-          {studyErrorDetail(practice.error, "Could not start practice.")}
+          {errorDetail(practice.error, "Could not start practice.")}
         </p>
       )}
       <ul className="flex min-w-0 flex-col divide-y border-y">

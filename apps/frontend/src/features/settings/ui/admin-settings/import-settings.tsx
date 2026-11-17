@@ -11,18 +11,10 @@ import {
 } from "@/lib/client/@tanstack/react-query.gen";
 import { useMutation } from "@tanstack/react-query";
 import { type ChangeEvent, type FormEvent, useId, useState } from "react";
+import { errorDetail } from "@/lib/utils";
 
 // Mirrors the server's file limit (ADR-0052).
 const MAX_FILE_BYTES = 8 * 1024 * 1024;
-
-function errorDetail(error: unknown, fallback: string) {
-  return error &&
-    typeof error === "object" &&
-    "detail" in error &&
-    typeof error.detail === "string"
-    ? error.detail
-    : fallback;
-}
 
 function plural(count: number, noun: string) {
   return `${count} ${noun}${count === 1 ? "" : "s"}`;

@@ -9,7 +9,6 @@ import {
   findQuoteRange,
   showClaimHighlights,
 } from "@/features/chat/lib/claim-highlights";
-import { studyErrorDetail } from "@/features/study/lib/error-detail";
 import { client } from "@/lib/api";
 import type { ExerciseView } from "@/lib/client";
 
@@ -18,7 +17,7 @@ import {
   chatExerciseAttemptMutation,
   chatExerciseRevealMutation,
 } from "@/lib/client/@tanstack/react-query.gen";
-import { cn } from "@/lib/utils";
+import { cn, errorDetail } from "@/lib/utils";
 import { useMutation } from "@tanstack/react-query";
 import { SearchCheckIcon } from "lucide-react";
 import { useEffect, useId, useState, type RefObject } from "react";
@@ -202,7 +201,7 @@ export function ExerciseBar({
       </div>
       {error && (
         <p role="alert" className="text-destructive text-sm">
-          {studyErrorDetail(error, "That didn't work. Try again.")}
+          {errorDetail(error, "That didn't work. Try again.")}
         </p>
       )}
       {exercise.revealed && exercise.valid && (

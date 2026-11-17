@@ -11,7 +11,6 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
-import { errorDetail } from "@/features/classes/error-detail";
 import { client } from "@/lib/api";
 import type { ClassInvite, CreatedClassInvite } from "@/lib/client";
 import {
@@ -22,6 +21,7 @@ import {
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useId, useState } from "react";
 import { HelpHeading } from "@/features/help/components/help-heading";
+import { errorDetail } from "@/lib/utils";
 
 export const MAX_INVITES = 50;
 export const MAX_LABEL_LENGTH = 80;

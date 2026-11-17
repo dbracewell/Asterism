@@ -9,8 +9,8 @@ import { studyNoteCreateMutation } from "@/lib/client/@tanstack/react-query.gen"
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { studyErrorDetail } from "../lib/error-detail";
 import { citationInputs } from "./card-draft-review";
+import { errorDetail } from "@/lib/utils";
 
 export const NOTE_TITLE_MAX = 120;
 
@@ -71,7 +71,7 @@ export function SaveNote({
       </Field>
       {save.error && (
         <p role="alert" className="text-destructive text-sm">
-          {studyErrorDetail(save.error, "Could not save the note. Try again.")}
+          {errorDetail(save.error, "Could not save the note. Try again.")}
         </p>
       )}
       <div>

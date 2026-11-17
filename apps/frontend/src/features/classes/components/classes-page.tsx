@@ -11,7 +11,6 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { ClassCourse } from "@/features/classes/components/class-course";
 import { InsightsConsent } from "@/features/classes/components/insights-consent";
-import { errorDetail } from "@/features/classes/error-detail";
 import { client } from "@/lib/api";
 import {
   classCreateMutation,
@@ -27,6 +26,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useId, useState } from "react";
 import { HelpHeading } from "@/features/help/components/help-heading";
+import { errorDetail } from "@/lib/utils";
 
 function JoinClass({ initialCode }: { initialCode: string }) {
   const id = useId();

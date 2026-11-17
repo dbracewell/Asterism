@@ -24,6 +24,7 @@ import {
 } from "@/lib/client/@tanstack/react-query.gen";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import { errorMessage } from "@/lib/utils";
 
 export function CanvasPolicySettings() {
   const user = useUser();
@@ -65,12 +66,10 @@ function CanvasPolicyForm() {
   const enabled = draft ?? policy.data.enabled;
   const dirty = enabled !== policy.data.enabled;
   const error = update.error;
-  const errorText =
-    error instanceof Error
-      ? error.message
-      : error && "detail" in error
-        ? String(error.detail)
-        : "Canvas policy could not be saved. Retry when administrator access is available.";
+  const errorText = errorMessage(
+    error,
+    "Canvas policy could not be saved. Retry when administrator access is available.",
+  );
   return (
     <SettingsPane
       title="Canvas"

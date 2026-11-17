@@ -23,7 +23,7 @@ import {
   canvasItemCreateMutation,
   canvasItemGetManyOptions,
 } from "@/lib/client/@tanstack/react-query.gen";
-import { cn, isErrorDetail } from "@/lib/utils";
+import { cn, errorDetail } from "@/lib/utils";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { PanelRightIcon, PlusIcon } from "lucide-react";
 import React from "react";
@@ -252,9 +252,7 @@ function NewCanvasItemDialog({
           </FieldGroup>
           {error && (
             <p role="alert" className="text-destructive text-sm">
-              {isErrorDetail(error) && typeof error.detail === "string"
-                ? error.detail
-                : "Could not create the canvas item."}
+              {errorDetail(error, "Could not create the canvas item.")}
             </p>
           )}
           <DialogFooter>

@@ -51,6 +51,7 @@ import {
 } from "../queries";
 import { TemplateBuilder } from "./template-builder";
 import { TemplateFieldEditor } from "./template-field-editor";
+import { errorDetail } from "@/lib/utils";
 
 export type EditorTarget =
   | { type: "new" }
@@ -63,17 +64,6 @@ type Props = {
   onClose: (deleted?: boolean) => void;
   restoreFocus: () => void;
 };
-
-/** Server error text: a domain `detail` string or the first validation message. */
-export function errorDetail(error: unknown) {
-  if (error && typeof error === "object" && "detail" in error) {
-    const { detail } = error;
-    if (typeof detail === "string") return detail;
-    if (Array.isArray(detail) && typeof detail[0]?.msg === "string")
-      return `Invalid template: ${detail[0].msg}`;
-  }
-  return "Retry, or reload the page if it keeps failing.";
-}
 
 export function TemplateEditorDialog(props: Props) {
   const { owner, target } = props;
@@ -584,7 +574,10 @@ function LoadedTemplateEditor({
               role="alert"
               className="flex-none items-start p-3 text-left"
               title="Could not save or delete template"
-              description={errorDetail(error)}
+              description={errorDetail(
+                error,
+                "Retry, or reload the page if it keeps failing.",
+              )}
             />
           )}
           <footer className="flex flex-wrap items-center justify-end gap-2">

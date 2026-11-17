@@ -27,6 +27,19 @@ describe("createRateLimiter", () => {
     expect(limiter.attempt("b")).toBe(false);
   });
 
+  it("evicts expired entries to admit a new key when full", () => {
+    vi.useFakeTimers();
+    const limiter = createRateLimiter({
+      max: 5,
+      windowMs: 1_000,
+      maxEntries: 1,
+    });
+    expect(limiter.attempt("a")).toBe(true);
+    vi.advanceTimersByTime(1_001);
+    expect(limiter.attempt("b")).toBe(true);
+    expect(limiter.attempt("c")).toBe(false);
+  });
+
   it("keys by the first forwarded address", () => {
     expect(clientIpKey("1.2.3.4, 5.6.7.8")).toBe("1.2.3.4");
     expect(clientIpKey(null)).toBe("unknown");

@@ -20,9 +20,9 @@ import {
 } from "@/lib/client/@tanstack/react-query.gen";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
-import { studyErrorDetail } from "../lib/error-detail";
 import { formatTags, parseTags, tagProblem } from "../lib/tags";
 import { TagsField } from "./tags";
+import { errorDetail } from "@/lib/utils";
 
 export const DECK_NAME_MAX = 120;
 export const DECK_DESCRIPTION_MAX = 2000;
@@ -139,7 +139,7 @@ function DeckForm({
       </FieldGroup>
       {error && (
         <p role="alert" className="text-destructive text-sm">
-          {studyErrorDetail(error, "Could not save the deck. Try again.")}
+          {errorDetail(error, "Could not save the deck. Try again.")}
         </p>
       )}
       <DialogFooter>

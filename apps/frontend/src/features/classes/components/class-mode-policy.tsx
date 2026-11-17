@@ -4,13 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { learningModeQueryOptions } from "@/features/chat/components/chat-learning-mode-picker";
-import { errorDetail } from "@/features/classes/error-detail";
 import { client } from "@/lib/api";
 import type { LearningModeId, TaughtClass } from "@/lib/client";
 import { classModePolicyUpdateMutation } from "@/lib/client/@tanstack/react-query.gen";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useId, useState } from "react";
 import { HelpHeading } from "@/features/help/components/help-heading";
+import { errorDetail } from "@/lib/utils";
 
 /** The educator's limits on learning modes in students' course projects (US-60.4). */
 export function ClassModePolicy({ item }: { item: TaughtClass }) {

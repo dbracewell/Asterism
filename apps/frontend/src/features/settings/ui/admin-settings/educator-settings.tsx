@@ -4,7 +4,6 @@ import { ListSkeleton } from "@/components/loading-skeletons";
 import { QueryError } from "@/components/query-error";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { errorDetail } from "@/features/classes/error-detail";
 import { client } from "@/lib/api";
 import type { EducatorRequest } from "@/lib/client";
 import {
@@ -13,6 +12,7 @@ import {
   educatorRequestGetManyOptions,
 } from "@/lib/client/@tanstack/react-query.gen";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { errorDetail } from "@/lib/utils";
 
 function Row({ request }: { request: EducatorRequest }) {
   const approve = useMutation(educatorRequestApproveMutation({ client }));
