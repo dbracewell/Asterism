@@ -38,7 +38,7 @@ vi.mock("@/features/chat/hooks/use-chat-session-crud", () => ({
   useChatSessionCrud: () => ({ createChatSession: mocks.createChatSession }),
 }));
 vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
-  courseModePolicyGetOptions: () => ({
+  chatModePolicyGetOptions: () => ({
     queryKey: ["course-policy"],
     queryFn: mocks.coursePolicy,
   }),
@@ -185,10 +185,18 @@ it("sends the chosen learning mode with a new chat", async () => {
 it("starts a course project chat in a mode its class policy allows", async () => {
   mocks.createChatSession.mockClear();
   mocks.coursePolicy.mockResolvedValueOnce({
-    class_name: "Biology 101",
-    educator_name: "Dr Teach",
     allowed_modes: ["tutor"],
-    answer_reveal: false,
+    reveal: "forbidden",
+    sources: [
+      {
+        kind: "course",
+        class_name: "Biology 101",
+        set_by: "Dr Teach",
+        allowed_modes: ["tutor"],
+        reveal: "forbidden",
+        learner_can_lift: false,
+      },
+    ],
   });
   renderPage();
   // The policy marks the mode chip and heads its list (US-73.2).

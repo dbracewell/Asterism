@@ -84,6 +84,20 @@ const user = {
   settings: {},
 } as unknown as User;
 
+const lockedPolicy = {
+  allowed_modes: [],
+  reveal: "override_required",
+  sources: [
+    {
+      kind: "learner",
+      set_by: "You",
+      allowed_modes: [],
+      reveal: "override_required",
+      learner_can_lift: true,
+    },
+  ],
+};
+
 function chatInfo(overrides: object = {}) {
   return {
     info: {
@@ -351,7 +365,7 @@ describe("learning mode lock", () => {
         chatInfo({
           learning_mode: "tutor",
           learning_mode_revision: 3,
-          learning_mode_locked: true,
+          mode_policy: lockedPolicy,
         }),
       );
       return {};
@@ -387,7 +401,7 @@ describe("learning mode lock", () => {
       chatInfo({
         learning_mode: "tutor",
         learning_mode_revision: 3,
-        learning_mode_locked: true,
+        mode_policy: lockedPolicy,
       }),
     );
     mocks.lock.mockRejectedValueOnce({ detail: "Busy" });

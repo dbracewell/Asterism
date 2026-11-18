@@ -1413,8 +1413,9 @@ export const zHintLevel = z.enum([
  *
  * Raising must go up from the branch's current level (or from ``none`` with
  * ``reset``) and must be offered by the chat's learning mode. Revealing the
- * answer needs ``confirm_reveal``; while the chat's learning mode is locked
- * it also needs ``override_lock``.
+ * answer needs ``confirm_reveal`` and an allowing mode policy; while the
+ * learner has locked the chat it also needs ``override_lock``, which never
+ * lifts a course limit.
  */
 export const zHintRequest = z.object({
   level: zHintLevel,
@@ -1801,18 +1802,6 @@ export const zClassModePolicy = z.object({
 });
 
 /**
- * CourseModePolicy
- *
- * What a student sees: the limits in force and who set them.
- */
-export const zCourseModePolicy = z.object({
-  class_name: z.string(),
-  educator_name: z.string(),
-  allowed_modes: z.array(zLearningModeId).nullable(),
-  answer_reveal: z.boolean(),
-});
-
-/**
  * LearningModeProvenance
  *
  * Public identity of the mode a turn ran under; never carries instruction text.
@@ -2021,6 +2010,47 @@ export const zMessageStatus = z.enum([
   "cancelled",
   "failed",
 ]);
+
+/**
+ * ModePolicySourceKind
+ */
+export const zModePolicySourceKind = z.enum(["learner", "course"]);
+
+/**
+ * ModeReveal
+ *
+ * Whether answers may be revealed, weakest restriction first.
+ */
+export const zModeReveal = z.enum([
+  "allowed",
+  "override_required",
+  "forbidden",
+]);
+
+/**
+ * ModePolicySource
+ *
+ * One contributor to the effective policy, and who set it.
+ */
+export const zModePolicySource = z.object({
+  kind: zModePolicySourceKind,
+  set_by: z.string(),
+  class_name: z.string().nullish(),
+  allowed_modes: z.array(zLearningModeId),
+  reveal: zModeReveal,
+  learner_can_lift: z.boolean(),
+});
+
+/**
+ * ModePolicy
+ *
+ * What a chat (or a new chat in a project) may do, and why.
+ */
+export const zModePolicy = z.object({
+  allowed_modes: z.array(zLearningModeId),
+  reveal: zModeReveal,
+  sources: z.array(zModePolicySource).optional(),
+});
 
 /**
  * ModelCapabilitySource
@@ -3341,7 +3371,7 @@ export const zChatInfo = z.object({
   context_model: zChatContextModel.nullish(),
   learning_mode: zLearningModeId.optional().default("standard"),
   learning_mode_revision: z.int().gte(1).optional().default(1),
-  learning_mode_locked: z.boolean().optional().default(false),
+  mode_policy: zModePolicy.nullish(),
   purpose: z
     .enum(["conversation", "skill_draft"])
     .optional()
@@ -5262,6 +5292,15 @@ export const zChatModelUpdatePath = z.object({
  */
 export const zChatModelUpdateResponse = zChatInfo;
 
+export const zChatModePolicyGetQuery = z.object({
+  project_id: z.uuid().nullish(),
+});
+
+/**
+ * Successful Response
+ */
+export const zChatModePolicyGetResponse = zModePolicy;
+
 export const zChatDraftModelUpdateBody = zChatDraftModelUpdate;
 
 export const zChatDraftModelUpdatePath = z.object({
@@ -6130,17 +6169,6 @@ export const zClassInsightsGetPath = z.object({
  * Successful Response
  */
 export const zClassInsightsGetResponse = zClassInsights;
-
-export const zCourseModePolicyGetPath = z.object({
-  project_id: z.uuid(),
-});
-
-/**
- * Response Coursemodepolicyget
- *
- * Successful Response
- */
-export const zCourseModePolicyGetResponse = zCourseModePolicy.nullable();
 
 export const zStudyDeckGetManyPath = z.object({
   project_id: z.uuid(),

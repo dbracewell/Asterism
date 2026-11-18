@@ -27,6 +27,7 @@ from .citation_schemas import SpanCitation
 from .disagreement_schemas import DisagreementSummary
 from .draft_comment_schemas import DraftCommentSummary
 from .exercise_schemas import ExerciseView
+from .mode_policy_schemas import ModePolicy
 from .verification_schemas import MessageVerification
 
 
@@ -374,8 +375,9 @@ class ChatInfo(BaseModel):
     context_model: ChatContextModel | None = Field(default=None)
     learning_mode: LearningModeId = LearningModeId.STANDARD
     learning_mode_revision: int = Field(default=1, ge=1)
-    # Self-imposed lock (US-52.5); never set while the mode is Standard.
-    learning_mode_locked: bool = False
+    # The effective learning-mode policy (ADR-0068): course limits and the
+    # learner's own lock. Set on single-chat responses; null in chat lists.
+    mode_policy: ModePolicy | None = None
     purpose: ChatPurpose = "conversation"
     # The active branch's hint level, carried by its latest user turn.
     hint_level: HintLevel = HintLevel.NONE
@@ -485,8 +487,9 @@ class HintRequest(BaseModel):
 
     Raising must go up from the branch's current level (or from ``none`` with
     ``reset``) and must be offered by the chat's learning mode. Revealing the
-    answer needs ``confirm_reveal``; while the chat's learning mode is locked
-    it also needs ``override_lock``.
+    answer needs ``confirm_reveal`` and an allowing mode policy; while the
+    learner has locked the chat it also needs ``override_lock``, which never
+    lifts a course limit.
     """
 
     model_config = ConfigDict(extra="forbid")

@@ -4,7 +4,8 @@ Status: accepted and implemented for US-60.4 on 2026-11-07
 ([EPIC-60](../epics/EPIC-60-EDUCATOR-AND-CLASS-POLICY.md)). Builds on
 [ADR-0028](0028-learning-mode-layer.md) (learning modes),
 [ADR-0031](0031-self-imposed-mode-lock.md) (the learner's own lock) and
-[ADR-0054](0054-course-packs.md) (course projects).
+[ADR-0054](0054-course-packs.md) (course projects). Enforcement and visibility
+are superseded by [ADR-0068](0068-effective-mode-policy.md); storage and scope stand.
 
 ## Context
 

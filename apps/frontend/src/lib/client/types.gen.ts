@@ -986,10 +986,7 @@ export type ChatInfo = {
    * Learning Mode Revision
    */
   learning_mode_revision?: number;
-  /**
-   * Learning Mode Locked
-   */
-  learning_mode_locked?: boolean;
+  mode_policy?: ModePolicy | null;
   /**
    * Purpose
    */
@@ -2020,32 +2017,6 @@ export type CourseFile = {
    * Size
    */
   size: number;
-};
-
-/**
- * CourseModePolicy
- *
- * What a student sees: the limits in force and who set them.
- */
-export type CourseModePolicy = {
-  /**
-   * Class Name
-   */
-  class_name: string;
-  /**
-   * Educator Name
-   */
-  educator_name: string;
-  /**
-   * Allowed Modes
-   *
-   * null allows every mode
-   */
-  allowed_modes: Array<LearningModeId> | null;
-  /**
-   * Answer Reveal
-   */
-  answer_reveal: boolean;
 };
 
 /**
@@ -3565,8 +3536,9 @@ export type HintLevel = "none" | "nudge" | "hint" | "worked_example" | "answer";
  *
  * Raising must go up from the branch's current level (or from ``none`` with
  * ``reset``) and must be offered by the chat's learning mode. Revealing the
- * answer needs ``confirm_reveal``; while the chat's learning mode is locked
- * it also needs ``override_lock``.
+ * answer needs ``confirm_reveal`` and an allowing mode policy; while the
+ * learner has locked the chat it also needs ``override_lock``, which never
+ * lifts a course limit.
  */
 export type HintRequest = {
   level: HintLevel;
@@ -4831,6 +4803,67 @@ export type MessageVerification = {
   claims: Array<VerifiedClaim>;
   usage: VerificationUsage;
 };
+
+/**
+ * ModePolicy
+ *
+ * What a chat (or a new chat in a project) may do, and why.
+ */
+export type ModePolicy = {
+  /**
+   * Allowed Modes
+   *
+   * Catalog modes every source allows; may be empty
+   */
+  allowed_modes: Array<LearningModeId>;
+  reveal: ModeReveal;
+  /**
+   * Sources
+   */
+  sources?: Array<ModePolicySource>;
+};
+
+/**
+ * ModePolicySource
+ *
+ * One contributor to the effective policy, and who set it.
+ */
+export type ModePolicySource = {
+  kind: ModePolicySourceKind;
+  /**
+   * Set By
+   *
+   * The educator's current name, or 'You' for the learner's lock
+   */
+  set_by: string;
+  /**
+   * Class Name
+   *
+   * The class, for a course source
+   */
+  class_name?: string | null;
+  /**
+   * Allowed Modes
+   */
+  allowed_modes: Array<LearningModeId>;
+  reveal: ModeReveal;
+  /**
+   * Learner Can Lift
+   */
+  learner_can_lift: boolean;
+};
+
+/**
+ * ModePolicySourceKind
+ */
+export type ModePolicySourceKind = "learner" | "course";
+
+/**
+ * ModeReveal
+ *
+ * Whether answers may be revealed, weakest restriction first.
+ */
+export type ModeReveal = "allowed" | "override_required" | "forbidden";
 
 /**
  * ModelCapabilitySource
@@ -10608,6 +10641,42 @@ export type ChatModelUpdateResponses = {
 export type ChatModelUpdateResponse =
   ChatModelUpdateResponses[keyof ChatModelUpdateResponses];
 
+export type ChatModePolicyGetData = {
+  body?: never;
+  path?: never;
+  query?: {
+    /**
+     * Project Id
+     */
+    project_id?: string | null;
+  };
+  url: "/chat/mode-policy";
+};
+
+export type ChatModePolicyGetErrors = {
+  /**
+   * Not found
+   */
+  404: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type ChatModePolicyGetError =
+  ChatModePolicyGetErrors[keyof ChatModePolicyGetErrors];
+
+export type ChatModePolicyGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: ModePolicy;
+};
+
+export type ChatModePolicyGetResponse =
+  ChatModePolicyGetResponses[keyof ChatModePolicyGetResponses];
+
 export type ChatDraftModelUpdateData = {
   body: ChatDraftModelUpdate;
   path: {
@@ -14438,60 +14507,6 @@ export type ClassInsightsGetResponses = {
 
 export type ClassInsightsGetResponse =
   ClassInsightsGetResponses[keyof ClassInsightsGetResponses];
-
-export type CourseModePolicyGetData = {
-  body?: never;
-  path: {
-    /**
-     * Project Id
-     */
-    project_id: string;
-  };
-  query?: never;
-  url: "/course-policy/projects/{project_id}";
-};
-
-export type CourseModePolicyGetErrors = {
-  /**
-   * Bad Request
-   */
-  400: ErrorDetail;
-  /**
-   * Unauthorized
-   */
-  401: ErrorDetail;
-  /**
-   * Forbidden
-   */
-  403: ErrorDetail;
-  /**
-   * Not Found
-   */
-  404: ErrorDetail;
-  /**
-   * Conflict
-   */
-  409: ErrorDetail;
-  /**
-   * Validation Error
-   */
-  422: ErrorDetail;
-};
-
-export type CourseModePolicyGetError =
-  CourseModePolicyGetErrors[keyof CourseModePolicyGetErrors];
-
-export type CourseModePolicyGetResponses = {
-  /**
-   * Response Coursemodepolicyget
-   *
-   * Successful Response
-   */
-  200: CourseModePolicy | null;
-};
-
-export type CourseModePolicyGetResponse =
-  CourseModePolicyGetResponses[keyof CourseModePolicyGetResponses];
 
 export type StudyDeckGetManyData = {
   body?: never;

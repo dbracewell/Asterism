@@ -28,14 +28,19 @@ async def info(client, cid):
     return (await client.get(f"/chat/{cid}", headers=auth())).json()["info"]
 
 
+def is_locked(chat_info):
+    """Whether the effective mode policy carries the learner's own lock (ADR-0068)."""
+    return any(source["kind"] == "learner" for source in chat_info["mode_policy"]["sources"])
+
+
 async def locked_tutor_chat(client, sessions):
     chat = await new_chat(client, learning_mode="tutor")
     cid, first = chat["info"]["id"], chat["messages"][0]["id"]
     await finish(sessions, first)
-    assert chat["info"]["learning_mode_locked"] is False
+    assert not is_locked(chat["info"])
     locked = await put_mode(client, cid, "tutor", 1, locked=True)
     assert locked.status_code == 200, locked.text
-    assert locked.json()["learning_mode_locked"] is True
+    assert is_locked(locked.json())
     assert locked.json()["learning_mode_revision"] == 2
     return cid, first
 
@@ -44,9 +49,10 @@ async def locked_tutor_chat(client, sessions):
 async def test_lock_persists_and_is_owner_scoped(project_api):
     client, sessions, _ = project_api
     cid, _ = await locked_tutor_chat(client, sessions)
-    assert (await info(client, cid))["learning_mode_locked"] is True
-    listed = (await client.get("/chat/", headers=auth())).json()["chats"]
-    assert next(chat for chat in listed if chat["id"] == cid)["learning_mode_locked"] is True
+    policy = (await info(client, cid))["mode_policy"]
+    assert is_locked({"mode_policy": policy})
+    assert "standard" not in policy["allowed_modes"] and policy["reveal"] == "override_required"
+    assert policy["sources"][0]["learner_can_lift"] is True
     other = await client.put(
         mode_path(cid),
         headers=auth("b"),
@@ -56,7 +62,7 @@ async def test_lock_persists_and_is_owner_scoped(project_api):
     # Relocking, and omitting ``locked``, keep the lock and the revision.
     assert (await select_mode(client, cid, "tutor", 2))["learning_mode_revision"] == 2
     again = await put_mode(client, cid, "tutor", 2, locked=True)
-    assert again.json()["learning_mode_revision"] == 2 and again.json()["learning_mode_locked"] is True
+    assert again.json()["learning_mode_revision"] == 2 and is_locked(again.json())
 
 
 @pytest.mark.asyncio
@@ -66,7 +72,7 @@ async def test_standard_mode_cannot_be_locked(project_api):
     cid = chat["info"]["id"]
     response = await put_mode(client, cid, "standard", 1, locked=True)
     assert response.status_code == 400
-    assert (await info(client, cid))["learning_mode_locked"] is False
+    assert not is_locked((await info(client, cid)))
 
 
 @pytest.mark.asyncio
@@ -74,7 +80,7 @@ async def test_switching_between_learning_modes_keeps_the_lock(project_api):
     client, sessions, _ = project_api
     cid, _ = await locked_tutor_chat(client, sessions)
     switched = await select_mode(client, cid, "review", 2)
-    assert switched["learning_mode"] == "review" and switched["learning_mode_locked"] is True
+    assert switched["learning_mode"] == "review" and is_locked(switched)
     assert switched["learning_mode_revision"] == 3
 
 
@@ -89,12 +95,12 @@ async def test_leaving_a_locked_mode_needs_the_override(project_api):
     refused = await put_mode(client, cid, "tutor", 2, locked=False)
     assert refused.status_code == 409
     current = await info(client, cid)
-    assert current["learning_mode"] == "tutor" and current["learning_mode_locked"] is True
+    assert current["learning_mode"] == "tutor" and is_locked(current)
     assert current["learning_mode_revision"] == 2
     # Selecting Standard releases the lock in the same change.
     left = await put_mode(client, cid, "standard", 2, override_lock=True)
     assert left.status_code == 200, left.text
-    assert left.json()["learning_mode"] == "standard" and left.json()["learning_mode_locked"] is False
+    assert left.json()["learning_mode"] == "standard" and not is_locked(left.json())
 
 
 @pytest.mark.asyncio
@@ -105,7 +111,7 @@ async def test_unlocking_keeps_the_mode_and_needs_the_current_revision(project_a
     assert stale.status_code == 409
     unlocked = await put_mode(client, cid, "tutor", 2, locked=False, override_lock=True)
     assert unlocked.status_code == 200, unlocked.text
-    assert unlocked.json()["learning_mode"] == "tutor" and unlocked.json()["learning_mode_locked"] is False
+    assert unlocked.json()["learning_mode"] == "tutor" and not is_locked(unlocked.json())
     assert unlocked.json()["learning_mode_revision"] == 3
     # Unlocked, Standard needs no override.
     assert (await select_mode(client, cid, "standard", 3))["learning_mode"] == "standard"
@@ -125,7 +131,7 @@ async def test_a_locked_reveal_needs_the_override_but_hints_do_not(project_api):
     assert unconfirmed.status_code == 400
     revealed = await raise_to(client, sessions, cid, nudge["id"], "answer", confirm_reveal=True, override_lock=True)
     assert revealed["learning_mode"]["hint_level"] == "answer"
-    assert (await info(client, cid))["learning_mode_locked"] is True
+    assert is_locked((await info(client, cid)))
     # A reset and a fresh raise are not gated.
     await raise_to(client, sessions, cid, revealed["id"], "hint", reset=True)
     assert await hint_level(client, cid) == "hint"

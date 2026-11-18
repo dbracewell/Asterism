@@ -11,6 +11,7 @@ from asterism.domains.learning.catalog import recheck_pinned, require_mode
 from asterism.domains.prompt_templates.rubric_provenance import RubricSnapshot, RubricUse, resolve_rubric_use
 
 from .jobs import chat_jobs
+from .mode_policy import ModePolicyConflict, mode_policy_for, require_allowed
 from .model_selection import selection_info
 from .models import ChatModel, MessageModel
 from .queries import select_owned_chats, select_owned_messages
@@ -42,8 +43,8 @@ def accept_hint_level(*, chat: ChatModel, previous: HintLevel, request: HintRequ
     """The hint level a new turn carries: unchanged, explicitly raised, or reset.
 
     Only the chat's current mode can offer a level, levels only rise within a
-    branch, and the answer needs an explicit confirmation, plus a lock override
-    while the chat's mode is locked.
+    branch, and the answer needs an explicit confirmation. The mode policy
+    (``mode_policy.accept_send_level``) decides whether a reveal is allowed.
     """
     if request is None:
         return previous
@@ -58,42 +59,7 @@ def accept_hint_level(*, chat: ChatModel, previous: HintLevel, request: HintRequ
         raise ConflictException("Hint level is already at or above this level; reload before sending")
     if request.level == HintLevel.ANSWER and not request.confirm_reveal:
         raise BadDataException("Showing the answer needs confirmation")
-    if request.level == HintLevel.ANSWER and chat.learning_mode_locked and not request.override_lock:
-        raise ConflictException("Learning mode is locked; confirm the override to show the answer")
     return request.level
-
-
-async def apply_class_policy(
-    *, user_id: str, chat: ChatModel, hint_level: HintLevel, request: HintRequest | None, session: AsyncSession
-) -> HintLevel:
-    """Narrow a send to the class policy of its course project (US-60.4).
-
-    A refused mode or an explicit reveal is a 409. A branch already at the
-    answer keeps going one level below it, so earlier reveals don't block it.
-    """
-    from asterism.domains.courses.policy import course_mode_policy
-
-    policy = await course_mode_policy(user_id=user_id, project_id=chat.project_id, session=session)
-    if policy is None:
-        return hint_level
-    policy.require_mode(chat.learning_mode)
-    if hint_level == HintLevel.ANSWER and not policy.answer_reveal:
-        if request is not None and request.level == HintLevel.ANSWER:
-            policy.require_level(HintLevel.ANSWER)
-        return HintLevel.WORKED_EXAMPLE
-    return hint_level
-
-
-async def require_class_policy(
-    *, user_id: str, chat: ChatModel, mode: LearningModeId, hint_level: HintLevel | None, session: AsyncSession
-) -> None:
-    """The live check before every run, including resume and regeneration."""
-    from asterism.domains.courses.policy import course_mode_policy
-
-    policy = await course_mode_policy(user_id=user_id, project_id=chat.project_id, session=session)
-    if policy is not None:
-        policy.require_mode(mode)
-        policy.require_level(hint_level)
 
 
 def accepted_mode_snapshot(message: MessageModel) -> LearningModeSnapshot:
@@ -136,7 +102,9 @@ def next_lock_state(chat: ChatModel, payload: ChatLearningModeUpdate) -> bool:
             raise BadDataException("Standard mode cannot be locked")
         locked = False
     if chat.learning_mode_locked and not locked and not payload.override_lock:
-        raise ConflictException("Learning mode is locked; confirm the override to leave it")
+        raise ModePolicyConflict(
+            "Not allowed by this chat's mode policy. You locked this chat; confirm the override to leave it."
+        )
     return locked
 
 
@@ -163,10 +131,11 @@ async def change_chat_learning_mode(
             if chat.learning_mode_revision != payload.expected_learning_mode_revision:
                 raise ConflictException("Chat learning mode changed; reload and retry")
             require_mode(payload.learning_mode)
-            await require_class_policy(
-                user_id=user_id, chat=chat, mode=payload.learning_mode, hint_level=None, session=session
-            )
             locked = next_lock_state(chat, payload)
+            policy = await mode_policy_for(user_id=user_id, project_id=chat.project_id, locked=locked, session=session)
+            if locked and not chat.learning_mode_locked and not policy.allowed_modes:
+                raise ModePolicyConflict("This chat can't be locked: no learning mode would be left")
+            require_allowed(policy, mode=payload.learning_mode)
             if chat.learning_mode != payload.learning_mode or chat.learning_mode_locked != locked:
                 chat.learning_mode = payload.learning_mode
                 chat.learning_mode_locked = locked

@@ -75,13 +75,14 @@ test("a class policy narrows learning modes in the course project", async ({
 
     // The server holds the same policy, whatever the client does.
     const served = await student.request.get(
-      `/api/py/course-policy/projects/${projectId}`,
+      `/api/py/chat/mode-policy?project_id=${projectId}`,
       { headers: await bearer(student) },
     );
     expect(await served.json()).toMatchObject({
-      class_name: "Chemistry",
-      educator_name: educatorName,
-      answer_reveal: false,
+      reveal: "forbidden",
+      sources: [
+        { kind: "course", class_name: "Chemistry", set_by: educatorName },
+      ],
     });
   } finally {
     await close();

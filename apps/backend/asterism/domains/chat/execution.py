@@ -18,7 +18,8 @@ from asterism.domains.user.about import read_about_snapshot
 
 from .execution_context import build_execution_provenance
 from .execution_models import ChatExecutionModel
-from .learning_modes import accepted_mode_snapshot, current_mode_snapshot, require_class_policy, turn_hint_level
+from .learning_modes import accepted_mode_snapshot, current_mode_snapshot, turn_hint_level
+from .mode_policy import require_run_allowed
 from .model_selection import require_chat_model
 from .models import ChatModel, MessageModel
 from .prompt_composition import build_prompt_snapshot
@@ -67,7 +68,7 @@ async def prepare_execution(
                     or recorded.request_message_id != message_id
                 ):
                     raise CodedException(409, "Recorded source context is unavailable or changed; regenerate")
-                await require_class_policy(
+                await require_run_allowed(
                     user_id=user_id,
                     chat=chat,
                     mode=recorded.learning_mode.id,
@@ -108,7 +109,7 @@ async def prepare_execution(
                     if restart
                     else accepted_mode_snapshot(message)
                 )
-                await require_class_policy(
+                await require_run_allowed(
                     user_id=user_id,
                     chat=chat,
                     mode=learning_mode.id,

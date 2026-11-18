@@ -234,6 +234,9 @@ import type {
   ChatModelUpdateData,
   ChatModelUpdateErrors,
   ChatModelUpdateResponses,
+  ChatModePolicyGetData,
+  ChatModePolicyGetErrors,
+  ChatModePolicyGetResponses,
   ChatRunGetData,
   ChatRunGetErrors,
   ChatRunGetResponses,
@@ -339,9 +342,6 @@ import type {
   ComponentsTestData,
   ComponentsTestErrors,
   ComponentsTestResponses,
-  CourseModePolicyGetData,
-  CourseModePolicyGetErrors,
-  CourseModePolicyGetResponses,
   EducatorAccessGetData,
   EducatorAccessGetErrors,
   EducatorAccessGetResponses,
@@ -1165,6 +1165,29 @@ export class ApiClient extends HeyApiClient {
         "Content-Type": "application/json",
         ...options.headers,
       },
+    });
+  }
+
+  /**
+   * New Chat Mode Policy
+   *
+   * The effective learning-mode policy a new chat in this project (or General) starts under.
+   */
+  public chatModePolicyGet<ThrowOnError extends boolean = false>(
+    options?: Options<ChatModePolicyGetData, ThrowOnError>,
+  ): RequestResult<
+    ChatModePolicyGetResponses,
+    ChatModePolicyGetErrors,
+    ThrowOnError
+  > {
+    return (options?.client ?? this.client).get<
+      ChatModePolicyGetResponses,
+      ChatModePolicyGetErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/chat/mode-policy",
+      ...options,
     });
   }
 
@@ -3177,29 +3200,6 @@ export class ApiClient extends HeyApiClient {
     >({
       security: [{ scheme: "bearer", type: "http" }],
       url: "/classes/{class_id}/insights",
-      ...options,
-    });
-  }
-
-  /**
-   * Get Course Policy
-   *
-   * The class policy limiting one of your projects, and who set it. None when nothing is limited.
-   */
-  public courseModePolicyGet<ThrowOnError extends boolean = false>(
-    options: Options<CourseModePolicyGetData, ThrowOnError>,
-  ): RequestResult<
-    CourseModePolicyGetResponses,
-    CourseModePolicyGetErrors,
-    ThrowOnError
-  > {
-    return (options.client ?? this.client).get<
-      CourseModePolicyGetResponses,
-      CourseModePolicyGetErrors,
-      ThrowOnError
-    >({
-      security: [{ scheme: "bearer", type: "http" }],
-      url: "/course-policy/projects/{project_id}",
       ...options,
     });
   }

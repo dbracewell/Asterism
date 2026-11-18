@@ -1,6 +1,7 @@
 # ADR-0031 — Self-imposed learning-mode lock
 
-Status: accepted for US-52.5 on 2026-11-01.
+Status: accepted for US-52.5 on 2026-11-01. Enforcement (changing it, reveals)
+superseded by [ADR-0068](0068-effective-mode-policy.md); storage and the UI delay stand.
 
 ## Context
 
