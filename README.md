@@ -245,11 +245,23 @@ runs on every startup and applies pending schema migrations to `database.db` in 
 transaction (`upgrade head`), keeping existing data. Startup refuses a database whose
 schema revision is newer than, or unknown to, the image and names both revisions;
 migrations never go backwards, so the way back from an upgrade is restoring a
-backup. Bind mounts must be writable by UID **10001**. Back up `/storage` before
-upgrades. Reset is a development tool for disposable data, never part of an upgrade;
+backup. Bind mounts must be writable by UID **10001**. Reset is a development tool for disposable data, never part of an upgrade;
 see [initialization and reset](docs/architecture/development-reset.md).
 
 Never use `docker compose down -v` unless deleting all persisted data is intentional.
+
+### Backup, restore and upgrades
+
+Back up while the app runs with
+`docker compose exec asterism /app/docker/entrypoint.sh backup --keep 14`, which writes
+one checked archive of both databases, files, vectors and themes into the `backups`
+volume. Check an archive with `verify`. Restore into an empty storage volume with the
+app stopped: `docker compose run --rm asterism restore /backups/<file>`. Restore
+checks every file, the schema revision and the `SYSTEM_KEY`, then applies pending
+migrations. Secrets are not in the archive. From a source checkout, use
+`pnpm backup --output-dir <dir>`, `pnpm backup:verify <file>` and `pnpm restore <file>`.
+Back up before every upgrade. The [backup and restore guide](docs/architecture/backup-and-restore.md)
+has a cron schedule with retention and the upgrade and roll-back procedure.
 
 Health checks cover the frontend, backend OpenAPI, and auth signing keys. If a
 service exits, the container stops so its restart policy can recover. SIGTERM stops

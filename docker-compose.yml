@@ -18,8 +18,12 @@ services:
       - "127.0.0.1:${PORT:-3000}:3000"
     volumes:
       - storage:/storage
+      # Backup archives (US-86.4): `docker compose exec asterism /app/docker/entrypoint.sh backup`.
+      # Copy them off this host too; see docs/architecture/backup-and-restore.md.
+      - backups:/backups
     restart: unless-stopped
     stop_grace_period: 30s
 
 volumes:
   storage:
+  backups:

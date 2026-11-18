@@ -297,6 +297,7 @@ Comprehensive system design guides and Mermaid sequence diagrams are available i
 - [Tool policy and approval](../../docs/architecture/tool-authorization.md)
 - [Context provenance and memory limits](../../docs/architecture/context-isolation.md)
 - [Clean initialization and reset with model-bundle retention](../../docs/architecture/development-reset.md)
+- [Backup and restore (`python -m asterism.backup`)](../../docs/architecture/backup-and-restore.md)
 
 ## Implementation history
 

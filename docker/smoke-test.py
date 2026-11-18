@@ -2,7 +2,7 @@
 
 Uses disposable containers, volumes, secrets, and accounts. Checks invalid-config
 safety, environment/file-secret modes, runtime origins, browser artifacts, auth/JWKS,
-persistence, graceful shutdown, and failure supervision.
+persistence, backup and restore, graceful shutdown, and failure supervision.
 """
 
 import base64
@@ -23,6 +23,9 @@ name = f"asterism-smoke-{suffix}"
 second_name = f"{name}-environment"
 volume = f"{name}-storage"
 second_volume = f"{name}-environment-storage"
+restored_name = f"{name}-restored"
+backup_volume = f"{name}-backups"
+restored_volume = f"{name}-restored-storage"
 secret_volume = f"{name}-secrets"
 runtime_secrets = {key: secrets.token_urlsafe(32) for key in ("BETTER_AUTH_SECRET", "SYSTEM_KEY", "ADMIN_PASSPHRASE")}
 
@@ -184,7 +187,7 @@ try:
     if dotenv_files:
         raise RuntimeError("Runtime dotenv files were copied into the image")
 
-    for disposable_volume in (volume, second_volume, secret_volume):
+    for disposable_volume in (volume, second_volume, secret_volume, backup_volume, restored_volume):
         docker("volume", "create", disposable_volume)
     docker(
         "run",
@@ -250,7 +253,7 @@ try:
         name,
         volume,
         public_url,
-        ["-v", f"{secret_volume}:/run/secrets:ro"],
+        ["-v", f"{secret_volume}:/run/secrets:ro", "-v", f"{backup_volume}:/backups"],
     )
     raw, request = client(base, public_url)
     request("/api/py/openapi.json")
@@ -282,6 +285,45 @@ try:
     assert request("/api/auth/jwks") == keys, "Signing keys changed across restart"
     request("/api/py/settings/user", token=request("/api/auth/token")["token"])
     assert_no_secret_output(docker("logs", name))
+
+    # Back up the running instance, restore into an empty volume, and sign in there (US-86.4).
+    written = docker("exec", name, "/app/docker/entrypoint.sh", "backup", "--keep", "3")
+    archive = re.search(r"Backup written: (/backups/\S+\.tar\.gz)", written)
+    assert archive, written
+    archive = archive.group(1)
+    assert "restorable" in docker("exec", name, "/app/docker/entrypoint.sh", "verify", archive)
+    restore_arguments = [
+        "-v",
+        f"{backup_volume}:/backups:ro",
+        "-v",
+        f"{secret_volume}:/run/secrets:ro",
+        "-e",
+        f"PUBLIC_URL={public_url}",
+    ]
+    refused = subprocess.run(
+        ["docker", "run", "--rm", "-v", f"{volume}:/storage", *restore_arguments, image, "restore", archive],
+        text=True,
+        capture_output=True,
+        timeout=180,  # a restore that fell through to starting the app would never exit
+    )
+    assert refused.returncode != 0 and "empty storage root" in refused.stderr, refused.stderr
+    restored = subprocess.run(
+        ["docker", "run", "--rm", "-v", f"{restored_volume}:/storage", *restore_arguments, image, "restore", archive],
+        text=True,
+        capture_output=True,
+        timeout=300,
+        check=True,
+    ).stdout
+    assert "Restore complete" in restored, restored
+    assert_no_secret_output(restored)
+    restored_base = start_container(
+        restored_name, restored_volume, public_url, ["-v", f"{secret_volume}:/run/secrets:ro"]
+    )
+    _, restored_request = client(restored_base, public_url)
+    restored_request("/api/auth/sign-in/email", credentials)
+    assert restored_request("/api/auth/jwks") == keys, "Signing keys changed across backup and restore"
+    restored_request("/api/py/settings/user", token=restored_request("/api/auth/token")["token"])
+    docker("rm", "-f", restored_name)
 
     docker(
         "exec",
@@ -402,21 +444,21 @@ else:
     print(
         "PASS: validation, env/file secrets, runtime origins, browser boundary, "
         "edge headers, secure cookies, upload and rate limits, "
-        "persistence, shutdown, failure supervision"
+        "persistence, backup and restore, shutdown, failure supervision"
     )
 except Exception:
-    for container in (name, second_name):
+    for container in (name, second_name, restored_name):
         subprocess.run(["docker", "logs", "--tail", "80", container], check=False)
     raise
 finally:
-    for container in (name, second_name):
+    for container in (name, second_name, restored_name):
         subprocess.run(
             ["docker", "rm", "-f", container],
             check=False,
             stdout=subprocess.DEVNULL,
         )
     subprocess.run(
-        ["docker", "volume", "rm", volume, second_volume, secret_volume],
+        ["docker", "volume", "rm", volume, second_volume, secret_volume, backup_volume, restored_volume],
         check=False,
         stdout=subprocess.DEVNULL,
     )

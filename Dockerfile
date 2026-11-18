@@ -45,7 +45,7 @@ RUN apt-get update \
   && apt-get install -y --no-install-recommends nginx tini libstdc++6 libgomp1 fonts-dejavu-core \
   && rm -rf /var/lib/apt/lists/* \
   && useradd --uid 10001 --create-home asterism \
-  && mkdir -p /storage && chown asterism:asterism /storage
+  && mkdir -p /storage /backups && chown asterism:asterism /storage /backups
 COPY --from=frontend-build /usr/local/bin/node /usr/local/bin/node
 WORKDIR /app
 # Preserve pnpm's workspace symlinks and native Node modules.
