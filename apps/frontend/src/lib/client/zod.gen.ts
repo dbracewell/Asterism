@@ -850,6 +850,15 @@ export const zCreatedClassInviteList = z.object({
 });
 
 /**
+ * DeletionRequest
+ *
+ * The signed-in user's own deletion request.
+ */
+export const zDeletionRequest = z.object({
+  requested_at: z.int().nullable(),
+});
+
+/**
  * DisagreementPosition
  */
 export const zDisagreementPosition = z.object({
@@ -4924,6 +4933,8 @@ export const zUserSummary = z.object({
   educator: z.enum(["pending", "approved"]).nullable(),
   group: zGroupRef,
   created_at: z.int(),
+  suspended: z.boolean(),
+  deletion_requested_at: z.int().nullable(),
 });
 
 /**
@@ -7331,6 +7342,54 @@ export const zUserAboutUpdateBody = zAboutYouUpdate;
  * Successful Response
  */
 export const zUserAboutUpdateResponse = zAboutYou;
+
+/**
+ * Successful Response
+ */
+export const zUserDeletionRequestWithdrawResponse = zDeletionRequest;
+
+/**
+ * Successful Response
+ */
+export const zUserDeletionRequestGetResponse = zDeletionRequest;
+
+/**
+ * Successful Response
+ */
+export const zUserDeletionRequestCreateResponse = zDeletionRequest;
+
+export const zUserDeletionRequestDismissPath = z.object({
+  user_id: z.string(),
+});
+
+/**
+ * Response Userdeletionrequestdismiss
+ *
+ * Successful Response
+ */
+export const zUserDeletionRequestDismissResponse = z.boolean();
+
+export const zUserReactivatePath = z.object({
+  user_id: z.string(),
+});
+
+/**
+ * Response Userreactivate
+ *
+ * Successful Response
+ */
+export const zUserReactivateResponse = z.boolean();
+
+export const zUserSuspendPath = z.object({
+  user_id: z.string(),
+});
+
+/**
+ * Response Usersuspend
+ *
+ * Successful Response
+ */
+export const zUserSuspendResponse = z.boolean();
 
 export const zUserDeletePath = z.object({
   user_id: z.string(),

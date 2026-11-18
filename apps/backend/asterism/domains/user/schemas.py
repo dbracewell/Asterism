@@ -40,6 +40,16 @@ class UserSummary(BaseModel):
     )
     group: GroupRef = Field(description="The one group the user is in")
     created_at: int = Field(description="When the account was first seen, in Unix seconds")
+    suspended: bool = Field(description="True while an administrator has suspended the account")
+    deletion_requested_at: int | None = Field(
+        description="When the user asked for their account to be deleted, in Unix seconds, or null"
+    )
+
+
+class DeletionRequest(BaseModel):
+    """The signed-in user's own deletion request."""
+
+    requested_at: int | None = Field(description="When it was made, in Unix seconds; null when there is none")
 
 
 class UserSummaryPage(BaseModel):

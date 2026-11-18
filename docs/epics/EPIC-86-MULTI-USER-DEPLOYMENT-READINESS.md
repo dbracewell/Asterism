@@ -22,7 +22,7 @@ This epic makes that one instance operable; it does not distribute it.
 | Packaging | One non-root container (Next.js, FastAPI, nginx), Compose and `docker run`, file secrets, health checks, smoke test | No upgrade or rollback procedure |
 | Process model | `asterism.serve` enforces one worker; finite chat admission ([ADR-0020](../adr/0020-chat-capacity-admission.md)) | No measured capacity for a class-sized load |
 | Accounts | Better Auth email/password; signup by admin key, signed-in admin or invite link | No password reset, no suspend/reactivate, no "sign out everywhere" |
-| Deleting users | `DELETE /users/{id}` (admin) removes backend rows, files and vectors | No UI; the Better Auth account stays, so the person can sign in again and is re-provisioned empty |
+| Deleting users | `DELETE /users/{id}` (admin) removes backend rows, files and vectors and writes a tombstone | No UI; the Better Auth account stays, so the person can still sign in and is refused by the tombstone (corrected 2026-11-17) |
 | Spend | Token counts on each message; per-model pricing in settings | No per-user or per-group limits, no usage view |
 | Data safety | `/storage` holds `users.db`, `database.db`, files, vectors and themes; README says "back up before upgrades" | No backup or restore command; no migrations or schema version, so upgrades mean a reset and a mismatched database starts half-working |
 | Edge | nginx proxy, `client_max_body_size 100m`; Better Auth's default rate limit | No security headers (CSP, HSTS, frame-ancestors, nosniff); upload limit differs from Next's 500 MB; no request limits on uploads or auth beyond Better Auth |
@@ -91,20 +91,20 @@ I ship each schema change as a migration.
 As an admin, I can suspend, reactivate, reset and delete accounts from Admin
 Settings → Users, so I can run the instance without touching the database.
 
-- [ ] Suspend / reactivate: Better Auth ban plus session revocation; the
+- [x] Suspend / reactivate: Better Auth ban plus session revocation; the
       backend refuses a suspended user's token (checked with the existing
       per-request user lookup) and stops their running jobs.
-- [ ] Admin-issued one-time password reset link (expiring, single use, shown
+- [x] Admin-issued one-time password reset link (expiring, single use, shown
       once), modeled on invite links; reset revokes existing sessions.
-- [ ] Delete from the UI: deletes the Better Auth account and then the backend
+- [x] Delete from the UI: deletes the Better Auth account and then the backend
       data (existing `delete_user`), with a confirmation naming what goes. A
       partial failure is reported and can be retried.
-- [ ] "Sign out everywhere" for the user in their own settings.
-- [ ] Deletion requests: a user who isn't an admin can ask for their account
+- [x] "Sign out everywhere" for the user in their own settings.
+- [x] Deletion requests: a user who isn't an admin can ask for their account
       to be deleted (and withdraw the request); Users shows open requests, and
       the admin deletes or dismisses. A request changes nothing else.
-- [ ] Admins can't suspend or delete themselves or the last admin.
-- [ ] Tests: suspended token refused on HTTP and WebSocket, reset link reuse
+- [x] Admins can't suspend or delete themselves or the last admin.
+- [x] Tests: suspended token refused on HTTP and WebSocket, reset link reuse
       and expiry, delete leaves no auth account, last-admin guard.
 
 ### US-86.3: Usage limits and usage view

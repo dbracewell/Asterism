@@ -78,3 +78,14 @@ it("leaves the sign-in page to handle signed-in visitors itself", () => {
     );
   }
 });
+
+it("lets signed-out visitors open a password reset link, and nothing below it", async () => {
+  const open = await proxy(
+    new NextRequest("http://localhost:3000/reset-password?token=abc_DEF-123"),
+  );
+  expect(open.headers.get("location")).toBeNull();
+  const guarded = await proxy(
+    new NextRequest("http://localhost:3000/reset-password/extra"),
+  );
+  expect(guarded.headers.get("location")).toContain("/sign-in");
+});

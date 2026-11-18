@@ -15,6 +15,7 @@ from asterism.core.schemas import AuthedUser
 from asterism.core.security import DependsJwtToken, optional_auth
 from asterism.db.dependencies import DBSessionDep
 from asterism.domains.groups.service import mirror_admin_role
+from asterism.domains.user import lifecycle
 from asterism.domains.user import service as user_service
 
 
@@ -28,8 +29,9 @@ async def get_current_user(
     after the first successful call per process (TTL-cached), so steady-state
     requests pay only a dict lookup. A valid JWT for an unknown id therefore
     auto-provisions the user row and main-agent configuration on first sight.
+    A suspended account is refused even though its token is valid (US-86.2).
     The verified name and email claims are then synced onto the row, and the
-    admin group is mirrored from the role claim (ADR-0058); both are dict
+    admin group is mirrored from the role claim (ADR-0058); all three are dict
     lookups unless something changed.
 
     Args:
@@ -45,6 +47,7 @@ async def get_current_user(
         session=session,
         identity=identity,
     )
+    await lifecycle.assert_active(authed_user.id, session)
     await user_service.sync_identity(authed_user.id, identity, session)
     await mirror_admin_role(authed_user.id, authed_user.role, session)
     return authed_user

@@ -25,6 +25,10 @@ vi.mock("@/features/auth/components/user-context", () => ({
     },
   }),
 }));
+// Tested on its own in account-lifecycle-settings.test.tsx.
+vi.mock("./account-lifecycle-settings", () => ({
+  AccountLifecycleSettings: () => null,
+}));
 vi.mock("@/features/theme/components/theme-context", () => ({
   useTheme: () => ({
     setTheme,

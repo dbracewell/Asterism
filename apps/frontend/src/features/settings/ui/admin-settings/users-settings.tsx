@@ -21,8 +21,11 @@ import {
   userGetManyOptions,
 } from "@/lib/client/@tanstack/react-query.gen";
 import { keepPreviousData, useMutation, useQuery } from "@tanstack/react-query";
-import { useDeferredValue, useState } from "react";
+import { useContext, useDeferredValue, useState } from "react";
 import { errorDetail } from "@/lib/utils";
+import { UserContext } from "@/features/auth/components/user-context";
+import { userDeletionRequestDismissMutation } from "@/lib/client/@tanstack/react-query.gen";
+import { UserAccountActions } from "./user-account-actions";
 
 const PAGE_SIZE = 50;
 
@@ -76,7 +79,43 @@ function GroupControl({
   );
 }
 
-function Row({ user, groups }: { user: UserSummary; groups?: Group[] }) {
+function DeletionRequestBadge({ user }: { user: UserSummary }) {
+  const dismiss = useMutation(userDeletionRequestDismissMutation({ client }));
+  if (user.deletion_requested_at == null) return null;
+  const label = user.name ?? user.email ?? user.id;
+  return (
+    <span className="flex flex-wrap items-center gap-1">
+      <Badge variant="destructive">
+        Asked for deletion {firstSeen(user.deletion_requested_at)}
+      </Badge>
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        disabled={dismiss.isPending}
+        aria-label={`Dismiss ${label}'s deletion request`}
+        onClick={() => dismiss.mutate({ path: { user_id: user.id } })}
+      >
+        Dismiss
+      </Button>
+      {dismiss.error && (
+        <span role="alert" className="text-destructive text-xs">
+          {errorDetail(dismiss.error, "Could not dismiss the request.")}
+        </span>
+      )}
+    </span>
+  );
+}
+
+function Row({
+  user,
+  groups,
+  isSelf,
+}: {
+  user: UserSummary;
+  groups?: Group[];
+  isSelf: boolean;
+}) {
   return (
     <li className="flex flex-wrap items-center justify-between gap-3 border-b py-2 text-sm">
       <span className="grid min-w-0 gap-0.5">
@@ -90,16 +129,24 @@ function Row({ user, groups }: { user: UserSummary; groups?: Group[] }) {
         {user.educator === "pending" && (
           <Badge variant="secondary">Educator request</Badge>
         )}
+        {user.suspended && <Badge variant="outline">Suspended</Badge>}
+        <DeletionRequestBadge user={user} />
         <span className="text-muted-foreground">
           First seen {firstSeen(user.created_at)}
         </span>
+        {/* Admins can't suspend or delete their own account. */}
+        {!isSelf && <UserAccountActions user={user} />}
       </span>
     </li>
   );
 }
 
-/** Who has an account (US-64.3) and which group they are in (US-70.3). */
+/**
+ * Who has an account (US-64.3), which group they are in (US-70.3), and
+ * suspension, reset links, deletion and deletion requests (US-86.2).
+ */
 export function UsersSettings() {
+  const selfId = useContext(UserContext).user?.id;
   const groups = useQuery({ ...groupGetManyOptions({ client }), retry: false });
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
@@ -117,7 +164,9 @@ export function UsersSettings() {
       <p className="text-sm">
         Everyone with an account and their group. Names and emails come from
         sign-in and update the next time each person uses Asterism. The admin
-        role is managed in sign-in, and administrators are always in Admin.
+        role is managed in sign-in, and administrators are always in Admin. Use
+        an account&apos;s menu to suspend it, create a password reset link or
+        delete it.
       </p>
       <Input
         type="search"
@@ -157,7 +206,12 @@ export function UsersSettings() {
         <>
           <ul>
             {users.data.items.map((user) => (
-              <Row key={user.id} user={user} groups={groups.data} />
+              <Row
+                key={user.id}
+                user={user}
+                groups={groups.data}
+                isSelf={user.id === selfId}
+              />
             ))}
           </ul>
           <div className="flex flex-wrap items-center justify-between gap-3">

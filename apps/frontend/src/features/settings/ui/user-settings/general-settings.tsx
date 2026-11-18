@@ -15,6 +15,7 @@ import {
   SettingsPane,
   SettingsSection,
 } from "@/features/settings/ui/settings-section";
+import { AccountLifecycleSettings } from "./account-lifecycle-settings";
 
 export const GeneralSettings = () => {
   const { updateSetting, isUpdatingUserSetting } = useUpdateUserSettings();
@@ -45,6 +46,7 @@ export const GeneralSettings = () => {
           </p>
         </SettingsSection>
       )}
+      <AccountLifecycleSettings />
       <SettingsSection title="Appearance">
         <div className="flex min-w-0 flex-col gap-2">
           <Label id={themeLabelId} asChild>

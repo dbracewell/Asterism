@@ -21,6 +21,7 @@ from asterism.domains.chat.jobs import chat_jobs
 from asterism.domains.chat.orchestrator import ChatOrchestrator
 from asterism.domains.files.schemas import FilePreview, UserFile, UserFileList
 from asterism.domains.user.dependencies import AuthedUserDep
+from asterism.domains.user.lifecycle import assert_active
 
 from .ai_use_log_schemas import AiUseLog, AiUseLogRequest
 from .disagreement_schemas import DisagreementRequest, DisagreementSummary
@@ -150,6 +151,8 @@ async def chat(
     try:
         try:
             async with db_session_manager.session() as session:
+                # A suspended account's token stays valid until it expires (US-86.2).
+                await assert_active(user.id, session)
                 chat_session = await chat_service.get_one(
                     chat_id=chat_id,
                     user_id=user.id,
@@ -182,7 +185,8 @@ async def chat(
             # (US-77.5). Another user's chat reads as not found.
             if error.code not in (401, 403, 404):
                 raise
-            await websocket.close(code=1008, reason="Chat not found" if error.code == 404 else "Forbidden")
+            reason = {401: "Unauthorized", 404: "Chat not found"}.get(error.code, "Forbidden")
+            await websocket.close(code=1008, reason=reason)
             return
 
         controller = ChatController(

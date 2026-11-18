@@ -52,6 +52,20 @@ export function decideSignupRole({
   return requestedRole === "admin" ? "admin" : "user";
 }
 
+export const SUSPENDED_MESSAGE =
+  "This account is suspended. Ask your administrator.";
+
+/** How long an admin-issued password reset link works. */
+export const RESET_LINK_TTL_SECONDS = 60 * 60;
+
+/** Better Auth routes that stay callable from the server but not over HTTP. */
+export const LIFECYCLE_PATHS_WITHOUT_HTTP = [
+  "/admin/ban-user",
+  "/admin/unban-user",
+  "/admin/remove-user",
+  "/request-password-reset",
+];
+
 function createAuth() {
   const config = getFrontendServerConfig();
   mkdirSync(dirname(config.authDbPath), { recursive: true });
@@ -62,11 +76,18 @@ function createAuth() {
     // Browser tests run a production build and create many accounts and
     // sessions from one address in parallel; production keeps the limiter.
     ...(config.profile === "test" && { rateLimit: { enabled: false } }),
+    // Account lifecycle runs only through the admin server actions, which also
+    // update the backend (US-86.2). Password resets use admin-issued links, so
+    // there is no public "email me a link" request.
+    disabledPaths: LIFECYCLE_PATHS_WITHOUT_HTTP,
     emailAndPassword: {
       enabled: true,
       autoSignIn: true,
       minPasswordLength: 8,
       maxPasswordLength: 32,
+      // A reset ends every session (US-86.2); links come from admins.
+      revokeSessionsOnPasswordReset: true,
+      resetPasswordTokenExpiresIn: RESET_LINK_TTL_SECONDS,
     },
     plugins: [
       jwt({
@@ -78,7 +99,7 @@ function createAuth() {
           },
         },
       }),
-      admin(),
+      admin({ bannedUserMessage: SUSPENDED_MESSAGE }),
       nextCookies(),
     ],
     user: {

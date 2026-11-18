@@ -1,7 +1,8 @@
 """HTTP endpoints for user lifecycle management (``/users``).
 
 This router handles the admin user list, provisioning a new user, deleting
-one, and the signed-in user's About you text (ADR-0066). Creation is the only
+or suspending one, deletion requests (US-86.2), and the signed-in user's
+About you text (ADR-0066). Creation is the only
 endpoint that can be reached without a JWT — it
 additionally accepts the shared ``SYSTEM_KEY`` secret so external tooling
 (e.g. the frontend's BetterAuth flow) can provision users out of band.
@@ -17,14 +18,14 @@ from fastapi import APIRouter, Query
 
 import asterism.domains.user.service as user_service
 from asterism.core import config
-from asterism.core.exceptions import ForbiddenException, UnauthorizedException
+from asterism.core.exceptions import UnauthorizedException
 from asterism.core.schemas import ErrorDetail
 from asterism.db.dependencies import DBSessionDep
 
-from . import about, admin
+from . import about, admin, lifecycle
 from .about_schemas import AboutYou, AboutYouUpdate
 from .dependencies import AdminUserDep, AuthedUserDep, OptionalAuthedUser
-from .schemas import CreateUserRequest, UserSummaryPage
+from .schemas import CreateUserRequest, DeletionRequest, UserSummaryPage
 
 user_router = APIRouter(
     prefix="/users",
@@ -46,10 +47,7 @@ async def list_users(
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=50, ge=1, le=100),
 ) -> UserSummaryPage:
-    """List accounts with their name, email, educator status and first-seen date.
-
-    Read-only: deactivating and deleting accounts are not part of this list.
-    """
+    """List accounts with their name, email, group, educator status, suspension and deletion request."""
     return await admin.list_users(session, search=search, page=page, page_size=page_size)
 
 
@@ -133,6 +131,80 @@ async def update_about(payload: AboutYouUpdate, user: AuthedUserDep, session: DB
     return await about.update_about(user_id=user.id, payload=payload, session=session)
 
 
+@user_router.get(
+    "/me/deletion-request",
+    response_model=DeletionRequest,
+    operation_id="userDeletionRequestGet",
+    summary="Your account deletion request",
+)
+async def get_deletion_request(user: AuthedUserDep, session: DBSessionDep) -> DeletionRequest:
+    return DeletionRequest(requested_at=await lifecycle.deletion_requested_at(user.id, session))
+
+
+@user_router.put(
+    "/me/deletion-request",
+    response_model=DeletionRequest,
+    operation_id="userDeletionRequestCreate",
+    summary="Ask an administrator to delete your account",
+    responses={403: {"model": ErrorDetail}},
+)
+async def create_deletion_request(user: AuthedUserDep, session: DBSessionDep) -> DeletionRequest:
+    """Ask for deletion. It grants nothing and changes nothing else; an administrator decides."""
+    requested_at = await lifecycle.request_deletion(user_id=user.id, is_admin=user.role == "admin", session=session)
+    return DeletionRequest(requested_at=requested_at)
+
+
+@user_router.delete(
+    "/me/deletion-request",
+    response_model=DeletionRequest,
+    operation_id="userDeletionRequestWithdraw",
+    summary="Withdraw your account deletion request",
+)
+async def withdraw_deletion_request(user: AuthedUserDep, session: DBSessionDep) -> DeletionRequest:
+    await lifecycle.withdraw_deletion(user_id=user.id, session=session)
+    return DeletionRequest(requested_at=None)
+
+
+@user_router.delete(
+    "/{user_id}/deletion-request",
+    response_model=bool,
+    operation_id="userDeletionRequestDismiss",
+    summary="Dismiss a user's deletion request (admin only)",
+)
+async def dismiss_deletion_request(user_id: str, user: AdminUserDep, session: DBSessionDep) -> bool:
+    """Close the request without deleting anything."""
+    await lifecycle.dismiss_deletion(actor_id=user.id, user_id=user_id, session=session)
+    return True
+
+
+@user_router.put(
+    "/{user_id}/suspension",
+    response_model=bool,
+    operation_id="userSuspend",
+    summary="Suspend an account (admin only)",
+    responses={403: {"model": ErrorDetail}, 409: {"model": ErrorDetail}},
+)
+async def suspend_user(user_id: str, user: AdminUserDep, session: DBSessionDep) -> bool:
+    """Refuse the account's tokens and stop its running work; data is kept. Idempotent.
+
+    The frontend also bans the account in Better Auth, which blocks sign-in and
+    revokes its sessions. Admins can't suspend themselves or the last administrator.
+    """
+    await lifecycle.suspend_user(actor_id=user.id, user_id=user_id, session=session)
+    return True
+
+
+@user_router.delete(
+    "/{user_id}/suspension",
+    response_model=bool,
+    operation_id="userReactivate",
+    summary="Reactivate a suspended account (admin only)",
+)
+async def reactivate_user(user_id: str, user: AdminUserDep, session: DBSessionDep) -> bool:
+    await lifecycle.reactivate_user(actor_id=user.id, user_id=user_id, session=session)
+    return True
+
+
 @user_router.delete(
     "/{user_id}",
     operation_id="userDelete",
@@ -145,9 +217,9 @@ async def delete_user(
 ) -> bool:
     """Permanently delete a user (row, tombstone, files, and vectors).
 
-    Admin-only via :data:`AdminUserDep`, and an admin may not delete their
-    own account — doing so would cascade-delete their data while their live
-    JWT keeps them able to re-enter the system.
+    Admin-only via :data:`AdminUserDep`. An admin may not delete their own
+    account or the last administrator. The frontend deletes the Better Auth
+    account first; retrying after a partial failure is safe.
 
     Args:
         user_id: The id of the user to delete (may differ from the caller).
@@ -159,10 +231,10 @@ async def delete_user(
 
     Raises:
         ForbiddenException: If the caller tries to delete their own account.
+        ConflictException: If the user is the last administrator.
         NotFoundException: If no such user exists.
     """
-    if user_id == user.id:
-        raise ForbiddenException("Cannot delete your own account")
+    await lifecycle.check_delete(actor_id=user.id, user_id=user_id, session=session)
     await user_service.delete_user(
         user_id=user_id,
         session=session,

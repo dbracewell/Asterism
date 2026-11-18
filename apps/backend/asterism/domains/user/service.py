@@ -334,7 +334,7 @@ class _UserWork:
     artifact_ids: list[uuid.UUID]
 
 
-async def _find_user_work(user_id: str, session: AsyncSession) -> _UserWork:
+async def find_user_work(user_id: str, session: AsyncSession) -> _UserWork:
     """Collect the ids that key a user's chat runs and file knowledge jobs."""
     from asterism.domains.chat.queries import select_owned_chat_ids
     from asterism.domains.knowledge.queries import select_owned_artifact_ids
@@ -345,7 +345,7 @@ async def _find_user_work(user_id: str, session: AsyncSession) -> _UserWork:
     )
 
 
-async def _stop_user_work(user_id: str, work: _UserWork) -> None:
+async def stop_user_work(user_id: str, work: _UserWork) -> None:
     """Cancel and await the user's chat runs and file ingestion/captioning jobs.
 
     Best-effort: a failure is logged and the deletion goes on.
@@ -389,9 +389,9 @@ async def delete_user(
     async with get_async_db_session(session) as session:
         if await session.get(UserModel, user_id) is None:
             raise NotFoundException("User not found")
-        await _stop_user_work(user_id, await _find_user_work(user_id, session))
+        await stop_user_work(user_id, await find_user_work(user_id, session))
         # Ids read inside the delete transaction catch work started meanwhile.
-        work = await _find_user_work(user_id, session)
+        work = await find_user_work(user_id, session)
         try:
             await session.execute(delete(UserModel).where(UserModel.id == user_id))
             await session.execute(insert(DeletedUserModel).values(id=user_id))
@@ -407,7 +407,7 @@ async def delete_user(
     _user_initialized_cache.pop(user_id, None)
     _identity_cache.pop(user_id, None)
     _deleted_cache[user_id] = True
-    await _stop_user_work(user_id, work)
+    await stop_user_work(user_id, work)
 
     # Non-relational cleanup is best-effort: a failure here orphans storage
     # but must not undo the authoritative relational deletion.
