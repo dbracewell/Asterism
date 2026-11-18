@@ -58,18 +58,18 @@ Source: user request (2026-11-18). Suggested order: [EPIC-87](docs/epics/EPIC-87
 
 ### EPIC-87: Architecture documentation refresh
 
-- [ ] US-87.1: Audit, template and link check
+- [x] US-87.1: Audit, template and link check
   - [x] Audit every guide against the code: for each, list stale claims, missing features and removed features. Record the audit in `docs/reviews/2026-11-18-architecture-docs-audit.md`.
   - [x] Write the guide template and writing rules in `docs/architecture/CONTRIBUTING.md` (structure, tone, terminology, diagram and link conventions, a before/after example).
   - [x] Add a terminology list shared with the user guide (EPIC-89) so the same thing has the same name everywhere (for example _main agent_, _sub-agent_, _General chat set_, _execution file scope_).
   - [x] Add `pnpm docs:check`: broken relative links, missing anchors and missing images across `docs/` and `README.md`. Wire it into CI (see open question 2).
   - [x] Rewrite `docs/architecture/README.md` as a map: a reading order for new contributors, then a table of "if you want to know X, read Y".
-- [x] US-87.2: System, security and request path
-  - [ ] `overview.md`: topology diagram (nginx, Next.js, FastAPI, SQLite, LanceDB, file store), workspace layout, request and streaming flow.
-  - [ ] `auth-and-security.md`: Better Auth and JWT/JWKS, the backend identity copy (ADR-0057), groups and roles, account lifecycle (suspend, reset links, deletion and deletion requests), edge hardening (CSP, HSTS, rate limits, trusted proxies), internal callbacks.
-  - [ ] `chat-and-websocket.md`: protocol, reconnectable jobs, cancellation, admission limits, usage-limit refusals, with a job lifecycle diagram.
-  - [ ] `capacity.md` and a new `operations.md`: process model, admission settings, logs and request IDs, readiness endpoints, Admin → Status, and admin settings export and import.
-  - [ ] Remove story references and stale claims from these guides.
+- [ ] US-87.2: System, security and request path
+  - [x] `overview.md`: topology diagram (nginx, Next.js, FastAPI, SQLite, LanceDB, file store), workspace layout, request and streaming flow.
+  - [x] `auth-and-security.md`: Better Auth and JWT/JWKS, the backend identity copy (ADR-0057), groups and roles, account lifecycle (suspend, reset links, deletion and deletion requests), edge hardening (CSP, HSTS, rate limits, trusted proxies), internal callbacks.
+  - [x] `chat-and-websocket.md`: protocol, reconnectable jobs, cancellation, admission limits, usage-limit refusals, with a job lifecycle diagram.
+  - [x] `capacity.md` and a new `operations.md`: process model, admission settings, logs and request IDs, readiness endpoints, Admin → Status, and admin settings export and import.
+  - [x] Remove story references and stale claims from these guides.
 - [ ] US-87.3: Agents, tools and prompts
   - [ ] `execution-context.md`: one turn traced from membership through prompt layers (main-agent instructions, About you, learning mode, skills) to retrieval and provider access, as a diagram plus a worked example.
   - [ ] `agent-runtime.md`: bounded loop, events, delegation, traces, context compaction, verification.
@@ -99,6 +99,10 @@ Source: user request (2026-11-18). Suggested order: [EPIC-87](docs/epics/EPIC-87
   - [ ] No story or epic references remain in guide bodies.
   - [ ] `pnpm docs:check` passes; every new guide is in the index.
   - [ ] Update `CLAUDE.md`/`AGENTS.md` links that point at renamed or split guides.
+
+Follow-ups found during EPIC-87 (code, not documentation; each needs its own story):
+
+- [ ] Admin-only routes refuse a non-admin with 401 rather than 403 (`get_current_admin` raises `UnauthorizedException`). The browser treats a 401 as an expired token and drops its cached token, so a non-admin opening an admin request costs a token refetch and reads as "signed out" rather than "not allowed".
 
 ### EPIC-88: A normal project README
 

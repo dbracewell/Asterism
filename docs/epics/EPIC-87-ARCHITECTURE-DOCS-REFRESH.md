@@ -1,6 +1,6 @@
 # EPIC-87: Architecture documentation refresh
 
-Status: in progress (US-87.1 awaiting confirmation). Proposed 2026-11-18. Source: user request (2026-11-18).
+Status: in progress (US-87.1 complete; US-87.2 awaiting confirmation). Proposed 2026-11-18. Source: user request (2026-11-18).
 
 ## Objective
 
@@ -55,6 +55,14 @@ does now.
 2. ~~Should the link checker run in CI or only locally?~~ Decided 2026-11-18:
    CI, in `quality-gates` (US-87.1).
 
+## Follow-ups found
+
+Problems in the code found while documenting it. They are recorded in `todo.md`
+and are not fixed in this epic.
+
+- Admin-only routes refuse a non-admin with 401 instead of 403, which the browser
+  reads as an expired token (found in US-87.2).
+
 ## User stories
 
 Suggested order: US-87.1 → 87.2 → 87.3 → 87.4 → 87.5 → 87.6 → 87.7.
@@ -84,18 +92,18 @@ guide should read.
 As a contributor, I can follow one request from the browser to the database and
 back, and I know every check it passes.
 
-- [ ] `overview.md`: topology diagram (nginx, Next.js, FastAPI, SQLite, LanceDB,
+- [x] `overview.md`: topology diagram (nginx, Next.js, FastAPI, SQLite, LanceDB,
       file store), workspace layout, request and streaming flow.
-- [ ] `auth-and-security.md`: Better Auth and JWT/JWKS, the backend identity
+- [x] `auth-and-security.md`: Better Auth and JWT/JWKS, the backend identity
       copy (ADR-0057), groups and roles, account lifecycle (suspend, reset links,
       deletion and deletion requests), edge hardening (CSP, HSTS, rate limits,
       trusted proxies), internal callbacks.
-- [ ] `chat-and-websocket.md`: protocol, reconnectable jobs, cancellation,
+- [x] `chat-and-websocket.md`: protocol, reconnectable jobs, cancellation,
       admission limits, usage-limit refusals, with a job lifecycle diagram.
-- [ ] `capacity.md` and a new `operations.md`: process model, admission
+- [x] `capacity.md` and a new `operations.md`: process model, admission
       settings, logs and request IDs, readiness endpoints, Admin → Status, and admin
       settings export and import.
-- [ ] Remove story references and stale claims from these guides.
+- [x] Remove story references and stale claims from these guides.
 
 ### US-87.3: Agents, tools and prompts
 
