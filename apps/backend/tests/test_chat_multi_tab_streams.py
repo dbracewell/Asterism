@@ -171,3 +171,26 @@ def test_an_attached_stream_never_expires_and_discard_releases_it(monkeypatch):
     assert get_message_queue(chat_id) is not stream  # Idle again, so the TTL applies.
     discard_message_queue(chat_id)
     assert message_queue_count() == baseline
+
+
+@pytest.mark.asyncio
+async def test_a_closing_socket_ends_the_status_loop_without_an_error_line(caplog):
+    """A tab closing while a status packet is sent is ordinary, not an error (US-86.7)."""
+    manager, chat_id, gate = ChatJobManager(), uuid.uuid4(), asyncio.Event()
+    job = manager.get_or_create(chat_id, runtime(chat_id, gate, []), user_id="user-a")
+
+    class ClosingTab(Tab):
+        async def send_json(self, packet):
+            if packet["type"] == "status":
+                self.closed.set()
+                raise WebSocketDisconnect(code=1006)
+            await super().send_json(packet)
+
+    tab = ClosingTab()
+    task = attach(manager, chat_id, job, tab)
+    await asyncio.wait_for(tab.closed.wait(), 5)
+    await asyncio.wait_for(task, 5)
+    gate.set()
+    await job.task
+    assert not [record for record in caplog.records if record.levelname == "ERROR"]
+    discard_message_queue(chat_id)

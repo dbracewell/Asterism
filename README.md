@@ -238,7 +238,8 @@ Edge protections are on by default
 - nginx limits each client address to 60 auth writes, 60 uploads and 120 chat
   WebSocket connections per minute, each with a burst of 60. That is enough for a
   class of about 30 behind one school address. Refused requests get a 429 with
-  `Retry-After`. Better Auth keeps its own sign-in limit as well.
+  `Retry-After`. Better Auth's own limiter allows the same 60 sign-ins per minute
+  per address, and its defaults elsewhere.
 
 ### Storage and lifecycle
 
@@ -292,6 +293,50 @@ The parity check verifies byte-identical strict-file values in the repository lo
 Compose, and direct Docker. The smoke test exercises both environment and canonical
 file-secret modes with two runtime origins and scans browser assets, image metadata,
 and logs for synthetic secret canaries.
+
+### Sizing and capacity
+
+One instance runs as one process with one SQLite database, so it grows by host size,
+not by replicas. Measured with `pnpm capacity:check`
+([capacity check](docs/architecture/capacity.md)):
+
+- **30 active students on 4 vCPU / 8 GB** passes every target with room to spare: peak
+  memory under 2 GiB, CPU under one core on average, first token p95 1.3 s even when
+  the whole class asks at once. Plan on 8 GB for the embedding model, Next.js and
+  page caches. Disk is the files people upload, plus the `backups` volume (about the
+  size of storage times the number of archives kept), plus `MIN_FREE_STORAGE_BYTES`.
+- **Larger groups** were not measured. Raise the limits below together, then run
+  `pnpm capacity:check --students <n> --env ...` on the target host before relying
+  on it.
+- **The model provider** usually sets the pace: its latency, and its own rate limits
+  on your API key.
+
+Admission settings (environment variables; defaults suit about 30 active users):
+
+| Setting | Default | What it limits |
+| --- | --- | --- |
+| `MAX_ACTIVE_CHAT_JOBS` | 32 | replies and chat titles running at once; the burst of 30 peaked at 25 |
+| `MAX_ACTIVE_CHAT_JOBS_PER_USER` | 4 | the same, for one person |
+| `MAX_CHAT_CONTROLLERS` | 128 | open chat connections (a chat open in a tab) |
+| `MAX_CHAT_CONTROLLERS_PER_USER` | 16 | the same, for one person |
+| `MAX_CONCURRENT_LLM_REQUESTS` | 32 | model streams at once; more wait for a slot. Lower it for a local model server |
+| `MAX_CONCURRENT_KNOWLEDGE_JOBS` | 4 | files being indexed at once; more wait in the queue |
+
+What "full" looks like to people:
+
+- **Replies at their limit:** the chat says "Chat capacity is full. Retry shortly." and
+  offers a retry. Nothing is lost; the message waits.
+- **Connections at their limit:** opening one more chat says "Chat connection capacity
+  is full. Close an unused chat connection and retry."
+- **Model streams at their limit:** replies start later, with no error.
+- **Budget used up** (Admin Settings → Groups): sending says the limit is reached and
+  when it resets.
+- **Too many requests from one address:** "Too many requests. Wait a minute and try
+  again."
+- **Disk nearly full:** readiness turns not ready and the container health check fails.
+
+Admin Settings → Status shows replies and connections against their limits, the file
+queue and free space, so watch it during a first busy class.
 
 ## Local development
 

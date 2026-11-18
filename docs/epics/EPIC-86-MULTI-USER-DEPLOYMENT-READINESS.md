@@ -176,13 +176,13 @@ As an operator, I can tell what the instance is doing and why something failed.
 As an operator, I know how many people one instance serves and what to do when
 it's full.
 
-- [ ] Repeatable load script (disposable instance, stub model provider with
+- [x] Repeatable load script (disposable instance, stub model provider with
       realistic streaming latency): N students chatting, uploading and studying.
-- [ ] Measure at the agreed target (30 active students, 4 vCPU / 8 GB): p95 time to first token,
+- [x] Measure at the agreed target (30 active students, 4 vCPU / 8 GB): p95 time to first token,
       admission refusals, SQLite busy errors, memory.
-- [ ] Fix what the run finds (e.g. SQLite busy timeout/WAL settings, admission
+- [x] Fix what the run finds (e.g. SQLite busy timeout/WAL settings, admission
       limits) within the single-process design.
-- [ ] Sizing guide in the README: host size, admission settings, what "full"
+- [x] Sizing guide in the README: host size, admission settings, what "full"
       looks like to users.
 
 ### US-86.8: Personal data and deployment guide

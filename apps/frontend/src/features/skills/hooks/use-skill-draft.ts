@@ -7,7 +7,7 @@ import {
   updateSubAgentActivities,
 } from "@/features/chat/types";
 import { client } from "@/lib/api";
-import { authClient } from "@/lib/auth-client";
+import { backendToken } from "@/lib/backend-token";
 import type { SkillDraftStart } from "@/lib/client";
 import {
   chatMessageSendMutation,
@@ -46,7 +46,7 @@ export function useSkillDraft(owner: string) {
 
   const token = useQuery({
     queryKey: ["skill-draft-token", owner],
-    queryFn: async () => (await authClient.token()).data?.token ?? "",
+    queryFn: async () => (await backendToken()) ?? "",
     enabled: chat !== null,
     staleTime: Infinity,
     retry: false,

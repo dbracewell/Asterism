@@ -38,23 +38,37 @@ it("uses the browser host for chat sockets without URL configuration", () => {
   expect(url.searchParams.get("token")).toBe("test-token");
 });
 
-it("refreshes the JWT token when the WebSocket closes before reconnecting", async () => {
-  getTokenMock.mockResolvedValueOnce({ data: { token: "refreshed-token" } });
+function jwt(label: string) {
+  const encode = (value: object) =>
+    btoa(JSON.stringify(value)).replace(/=+$/, "");
+  return `${encode({ alg: "RS256" })}.${encode({ iat: 1, exp: 901, label })}.sig`;
+}
+
+it("fetches a new JWT when the backend rejected the socket's token", async () => {
+  getTokenMock
+    .mockResolvedValueOnce({ data: { token: jwt("reused") } })
+    .mockResolvedValueOnce({ data: { token: jwt("refreshed") } });
 
   renderHook(() =>
     useChatWebSocket({ chatId: "chat-1", jwtToken: "initial-token" }),
   );
-
-  const options = socket.mock.calls.at(-1)?.[1] as {
-    onClose: () => void;
+  const close = async (code: number) => {
+    const options = socket.mock.calls.at(-1)?.[1] as {
+      onClose: (event: { code: number }) => void;
+    };
+    await act(async () => {
+      options.onClose({ code });
+    });
+    return new URL(socket.mock.calls.at(-1)?.[0]).searchParams.get("token");
   };
-  await act(async () => {
-    options.onClose();
-  });
 
-  const latestUrl = new URL(socket.mock.calls.at(-1)?.[0]);
+  // An ordinary drop reconnects with the tab's reused token (US-86.7).
+  expect(await close(1006)).toBe(jwt("reused"));
+  expect(await close(1006)).toBe(jwt("reused"));
   expect(getTokenMock).toHaveBeenCalledTimes(1);
-  expect(latestUrl.searchParams.get("token")).toBe("refreshed-token");
+  // 1008 is the backend refusing the token: fetch a new one.
+  expect(await close(1008)).toBe(jwt("refreshed"));
+  expect(getTokenMock).toHaveBeenCalledTimes(2);
 });
 
 it("forwards typed sub-agent packets without replacing the parent stream", () => {

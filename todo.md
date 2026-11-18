@@ -113,10 +113,12 @@ Done 2026-11-18 ([ADR-0074](docs/adr/0074-production-logs-and-status.md)). Readi
 
 ### US-86.7: Capacity check and sizing guide
 
-- [ ] Repeatable load script (disposable instance, stub model provider with realistic streaming latency): N students chatting, uploading and studying.
-- [ ] Measure at the agreed target (30 active students, 4 vCPU / 8 GB): p95 time to first token, admission refusals, SQLite busy errors, memory.
-- [ ] Fix what the run finds (e.g. SQLite busy timeout/WAL settings, admission limits) within the single-process design.
-- [ ] Sizing guide in the README: host size, admission settings, what "full" looks like to users.
+Done 2026-11-18 ([ADR-0075](docs/adr/0075-capacity-check-and-sizing.md), [capacity](docs/architecture/capacity.md)). `pnpm capacity:check`: 30 students from one address on 4 CPUs / 8 GB, with a streaming model double. Found and fixed: Better Auth's 3-per-10 s sign-in limit (now 60/min, like nginx), a token fetched per backend call (now reused per tab; 224 refusals → 0), 8 provider streams (now 32; burst first token p95 7.4 s → 1.3 s), an ERROR line per closed tab. SQLite: no busy errors; peak memory 1.8 GiB.
+
+- [x] Repeatable load script (disposable instance, stub model provider with realistic streaming latency): N students chatting, uploading and studying.
+- [x] Measure at the agreed target (30 active students, 4 vCPU / 8 GB): p95 time to first token, admission refusals, SQLite busy errors, memory.
+- [x] Fix what the run finds (e.g. SQLite busy timeout/WAL settings, admission limits) within the single-process design.
+- [x] Sizing guide in the README: host size, admission settings, what "full" looks like to users.
 
 ### US-86.8: Personal data and deployment guide
 

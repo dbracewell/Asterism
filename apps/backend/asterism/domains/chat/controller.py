@@ -207,3 +207,6 @@ class ChatController:
                 )
         except asyncio.CancelledError:
             pass
+        except WebSocketDisconnect:
+            # The tab closed between packets; the command loop ends the controller.
+            pass
