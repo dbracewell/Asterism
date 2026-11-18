@@ -21,7 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { client } from "@/lib/api";
-import type { ChatInfo, LearningModeId } from "@/lib/client";
+import type { ChatInfo, LearningModeId, ModePolicy } from "@/lib/client";
 import {
   chatLearningModeUpdateMutation,
   chatSessionGetOneOptions,
@@ -31,13 +31,13 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { GraduationCapIcon, LockIcon } from "lucide-react";
 import React from "react";
 import {
-  type CourseModePolicy,
-  CoursePolicyNotice,
-  useCourseModePolicy,
-} from "./course-mode-policy";
+  courseSource,
+  learnerSource,
+  ModePolicyNotice,
+  modeSelectable,
+} from "./mode-policy-notice";
 import {
   DelayedConfirmAction,
-  learnerLocked,
   LOCK_OVERRIDE_DELAY_SECONDS,
 } from "./delayed-confirm-action";
 
@@ -61,10 +61,10 @@ export function LearningModePicker({
   value: LearningModeId;
   onChange: (value: LearningModeId) => void;
   disabled?: boolean;
-  /** A class policy; modes it doesn't allow are shown but can't be chosen. */
-  policy?: CourseModePolicy | null;
+  /** The effective policy; modes it refuses are shown but can't be chosen. */
+  policy?: ModePolicy | null;
 }) {
-  const allowedModes = policy?.allowed_modes ?? null;
+  const course = courseSource(policy);
   const query = useQuery(learningModeQueryOptions());
   const modes = query.data?.modes;
   const selected = modes?.find((mode) => mode.id === value);
@@ -79,20 +79,18 @@ export function LearningModePicker({
           aria-label="Learning mode"
           data-tour="learning-mode"
           aria-description={
-            policy ? "Limited by your class's policy" : undefined
+            course ? "Limited by your class's policy" : undefined
           }
           className={COMPOSER_CHIP}
         >
           <GraduationCapIcon className="text-muted-foreground" />
           <SelectValue placeholder="Learning mode" />
-          {policy && (
+          {(course || learnerSource(policy)) && (
             <LockIcon aria-hidden="true" className="text-muted-foreground" />
           )}
         </SelectTrigger>
         <SelectContent className="max-w-[min(18rem,calc(100vw-1rem))]">
-          {policy && (
-            <CoursePolicyNotice policy={policy} className="px-2 py-1.5" />
-          )}
+          <ModePolicyNotice policy={policy} className="px-2 py-1.5" />
           <SelectGroup>
             {!selected && (
               <SelectItem value={value} disabled>
@@ -103,11 +101,11 @@ export function LearningModePicker({
               <SelectItem
                 key={mode.id}
                 value={mode.id}
-                disabled={!!allowedModes && !allowedModes.includes(mode.id)}
+                disabled={!modeSelectable(policy, mode.id)}
                 description={
-                  allowedModes && !allowedModes.includes(mode.id)
-                    ? "Not allowed in this course"
-                    : mode.description
+                  modeSelectable(policy, mode.id)
+                    ? mode.description
+                    : "Not allowed in this course"
                 }
               >
                 {mode.name}
@@ -160,7 +158,7 @@ export function ExistingChatLearningModePicker({
   });
   // Leaving a locked mode for Standard waits for a delayed confirmation.
   const [confirmStandard, setConfirmStandard] = React.useState(false);
-  const policy = useCourseModePolicy(info.project_id);
+  const policy = info.mode_policy;
   const mode = info.learning_mode ?? "standard";
   const modeName = useLearningModeName(mode) ?? "this learning mode";
   const select = (learningMode: LearningModeId, overrideLock = false) =>
@@ -179,7 +177,7 @@ export function ExistingChatLearningModePicker({
         policy={policy}
         disabled={disabled || mutation.isPending || !!mutation.error}
         onChange={(learningMode) => {
-          if (learningMode === "standard" && learnerLocked(info))
+          if (learningMode === "standard" && learnerSource(policy))
             setConfirmStandard(true);
           else select(learningMode);
         }}

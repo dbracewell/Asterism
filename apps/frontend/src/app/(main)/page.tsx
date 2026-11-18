@@ -10,7 +10,7 @@ import { ChatModelPicker } from "@/features/chat/components/chat-model-picker";
 import { comparePayload } from "@/features/chat/components/compare-targets";
 import { ComposerStatus } from "@/features/chat/components/composer-status";
 import { LearningModePicker } from "@/features/chat/components/chat-learning-mode-picker";
-import { useCourseModePolicy } from "@/features/chat/components/course-mode-policy";
+import { useNewChatModePolicy } from "@/features/chat/components/mode-policy-notice";
 import { ChatGoalToggle } from "@/features/chat/components/chat-goal-toggle";
 import {
   ChatRubricPicker,
@@ -54,11 +54,11 @@ export default function AppPage() {
   const [chosenMode, setLearningMode] = useState<LearningModeId>("standard");
   const [compareModels, setCompareModels] = useState<string[]>([]);
   const [rubric, setRubric] = useState<RubricUse | null>(null);
-  // A course project's class policy may not allow the default mode.
-  const policy = useCourseModePolicy(projectId);
+  // A course project's policy may not allow the default mode (ADR-0068).
+  const policy = useNewChatModePolicy(projectId);
   const learningMode =
-    policy?.allowed_modes && !policy.allowed_modes.includes(chosenMode)
-      ? policy.allowed_modes[0]
+    policy && !policy.allowed_modes.includes(chosenMode)
+      ? (policy.allowed_modes[0] ?? chosenMode)
       : chosenMode;
   const takesRubric = useModeTakesRubric(learningMode);
   const sentRubric = takesRubric ? rubric : null;

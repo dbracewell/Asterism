@@ -1,7 +1,6 @@
 "use client";
 
 import { AlertDialogAction } from "@/components/ui/alert-dialog";
-import type { ChatInfo } from "@/lib/client";
 import React from "react";
 
 /** Seconds a locked chat waits before an override can be confirmed. */
@@ -53,14 +52,4 @@ export function DelayedConfirmAction({
       )}
     </AlertDialogAction>
   );
-}
-
-/** Whether the learner has locked this chat's learning mode (ADR-0068). */
-export function learnerLocked(info: Pick<ChatInfo, "mode_policy">) {
-  return !!info.mode_policy?.sources?.some((item) => item.kind === "learner");
-}
-
-/** The wait a locked chat imposes before an override, or none when unlocked. */
-export function lockOverrideDelay(info: Pick<ChatInfo, "mode_policy">) {
-  return learnerLocked(info) ? LOCK_OVERRIDE_DELAY_SECONDS : 0;
 }
