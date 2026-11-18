@@ -64,6 +64,7 @@ from asterism.domains.study.models import (  # noqa: F401
     StudyQuizQuestionModel,
     StudyReviewLogModel,
 )
+from asterism.domains.usage.models import UsageRecordModel  # noqa: F401
 from asterism.domains.user.models import AccountDeletionRequestModel, DeletedUserModel, UserModel  # noqa: F401
 
 from .base_model import Base  # noqa: F401

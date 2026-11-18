@@ -20,11 +20,14 @@ from asterism.db.database import get_async_db_session
 from asterism.domains.chatgpt.availability import ModelAvailability
 from asterism.domains.llm.draft import get_draft_model
 from asterism.domains.llm.factory import create_llm_client
+from asterism.domains.llm.metering import meter_for
 from asterism.domains.llm.schemas import LLMClientProtocol, LLMMessage
 from asterism.domains.settings.models import LLMModel, ProviderModel
 from asterism.domains.settings.provider_types import ProviderType
 from asterism.domains.settings.queries import select_visible_models
 from asterism.domains.settings.schemas import LlmWithProvider
+from asterism.domains.usage.schemas import BACKGROUND_SOURCES, UsageSource
+from asterism.domains.usage.service import require_within_budget
 
 logger = get_logger("ChatTitleModel")
 
@@ -46,7 +49,13 @@ class PlanTitleModel:
         return event.content or ""
 
 
-async def plan_title_model(user_id: str, selected_model_id: uuid.UUID | None) -> PlanTitleModel | None:
+async def plan_title_model(
+    user_id: str,
+    selected_model_id: uuid.UUID | None,
+    *,
+    source: UsageSource = UsageSource.TITLE,
+    chat_id: uuid.UUID | None = None,
+) -> PlanTitleModel | None:
     """The owner's available plan model for titling, or ``None``."""
     async with get_async_db_session() as session:
         availability = await ModelAvailability.load(user_id, session)
@@ -67,19 +76,30 @@ async def plan_title_model(user_id: str, selected_model_id: uuid.UUID | None) ->
             return None
         info = LlmWithProvider.model_validate(chosen)
     logger.info("Titling on the owner's ChatGPT plan user=%s model=%s", user_id, info.name)
-    return PlanTitleModel(create_llm_client(info.name, info.provider, user_id=user_id))
+    meter = meter_for(user_id, source, info, chat_id=chat_id)
+    return PlanTitleModel(create_llm_client(info.name, info.provider, user_id=user_id, usage=meter))
 
 
-async def resolve_title_model(user_id: str, selected_model_id: uuid.UUID | None) -> TitleModel | None:
+async def resolve_title_model(
+    user_id: str,
+    selected_model_id: uuid.UUID | None,
+    *,
+    source: UsageSource = UsageSource.TITLE,
+    chat_id: uuid.UUID | None = None,
+) -> TitleModel | None:
     """The draft model when usable, else the owner's plan model, else ``None``.
 
     A configured draft model that fails at generation time does not switch to
     the plan; only an unset or unavailable draft model does.
     """
+    if source not in BACKGROUND_SOURCES:
+        # The coach and reflection drafts are new work the user asked for (ADR-0073).
+        async with get_async_db_session() as session:
+            await require_within_budget(user_id, session)
     draft = get_draft_model()
     try:
         await draft.get_model()
-        return draft
+        return draft.charged_to(user_id, source, chat_id)
     except (NotFoundException, BadDataException) as error:
         logger.info("No usable draft model for titles (%s); trying the owner's plan", error)
-    return await plan_title_model(user_id, selected_model_id)
+    return await plan_title_model(user_id, selected_model_id, source=source, chat_id=chat_id)

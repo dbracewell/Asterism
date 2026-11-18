@@ -494,3 +494,25 @@ async def test_create_image_forces_the_tool_or_generates_directly(images, monkey
         "Image generation is turned off"
     ]
     assert len(provider.calls) == count
+
+
+async def test_images_are_counted_as_usage_and_refused_over_budget(images, monkeypatch):
+    """US-86.3: images use no tokens, but each saved image is counted and a user over budget gets none."""
+    import asterism.db.database as database
+    from asterism.domains.groups.models import GroupModel
+    from asterism.domains.usage.models import UsageRecordModel
+    from asterism.domains.usage.service import UsageLimitExceeded
+
+    monkeypatch.setattr("asterism.domains.usage.service.get_async_db_session", database.get_async_db_session)
+    client, sessions, _ = images
+    chat_id, _, _ = await started_chat(client, sessions)
+    await set_policy(sessions)
+    await generate_images(user_id="a", chat_id=chat_id, request=ImageRequest(prompt="A harbour", count=2))
+    async with sessions() as db:
+        [usage] = list(await db.scalars(select(UsageRecordModel)))
+        assert (usage.source, usage.images, usage.input_tokens, usage.chat_id) == ("image", 2, 0, chat_id)
+        db.add(UsageRecordModel(user_id="a", source="chat", input_tokens=50, output_tokens=0))
+        await db.execute(update(GroupModel).where(GroupModel.id == "student").values(daily_token_budget=50))
+        await db.commit()
+    with pytest.raises(UsageLimitExceeded):
+        await generate_images(user_id="a", chat_id=chat_id, request=ImageRequest(prompt="Another harbour"))

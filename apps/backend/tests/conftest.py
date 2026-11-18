@@ -16,3 +16,16 @@ def _reset_user_caches():
     yield
     clear_user_cache()
     clear_suspension_cache()
+
+
+@pytest.fixture(autouse=True)
+def _forget_lazily_initialized_sessions():
+    """Drop a session manager a test left initialized (e.g. by usage recording, which
+    opens its own session lazily), so the next test cannot inherit a stale database URL."""
+    from asterism.db.database import db_session_manager
+
+    initialized = db_session_manager.is_initialized
+    yield
+    if not initialized and db_session_manager.is_initialized:
+        db_session_manager._engine = None  # pyright: ignore[reportPrivateUsage]
+        db_session_manager._session_maker = None  # pyright: ignore[reportPrivateUsage]

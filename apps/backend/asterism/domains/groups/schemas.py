@@ -24,6 +24,18 @@ class Group(BaseModel):
         description="Tools members may use; null allows every enabled tool, including future ones"
     )
 
+    daily_token_budget: int | None = Field(
+        default=None, description="Tokens per member per day (instance timezone); None: no budget"
+    )
+    monthly_token_budget: int | None = Field(default=None, description="Tokens per member per month; None: no budget")
+
+
+class GroupBudgetUpdate(BaseModel):
+    """Token budgets per member, input plus output. None removes that budget."""
+
+    daily_token_budget: int | None = Field(default=None, ge=1, le=10_000_000_000)
+    monthly_token_budget: int | None = Field(default=None, ge=1, le=1_000_000_000_000)
+
 
 class GroupAccessUpdate(BaseModel):
     """Replace a group's model and tool access. Null means every enabled one."""

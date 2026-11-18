@@ -393,6 +393,9 @@ import type {
   GroupAccessUpdateData,
   GroupAccessUpdateError,
   GroupAccessUpdateResponse,
+  GroupBudgetUpdateData,
+  GroupBudgetUpdateError,
+  GroupBudgetUpdateResponse,
   GroupCreateData,
   GroupCreateError,
   GroupCreateResponse,
@@ -726,6 +729,18 @@ import type {
   ToolsGetAllData,
   ToolsGetAllError,
   ToolsGetAllResponse,
+  UsageGetMineData,
+  UsageGetMineError,
+  UsageGetMineResponse,
+  UsageGetReportData,
+  UsageGetReportError,
+  UsageGetReportResponse,
+  UsageSettingsGetData,
+  UsageSettingsGetError,
+  UsageSettingsGetResponse,
+  UsageSettingsUpdateData,
+  UsageSettingsUpdateError,
+  UsageSettingsUpdateResponse,
   UserAboutGetData,
   UserAboutGetError,
   UserAboutGetResponse,
@@ -9198,6 +9213,35 @@ export const groupAccessUpdateMutation = (
 };
 
 /**
+ * Update Budget
+ *
+ * Set the daily and monthly token budget of each member. The admin group can't have one.
+ */
+export const groupBudgetUpdateMutation = (
+  options?: Partial<Options<GroupBudgetUpdateData>>,
+): UseMutationOptions<
+  GroupBudgetUpdateResponse,
+  GroupBudgetUpdateError,
+  Options<GroupBudgetUpdateData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    GroupBudgetUpdateResponse,
+    GroupBudgetUpdateError,
+    Options<GroupBudgetUpdateData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().groupBudgetUpdate({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
  * Move Member
  *
  * Move a user into another group. The admin group follows the sign-in role and can't be set here.
@@ -9216,6 +9260,170 @@ export const groupMemberMoveMutation = (
   > = {
     mutationFn: async (fnOptions) => {
       const { data } = await ApiClient.__registry.get().groupMemberMove({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const usageGetMineQueryKey = (options?: Options<UsageGetMineData>) =>
+  createQueryKey("usageGetMine", options);
+
+/**
+ * My Usage
+ *
+ * Your tokens today and this month, your budget, and when each resets.
+ */
+export const usageGetMineOptions = (options?: Options<UsageGetMineData>) =>
+  queryOptions<
+    UsageGetMineResponse,
+    UsageGetMineError,
+    UsageGetMineResponse,
+    ReturnType<typeof usageGetMineQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry.get().usageGetMine({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: usageGetMineQueryKey(options),
+  });
+
+export const usageGetReportQueryKey = (options?: Options<UsageGetReportData>) =>
+  createQueryKey("usageGetReport", options);
+
+/**
+ * Usage Report
+ *
+ * Tokens and estimated cost per user and model, and per group, over a period of days.
+ */
+export const usageGetReportOptions = (options?: Options<UsageGetReportData>) =>
+  queryOptions<
+    UsageGetReportResponse,
+    UsageGetReportError,
+    UsageGetReportResponse,
+    ReturnType<typeof usageGetReportQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry.get().usageGetReport({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: usageGetReportQueryKey(options),
+  });
+
+export const usageGetReportInfiniteQueryKey = (
+  options?: Options<UsageGetReportData>,
+): QueryKey<Options<UsageGetReportData>> =>
+  createQueryKey("usageGetReport", options, true);
+
+/**
+ * Usage Report
+ *
+ * Tokens and estimated cost per user and model, and per group, over a period of days.
+ */
+export const usageGetReportInfiniteOptions = (
+  options?: Options<UsageGetReportData>,
+) =>
+  infiniteQueryOptions<
+    UsageGetReportResponse,
+    UsageGetReportError,
+    InfiniteData<UsageGetReportResponse>,
+    QueryKey<Options<UsageGetReportData>>,
+    | string
+    | null
+    | Pick<
+        QueryKey<Options<UsageGetReportData>>[0],
+        "body" | "headers" | "path" | "query"
+      >
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<UsageGetReportData>>[0],
+          "body" | "headers" | "path" | "query"
+        > =
+          typeof pageParam === "object"
+            ? pageParam
+            : {
+                query: {
+                  start: pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await ApiClient.__registry.get().usageGetReport({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: usageGetReportInfiniteQueryKey(options),
+    },
+  );
+
+export const usageSettingsGetQueryKey = (
+  options?: Options<UsageSettingsGetData>,
+) => createQueryKey("usageSettingsGet", options);
+
+/**
+ * Read Settings
+ */
+export const usageSettingsGetOptions = (
+  options?: Options<UsageSettingsGetData>,
+) =>
+  queryOptions<
+    UsageSettingsGetResponse,
+    UsageSettingsGetError,
+    UsageSettingsGetResponse,
+    ReturnType<typeof usageSettingsGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry.get().usageSettingsGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: usageSettingsGetQueryKey(options),
+  });
+
+/**
+ * Update Settings
+ *
+ * Set the timezone whose midnight starts each budget day and month for everyone.
+ */
+export const usageSettingsUpdateMutation = (
+  options?: Partial<Options<UsageSettingsUpdateData>>,
+): UseMutationOptions<
+  UsageSettingsUpdateResponse,
+  UsageSettingsUpdateError,
+  Options<UsageSettingsUpdateData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UsageSettingsUpdateResponse,
+    UsageSettingsUpdateError,
+    Options<UsageSettingsUpdateData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().usageSettingsUpdate({
         ...options,
         ...fnOptions,
         throwOnError: true,

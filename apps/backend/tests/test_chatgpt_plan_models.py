@@ -147,7 +147,7 @@ async def test_other_users_cannot_bind_or_run_a_plan_model(plan):
         await settings_service.get_model_and_provider(uuid.UUID(model_id))
     model = await settings_service.get_model_and_provider(uuid.UUID(model_id), user_id="a")
     with pytest.raises(BadDataException):
-        create_llm_client(model.name, model.provider, user_id="b")
+        create_llm_client(model.name, model.provider, user_id="b", usage=None)
 
 
 @pytest.mark.asyncio
@@ -157,7 +157,7 @@ async def test_plan_requests_run_only_on_the_owners_connection(plan):
     await connect(client, double)
     model = await settings_service.get_model_and_provider(uuid.UUID(await plan_model_id(sessions)), user_id="a")
 
-    llm = create_llm_client(model.name, model.provider, user_id="a")
+    llm = create_llm_client(model.name, model.provider, user_id="a", usage=None)
     assert isinstance(llm, ChatGPTPlanClient)
     events = [event async for event in llm.chat(messages=[LLMMessage.user("Hi")], temperature=0.3)]
 

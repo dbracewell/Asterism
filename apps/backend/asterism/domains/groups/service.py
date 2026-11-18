@@ -82,6 +82,8 @@ def _view(group: GroupModel, member_count: int) -> Group:
         member_count=member_count,
         models=None if group.model_access is None else [uuid.UUID(value) for value in group.model_access],
         tools=group.tool_access,
+        daily_token_budget=group.daily_token_budget,
+        monthly_token_budget=group.monthly_token_budget,
     )
 
 
@@ -196,6 +198,20 @@ async def rename_group(*, group_id: str, name: str, admin_id: str, session: Asyn
     group.name = name
     await _commit_name(group, session)
     logger.info(f"Admin {admin_id} renamed group {group_id}")
+    return _view(group, await _count(group_id, session))
+
+
+async def set_budget(
+    *, group_id: str, daily: int | None, monthly: int | None, admin_id: str, session: AsyncSession
+) -> Group:
+    """Set a group's per-member token budgets (US-86.3). Admins are never limited, so the admin group has none."""
+    if group_id == ADMIN_GROUP:
+        raise BadDataException("Admins have no usage budget")
+    group = await _require_group(group_id, session)
+    group.daily_token_budget = daily
+    group.monthly_token_budget = monthly
+    await session.commit()
+    logger.info(f"Admin {admin_id} set token budgets for group {group_id}: daily={daily} monthly={monthly}")
     return _view(group, await _count(group_id, session))
 
 

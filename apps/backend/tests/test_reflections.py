@@ -145,7 +145,7 @@ async def test_draft_suggestion_uses_the_title_model_and_stores_nothing(project_
             seen.append(messages)
             return '{"learned": "I learned osmosis.", "unclear": "Tonicity"}'
 
-    async def model(user_id, selected):
+    async def model(user_id, selected, **_):
         return Model()
 
     monkeypatch.setattr(draft_module, "resolve_title_model", model)
@@ -158,7 +158,7 @@ async def test_draft_suggestion_uses_the_title_model_and_stores_nothing(project_
     assert (await client.get(BASE, headers=auth())).json()["total"] == 0
     assert (await client.post(f"{BASE}draft", headers=auth("b"), json={"chat_id": chat_id})).status_code == 404
 
-    async def none(user_id, selected):
+    async def none(user_id, selected, **_):
         return None
 
     monkeypatch.setattr(draft_module, "resolve_title_model", none)

@@ -32,12 +32,14 @@ class ErrorDetail(BaseModel):
     """Standard error response body: a message plus its HTTP status code.
 
     ``reason`` is a stable machine-readable cause for errors a client must tell
-    apart (for example ``course_managed``); most errors omit it.
+    apart (for example ``course_managed``); most errors omit it. ``resets_at``
+    (Unix seconds) says when a ``usage_limit`` refusal stops applying.
     """
 
     detail: str
     code: int
     reason: str | None = None
+    resets_at: int | None = None
 
 
 class NoArgs(BaseModel):

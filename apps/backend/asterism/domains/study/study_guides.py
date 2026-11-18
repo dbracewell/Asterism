@@ -21,6 +21,7 @@ from asterism.core.exceptions import CodedException
 from asterism.domains.llm.schemas import LLMMessage
 from asterism.domains.llm.selection import resolve_usable_model
 from asterism.domains.projects.scope import project_member_files, read_project_context
+from asterism.domains.usage.schemas import UsageSource
 
 from . import quizzes, service, weak_spots
 from .drafting import DraftFailed, clean_text, json_object
@@ -223,7 +224,9 @@ async def plan_study_guide(
     *, user_id: str, project_id: uuid.UUID, request: StudyGuideRequest, session: AsyncSession
 ) -> StudyGuideDraft:
     context = await _context(user_id=user_id, project_id=project_id, session=session)
-    model = await resolve_usable_model(user_id=user_id, model_id=request.model_id, session=session)
+    model = await resolve_usable_model(
+        user_id=user_id, model_id=request.model_id, session=session, source=UsageSource.STUDY
+    )
     # Release the request session's connection before the model call.
     await session.commit()
     try:

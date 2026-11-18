@@ -14,6 +14,7 @@ from .schemas import (
     Group,
     GroupAccessOptions,
     GroupAccessUpdate,
+    GroupBudgetUpdate,
     GroupCreate,
     GroupMembershipUpdate,
     GroupModelOption,
@@ -86,6 +87,18 @@ async def update_access(group_id: str, payload: GroupAccessUpdate, user: AdminUs
         models=payload.models,
         tools=payload.tools,
         configurable_tools=configurable,
+        admin_id=user.id,
+        session=db,
+    )
+
+
+@groups_router.put("/{group_id}/budget", response_model=Group, operation_id="groupBudgetUpdate")
+async def update_budget(group_id: str, payload: GroupBudgetUpdate, user: AdminUserDep, db: DBSessionDep) -> Group:
+    """Set the daily and monthly token budget of each member. The admin group can't have one."""
+    return await service.set_budget(
+        group_id=group_id,
+        daily=payload.daily_token_budget,
+        monthly=payload.monthly_token_budget,
         admin_id=user.id,
         session=db,
     )

@@ -18,6 +18,7 @@ from asterism.common.log import get_logger
 from asterism.core.exceptions import BadDataException, CodedException, NotFoundException
 from asterism.domains.llm.schemas import LLMMessage
 from asterism.domains.llm.selection import ModelReply, resolve_usable_model
+from asterism.domains.usage.schemas import UsageSource
 
 from .comparisons import read_comparison
 from .disagreement_schemas import (
@@ -127,7 +128,9 @@ async def _run_pass(
     *, user_id: str, model_id: uuid.UUID, sources: list[SourceText], session: AsyncSession
 ) -> DisagreementSummary:
     started = time.monotonic()
-    model = await resolve_usable_model(user_id=user_id, model_id=model_id, session=session)
+    model = await resolve_usable_model(
+        user_id=user_id, model_id=model_id, session=session, source=UsageSource.DISAGREEMENT
+    )
     # Release the request session's connection before the model call.
     await session.commit()
     try:

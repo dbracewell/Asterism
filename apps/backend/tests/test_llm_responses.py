@@ -464,4 +464,4 @@ def test_existing_providers_keep_chat_completions(provider_type):
     )
 
     assert request_capabilities(provider_type) is CHAT_COMPLETIONS_CAPABILITIES
-    assert isinstance(create_llm_client("model", provider), LLMClient)
+    assert isinstance(create_llm_client("model", provider, usage=None), LLMClient)

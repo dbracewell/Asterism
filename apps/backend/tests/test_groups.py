@@ -122,6 +122,8 @@ async def test_custom_groups_can_be_created_renamed_and_deleted_when_empty(api):
         "member_count": 0,
         "models": None,
         "tools": None,
+        "daily_token_budget": None,
+        "monthly_token_budget": None,
     }
     duplicate = await client.post("/groups", headers=auth("admin"), json={"name": "night SCHOOL"})
     assert duplicate.status_code == 409

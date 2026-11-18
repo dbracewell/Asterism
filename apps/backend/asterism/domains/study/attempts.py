@@ -19,6 +19,7 @@ from asterism.core.exceptions import BadDataException, NotFoundException
 from asterism.db.queries import paginate_select
 from asterism.domains.llm.schemas import LLMMessage
 from asterism.domains.llm.selection import ModelCall, SelectedModel, resolve_usable_model
+from asterism.domains.usage.schemas import UsageSource
 
 from . import clock
 from .citations import resolve_citations
@@ -146,7 +147,10 @@ async def _grading_model(
         return None
     if model_id is None:
         raise BadDataException("Choose a model to grade short answers")
-    return await resolve_usable_model(user_id=user_id, model_id=model_id, session=session)
+    # Grading finishes a submitted attempt, so it is counted but never refused.
+    return await resolve_usable_model(
+        user_id=user_id, model_id=model_id, session=session, source=UsageSource.STUDY, admit=False
+    )
 
 
 # --- Results ---------------------------------------------------------------

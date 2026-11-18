@@ -6,7 +6,7 @@ so code refers to them directly. They can't be renamed or deleted.
 
 import uuid
 
-from sqlalchemy import DDL, JSON, CheckConstraint, Index, String, event, func
+from sqlalchemy import DDL, JSON, CheckConstraint, Index, Integer, String, event, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from asterism.db.base_model import Base
@@ -35,6 +35,10 @@ class GroupModel(Base, TimestampMixin):
     # later; a list allows only those ids or tool names. Stale entries are ignored.
     model_access: Mapped[list[str] | None] = mapped_column(JSON, nullable=True)
     tool_access: Mapped[list[str] | None] = mapped_column(JSON, nullable=True)
+    # US-86.3: tokens per member per day and per month; None means no budget. Never set on admin;
+    # positive values are enforced by the API (a CHECK would rebuild this table).
+    daily_token_budget: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    monthly_token_budget: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
     __table_args__ = (
         CheckConstraint(f"length(trim(name)) BETWEEN 1 AND {MAX_GROUP_NAME_LENGTH}", name="ck_groups_name"),

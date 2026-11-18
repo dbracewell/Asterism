@@ -365,7 +365,7 @@ async def test_title_generation_falls_back_after_invalid_provider_output(
     async def save(title: str):
         saved.append(title)
 
-    async def resolve(*_args):
+    async def resolve(*_args, **_kwargs):
         return EmptyDraftModel()
 
     monkeypatch.setattr("asterism.domains.chat.orchestrator.resolve_title_model", resolve)

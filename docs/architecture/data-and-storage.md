@@ -111,6 +111,18 @@ Contributor workflow and the upgrade-test harness are in the
 `pnpm reset:db` remains a development tool for disposable data
 ([initialization and reset](development-reset.md)).
 
+## Usage ledger
+
+`usage_records` ([ADR-0073](../adr/0073-usage-ledger-and-budgets.md)) holds one
+append-only row per completed model call or image request. Each row records the
+user, source, model id and name, chat, tokens, images, the model's prices at call
+time, and whether it ran on a ChatGPT plan. Rows have no foreign key to models or
+chats, so a deleted model or chat never rewrites past usage. Deleting the user
+deletes their rows. Clients are metered where `create_llm_client` builds them.
+Budgets are `groups.daily_token_budget` and `groups.monthly_token_budget`. Their
+days and months follow the `usage_timezone` app setting (UTC by default). Reads
+and budget checks aggregate over the `(user_id, created_at)` index.
+
 ## Search indexes
 
 SQLite FTS5 virtual tables, `chat_search` and `project_search`, provide

@@ -28,6 +28,7 @@ from asterism.domains.llm.schemas import LLMMessage
 from asterism.domains.llm.selection import SelectedModel, resolve_usable_model
 from asterism.domains.retrieval.service import RetrievalHit, RetrievalService
 from asterism.domains.settings.tool_settings import get_tool_settings
+from asterism.domains.usage.schemas import UsageSource
 
 from .models import MessageModel
 from .queries import select_owned_messages
@@ -355,7 +356,9 @@ async def verify_message(
     started = time.monotonic()
     deadline = started + REQUEST_SECONDS
     message = await _require_answer(user_id=user_id, chat_id=chat_id, message_id=message_id, session=session)
-    model = await resolve_usable_model(user_id=user_id, model_id=request.model_id, session=session)
+    model = await resolve_usable_model(
+        user_id=user_id, model_id=request.model_id, session=session, source=UsageSource.VERIFICATION, chat_id=chat_id
+    )
     scope = await verification_scope(
         user_id=user_id,
         chat_id=chat_id,

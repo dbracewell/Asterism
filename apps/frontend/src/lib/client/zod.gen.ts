@@ -1065,12 +1065,14 @@ export const zEmbeddingPayload = z.object({
  * Standard error response body: a message plus its HTTP status code.
  *
  * ``reason`` is a stable machine-readable cause for errors a client must tell
- * apart (for example ``course_managed``); most errors omit it.
+ * apart (for example ``course_managed``); most errors omit it. ``resets_at``
+ * (Unix seconds) says when a ``usage_limit`` refusal stops applying.
  */
 export const zErrorDetail = z.object({
   detail: z.string(),
   code: z.int(),
   reason: z.string().nullish(),
+  resets_at: z.int().nullish(),
 });
 
 /**
@@ -1312,6 +1314,8 @@ export const zGroup = z.object({
   member_count: z.int().gte(0),
   models: z.array(z.uuid()).nullable(),
   tools: z.array(z.string()).nullable(),
+  daily_token_budget: z.int().nullish(),
+  monthly_token_budget: z.int().nullish(),
 });
 
 /**
@@ -1322,6 +1326,16 @@ export const zGroup = z.object({
 export const zGroupAccessUpdate = z.object({
   models: z.array(z.uuid()).max(1000).nullable(),
   tools: z.array(z.string()).max(200).nullable(),
+});
+
+/**
+ * GroupBudgetUpdate
+ *
+ * Token budgets per member, input plus output. None removes that budget.
+ */
+export const zGroupBudgetUpdate = z.object({
+  daily_token_budget: z.int().gte(1).lte(10000000000).nullish(),
+  monthly_token_budget: z.int().gte(1).lte(1000000000000).nullish(),
 });
 
 /**
@@ -4760,6 +4774,38 @@ export const zUpdateSettingValue = z.object({
 });
 
 /**
+ * UsageGroupRow
+ */
+export const zUsageGroupRow = z.object({
+  group_id: z.string().nullable(),
+  group_name: z.string().nullable(),
+  users: z.int(),
+  total_tokens: z.int(),
+  images: z.int(),
+  cost_usd: z.number().nullable(),
+});
+
+/**
+ * UsageModelTotal
+ */
+export const zUsageModelTotal = z.object({
+  model_id: z.uuid().nullable(),
+  model_name: z.string(),
+  input_tokens: z.int(),
+  output_tokens: z.int(),
+  images: z.int(),
+  cost_usd: z.number().nullable(),
+  unpriced_tokens: z.int(),
+});
+
+/**
+ * UsageSettings
+ */
+export const zUsageSettings = z.object({
+  timezone: z.string(),
+});
+
+/**
  * UsageStep
  *
  * Provider-reported usage of one model call (0 when the provider reported none).
@@ -4811,6 +4857,61 @@ export const zDelegationRecord = z.object({
   inline_files: z.array(zInlineFileReference).optional(),
   citations: z.array(zSpanCitation).optional(),
   skill_loads: z.array(zSkillLoad).optional(),
+});
+
+/**
+ * UsageUserRow
+ */
+export const zUsageUserRow = z.object({
+  user_id: z.string(),
+  name: z.string(),
+  email: z.string(),
+  group_id: z.string().nullable(),
+  group_name: z.string().nullable(),
+  models: z.array(zUsageModelTotal),
+  total_tokens: z.int(),
+  cost_usd: z.number().nullable(),
+});
+
+/**
+ * UsageReport
+ *
+ * Usage over ``[start, end)`` in the instance timezone, per user and model and per group.
+ */
+export const zUsageReport = z.object({
+  timezone: z.string(),
+  start: z.int(),
+  end: z.int(),
+  users: z.array(zUsageUserRow),
+  groups: z.array(zUsageGroupRow),
+  total_tokens: z.int(),
+  cost_usd: z.number().nullable(),
+});
+
+/**
+ * UsageWindow
+ *
+ * Tokens used in the current day or month, the budget, and when it resets.
+ */
+export const zUsageWindow = z.object({
+  used_tokens: z.int().gte(0),
+  budget_tokens: z.int().nullable(),
+  remaining_tokens: z.int().nullable(),
+  starts_at: z.int(),
+  resets_at: z.int(),
+});
+
+/**
+ * MyUsage
+ *
+ * The signed-in user's usage and remaining budget.
+ */
+export const zMyUsage = z.object({
+  timezone: z.string(),
+  exempt: z.boolean(),
+  day: zUsageWindow,
+  month: zUsageWindow,
+  month_by_model: z.array(zUsageModelTotal),
 });
 
 /**
@@ -7452,6 +7553,17 @@ export const zGroupAccessUpdatePath = z.object({
  */
 export const zGroupAccessUpdateResponse = zGroup;
 
+export const zGroupBudgetUpdateBody = zGroupBudgetUpdate;
+
+export const zGroupBudgetUpdatePath = z.object({
+  group_id: z.string(),
+});
+
+/**
+ * Successful Response
+ */
+export const zGroupBudgetUpdateResponse = zGroup;
+
 export const zGroupMemberMoveBody = zGroupMembershipUpdate;
 
 export const zGroupMemberMovePath = z.object({
@@ -7462,6 +7574,33 @@ export const zGroupMemberMovePath = z.object({
  * Successful Response
  */
 export const zGroupMemberMoveResponse = zGroupRef;
+
+/**
+ * Successful Response
+ */
+export const zUsageGetMineResponse = zMyUsage;
+
+export const zUsageGetReportQuery = z.object({
+  start: z.iso.date().nullish(),
+  end: z.iso.date().nullish(),
+});
+
+/**
+ * Successful Response
+ */
+export const zUsageGetReportResponse = zUsageReport;
+
+/**
+ * Successful Response
+ */
+export const zUsageSettingsGetResponse = zUsageSettings;
+
+export const zUsageSettingsUpdateBody = zUsageSettings;
+
+/**
+ * Successful Response
+ */
+export const zUsageSettingsUpdateResponse = zUsageSettings;
 
 /**
  * Successful Response
