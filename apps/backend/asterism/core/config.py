@@ -11,6 +11,7 @@ configuration profile. Profile tiers:
 
 import os
 from pathlib import Path
+from typing import Literal
 from urllib.parse import urlsplit
 
 from pydantic import Field, computed_field, model_validator
@@ -94,6 +95,15 @@ class Config(BaseSettings):
 
     system_key: str = Field(default_factory=lambda: _file_secret("SYSTEM_KEY"))
     """System key used for signing JWTs and other internal secrets (value redacted)."""
+
+    log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "INFO"
+    """Backend log level (US-86.6). DEBUG can include request details; keep it off in production."""
+
+    log_format: Literal["text", "json"] = "text"
+    """``json`` writes one object per line for log collectors."""
+
+    min_free_storage_bytes: int = 1024**3
+    """Readiness fails when the storage root's disk has less free space than this (US-86.6)."""
 
     max_chars_for_retrieval: int = 50000
     """The maximum number of characters to retrieve from a document for context."""
@@ -265,6 +275,8 @@ class Config(BaseSettings):
                 raise ConfigValidationError(
                     "SYSTEM_KEY does not meet the production strength requirement (value redacted)",
                 )
+        if not 0 <= self.min_free_storage_bytes <= 1024**5:
+            raise ConfigValidationError("MIN_FREE_STORAGE_BYTES must be from 0 to 1 PiB")
         if not 1 <= self.max_chars_for_retrieval <= 1_000_000:
             raise ConfigValidationError("MAX_CHARS_FOR_RETRIEVAL must be from 1 to 1000000")
         if not 1 <= self.max_upload_file_size_bytes <= 100 * 1024 * 1024:

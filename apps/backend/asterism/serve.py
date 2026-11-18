@@ -6,6 +6,8 @@ from collections.abc import Mapping, Sequence
 
 import uvicorn
 
+from asterism.common.log import log_settings, logging_config
+
 
 def validate_workers(environment: Mapping[str, str]) -> None:
     """Reject server environment overrides that imply unsupported worker modes."""
@@ -41,6 +43,8 @@ def main(arguments: Sequence[str] | None = None) -> None:
         timeout_graceful_shutdown=options.timeout_graceful_shutdown,
         proxy_headers=options.proxy_headers,
         forwarded_allow_ips=options.forwarded_allow_ips,
+        # Uvicorn's own loggers use the app's handler, level and format (US-86.6).
+        log_config=logging_config(*log_settings()),
     )
 
 

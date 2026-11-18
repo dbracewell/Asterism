@@ -411,6 +411,9 @@ import type {
   GroupRenameData,
   GroupRenameError,
   GroupRenameResponse,
+  HealthReadyData,
+  HealthReadyError,
+  HealthReadyResponse,
   ImageGenerationAvailabilityData,
   ImageGenerationAvailabilityError,
   ImageGenerationAvailabilityResponse,
@@ -597,6 +600,9 @@ import type {
   SkillUpdateData,
   SkillUpdateError,
   SkillUpdateResponse,
+  StatusGetData,
+  StatusGetError,
+  StatusGetResponse,
   StudyCardCreateData,
   StudyCardCreateError,
   StudyCardCreateResponse,
@@ -9433,6 +9439,60 @@ export const usageSettingsUpdateMutation = (
   };
   return mutationOptions;
 };
+
+export const healthReadyQueryKey = (options?: Options<HealthReadyData>) =>
+  createQueryKey("healthReady", options);
+
+/**
+ * Ready
+ *
+ * 200 when the backend can serve: database writable, storage free space, auth keys loadable; else 503.
+ */
+export const healthReadyOptions = (options?: Options<HealthReadyData>) =>
+  queryOptions<
+    HealthReadyResponse,
+    HealthReadyError,
+    HealthReadyResponse,
+    ReturnType<typeof healthReadyQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry.get().healthReady({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: healthReadyQueryKey(options),
+  });
+
+export const statusGetQueryKey = (options?: Options<StatusGetData>) =>
+  createQueryKey("statusGet", options);
+
+/**
+ * Instance Status
+ *
+ * Version, uptime, chat admission, knowledge queue, storage and last backup.
+ */
+export const statusGetOptions = (options?: Options<StatusGetData>) =>
+  queryOptions<
+    StatusGetResponse,
+    StatusGetError,
+    StatusGetResponse,
+    ReturnType<typeof statusGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry.get().statusGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: statusGetQueryKey(options),
+  });
 
 export const toolsGetActiveQueryKey = (options?: Options<ToolsGetActiveData>) =>
   createQueryKey("toolsGetActive", options);

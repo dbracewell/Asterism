@@ -13,6 +13,9 @@ services:
       ADMIN_PASSPHRASE: ${ADMIN_PASSPHRASE:?Set ADMIN_PASSPHRASE}
       # Your TLS proxy's address, so rate limits see real clients (ADR-0071).
       TRUSTED_PROXIES: ${TRUSTED_PROXIES:-}
+      # Backend logs (US-86.6): INFO and text by default; json for log collectors.
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      LOG_FORMAT: ${LOG_FORMAT:-text}
 
     ports:
       - "127.0.0.1:${PORT:-3000}:3000"

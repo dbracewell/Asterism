@@ -46,6 +46,7 @@ export type PageGuideId =
   | "admin.image-generation"
   | "admin.groups"
   | "admin.usage"
+  | "admin.status"
   | "admin.users"
   | "admin.educators"
   | "admin.export";
@@ -1060,6 +1061,34 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
     terms: ["concept.group", "concept.model"],
     audience: "admin",
   },
+  "admin.status": {
+    title: "Status",
+    purpose:
+      "See whether the instance is ready and how busy it is, without opening the server's logs.",
+    areas: [
+      {
+        name: "Instance",
+        description:
+          "Version, schema revision, how long it has been running and the log settings. Ready means the database takes writes, storage has its minimum free space and sign-in keys load; Not ready names what failed.",
+      },
+      {
+        name: "Work",
+        description:
+          "Replies running and chat connections open, against their limits, and file processing running or waiting. At a limit, new work is refused until a slot frees up.",
+      },
+      {
+        name: "Storage and backups",
+        description:
+          "How much Asterism's data takes, the disk's free space, and when the last backup ran. Backups more than two days old are shown in red.",
+      },
+    ],
+    tasks: [
+      "Before an upgrade, check that the last backup is recent.",
+      "Match a problem across the server's logs: nginx and backend lines for one request share its request id.",
+    ],
+    terms: [],
+    audience: "admin",
+  },
   "admin.users": {
     title: "Users",
     purpose:
@@ -1147,6 +1176,7 @@ const adminSettingsGuides: Record<string, PageGuideId | null> = {
   export: "admin.export",
   "group-settings": "admin.groups",
   usage: "admin.usage",
+  status: "admin.status",
   "image-generation": "admin.image-generation",
   "code-execution": null,
 };

@@ -373,6 +373,9 @@ else:
             *environment_arguments,
             "-e",
             "MAX_UPLOAD_FILE_SIZE_BYTES=1048576",
+            # Production log profile (US-86.6): JSON lines with request ids.
+            "-e",
+            "LOG_FORMAT=json",
             # Every peer counts as a trusted proxy here, so X-Forwarded-For names the client.
             "-e",
             "TRUSTED_PROXIES=0.0.0.0/0,::/0",
@@ -441,6 +444,29 @@ else:
     status, _, _ = sign_in_from("203.0.113.8")
     assert status != 429, "The rate limit ignored the trusted client address"
     assert_no_secret_output(docker("logs", second_name))
+    # A signed-in backend request logs at INFO (the identity sync), under nginx's request id.
+    status, settings_headers, _ = exchange(
+        second_base,
+        second_public_url,
+        "GET",
+        "/api/py/settings/user",
+        headers={"Authorization": f"Bearer {second_token}"},
+    )
+    assert status == 200, status
+    status, ready_headers, ready_body = exchange(second_base, second_public_url, "GET", "/api/py/health/ready")
+    assert status == 200 and json.loads(ready_body)["ready"] is True, ready_body
+    request_ids = {ready_headers["X-Request-ID"], settings_headers["X-Request-ID"]}
+    json_lines = [
+        json.loads(line)
+        for line in docker("logs", second_name).splitlines()
+        if line.startswith("{") and '"logger"' in line
+    ]
+    assert json_lines, "LOG_FORMAT=json wrote no JSON log lines"
+    assert all({"time", "level", "logger", "request_id", "message"} <= set(line) for line in json_lines)
+    assert any(line["request_id"] == settings_headers["X-Request-ID"] for line in json_lines), (
+        "The signed-in request's log line did not carry its request id"
+    )
+    assert all(len(value) == 32 for value in request_ids), request_ids
     print(
         "PASS: validation, env/file secrets, runtime origins, browser boundary, "
         "edge headers, secure cookies, upload and rate limits, "

@@ -31,6 +31,17 @@ class JobManager[**P]:
         """Create a manager allowing up to *max_concurrency* concurrently executing jobs."""
         self._semaphore = asyncio.Semaphore(max_concurrency)
         self._tasks: dict[str, asyncio.Task[None]] = {}
+        self._running = 0
+
+    @property
+    def running(self) -> int:
+        """Jobs executing now (holding a concurrency slot)."""
+        return self._running
+
+    @property
+    def queued(self) -> int:
+        """Jobs scheduled but still waiting for a slot."""
+        return sum(1 for task in self._tasks.values() if not task.done()) - self._running
 
     def enqueue(
         self,
@@ -63,7 +74,11 @@ class JobManager[**P]:
             **kwargs: P.kwargs,
         ) -> None:
             async with semaphore:
-                await runnable(*args, **kwargs)
+                self._running += 1
+                try:
+                    await runnable(*args, **kwargs)
+                finally:
+                    self._running -= 1
 
         task = asyncio.create_task(_wrapper(self._semaphore, runnable, *args, **kwargs))
         self._tasks[key] = task

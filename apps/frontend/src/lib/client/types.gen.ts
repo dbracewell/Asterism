@@ -544,6 +544,20 @@ export type CapabilityManifest = {
 };
 
 /**
+ * Capacity
+ */
+export type Capacity = {
+  /**
+   * Used
+   */
+  used: number;
+  /**
+   * Limit
+   */
+  limit: number;
+};
+
+/**
  * Captioning
  *
  * The captioning output of one artifact.
@@ -3752,6 +3766,50 @@ export type InsightsConsent = {
 };
 
 /**
+ * InstanceStatus
+ *
+ * What the instance is doing now, for Admin Settings → Status.
+ */
+export type InstanceStatus = {
+  /**
+   * Version
+   */
+  version: string;
+  /**
+   * Schema Revision
+   */
+  schema_revision: string;
+  /**
+   * Started At
+   */
+  started_at: number;
+  /**
+   * Uptime Seconds
+   */
+  uptime_seconds: number;
+  /**
+   * Log Level
+   */
+  log_level: string;
+  /**
+   * Log Format
+   */
+  log_format: string;
+  active_chat_runs: Capacity;
+  chat_connections: Capacity;
+  /**
+   * Knowledge Running
+   */
+  knowledge_running: number;
+  /**
+   * Knowledge Queued
+   */
+  knowledge_queued: number;
+  storage: StorageStatus;
+  last_backup: LastBackup | null;
+};
+
+/**
  * InstructionOverrideProvenance
  *
  * Public record of an override: which definition, at which revision, which text.
@@ -4041,6 +4099,24 @@ export type KnowledgeReprocessSummary = {
    * Queued File Count
    */
   queued_file_count: number;
+};
+
+/**
+ * LastBackup
+ */
+export type LastBackup = {
+  /**
+   * Created At
+   */
+  created_at: number;
+  /**
+   * Archive
+   */
+  archive: string;
+  /**
+   * Size Bytes
+   */
+  size_bytes: number;
 };
 
 /**
@@ -6461,6 +6537,40 @@ export type ProviderSummary = {
 export type ProviderType = "openai" | "generic_openai" | "chatgpt";
 
 /**
+ * Readiness
+ */
+export type Readiness = {
+  /**
+   * Ready
+   */
+  ready: boolean;
+  /**
+   * Checks
+   */
+  checks: Array<ReadinessCheck>;
+};
+
+/**
+ * ReadinessCheck
+ */
+export type ReadinessCheck = {
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * Ok
+   */
+  ok: boolean;
+  /**
+   * Detail
+   *
+   * Why a check failed; never a path, secret or internal error text
+   */
+  detail: string;
+};
+
+/**
  * RecordedRun
  *
  * One recorded run on any branch, for run diff (US-54.6).
@@ -7473,6 +7583,32 @@ export type StarterPackCatalog = {
    * Items
    */
   items: Array<StarterPack>;
+};
+
+/**
+ * StorageStatus
+ */
+export type StorageStatus = {
+  /**
+   * Used Bytes
+   *
+   * Size of the storage root; None while it is first measured
+   */
+  used_bytes: number | null;
+  /**
+   * Free Bytes
+   */
+  free_bytes: number;
+  /**
+   * Total Bytes
+   */
+  total_bytes: number;
+  /**
+   * Min Free Bytes
+   *
+   * Readiness fails below this
+   */
+  min_free_bytes: number;
 };
 
 /**
@@ -21259,6 +21395,57 @@ export type UsageSettingsUpdateResponses = {
 
 export type UsageSettingsUpdateResponse =
   UsageSettingsUpdateResponses[keyof UsageSettingsUpdateResponses];
+
+export type HealthReadyData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/health/ready";
+};
+
+export type HealthReadyErrors = {
+  /**
+   * Service Unavailable
+   */
+  503: Readiness;
+};
+
+export type HealthReadyError = HealthReadyErrors[keyof HealthReadyErrors];
+
+export type HealthReadyResponses = {
+  /**
+   * Successful Response
+   */
+  200: Readiness;
+};
+
+export type HealthReadyResponse =
+  HealthReadyResponses[keyof HealthReadyResponses];
+
+export type StatusGetData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/status";
+};
+
+export type StatusGetErrors = {
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+};
+
+export type StatusGetError = StatusGetErrors[keyof StatusGetErrors];
+
+export type StatusGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: InstanceStatus;
+};
+
+export type StatusGetResponse = StatusGetResponses[keyof StatusGetResponses];
 
 export type ToolsGetActiveData = {
   body?: never;

@@ -52,6 +52,8 @@ for compression, so schedule it outside lessons when you can.
   be outside the storage root. `--keep N` deletes all but the newest N archives
   there after a successful backup; it only touches files named
   `asterism-backup-<time>.tar.gz`. Only one backup runs at a time per directory.
+- After a successful backup, `.last-backup.json` in the storage root records its time,
+  name and size for Admin Settings → Status. It is not part of any archive.
 - **verify** runs every restore check by unpacking into a temporary directory,
   then deletes it. It changes nothing.
 - **restore** runs with the app stopped, into an empty storage root, and does

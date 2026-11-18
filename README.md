@@ -118,6 +118,11 @@ cp .env.example .env
   is the largest upload request, one file or several together. nginx, the Next.js
   proxy and the backend all apply it. A lower value also lowers the file processing
   and vision image limits unless those are set explicitly.
+- Optional: `LOG_LEVEL` (`DEBUG`, `INFO` (default), `WARNING`, `ERROR`) and
+  `LOG_FORMAT` (`text` (default) or `json`, one object per line) set the backend's
+  logs. Each line names the request id of the HTTP request or WebSocket session it
+  ran under, and nginx logs the same id. At INFO and above, logs never contain
+  message text, file text, About you, tokens or secrets. DEBUG is for development.
 - Optional: `TRUSTED_PROXIES` is a comma-separated list of addresses or CIDR
   networks, for example `10.0.0.0/8,192.0.2.7`. nginx takes the client address from
   `X-Forwarded-For` only when the connection comes from one of these.
@@ -263,7 +268,13 @@ migrations. Secrets are not in the archive. From a source checkout, use
 Back up before every upgrade. The [backup and restore guide](docs/architecture/backup-and-restore.md)
 has a cron schedule with retention and the upgrade and roll-back procedure.
 
-Health checks cover the frontend, backend OpenAPI, and auth signing keys. If a
+The container health check calls two public readiness endpoints. `/api/py/health/ready`
+checks that the backend database takes writes, that storage has `MIN_FREE_STORAGE_BYTES`
+free (default 1 GiB) and that the auth signing keys load. `/api/health` checks that the
+Better Auth database takes writes and its signing key works. Each returns 503 naming
+what failed. Admin Settings → Status shows readiness, version, uptime, replies running
+and chat connections against their limits, the file processing queue, storage use and
+the last backup. If a
 service exits, the container stops so its restart policy can recover. SIGTERM stops
 all services. ML/CUDA dependencies make builds and images large; allow substantial
 free Docker disk space. Optional tools requiring Playwright browsers need those

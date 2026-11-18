@@ -21,6 +21,7 @@ import {
   MessageCircleIcon,
   ShrinkIcon,
   GaugeIcon,
+  ActivityIcon,
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import type { ReactNode } from "react";
@@ -43,6 +44,13 @@ const GroupSettings = dynamic(
   () =>
     import("@/features/settings/ui/admin-settings/groups-settings").then(
       (module) => module.GroupSettings,
+    ),
+  { loading: AdminPaneLoading },
+);
+const StatusSettings = dynamic(
+  () =>
+    import("@/features/settings/ui/admin-settings/status-settings").then(
+      (module) => module.StatusSettings,
     ),
   { loading: AdminPaneLoading },
 );
@@ -175,6 +183,13 @@ export const getLazyAdminSettingsSections = (): Types => [
     value: "usage",
     icon: <GaugeIcon />,
     settingsPane: pane("Usage", <UsageSettings />),
+  },
+  {
+    type: "section",
+    label: "Status",
+    value: "status",
+    icon: <ActivityIcon />,
+    settingsPane: pane("Status", <StatusSettings />),
   },
   { type: "separator" },
   {

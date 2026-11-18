@@ -1,13 +1,31 @@
-"""Central logging setup for the Asterism backend.
+"""Central logging setup for the Asterism backend (US-86.6).
 
-Configures a single stdout stream handler with Uvicorn-style formatting and
-installs a credential-redaction filter on Uvicorn's transport loggers.
+One stdout handler for every logger, Uvicorn's included. ``LOG_LEVEL`` (default
+``INFO``) sets the level; ``LOG_FORMAT`` is ``text`` (default, Uvicorn-style) or
+``json`` (one object per line). Every record carries the ``request_id`` of the
+HTTP request or WebSocket session it ran under; tasks started there inherit it,
+because asyncio copies context variables into new tasks. Uvicorn's transport
+loggers get a filter that redacts socket query credentials.
+
+``core.config`` validates both settings at startup. This module reads them from
+the environment itself because it is a leaf: it is imported before any config.
 """
 
+import json
 import logging
+import os
 import re
+from contextvars import ContextVar
+from datetime import UTC, datetime
 from logging import Logger
 from logging.config import dictConfig
+from typing import Any
+
+LOG_LEVELS = ("DEBUG", "INFO", "WARNING", "ERROR")
+LOG_FORMATS = ("text", "json")
+
+request_id: ContextVar[str | None] = ContextVar("asterism_request_id", default=None)
+"""The current request or WebSocket session id; ``None`` outside one (startup, timers)."""
 
 
 class RedactTransportTokens(logging.Filter):
@@ -35,59 +53,100 @@ class RedactTransportTokens(logging.Filter):
         return True
 
 
-_is_initialized = False
-_root_logger: Logger | None = None
+class RequestContext(logging.Filter):
+    """Stamp each record with the current request id ("-" outside a request)."""
 
-# dictConfig payload applied once at first logger use: everything goes to stdout
-# with Uvicorn-style colors; the root "asterism" namespace runs at DEBUG level.
-LOGGING_CONFIG = {
-    "version": 1,
-    "disable_existing_loggers": False,
-    "formatters": {
-        "uvicorn": {
+    def filter(self, record: logging.LogRecord) -> bool:
+        record.request_id = request_id.get() or "-"
+        return True
+
+
+class JsonFormatter(logging.Formatter):
+    """One JSON object per line: time, level, logger, request id, message, and any exception."""
+
+    def format(self, record: logging.LogRecord) -> str:
+        entry: dict[str, Any] = {
+            "time": datetime.fromtimestamp(record.created, UTC)
+            .isoformat(timespec="milliseconds")
+            .replace("+00:00", "Z"),
+            "level": record.levelname,
+            "logger": record.name,
+            "request_id": getattr(record, "request_id", "-"),
+            "message": record.getMessage(),
+        }
+        if record.exc_info:
+            entry["exception"] = self.formatException(record.exc_info)
+        return json.dumps(entry, ensure_ascii=False)
+
+
+def log_settings(environment: dict[str, str] | None = None) -> tuple[str, str]:
+    """The (level, format) the environment asks for, falling back to INFO/text when unset or unknown."""
+    source = os.environ if environment is None else environment
+    level = source.get("LOG_LEVEL", "INFO").strip().upper()
+    fmt = source.get("LOG_FORMAT", "text").strip().lower()
+    return (level if level in LOG_LEVELS else "INFO", fmt if fmt in LOG_FORMATS else "text")
+
+
+def logging_config(level: str = "INFO", fmt: str = "text") -> dict[str, Any]:
+    """A ``dictConfig`` payload; also passed to Uvicorn so its own loggers share the handler."""
+    formatter = (
+        {"()": JsonFormatter}
+        if fmt == "json"
+        else {
             "()": "uvicorn.logging.DefaultFormatter",
-            "fmt": "%(levelprefix)s %(asctime)s | %(name)s | %(message)s",
+            "fmt": "%(levelprefix)s %(asctime)s | %(name)s | %(request_id)s | %(message)s",
             "datefmt": "%Y-%m-%d %H:%M:%S",
-            "use_colors": True,
+            "use_colors": None,
+        }
+    )
+    return {
+        "version": 1,
+        "disable_existing_loggers": False,
+        "filters": {
+            "request": {"()": RequestContext},
+            "redact": {"()": RedactTransportTokens},
         },
-    },
-    "handlers": {
-        "stream": {
-            "class": "logging.StreamHandler",
-            "stream": "ext://sys.stdout",
-            "formatter": "uvicorn",
-            "level": "DEBUG",
+        "formatters": {"default": formatter},
+        "handlers": {
+            "stream": {
+                "class": "logging.StreamHandler",
+                "stream": "ext://sys.stdout",
+                "formatter": "default",
+                "filters": ["request", "redact"],
+            },
         },
-    },
-    "loggers": {
-        "": {
-            "handlers": ["stream"],
-            "level": "INFO",
+        "loggers": {
+            "": {"handlers": ["stream"], "level": level},
+            "asterism": {"level": level},
+            # Uvicorn's loggers go through the same handler (and format).
+            "uvicorn": {"handlers": [], "level": level, "propagate": True},
+            "uvicorn.error": {"handlers": [], "level": level, "propagate": True, "filters": ["redact"]},
+            # Request lines are nginx's job; keep Uvicorn's quiet.
+            "uvicorn.access": {"handlers": [], "level": "WARNING", "propagate": True, "filters": ["redact"]},
+            "httpx": {"level": "WARNING"},
         },
-    },
-}
+    }
+
+
+_is_initialized = False
 
 
 def __initialize_logging():
-    """Apply LOGGING_CONFIG once, then configure the asterism/Uvicorn/httpx loggers."""
+    """Apply the environment's logging configuration once."""
     global _is_initialized
-    global _root_logger
     if _is_initialized:
         return
     _is_initialized = True
-    dictConfig(LOGGING_CONFIG)
-    logging.getLogger("asterism").setLevel(logging.DEBUG)
-    for name in ("uvicorn.error", "uvicorn.access"):
-        logging.getLogger(name).addFilter(RedactTransportTokens())
-    logging.getLogger("uvicorn.access").setLevel(logging.WARNING)
-    logging.getLogger("httpx").setLevel(logging.WARNING)
+    dictConfig(logging_config(*log_settings()))
 
 
 __existing_loggers: dict[str, Logger] = {}
 
 
 def get_logger(name: str) -> Logger:
-    """Return a DEBUG-level logger under the given name, initializing logging on first use.
+    """Return a logger under the given name, initializing logging on first use.
+
+    Loggers inherit ``LOG_LEVEL``; none is pinned to DEBUG.
 
     Args:
         name: Logger name; typically ``__name__`` of the calling module or a
@@ -102,7 +161,6 @@ def get_logger(name: str) -> Logger:
         return logger
 
     logger = logging.getLogger(name)
-    logger.setLevel(logging.DEBUG)
     __existing_loggers[name] = logger
 
     return logger
