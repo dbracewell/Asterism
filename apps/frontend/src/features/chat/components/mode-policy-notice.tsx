@@ -11,6 +11,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { HelpTopic } from "@/features/help/components/help-topic";
 import { client } from "@/lib/api";
 import type {
   ChatInfo,
@@ -220,7 +221,10 @@ export function ModePolicyControl({ info }: { info: ChatInfo }) {
       </Button>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>{title}</AlertDialogTitle>
+          <AlertDialogTitle className="flex items-center gap-1">
+            {title}
+            <HelpTopic id="concept.mode-policy" />
+          </AlertDialogTitle>
           <AlertDialogDescription>
             {locked
               ? "You locked this chat to keep yourself working it out. Unlocking lets you switch to Standard or reveal answers without the extra wait. Your class's limits stay."

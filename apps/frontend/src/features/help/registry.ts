@@ -30,7 +30,7 @@ export type HelpId =
   | "concept.progress"
   | "concept.hint-levels"
   | "concept.answer-reveal"
-  | "concept.mode-lock"
+  | "concept.mode-policy"
   | "concept.template"
   | "concept.prompt-coach"
   | "concept.canvas"
@@ -51,7 +51,6 @@ export type HelpId =
   | "concept.course"
   | "concept.class-code"
   | "concept.class-invite"
-  | "concept.class-mode-policy"
   | "concept.class-insights"
   | "concept.team-pack"
   | "composer.controls"
@@ -238,8 +237,7 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
       "concept.mode-review",
       "concept.mode-draft-feedback",
       "concept.mode-research",
-      "concept.mode-lock",
-      "concept.class-mode-policy",
+      "concept.mode-policy",
     ],
     audience: "everyone",
   },
@@ -263,7 +261,7 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
     related: [
       "concept.hint-levels",
       "concept.answer-reveal",
-      "concept.mode-lock",
+      "concept.mode-policy",
     ],
     audience: "everyone",
   },
@@ -383,22 +381,24 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
       "If the chat's mode is locked, you'll wait a few seconds before you can confirm.",
       "In a class's course project, your educator may turn answer reveals off.",
     ],
-    related: [
-      "concept.hint-levels",
-      "concept.mode-lock",
-      "concept.class-mode-policy",
-    ],
+    related: ["concept.hint-levels", "concept.mode-policy"],
     audience: "everyone",
   },
-  "concept.mode-lock": {
-    title: "Mode lock",
+  "concept.mode-policy": {
+    title: "Mode restrictions",
     summary:
-      "Lets you commit to a learning mode in this chat, so skipping ahead takes a deliberate step.",
+      "Limits on the learning modes a chat can use and on revealing answers. They come from your own lock, your educator's course policy, or both.",
     details: [
-      "While the mode is locked, switching to Standard or showing an answer asks you to confirm and wait five seconds.",
-      "The lock is your own choice. You can always remove it from the chat header.",
+      "Your lock is your own choice: lock a learning mode from the chat header to make skipping ahead a deliberate step. Switching to Standard or showing an answer then asks you to confirm and wait five seconds, and you can unlock at any time.",
+      "In a class's course project, your educator can limit the modes and turn answer reveals off. Only they can change that, and it doesn't reach your other chats.",
+      "When both apply, the stricter rule wins. Unlocking lifts only your own lock, never the course's limits.",
+      "A course policy can only limit. It never adds tools, files or modes. A change applies from the next message.",
     ],
-    related: ["concept.learning-mode", "concept.answer-reveal"],
+    related: [
+      "concept.learning-mode",
+      "concept.answer-reveal",
+      "concept.course",
+    ],
     audience: "everyone",
   },
   "concept.template": {
@@ -563,7 +563,7 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
       "Asking sends your name and email to your administrator. Educators are not administrators and get no extra access to other people's chats or files.",
       "If educator access is revoked, the educator can no longer manage their classes, and students stay in them.",
     ],
-    related: ["concept.class", "concept.course", "concept.class-mode-policy"],
+    related: ["concept.class", "concept.course", "concept.mode-policy"],
     audience: "everyone",
   },
   "concept.group": {
@@ -592,7 +592,7 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
       "concept.class",
       "concept.project",
       "concept.sub-agent",
-      "concept.class-mode-policy",
+      "concept.mode-policy",
     ],
     audience: "everyone",
   },
@@ -616,21 +616,6 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
       "Students who already have an account join with the class code instead.",
     ],
     related: ["concept.class-code", "concept.class"],
-    audience: "everyone",
-  },
-  "concept.class-mode-policy": {
-    title: "Learning mode policy",
-    summary:
-      "An educator's limits on which learning modes students may use in the course project, and whether they can reveal answers.",
-    details: [
-      "The policy can only limit. It never adds tools, files or modes, and students' other chats are unaffected.",
-      "Students see the limits and that their educator set them. A change applies from the next message.",
-    ],
-    related: [
-      "concept.learning-mode",
-      "concept.answer-reveal",
-      "concept.course",
-    ],
     audience: "everyone",
   },
   "concept.class-insights": {
@@ -683,7 +668,7 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
       "concept.learning-mode",
       "concept.skill",
       "concept.sub-agent",
-      "concept.mode-lock",
+      "concept.mode-policy",
     ],
     audience: "everyone",
   },

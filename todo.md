@@ -64,5 +64,5 @@ Source: user request and the [feature overlap review](docs/reviews/2026-11-17-fe
 
 ### US-85.3: Help and docs
 
-- [ ] One help entry for mode restrictions
-- [ ] Architecture docs and classes/educator README sections
+- [x] One help entry for mode restrictions
+- [x] Architecture docs and classes/educator README sections

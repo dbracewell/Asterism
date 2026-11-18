@@ -104,7 +104,7 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
       {
         name: "Header",
         description:
-          "Shows where the chat lives, its model, the mode lock in a learning mode, and a menu to rename or move the chat, reflect on the session, export an AI-use log or delete the chat.",
+          "Shows where the chat lives, its model, the mode restrictions control (your lock, and any course limits), and a menu to rename or move the chat, reflect on the session, export an AI-use log or delete the chat.",
       },
       {
         name: "Conversation",
@@ -125,7 +125,7 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
     tasks: [
       "Regenerate a reply to get another version, then use the arrows to switch between versions.",
       "Use Compare with other models under a reply to see how different models answer.",
-      "Lock the learning mode from the header to stop yourself skipping ahead.",
+      "Lock the learning mode from the header to stop yourself skipping ahead; the same control shows any limits your course sets.",
       "Open the status ring beside the send button and choose Compact now to summarize earlier turns of a long chat.",
       "Choose Create image in the + menu, then describe the picture you want.",
     ],
@@ -134,7 +134,7 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
       "concept.context-compaction",
       "composer.controls",
       "concept.hint-levels",
-      "concept.mode-lock",
+      "concept.mode-policy",
       "concept.citation",
       "concept.tool-approval",
       "concept.canvas",
@@ -437,7 +437,7 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
       "concept.class-code",
       "concept.class-invite",
       "concept.course",
-      "concept.class-mode-policy",
+      "concept.mode-policy",
       "concept.class-insights",
     ],
     audience: "everyone",

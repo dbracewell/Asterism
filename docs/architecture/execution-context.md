@@ -178,15 +178,35 @@ turn's level under the current mode. Tutor offers every level; Review my work
 offers only `answer`, its confirmed corrected-solution reveal. See
 [ADR-0029](../adr/0029-branch-local-hint-levels.md).
 
-### Mode lock
+### Mode policy
 
-A learner can lock a chat's learning mode (never Standard). The lock is chat
-state, not prompt input: it adds no layer and is not pinned on turns. While
-locked, selecting Standard or unlocking needs `override_lock` on
-`PUT /chat/{id}/learning-mode`, and an `answer` hint request needs
-`override_lock` as well as `confirm_reveal`. The UI makes each override wait
-five seconds behind a confirmation. See
-[ADR-0031](../adr/0031-self-imposed-mode-lock.md).
+One effective policy per chat restricts learning modes and answer reveals
+([ADR-0068](../adr/0068-effective-mode-policy.md)). It combines two sources,
+read live on every check, and the stricter rule wins:
+
+- **Learner lock** (`chats.learning_mode_locked`,
+  [ADR-0031](../adr/0031-self-imposed-mode-lock.md)): allows every learning
+  mode except Standard; reveals need `override_lock`. The learner can lift it.
+- **Course policy** (`classes.allowed_modes`, `classes.answer_reveal`,
+  [ADR-0055](../adr/0055-class-mode-policy.md)): applies to a student's course
+  project while they are a current member. Only the educator can change it.
+
+Allowed modes are the catalog ∩ both sources (possibly empty); reveal is
+`forbidden` over `override_required` over `allowed`. `chat/mode_policy.py`
+builds the policy and holds the one check that sends, mode changes, hint
+requests and every run (first execution, resume, regeneration) call. Runs check
+with the learner source lifted: the lock gated the turn at acceptance and is
+not pinned on turns. `override_lock` lifts only the learner source; selecting
+Standard releases the lock and is refused when the course forbids Standard. A
+lock that would leave no mode is refused. Refusals are 409 with
+`reason: "mode_policy"` and name each source.
+
+`ChatInfo.mode_policy` carries the policy on single-chat responses, and
+`GET /chat/mode-policy?project_id=` returns it for a new chat. The frontend's
+`ModePolicyNotice` lists each source, and `ModePolicyControl` in the chat
+header locks the mode or unlocks it after a five-second confirmation. The mode
+picker disables modes that only the course refuses, and the reveal button is
+hidden, delayed or shown by `mode_policy.reveal`.
 
 ### Attempts in Review my work
 

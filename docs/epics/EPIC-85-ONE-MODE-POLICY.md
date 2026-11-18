@@ -1,6 +1,6 @@
 # EPIC-85: One mode policy (stricter rule wins)
 
-Status: in progress (2026-11-17); US-85.1 and US-85.2 implemented. Source: user decision on the
+Status: complete (2026-11-17). Source: user decision on the
 [feature overlap review](../reviews/2026-11-17-feature-overlap-review.md), finding 3.
 
 ## Objective
@@ -83,5 +83,5 @@ the stricter rule wins.
 
 ### US-85.3: Help and docs
 
-- [ ] Merge the mode-lock and course-policy help entries into one.
-- [ ] Update architecture docs and the classes/educator README sections.
+- [x] Merge the mode-lock and course-policy help entries into one.
+- [x] Update architecture docs and the classes/educator README sections.
