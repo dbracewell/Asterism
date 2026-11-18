@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/breadcrumb";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ChatModeLock } from "@/features/chat/components/chat-mode-lock";
+import { ModePolicyControl } from "@/features/chat/components/mode-policy-notice";
 import { ChatSessionActionMenu } from "@/features/dashboard/components/chat-session-action-menu";
 import { PageHelp } from "@/features/help/components/page-help";
 import { client } from "@/lib/api";
@@ -149,7 +149,7 @@ export function ChatHeaderContent({
         ]}
       />
       <ChatChips info={info} />
-      {!file && <ChatModeLock info={info} />}
+      {!file && <ModePolicyControl info={info} />}
       <ChatSessionActionMenu chat={info} variant="header" />
     </>
   );

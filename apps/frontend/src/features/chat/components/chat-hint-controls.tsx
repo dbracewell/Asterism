@@ -1,6 +1,5 @@
 "use client";
 
-import { useCourseModePolicy } from "./course-mode-policy";
 import { HelpTopic } from "@/features/help/components/help-topic";
 import {
   AlertDialog,
@@ -24,8 +23,7 @@ import { LightbulbIcon } from "lucide-react";
 import { learningModeQueryOptions } from "./chat-learning-mode-picker";
 import {
   DelayedConfirmAction,
-  learnerLocked,
-  lockOverrideDelay,
+  LOCK_OVERRIDE_DELAY_SECONDS,
 } from "./delayed-confirm-action";
 
 const ORDER: HintLevel[] = [
@@ -120,9 +118,9 @@ export function ChatHintControls({
   onResetChange: (reset: boolean) => void;
 }) {
   const catalog = useQuery(learningModeQueryOptions());
-  // A class policy can turn reveals off in a course project (US-60.4).
-  const revealAllowed =
-    useCourseModePolicy(info.project_id)?.answer_reveal ?? true;
+  // The effective policy hides, delays or shows the reveal (ADR-0068).
+  const revealRule = info.mode_policy?.reveal ?? "allowed";
+  const revealAllowed = revealRule !== "forbidden";
   const mode = catalog.data?.modes.find(
     (item) => item.id === info.learning_mode,
   );
@@ -135,7 +133,7 @@ export function ChatHintControls({
     (level): level is keyof typeof hintPrompt => level !== "answer",
   );
   const reveal = revealCopy(info.learning_mode);
-  const locked = learnerLocked(info);
+  const locked = revealRule === "override_required";
   return (
     <div
       role="group"
@@ -203,7 +201,7 @@ export function ChatHintControls({
             <AlertDialogFooter>
               <AlertDialogCancel>Keep trying</AlertDialogCancel>
               <DelayedConfirmAction
-                delaySeconds={lockOverrideDelay(info)}
+                delaySeconds={locked ? LOCK_OVERRIDE_DELAY_SECONDS : 0}
                 onConfirm={() =>
                   onRaise(
                     {

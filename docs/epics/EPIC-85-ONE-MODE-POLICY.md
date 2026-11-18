@@ -1,6 +1,6 @@
 # EPIC-85: One mode policy (stricter rule wins)
 
-Status: in progress (2026-11-17); US-85.1 implemented. Source: user decision on the
+Status: in progress (2026-11-17); US-85.1 and US-85.2 implemented. Source: user decision on the
 [feature overlap review](../reviews/2026-11-17-feature-overlap-review.md), finding 3.
 
 ## Objective
@@ -75,11 +75,11 @@ the stricter rule wins.
 
 ### US-85.2: One policy control (frontend)
 
-- [ ] One `ModePolicyNotice` replaces `chat-mode-lock.tsx` and
+- [x] One `ModePolicyNotice` replaces `chat-mode-lock.tsx` and
       `course-mode-policy.tsx` in the header, composer and new-chat page.
-- [ ] Mode picker and hint controls read `mode_policy` (disabled modes, reveal
+- [x] Mode picker and hint controls read `mode_policy` (disabled modes, reveal
       hidden / delayed / shown).
-- [ ] Update unit tests and Playwright specs.
+- [x] Update unit tests and Playwright specs.
 
 ### US-85.3: Help and docs
 

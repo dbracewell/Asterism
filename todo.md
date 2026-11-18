@@ -58,9 +58,9 @@ Source: user request and the [feature overlap review](docs/reviews/2026-11-17-fe
 
 ### US-85.2: One policy control (frontend)
 
-- [ ] `ModePolicyNotice` replaces mode lock and course policy components
-- [ ] Mode picker and hint controls read `mode_policy`
-- [ ] Unit and Playwright tests updated
+- [x] `ModePolicyNotice` replaces mode lock and course policy components
+- [x] Mode picker and hint controls read `mode_policy`
+- [x] Unit and Playwright tests updated
 
 ### US-85.3: Help and docs
 

@@ -12,7 +12,7 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { ChatHintControls } from "./chat-hint-controls";
 
 const { api, raised } = vi.hoisted(() => ({
-  api: { learningModeGetMany: vi.fn(), chatModePolicyGet: vi.fn() },
+  api: { learningModeGetMany: vi.fn() },
   raised: vi.fn(),
 }));
 vi.mock("@/lib/api", () => ({
@@ -51,13 +51,13 @@ afterEach(() => {
 });
 
 const lockedPolicy: ChatInfo["mode_policy"] = {
-  allowed_modes: [],
+  allowed_modes: ["tutor", "review"],
   reveal: "override_required",
   sources: [
     {
       kind: "learner",
       set_by: "You",
-      allowed_modes: [],
+      allowed_modes: ["tutor", "review"],
       reveal: "override_required",
       learner_can_lift: true,
     },
@@ -283,26 +283,29 @@ it("restarts the wait each time the locked reveal opens", async () => {
 });
 
 it("hides the reveal when the class policy turns it off", async () => {
-  api.chatModePolicyGet.mockResolvedValue({
-    data: {
-      allowed_modes: ["tutor"],
-      reveal: "forbidden",
-      sources: [
-        {
-          kind: "course",
-          class_name: "Biology 101",
-          set_by: "Dr Teach",
-          allowed_modes: ["tutor"],
-          reveal: "forbidden",
-          learner_can_lift: false,
-        },
-      ],
-    },
-  });
   render(
     <QueryClientProvider client={new QueryClient()}>
       <ChatHintControls
-        info={{ ...info("tutor", "none"), project_id: "course" } as ChatInfo}
+        info={
+          {
+            ...info("tutor", "none"),
+            project_id: "course",
+            mode_policy: {
+              allowed_modes: ["tutor"],
+              reveal: "forbidden",
+              sources: [
+                {
+                  kind: "course",
+                  class_name: "Biology 101",
+                  set_by: "Dr Teach",
+                  allowed_modes: ["tutor"],
+                  reveal: "forbidden",
+                  learner_can_lift: false,
+                },
+              ],
+            },
+          } as ChatInfo
+        }
         disabled={false}
         resetPending={false}
         onResetChange={() => {}}
@@ -313,7 +316,6 @@ it("hides the reveal when the class policy turns it off", async () => {
   expect(
     await screen.findByRole("button", { name: "Worked example" }),
   ).toBeInTheDocument();
-  await vi.waitFor(() => expect(api.chatModePolicyGet).toHaveBeenCalled());
   await vi.waitFor(() =>
     expect(
       screen.queryByRole("button", { name: "Show answer" }),

@@ -193,13 +193,13 @@ function LockedHarness({ info }: { info: ChatInfo }) {
 }
 
 const lockedPolicy: ChatInfo["mode_policy"] = {
-  allowed_modes: [],
+  allowed_modes: ["tutor", "review"],
   reveal: "override_required",
   sources: [
     {
       kind: "learner",
       set_by: "You",
-      allowed_modes: [],
+      allowed_modes: ["tutor", "review"],
       reveal: "override_required",
       learner_can_lift: true,
     },
