@@ -67,6 +67,11 @@ turning every area off. Team-pack export/import and course copies carry
 `areas`; a change to them is listed as a course settings change. A course
 project always shows Study, whatever the educator's project hides.
 
+While a student is a current member of the class, the class's mode policy limits
+learning modes and answer reveals in their course project. It combines with the
+student's own lock into one effective mode policy where the stricter rule wins;
+see [Mode policy](execution-context.md#mode-policy).
+
 "New project" opens a wizard (US-65.3) in a dialog: starting point (Study a
 course, Ask my documents, Agent workspace, Blank), name and description, files
 and instructions, goal (only while the Goal area is on) and review. A starting

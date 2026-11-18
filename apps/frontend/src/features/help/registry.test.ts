@@ -19,7 +19,7 @@ const requiredGlossary: HelpId[] = [
   "concept.mode-review",
   "concept.hint-levels",
   "concept.answer-reveal",
-  "concept.mode-lock",
+  "concept.mode-policy",
   "concept.template",
   "concept.model",
   "concept.attachment",
@@ -36,7 +36,6 @@ const newerGlossary: HelpId[] = [
   "concept.course",
   "concept.class-code",
   "concept.class-invite",
-  "concept.class-mode-policy",
   "concept.class-insights",
   "concept.flashcard",
   "concept.quiz",
@@ -66,8 +65,10 @@ describe("help registry", () => {
     expect(text("concept.class-insights")).toMatch(
       /never see chats, answers or any one student's results/,
     );
-    // The class policy only narrows what students can do.
-    expect(text("concept.class-mode-policy")).toMatch(/can only limit/);
+    // The course policy only narrows, and unlocking never lifts it (ADR-0068).
+    expect(text("concept.mode-policy")).toMatch(/can only limit/);
+    expect(text("concept.mode-policy")).toMatch(/stricter rule wins/);
+    expect(text("concept.mode-policy")).toMatch(/never the course's limits/);
     // Packs never carry secrets or grant tools on their own.
     expect(text("concept.team-pack")).toMatch(/never holds files, keys/);
     expect(text("concept.team-pack")).toMatch(/can't grant tools/);

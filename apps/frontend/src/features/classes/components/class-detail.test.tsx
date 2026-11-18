@@ -152,7 +152,7 @@ it("offers help beside every section", async () => {
     ["Invites for new students", "Invite links"],
     ["Students", "Class"],
     ["Course", "Course"],
-    ["Learning mode policy", "Learning mode policy"],
+    ["Learning mode policy", "Mode restrictions"],
     ["Where the class struggles", "Class insights"],
   ]) {
     expect(

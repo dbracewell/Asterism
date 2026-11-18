@@ -32,10 +32,7 @@ export function ClassModePolicy({ item }: { item: TaughtClass }) {
   const allChosen = modes.every((mode) => chosen.includes(mode.id));
   return (
     <section aria-label="Learning mode policy" className="grid gap-3">
-      <HelpHeading
-        help="concept.class-mode-policy"
-        className="text-lg font-medium"
-      >
+      <HelpHeading help="concept.mode-policy" className="text-lg font-medium">
         Learning mode policy
       </HelpHeading>
       <p className="text-sm">

@@ -82,7 +82,7 @@ test("an educator opens class help from the keyboard; admins see settings file h
       "Invite links",
       "Class",
       "Course",
-      "Learning mode policy",
+      "Mode restrictions",
       "Class insights",
     ]) {
       const trigger = educator.getByRole("button", {
