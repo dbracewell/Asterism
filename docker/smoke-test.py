@@ -6,6 +6,7 @@ persistence, graceful shutdown, and failure supervision.
 """
 
 import base64
+import http.client
 import http.cookiejar
 import json
 import re
@@ -85,6 +86,47 @@ def client(base, public_url):
         return json.loads(raw(path, data, token))
 
     return raw, request
+
+
+def exchange(base, public_url, method, path, data=None, headers=None, content_length=None):
+    """One request without redirects, cookies or raising on errors: (status, headers, body)."""
+    target = urllib.parse.urlsplit(base)
+    connection = http.client.HTTPConnection(target.hostname, target.port, timeout=15)
+    try:
+        body = json.dumps(data).encode() if data is not None else None
+        connection.putrequest(method, path, skip_host=True)
+        connection.putheader("Host", urllib.parse.urlsplit(public_url).netloc)
+        connection.putheader("Origin", public_url)
+        for key, value in (headers or {}).items():
+            connection.putheader(key, value)
+        if body is not None:
+            connection.putheader("Content-Type", "application/json")
+        length = content_length if content_length is not None else len(body or b"")
+        connection.putheader("Content-Length", str(length))
+        connection.endheaders(body if content_length is None else None)
+        response = connection.getresponse()
+        return response.status, response.headers, response.read()
+    finally:
+        connection.close()
+
+
+def assert_edge_headers(base, public_url, https):
+    """US-86.5: page CSP with a nonce, locked-down API responses, HSTS only under HTTPS."""
+    _, page, _ = exchange(base, public_url, "GET", "/sign-in")
+    policy = page["Content-Security-Policy"] or ""
+    assert "'nonce-" in policy and "'strict-dynamic'" in policy, policy
+    assert "frame-ancestors 'none'" in policy, policy
+    assert page["X-Content-Type-Options"] == "nosniff"
+    _, api, _ = exchange(base, public_url, "GET", "/api/py/openapi.json")
+    assert (api["Content-Security-Policy"] or "").startswith("default-src 'none'")
+    assert api["X-Frame-Options"] == "DENY" and api["X-Content-Type-Options"] == "nosniff"
+    assert len(api.get_all("X-Content-Type-Options")) == 1, "Duplicated API security headers"
+    for headers in (page, api):
+        assert (headers["Strict-Transport-Security"] is not None) == https, "HSTS must follow PUBLIC_URL"
+
+
+# Accounts are created with the admin key (or by a signed-in admin, or an invite).
+signup_path = "/api/auth/sign-up/email?" + urllib.parse.urlencode({"adminKey": runtime_secrets["ADMIN_PASSPHRASE"]})
 
 
 def assert_no_secret_output(output):
@@ -212,6 +254,7 @@ try:
     )
     raw, request = client(base, public_url)
     request("/api/py/openapi.json")
+    assert_edge_headers(base, public_url, https=False)
     html = raw("/sign-in").decode()
     for source in re.findall(r'<script[^>]+src="([^"]+)"', html):
         asset = raw(source)
@@ -220,7 +263,7 @@ try:
                 raise RuntimeError("A runtime secret appeared in a browser asset")
 
     credentials = {"email": "smoke@example.com", "password": secrets.token_urlsafe(18)}
-    request("/api/auth/sign-up/email", {**credentials, "name": "Smoke Test"})
+    request(signup_path, {**credentials, "name": "Smoke Test"})
     token = request("/api/auth/token")["token"]
     claims = json.loads(base64.urlsafe_b64decode(token.split(".")[1] + "=="))
     assert claims["iss"] == public_url
@@ -275,7 +318,8 @@ else:
     else:
         raise AssertionError("Supervisor left container running after service exit")
 
-    second_public_url = "http://localhost:43210"
+    # An HTTPS public origin (TLS ends at an outside proxy) and a small upload limit.
+    second_public_url = "https://localhost:43210"
     environment_arguments = [
         argument for key, value in runtime_secrets.items() for argument in ("-e", f"{key}={value}")
     ]
@@ -283,24 +327,81 @@ else:
         second_name,
         second_volume,
         second_public_url,
-        environment_arguments,
+        [
+            *environment_arguments,
+            "-e",
+            "MAX_UPLOAD_FILE_SIZE_BYTES=1048576",
+            # Every peer counts as a trusted proxy here, so X-Forwarded-For names the client.
+            "-e",
+            "TRUSTED_PROXIES=0.0.0.0/0,::/0",
+        ],
     )
-    _, second_request = client(second_base, second_public_url)
-    second_request(
-        "/api/auth/sign-up/email",
+    assert_edge_headers(second_base, second_public_url, https=True)
+    status, signed_up, _ = exchange(
+        second_base,
+        second_public_url,
+        "POST",
+        signup_path,
         {
             "email": "environment@example.com",
             "password": secrets.token_urlsafe(18),
             "name": "Environment Test",
         },
     )
-    second_token = second_request("/api/auth/token")["token"]
+    assert status == 200, status
+    # Secure cookies are never sent over plain HTTP, so carry them by hand.
+    cookies = signed_up.get_all("Set-Cookie") or []
+    assert cookies, "Sign-up set no cookies"
+    for cookie in cookies:
+        attributes = {part.strip().lower() for part in cookie.split(";")[1:]}
+        assert cookie.startswith("__Secure-"), cookie.split("=", 1)[0]
+        assert {"secure", "httponly", "samesite=lax"} <= attributes, cookie.split("=", 1)[0]
+    session_cookie = "; ".join(cookie.split(";", 1)[0] for cookie in cookies)
+    status, _, body = exchange(
+        second_base, second_public_url, "GET", "/api/auth/token", headers={"Cookie": session_cookie}
+    )
+    assert status == 200, status
+    second_token = json.loads(body)["token"]
     second_claims = json.loads(base64.urlsafe_b64decode(second_token.split(".")[1] + "=="))
     assert second_claims["iss"] == second_public_url
     assert second_claims["aud"] == second_public_url
+
+    # One upload limit: nginx refuses an oversized request before the backend reads it.
+    status, _, body = exchange(
+        second_base,
+        second_public_url,
+        "POST",
+        "/api/py/files/",
+        headers={"Authorization": f"Bearer {second_token}", "Content-Type": "multipart/form-data; boundary=x"},
+        content_length=3 * 1024 * 1024,
+    )
+    assert status == 413, status
+    assert json.loads(body) == {"detail": "The upload is larger than the 1 MB limit."}, body
+
+    # Auth writes are rate limited per trusted client address at the edge.
+    def sign_in_from(client_address):
+        return exchange(
+            second_base,
+            second_public_url,
+            "POST",
+            "/api/auth/sign-in/email",
+            {"email": "nobody@example.com", "password": "not-the-password"},
+            headers={"X-Forwarded-For": client_address},
+        )
+
+    limited = None
+    for _ in range(100):
+        status, headers, body = sign_in_from("203.0.113.7")
+        if status == 429 and headers["Retry-After"] == "60":
+            limited = json.loads(body)
+            break
+    assert limited and limited["detail"].startswith("Too many requests"), "No edge rate limit on sign-in"
+    status, _, _ = sign_in_from("203.0.113.8")
+    assert status != 429, "The rate limit ignored the trusted client address"
     assert_no_secret_output(docker("logs", second_name))
     print(
         "PASS: validation, env/file secrets, runtime origins, browser boundary, "
+        "edge headers, secure cookies, upload and rate limits, "
         "persistence, shutdown, failure supervision"
     )
 except Exception:

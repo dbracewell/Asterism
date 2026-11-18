@@ -1,0 +1,23 @@
+<!doctype html>
+<meta charset="utf-8" />
+<title>Canvas preview</title>
+<!--
+  The canvas HTML preview frame (ADR-0063, US-86.5). The app loads this page in
+  a sandboxed iframe (opaque origin) and posts the preview document to it once.
+  Its header CSP allows inline scripts but no network; see
+  src/lib/content-security-policy.ts.
+-->
+<script>
+  addEventListener(
+    "message",
+    (event) => {
+      if (event.source !== parent) return;
+      const html = event.data && event.data.asterismCanvasPreview;
+      if (typeof html !== "string") return;
+      document.open();
+      document.write(html);
+      document.close();
+    },
+    { once: true },
+  );
+</script>

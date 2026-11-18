@@ -1,4 +1,5 @@
 import { accessSync, constants, existsSync, statSync } from "node:fs";
+import { isIP } from "node:net";
 import { dirname, isAbsolute, parse, resolve } from "node:path";
 
 export const SECRET_NAMES = new Set([
@@ -6,6 +7,9 @@ export const SECRET_NAMES = new Set([
   "SYSTEM_KEY",
   "ADMIN_PASSPHRASE",
 ]);
+
+/** The largest upload request the backend accepts (100 MiB). */
+export const MAX_UPLOAD_BYTES_LIMIT = 100 * 1024 * 1024;
 
 export const CATALOG = {
   PUBLIC_URL: {
@@ -20,6 +24,13 @@ export const CATALOG = {
   DB_URL: { classification: "sensitive-url" },
   PORT: { classification: "public", defaultValue: "3000" },
   MAX_CHARS_FOR_RETRIEVAL: { classification: "tuning", defaultValue: "50000" },
+  // One upload limit for nginx, the Next.js proxy and the backend (US-86.5).
+  MAX_UPLOAD_FILE_SIZE_BYTES: {
+    classification: "tuning",
+    defaultValue: String(MAX_UPLOAD_BYTES_LIMIT),
+  },
+  // Proxies in front of the container whose X-Forwarded-For nginx trusts.
+  TRUSTED_PROXIES: { classification: "security-policy" },
   CORS_ALLOWED_ORIGINS: { classification: "security-policy" },
   DEFAULT_ALLOWED_TOOLS: { classification: "capability-policy" },
   SKIP_KNOWLEDGE_MODEL_PROVISIONING: { classification: "test-control" },
@@ -202,6 +213,29 @@ function validateJsonList(name, value) {
   }
 }
 
+/** An IPv4 or IPv6 address, optionally with a CIDR prefix length. */
+export function isAddressOrNetwork(value) {
+  const [address, prefix, ...rest] = value.split("/");
+  const family = isIP(address);
+  if (!family || rest.length) return false;
+  if (prefix === undefined) return true;
+  if (!/^\d{1,3}$/.test(prefix)) return false;
+  return Number(prefix) <= (family === 4 ? 32 : 128);
+}
+
+/** TRUSTED_PROXIES: comma-separated addresses or networks; empty means none. */
+export function parseProxyList(value) {
+  if (!value) return [];
+  const items = value.split(",").map((item) => item.trim());
+  if (items.some((item) => !isAddressOrNetwork(item))) return undefined;
+  return items;
+}
+
+function validateProxyList(value) {
+  if (parseProxyList(value) === undefined)
+    return "must be comma-separated IP addresses or CIDR networks";
+}
+
 export function validateConfiguration({
   environment = process.env,
   sources = new Map(),
@@ -265,6 +299,15 @@ export function validateConfiguration({
       const size = Number(selected.value);
       if (!Number.isInteger(size) || size < 1 || size > 1_000_000)
         message = "must be an integer from 1 to 1000000";
+    } else if (
+      name === "MAX_UPLOAD_FILE_SIZE_BYTES" &&
+      selected.value !== undefined
+    ) {
+      const size = Number(selected.value);
+      if (!Number.isInteger(size) || size < 1 || size > MAX_UPLOAD_BYTES_LIMIT)
+        message = `must be an integer from 1 to ${MAX_UPLOAD_BYTES_LIMIT}`;
+    } else if (name === "TRUSTED_PROXIES") {
+      message = validateProxyList(selected.value);
     } else if (
       name === "CORS_ALLOWED_ORIGINS" ||
       name === "DEFAULT_ALLOWED_TOOLS"

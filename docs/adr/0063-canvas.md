@@ -150,9 +150,13 @@ holds the policy.
 
 HTML is never inlined into the app DOM. The panel (US-72.2) previews it in an
 `iframe` with `sandbox="allow-scripts"` (no `allow-same-origin`, popups, forms
-or top navigation) and `srcdoc` content, prefixed with a CSP `<meta>` that
+or top navigation). The page is prefixed with a CSP `<meta>` that
 allows only inline script and style and `data:`/`blob:` media
-(`default-src 'none'`), so the page can't fetch anything. Links target a new
+(`default-src 'none'`), so the page can't fetch anything. Since US-86.5 the
+frame loads `/canvas-preview.html`, which has the same policy as a header, and
+the panel posts the page to it once loaded; a `srcdoc` frame would inherit the
+app's nonce-based CSP, which refuses the page's inline scripts
+([ADR-0071](0071-edge-hardening.md)). Links target a new
 window, which the sandbox refuses. A script can still navigate its own frame;
 that page also loads in the opaque, sandboxed origin with no access to the
 app.

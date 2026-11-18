@@ -11,6 +11,8 @@ services:
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?Set BETTER_AUTH_SECRET}
       SYSTEM_KEY: ${SYSTEM_KEY:?Set SYSTEM_KEY}
       ADMIN_PASSPHRASE: ${ADMIN_PASSPHRASE:?Set ADMIN_PASSPHRASE}
+      # Your TLS proxy's address, so rate limits see real clients (ADR-0071).
+      TRUSTED_PROXIES: ${TRUSTED_PROXIES:-}
 
     ports:
       - "127.0.0.1:${PORT:-3000}:3000"

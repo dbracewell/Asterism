@@ -83,8 +83,20 @@ by the launcher, configuration check, tests, and container startup. It exports
 and redacted error types. This is a library module rather than a standalone command.
 
 Validation covers command-specific requirements, origins, secret placeholders and
-production strength, absolute/writable storage targets, SQLite URLs, ports, and JSON
-list settings.
+production strength, absolute/writable storage targets, SQLite URLs, ports, the
+upload limit, trusted proxy networks, and JSON list settings.
+
+### `edge-config.mjs`
+
+Renders the nginx snippets that depend on settings into a directory: the request
+body limit and its JSON 413 from `MAX_UPLOAD_FILE_SIZE_BYTES`, HSTS when `PUBLIC_URL`
+is HTTPS, and real-IP rules from `TRUSTED_PROXIES`
+([ADR-0071](../docs/adr/0071-edge-hardening.md)). The container entrypoint runs it
+after configuration validation; `next.config.ts` imports its request limit.
+
+```bash
+node scripts/edge-config.mjs /tmp/asterism-nginx
+```
 
 ### `reset-databases.mjs`
 

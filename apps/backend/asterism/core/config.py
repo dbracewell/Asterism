@@ -226,6 +226,11 @@ class Config(BaseSettings):
             self.db_url = f"sqlite+aiosqlite:///{self.storage_root}/database.db"
         if not self.cors_allowed_origins:
             self.cors_allowed_origins = [self.public_url]
+        # Lowering MAX_UPLOAD_FILE_SIZE_BYTES alone must be enough (US-86.5):
+        # limits left at their defaults follow it down; explicit values are kept.
+        for name in ("max_process_file_size_bytes", "max_vision_image_bytes"):
+            if name not in self.model_fields_set:
+                setattr(self, name, min(getattr(self, name), self.max_upload_file_size_bytes))
 
         return self
 

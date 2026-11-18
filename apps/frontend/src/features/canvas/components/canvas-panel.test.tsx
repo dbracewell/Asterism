@@ -219,8 +219,22 @@ describe("CanvasPanel", () => {
     setup();
     const frame = await screen.findByTitle("Preview of Notes");
     expect(frame).toHaveAttribute("sandbox", "allow-scripts");
-    expect(frame.getAttribute("srcdoc")).toMatch(
-      /^<!doctype html><meta http-equiv="Content-Security-Policy" content="default-src 'none'/,
+    // Its own document and policy (US-86.5), not srcdoc: the page receives
+    // the preview once the frame has loaded.
+    expect(frame).not.toHaveAttribute("srcdoc");
+    expect(frame).toHaveAttribute("src", "/canvas-preview.html");
+    const post = vi.fn();
+    Object.defineProperty(frame, "contentWindow", {
+      value: { postMessage: post },
+    });
+    fireEvent.load(frame);
+    expect(post).toHaveBeenCalledWith(
+      {
+        asterismCanvasPreview: expect.stringMatching(
+          /^<!doctype html><meta http-equiv="Content-Security-Policy" content="default-src 'none'.*second draft$/,
+        ),
+      },
+      "*",
     );
     await userEvent.click(screen.getByRole("tab", { name: "Source" }));
     expect(

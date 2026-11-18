@@ -90,11 +90,13 @@ Source: the 2026-11-06 multi-user web decision. [EPIC-86](docs/epics/EPIC-86-MUL
 
 ### US-86.5: Edge hardening
 
-- [ ] Security headers from nginx and Next.js: CSP (scripts self, no inline except hashed/nonce'd as Next requires; frames none; connect-src self and the WebSocket path), `frame-ancestors 'none'`, `X-Content-Type-Options`, `Referrer-Policy`, and HSTS when `PUBLIC_URL` is HTTPS.
-- [ ] One upload limit: nginx, the Next proxy and the backend agree, from one setting.
-- [ ] Request rate limits in nginx for auth endpoints, uploads and the WebSocket handshake, keyed on the trusted client address.
-- [ ] Verify secure, HttpOnly, SameSite cookies under HTTPS `PUBLIC_URL`.
-- [ ] Playwright check that the app works under the CSP (no blocked script, style, image or WebSocket), plus a header assertion in the container smoke test.
+Done 2026-11-18 ([ADR-0071](docs/adr/0071-edge-hardening.md)). Frames: only the sandboxed canvas preview (`frame-src 'self'`); styles allow inline. Found: Better Auth's own sign-in limit (3 per 10 s per address) is stricter than nginx for a class on one address; measure in US-86.7.
+
+- [x] Security headers from nginx and Next.js: CSP (scripts self, no inline except hashed/nonce'd as Next requires; frames none; connect-src self and the WebSocket path), `frame-ancestors 'none'`, `X-Content-Type-Options`, `Referrer-Policy`, and HSTS when `PUBLIC_URL` is HTTPS.
+- [x] One upload limit: nginx, the Next proxy and the backend agree, from one setting.
+- [x] Request rate limits in nginx for auth endpoints, uploads and the WebSocket handshake, keyed on the trusted client address.
+- [x] Verify secure, HttpOnly, SameSite cookies under HTTPS `PUBLIC_URL`.
+- [x] Playwright check that the app works under the CSP (no blocked script, style, image or WebSocket), plus a header assertion in the container smoke test.
 
 ### US-86.6: Production logs and status
 

@@ -12,6 +12,7 @@ procs:
       CORS_ALLOWED_ORIGINS: null
       MAX_CHARS_FOR_RETRIEVAL: null
       DEFAULT_ALLOWED_TOOLS: null
+      TRUSTED_PROXIES: null
       PORT: null
     stop: SIGTERM
   backend:
@@ -26,5 +27,6 @@ procs:
       BETTER_AUTH_SECRET: null
       ADMIN_PASSPHRASE: null
       BETTER_AUTH_DB_PATH: null
+      TRUSTED_PROXIES: null
       PORT: null
     stop: SIGTERM

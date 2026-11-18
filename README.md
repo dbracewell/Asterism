@@ -114,6 +114,13 @@ cp .env.example .env
   uses its named volume at `/storage`, regardless of this local setting.
 - Optional: `BETTER_AUTH_DB_PATH` and `DB_URL` override database locations.
 - Optional: `PORT` changes the Compose host port; update `PUBLIC_URL` to match.
+- Optional: `MAX_UPLOAD_FILE_SIZE_BYTES` (default and maximum 104857600, 100 MiB)
+  is the largest upload request, one file or several together. nginx, the Next.js
+  proxy and the backend all apply it. A lower value also lowers the file processing
+  and vision image limits unless those are set explicitly.
+- Optional: `TRUSTED_PROXIES` is a comma-separated list of addresses or CIDR
+  networks, for example `10.0.0.0/8,192.0.2.7`. nginx takes the client address from
+  `X-Forwarded-For` only when the connection comes from one of these.
 
 ### Strict portable `.env` syntax
 
@@ -209,7 +216,24 @@ mount lowercase aliases.
 
 For remote HTTPS access, put a trusted TLS proxy in front of port 3000 and set
 `PUBLIC_URL` to its external origin. Forward Host, X-Forwarded-Proto, and WebSocket
-upgrades. Do not expose internal ports 3001 or 8000.
+upgrades. Do not expose internal ports 3001 or 8000. Add the proxy's address to
+`TRUSTED_PROXIES` and have it set `X-Forwarded-For`; otherwise every request seems
+to come from the proxy, and the rate limits below apply to everyone at once.
+
+Edge protections are on by default
+([ADR-0071](docs/adr/0071-edge-hardening.md)):
+
+- Pages send a Content Security Policy with a fresh script nonce on every request:
+  no inline or third-party scripts, no frames except the canvas preview, and
+  connections only to the app's own origin. API responses may not run, load or be
+  framed. Every response sends `X-Content-Type-Options: nosniff` and
+  `Referrer-Policy: same-origin`.
+- With an `https://` `PUBLIC_URL`, responses send HSTS (one year) and the
+  authentication cookies are `Secure`, `HttpOnly` and `SameSite=Lax`.
+- nginx limits each client address to 60 auth writes, 60 uploads and 120 chat
+  WebSocket connections per minute, each with a burst of 60. That is enough for a
+  class of about 30 behind one school address. Refused requests get a 429 with
+  `Retry-After`. Better Auth keeps its own sign-in limit as well.
 
 ### Storage and lifecycle
 
