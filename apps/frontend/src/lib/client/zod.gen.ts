@@ -858,6 +858,40 @@ export const zCreatedClassInviteList = z.object({
 });
 
 /**
+ * DataExport
+ *
+ * The person's latest archive. ``expires_at`` and ``size_bytes`` are set once ready.
+ */
+export const zDataExport = z.object({
+  id: z.uuid(),
+  status: z.enum(["pending", "running", "ready", "failed"]),
+  requested_at: z.int(),
+  completed_at: z.int().nullish(),
+  expires_at: z.int().nullish(),
+  size_bytes: z.int().nullish(),
+  error: z.string().nullish(),
+});
+
+/**
+ * DataExportLink
+ *
+ * A download link for the ready archive; it works for a few minutes.
+ */
+export const zDataExportLink = z.object({
+  url: z.string(),
+  expires_at: z.int(),
+});
+
+/**
+ * DataExportState
+ *
+ * ``export`` is null when nothing was requested or the last archive expired.
+ */
+export const zDataExportState = z.object({
+  export: zDataExport.nullish(),
+});
+
+/**
  * DeletionRequest
  *
  * The signed-in user's own deletion request.
@@ -7675,6 +7709,21 @@ export const zHealthReadyResponse = zReadiness;
  * Successful Response
  */
 export const zStatusGetResponse = zInstanceStatus;
+
+/**
+ * Successful Response
+ */
+export const zDataExportGetResponse = zDataExportState;
+
+/**
+ * Successful Response
+ */
+export const zDataExportCreateResponse = zDataExport;
+
+/**
+ * Successful Response
+ */
+export const zDataExportLinkCreateResponse = zDataExportLink;
 
 /**
  * Successful Response

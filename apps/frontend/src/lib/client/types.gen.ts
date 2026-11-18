@@ -2239,6 +2239,67 @@ export type CreatedClassInviteList = {
 };
 
 /**
+ * DataExport
+ *
+ * The person's latest archive. ``expires_at`` and ``size_bytes`` are set once ready.
+ */
+export type DataExport = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Status
+   */
+  status: "pending" | "running" | "ready" | "failed";
+  /**
+   * Requested At
+   */
+  requested_at: number;
+  /**
+   * Completed At
+   */
+  completed_at?: number | null;
+  /**
+   * Expires At
+   */
+  expires_at?: number | null;
+  /**
+   * Size Bytes
+   */
+  size_bytes?: number | null;
+  /**
+   * Error
+   */
+  error?: string | null;
+};
+
+/**
+ * DataExportLink
+ *
+ * A download link for the ready archive; it works for a few minutes.
+ */
+export type DataExportLink = {
+  /**
+   * Url
+   */
+  url: string;
+  /**
+   * Expires At
+   */
+  expires_at: number;
+};
+
+/**
+ * DataExportState
+ *
+ * ``export`` is null when nothing was requested or the last archive expired.
+ */
+export type DataExportState = {
+  export?: DataExport | null;
+};
+
+/**
  * DelegationRecord
  *
  * One sub-agent delegation observed during an assistant step.
@@ -21446,6 +21507,102 @@ export type StatusGetResponses = {
 };
 
 export type StatusGetResponse = StatusGetResponses[keyof StatusGetResponses];
+
+export type DataExportGetData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/data-export";
+};
+
+export type DataExportGetErrors = {
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+};
+
+export type DataExportGetError = DataExportGetErrors[keyof DataExportGetErrors];
+
+export type DataExportGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: DataExportState;
+};
+
+export type DataExportGetResponse =
+  DataExportGetResponses[keyof DataExportGetResponses];
+
+export type DataExportCreateData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/data-export";
+};
+
+export type DataExportCreateErrors = {
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+};
+
+export type DataExportCreateError =
+  DataExportCreateErrors[keyof DataExportCreateErrors];
+
+export type DataExportCreateResponses = {
+  /**
+   * Successful Response
+   */
+  202: DataExport;
+};
+
+export type DataExportCreateResponse =
+  DataExportCreateResponses[keyof DataExportCreateResponses];
+
+export type DataExportLinkCreateData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/data-export/link";
+};
+
+export type DataExportLinkCreateErrors = {
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+};
+
+export type DataExportLinkCreateError =
+  DataExportLinkCreateErrors[keyof DataExportLinkCreateErrors];
+
+export type DataExportLinkCreateResponses = {
+  /**
+   * Successful Response
+   */
+  200: DataExportLink;
+};
+
+export type DataExportLinkCreateResponse =
+  DataExportLinkCreateResponses[keyof DataExportLinkCreateResponses];
 
 export type ToolsGetActiveData = {
   body?: never;

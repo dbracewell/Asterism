@@ -29,6 +29,8 @@ vi.mock("@/features/auth/components/user-context", () => ({
 vi.mock("./account-lifecycle-settings", () => ({
   AccountLifecycleSettings: () => null,
 }));
+// Tested on its own in download-my-data.test.tsx.
+vi.mock("./download-my-data", () => ({ DownloadMyData: () => null }));
 vi.mock("@/features/theme/components/theme-context", () => ({
   useTheme: () => ({
     setTheme,

@@ -44,6 +44,11 @@ const newerGlossary: HelpId[] = [
   "concept.study-note",
   "concept.team-pack",
   "admin.settings-file",
+  // US-86.8: limits, account lifecycle and personal data.
+  "concept.usage-limit",
+  "concept.suspension",
+  "concept.deletion-request",
+  "concept.data-download",
 ];
 
 const text = (id: HelpId) => {

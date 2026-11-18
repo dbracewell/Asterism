@@ -123,6 +123,16 @@ Budgets are `groups.daily_token_budget` and `groups.monthly_token_budget`. Their
 days and months follow the `usage_timezone` app setting (UTC by default). Reads
 and budget checks aggregate over the `(user_id, created_at)` index.
 
+## Data exports
+
+`data_exports` ([ADR-0076](../adr/0076-download-my-data.md)) holds at most one row
+per user: a "Download my data" archive that is pending, running, ready or failed,
+with its completion and expiry times and size. The zip itself is
+`exports/<hash of the user id>/<export id>.zip` under the storage root. It is written
+as `.partial` and renamed when complete, kept for 7 days, and deleted with the
+account. `exports/` is outside every backed-up tree. A restart marks interrupted
+builds failed and removes expired archives.
+
 ## Search indexes
 
 SQLite FTS5 virtual tables, `chat_search` and `project_search`, provide
