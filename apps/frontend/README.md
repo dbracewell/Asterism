@@ -354,9 +354,9 @@ prompt. Delegates inherit the recorded text within their existing capability
 ceilings. About you grants no tools or files, and no long-term memory engine is
 active. See [ADR-0066](../../docs/adr/0066-about-you.md).
 
-This schema requires fresh initialization. For an older development database, use
-the explicit reset workflow when ready to discard its data; story tests use
-disposable storage and do not reset the working database.
+Schema changes ship as versioned migrations; `init:db` upgrades an existing
+database in place. Story tests use disposable storage and do not touch the working
+database.
 
 ## Skills settings
 

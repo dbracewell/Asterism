@@ -79,12 +79,44 @@ records why SQLite/FTS initialization and FileStore's local `Path` are current
 implementation constraints, how process-local queues/guards limit deployment,
 and what future adapter work must preserve.
 
+## Schema versioning
+
+The backend schema is versioned with Alembic
+([ADR-0069](../adr/0069-versioned-schema-migrations.md)); the revision in
+`alembic_version` is the schema version. Scripts live in
+[`asterism/db/migrations/versions/`](../../apps/backend/asterism/db/migrations/versions/)
+and [`asterism/db/migrate.py`](../../apps/backend/asterism/db/migrate.py) runs them.
+
+- **Baseline.** The first revision creates the schema as adopted on 2026-11-17:
+  every model table and index, the built-in groups, the FTS5 indexes and their
+  triggers, and the record immutability triggers, as frozen SQL. `create_all` is
+  not an initialization path; tests may still use it for disposable schemas.
+- **Upgrade.** `init:db` and container startup run `upgrade head` in one SQLite
+  transaction (explicit `BEGIN`, so DDL rolls back too) on a dedicated engine
+  without the application PRAGMAs, so foreign keys are off during table rebuilds.
+- **Guards.** `init:db` and the API server refuse a database whose revision the
+  code does not know (newer, or another branch) and a non-empty database with no
+  revision (created before the baseline), naming both revisions and changing
+  nothing. The API server also refuses a database behind head. There are no
+  downgrades; the way back is restoring a backup.
+- **Parity.** `tests/test_migrations.py` builds one database by migrations and one
+  by `create_all` plus the current FTS definitions, and requires the same tables,
+  columns, constraints, indexes, triggers, FTS tables and seed groups, plus an
+  empty autogenerate diff. A model or trigger change without a migration fails CI.
+- **Better Auth** migrates `users.db` with its pinned CLI and is outside Alembic.
+
+Contributor workflow and the upgrade-test harness are in the
+[backend README](../../apps/backend/README.md#database-initialization-and-migrations).
+`pnpm reset:db` remains a development tool for disposable data
+([initialization and reset](development-reset.md)).
+
 ## Search indexes
 
 SQLite FTS5 virtual tables, `chat_search` and `project_search`, provide
 owner-scoped keyword search over chat titles/persisted message text and project
 names/descriptions. Project prompts, attachments and extracted file content are not
-indexed. Fresh initialization installs indexes and insert/update/delete triggers.
+indexed. Migrations install the indexes and insert/update/delete triggers; their
+current definitions live in `chat/search_index.py`, and a change there needs a migration.
 The service parses at most ten case-folded word terms; the adapter quotes and
 joins them with `AND`, so user input is never passed through as FTS syntax.
 `chat/search_index.py` exposes composable SQL ID selects through `ChatSearchIndex`.
@@ -353,7 +385,6 @@ records hold public execution metadata and private prompt snapshots; separate
 response/request references preserve regeneration history. Composite keys enforce
 owner/chat scope, and database triggers reject record/input rewrites. Chat/user
 deletion cascades records. No About you text is serialized into public execution
-metadata or indexed by chat search. These are fresh-schema changes, with no
-migrations or compatibility stores. Use the explicit development reset for an old
-local database; tests use disposable storage. See
+metadata or indexed by chat search. These objects are part of the migration
+baseline; tests use disposable storage. See
 [ADR-0066](../adr/0066-about-you.md).

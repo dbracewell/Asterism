@@ -61,10 +61,13 @@ _SEARCH_TRIGGERS = {
 
 
 async def initialize_search_index(connection: AsyncConnection) -> None:
-    """Install SQLite FTS5 tables and change triggers after model tables exist.
+    """Install the current SQLite FTS5 tables and change triggers after model tables exist.
 
-    Triggers are dropped and recreated each time so an existing database always
-    runs the current definitions.
+    Databases get these objects from migrations (ADR-0069), not from this
+    function. It is the current definition, used by tests that build a schema
+    with ``create_all``; the schema parity test checks that the migration head
+    matches it, so a change here needs a migration. Triggers are dropped and
+    recreated each time.
     """
     if connection.dialect.name != "sqlite":
         raise RuntimeError(f"No full-text search setup for database dialect: {connection.dialect.name}")

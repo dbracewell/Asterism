@@ -1,10 +1,10 @@
 """Model registry for the declarative :class:`~asterism.db.base_model.Base`.
 
 Importing this module pulls in every domain model so that ``Base.metadata``
-contains the complete table set. Anything that calls
-``Base.metadata.create_all`` (e.g. ``init_db``) must import from here rather
-than from a single domain, otherwise tables for unimported domains would be
-silently skipped.
+contains the complete table set. Migrations (autogenerate and the schema
+parity test) and tests that call ``Base.metadata.create_all`` must import from
+here rather than from a single domain, otherwise tables for unimported domains
+would be silently skipped.
 
 The imports are side-effect only; the ``noqa: F401`` markers are intentional.
 """

@@ -265,8 +265,8 @@ output and tool operations, so revocation during streaming blocks later output.
 Delegates receive their own prompt composition without the parent's skills.
 
 See [ADR-0023](../adr/0023-branch-local-skill-execution.md) for the storage and
-replay decision. Schema changes require fresh initialization; no migrations or
-working-data resets are performed.
+replay decision. Schema changes ship as versioned migrations
+([ADR-0069](../adr/0069-versioned-schema-migrations.md)).
 
 ## Chat composer and slash commands
 

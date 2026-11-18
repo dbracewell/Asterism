@@ -1,10 +1,13 @@
-# Clean development initialization and reset
+# Development initialization and reset
 
-The backend initializes the current model schema with `Base.metadata.create_all`
-and installs chat/project FTS5 indexes and triggers. It does not migrate an older
-backend schema. Better Auth independently uses its pinned official CLI to initialize
-and maintain the authentication schema. This distinction applies to local and
-container startup.
+The backend database is versioned with Alembic
+([ADR-0069](../adr/0069-versioned-schema-migrations.md)): initialization applies
+pending migrations up to head, for fresh and existing databases alike, keeping data.
+Better Auth independently uses its pinned official CLI to initialize and maintain
+the authentication schema. This applies to local and container startup.
+
+**Reset is a development tool for disposable local data. It is never part of an
+upgrade.** Upgrades run `init:db` (or start the new container) after a backup.
 
 ## Initialize without deleting data
 
@@ -16,10 +19,20 @@ pnpm --filter @asterism/backend init:db
 pnpm --filter @asterism/frontend migrate:db
 ```
 
-Backend initialization creates missing tables, storage directories, search indexes,
-and default settings. It does not upgrade incompatible existing tables. Do not use
-initialization as a substitute for an intentional reset after a breaking schema
-change. Container startup runs both initializers each time without deleting data.
+Backend initialization creates storage directories, applies pending migrations
+(tables, indexes, triggers, search indexes) and seeds default settings. Run it again
+after pulling schema changes: the API server refuses to start until the database is
+at the current revision. Container startup runs both initializers each time without
+deleting data.
+
+### Databases created before migrations
+
+A backend database created before the baseline revision (2026-11-17) has no
+`alembic_version` table. Initialization and the API server refuse it, without
+changing it, with an error asking for a reset. Reset such a development database
+once with `pnpm reset:db` (below); this is the last reset the old policy requires.
+A database at a revision the code doesn't know (from a newer branch or release) is
+refused the same way; switch to that code or restore a backup instead of resetting.
 
 ## Reset disposable application data
 
@@ -61,7 +74,7 @@ manually to bypass target review.
 
 | Target                                                      | Reset behavior                                                                                           |
 | ----------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| Backend `DB_URL`, default `STORAGE_ROOT/database.db`        | Delete SQLite file and `-wal`, `-shm`, `-journal` sidecars; create fresh model schema and search indexes |
+| Backend `DB_URL`, default `STORAGE_ROOT/database.db`        | Delete SQLite file and `-wal`, `-shm`, `-journal` sidecars; migrate a fresh database to head           |
 | Auth `BETTER_AUTH_DB_PATH`, default `STORAGE_ROOT/users.db` | Delete selected database and sidecars; initialize using pinned Better Auth CLI                           |
 | `STORAGE_ROOT/files`                                        | Remove original uploaded bytes, including sharded source keys                                            |
 | `STORAGE_ROOT/knowledge`                                    | Remove derived knowledge/vector storage                                                                  |
@@ -86,7 +99,7 @@ model canaries to check fresh initialization, reset removal, and bundle retentio
 
 ```bash
 node scripts/run-with-env.mjs --env none --scope backend --profile test -- \
-  uv run --directory apps/backend pytest -q tests/test_init_db.py
+  uv run --directory apps/backend pytest -q tests/test_init_db.py tests/test_migrations.py
 pnpm test:config
 ```
 

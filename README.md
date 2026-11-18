@@ -173,8 +173,9 @@ Server-side API requests use loopback port 8000. Signing-key discovery and webho
 use loopback port 3000. These internal ports are fixed in both development and Docker.
 There are no separate JWT issuer/audience or browser API URL settings.
 
-Asterism currently has no supported legacy-installation migration path. Fresh
-installations use only the root configuration described above.
+The backend schema is versioned with Alembic
+([ADR-0069](docs/adr/0069-versioned-schema-migrations.md)): upgrades apply pending
+migrations in place, and configuration changes are listed in release notes.
 
 ## Docker
 
@@ -215,13 +216,14 @@ upgrades. Do not expose internal ports 3001 or 8000.
 `/storage` contains `users.db`, `database.db`, uploaded files, and custom themes
 under `themes` (see [theme lifecycle](docs/architecture/theme-storage.md)). Auth migrations
 run on each startup using the bundled, pinned official Better Auth CLI and explicit
-`src/lib/auth-cli.ts` configuration (no startup downloads). The backend initializer runs on every startup, creating missing model tables and
-search indexes without upgrading incompatible existing tables. Backend data is not
-automatically migrated or reset. Bind mounts must
-be writable by UID **10001**. Back up databases before upgrades. For an intentional clean development cutover,
-follow [initialization and reset](docs/architecture/development-reset.md); full reset
-removes relational/source/vector data while preserving downloaded model bundles
-and administrator theme customization.
+`src/lib/auth-cli.ts` configuration (no startup downloads). The backend initializer
+runs on every startup and applies pending schema migrations to `database.db` in one
+transaction (`upgrade head`), keeping existing data. Startup refuses a database whose
+schema revision is newer than, or unknown to, the image and names both revisions;
+migrations never go backwards, so the way back from an upgrade is restoring a
+backup. Bind mounts must be writable by UID **10001**. Back up `/storage` before
+upgrades. Reset is a development tool for disposable data, never part of an upgrade;
+see [initialization and reset](docs/architecture/development-reset.md).
 
 Never use `docker compose down -v` unless deleting all persisted data is intentional.
 
@@ -251,7 +253,8 @@ linked against SQLite **3.45+** (the backend uses JSONB functions).
 
 1. Run `pnpm install` and `pnpm --filter @asterism/backend sync`.
 2. Configure the root `.env` as above, with an absolute writable `STORAGE_ROOT`.
-3. Initialize databases on a **fresh installation only**:
+3. Initialize or upgrade the databases (run again after pulling schema changes;
+   the backend refuses to start until its database is at the current revision):
 
    ```bash
    # Create your configured STORAGE_ROOT directory first.
@@ -259,7 +262,8 @@ linked against SQLite **3.45+** (the backend uses JSONB functions).
    pnpm --filter @asterism/backend init:db
    ```
 
-   Both initialization commands preserve existing data. To intentionally delete and
+   Both commands preserve existing data; `init:db` applies pending backend
+   migrations. To intentionally delete and
    recreate both local SQLite databases and clear disposable source/knowledge storage, run `pnpm reset:db`, inspect the displayed
    absolute targets, and type `RESET`. Noninteractive execution is canceled unless
    `pnpm reset:db -- --yes` is supplied explicitly. Reset supports only validated
@@ -344,9 +348,9 @@ prompt. Delegates inherit the recorded text within their existing capability
 ceilings. About you grants no tools or files, and no long-term memory engine is
 active. See [ADR-0066](docs/adr/0066-about-you.md).
 
-This schema requires fresh initialization. For an older development database, use
-the explicit reset workflow when ready to discard its data; story tests use
-disposable storage and do not reset the working database.
+Schema changes ship as versioned migrations; `init:db` upgrades an existing
+database in place. Story tests use disposable storage and do not touch the working
+database.
 
 ## License
 
