@@ -3,8 +3,6 @@
     "deny": [
       "Read(./.env)",
       "Read(./apps/backend/.venv/**)",
-      "Read(./apps/frontend/node_modules/**)",
-      "Read(./node_modules/**)",
       "Read(./apps/backed/node_modules/**)",
       "Read(./*.lock)",
       "Read(./package-lock.json)"

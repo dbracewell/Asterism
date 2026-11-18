@@ -51,3 +51,134 @@ Source: user request and the [feature overlap review](docs/reviews/2026-11-17-fe
 ## Multi-user deployment readiness (proposed 2026-11-17)
 
 [EPIC-86](docs/epics/EPIC-86-MULTI-USER-DEPLOYMENT-READINESS.md) (US-86.1 through US-86.8) is complete and archived in the [2026-11-18 checklist](docs/archive/todo-completed-2026-11-18.md). Still open for the user: the one-time reset of pre-baseline development databases (US-86.1).
+
+## Documentation (proposed 2026-11-18)
+
+Source: user request (2026-11-18). Suggested order: [EPIC-87](docs/epics/EPIC-87-ARCHITECTURE-DOCS-REFRESH.md) → [EPIC-88](docs/epics/EPIC-88-PROJECT-README.md) → [EPIC-89](docs/epics/EPIC-89-USER-GUIDE.md). US-87.1 adds `pnpm docs:check`, which the later epics use; US-89.1 adds the screenshot pipeline. Work one story at a time.
+
+### EPIC-87: Architecture documentation refresh
+
+- [ ] US-87.1: Audit, template and link check
+  - [ ] Audit every guide against the code: for each, list stale claims, missing features and removed features. Record the audit in `docs/reviews/2026-11-architecture-docs-audit.md`.
+  - [ ] Write the guide template and writing rules in `docs/architecture/CONTRIBUTING.md` (structure, tone, terminology, diagram and link conventions, a before/after example).
+  - [ ] Add a terminology list shared with the user guide (EPIC-89) so the same thing has the same name everywhere (for example _main agent_, _sub-agent_, _General chat set_, _execution file scope_).
+  - [ ] Add `pnpm docs:check`: broken relative links, missing anchors and missing images across `docs/` and `README.md`. Wire it into CI (see open question 2).
+  - [ ] Rewrite `docs/architecture/README.md` as a map: a reading order for new contributors, then a table of "if you want to know X, read Y".
+- [ ] US-87.2: System, security and request path
+  - [ ] `overview.md`: topology diagram (nginx, Next.js, FastAPI, SQLite, LanceDB, file store), workspace layout, request and streaming flow.
+  - [ ] `auth-and-security.md`: Better Auth and JWT/JWKS, the backend identity copy (ADR-0057), groups and roles, account lifecycle (suspend, reset links, deletion and deletion requests), edge hardening (CSP, HSTS, rate limits, trusted proxies), internal callbacks.
+  - [ ] `chat-and-websocket.md`: protocol, reconnectable jobs, cancellation, admission limits, usage-limit refusals, with a job lifecycle diagram.
+  - [ ] `capacity.md` and a new `operations.md`: process model, admission settings, logs and request IDs, readiness endpoints and Admin → Status.
+  - [ ] Remove story references and stale claims from these guides.
+- [ ] US-87.3: Agents, tools and prompts
+  - [ ] `execution-context.md`: one turn traced from membership through prompt layers (main-agent instructions, About you, learning mode, skills) to retrieval and provider access, as a diagram plus a worked example.
+  - [ ] `agent-runtime.md`: bounded loop, events, delegation, traces, context compaction, verification.
+  - [ ] `tool-authorization.md`: ordinary versus internal tools, a table of every internal tool (`sub_agent`, `search_knowledge`, `load_skill`, `canvas_*`, `generate_image`) and the conditions that offer it; approvals.
+  - [ ] `skills.md`, `prompt-templates.md`, `context-isolation.md`: refresh and remove history narration.
+  - [ ] `llm-providers.md`: provider modes, model capabilities, ChatGPT plan connections, pricing used by the usage ledger.
+  - [ ] New `learning-modes.md`: the modes, hint levels and show answer, how the effective mode is chosen (ADR-0068), and how class policy restricts it.
+- [ ] US-87.4: Data, files and knowledge
+  - [ ] `data-and-storage.md`: schema overview by domain (with an entity diagram), message tree, FTS search, migrations (ADR-0069); remove persona references.
+  - [ ] Merge or clearly divide `knowledge-retrieval.md` and `file-knowledge-processing.md` so each topic has one home: processing pipeline in one, scoped retrieval in the other.
+  - [ ] `backup-and-restore.md`, `development-reset.md`: refresh against the current commands.
+  - [ ] New `usage-and-budgets.md`: the usage ledger, what is recorded, group budgets, where refusals happen, what is never refused.
+  - [ ] Add "Download my data" (ADR-0076) and user deletion to the data lifecycle section.
+- [ ] US-87.5: Product domains without a guide
+  - [ ] New `classes-and-courses.md`: classes, educators, invites, courses, course-managed content, mode policy and class insights.
+  - [ ] New `canvas.md`: branch-aware canvas versions, the tools, trust rules and preview isolation.
+  - [ ] New `image-generation.md`: provider configuration, group access, the prompt check, recording and produced files.
+  - [ ] New `team-packs.md`: export and import, the manifest (ADR-0051) and what a pack never grants.
+  - [ ] `study-tools.md`, `project-workspaces.md`: refresh against today's study pages (decks, review, quizzes, notes, summaries, guides, drafts) and project settings.
+- [ ] US-87.6: Frontend
+  - [ ] Split `frontend-and-themes.md` into `frontend.md` (app shell, routing, data loading with TanStack Query and Hey API, layout and scrolling rules, settings structure) and `themes.md` (ownership, tokens, Theme Editor).
+  - [ ] Replace the product-surface inventory with the current admin and user settings sections; only Code Execution is still Planned.
+  - [ ] `markdown-content.md`, `theme-storage.md`, `bundled-theme-palettes.md`: refresh; resolve open question 1 for the review matrix.
+  - [ ] New section on the help system: help registry, page guides, help center and first-chat tour, and how they relate to the user guide (EPIC-89).
+- [ ] US-87.7: Final consistency pass
+  - [ ] Read every guide end to end for tone, terminology and duplication; each topic has one home and other guides link to it.
+  - [ ] No story or epic references remain in guide bodies.
+  - [ ] `pnpm docs:check` passes; every new guide is in the index.
+  - [ ] Update `CLAUDE.md`/`AGENTS.md` links that point at renamed or split guides.
+
+### EPIC-88: A normal project README
+
+- [ ] US-88.1: Give displaced content a home
+  - [ ] Map every README section to its destination in a checklist in the PR description; nothing is dropped silently.
+  - [ ] Create `docs/development.md`: prerequisites, setup, migrations, `pnpm dev` and focused commands, mprocs, quality checks, isolated E2E and CI helpers.
+  - [ ] Merge configuration, `.env` grammar, file secrets, edge protections, sizing and admission settings, backup and upgrade into `docs/deployment.md` where they are not already there; remove duplicates.
+  - [ ] Update links elsewhere in `docs/` that point at README anchors.
+- [ ] US-88.2: Rewrite the README
+  - [ ] Rewrite `README.md` to the agreed sections; keep the CI badge.
+  - [ ] Add one screenshot of the chat workspace (from the EPIC-89 screenshot pipeline once it exists; a manual capture from a disposable demo instance until then).
+  - [ ] Feature list reflects shipped features only; link "planned" items to `todo.md` rather than listing them.
+  - [ ] Verify both quick starts from a clean clone with disposable storage, and record the result in the PR.
+  - [ ] `pnpm docs:check` (EPIC-87) and `pnpm format:check` pass.
+
+### EPIC-89: User guide
+
+- [ ] US-89.1: Screenshot pipeline and guide skeleton
+  - [ ] `pnpm docs:screenshots`: boot a disposable instance (reuse `scripts/capacity/instance.mjs` and the stub provider), never touching the working database.
+  - [ ] Seed script for the demo dataset: an admin, an educator and two students in their groups; a model provider and models; files in several formats; a project with files and a sub-agent; chats with branches, sources and a canvas; flashcard decks, a quiz and notes; a class with a course.
+  - [ ] Stub provider serves scripted replies keyed to the demo prompts, so chat screenshots look like real answers.
+  - [ ] Shot list file: each entry names the image, the page, the setup steps and the viewport. The script fails if a shot cannot be taken.
+  - [ ] Fixed theme, fonts, dates and viewport so reruns produce the same images apart from real UI changes.
+  - [ ] Create `docs/guide/README.md`, the folder structure, a page template and the writing rules (voice, steps, screenshots, alt text).
+- [ ] US-89.2: Getting started
+  - [ ] What Asterism is and what it can help with, in plain words.
+  - [ ] Signing in: accepting an invite link, signing in, resetting a password with a link from an admin, signing out and "sign out everywhere".
+  - [ ] A tour of the screen: sidebar, General chats, projects, Files, search, settings, help, on desktop and phone.
+  - [ ] Your first chat: typing a message, stopping a reply, choosing a model, what the progress panel shows.
+  - [ ] Getting help: the Help center, help icons and the first-chat tour.
+- [ ] US-89.3: Chatting
+  - [ ] Choosing and comparing models.
+  - [ ] Attaching files and seeing which files are in context.
+  - [ ] Reading sources and citations.
+  - [ ] Editing, regenerating and switching between branches.
+  - [ ] Approving or denying a tool request.
+  - [ ] Canvas: creating, editing and reading a document with Asterism.
+  - [ ] Generating images (when your group allows it).
+  - [ ] Using `/` skills, prompt templates and the prompt coach.
+  - [ ] Long conversations and context compaction, in plain terms.
+  - [ ] Finding old chats with search.
+- [ ] US-89.4: Files and projects
+  - [ ] The Files library: uploading, processing status, retrying, image captions, downloading and deleting.
+  - [ ] Projects: creating one, adding and removing files, project settings and sub-agents for the project.
+  - [ ] What removing a file from a project does, compared with deleting it.
+  - [ ] Team packs: exporting and importing a project setup, and what a pack never includes.
+- [ ] US-89.5: Learning with Asterism
+  - [ ] Learning modes: Standard, Tutor, Explain-back, Review my work, Draft feedback, Research assistant; when to use each, with an example chat.
+  - [ ] Hint levels and Show answer.
+  - [ ] Mode restrictions set by a class, and how they appear to you.
+  - [ ] Reflections, the AI-use log and exporting it.
+  - [ ] Rubrics: writing one and using it for feedback.
+- [ ] US-89.6: Studying
+  - [ ] Flashcard decks: drafting from files, reviewing drafts, studying.
+  - [ ] Practice quizzes: creating, taking and reviewing attempts.
+  - [ ] Study notes, summaries and study guides.
+  - [ ] Following your progress.
+- [ ] US-89.7: Making Asterism yours
+  - [ ] General settings: theme and fonts.
+  - [ ] Your Asterism: About you (what to write, what not to), your usage and budget.
+  - [ ] Agents: main-agent instructions, sub-agents, the General chat set.
+  - [ ] Skills: writing one, drafting one with Asterism, assigning it.
+  - [ ] Templates and Rubrics settings.
+  - [ ] Connecting a ChatGPT plan.
+  - [ ] Download my data and asking for your account to be deleted.
+- [ ] US-89.8: For educators
+  - [ ] Creating a class and inviting students.
+  - [ ] Courses and course-managed content: what students see and cannot change.
+  - [ ] Setting mode policy for a class.
+  - [ ] Reading class insights.
+- [ ] US-89.9: For administrators, troubleshooting and review
+  - [ ] First-time setup: the admin passphrase, connecting a provider, enabling a model.
+  - [ ] Providers and models, including pricing.
+  - [ ] Users: invites, suspend and reactivate, reset links, deletion and deletion requests.
+  - [ ] Groups and budgets, Usage, Status.
+  - [ ] Policies: Tools, Skills, Canvas, ChatGPT Plans, Context Compaction, Image Generation, Image Captioning, Educators, Export; Code Execution is marked Planned.
+  - [ ] Theme Editor.
+  - [ ] Troubleshooting page: capacity full, usage limit, suspended account, too many requests, failed file processing, model unavailable.
+  - [ ] Glossary aligned with the help registry and the terminology list.
+  - [ ] Walkthrough review: follow every page on a fresh demo instance and fix any step that does not match the app.
+  - [ ] Readability review by someone non-technical (or against the reading-level target), and fix what confuses them.
+  - [ ] Link the guide from `README.md` and, if agreed (open question 1), from the in-app Help center.
+  - [ ] `pnpm docs:check` passes, including every image reference.
