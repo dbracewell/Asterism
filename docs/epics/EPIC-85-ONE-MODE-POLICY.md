@@ -1,6 +1,6 @@
 # EPIC-85: One mode policy (stricter rule wins)
 
-Status: complete (2026-11-17). Source: user decision on the
+Status: complete (2026-11-17); archived. Source: user decision on the
 [feature overlap review](../reviews/2026-11-17-feature-overlap-review.md), finding 3.
 
 ## Objective

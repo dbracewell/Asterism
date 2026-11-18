@@ -79,3 +79,15 @@ reworded card still clears its unclear item. See ADR-0067 (Progress panel).
 - [x] US-84.1: Progress read and one practice route (backend)
 - [x] US-84.2: Progress panel (frontend)
 - [x] US-84.3: Help and docs
+
+EPIC-85 is complete. US-85.1 to US-85.3 were each merged on 2026-11-17. US-85.1
+pointed the old lock and course-policy components at the new fields so the
+frontend stayed green until US-85.2 replaced them. No classes/educator README
+sections existed, so US-85.3 documented course limits in the project
+workspaces architecture doc. See ADR-0068 (Effective mode policy).
+
+### [EPIC-85: One mode policy](../epics/EPIC-85-ONE-MODE-POLICY.md)
+
+- [x] US-85.1: Effective policy and one check (backend)
+- [x] US-85.2: One policy control (frontend)
+- [x] US-85.3: Help and docs

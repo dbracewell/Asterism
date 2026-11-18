@@ -46,23 +46,4 @@ Source: [codebase review](codebase_review.md), verified against the code on 2026
 
 ## Feature consolidation (proposed 2026-11-17)
 
-Source: user request and the [feature overlap review](docs/reviews/2026-11-17-feature-overlap-review.md). Suggested order: [EPIC-83](docs/epics/EPIC-83-YOUR-ASTERISM-AND-PERSONA-REMOVAL.md) → [EPIC-84](docs/epics/EPIC-84-ONE-PROGRESS-PANEL.md) → [EPIC-85](docs/epics/EPIC-85-ONE-MODE-POLICY.md). Work one story at a time. EPIC-83 and EPIC-84 are complete and archived in the [2026-11-17 checklist](docs/archive/todo-completed-2026-11-17.md).
-
-### US-85.1: Effective policy and one check (backend)
-
-- [x] ADR-0068 "Effective mode policy" superseding ADR-0031/0055 enforcement
-- [x] `effective_mode_policy` reading learner lock and course policy live
-- [x] Replace lock and class-policy checks with the one check
-- [x] `ChatInfo.mode_policy`; remove `GET /course-policy/projects/{id}`
-- [x] Tests for each source, both, override scope, Standard switch, empty intersection, tightening; regenerate client
-
-### US-85.2: One policy control (frontend)
-
-- [x] `ModePolicyNotice` replaces mode lock and course policy components
-- [x] Mode picker and hint controls read `mode_policy`
-- [x] Unit and Playwright tests updated
-
-### US-85.3: Help and docs
-
-- [x] One help entry for mode restrictions
-- [x] Architecture docs and classes/educator README sections
+Source: user request and the [feature overlap review](docs/reviews/2026-11-17-feature-overlap-review.md). Suggested order: [EPIC-83](docs/epics/EPIC-83-YOUR-ASTERISM-AND-PERSONA-REMOVAL.md) → [EPIC-84](docs/epics/EPIC-84-ONE-PROGRESS-PANEL.md) → [EPIC-85](docs/epics/EPIC-85-ONE-MODE-POLICY.md). Work one story at a time. EPIC-83, EPIC-84 and EPIC-85 are complete and archived in the [2026-11-17 checklist](docs/archive/todo-completed-2026-11-17.md).
