@@ -390,20 +390,26 @@ async def upload_files(
 
     Raises:
         BadDataException: If a filename is malformed, an extension is denied,
-            or a file exceeds the upload size limit.
+            or the files exceed the upload size limit, alone or together.
     """
     created: list[UserFileModel] = []
     artifacts = []
     store = get_file_store()
     saved: list[str] = []
+    # One limit for the whole request, as nginx and the Next.js proxy apply it
+    # (US-86.5): one large file or several smaller ones.
+    remaining = config.max_upload_file_size_bytes
     try:
         for upload in uploads:
             original_name = sanitize_filename(upload.filename or "")
-            content = await upload.read(config.max_upload_file_size_bytes + 1)
-            if len(content) > config.max_upload_file_size_bytes:
+            content = await upload.read(remaining + 1)
+            if len(content) > remaining:
                 raise BadDataException(
-                    f'File "{original_name}" exceeds the {config.max_upload_file_size_bytes} byte upload limit',
+                    f'File "{original_name}" exceeds the {config.max_upload_file_size_bytes} byte upload limit'
+                    if remaining == config.max_upload_file_size_bytes
+                    else f"These files together exceed the {config.max_upload_file_size_bytes} byte upload limit",
                 )
+            remaining -= len(content)
             sha256 = hashlib.sha256(content).hexdigest()
             existing = await session.scalar(
                 select_file_by_content(user_id=user_id, original_name=original_name, sha256=sha256)

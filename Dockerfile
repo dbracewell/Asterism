@@ -58,10 +58,13 @@ COPY --from=frontend-build /app/apps/frontend/package.json /app/apps/frontend/ne
 COPY --from=frontend-build /app/apps/frontend/src/lib/auth-core.ts ./apps/frontend/src/lib/auth-core.ts
 COPY --from=frontend-build /app/apps/frontend/src/lib/auth-cli.ts ./apps/frontend/src/lib/auth-cli.ts
 COPY --from=frontend-build /app/apps/frontend/src/lib/server-config-core.ts ./apps/frontend/src/lib/server-config-core.ts
+# next.config.ts reads the security headers and the shared upload limit.
+COPY --from=frontend-build /app/apps/frontend/src/lib/content-security-policy.ts ./apps/frontend/src/lib/content-security-policy.ts
 COPY --from=frontend-build /app/scripts/config-check.mjs \
-  /app/scripts/config-contract.mjs /app/scripts/run-with-env.mjs ./scripts/
+  /app/scripts/config-contract.mjs /app/scripts/run-with-env.mjs \
+  /app/scripts/edge-config.mjs ./scripts/
 COPY --from=backend-build /app/apps/backend ./apps/backend
-COPY docker/entrypoint.sh docker/healthcheck.py docker/nginx.conf ./docker/
+COPY docker/entrypoint.sh docker/healthcheck.py docker/nginx.conf docker/nginx-api-headers.conf ./docker/
 RUN chmod +x /app/docker/entrypoint.sh
 ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 \
   PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 \

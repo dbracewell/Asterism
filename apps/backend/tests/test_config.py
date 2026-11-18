@@ -89,3 +89,19 @@ def test_chat_capacity_defaults_are_finite(tmp_path):
     settings.validate_runtime()
     assert (settings.max_active_chat_jobs, settings.max_active_chat_jobs_per_user) == (32, 4)
     assert (settings.max_chat_controllers, settings.max_chat_controllers_per_user) == (128, 16)
+
+
+def test_a_lower_upload_limit_lowers_the_limits_left_at_default(tmp_path, monkeypatch):
+    """US-86.5: one setting lowers the upload limit; explicit sub-limits are kept."""
+    monkeypatch.setenv("MAX_UPLOAD_FILE_SIZE_BYTES", "1048576")
+    settings = Config(_env_file=None, storage_root=tmp_path)  # type: ignore
+    assert settings.max_process_file_size_bytes == 1048576
+    assert settings.max_vision_image_bytes == 1048576
+    settings.validate_runtime()
+
+    monkeypatch.setenv("MAX_VISION_IMAGE_BYTES", "4096")
+    settings = Config(_env_file=None, storage_root=tmp_path)  # type: ignore
+    assert settings.max_vision_image_bytes == 4096
+    monkeypatch.setenv("MAX_PROCESS_FILE_SIZE_BYTES", "2097152")
+    settings = Config(_env_file=None, storage_root=tmp_path)  # type: ignore
+    assert settings.max_process_file_size_bytes == 2097152

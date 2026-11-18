@@ -1,4 +1,5 @@
 import { getAuth } from "@/lib/auth";
+import { pageContentSecurityPolicy } from "@/lib/content-security-policy";
 import { getFrontendServerConfig } from "@/lib/server-config-core";
 import { headers } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
@@ -39,6 +40,7 @@ if (process.env.ASTERISM_CONFIG_PROFILE === "test") {
     "/e2e/prose",
     "/e2e/help",
     "/e2e/help-center",
+    "/e2e/canvas-preview",
   );
 }
 
@@ -52,8 +54,6 @@ export async function proxy(request: NextRequest) {
     headers: await headers(),
   });
 
-  let response = NextResponse.next();
-
   const externalOrigin = getFrontendServerConfig().publicUrl;
   const pathname = request.nextUrl.pathname.trim();
 
@@ -65,10 +65,22 @@ export async function proxy(request: NextRequest) {
       `/sign-in?redirect=${encodeURIComponent(target)}`,
       externalOrigin,
     );
-    response = NextResponse.redirect(redirectUrl);
+    return NextResponse.redirect(redirectUrl);
   }
-  // /sign-in is excluded by the matcher; the page redirects signed-in users.
+  // The sign-in page itself redirects signed-in users.
 
+  // US-86.5: a fresh nonce per page. Next.js reads it from the request's CSP
+  // header and applies it to its own scripts while rendering.
+  const policy = pageContentSecurityPolicy({
+    nonce: Buffer.from(crypto.randomUUID()).toString("base64"),
+    publicUrl: externalOrigin,
+    development: process.env.NODE_ENV === "development",
+  });
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("Content-Security-Policy", policy);
+  const response = NextResponse.next({ request: { headers: requestHeaders } });
+  response.headers.set("Content-Security-Policy", policy);
+  response.headers.set("X-Frame-Options", "DENY");
   return response;
 }
 
@@ -76,6 +88,6 @@ export async function proxy(request: NextRequest) {
 // sign-in pages before the local development rewrite can proxy them.
 export const config = {
   matcher: [
-    "/((?!api/py(?:/|$)|api/auth|api/stream|api/chat|_next|monitoring|sign-in|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
+    "/((?!api/py(?:/|$)|api/auth|api/stream|api/chat|_next|monitoring|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
   ],
 };

@@ -42,6 +42,9 @@ env -u SYSTEM_KEY -u ADMIN_PASSPHRASE -u DB_URL \
     -u DEFAULT_ALLOWED_TOOLS ASTERISM_CONFIG_PROFILE=auth-migrate \
     node node_modules/auth/dist/index.mjs migrate --config ./src/lib/auth-cli.ts --yes
 
+# Upload limit, HSTS and trusted proxies for nginx, from the validated settings (US-86.5).
+node /app/scripts/edge-config.mjs /tmp/asterism-nginx
+
 echo "STORAGE_ROOT=${STORAGE_ROOT:-/storage}"
 mkdir -p "$STORAGE_ROOT"
 

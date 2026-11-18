@@ -133,6 +133,13 @@ async def test_upload_rejects_unsafe_extensions_and_size(file_session, monkeypat
             uploads=[_upload("large.txt", b"four")],
             session=file_session,
         )
+    # The limit covers the whole request, as at the edge (US-86.5).
+    with pytest.raises(BadDataException, match="together exceed the 3 byte"):
+        await upload_files(
+            user_id="user-a",
+            uploads=[_upload("one.txt", b"ab"), _upload("two.txt", b"cd")],
+            session=file_session,
+        )
     assert list(config.files_root.rglob("source.*")) == []
 
 

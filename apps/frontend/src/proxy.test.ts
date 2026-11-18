@@ -71,8 +71,41 @@ it("keeps the query string in the sign-in redirect", async () => {
   );
 });
 
-it("leaves the sign-in page to handle signed-in visitors itself", () => {
+it("serves the sign-in page signed out, under the page CSP", async () => {
   for (const url of ["/sign-in", "/sign-in?redirect=%2Fsettings"]) {
+    expect(unstable_doesProxyMatch({ config, nextConfig: {}, url })).toBe(true);
+    const response = await proxy(
+      new NextRequest(`http://localhost:3000${url}`),
+    );
+    expect(response.headers.get("location")).toBeNull();
+    expect(response.headers.get("content-security-policy")).toContain(
+      "frame-ancestors 'none'",
+    );
+  }
+});
+
+function nonceOf(policy: string | null) {
+  return /'nonce-([^']+)'/.exec(policy ?? "")?.[1];
+}
+
+it("gives each page a fresh nonce and hands the policy to the renderer", async () => {
+  const first = await proxy(new NextRequest("http://localhost:3000/sign-in"));
+  const second = await proxy(new NextRequest("http://localhost:3000/sign-in"));
+  const policy = first.headers.get("content-security-policy");
+  expect(nonceOf(policy)).toMatch(/^[A-Za-z0-9+/]{40,}={0,2}$/);
+  expect(nonceOf(policy)).not.toBe(
+    nonceOf(second.headers.get("content-security-policy")),
+  );
+  expect(policy).toContain("'strict-dynamic'");
+  expect(first.headers.get("x-frame-options")).toBe("DENY");
+  // Next.js reads the nonce from the forwarded request's CSP header.
+  expect(
+    first.headers.get("x-middleware-request-content-security-policy"),
+  ).toBe(policy);
+});
+
+it("leaves static files, including the canvas preview frame, to their own headers", () => {
+  for (const url of ["/canvas-preview.html", "/sse-worker.js", "/icon.svg"]) {
     expect(unstable_doesProxyMatch({ config, nextConfig: {}, url })).toBe(
       false,
     );

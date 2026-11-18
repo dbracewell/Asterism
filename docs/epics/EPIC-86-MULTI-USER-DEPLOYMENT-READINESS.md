@@ -145,16 +145,16 @@ As an admin, I can take a consistent backup while the app runs and restore it.
 As an operator, I can put Asterism on the internet behind a TLS proxy with
 sensible protections on by default.
 
-- [ ] Security headers from nginx and Next.js: CSP (scripts self, no inline
+- [x] Security headers from nginx and Next.js: CSP (scripts self, no inline
       except hashed/nonce'd as Next requires; frames none; connect-src self and the
       WebSocket path), `frame-ancestors 'none'`, `X-Content-Type-Options`,
       `Referrer-Policy`, and HSTS when `PUBLIC_URL` is HTTPS.
-- [ ] One upload limit: nginx, the Next proxy and the backend agree, from one
+- [x] One upload limit: nginx, the Next proxy and the backend agree, from one
       setting.
-- [ ] Request rate limits in nginx for auth endpoints, uploads and the
+- [x] Request rate limits in nginx for auth endpoints, uploads and the
       WebSocket handshake, keyed on the trusted client address.
-- [ ] Verify secure, HttpOnly, SameSite cookies under HTTPS `PUBLIC_URL`.
-- [ ] Playwright check that the app works under the CSP (no blocked script,
+- [x] Verify secure, HttpOnly, SameSite cookies under HTTPS `PUBLIC_URL`.
+- [x] Playwright check that the app works under the CSP (no blocked script,
       style, image or WebSocket), plus a header assertion in the container smoke test.
 
 ### US-86.6: Production logs and status

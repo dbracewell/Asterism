@@ -1,4 +1,5 @@
 import type { ToolResult } from "@/lib/client";
+import { PREVIEW_DOCUMENT_CSP } from "@/lib/content-security-policy";
 import { z } from "zod";
 
 /** The main agent's canvas tools (ADR-0063). */
@@ -84,16 +85,7 @@ export const MAX_SELECTION_LENGTH = 4000;
  * pages work offline. The iframe sandbox (no allow-same-origin, popups or top
  * navigation) keeps the page away from the app.
  */
-export const PREVIEW_CSP = [
-  "default-src 'none'",
-  "script-src 'unsafe-inline'",
-  "style-src 'unsafe-inline'",
-  "img-src data: blob:",
-  "font-src data:",
-  "media-src data: blob:",
-  "form-action 'none'",
-  "base-uri 'none'",
-].join("; ");
+export const PREVIEW_CSP = PREVIEW_DOCUMENT_CSP;
 
 /**
  * The document an HTML preview frame renders: the CSP comes first, so it
