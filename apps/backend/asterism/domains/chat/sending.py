@@ -16,6 +16,7 @@ from asterism.domains.agent.learning_inputs import HintLevel
 from asterism.domains.projects.goals import resolve_goal
 from asterism.domains.projects.scope import require_owned_project
 from asterism.domains.prompt_templates.provenance import resolve_template_use
+from asterism.domains.usage.service import require_within_budget
 from asterism.domains.user.about import read_about_snapshot
 from asterism.domains.user.models import UserModel
 
@@ -103,6 +104,8 @@ async def persist_user_send(
     from .branches import latest_branch_user_turn
     from .skills import accept_skills
 
+    # A send starts new model work: refuse it over budget before anything is stored (ADR-0073).
+    await require_within_budget(user_id, session)
     skills = await accept_skills(user_id=user_id, chat=chat, selection=payload.skills, session=session)
     # The parent is the active branch tip, so its latest user turn holds the branch level.
     reveal = payload.hint is not None and payload.hint.level == HintLevel.ANSWER

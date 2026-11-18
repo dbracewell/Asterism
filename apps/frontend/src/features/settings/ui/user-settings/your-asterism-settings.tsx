@@ -19,6 +19,7 @@ import {
   SettingsSaveBar,
   SettingsSection,
 } from "@/features/settings/ui/settings-section";
+import { YourUsageSection } from "@/features/settings/ui/user-settings/your-usage-section";
 import { client } from "@/lib/api";
 import type { AboutYou } from "@/lib/client";
 import { userAboutUpdateMutation } from "@/lib/client/@tanstack/react-query.gen";
@@ -28,8 +29,8 @@ import { errorDetail } from "@/lib/utils";
 export const ABOUT_MAX_CHARACTERS = 16000;
 
 /**
- * Your Asterism: what Asterism knows about you. Holds the About you text now;
- * a Memory section can sit beside it later.
+ * Your Asterism: what Asterism knows about you (About you) and your usage
+ * against your group's budget. A Memory section can sit beside them later.
  */
 export function YourAsterismSettings() {
   const user = useUser();
@@ -41,8 +42,9 @@ function OwnedSettings({ userId }: { userId: string }) {
   return (
     <SettingsPane
       title="Your Asterism"
-      description="What Asterism knows about you. It uses this when it answers you, in every chat."
+      description="What Asterism knows about you, and how much you've used it."
     >
+      <YourUsageSection />
       {query.isPending && <FormSkeleton label="Loading About you…" />}
       {query.error && (
         <QueryError

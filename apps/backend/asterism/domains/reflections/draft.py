@@ -18,6 +18,7 @@ from asterism.core.exceptions import CodedException
 from asterism.domains.chat.schemas import Message
 from asterism.domains.chat.title_model import resolve_title_model
 from asterism.domains.llm.schemas import LLMMessage
+from asterism.domains.usage.schemas import UsageSource
 
 from .schemas import MAX_REFLECTION_CHARS, ReflectionDraft
 from .service import require_owned_chat
@@ -90,7 +91,7 @@ async def suggest_draft(*, user_id: str, chat_id: uuid.UUID, session: AsyncSessi
     from asterism.domains.chat.service import get_one
 
     chat = await require_owned_chat(user_id, chat_id, session)
-    model = await resolve_title_model(user_id, chat.selected_model_id)
+    model = await resolve_title_model(user_id, chat.selected_model_id, source=UsageSource.REFLECTION, chat_id=chat_id)
     if model is None:
         raise DraftUnavailable()
     text = transcript((await get_one(chat_id, user_id, session)).messages)

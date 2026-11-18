@@ -11,6 +11,7 @@ from asterism.domains.settings.models import ApplicationSettingsModel
 from asterism.domains.settings.service import get_draft_model
 from asterism.domains.tools.builtin import load_builtin_tools
 from asterism.domains.tools.registry import _group_allows_tool
+from asterism.domains.usage.schemas import UsageSource
 from test_classes import api as _api
 from test_courses import MODEL, OTHER_MODEL, apply, offer, publish, student_records
 from test_courses import course as _course
@@ -81,7 +82,7 @@ async def test_pickers_list_only_allowed_models_and_every_model_check_refuses_th
         assert await available_user_model("s1", MODEL, session) is not None
         # Study tools and verification.
         with pytest.raises(CodedException, match=GROUP_UNAVAILABLE):
-            await resolve_usable_model(user_id="s1", model_id=OTHER_MODEL, session=session)
+            await resolve_usable_model(user_id="s1", model_id=OTHER_MODEL, session=session, source=UsageSource.STUDY)
         # Other groups are unaffected.
         assert len(await list_chat_models("teach", session)) == 2
 

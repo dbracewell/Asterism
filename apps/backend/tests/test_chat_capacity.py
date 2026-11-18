@@ -298,3 +298,45 @@ async def test_controller_admission_cannot_cross_owner_or_be_attached_twice():
         jobs.attach(candidate.chat_id, candidate, own)
     assert candidate.controllers == 0
     await jobs.shutdown()
+
+
+@pytest.mark.asyncio
+async def test_regenerate_over_budget_is_refused_on_the_socket_with_the_usage_shape(monkeypatch):
+    """US-86.3: regenerate is admitted on the WebSocket; over budget it never starts and says when it resets."""
+    from contextlib import asynccontextmanager
+
+    from asterism.domains.usage.service import UsageLimitExceeded
+
+    @asynccontextmanager
+    async def no_session():
+        yield None
+
+    async def over_budget(user_id, session):
+        assert user_id == "a"
+        raise UsageLimitExceeded("You've used your daily budget of 10 tokens.", resets_at=1_800_000_000)
+
+    monkeypatch.setattr("asterism.domains.chat.controller.get_async_db_session", no_session)
+    monkeypatch.setattr("asterism.domains.chat.controller.require_within_budget", over_budget)
+    jobs = manager()
+    regenerate = AsyncMock()
+    candidate = job(jobs, user_id="a", reload_chat=regenerate)
+    token = jobs.admit_controller("a")
+    jobs.attach(candidate.chat_id, candidate, token)
+    connection = SimpleNamespace(send_json=AsyncMock())
+    controller = ChatController(candidate.chat_id, connection, candidate, token)
+    controller._is_running = True
+    processing = asyncio.create_task(controller._process_commands_loop())
+    await controller.inbound_commands.put({"type": "regenerate", "parent_message_id": "x"})
+    await controller.inbound_commands.join()
+    packet = connection.send_json.call_args.args[0]
+    assert (packet["type"], packet["code"], packet["error_code"], packet["resets_at"]) == (
+        "error",
+        409,
+        "usage_limit",
+        1_800_000_000,
+    )
+    regenerate.assert_not_awaited()
+    assert jobs.active_count == 0
+    processing.cancel()
+    await asyncio.gather(processing, return_exceptions=True)
+    await jobs.shutdown()

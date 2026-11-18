@@ -20,6 +20,7 @@ import {
   ShieldUserIcon,
   MessageCircleIcon,
   ShrinkIcon,
+  GaugeIcon,
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import type { ReactNode } from "react";
@@ -42,6 +43,13 @@ const GroupSettings = dynamic(
   () =>
     import("@/features/settings/ui/admin-settings/groups-settings").then(
       (module) => module.GroupSettings,
+    ),
+  { loading: AdminPaneLoading },
+);
+const UsageSettings = dynamic(
+  () =>
+    import("@/features/settings/ui/admin-settings/usage-settings").then(
+      (module) => module.UsageSettings,
     ),
   { loading: AdminPaneLoading },
 );
@@ -160,6 +168,13 @@ export const getLazyAdminSettingsSections = (): Types => [
     value: "user-permissions",
     icon: <ShieldUserIcon />,
     settingsPane: pane("Users", <UsersSettings />),
+  },
+  {
+    type: "section",
+    label: "Usage",
+    value: "usage",
+    icon: <GaugeIcon />,
+    settingsPane: pane("Usage", <UsageSettings />),
   },
   { type: "separator" },
   {

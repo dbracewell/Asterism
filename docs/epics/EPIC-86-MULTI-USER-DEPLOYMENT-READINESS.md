@@ -112,17 +112,17 @@ Settings → Users, so I can run the instance without touching the database.
 As an admin, I can see who is using how much and cap it per group, so one
 account can't spend the whole budget.
 
-- [ ] Usage read: tokens and estimated cost per user and per model over a
+- [x] Usage read: tokens and estimated cost per user and per model over a
       period, from message token counts and model pricing. Include delegated,
       verification, study-generation and image calls.
-- [ ] Group budget: optional token budget per user per day and per month,
+- [x] Group budget: optional token budget per user per day and per month,
       set by an admin on the group.
-- [ ] Enforcement at send/regenerate admission and on study and image
+- [x] Enforcement at send/regenerate admission and on study and image
       generation; refusal is one 409 shape (`reason: "usage_limit"`) saying when the
       budget resets. Running turns finish.
-- [ ] Users see their own usage and remaining budget in Your Asterism.
-- [ ] Admin Settings → Usage page (table, period picker, per-group totals).
-- [ ] Tests: budget boundaries, reset windows (user timezone vs UTC: decide and
+- [x] Users see their own usage and remaining budget in Your Asterism.
+- [x] Admin Settings → Usage page (table, period picker, per-group totals).
+- [x] Tests: budget boundaries, reset windows (user timezone vs UTC: decide and
       document), admin exemption, every generation path counted.
 
 ### US-86.4: Backup and restore

@@ -24,6 +24,7 @@ from asterism.domains.agent.context_manifest import ContextManifest
 from asterism.domains.agent.instruction_overrides import InstructionOverride, ReplayedStep, override_for
 from asterism.domains.agent.service import get_agent_profile
 from asterism.domains.llm.schemas import ToolResult
+from asterism.domains.usage.service import require_within_budget
 
 from .branches import active_branch
 from .comparisons import pending_on_branch
@@ -222,6 +223,8 @@ async def accept_fork(
         if accepted is None:
             raise NotFoundException("Accepted fork not found")
         return Message.model_validate(accepted)
+    # A fork is a new run (ADR-0073); a repeated request above replays its receipt.
+    await require_within_budget(user_id, session)
     if not await session.scalar(
         select_owned_chats(user_id=user_id).with_only_columns(ChatModel.id).where(ChatModel.id == chat_id),
     ):

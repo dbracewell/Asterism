@@ -10,12 +10,21 @@ const mocks = vi.hoisted(() => ({
   rename: vi.fn(),
   remove: vi.fn(),
   access: vi.fn(),
+  budget: vi.fn(),
 }));
 vi.mock("@/lib/api", () => ({ client: {} }));
 vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
   groupGetManyOptions: () => ({
     queryKey: ["groups"],
     queryFn: async () => [
+      {
+        id: "admin",
+        name: "Admin",
+        built_in: true,
+        member_count: 1,
+        models: null,
+        tools: null,
+      },
       {
         id: "student",
         name: "Student",
@@ -31,6 +40,8 @@ vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
         member_count: 0,
         models: ["m1"],
         tools: [],
+        daily_token_budget: 50000,
+        monthly_token_budget: 1000000,
       },
     ],
   }),
@@ -48,6 +59,7 @@ vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
   groupRenameMutation: () => ({ mutationFn: mocks.rename }),
   groupDeleteMutation: () => ({ mutationFn: mocks.remove }),
   groupAccessUpdateMutation: () => ({ mutationFn: mocks.access }),
+  groupBudgetUpdateMutation: () => ({ mutationFn: mocks.budget }),
 }));
 
 function setup() {
@@ -139,5 +151,45 @@ it("creates, renames and deletes a custom group, showing refusals", async () => 
   await actor.click(screen.getByRole("button", { name: "Confirm" }));
   expect(await within(night).findByRole("alert")).toHaveTextContent(
     "Move this group's 1 member(s)",
+  );
+});
+
+it("sets a group's usage budget, and Admin has none", async () => {
+  mocks.budget.mockResolvedValue({});
+  const user = setup();
+  const admin = await screen.findByRole("listitem", { name: "Admin" });
+  expect(admin).not.toHaveTextContent("budget");
+  expect(
+    within(admin).queryByRole("button", { name: /usage budget/ }),
+  ).not.toBeInTheDocument();
+  const night = screen.getByRole("listitem", { name: "Night school" });
+  expect(night).toHaveTextContent("50,000 tokens a day, 1,000,000 a month");
+  const student = screen.getByRole("listitem", { name: "Student" });
+  expect(student).toHaveTextContent("no usage budget");
+
+  await user.click(
+    within(student).getByRole("button", {
+      name: "Edit usage budget for Student",
+    }),
+  );
+  const daily = within(student).getByLabelText("Tokens per member per day");
+  await user.type(daily, "12.5");
+  expect(within(student).getByRole("alert")).toHaveTextContent("whole number");
+  expect(
+    within(student).getByRole("button", { name: "Save budget for Student" }),
+  ).toBeDisabled();
+  await user.clear(daily);
+  await user.type(daily, "200,000");
+  await user.click(
+    within(student).getByRole("button", { name: "Save budget for Student" }),
+  );
+  await waitFor(() =>
+    expect(mocks.budget.mock.calls[0][0]).toEqual({
+      path: { group_id: "student" },
+      body: { daily_token_budget: 200000, monthly_token_budget: null },
+    }),
+  );
+  expect(await within(student).findByRole("status")).toHaveTextContent(
+    "Budget saved",
   );
 });

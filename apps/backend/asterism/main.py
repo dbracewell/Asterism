@@ -39,6 +39,7 @@ from asterism.domains.settings_transfer.router import settings_transfer_router
 from asterism.domains.skills.router import skills_router
 from asterism.domains.study.router import study_router
 from asterism.domains.tools.router import tools_router
+from asterism.domains.usage.router import usage_router
 from asterism.domains.user.router import user_router
 
 truststore.inject_into_ssl()
@@ -115,7 +116,9 @@ async def global_coded_exception_handler(
     _: Request,
     exc: CodedException,
 ):
-    error_data = ErrorDetail(code=exc.code, detail=str(exc), reason=exc.reason)
+    error_data = ErrorDetail(
+        code=exc.code, detail=str(exc), reason=exc.reason, resets_at=getattr(exc, "resets_at", None)
+    )
     return JSONResponse(
         status_code=exc.code,
         content=error_data.model_dump(exclude_none=True),
@@ -169,6 +172,7 @@ app.include_router(chatgpt_router)
 app.include_router(settings_router)
 app.include_router(user_router)
 app.include_router(groups_router)
+app.include_router(usage_router)
 app.include_router(tools_router)
 app.include_router(components_router)
 app.include_router(agents_router)

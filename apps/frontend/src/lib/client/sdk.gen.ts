@@ -393,6 +393,9 @@ import type {
   GroupAccessUpdateData,
   GroupAccessUpdateErrors,
   GroupAccessUpdateResponses,
+  GroupBudgetUpdateData,
+  GroupBudgetUpdateErrors,
+  GroupBudgetUpdateResponses,
   GroupCreateData,
   GroupCreateErrors,
   GroupCreateResponses,
@@ -726,6 +729,18 @@ import type {
   ToolsGetAllData,
   ToolsGetAllErrors,
   ToolsGetAllResponses,
+  UsageGetMineData,
+  UsageGetMineErrors,
+  UsageGetMineResponses,
+  UsageGetReportData,
+  UsageGetReportErrors,
+  UsageGetReportResponses,
+  UsageSettingsGetData,
+  UsageSettingsGetErrors,
+  UsageSettingsGetResponses,
+  UsageSettingsUpdateData,
+  UsageSettingsUpdateErrors,
+  UsageSettingsUpdateResponses,
   UserAboutGetData,
   UserAboutGetErrors,
   UserAboutGetResponses,
@@ -6609,6 +6624,33 @@ export class ApiClient extends HeyApiClient {
   }
 
   /**
+   * Update Budget
+   *
+   * Set the daily and monthly token budget of each member. The admin group can't have one.
+   */
+  public groupBudgetUpdate<ThrowOnError extends boolean = false>(
+    options: Options<GroupBudgetUpdateData, ThrowOnError>,
+  ): RequestResult<
+    GroupBudgetUpdateResponses,
+    GroupBudgetUpdateErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).put<
+      GroupBudgetUpdateResponses,
+      GroupBudgetUpdateErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/groups/{group_id}/budget",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+  }
+
+  /**
    * Move Member
    *
    * Move a user into another group. The admin group follows the sign-in role and can't be set here.
@@ -6627,6 +6669,96 @@ export class ApiClient extends HeyApiClient {
     >({
       security: [{ scheme: "bearer", type: "http" }],
       url: "/groups/members/{user_id}",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+  }
+
+  /**
+   * My Usage
+   *
+   * Your tokens today and this month, your budget, and when each resets.
+   */
+  public usageGetMine<ThrowOnError extends boolean = false>(
+    options?: Options<UsageGetMineData, ThrowOnError>,
+  ): RequestResult<UsageGetMineResponses, UsageGetMineErrors, ThrowOnError> {
+    return (options?.client ?? this.client).get<
+      UsageGetMineResponses,
+      UsageGetMineErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/usage/me",
+      ...options,
+    });
+  }
+
+  /**
+   * Usage Report
+   *
+   * Tokens and estimated cost per user and model, and per group, over a period of days.
+   */
+  public usageGetReport<ThrowOnError extends boolean = false>(
+    options?: Options<UsageGetReportData, ThrowOnError>,
+  ): RequestResult<
+    UsageGetReportResponses,
+    UsageGetReportErrors,
+    ThrowOnError
+  > {
+    return (options?.client ?? this.client).get<
+      UsageGetReportResponses,
+      UsageGetReportErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/usage/report",
+      ...options,
+    });
+  }
+
+  /**
+   * Read Settings
+   */
+  public usageSettingsGet<ThrowOnError extends boolean = false>(
+    options?: Options<UsageSettingsGetData, ThrowOnError>,
+  ): RequestResult<
+    UsageSettingsGetResponses,
+    UsageSettingsGetErrors,
+    ThrowOnError
+  > {
+    return (options?.client ?? this.client).get<
+      UsageSettingsGetResponses,
+      UsageSettingsGetErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/usage/settings",
+      ...options,
+    });
+  }
+
+  /**
+   * Update Settings
+   *
+   * Set the timezone whose midnight starts each budget day and month for everyone.
+   */
+  public usageSettingsUpdate<ThrowOnError extends boolean = false>(
+    options: Options<UsageSettingsUpdateData, ThrowOnError>,
+  ): RequestResult<
+    UsageSettingsUpdateResponses,
+    UsageSettingsUpdateErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).put<
+      UsageSettingsUpdateResponses,
+      UsageSettingsUpdateErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/usage/settings",
       ...options,
       headers: {
         "Content-Type": "application/json",

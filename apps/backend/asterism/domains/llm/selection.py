@@ -11,8 +11,11 @@ from asterism.domains.chatgpt.availability import ModelAvailability
 from asterism.domains.settings.models import LLMModel
 from asterism.domains.settings.queries import select_visible_models
 from asterism.domains.settings.schemas import LlmWithProvider
+from asterism.domains.usage.schemas import BACKGROUND_SOURCES, UsageSource
+from asterism.domains.usage.service import require_within_budget
 
 from .factory import create_llm_client
+from .metering import meter_for
 from .schemas import LLMClientProtocol, LLMMessage
 
 ModelCall = Callable[[list[LLMMessage]], Awaitable[str]]
@@ -50,8 +53,23 @@ class SelectedModel:
         return (await self.reply(messages)).content
 
 
-async def resolve_usable_model(*, user_id: str, model_id: uuid.UUID, session: AsyncSession) -> SelectedModel:
-    """A model the caller may use right now, or 409 with the reason."""
+async def resolve_usable_model(
+    *,
+    user_id: str,
+    model_id: uuid.UUID,
+    session: AsyncSession,
+    source: UsageSource,
+    chat_id: uuid.UUID | None = None,
+    admit: bool = True,
+) -> SelectedModel:
+    """A model the caller may use right now, or 409 with the reason. Its calls are charged to ``user_id``.
+
+    New work the user started is refused over budget (409 ``usage_limit``);
+    background sources, and callers finishing work already admitted
+    (``admit=False``), are counted but never refused.
+    """
+    if admit and source not in BACKGROUND_SOURCES:
+        await require_within_budget(user_id, session)
     row = await session.scalar(
         select_visible_models(user_id).where(LLMModel.id == model_id).execution_options(populate_existing=True)
     )
@@ -59,7 +77,9 @@ async def resolve_usable_model(*, user_id: str, model_id: uuid.UUID, session: As
     if row is None or reason is not None:
         raise CodedException(409, f"Selected model is unavailable ({reason}); choose another model")
     info = LlmWithProvider.model_validate(row)
-    client = create_llm_client(info.name, info.provider, user_id=user_id)
+    client = create_llm_client(
+        info.name, info.provider, user_id=user_id, usage=meter_for(user_id, source, info, chat_id=chat_id)
+    )
     return SelectedModel(id=row.id, name=row.display_name or info.name, client=client)
 
 

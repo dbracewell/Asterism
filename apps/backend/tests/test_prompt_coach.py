@@ -48,7 +48,7 @@ def coached(project_api, monkeypatch):
     client, sessions, _ = project_api
     state = {"model": FakeModel(review_json()), "calls": []}
 
-    async def resolve(user_id, model_id):
+    async def resolve(user_id, model_id, **_):
         state["calls"].append((user_id, model_id))
         return state["model"]
 

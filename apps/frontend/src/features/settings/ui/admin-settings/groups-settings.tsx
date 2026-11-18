@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { HelpTopic } from "@/features/help/components/help-topic";
+import { GroupBudgetEditor } from "@/features/settings/ui/admin-settings/group-budget-editor";
 import { client } from "@/lib/api";
 import type { Group, GroupAccessOptions } from "@/lib/client";
 import {
@@ -227,6 +228,16 @@ function RenameForm({ group, done }: { group: Group; done: () => void }) {
   );
 }
 
+function budgetSummary(group: Group) {
+  const parts = [
+    group.daily_token_budget != null &&
+      `${group.daily_token_budget.toLocaleString("en-US")} tokens a day`,
+    group.monthly_token_budget != null &&
+      `${group.monthly_token_budget.toLocaleString("en-US")} a month`,
+  ].filter(Boolean);
+  return parts.length ? parts.join(", ") : "no usage budget";
+}
+
 function GroupRow({
   group,
   options,
@@ -260,6 +271,7 @@ function GroupRow({
             {group.member_count}{" "}
             {group.member_count === 1 ? "member" : "members"} ·{" "}
             {summary(group.models, "models")} · {summary(group.tools, "tools")}
+            {group.id !== "admin" && ` · ${budgetSummary(group)}`}
           </span>
         </span>
         {!group.built_in && !renaming && (
@@ -303,6 +315,18 @@ function GroupRow({
           </CollapsibleTrigger>
           <CollapsibleContent>
             <AccessEditor key={group.id} group={group} options={options} />
+          </CollapsibleContent>
+        </Collapsible>
+      )}
+      {group.id !== "admin" && (
+        <Collapsible>
+          <CollapsibleTrigger asChild>
+            <Button type="button" variant="ghost" size="sm" className="w-fit">
+              Edit usage budget for {group.name}
+            </Button>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <GroupBudgetEditor key={group.id} group={group} />
           </CollapsibleContent>
         </Collapsible>
       )}

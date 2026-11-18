@@ -45,6 +45,7 @@ export type PageGuideId =
   | "admin.image-captioning"
   | "admin.image-generation"
   | "admin.groups"
+  | "admin.usage"
   | "admin.users"
   | "admin.educators"
   | "admin.export";
@@ -716,6 +717,11 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
       "Tell Asterism about yourself so its answers fit you. What you write is used in every chat.",
     areas: [
       {
+        name: "Usage",
+        description:
+          "Tokens you used today and this month. If your group has a budget, it shows how much is left and when it resets. When it's used up, new messages and study tools wait until then; a reply already running finishes.",
+      },
+      {
         name: "About you",
         description:
           "One text about who you are, what you're studying or working on, and what you already know. New messages use the latest saved text; messages already sent keep the text they were sent with.",
@@ -1017,10 +1023,39 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
         description:
           "Each group allows every enabled model and tool, or only the ones you check. It can only narrow what Providers and Tools turn on, and members' own ChatGPT plan models aren't limited.",
       },
+      {
+        name: "Usage budget",
+        description:
+          "Tokens each member may use per day and per month, input and output together. Once a member has used it, new sends, regenerations, study tools and images are refused until it resets; replies already running finish. Leave a field empty for no budget. Admins never have one.",
+      },
     ],
     tasks: [
       "Limit students to some models: edit access for Student and check the models they may use.",
+      "Give each student 200,000 tokens a day: edit the usage budget for Student.",
       "Move people between groups from the Users section.",
+    ],
+    terms: ["concept.group", "concept.model"],
+    audience: "admin",
+  },
+  "admin.usage": {
+    title: "Usage",
+    purpose:
+      "See how many tokens each person used on each model, what it is estimated to have cost, and set when budget days start.",
+    areas: [
+      {
+        name: "Usage",
+        description:
+          "Tokens and images per user and model, and totals per group, for the days you choose. Every model call counts: chats, sub-agents, verification, study tools, chat titles and image captions. Cost uses each model's price when the call ran; \"—\" means the model had no price or ran on a member's ChatGPT plan. Usage is recorded from the version that added this page on.",
+      },
+      {
+        name: "Budget day",
+        description:
+          "The timezone whose midnight starts each budget day, and whose 1st starts each month, for everyone. Set it to your school's timezone.",
+      },
+    ],
+    tasks: [
+      "Check last week's usage: choose its first and last day.",
+      "Set budgets per group in the Groups section.",
     ],
     terms: ["concept.group", "concept.model"],
     audience: "admin",
@@ -1111,6 +1146,7 @@ const adminSettingsGuides: Record<string, PageGuideId | null> = {
   educators: "admin.educators",
   export: "admin.export",
   "group-settings": "admin.groups",
+  usage: "admin.usage",
   "image-generation": "admin.image-generation",
   "code-execution": null,
 };

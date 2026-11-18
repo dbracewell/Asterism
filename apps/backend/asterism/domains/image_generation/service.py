@@ -14,6 +14,8 @@ from typing import TYPE_CHECKING
 
 from asterism.common.log import get_logger
 from asterism.core.exceptions import BadDataException
+from asterism.domains.usage.schemas import UsageMeter, UsageSource
+from asterism.domains.usage.service import record_usage, require_within_budget
 
 from .models import ImageGenerationModel
 from .policy import require_available
@@ -147,6 +149,8 @@ async def generate_images(
     await _refuse_unsafe(user_id, chat_id, request, started)
     async with get_async_db_session() as session:
         await require_available(user_id, session)
+        # Images use no tokens, but a user over budget gets no new generation work (ADR-0073).
+        await require_within_budget(user_id, session)
         provider = await load_generator(session)
     if provider is None:
         raise BadDataException("No image provider is set up")
@@ -261,6 +265,16 @@ async def _run(
         revision=result.revision,
         steps=result.steps,
         images=[{"file_id": str(image.file_id), "seed": image.seed} for image in saved],
+    )
+    await record_usage(
+        UsageMeter(
+            user_id=user_id,
+            source=UsageSource.IMAGE,
+            model_id=None,
+            model_name=f"{provider.name}: {result.model}" if result.model else provider.name,
+            chat_id=chat_id,
+        ),
+        images=len(saved),
     )
     return saved
 

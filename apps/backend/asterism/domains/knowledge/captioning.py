@@ -28,8 +28,10 @@ from asterism.domains.knowledge.policy import get_captioning_configuration
 from asterism.domains.knowledge.processing_schemas import KnowledgeCaptionConfiguration
 from asterism.domains.knowledge.vector_store import VectorChunk, vector_store
 from asterism.domains.llm.factory import create_llm_client
+from asterism.domains.llm.metering import meter_for
 from asterism.domains.llm.schemas import ImageUrlContent, ImageUrlContentPart, LLMMessage, TextContentPart
 from asterism.domains.settings.service import get_model_and_provider
+from asterism.domains.usage.schemas import UsageSource
 
 from .caption_schemas import (
     CaptionErrorCode,
@@ -205,7 +207,10 @@ async def _provider_model_caption(
         raise CaptioningError(CaptionErrorCode.INVALID_SELECTION, "The selected caption provider has no API key")
 
     CaptioningConfiguration(mode=CaptionMode.PROVIDER, provider_model_id=model.id).validate([model])
-    client = create_llm_client(model.name, model.provider)
+    # Background work for the file's owner: counted, never refused (ADR-0073).
+    client = create_llm_client(
+        model.name, model.provider, usage=meter_for(request.file.user_id, UsageSource.CAPTION, model)
+    )
     image_data = base64.b64encode(request.image).decode("ascii")
     logger.info(f"Captioning document {request.file.id} with provider {model.provider.name}/{model.name}")
     response = await client.generate(

@@ -1,4 +1,4 @@
-import { ApiClient, type AboutYou } from "@/lib/client";
+import { ApiClient, type AboutYou, type MyUsage } from "@/lib/client";
 import {
   MutationCache,
   QueryClient,
@@ -15,6 +15,7 @@ const { identity, api } = vi.hoisted(() => ({
   api: {
     userAboutGet: vi.fn(),
     userAboutUpdate: vi.fn(),
+    usageGetMine: vi.fn(),
   },
 }));
 vi.mock("@/features/auth/components/user-context", () => ({
@@ -26,6 +27,32 @@ vi.mock("@/lib/api", () => ({
 
 let stored: AboutYou;
 
+// 2026-11-19 00:00 UTC.
+const RESETS = 1795046400;
+
+function usage(over: Partial<MyUsage> = {}): MyUsage {
+  return {
+    timezone: "UTC",
+    exempt: false,
+    day: {
+      used_tokens: 1500,
+      budget_tokens: 2000,
+      remaining_tokens: 500,
+      starts_at: RESETS - 86400,
+      resets_at: RESETS,
+    },
+    month: {
+      used_tokens: 1500,
+      budget_tokens: null,
+      remaining_tokens: null,
+      starts_at: 0,
+      resets_at: RESETS + 86400 * 12,
+    },
+    month_by_model: [],
+    ...over,
+  };
+}
+
 beforeEach(() => {
   identity.id = "a";
   Object.values(api).forEach((fn) => fn.mockReset());
@@ -34,6 +61,7 @@ beforeEach(() => {
   api.userAboutGet.mockImplementation(async () => ({
     data: structuredClone(stored),
   }));
+  api.usageGetMine.mockImplementation(async () => ({ data: usage() }));
   api.userAboutUpdate.mockImplementation(async ({ body }) => {
     if (body.expected_revision !== stored.revision) {
       throw { detail: "About you changed; reload and retry" };
@@ -126,4 +154,36 @@ it("does not reuse another owner's cached text", async () => {
     .getAll()
     .map((query) => JSON.stringify(query.queryKey));
   expect(keys.some((key) => key.includes("userAboutGet:a"))).toBe(true);
+});
+
+it("shows today's budget, what is left and when it resets", async () => {
+  setup();
+  const today = await screen.findByRole("region", { name: "Today" });
+  expect(today).toHaveTextContent("1,500 tokens of 2,000 tokens");
+  expect(today).toHaveTextContent("500 tokens left · resets");
+  expect(
+    screen.getByRole("progressbar", { name: "Today: 75% of your budget used" }),
+  ).toBeInTheDocument();
+  expect(screen.getByRole("region", { name: "This month" })).toHaveTextContent(
+    "1,500 tokens used. No budget.",
+  );
+});
+
+it("says when a used-up budget lets new work start again", async () => {
+  api.usageGetMine.mockImplementation(async () => ({
+    data: usage({
+      day: {
+        used_tokens: 2000,
+        budget_tokens: 2000,
+        remaining_tokens: 0,
+        starts_at: RESETS - 86400,
+        resets_at: RESETS,
+      },
+    }),
+  }));
+  setup();
+  const today = await screen.findByRole("region", { name: "Today" });
+  expect(today).toHaveTextContent(
+    /Used up\. New work can start again .*Nov 19/,
+  );
 });

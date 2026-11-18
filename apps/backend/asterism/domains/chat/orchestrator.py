@@ -43,6 +43,7 @@ from asterism.domains.chat.schemas import (
 )
 from asterism.domains.chat.title_model import resolve_title_model
 from asterism.domains.files.produced import file_reference_token
+from asterism.domains.llm.metering import with_source
 from asterism.domains.llm.schemas import (
     ImageUrlContent,
     ImageUrlContentPart,
@@ -59,6 +60,7 @@ from asterism.domains.prompt_templates.rubrics import render_rubric
 from asterism.domains.settings import service as settings_service
 from asterism.domains.settings.schemas import CompactionSettings
 from asterism.domains.tools.registry import tool_registry
+from asterism.domains.usage.schemas import UsageSource
 
 if TYPE_CHECKING:
     from asterism.domains.agent.user_response_queue import UserResponseQueue
@@ -391,7 +393,9 @@ class ChatOrchestrator:
         title_model = None
         try:
             # The draft model, else the owner's own ChatGPT plan (title_model).
-            title_model = await resolve_title_model(self.user_id, self.chat.info.selected_model_id)
+            title_model = await resolve_title_model(
+                self.user_id, self.chat.info.selected_model_id, chat_id=self.chat_id
+            )
         except Exception as error:
             # A missing/unavailable title model must use the same bounded
             # fallback as failed title-generation attempts.
@@ -623,12 +627,18 @@ class ChatOrchestrator:
         """The admin's compaction model if set, else this run's own model, with its window."""
         if model_id is None:
             name = self._execution.model.name if self._execution is not None else str(self.agent.model_id)
-            client = await self.agent._get_client()
+            client = with_source(await self.agent._get_client(), UsageSource.COMPACTION)
             return SelectedModel(id=self.agent.model_id, name=name, client=client), window  # type: ignore[arg-type]
         from asterism.db.database import get_async_db_session
 
         async with get_async_db_session() as session:
-            model = await resolve_usable_model(user_id=self.user_id, model_id=model_id, session=session)
+            model = await resolve_usable_model(
+                user_id=self.user_id,
+                model_id=model_id,
+                session=session,
+                source=UsageSource.COMPACTION,
+                chat_id=self.chat_id,
+            )
             info = await settings_service.get_model_and_provider(
                 model_id=model_id, user_id=self.user_id, session=session
             )

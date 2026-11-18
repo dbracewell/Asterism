@@ -62,6 +62,7 @@ describe("getLazyAdminSettingsSections", () => {
       "Theme Editor",
       "Groups",
       "Users",
+      "Usage",
       "Tools",
       "Skills",
       "Canvas",

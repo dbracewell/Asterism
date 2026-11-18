@@ -18,6 +18,7 @@ from asterism.common.log import get_logger
 from asterism.core.exceptions import CodedException, ForbiddenException
 from asterism.domains.chat.title_model import TitleModel, resolve_title_model
 from asterism.domains.llm.schemas import LLMMessage
+from asterism.domains.usage.schemas import UsageSource
 
 from .schemas import (
     MAX_COACH_EDIT_CHARS,
@@ -149,7 +150,7 @@ def parse_review(raw: str, prompt: str) -> PromptReview:
 async def _review_model(user_id: str, model_id: uuid.UUID | None) -> TitleModel:
     if not await is_enabled(user_id):
         raise ForbiddenException("Turn on the prompt coach in your settings first")
-    model = await resolve_title_model(user_id, model_id)
+    model = await resolve_title_model(user_id, model_id, source=UsageSource.PROMPT_COACH)
     if model is None:
         raise CoachUnavailable()
     return model

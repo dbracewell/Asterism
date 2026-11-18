@@ -2795,7 +2795,8 @@ export type EmbeddingPayload = {
  * Standard error response body: a message plus its HTTP status code.
  *
  * ``reason`` is a stable machine-readable cause for errors a client must tell
- * apart (for example ``course_managed``); most errors omit it.
+ * apart (for example ``course_managed``); most errors omit it. ``resets_at``
+ * (Unix seconds) says when a ``usage_limit`` refusal stops applying.
  */
 export type ErrorDetail = {
   /**
@@ -2810,6 +2811,10 @@ export type ErrorDetail = {
    * Reason
    */
   reason?: string | null;
+  /**
+   * Resets At
+   */
+  resets_at?: number | null;
 };
 
 /**
@@ -3370,6 +3375,18 @@ export type Group = {
    * Tools members may use; null allows every enabled tool, including future ones
    */
   tools: Array<string> | null;
+  /**
+   * Daily Token Budget
+   *
+   * Tokens per member per day (instance timezone); None: no budget
+   */
+  daily_token_budget?: number | null;
+  /**
+   * Monthly Token Budget
+   *
+   * Tokens per member per month; None: no budget
+   */
+  monthly_token_budget?: number | null;
 };
 
 /**
@@ -3402,6 +3419,22 @@ export type GroupAccessUpdate = {
    * Tools
    */
   tools: Array<string> | null;
+};
+
+/**
+ * GroupBudgetUpdate
+ *
+ * Token budgets per member, input plus output. None removes that budget.
+ */
+export type GroupBudgetUpdate = {
+  /**
+   * Daily Token Budget
+   */
+  daily_token_budget?: number | null;
+  /**
+   * Monthly Token Budget
+   */
+  monthly_token_budget?: number | null;
 };
 
 /**
@@ -4942,6 +4975,30 @@ export type ModelRequirements = {
    * Min Context Window
    */
   min_context_window?: number | null;
+};
+
+/**
+ * MyUsage
+ *
+ * The signed-in user's usage and remaining budget.
+ */
+export type MyUsage = {
+  /**
+   * Timezone
+   */
+  timezone: string;
+  /**
+   * Exempt
+   *
+   * Admins have no budget
+   */
+  exempt: boolean;
+  day: UsageWindow;
+  month: UsageWindow;
+  /**
+   * Month By Model
+   */
+  month_by_model: Array<UsageModelTotal>;
 };
 
 /**
@@ -9590,6 +9647,122 @@ export type UpdateSettingValue = {
 };
 
 /**
+ * UsageGroupRow
+ */
+export type UsageGroupRow = {
+  /**
+   * Group Id
+   */
+  group_id: string | null;
+  /**
+   * Group Name
+   */
+  group_name: string | null;
+  /**
+   * Users
+   */
+  users: number;
+  /**
+   * Total Tokens
+   */
+  total_tokens: number;
+  /**
+   * Images
+   */
+  images: number;
+  /**
+   * Cost Usd
+   */
+  cost_usd: number | null;
+};
+
+/**
+ * UsageModelTotal
+ */
+export type UsageModelTotal = {
+  /**
+   * Model Id
+   */
+  model_id: string | null;
+  /**
+   * Model Name
+   */
+  model_name: string;
+  /**
+   * Input Tokens
+   */
+  input_tokens: number;
+  /**
+   * Output Tokens
+   */
+  output_tokens: number;
+  /**
+   * Images
+   */
+  images: number;
+  /**
+   * Cost Usd
+   *
+   * Estimated from prices at call time; None when no call was priced
+   */
+  cost_usd: number | null;
+  /**
+   * Unpriced Tokens
+   *
+   * Tokens on models with no price or on a ChatGPT plan
+   */
+  unpriced_tokens: number;
+};
+
+/**
+ * UsageReport
+ *
+ * Usage over ``[start, end)`` in the instance timezone, per user and model and per group.
+ */
+export type UsageReport = {
+  /**
+   * Timezone
+   */
+  timezone: string;
+  /**
+   * Start
+   */
+  start: number;
+  /**
+   * End
+   */
+  end: number;
+  /**
+   * Users
+   */
+  users: Array<UsageUserRow>;
+  /**
+   * Groups
+   */
+  groups: Array<UsageGroupRow>;
+  /**
+   * Total Tokens
+   */
+  total_tokens: number;
+  /**
+   * Cost Usd
+   */
+  cost_usd: number | null;
+};
+
+/**
+ * UsageSettings
+ */
+export type UsageSettings = {
+  /**
+   * Timezone
+   *
+   * IANA timezone whose midnight starts a budget day, e.g. Europe/London
+   */
+  timezone: string;
+};
+
+/**
  * UsageStep
  *
  * Provider-reported usage of one model call (0 when the provider reported none).
@@ -9607,6 +9780,78 @@ export type UsageStep = {
    * Generation Duration Ms
    */
   generation_duration_ms?: number;
+};
+
+/**
+ * UsageUserRow
+ */
+export type UsageUserRow = {
+  /**
+   * User Id
+   */
+  user_id: string;
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * Email
+   */
+  email: string;
+  /**
+   * Group Id
+   */
+  group_id: string | null;
+  /**
+   * Group Name
+   */
+  group_name: string | null;
+  /**
+   * Models
+   */
+  models: Array<UsageModelTotal>;
+  /**
+   * Total Tokens
+   */
+  total_tokens: number;
+  /**
+   * Cost Usd
+   */
+  cost_usd: number | null;
+};
+
+/**
+ * UsageWindow
+ *
+ * Tokens used in the current day or month, the budget, and when it resets.
+ */
+export type UsageWindow = {
+  /**
+   * Used Tokens
+   */
+  used_tokens: number;
+  /**
+   * Budget Tokens
+   *
+   * None: no budget
+   */
+  budget_tokens: number | null;
+  /**
+   * Remaining Tokens
+   */
+  remaining_tokens: number | null;
+  /**
+   * Starts At
+   *
+   * Unix seconds
+   */
+  starts_at: number;
+  /**
+   * Resets At
+   *
+   * Unix seconds
+   */
+  resets_at: number;
 };
 
 /**
@@ -20759,6 +21004,54 @@ export type GroupAccessUpdateResponses = {
 export type GroupAccessUpdateResponse =
   GroupAccessUpdateResponses[keyof GroupAccessUpdateResponses];
 
+export type GroupBudgetUpdateData = {
+  body: GroupBudgetUpdate;
+  path: {
+    /**
+     * Group Id
+     */
+    group_id: string;
+  };
+  query?: never;
+  url: "/groups/{group_id}/budget";
+};
+
+export type GroupBudgetUpdateErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type GroupBudgetUpdateError =
+  GroupBudgetUpdateErrors[keyof GroupBudgetUpdateErrors];
+
+export type GroupBudgetUpdateResponses = {
+  /**
+   * Successful Response
+   */
+  200: Group;
+};
+
+export type GroupBudgetUpdateResponse =
+  GroupBudgetUpdateResponses[keyof GroupBudgetUpdateResponses];
+
 export type GroupMemberMoveData = {
   body: GroupMembershipUpdate;
   path: {
@@ -20806,6 +21099,166 @@ export type GroupMemberMoveResponses = {
 
 export type GroupMemberMoveResponse =
   GroupMemberMoveResponses[keyof GroupMemberMoveResponses];
+
+export type UsageGetMineData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/usage/me";
+};
+
+export type UsageGetMineErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Forbidden
+   */
+  403: ErrorDetail;
+};
+
+export type UsageGetMineError = UsageGetMineErrors[keyof UsageGetMineErrors];
+
+export type UsageGetMineResponses = {
+  /**
+   * Successful Response
+   */
+  200: MyUsage;
+};
+
+export type UsageGetMineResponse =
+  UsageGetMineResponses[keyof UsageGetMineResponses];
+
+export type UsageGetReportData = {
+  body?: never;
+  path?: never;
+  query?: {
+    /**
+     * Start
+     *
+     * First day, in the usage timezone; default: 1st of this month
+     */
+    start?: string | null;
+    /**
+     * End
+     *
+     * Last day, included; default: today
+     */
+    end?: string | null;
+  };
+  url: "/usage/report";
+};
+
+export type UsageGetReportErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Forbidden
+   */
+  403: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type UsageGetReportError =
+  UsageGetReportErrors[keyof UsageGetReportErrors];
+
+export type UsageGetReportResponses = {
+  /**
+   * Successful Response
+   */
+  200: UsageReport;
+};
+
+export type UsageGetReportResponse =
+  UsageGetReportResponses[keyof UsageGetReportResponses];
+
+export type UsageSettingsGetData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/usage/settings";
+};
+
+export type UsageSettingsGetErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Forbidden
+   */
+  403: ErrorDetail;
+};
+
+export type UsageSettingsGetError =
+  UsageSettingsGetErrors[keyof UsageSettingsGetErrors];
+
+export type UsageSettingsGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: UsageSettings;
+};
+
+export type UsageSettingsGetResponse =
+  UsageSettingsGetResponses[keyof UsageSettingsGetResponses];
+
+export type UsageSettingsUpdateData = {
+  body: UsageSettings;
+  path?: never;
+  query?: never;
+  url: "/usage/settings";
+};
+
+export type UsageSettingsUpdateErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Forbidden
+   */
+  403: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type UsageSettingsUpdateError =
+  UsageSettingsUpdateErrors[keyof UsageSettingsUpdateErrors];
+
+export type UsageSettingsUpdateResponses = {
+  /**
+   * Successful Response
+   */
+  200: UsageSettings;
+};
+
+export type UsageSettingsUpdateResponse =
+  UsageSettingsUpdateResponses[keyof UsageSettingsUpdateResponses];
 
 export type ToolsGetActiveData = {
   body?: never;

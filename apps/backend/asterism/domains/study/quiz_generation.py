@@ -18,6 +18,7 @@ from asterism.domains.llm.schemas import LLMMessage
 from asterism.domains.llm.selection import ModelCall, resolve_usable_model
 from asterism.domains.projects.scope import project_member_files
 from asterism.domains.retrieval.sources import SourceExcerpt
+from asterism.domains.usage.schemas import UsageSource
 
 from .drafting import (
     UNREADABLE_REPLY,
@@ -214,7 +215,9 @@ async def generate_quiz(
 ) -> StudyQuizGeneration:
     deadline = time.monotonic() + REQUEST_SECONDS
     files = await resolve_files(user_id=user_id, project_id=project_id, file_ids=request.file_ids, session=session)
-    model = await resolve_usable_model(user_id=user_id, model_id=request.model_id, session=session)
+    model = await resolve_usable_model(
+        user_id=user_id, model_id=request.model_id, session=session, source=UsageSource.STUDY
+    )
     # Release the request session's connection before the long-running work.
     await session.commit()
 

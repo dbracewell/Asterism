@@ -21,6 +21,7 @@ from asterism.domains.agent.execution_scope import (
 )
 from asterism.domains.chat.schemas import Chat, MessageExecution
 from asterism.domains.llm.factory import create_llm_client
+from asterism.domains.llm.metering import meter_for
 from asterism.domains.llm.schemas import (
     ContentPart,
     LLMClientProtocol,
@@ -34,6 +35,7 @@ from asterism.domains.settings.schemas import LlmWithProvider
 from asterism.domains.tools.catalog import IMAGE_TOOL_NAME, INTERNAL_TOOL_NAMES, SCOPED_TOOL_NAMES, configurable_tools
 from asterism.domains.tools.context import ContextToolScope
 from asterism.domains.tools.registry import tool_registry
+from asterism.domains.usage.schemas import UsageSource
 
 from .approval import (
     AllowlistApprovalPolicy,
@@ -383,7 +385,13 @@ class Agent:
         if self._client is not None:
             return self._client
 
-        client = create_llm_client(model_info.name, model_info.provider, user_id=self.user.id)
+        source = UsageSource.DELEGATION if self.profile.sub_agent else UsageSource.CHAT
+        client = create_llm_client(
+            model_info.name,
+            model_info.provider,
+            user_id=self.user.id,
+            usage=meter_for(self.user.id, source, model_info, chat_id=self.session.info.id),
+        )
         self._client = client
         return client
 

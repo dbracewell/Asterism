@@ -87,7 +87,7 @@ def usage(chatgpt, monkeypatch):
 
 async def plan_llm(sessions):
     model = await settings_service.get_model_and_provider(uuid.UUID(await plan_model_id(sessions)), user_id="a")
-    return create_llm_client(model.name, model.provider, user_id="a")
+    return create_llm_client(model.name, model.provider, user_id="a", usage=None)
 
 
 async def run(llm):

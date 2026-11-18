@@ -7,12 +7,14 @@ from fastapi import WebSocketDisconnect
 
 from asterism.common.log import get_logger
 from asterism.core.tasks import BackgroundTaskManager
+from asterism.db.database import get_async_db_session
 from asterism.domains.agent.schemas import AgentEventType
 from asterism.domains.chat.capacity import ChatCapacityError
 from asterism.domains.chat.connection import Connection
 from asterism.domains.chat.jobs import ChatJob, ControllerAdmission, chat_jobs
 from asterism.domains.chat.message_queue import ChatStream, MessageQueue, get_message_queue, subscribe, unsubscribe
 from asterism.domains.chat.orchestrator import ChatOrchestrator
+from asterism.domains.usage.service import UsageLimitExceeded, require_within_budget
 
 
 class ChatController:
@@ -116,6 +118,7 @@ class ChatController:
                             continue
                         current_job = self.job.start(self.orchestrator.resume_pending_turn())
                     case "regenerate":
+                        await self._admit_new_run()
                         current_job = self.job.start(self._regenerate(cmd.get("parent_message_id", "")))
                     case "compact":
                         # Shares the work slot, so it never overlaps a turn (ADR-0060).
@@ -140,10 +143,15 @@ class ChatController:
                 except asyncio.CancelledError:
                     raise
 
-            except ChatCapacityError as error:
+            except (ChatCapacityError, UsageLimitExceeded) as error:
                 await self.connection.send_json(error.packet())
             finally:
                 self.inbound_commands.task_done()
+
+    async def _admit_new_run(self) -> None:
+        """Refuse a regenerate over budget before it starts (ADR-0073); resumes finish admitted work."""
+        async with get_async_db_session() as session:
+            await require_within_budget(self.orchestrator.user_id, session)
 
     async def _regenerate(self, parent_message_id: str) -> None:
         await self.orchestrator.reload_chat()

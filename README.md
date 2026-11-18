@@ -373,6 +373,20 @@ migrates, and removes a unique temporary auth database and configuration directo
 CI also builds the Docker frontend stage without runtime credentials. See each
 application's README for focused commands.
 
+## Usage and budgets
+
+Every model call is recorded per user: chats, sub-agents, verification, study tools,
+titles, captions and images. Each record keeps the price at call time
+([ADR-0073](docs/adr/0073-usage-ledger-and-budgets.md)). Users see today's and this
+month's usage, and what is left of their budget, in User Settings → Your Asterism.
+Admins see tokens and estimated cost per user, model and group in Admin
+Settings → Usage, and set when a budget day starts there. Set daily and monthly token
+budgets per group in Admin Settings → Groups. Admins have none. Over budget, new sends,
+regenerations, study tools and images are refused with a 409 (`reason: "usage_limit"`)
+that says when the budget resets. Replies already running finish, and background work
+(titles, captions, compaction) is never refused. Usage is recorded from the upgrade
+that added it; earlier runs are not backfilled.
+
 ## About you
 
 User Settings → Your Asterism holds one **About you** text per user: facts about

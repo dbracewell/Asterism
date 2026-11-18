@@ -74,12 +74,14 @@ Source: the 2026-11-06 multi-user web decision. [EPIC-86](docs/epics/EPIC-86-MUL
 
 ### US-86.3: Usage limits and usage view
 
-- [ ] Usage read: tokens and estimated cost per user and per model over a period, from message token counts and model pricing. Include delegated, verification, study-generation and image calls.
-- [ ] Group budget: optional token budget per user per day and per month, set by an admin on the group.
-- [ ] Enforcement at send/regenerate admission and on study and image generation; refusal is one 409 shape (`reason: "usage_limit"`) saying when the budget resets. Running turns finish.
-- [ ] Users see their own usage and remaining budget in Your Asterism.
-- [ ] Admin Settings → Usage page (table, period picker, per-group totals).
-- [ ] Tests: budget boundaries, reset windows (user timezone vs UTC: decide and document), admin exemption, every generation path counted.
+Done 2026-11-18 ([ADR-0073](docs/adr/0073-usage-ledger-and-budgets.md)). Decided: one instance timezone for budget days and months (Admin Settings → Usage, default UTC); usage counts from the upgrade (no backfill); background calls (titles, captions, compaction) count but are never refused. Also enforced: forks, verification, disagreements, reflection drafts and the prompt coach. Added the shadcn `table` component (the CLI tried to add an unrelated `cn` package; removed).
+
+- [x] Usage read: tokens and estimated cost per user and per model over a period, from message token counts and model pricing. Include delegated, verification, study-generation and image calls.
+- [x] Group budget: optional token budget per user per day and per month, set by an admin on the group.
+- [x] Enforcement at send/regenerate admission and on study and image generation; refusal is one 409 shape (`reason: "usage_limit"`) saying when the budget resets. Running turns finish.
+- [x] Users see their own usage and remaining budget in Your Asterism.
+- [x] Admin Settings → Usage page (table, period picker, per-group totals).
+- [x] Tests: budget boundaries, reset windows (decided: one instance timezone, ADR-0073), admin exemption, every generation path counted.
 
 ### US-86.4: Backup and restore
 
