@@ -50,60 +50,68 @@ Source: user request and the [feature overlap review](docs/reviews/2026-11-17-fe
 
 ## Multi-user deployment readiness (proposed 2026-11-17)
 
-Source: the 2026-11-06 multi-user web decision. [EPIC-86](docs/epics/EPIC-86-MULTI-USER-DEPLOYMENT-READINESS.md). Suggested order: US-86.1 → 86.4 → 86.3 → 86.2 → 86.5 → 86.6 → 86.7. Open questions (migrations, self-service deletion, target load) must be decided before US-86.3. Work one story at a time.
+Source: the 2026-11-06 multi-user web decision. [EPIC-86](docs/epics/EPIC-86-MULTI-USER-DEPLOYMENT-READINESS.md). Decided 2026-11-17: migrations from now on ([ADR-0069](docs/adr/0069-versioned-schema-migrations.md)), only admins delete accounts (others can request), target load 30 active students on 4 vCPU / 8 GB. Suggested order: US-86.1 → 86.2 → 86.5 → 86.4 → 86.3 → 86.6 → 86.7 → 86.8. Work one story at a time.
 
-### US-86.1: Account lifecycle for admins
+### US-86.1: Versioned migrations
 
-- [ ] Suspend / reactivate with session revocation; backend refuses suspended tokens and stops their jobs
-- [ ] Admin-issued one-time password reset link; reset revokes sessions
-- [ ] Delete from the UI: Better Auth account then backend data, retryable
-- [ ] "Sign out everywhere" in user settings
-- [ ] Self and last-admin guards
-- [ ] Tests: HTTP and WebSocket refusal, reset link reuse/expiry, no leftover auth account, last-admin guard
+- [ ] Add Alembic to the backend with migrations in `asterism/db/migrations/`.
+- [ ] Baseline revision: today's schema, including the FTS5 tables and triggers `init_db` installs; `init:db` and container startup run `upgrade head` instead of `create_all`.
+- [ ] Startup refuses a database revision that is newer than, or unknown to, the code, naming both revisions; forward-only, no downgrades.
+- [ ] CI check: the models and the migration head produce the same schema (autogenerate diff is empty), including FTS objects.
+- [ ] Migration test harness: seed a database at revision N-1, upgrade, assert data; documented in the backend README.
+- [ ] Update the development reset doc, README storage section and `docs/architecture/data-and-storage.md`; reset is dev-only.
+- [ ] One-time reset of pre-baseline development databases.
 
-### US-86.2: Usage limits and usage view
+### US-86.2: Account lifecycle for admins
 
-- [ ] Usage read per user and model, every generation path included
-- [ ] Group token budgets per user per day and month
-- [ ] Enforcement at admission with `reason: "usage_limit"`
-- [ ] Own usage and remaining budget in Your Asterism
-- [ ] Admin Settings → Usage page
-- [ ] Tests: boundaries, reset windows, admin exemption, all paths counted
+- [ ] Suspend / reactivate: Better Auth ban plus session revocation; the backend refuses a suspended user's token (checked with the existing per-request user lookup) and stops their running jobs.
+- [ ] Admin-issued one-time password reset link (expiring, single use, shown once), modeled on invite links; reset revokes existing sessions.
+- [ ] Delete from the UI: deletes the Better Auth account and then the backend data (existing `delete_user`), with a confirmation naming what goes. A partial failure is reported and can be retried.
+- [ ] "Sign out everywhere" for the user in their own settings.
+- [ ] Deletion requests: a user who isn't an admin can ask for their account to be deleted (and withdraw the request); Users shows open requests, and the admin deletes or dismisses. A request changes nothing else.
+- [ ] Admins can't suspend or delete themselves or the last admin.
+- [ ] Tests: suspended token refused on HTTP and WebSocket, reset link reuse and expiry, delete leaves no auth account, last-admin guard.
 
-### US-86.3: Backup, restore and schema version
+### US-86.3: Usage limits and usage view
 
-- [ ] ADR deciding the upgrade path (migrations vs export/reset/import)
-- [ ] Schema version stamp; startup refuses a mismatch
-- [ ] Online `backup` command with manifest and checksums
-- [ ] Offline `restore` command with verification
-- [ ] Documented schedule, retention and upgrade/rollback procedure
-- [ ] Tests: backup during an active chat, corrupted archive, version mismatch
+- [ ] Usage read: tokens and estimated cost per user and per model over a period, from message token counts and model pricing. Include delegated, verification, study-generation and image calls.
+- [ ] Group budget: optional token budget per user per day and per month, set by an admin on the group.
+- [ ] Enforcement at send/regenerate admission and on study and image generation; refusal is one 409 shape (`reason: "usage_limit"`) saying when the budget resets. Running turns finish.
+- [ ] Users see their own usage and remaining budget in Your Asterism.
+- [ ] Admin Settings → Usage page (table, period picker, per-group totals).
+- [ ] Tests: budget boundaries, reset windows (user timezone vs UTC: decide and document), admin exemption, every generation path counted.
 
-### US-86.4: Edge hardening
+### US-86.4: Backup and restore
 
-- [ ] Security headers (CSP, frame-ancestors, nosniff, Referrer-Policy, HSTS on HTTPS)
-- [ ] One upload limit across nginx, Next proxy and backend
-- [ ] nginx rate limits for auth, uploads and WebSocket handshake
-- [ ] Secure cookie flags under HTTPS
-- [ ] Playwright CSP check and smoke-test header assertions
+- [ ] `backup` command (package script and container entrypoint subcommand): SQLite online backup of `users.db` and `database.db`, plus files, vectors and themes, into one timestamped archive with a manifest and checksums.
+- [ ] `restore` command: offline, into an empty storage root, verifies checksums and the migration revision, then runs the normal startup checks (applying pending migrations).
+- [ ] Documented schedule and retention example (cron / Compose) and an upgrade procedure (backup → new image → start → verify → roll back by restore).
+- [ ] Tests: backup during an active chat restores to a working instance; corrupted archive refused; a backup from a newer revision refused.
 
-### US-86.5: Production logs and status
+### US-86.5: Edge hardening
 
-- [ ] Production log profile, `LOG_LEVEL`, optional JSON, request IDs
-- [ ] Log hygiene test
-- [ ] Readiness endpoint used by the container health check
-- [ ] Admin Settings → Status
+- [ ] Security headers from nginx and Next.js: CSP (scripts self, no inline except hashed/nonce'd as Next requires; frames none; connect-src self and the WebSocket path), `frame-ancestors 'none'`, `X-Content-Type-Options`, `Referrer-Policy`, and HSTS when `PUBLIC_URL` is HTTPS.
+- [ ] One upload limit: nginx, the Next proxy and the backend agree, from one setting.
+- [ ] Request rate limits in nginx for auth endpoints, uploads and the WebSocket handshake, keyed on the trusted client address.
+- [ ] Verify secure, HttpOnly, SameSite cookies under HTTPS `PUBLIC_URL`.
+- [ ] Playwright check that the app works under the CSP (no blocked script, style, image or WebSocket), plus a header assertion in the container smoke test.
 
-### US-86.6: Capacity check and sizing guide
+### US-86.6: Production logs and status
 
-- [ ] Repeatable load script with a stub provider
-- [ ] Measure at the agreed target
-- [ ] Fix findings within the single-process design
-- [ ] README sizing guide
+- [ ] Production log profile: INFO by default, `LOG_LEVEL` setting, optional JSON format; request ID per HTTP request and WebSocket session, propagated to job logs.
+- [ ] Log hygiene test: no message content, file text, About you, tokens or secrets at INFO and above.
+- [ ] Readiness endpoint: both databases writable, storage free space above a threshold, auth keys loadable; container health check uses it.
+- [ ] Admin Settings → Status: version, uptime, active chats against admission limits, knowledge queue depth, storage use and free space, last backup time.
 
-### US-86.7: Personal data and deployment guide
+### US-86.7: Capacity check and sizing guide
 
-- [ ] "Download my data" archive
-- [ ] Account deletion per the open-question decision
-- [ ] `docs/deployment.md`
-- [ ] Help entries for usage limits, suspension and data download
+- [ ] Repeatable load script (disposable instance, stub model provider with realistic streaming latency): N students chatting, uploading and studying.
+- [ ] Measure at the agreed target (30 active students, 4 vCPU / 8 GB): p95 time to first token, admission refusals, SQLite busy errors, memory.
+- [ ] Fix what the run finds (e.g. SQLite busy timeout/WAL settings, admission limits) within the single-process design.
+- [ ] Sizing guide in the README: host size, admission settings, what "full" looks like to users.
+
+### US-86.8: Personal data and deployment guide
+
+- [ ] "Download my data": chats (Markdown and JSON), my files, study records, skills, About you and settings, as one archive built in the background.
+- [ ] `docs/deployment.md`: prerequisites, TLS proxy examples, secrets, first admin, backups and upgrades, limits, monitoring, incident checklist; README links to it.
+- [ ] Help entries for usage limits, suspension, deletion requests and data download.

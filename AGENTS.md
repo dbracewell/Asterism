@@ -20,12 +20,19 @@ This document defines the expected architecture, delivery process, and implement
 
 ### Development stage policy
 
-This project is in active development and has no production users.
+This project is in active development and is preparing for real multi-user
+deployments. Stored data must survive upgrades
+([ADR-0069](docs/adr/0069-versioned-schema-migrations.md), from 2026-11-17).
 
-- Do not preserve backwards compatibility (APIs, schemas, config, stored data, file formats).
-- Breaking changes are acceptable; do not add compatibility shims, deprecation paths, or legacy fallbacks.
-- Existing data is disposable. Prefer dropping/resetting the database (e.g. `scripts/reset-databases.mjs`) over writing migrations.
-- Do not write data migrations; change the schema directly and update initialization.
+- Every backend schema change ships with a versioned Alembic migration (and a data
+  migration when stored data changes), plus a test that upgrades a database seeded
+  at the previous revision. Better Auth migrates its own tables.
+- Stored data and on-disk file formats stay readable across upgrades.
+- The frontend and backend ship together, so their API contract needs no
+  compatibility shims, deprecation paths or legacy fallbacks. List configuration
+  changes in release notes.
+- `scripts/reset-databases.mjs` is a development tool for disposable local data,
+  never part of an upgrade.
 
 ---
 
@@ -308,10 +315,10 @@ When an epic completes:
 3. Add/adjust tests with each meaningful behavior change.
 4. Avoid hidden coupling between frontend and backend contracts.
 5. Regenerate typed API clients after OpenAPI changes.
-6. Keep storage behind interfaces; backend schema changes use fresh initialization,
-   with no data migrations. See [development reset](docs/architecture/development-reset.md)
-   for the explicit full reset of auth/backend data, source files, and vectors while
-   retaining model bundles. Do not reset the working database as part of story
+6. Keep storage behind interfaces; backend schema changes ship as versioned migrations
+   ([ADR-0069](docs/adr/0069-versioned-schema-migrations.md)). The
+   [development reset](docs/architecture/development-reset.md) clears disposable
+   local data only. Do not reset the working database as part of story
    verification; use disposable isolated storage.
 7. Capture major architectural decisions in ADR-style notes when scope is non-trivial.
 8. Keep functions and services focused on one responsibility. Separate query construction, pagination/execution, response enrichment, and lifecycle mutations; do not grow a general service function by adding flags or parameters for each new caller or domain.
