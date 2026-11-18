@@ -67,6 +67,9 @@ jobs:
       - name: Verify workspace task configuration
         run: pnpm check:workspace-tasks
 
+      - name: Verify documentation links
+        run: pnpm docs:check
+
       - name: Run quality gates
         run: pnpm format:check && pnpm lint && pnpm typecheck && pnpm test
 
