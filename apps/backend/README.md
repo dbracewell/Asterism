@@ -77,21 +77,75 @@ becomes current, so a failed replacement does not replace a usable artifact. See
 [Knowledge retrieval](../../docs/architecture/knowledge-retrieval.md) for lifecycle,
 automatic embedding provisioning, provider disclosure, and operational details.
 
-## Database initialization
+## Database initialization and migrations
 
-On a fresh installation, from the repository root:
+From the repository root, on a fresh installation and after every pull that
+changes the schema:
 
 ```bash
 pnpm --filter @asterism/backend init:db
 ```
 
-Initialization creates missing model tables, installs SQLite FTS5 search indexes
-and triggers, and creates defaults. It can be run repeatedly on the current schema;
-it does not upgrade older schemas. The container runs it on every startup before
-launching the backend. To intentionally recreate the configured local SQLite database, run
-`pnpm --filter @asterism/backend reset:db`, verify the displayed absolute target, and
-type `RESET`. A noninteractive reset is canceled unless the internal confirmed command
-is invoked through the root `pnpm reset:db -- --yes` workflow.
+`init:db` applies pending migrations (`upgrade head`) in one SQLite transaction,
+then seeds defaults; fresh and existing databases take the same path and data is
+kept. The container runs it on every startup. The API server checks the revision
+before serving and refuses to start unless the database is at this code's head.
+Both refuse, without changing anything, a database whose revision the code does
+not know (newer, or from another branch) and one created before migrations were
+adopted; the error names both revisions. Migrations are forward-only
+([ADR-0069](../../docs/adr/0069-versioned-schema-migrations.md)).
+
+### Changing the schema
+
+Every model, trigger or FTS change ships with a migration in
+`asterism/db/migrations/versions/`. Generate one against a database at head
+(a disposable one is fine), then review it:
+
+```bash
+cd apps/backend
+DB_URL=sqlite+aiosqlite:////absolute/path/scratch.db uv run alembic revision --autogenerate -m "add widgets"
+```
+
+- Autogenerate covers tables, columns, indexes and constraints. It does not see
+  expression indexes, triggers, FTS5 tables or seed rows; write those as
+  `op.create_index(..., [sa.text(...)])` or `op.execute(...)` with frozen SQL.
+- Constraint changes on SQLite rebuild the table (`op.batch_alter_table`); say in
+  the migration docstring what it rebuilds. Foreign keys are off while migrations run.
+- Never import application models or column types in a migration; the generator
+  renders JSON and encrypted columns as plain `sa.JSON()` / `sa.Text()`.
+- There is no `downgrade()`.
+
+`tests/test_migrations.py` is the CI check: a database built by the migrations
+must match `create_all` plus the current FTS definitions
+(`domains/chat/search_index.py`) object for object, and Alembic's autogenerate
+diff against the models must be empty. A model change without a migration fails it.
+
+### Migration tests
+
+A migration that changes stored data gets a test that seeds the previous revision
+and upgrades, using `tests/migration_harness.py`:
+
+```python
+async def test_widget_backfill(migration_db):
+    await upgrade_to(migration_db, "<previous revision>")
+    with sqlite3.connect(migration_db) as db:  # seed rows in the old shape, plain SQL
+        db.execute("INSERT INTO ...")
+    await upgrade_to(migration_db, "head")
+    with sqlite3.connect(migration_db) as db:  # assert the new shape
+        ...
+```
+
+Seed with SQL, not models: models describe head, not the previous revision.
+`test_data_seeded_at_previous_revision_survives_upgrade` is the template.
+
+### Development reset
+
+To discard a disposable local database, run `pnpm reset:db` from the repository
+root (or `pnpm --filter @asterism/backend reset:db` for the backend only), verify
+the displayed absolute targets, and type `RESET`. A noninteractive reset is
+canceled unless the internal confirmed command is invoked through the root
+`pnpm reset:db -- --yes` workflow. Reset is never part of an upgrade; see
+[initialization and reset](../../docs/architecture/development-reset.md).
 
 ## Chat admission
 
@@ -261,9 +315,9 @@ prompt. Delegates inherit the recorded text within their existing capability
 ceilings. About you grants no tools or files, and no long-term memory engine is
 active. See [ADR-0066](../../docs/adr/0066-about-you.md).
 
-This schema requires fresh initialization. For an older development database, use
-the explicit reset workflow when ready to discard its data; story tests use
-disposable storage and do not reset the working database.
+Schema changes ship as versioned migrations; `init:db` upgrades an existing
+database in place. Story tests use disposable storage and do not touch the working
+database.
 
 ## Private skills API foundation
 

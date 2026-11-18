@@ -54,13 +54,13 @@ Source: the 2026-11-06 multi-user web decision. [EPIC-86](docs/epics/EPIC-86-MUL
 
 ### US-86.1: Versioned migrations
 
-- [ ] Add Alembic to the backend with migrations in `asterism/db/migrations/`.
-- [ ] Baseline revision: today's schema, including the FTS5 tables and triggers `init_db` installs; `init:db` and container startup run `upgrade head` instead of `create_all`.
-- [ ] Startup refuses a database revision that is newer than, or unknown to, the code, naming both revisions; forward-only, no downgrades.
-- [ ] CI check: the models and the migration head produce the same schema (autogenerate diff is empty), including FTS objects.
-- [ ] Migration test harness: seed a database at revision N-1, upgrade, assert data; documented in the backend README.
-- [ ] Update the development reset doc, README storage section and `docs/architecture/data-and-storage.md`; reset is dev-only.
-- [ ] One-time reset of pre-baseline development databases.
+- [x] Add Alembic to the backend with migrations in `asterism/db/migrations/`.
+- [x] Baseline revision: today's schema, including the FTS5 tables and triggers `init_db` installs; `init:db` and container startup run `upgrade head` instead of `create_all`.
+- [x] Startup refuses a database revision that is newer than, or unknown to, the code, naming both revisions; forward-only, no downgrades.
+- [x] CI check: the models and the migration head produce the same schema (autogenerate diff is empty), including FTS objects.
+- [x] Migration test harness: seed a database at revision N-1, upgrade, assert data; documented in the backend README.
+- [x] Update the development reset doc, README storage section and `docs/architecture/data-and-storage.md`; reset is dev-only.
+- [ ] One-time reset of pre-baseline development databases. (Startup refuses them and asks for `pnpm reset:db`; resetting the working database is left to the user.)
 
 ### US-86.2: Account lifecycle for admins
 

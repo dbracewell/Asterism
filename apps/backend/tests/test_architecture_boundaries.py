@@ -9,10 +9,11 @@ ROOT = Path(__file__).resolve().parents[1] / "asterism"
 # Named assembly/lifecycle edges, not blanket permission to import domain models.
 DB_COMPOSITION_ROOTS = {
     "asterism.db.init_db": {
-        "asterism.domains.chat.search_index",
         "asterism.domains.settings.models",
         "asterism.domains.tools.catalog",
     },
+    # Alembic's environment compares migrations against the full model registry.
+    "asterism.db.migrations.env": set(),
     "asterism.db.model_registry": {
         "asterism.domains.agent.models",
         "asterism.domains.canvas.models",
@@ -163,7 +164,8 @@ def test_forbidden_edges_cannot_hide_in_subpackages_or_deferred_imports(tmp_path
 @pytest.mark.parametrize(
     ("path", "source"),
     [
-        ("db/init_db.py", "from asterism.domains.chat.search_index import initialize_search_index"),
+        ("db/init_db.py", "from asterism.domains.settings.models import ApplicationSettingsModel"),
+        ("db/migrations/env.py", "from asterism.db.model_registry import Base"),
         ("db/model_registry.py", "from asterism.domains.chat.models import ChatModel"),
         ("domains/agent/agent.py", "from ..chat.runtime_files import create_runtime_file_reader"),
         ("domains/agent/service.py", "from ..projects.revocation import revoke_agent_projects"),

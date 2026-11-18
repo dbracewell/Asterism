@@ -1,12 +1,13 @@
 """Database initialization CLI (``python -m asterism.db.init_db``).
 
-Creates missing tables, installs the chat full-text search indexes, and seeds
-the ``active_tools`` application setting. With ``--reset`` it first deletes the
-local SQLite database (plus WAL/SHM/journal sidecar files) and the disposable
-source/knowledge storage trees; model bundles are never touched.
+Applies pending schema migrations (``upgrade head``, ADR-0069) and seeds the
+``active_tools`` application setting. Fresh and existing databases take the
+same path; a database whose revision this code does not know, or one created
+before versioned migrations, is refused without changes.
 
-Per project policy the dev database is disposable: this tool deletes instead of
-migrating, and ``create_all`` re-initializes the schema from current models.
+With ``--reset`` (development only, never part of an upgrade) it first deletes
+the local SQLite database (plus WAL/SHM/journal sidecar files) and the
+disposable source/knowledge storage trees; model bundles are never touched.
 """
 
 import argparse
@@ -20,12 +21,11 @@ from sqlalchemy.engine import make_url
 
 from asterism.common.log import DEFAULT_LOGGER
 from asterism.core import config
-from asterism.domains.chat.search_index import initialize_search_index
 from asterism.domains.settings.models import ApplicationSettingsModel
 from asterism.domains.tools.catalog import SCOPED_TOOL_NAMES
 
 from .database import db_session_manager, get_async_db_session
-from .model_registry import Base
+from .migrate import upgrade_database
 
 
 def sqlite_database_path() -> Path:
@@ -87,9 +87,8 @@ async def initialize_database(*, reset: bool = False, assume_yes: bool = False) 
     """Initialize (and optionally reset first) the backend database.
 
     Steps: validate config; optionally delete DB + disposable storage behind a
-    confirmation; recreate storage directories; create missing tables; install
-    FTS indexes; seed the ``active_tools`` setting if absent; close the
-    session manager so callers (e.g. tests) start from a clean slate.
+    confirmation; recreate storage directories; apply pending migrations; seed
+    the ``active_tools`` setting if absent; close the session manager so callers (e.g. tests) start from a clean slate.
 
     Args:
         reset: Delete the SQLite database and source/knowledge storage first.
@@ -111,12 +110,9 @@ async def initialize_database(*, reset: bool = False, assume_yes: bool = False) 
                 shutil.rmtree(root)
 
     config.prepare_storage()
+    DEFAULT_LOGGER.info("Applying pending database migrations...")
+    await upgrade_database()
     await db_session_manager.init()
-    async with db_session_manager.connect() as conn:
-        DEFAULT_LOGGER.info("Creating missing database tables and functions...")
-        await conn.run_sync(Base.metadata.create_all)
-        DEFAULT_LOGGER.info("Installing SQLite full-text search indexes...")
-        await initialize_search_index(conn)
     async with get_async_db_session() as session:
         if await session.get(ApplicationSettingsModel, "active_tools") is None:
             await session.execute(
@@ -138,7 +134,9 @@ def arguments() -> argparse.Namespace:
     Returns:
         Namespace with ``reset`` (bool) and ``yes`` (bool).
     """
-    parser = argparse.ArgumentParser(description="Initialize the backend database without deleting existing data.")
+    parser = argparse.ArgumentParser(
+        description="Initialize or upgrade the backend database without deleting existing data."
+    )
     parser.add_argument(
         "--reset",
         action="store_true",

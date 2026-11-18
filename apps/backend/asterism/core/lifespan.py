@@ -8,6 +8,7 @@ from fastapi import FastAPI
 from asterism.common.log import get_logger
 from asterism.core import config
 from asterism.db.database import db_session_manager
+from asterism.db.migrate import verify_database_revision
 from asterism.domains.chat.jobs import chat_jobs
 from asterism.domains.chatgpt.plan_models import close_api_http
 from asterism.domains.chatgpt.service import close_oauth_client
@@ -37,13 +38,16 @@ async def _shutdown_image_generation() -> None:
 async def init_system() -> None:
     """Bring up all backend subsystems in dependency order.
 
-    Validates configuration, prepares storage directories, initializes the
-    database session manager and knowledge runtime, loads the event-bus handler
-    module manifest, then loads built-in components/tools into the tool registry.
+    Validates configuration, prepares storage directories, refuses a database
+    that is not at this code's schema head, initializes the database session
+    manager and knowledge runtime, loads the event-bus handler module manifest,
+    then loads built-in components/tools into the tool registry.
     """
     config.validate_runtime()
     config.prepare_storage()
     get_draft_model()
+    await verify_database_revision()
+    logger.info("Database schema is at the current revision.")
     await db_session_manager.init()
     logger.info("Database session manager initialized.")
     # The knowledge domain reads its sources through the files domain's

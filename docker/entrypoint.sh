@@ -46,7 +46,7 @@ echo "STORAGE_ROOT=${STORAGE_ROOT:-/storage}"
 mkdir -p "$STORAGE_ROOT"
 
 cd /app/apps/backend
-# Initialize current model tables and search indexes without migrating or resetting existing data.
+# Apply pending schema migrations (ADR-0069); refuses a database newer than, or unknown to, this image.
 env -u BETTER_AUTH_SECRET -u ADMIN_PASSPHRASE -u BETTER_AUTH_DB_PATH \
     .venv/bin/python -m asterism.db.init_db
 
