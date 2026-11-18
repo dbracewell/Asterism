@@ -1,6 +1,6 @@
 # EPIC-86: Multi-user deployment readiness
 
-Status: proposed (2026-11-17); open questions decided the same day. Source: the multi-user web direction decided on
+Status: complete (2026-11-18; US-86.1 through US-86.8 merged). Proposed 2026-11-17; open questions decided the same day. Source: the multi-user web direction decided on
 2026-11-06 ([ADR-0053](../adr/0053-classes-and-educators.md)) and the open item
 in `todo.md` ("a multi-user deployment readiness epic").
 
@@ -190,9 +190,9 @@ it's full.
 As a user, I can take my data with me; as an operator, I have one guide to
 deploy and run Asterism.
 
-- [ ] "Download my data": chats (Markdown and JSON), my files, study records,
+- [x] "Download my data": chats (Markdown and JSON), my files, study records,
       skills, About you and settings, as one archive built in the background.
-- [ ] `docs/deployment.md`: prerequisites, TLS proxy examples, secrets, first
+- [x] `docs/deployment.md`: prerequisites, TLS proxy examples, secrets, first
       admin, backups and upgrades, limits, monitoring, incident checklist; README
       links to it.
-- [ ] Help entries for usage limits, suspension, deletion requests and data download.
+- [x] Help entries for usage limits, suspension, deletion requests and data download.

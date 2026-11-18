@@ -419,6 +419,12 @@ async def delete_user(
     except Exception:  # noqa: BLE001 - storage cleanup must not block deletion
         logger.exception("Failed to remove file store data for deleted user %s", user_id)
     try:
+        from asterism.domains.data_export.storage import delete_user_exports
+
+        delete_user_exports(user_id)
+    except Exception:  # noqa: BLE001 - storage cleanup must not block deletion
+        logger.exception("Failed to remove data exports for deleted user %s", user_id)
+    try:
         await vector_store.delete_user(user_id=user_id)
     except Exception:  # noqa: BLE001 - storage cleanup must not block deletion
         logger.exception("Failed to remove knowledge vectors for deleted user %s", user_id)

@@ -54,6 +54,9 @@ async def init_system() -> None:
     # reader; this is where the two are composed.
     await initialize_knowledge_runtime(FileSourceReader())
     logger.info("Knowledge vector store initialized.")
+    from asterism.domains.data_export.service import recover_exports
+
+    await recover_exports()
     logger.info("Loading tools and components...")
     from asterism.core import event_handlers  # noqa: F401 - event-bus handler module manifest
     from asterism.domains.components.builtin import load_builtin_components
@@ -89,6 +92,9 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     event_bus.emit(NoArgEvent(type=EventType.SYSTEM_STOP))
     await event_bus.shutdown()
     await chat_jobs.shutdown()
+    from asterism.domains.data_export.storage import export_jobs
+
+    await export_jobs.shutdown()
     await shutdown_knowledge_runtime()
     await _shutdown_image_generation()
     await close_fetch_browser()

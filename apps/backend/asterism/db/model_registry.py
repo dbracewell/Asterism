@@ -36,6 +36,7 @@ from asterism.domains.courses.models import (  # noqa: F401
     CourseFileModel,
     CourseVersionModel,
 )
+from asterism.domains.data_export.models import DataExportModel  # noqa: F401
 from asterism.domains.files.models import UserFileModel  # noqa: F401
 from asterism.domains.groups.models import GroupModel  # noqa: F401
 from asterism.domains.image_generation.models import ImageGenerationModel  # noqa: F401

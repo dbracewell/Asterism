@@ -342,6 +342,15 @@ import type {
   ComponentsTestData,
   ComponentsTestErrors,
   ComponentsTestResponses,
+  DataExportCreateData,
+  DataExportCreateErrors,
+  DataExportCreateResponses,
+  DataExportGetData,
+  DataExportGetErrors,
+  DataExportGetResponses,
+  DataExportLinkCreateData,
+  DataExportLinkCreateErrors,
+  DataExportLinkCreateResponses,
   EducatorAccessGetData,
   EducatorAccessGetErrors,
   EducatorAccessGetResponses,
@@ -6803,6 +6812,71 @@ export class ApiClient extends HeyApiClient {
     >({
       security: [{ scheme: "bearer", type: "http" }],
       url: "/status",
+      ...options,
+    });
+  }
+
+  /**
+   * Read Export
+   *
+   * Your latest archive, or none.
+   */
+  public dataExportGet<ThrowOnError extends boolean = false>(
+    options?: Options<DataExportGetData, ThrowOnError>,
+  ): RequestResult<DataExportGetResponses, DataExportGetErrors, ThrowOnError> {
+    return (options?.client ?? this.client).get<
+      DataExportGetResponses,
+      DataExportGetErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/data-export",
+      ...options,
+    });
+  }
+
+  /**
+   * Create Export
+   *
+   * Prepare a new archive in the background, replacing the last one.
+   */
+  public dataExportCreate<ThrowOnError extends boolean = false>(
+    options?: Options<DataExportCreateData, ThrowOnError>,
+  ): RequestResult<
+    DataExportCreateResponses,
+    DataExportCreateErrors,
+    ThrowOnError
+  > {
+    return (options?.client ?? this.client).post<
+      DataExportCreateResponses,
+      DataExportCreateErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/data-export",
+      ...options,
+    });
+  }
+
+  /**
+   * Create Link
+   *
+   * A download link for the ready archive, valid for a few minutes.
+   */
+  public dataExportLinkCreate<ThrowOnError extends boolean = false>(
+    options?: Options<DataExportLinkCreateData, ThrowOnError>,
+  ): RequestResult<
+    DataExportLinkCreateResponses,
+    DataExportLinkCreateErrors,
+    ThrowOnError
+  > {
+    return (options?.client ?? this.client).post<
+      DataExportLinkCreateResponses,
+      DataExportLinkCreateErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/data-export/link",
       ...options,
     });
   }

@@ -24,6 +24,7 @@ from asterism.domains.chatgpt.router import chatgpt_router
 from asterism.domains.classes.router import class_invites_router, classes_router, educator_access_router
 from asterism.domains.components.router import components_router
 from asterism.domains.courses.router import courses_router
+from asterism.domains.data_export.router import data_export_router
 from asterism.domains.files.router import file_router
 from asterism.domains.groups.router import groups_router
 from asterism.domains.image_generation.local.router import local_image_router
@@ -179,6 +180,7 @@ app.include_router(user_router)
 app.include_router(groups_router)
 app.include_router(usage_router)
 app.include_router(status_router)
+app.include_router(data_export_router)
 app.include_router(tools_router)
 app.include_router(components_router)
 app.include_router(agents_router)

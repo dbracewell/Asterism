@@ -686,6 +686,16 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
           "The group you're in, which decides the models and tools you may use. Only an administrator can change it.",
       },
       {
+        name: "Your data",
+        description:
+          "Prepare one archive of everything your account holds, then download it. It is kept for 7 days.",
+      },
+      {
+        name: "Sign-in and account",
+        description:
+          "Sign out on every device, or ask an administrator to delete your account.",
+      },
+      {
         name: "Appearance",
         description:
           "Choose a theme and text size, and whether to show the model's thinking.",
@@ -703,12 +713,16 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
     ],
     tasks: [
       "Turn on Prompt Coach to get feedback on your prompts before you send them.",
+      "Download your data before asking to delete your account.",
     ],
     terms: [
       "concept.model",
       "concept.prompt-coach",
       "concept.canvas",
       "concept.group",
+      "concept.data-download",
+      "concept.deletion-request",
+      "concept.suspension",
     ],
     audience: "everyone",
   },
@@ -732,7 +746,11 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
       'Write a few facts about yourself, for example "second-year nursing student; I know basic chemistry".',
       "To change how Asterism responds, pick a learning mode in the chat or edit your main agent's instructions instead.",
     ],
-    terms: ["concept.about-you", "concept.learning-mode"],
+    terms: [
+      "concept.about-you",
+      "concept.learning-mode",
+      "concept.usage-limit",
+    ],
     audience: "everyone",
   },
   "settings.skills": {

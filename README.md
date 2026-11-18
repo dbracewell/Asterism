@@ -191,6 +191,10 @@ migrations in place, and configuration changes are listed in release notes.
 
 ## Docker
 
+**Deploying for real users?** Follow the [deployment guide](docs/deployment.md):
+prerequisites, TLS proxy examples, secrets, the first administrator, backups and
+upgrades, limits, monitoring and an incident checklist.
+
 The root `Dockerfile` packages Next.js, FastAPI, and nginx in one non-root container.
 pnpm builds the frontend workspace; uv installs locked Python dependencies. The split
 container configuration is no longer supported.
@@ -243,7 +247,8 @@ Edge protections are on by default
 
 ### Storage and lifecycle
 
-`/storage` contains `users.db`, `database.db`, uploaded files, and custom themes
+`/storage` contains `users.db`, `database.db`, uploaded files, people's "Download my
+data" archives under `exports` (kept 7 days, not backed up), and custom themes
 under `themes` (see [theme lifecycle](docs/architecture/theme-storage.md)). Auth migrations
 run on each startup using the bundled, pinned official Better Auth CLI and explicit
 `src/lib/auth-cli.ts` configuration (no startup downloads). The backend initializer

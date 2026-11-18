@@ -342,6 +342,15 @@ import type {
   ComponentsTestData,
   ComponentsTestError,
   ComponentsTestResponse,
+  DataExportCreateData,
+  DataExportCreateError,
+  DataExportCreateResponse,
+  DataExportGetData,
+  DataExportGetError,
+  DataExportGetResponse,
+  DataExportLinkCreateData,
+  DataExportLinkCreateError,
+  DataExportLinkCreateResponse,
   EducatorAccessGetData,
   EducatorAccessGetError,
   EducatorAccessGetResponse,
@@ -9493,6 +9502,91 @@ export const statusGetOptions = (options?: Options<StatusGetData>) =>
     },
     queryKey: statusGetQueryKey(options),
   });
+
+export const dataExportGetQueryKey = (options?: Options<DataExportGetData>) =>
+  createQueryKey("dataExportGet", options);
+
+/**
+ * Read Export
+ *
+ * Your latest archive, or none.
+ */
+export const dataExportGetOptions = (options?: Options<DataExportGetData>) =>
+  queryOptions<
+    DataExportGetResponse,
+    DataExportGetError,
+    DataExportGetResponse,
+    ReturnType<typeof dataExportGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry.get().dataExportGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: dataExportGetQueryKey(options),
+  });
+
+/**
+ * Create Export
+ *
+ * Prepare a new archive in the background, replacing the last one.
+ */
+export const dataExportCreateMutation = (
+  options?: Partial<Options<DataExportCreateData>>,
+): UseMutationOptions<
+  DataExportCreateResponse,
+  DataExportCreateError,
+  Options<DataExportCreateData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    DataExportCreateResponse,
+    DataExportCreateError,
+    Options<DataExportCreateData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().dataExportCreate({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Create Link
+ *
+ * A download link for the ready archive, valid for a few minutes.
+ */
+export const dataExportLinkCreateMutation = (
+  options?: Partial<Options<DataExportLinkCreateData>>,
+): UseMutationOptions<
+  DataExportLinkCreateResponse,
+  DataExportLinkCreateError,
+  Options<DataExportLinkCreateData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    DataExportLinkCreateResponse,
+    DataExportLinkCreateError,
+    Options<DataExportLinkCreateData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().dataExportLinkCreate({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
 
 export const toolsGetActiveQueryKey = (options?: Options<ToolsGetActiveData>) =>
   createQueryKey("toolsGetActive", options);

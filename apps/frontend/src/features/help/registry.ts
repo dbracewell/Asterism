@@ -48,6 +48,10 @@ export type HelpId =
   | "concept.class"
   | "concept.educator"
   | "concept.group"
+  | "concept.usage-limit"
+  | "concept.suspension"
+  | "concept.deletion-request"
+  | "concept.data-download"
   | "concept.course"
   | "concept.class-code"
   | "concept.class-invite"
@@ -575,6 +579,53 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
       'A group can be limited to some models and tools. A model your group can\'t use shows as "Not available to your group"; chats and sub-agents that use it keep it, and nothing is switched for you.',
     ],
     related: ["concept.educator", "concept.model"],
+    audience: "everyone",
+  },
+  "concept.usage-limit": {
+    title: "Usage limit",
+    summary:
+      "Your group may have a daily or monthly token budget. Settings → Your Asterism shows how much you've used and when it resets.",
+    details: [
+      "When the budget is used up, new messages, regenerated replies and study tools wait until it resets, and the message says when that is. A reply that is already running finishes.",
+      "Days start at midnight and months on the 1st, in the time zone your administrator chose. Chat titles and captions still count toward your use but are never refused.",
+      "Administrators set budgets in Admin Settings → Groups. The Admin group has no budget.",
+    ],
+    related: ["concept.group", "concept.model"],
+    audience: "everyone",
+  },
+  "concept.suspension": {
+    title: "Suspended account",
+    summary:
+      "An administrator can suspend an account. A suspended account can't sign in, and its open pages stop working.",
+    details: [
+      'Signing in says "This account is suspended. Ask your administrator." Replies that were running are stopped.',
+      "Nothing is deleted. When an administrator reactivates the account, everything is as it was.",
+    ],
+    related: ["concept.deletion-request"],
+    audience: "everyone",
+  },
+  "concept.deletion-request": {
+    title: "Deletion request",
+    summary:
+      "To have your account deleted, ask in Settings → General under Sign-in and account. An administrator decides.",
+    details: [
+      "Until an administrator acts, nothing changes and you can withdraw the request.",
+      "Deleting an account removes its chats, projects, files, study records, skills and settings for good. Download your data first if you want to keep it.",
+      "Administrators can't request deletion of their own account; another administrator deletes it.",
+    ],
+    related: ["concept.data-download", "concept.suspension"],
+    audience: "everyone",
+  },
+  "concept.data-download": {
+    title: "Download my data",
+    summary:
+      "One zip archive of everything your account holds. Start it in Settings → General under Your data.",
+    details: [
+      "The archive has your chats (readable Markdown and full JSON, with every reply version), library files, projects, study decks, reviews, quizzes and notes, reflections, skills, About you, settings and usage.",
+      "It is prepared in the background, which can take a few minutes. You can leave the page and come back.",
+      "The archive is kept for 7 days. Preparing a new one replaces it. A download link works for a few minutes, so start the download from the settings page.",
+    ],
+    related: ["concept.deletion-request", "concept.about-you"],
     audience: "everyone",
   },
   "concept.course": {
