@@ -1,24 +1,43 @@
 "use client";
 
 import { client } from "@/lib/api";
-import type { CourseModePolicy, LearningModeId } from "@/lib/client";
-import { courseModePolicyGetOptions } from "@/lib/client/@tanstack/react-query.gen";
+import type { LearningModeId } from "@/lib/client";
+import { chatModePolicyGetOptions } from "@/lib/client/@tanstack/react-query.gen";
+import { zLearningModeId } from "@/lib/client/zod.gen";
 import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { GraduationCapIcon } from "lucide-react";
 import { learningModeQueryOptions } from "./chat-learning-mode-picker";
 
+/** The course source of a project's effective mode policy (ADR-0068). */
+export type CourseModePolicy = {
+  class_name: string;
+  educator_name: string;
+  allowed_modes: LearningModeId[] | null;
+  answer_reveal: boolean;
+};
+
 /** The class policy narrowing a course project, if any (US-60.4). */
 export function useCourseModePolicy(projectId: string | null | undefined) {
   const policy = useQuery({
-    ...courseModePolicyGetOptions({
+    ...chatModePolicyGetOptions({
       client,
-      path: { project_id: projectId ?? "" },
+      query: { project_id: projectId ?? undefined },
     }),
     enabled: !!projectId,
     retry: false,
   });
-  return projectId ? (policy.data ?? null) : null;
+  const course = policy.data?.sources?.find((item) => item.kind === "course");
+  if (!projectId || !course) return null;
+  return {
+    class_name: course.class_name ?? "",
+    educator_name: course.set_by,
+    allowed_modes:
+      course.allowed_modes.length === zLearningModeId.options.length
+        ? null
+        : course.allowed_modes,
+    answer_reveal: course.reveal !== "forbidden",
+  } satisfies CourseModePolicy;
 }
 
 export function modeAllowed(

@@ -1,6 +1,6 @@
 # EPIC-85: One mode policy (stricter rule wins)
 
-Status: proposed (2026-11-17). Source: user decision on the
+Status: in progress (2026-11-17); US-85.1 implemented. Source: user decision on the
 [feature overlap review](../reviews/2026-11-17-feature-overlap-review.md), finding 3.
 
 ## Objective
@@ -60,16 +60,16 @@ the stricter rule wins.
 
 ### US-85.1: Effective policy and one check (backend)
 
-- [ ] ADR-0068 "Effective mode policy": combination rules, reveal ordering,
+- [x] ADR-0068 "Effective mode policy": combination rules, reveal ordering,
       override scope, empty intersection, refusal shape.
-- [ ] `effective_mode_policy` in the chat/learning-mode domain, reading the
+- [x] `effective_mode_policy` in the chat/learning-mode domain, reading the
       course source through `courses/policy.py`.
-- [ ] Replace `accept_hint_level`'s lock check, `next_lock_state`'s course gaps,
+- [x] Replace `accept_hint_level`'s lock check, `next_lock_state`'s course gaps,
       `apply_class_policy` and `require_class_policy` with calls to the one check.
-- [ ] `ChatInfo.mode_policy` replaces `learning_mode_locked` in responses;
+- [x] `ChatInfo.mode_policy` replaces `learning_mode_locked` in responses;
       `GET /course-policy/projects/{id}` is removed (the new-chat page reads the
       project's effective policy from one route).
-- [ ] Tests: each source alone, both together, override cannot lift the course,
+- [x] Tests: each source alone, both together, override cannot lift the course,
       Standard switch under a course that forbids it, empty intersection,
       tightening after acceptance stops resume/regenerate. Regenerate the client.
 

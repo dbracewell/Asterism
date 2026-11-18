@@ -192,6 +192,20 @@ function LockedHarness({ info }: { info: ChatInfo }) {
   );
 }
 
+const lockedPolicy: ChatInfo["mode_policy"] = {
+  allowed_modes: [],
+  reveal: "override_required",
+  sources: [
+    {
+      kind: "learner",
+      set_by: "You",
+      allowed_modes: [],
+      reveal: "override_required",
+      learner_can_lift: true,
+    },
+  ],
+};
+
 const lockedTutor: ChatInfo = {
   id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
   user_id: "a",
@@ -199,7 +213,7 @@ const lockedTutor: ChatInfo = {
   updated_at: 0,
   learning_mode: "tutor",
   learning_mode_revision: 2,
-  learning_mode_locked: true,
+  mode_policy: lockedPolicy,
 };
 
 it("switches a locked chat between learning modes without a confirmation", async () => {
@@ -234,7 +248,7 @@ it("makes a locked chat wait and confirm before switching to Standard", async ()
     data: {
       ...lockedTutor,
       learning_mode: "standard",
-      learning_mode_locked: false,
+      mode_policy: null,
       learning_mode_revision: 3,
     },
   });
@@ -275,7 +289,7 @@ it("makes a locked chat wait and confirm before switching to Standard", async ()
   await waitFor(() =>
     expect(changed.mock.calls[0]?.[0]).toMatchObject({
       learning_mode: "standard",
-      learning_mode_locked: false,
+      mode_policy: null,
     }),
   );
 });

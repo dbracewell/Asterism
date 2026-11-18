@@ -55,9 +55,12 @@ export function DelayedConfirmAction({
   );
 }
 
+/** Whether the learner has locked this chat's learning mode (ADR-0068). */
+export function learnerLocked(info: Pick<ChatInfo, "mode_policy">) {
+  return !!info.mode_policy?.sources?.some((item) => item.kind === "learner");
+}
+
 /** The wait a locked chat imposes before an override, or none when unlocked. */
-export function lockOverrideDelay(
-  info: Pick<ChatInfo, "learning_mode_locked">,
-) {
-  return info.learning_mode_locked ? LOCK_OVERRIDE_DELAY_SECONDS : 0;
+export function lockOverrideDelay(info: Pick<ChatInfo, "mode_policy">) {
+  return learnerLocked(info) ? LOCK_OVERRIDE_DELAY_SECONDS : 0;
 }

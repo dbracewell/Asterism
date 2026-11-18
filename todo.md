@@ -50,11 +50,11 @@ Source: user request and the [feature overlap review](docs/reviews/2026-11-17-fe
 
 ### US-85.1: Effective policy and one check (backend)
 
-- [ ] ADR-0068 "Effective mode policy" superseding ADR-0031/0055 enforcement
-- [ ] `effective_mode_policy` reading learner lock and course policy live
-- [ ] Replace lock and class-policy checks with the one check
-- [ ] `ChatInfo.mode_policy`; remove `GET /course-policy/projects/{id}`
-- [ ] Tests for each source, both, override scope, Standard switch, empty intersection, tightening; regenerate client
+- [x] ADR-0068 "Effective mode policy" superseding ADR-0031/0055 enforcement
+- [x] `effective_mode_policy` reading learner lock and course policy live
+- [x] Replace lock and class-policy checks with the one check
+- [x] `ChatInfo.mode_policy`; remove `GET /course-policy/projects/{id}`
+- [x] Tests for each source, both, override scope, Standard switch, empty intersection, tightening; regenerate client
 
 ### US-85.2: One policy control (frontend)
 

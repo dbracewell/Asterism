@@ -21,7 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { client } from "@/lib/api";
-import type { ChatInfo, CourseModePolicy, LearningModeId } from "@/lib/client";
+import type { ChatInfo, LearningModeId } from "@/lib/client";
 import {
   chatLearningModeUpdateMutation,
   chatSessionGetOneOptions,
@@ -30,9 +30,14 @@ import {
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { GraduationCapIcon, LockIcon } from "lucide-react";
 import React from "react";
-import { CoursePolicyNotice, useCourseModePolicy } from "./course-mode-policy";
+import {
+  type CourseModePolicy,
+  CoursePolicyNotice,
+  useCourseModePolicy,
+} from "./course-mode-policy";
 import {
   DelayedConfirmAction,
+  learnerLocked,
   LOCK_OVERRIDE_DELAY_SECONDS,
 } from "./delayed-confirm-action";
 
@@ -174,7 +179,7 @@ export function ExistingChatLearningModePicker({
         policy={policy}
         disabled={disabled || mutation.isPending || !!mutation.error}
         onChange={(learningMode) => {
-          if (learningMode === "standard" && info.learning_mode_locked)
+          if (learningMode === "standard" && learnerLocked(info))
             setConfirmStandard(true);
           else select(learningMode);
         }}

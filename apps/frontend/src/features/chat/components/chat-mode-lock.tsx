@@ -20,6 +20,7 @@ import React from "react";
 import { useLearningModeName } from "./chat-learning-mode-picker";
 import {
   DelayedConfirmAction,
+  learnerLocked,
   LOCK_OVERRIDE_DELAY_SECONDS,
 } from "./delayed-confirm-action";
 
@@ -29,7 +30,7 @@ import {
  */
 export function ChatModeLock({ info }: { info: ChatInfo }) {
   const mode = info.learning_mode ?? "standard";
-  const locked = !!info.learning_mode_locked;
+  const locked = learnerLocked(info);
   const name = useLearningModeName(mode) ?? "Learning";
   const [open, setOpen] = React.useState(false);
   const mutation = useMutation({

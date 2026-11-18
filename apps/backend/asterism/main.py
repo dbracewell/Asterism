@@ -22,7 +22,7 @@ from asterism.domains.chat.router import chat_router
 from asterism.domains.chatgpt.router import chatgpt_router
 from asterism.domains.classes.router import class_invites_router, classes_router, educator_access_router
 from asterism.domains.components.router import components_router
-from asterism.domains.courses.router import course_policy_router, courses_router
+from asterism.domains.courses.router import courses_router
 from asterism.domains.files.router import file_router
 from asterism.domains.groups.router import groups_router
 from asterism.domains.image_generation.local.router import local_image_router
@@ -152,7 +152,6 @@ app.include_router(educator_access_router)
 app.include_router(classes_router)
 app.include_router(class_invites_router)
 app.include_router(courses_router)
-app.include_router(course_policy_router)
 app.include_router(study_router)
 # The knowledge router is registered before the settings router: both serve
 # /settings/app/... paths, and the knowledge ones are more specific than the

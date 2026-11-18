@@ -90,6 +90,7 @@ async def selection_info(chat: ChatModel, session: AsyncSession) -> ChatInfo:
     from asterism.domains.agent.skill_inputs import AcceptedSkills
 
     from .branches import latest_branch_user_turn
+    from .mode_policy import effective_mode_policy
     from .skills import describe_skills
 
     info = ChatInfo.model_validate(chat)
@@ -99,6 +100,7 @@ async def selection_info(chat: ChatModel, session: AsyncSession) -> ChatInfo:
     )
     info.hint_level = turn.hint_level if turn is not None else HintLevel.NONE
     info.selected_model = await selected_chat_model(chat, session)
+    info.mode_policy = await effective_mode_policy(user_id=chat.user_id, chat=chat, session=session)
     return info
 
 

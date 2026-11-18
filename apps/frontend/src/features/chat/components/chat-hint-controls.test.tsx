@@ -12,7 +12,7 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { ChatHintControls } from "./chat-hint-controls";
 
 const { api, raised } = vi.hoisted(() => ({
-  api: { learningModeGetMany: vi.fn(), courseModePolicyGet: vi.fn() },
+  api: { learningModeGetMany: vi.fn(), chatModePolicyGet: vi.fn() },
   raised: vi.fn(),
 }));
 vi.mock("@/lib/api", () => ({
@@ -50,16 +50,30 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
+const lockedPolicy: ChatInfo["mode_policy"] = {
+  allowed_modes: [],
+  reveal: "override_required",
+  sources: [
+    {
+      kind: "learner",
+      set_by: "You",
+      allowed_modes: [],
+      reveal: "override_required",
+      learner_can_lift: true,
+    },
+  ],
+};
+
 function info(
   learning_mode: ChatInfo["learning_mode"],
   hint_level: HintLevel,
-  learning_mode_locked = false,
+  locked = false,
 ) {
   return {
     id: "chat",
     learning_mode,
     hint_level,
-    learning_mode_locked,
+    mode_policy: locked ? lockedPolicy : null,
   } as ChatInfo;
 }
 
@@ -269,12 +283,20 @@ it("restarts the wait each time the locked reveal opens", async () => {
 });
 
 it("hides the reveal when the class policy turns it off", async () => {
-  api.courseModePolicyGet.mockResolvedValue({
+  api.chatModePolicyGet.mockResolvedValue({
     data: {
-      class_name: "Biology 101",
-      educator_name: "Dr Teach",
-      allowed_modes: null,
-      answer_reveal: false,
+      allowed_modes: ["tutor"],
+      reveal: "forbidden",
+      sources: [
+        {
+          kind: "course",
+          class_name: "Biology 101",
+          set_by: "Dr Teach",
+          allowed_modes: ["tutor"],
+          reveal: "forbidden",
+          learner_can_lift: false,
+        },
+      ],
     },
   });
   render(
@@ -291,7 +313,7 @@ it("hides the reveal when the class policy turns it off", async () => {
   expect(
     await screen.findByRole("button", { name: "Worked example" }),
   ).toBeInTheDocument();
-  await vi.waitFor(() => expect(api.courseModePolicyGet).toHaveBeenCalled());
+  await vi.waitFor(() => expect(api.chatModePolicyGet).toHaveBeenCalled());
   await vi.waitFor(() =>
     expect(
       screen.queryByRole("button", { name: "Show answer" }),

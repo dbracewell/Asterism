@@ -12,6 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from asterism.core.exceptions import BadDataException, CodedException, NotFoundException
 from asterism.db.database import get_async_db_session
 from asterism.domains.agent.execution_scope import ChatPurpose
+from asterism.domains.agent.learning_inputs import HintLevel
 from asterism.domains.projects.goals import resolve_goal
 from asterism.domains.projects.scope import require_owned_project
 from asterism.domains.prompt_templates.provenance import resolve_template_use
@@ -28,10 +29,10 @@ from .jobs import chat_jobs
 from .learning_modes import (
     accept_hint_level,
     accept_rubric,
-    apply_class_policy,
     current_mode_snapshot,
     turn_hint_level,
 )
+from .mode_policy import accept_send_level
 from .model_selection import require_chat_model, selection_info
 from .models import ChatModel, MessageModel
 from .queries import select_owned_chats, select_owned_messages
@@ -104,7 +105,8 @@ async def persist_user_send(
 
     skills = await accept_skills(user_id=user_id, chat=chat, selection=payload.skills, session=session)
     # The parent is the active branch tip, so its latest user turn holds the branch level.
-    hint_level = await apply_class_policy(
+    reveal = payload.hint is not None and payload.hint.level == HintLevel.ANSWER
+    hint_level = await accept_send_level(
         user_id=user_id,
         chat=chat,
         hint_level=accept_hint_level(
@@ -112,7 +114,8 @@ async def persist_user_send(
             previous=turn_hint_level(await latest_branch_user_turn(user_id, chat.id, session)),
             request=payload.hint,
         ),
-        request=payload.hint,
+        request_reveal=reveal,
+        override_lock=reveal and payload.hint.override_lock,
         session=session,
     )
     template = (

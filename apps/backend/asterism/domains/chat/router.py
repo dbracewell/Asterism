@@ -27,6 +27,8 @@ from .disagreement_schemas import DisagreementRequest, DisagreementSummary
 from .draft_comment_schemas import DraftCommentSummary, DraftCommentUpdate, DraftReview
 from .exercise_schemas import ExerciseAttemptRequest, ExerciseView
 from .learning_modes import change_chat_learning_mode
+from .mode_policy import mode_policy_for
+from .mode_policy_schemas import ModePolicy
 from .model_selection import change_chat_model, list_chat_models
 from .schemas import (
     BulkDeleteChatRequest,
@@ -84,6 +86,16 @@ async def select_chat_model(
     session: DBSessionDep,
 ) -> ChatInfo:
     return await change_chat_model(user_id=user.id, chat_id=chat_id, payload=payload, session=session)
+
+
+@chat_router.get("/mode-policy", response_model=ModePolicy, operation_id="chatModePolicyGet")
+async def new_chat_mode_policy(
+    user: AuthedUserDep,
+    session: DBSessionDep,
+    project_id: uuid.UUID | None = Query(default=None),
+) -> ModePolicy:
+    """The effective learning-mode policy a new chat in this project (or General) starts under."""
+    return await mode_policy_for(user_id=user.id, project_id=project_id, locked=False, session=session)
 
 
 @chat_router.put("/drafts/{draft_id}/model", response_model=ChatDraft, operation_id="chatDraftModelUpdate")

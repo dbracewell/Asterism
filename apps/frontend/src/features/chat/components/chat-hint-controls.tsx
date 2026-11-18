@@ -24,6 +24,7 @@ import { LightbulbIcon } from "lucide-react";
 import { learningModeQueryOptions } from "./chat-learning-mode-picker";
 import {
   DelayedConfirmAction,
+  learnerLocked,
   lockOverrideDelay,
 } from "./delayed-confirm-action";
 
@@ -134,7 +135,7 @@ export function ChatHintControls({
     (level): level is keyof typeof hintPrompt => level !== "answer",
   );
   const reveal = revealCopy(info.learning_mode);
-  const locked = !!info.learning_mode_locked;
+  const locked = learnerLocked(info);
   return (
     <div
       role="group"

@@ -35,6 +35,20 @@ const tutor = (hint_level: HintLevel) => ({
   hint_level,
 });
 
+const lockedPolicy: ChatInfo["mode_policy"] = {
+  allowed_modes: [],
+  reveal: "override_required",
+  sources: [
+    {
+      kind: "learner",
+      set_by: "You",
+      allowed_modes: [],
+      reveal: "override_required",
+      learner_can_lift: true,
+    },
+  ],
+};
+
 test("locks the mode from the header and makes leaving it or revealing wait", async ({
   page,
 }) => {
@@ -53,7 +67,7 @@ test("locks the mode from the header and makes leaving it or revealing wait", as
       project_id: null,
       learning_mode: "tutor",
       learning_mode_revision: 1,
-      learning_mode_locked: false,
+      mode_policy: null,
       hint_level: "none",
     },
     messages: [
@@ -118,9 +132,9 @@ test("locks the mode from the header and makes leaving it or revealing wait", as
     const info: ChatInfo = {
       ...chat.info,
       learning_mode: body.learning_mode,
-      learning_mode_locked: standard
-        ? false
-        : (body.locked ?? chat.info.learning_mode_locked),
+      mode_policy: (standard ? false : (body.locked ?? !!chat.info.mode_policy))
+        ? lockedPolicy
+        : null,
       learning_mode_revision: (chat.info.learning_mode_revision ?? 1) + 1,
     };
     chat = { ...chat, info };
