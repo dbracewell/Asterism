@@ -111,7 +111,7 @@ this defect. **Owner: US-32.1.**
   [ChatSession](../../apps/frontend/src/features/chat/components/chat-session.tsx)
   reserves a fixed 150px tail gap for an absolutely positioned composer that can
   grow with attachments and scope panels; measure last-message reachability.
-- [SettingsCard](../../apps/frontend/src/features/settings/ui/setttings-card.tsx)
+- [SettingsCard](../../apps/frontend/src/features/settings/ui/settings-card.tsx)
   chooses orientation from viewport width, clips its shell, and replaces the URL
   with only `t` and `setting`, discarding unrelated query parameters.
 

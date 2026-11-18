@@ -1,6 +1,6 @@
 # EPIC-87: Architecture documentation refresh
 
-Status: proposed (2026-11-18). Source: user request (2026-11-18).
+Status: in progress (US-87.1 awaiting confirmation). Proposed 2026-11-18. Source: user request (2026-11-18).
 
 ## Objective
 
@@ -21,7 +21,7 @@ does now.
 | Area        | Today                                                                                          | Gap                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | ----------- | ---------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Coverage    | 24 guides, about 5,300 lines                                                                   | No guide for canvas ([ADR-0063](../adr/0063-canvas.md)), image generation ([ADR-0064](../adr/0064-image-generation.md)), account lifecycle ([ADR-0070](../adr/0070-account-lifecycle.md)), groups and usage budgets ([ADR-0058](../adr/0058-user-groups.md), [ADR-0073](../adr/0073-usage-ledger-and-budgets.md)), classes and courses ([ADR-0053](../adr/0053-classes-and-educators.md)), learning modes and mode policy ([ADR-0068](../adr/0068-effective-mode-policy.md)), context compaction ([ADR-0060](../adr/0060-context-compaction.md)), logs and status ([ADR-0074](../adr/0074-production-logs-and-status.md)), the help center or team packs. "Suspend" appears in no guide |
-| Accuracy    | Most guides were written story by story                                                        | Some describe removed features (personas still appear in `data-and-storage.md`); `frontend-and-themes.md` still lists panes as Planned that now ship                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| Accuracy    | Most guides were written story by story                                                        | Some name code that no longer exists (`file-knowledge-processing.md`) or contradict ADRs (General chat delegation in `tool-authorization.md`); `frontend-and-themes.md` still lists panes as Planned that now ship                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | Readability | Dense, list-heavy prose                                                                        | Story and epic references in the body (28 in `frontend-and-themes.md`, 15 in `prompt-templates.md`); terms used before they are defined; few diagrams of flows                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | Navigation  | `README.md` index plus an unordered "Additional guides" list                                   | No reading order, no single place that says which guide answers which question                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | Size        | `frontend-and-themes.md` is 659 lines and mixes layout, themes, product surface and trust gaps | Hard to find one topic                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
@@ -52,8 +52,8 @@ does now.
 1. Should `bundled-theme-palettes.md` and `theme-layout-review-matrix.md` stay in
    `architecture/`, or move to `docs/reviews/` as review evidence? Proposed: keep
    the palette guide, move the review matrix.
-2. Should the link checker run in CI (`quality-gates`) or only locally?
-   Proposed: CI, since it is fast and the guide in EPIC-89 depends on it too.
+2. ~~Should the link checker run in CI or only locally?~~ Decided 2026-11-18:
+   CI, in `quality-gates` (US-87.1).
 
 ## User stories
 
@@ -65,18 +65,18 @@ US-87.1 sets the template and tooling the other stories use.
 As a contributor, I know which guides are wrong or missing and how a refreshed
 guide should read.
 
-- [ ] Audit every guide against the code: for each, list stale claims, missing
+- [x] Audit every guide against the code: for each, list stale claims, missing
       features and removed features. Record the audit in
-      `docs/reviews/2026-11-architecture-docs-audit.md`.
-- [ ] Write the guide template and writing rules in
+      `docs/reviews/2026-11-18-architecture-docs-audit.md`.
+- [x] Write the guide template and writing rules in
       `docs/architecture/CONTRIBUTING.md` (structure, tone, terminology, diagram
       and link conventions, a before/after example).
-- [ ] Add a terminology list shared with the user guide (EPIC-89) so the same
+- [x] Add a terminology list shared with the user guide (EPIC-89) so the same
       thing has the same name everywhere (for example _main agent_, _sub-agent_,
       _General chat set_, _execution file scope_).
-- [ ] Add `pnpm docs:check`: broken relative links, missing anchors and missing
+- [x] Add `pnpm docs:check`: broken relative links, missing anchors and missing
       images across `docs/` and `README.md`. Wire it into CI (see open question 2).
-- [ ] Rewrite `docs/architecture/README.md` as a map: a reading order for new
+- [x] Rewrite `docs/architecture/README.md` as a map: a reading order for new
       contributors, then a table of "if you want to know X, read Y".
 
 ### US-87.2: System, security and request path
@@ -93,7 +93,8 @@ back, and I know every check it passes.
 - [ ] `chat-and-websocket.md`: protocol, reconnectable jobs, cancellation,
       admission limits, usage-limit refusals, with a job lifecycle diagram.
 - [ ] `capacity.md` and a new `operations.md`: process model, admission
-      settings, logs and request IDs, readiness endpoints and Admin → Status.
+      settings, logs and request IDs, readiness endpoints, Admin → Status, and admin
+      settings export and import.
 - [ ] Remove story references and stale claims from these guides.
 
 ### US-87.3: Agents, tools and prompts
@@ -108,7 +109,8 @@ can and cannot grant a capability.
       compaction, verification.
 - [ ] `tool-authorization.md`: ordinary versus internal tools, a table of every
       internal tool (`sub_agent`, `search_knowledge`, `load_skill`, `canvas_*`,
-      `generate_image`) and the conditions that offer it; approvals.
+      `generate_image`) and the conditions that offer it; approvals; the component
+      registry of search providers and image generators.
 - [ ] `skills.md`, `prompt-templates.md`, `context-isolation.md`: refresh and
       remove history narration.
 - [ ] `llm-providers.md`: provider modes, model capabilities, ChatGPT plan
@@ -122,8 +124,8 @@ As a contributor, I know where each piece of data lives, who can read it, and
 what happens to it on upload, deletion, backup and upgrade.
 
 - [ ] `data-and-storage.md`: schema overview by domain (with an entity
-      diagram), message tree, FTS search, migrations (ADR-0069); remove persona
-      references.
+      diagram), message tree, FTS search, migrations (ADR-0069); correct the
+      serialization section, which names a `JSONB_COLUMN` helper that does not exist.
 - [ ] Merge or clearly divide `knowledge-retrieval.md` and
       `file-knowledge-processing.md` so each topic has one home: processing
       pipeline in one, scoped retrieval in the other.

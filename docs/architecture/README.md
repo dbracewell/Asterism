@@ -1,134 +1,128 @@
-# Asterism Architecture Documentation
+# Asterism architecture guides
 
-This directory documents the architecture implemented in the Asterism monorepo.
-Asterism is a self-hosted AI chat application with a Next.js frontend, FastAPI
-backend, one main configuration per user and project-selected sub-agents, reconnectable streamed
-responses, full-text chat search, and user-owned file attachments.
+These guides explain how Asterism is built: what each part of the system does,
+the rules it keeps, and where its code lives. They are written for contributors,
+starting with someone who has just joined the project.
 
-## Document index
+Asterism is a self-hosted AI chat application for groups such as a school. A
+Next.js frontend and a single FastAPI backend process run together in one
+container on one host, with SQLite for data, LanceDB for search vectors and the
+local disk for files.
+The guides below take that system apart one piece at a time.
 
-| Document                                                                            | Scope                                                                                           |
-| ----------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| [System overview](overview.md)                                                      | Topology, workspace layout, request, streaming, and chat-job lifecycle                          |
-| [Authentication and security](auth-and-security.md)                                 | Better Auth, JWT/JWKS verification, tenancy, and internal callbacks                             |
-| [Chat and WebSocket](chat-and-websocket.md)                                         | Bidirectional chat protocol, reconnectable jobs, queues, cancellation, and controller lifecycle |
-| [Agent runtime](agent-runtime.md)                                                   | Bounded LLM loop, event stream, delegation, and traces                                          |
-| [Tool authorization](tool-authorization.md)                                         | Allowlist and interactive approval policies, child-agent boundaries                             |
-| [LLM providers](llm-providers.md)                                                   | OpenAI and OpenAI-compatible provider configuration and capabilities                            |
-| [Data and storage](data-and-storage.md)                                             | SQLite schema, FTS search, message tree, local file storage, and attachments                    |
-| [Knowledge retrieval](knowledge-retrieval.md)                                       | File-owned processing, scoped LanceDB retrieval, and image captioning                           |
-| [File knowledge processing](file-knowledge-processing.md)                           | Upload-to-artifact pipeline, embeddings, captions, jobs, and lifecycle guarantees               |
-| [ADR-0016: Memory resource contracts](../adr/adr-0016-memory-resource-contracts.md) | Process-lifetime state inventory, ownership, bounds, and remediation plan                       |
+If you want to use Asterism rather than change it, read the user guide in
+`docs/guide/` instead. To install and run an instance, read the
+[deployment guide](../deployment.md).
 
-Additional guides:
+## Where to start
 
-- [ADR-0020: Chat admission](../adr/0020-chat-capacity-admission.md): finite owner/global work and controller limits, retryable overload, reconnect and release ownership.
+Read these five guides in order. Together they cover the path of one chat
+message, from the browser to the model and back, and the rules that path obeys.
 
-- [ADR-0019: Single-process runtime and storage seams](../adr/0019-single-process-runtime-and-storage-seams.md): worker validation, named composition roots and current SQLite/FileStore/LanceDB limits.
+1. [System overview](overview.md): the components, how they connect, and the
+   life of a request.
+2. [Authentication and security](auth-and-security.md): who a request is from
+   and what they may do.
+3. [Chat and WebSocket](chat-and-websocket.md): how a message is accepted,
+   streamed, cancelled and resumed.
+4. [Execution context](execution-context.md): how one turn gathers its
+   instructions, files and helpers, and why none of them can widen its access.
+5. [Agent runtime](agent-runtime.md): the bounded loop that calls the model and
+   its tools, including delegation to sub-agents.
 
-- [Theme and layout review matrix](theme-layout-review-matrix.md): automated palette/state/container gates, retained CI evidence, manual checks and exception policy.
+After that, read whichever guide covers the part you are changing.
 
-- [Markdown and file-content trust](markdown-content.md): raw HTML disabled,
-  explicit link/resource policy, constrained math, files and citations.
-- [ADR-0051: Team pack format](../adr/0051-team-pack-format.md): versioned manifest,
-  bounds, credential screening, and requests that grant nothing.
-- [ADR-0039: Inline file references](../adr/0039-inline-file-references-in-markdown.md):
-  `asterism-file:` tokens, save-time resolution, produced files and active content.
-- [Theme storage and lifecycle](theme-storage.md): read-only defaults, persistent
-  overrides, atomic saves, single-writer ownership, backup and reset.
-- [Bundled theme palettes](bundled-theme-palettes.md): source versions, semantic
-  role mapping, accessibility deviations and rendered contrast review.
-- [Frontend layout, themes, and product surface](frontend-and-themes.md): current
-  theme ownership, scrolling constraints, unfinished settings and known trust gaps.
-- [2026-10-17 codebase review](../reviews/2026-10-17-codebase-review.md) and
-  [quality roadmap](../plans/post-refactor-quality-roadmap.md): architecture/UI
-  findings, verification evidence and the EPIC-31–EPIC-35 delivery sequence.
+## Find a guide
 
-- [Execution context and module boundaries](execution-context.md): trace project/chat
-  readers into Agent, RuntimeFileReader, and RetrievalService.
-- [Project and chat workspaces](project-workspaces.md): settings, membership UI,
-  attachment scopes, model picker, and selection/error states.
-- [Context provenance and memory isolation](context-isolation.md): replay ceilings,
-  content-free audit, historical information limits, and future memory keys.
-- [Prompt templates](prompt-templates.md): owner-scoped template documents and the
-  bundled framework catalog ([ADR-0026](../adr/0026-prompt-template-documents-and-framework-catalog.md)).
-- [Study tools](study-tools.md): project-scoped decks, cards and citations
-  ([ADR-0033](../adr/0033-study-domain-and-scheduling.md)).
-- [Development initialization and reset](development-reset.md): relational, source,
-  vector cleanup, model-bundle retention, and isolated verification.
-- [ADR-0017](../adr/0017-project-file-and-chat-boundaries.md): current accepted
-  project/file/chat/configuration/execution decisions.
+| If you want to know…                                                       | Read                                                            |
+| -------------------------------------------------------------------------- | --------------------------------------------------------------- |
+| How the pieces fit together and how a request flows                        | [System overview](overview.md)                                  |
+| How sign-in, tokens and per-user data isolation work                       | [Authentication and security](auth-and-security.md)             |
+| How messages are accepted, streamed, cancelled and compared                | [Chat and WebSocket](chat-and-websocket.md)                     |
+| How many people one instance serves, and how that was measured             | [Capacity check](capacity.md)                                   |
+| What a turn's prompt is made of and which files it may read                | [Execution context](execution-context.md)                       |
+| How the agent loop, delegation, traces and compaction work                 | [Agent runtime](agent-runtime.md)                               |
+| Which tools an agent is offered and how approval works                     | [Tool authorization](tool-authorization.md)                     |
+| What is recorded about each run and what stays private                     | [Context provenance and isolation](context-isolation.md)        |
+| How skills are stored, assigned and activated                              | [Skills](skills.md)                                             |
+| How prompt templates, the prompt coach and rubrics work                    | [Prompt templates](prompt-templates.md)                         |
+| How model providers and model capabilities are configured                  | [LLM providers](llm-providers.md)                               |
+| Where data lives: tables, search indexes, files, migrations                | [Data and storage](data-and-storage.md)                         |
+| What happens to an upload, from bytes to searchable text                   | [File knowledge processing](file-knowledge-processing.md)       |
+| How file search stays inside a chat's allowed files, and how captions work | [Knowledge retrieval](knowledge-retrieval.md)                   |
+| How backups, restores and upgrades work                                    | [Backup and restore](backup-and-restore.md)                     |
+| How to initialize or reset a development database                          | [Development initialization and reset](development-reset.md)    |
+| How projects, project files and project sub-agents work                    | [Project workspaces](project-workspaces.md)                     |
+| How flashcards, quizzes, notes and progress work                           | [Study tools](study-tools.md)                                   |
+| How the frontend is laid out, and how themes and chat components work      | [Frontend layout and themes](frontend-and-themes.md)            |
+| What Markdown, links, math and file content may do                         | [Markdown and file-content trust](markdown-content.md)          |
+| Where custom themes are stored and how they are saved                      | [Theme storage](theme-storage.md)                               |
+| Where the bundled palettes come from and how contrast was checked          | [Bundled theme palettes](bundled-theme-palettes.md)             |
+| Which theme and layout checks run, and which are manual                    | [Theme and layout review matrix](theme-layout-review-matrix.md) |
 
-## Current deployment topology
+Some shipped features do not have a guide of their own yet: classes and courses,
+canvas, image generation, usage budgets and team packs. Learning modes are
+described inside [Execution context](execution-context.md#learning-modes). Until they do,
+their ADRs are the reference: [classes](../adr/0053-classes-and-educators.md),
+[canvas](../adr/0063-canvas.md), [image generation](../adr/0064-image-generation.md),
+[mode policy](../adr/0068-effective-mode-policy.md),
+[usage and budgets](../adr/0073-usage-ledger-and-budgets.md) and
+[team packs](../adr/0051-team-pack-format.md). The
+[2026-11-18 audit](../reviews/2026-11-18-architecture-docs-audit.md) lists the
+known gaps and errors in the existing guides, and
+[EPIC-87](../epics/EPIC-87-ARCHITECTURE-DOCS-REFRESH.md) fixes them.
 
-```mermaid
-flowchart TD
-    Browser[Browser]
+## The main boundaries
 
-    subgraph Frontend[Next.js application / nginx public entrypoint]
-        Auth[Better Auth: /api/auth]
-        UI[React UI]
-        Stream[Event stream: /api/stream]
-        Proxy[Same-origin /api/py proxy]
-    end
+A few rules hold across the whole system. Each guide explains how its part keeps
+them.
 
-    subgraph Backend[FastAPI :8000]
-        API[REST and WebSocket routes]
-        Chat[Chat job, controller, and orchestrator]
-        Agent[Agent runtime and tool registry]
-        Knowledge[File processing, captions, and retrieval]
-        DB[SQLAlchemy async session manager]
-    end
+- **The browser talks only to its own origin.** All backend traffic, HTTP and
+  WebSocket alike, goes through `/api/py` on the public origin. In development
+  Next.js forwards it to FastAPI; in the container nginx does.
+- **Better Auth owns identity.** It issues sessions and signed tokens. FastAPI
+  checks each token against Better Auth's public keys and never trusts an
+  identity sent by the browser.
+- **Nothing written can grant a capability.** An agent's tools come from what the
+  user assigned, what the admin allows, what the model supports and what the
+  chat's context provides. Prompts, files, skills, About you text and approval
+  clicks cannot add to that set.
+- **A turn's file access is fixed when it starts and rechecked when it is used.**
+  Each run records the files it may read. Every read checks again that access
+  still holds, so removing a file takes effect immediately.
+- **Storage sits behind interfaces.** The relational database, the vector store
+  and the file store each have an adapter, so they can be replaced later.
+- **One process.** The supported deployment runs a single backend process, which
+  holds chat jobs and queues in memory
+  ([ADR-0019](../adr/0019-single-process-runtime-and-storage-seams.md)).
 
-    SQLite[(SQLite in STORAGE_ROOT)]
-    Files[(Local files in STORAGE_ROOT/files)]
-    Providers[OpenAI or compatible provider]
+## Where the code starts
 
-    Browser --> UI
-    Browser -->|session and JWT| Auth
-    Browser -->|REST and WebSocket: /api/py| Proxy
-    Proxy --> API
-    API --> Chat
-    Chat --> Agent
-    Agent --> Providers
-    Agent --> Knowledge
-    Knowledge --> Providers
-    Knowledge --> DB
-    API --> DB
-    DB --> SQLite
-    API --> Files
-    Backend -->|system-key callback| Stream
-```
+- Backend application: [`asterism.main:app`](../../apps/backend/asterism/main.py),
+  with startup and shutdown in [`core/lifespan.py`](../../apps/backend/asterism/core/lifespan.py).
+- Backend domains: [`apps/backend/asterism/domains/`](../../apps/backend/asterism/domains/),
+  one package per area (chat, agent, files, knowledge, projects and so on).
+- Chat jobs and transport: [`ChatJobManager`](../../apps/backend/asterism/domains/chat/jobs.py)
+  and [`ChatController`](../../apps/backend/asterism/domains/chat/controller.py).
+- Agent loop: [`Agent`](../../apps/backend/asterism/domains/agent/agent.py).
+- Tool registry: [`registry.py`](../../apps/backend/asterism/domains/tools/registry.py).
+- Knowledge runtime: [`runtime.py`](../../apps/backend/asterism/domains/knowledge/runtime.py).
+- Frontend routes: [`apps/frontend/src/app/`](../../apps/frontend/src/app/), with
+  features under [`src/features/`](../../apps/frontend/src/features/).
+- Frontend chat connection: [`useChatWebSocket`](../../apps/frontend/src/features/chat/hooks/use-chat-websocket.tsx).
 
-## Design boundaries
+## Decisions and history
 
-- **Same-origin browser traffic:** the browser uses `/api/py` for FastAPI HTTP,
-  WebSocket, and OpenAPI traffic. Next.js supplies the local-development proxy;
-  nginx supplies the equivalent route in the combined container.
-- **Authentication boundary:** Better Auth owns sessions and signing keys. FastAPI
-  validates bearer and WebSocket JWTs against the frontend's loopback JWKS endpoint.
-- **Capability boundary:** configured ordinary capabilities, admin policy, explicit
-  model support, and live context derive effective tool schemas. Main-agent calls
-  can require interactive approval within this boundary; delegated tools use the
-  child's allowlist. Internal search/delegation are context managed, without user
-  toggles. Approval cannot expand capabilities or file scope.
-- **Persistence boundary:** SQLAlchemy manages the relational store; uploaded bytes
-  pass through the `FileStore` protocol, whose current implementation is
-  `LocalFileStore`.
-- **Knowledge boundary:** each source file owns its processed generations;
-  project/chat references resolve into the live execution file scope. Runtime
-  retrieval rechecks authorization and artifact freshness before release. LanceDB accepts only owner- and allowed-file-filtered searches.
-- **Provider boundary:** the runtime uses the OpenAI SDK. Supported configurations
-  are canonical OpenAI and a generic OpenAI-compatible HTTP(S) endpoint. Captioning
-  is disabled by default; when enabled it uses either the admin-selected discovered
-  vision model or a pinned, manifest-verified local bundle.
+- [Architecture decision records](../adr/) explain why the system is built the way
+  it is. Guides link to the ADR behind each rule.
+- [ADR-0017](../adr/0017-project-file-and-chat-boundaries.md) collects the current
+  contracts between projects, files, chats and executions.
+- [ADR-0016](../adr/adr-0016-memory-resource-contracts.md) lists the state the
+  backend keeps in memory and how it is bounded.
+- Epics, the [checklist archive](../archive/) and [reviews](../reviews/) record how
+  the system got here.
 
-## Code entry points
+## Writing a guide
 
-- Backend app: [`asterism.main:app`](../../apps/backend/asterism/main.py)
-- Backend lifespan: [`asterism.core.lifespan:lifespan`](../../apps/backend/asterism/core/lifespan.py)
-- Chat jobs and transport: [`ChatJobManager`](../../apps/backend/asterism/domains/chat/jobs.py) and [`ChatController`](../../apps/backend/asterism/domains/chat/controller.py)
-- Agent loop: [`Agent`](../../apps/backend/asterism/domains/agent/agent.py)
-- Knowledge runtime: [`runtime.py`](../../apps/backend/asterism/domains/knowledge/runtime.py)
-- Tool registry: [`tool_registry`](../../apps/backend/asterism/domains/tools/registry.py)
-- Frontend chat hook: [`useChatWebSocket`](../../apps/frontend/src/features/chat/hooks/use-chat-websocket.tsx)
+[CONTRIBUTING.md](CONTRIBUTING.md) describes the layout every guide follows and
+how to write and check one. Shared terms are in [terminology](../terminology.md).
