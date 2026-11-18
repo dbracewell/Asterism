@@ -9,6 +9,8 @@ const publicRoutes = [
   // Admin-issued password reset links are opened while signed out (US-86.2).
   "/reset-password",
   "/api/stream",
+  // Readiness for the container health check (US-86.6).
+  "/api/health",
   "/api/theme",
   "/api/theme/list",
 ];

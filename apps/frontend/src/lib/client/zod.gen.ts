@@ -238,6 +238,14 @@ export const zCapabilityManifest = z.object({
 });
 
 /**
+ * Capacity
+ */
+export const zCapacity = z.object({
+  used: z.int(),
+  limit: z.int(),
+});
+
+/**
  * CaptioningPayload
  *
  * The caption derived from an image.
@@ -1786,6 +1794,15 @@ export const zKnowledgeReprocessSummary = z.object({
 });
 
 /**
+ * LastBackup
+ */
+export const zLastBackup = z.object({
+  created_at: z.int(),
+  archive: z.string(),
+  size_bytes: z.int(),
+});
+
+/**
  * LearningModeId
  */
 export const zLearningModeId = z.enum([
@@ -2906,6 +2923,23 @@ export const zProviderSettings = z.object({
 });
 
 /**
+ * ReadinessCheck
+ */
+export const zReadinessCheck = z.object({
+  name: z.string(),
+  ok: z.boolean(),
+  detail: z.string(),
+});
+
+/**
+ * Readiness
+ */
+export const zReadiness = z.object({
+  ready: z.boolean(),
+  checks: z.array(zReadinessCheck),
+});
+
+/**
  * Reflection
  */
 export const zReflection = z.object({
@@ -3541,6 +3575,36 @@ export const zStarterPack = z.object({
  */
 export const zStarterPackCatalog = z.object({
   items: z.array(zStarterPack),
+});
+
+/**
+ * StorageStatus
+ */
+export const zStorageStatus = z.object({
+  used_bytes: z.int().nullable(),
+  free_bytes: z.int(),
+  total_bytes: z.int(),
+  min_free_bytes: z.int(),
+});
+
+/**
+ * InstanceStatus
+ *
+ * What the instance is doing now, for Admin Settings → Status.
+ */
+export const zInstanceStatus = z.object({
+  version: z.string(),
+  schema_revision: z.string(),
+  started_at: z.int(),
+  uptime_seconds: z.int(),
+  log_level: z.string(),
+  log_format: z.string(),
+  active_chat_runs: zCapacity,
+  chat_connections: zCapacity,
+  knowledge_running: z.int(),
+  knowledge_queued: z.int(),
+  storage: zStorageStatus,
+  last_backup: zLastBackup.nullable(),
 });
 
 /**
@@ -7601,6 +7665,16 @@ export const zUsageSettingsUpdateBody = zUsageSettings;
  * Successful Response
  */
 export const zUsageSettingsUpdateResponse = zUsageSettings;
+
+/**
+ * Successful Response
+ */
+export const zHealthReadyResponse = zReadiness;
+
+/**
+ * Successful Response
+ */
+export const zStatusGetResponse = zInstanceStatus;
 
 /**
  * Successful Response

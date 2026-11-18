@@ -161,14 +161,14 @@ sensible protections on by default.
 
 As an operator, I can tell what the instance is doing and why something failed.
 
-- [ ] Production log profile: INFO by default, `LOG_LEVEL` setting, optional
+- [x] Production log profile: INFO by default, `LOG_LEVEL` setting, optional
       JSON format; request ID per HTTP request and WebSocket session, propagated
       to job logs.
-- [ ] Log hygiene test: no message content, file text, About you, tokens or
+- [x] Log hygiene test: no message content, file text, About you, tokens or
       secrets at INFO and above.
-- [ ] Readiness endpoint: both databases writable, storage free space above a
+- [x] Readiness endpoint: both databases writable, storage free space above a
       threshold, auth keys loadable; container health check uses it.
-- [ ] Admin Settings → Status: version, uptime, active chats against admission
+- [x] Admin Settings → Status: version, uptime, active chats against admission
       limits, knowledge queue depth, storage use and free space, last backup time.
 
 ### US-86.7: Capacity check and sizing guide

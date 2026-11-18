@@ -15,6 +15,7 @@ from asterism.common.log import get_logger
 from asterism.core import config
 from asterism.core.exceptions import CodedException
 from asterism.core.lifespan import lifespan
+from asterism.core.request_id import RequestIdMiddleware
 from asterism.core.schemas import ErrorDetail
 from asterism.domains.agent.router import agents_router
 from asterism.domains.canvas.router import canvas_router
@@ -37,6 +38,7 @@ from asterism.domains.reflections.router import reflections_router
 from asterism.domains.settings.settings_router import settings_router
 from asterism.domains.settings_transfer.router import settings_transfer_router
 from asterism.domains.skills.router import skills_router
+from asterism.domains.status.router import status_router
 from asterism.domains.study.router import study_router
 from asterism.domains.tools.router import tools_router
 from asterism.domains.usage.router import usage_router
@@ -96,7 +98,10 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["X-Request-ID"],
 )
+# Added last, so it runs outermost: even CORS refusals carry a request id.
+app.add_middleware(RequestIdMiddleware)
 
 
 @app.exception_handler(HTTPException)
@@ -173,6 +178,7 @@ app.include_router(settings_router)
 app.include_router(user_router)
 app.include_router(groups_router)
 app.include_router(usage_router)
+app.include_router(status_router)
 app.include_router(tools_router)
 app.include_router(components_router)
 app.include_router(agents_router)

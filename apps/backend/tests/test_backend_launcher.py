@@ -8,6 +8,7 @@ from pathlib import Path
 
 import pytest
 from asterism import serve
+from asterism.common.log import log_settings, logging_config
 
 BACKEND = Path(__file__).resolve().parents[1]
 REPO = BACKEND.parents[1]
@@ -48,6 +49,7 @@ def test_single_worker_launch_is_explicit_and_forwards_supported_options(monkeyp
                 "timeout_graceful_shutdown": None,
                 "proxy_headers": True,
                 "forwarded_allow_ips": "127.0.0.1",
+                "log_config": logging_config(*log_settings()),
             },
         )
     ]

@@ -15,6 +15,7 @@ copied as files; each table is pinned to its current version and exported.
 
 import fcntl
 import io
+import json
 import os
 import shutil
 import sqlite3
@@ -155,6 +156,25 @@ def _fsync_directory(path: Path) -> None:
         os.close(descriptor)
 
 
+LAST_BACKUP = ".last-backup.json"
+
+
+def record_last_backup(layout: StorageLayout, archive: Path, moment: datetime) -> None:
+    """Note the newest backup in the storage root for Admin Settings → Status (US-86.6). Best effort."""
+    marker = layout.storage_root / LAST_BACKUP
+    data = {
+        "created_at": int(moment.timestamp()),
+        "archive": archive.name,
+        "size_bytes": archive.stat().st_size,
+    }
+    try:
+        temporary = marker.with_name(f"{LAST_BACKUP}.tmp")
+        temporary.write_text(json.dumps(data) + "\n")
+        temporary.replace(marker)
+    except OSError as error:
+        print(f"Warning: could not record the backup time in {marker}: {error}")
+
+
 def prune(output_dir: Path, keep: int) -> list[Path]:
     """Delete all but the newest ``keep`` backups in ``output_dir``; returns what was deleted."""
     archives = sorted(path for path in output_dir.iterdir() if ARCHIVE_PATTERN.fullmatch(path.name))
@@ -231,6 +251,7 @@ def create_backup(
             shutil.rmtree(staging, ignore_errors=True)
         if keep is not None:
             prune(output_dir, keep)
+        record_last_backup(layout, final, moment)
         return final
     finally:
         lock.close()

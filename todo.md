@@ -104,10 +104,12 @@ Done 2026-11-18 ([ADR-0071](docs/adr/0071-edge-hardening.md)). Frames: only the 
 
 ### US-86.6: Production logs and status
 
-- [ ] Production log profile: INFO by default, `LOG_LEVEL` setting, optional JSON format; request ID per HTTP request and WebSocket session, propagated to job logs.
-- [ ] Log hygiene test: no message content, file text, About you, tokens or secrets at INFO and above.
-- [ ] Readiness endpoint: both databases writable, storage free space above a threshold, auth keys loadable; container health check uses it.
-- [ ] Admin Settings → Status: version, uptime, active chats against admission limits, knowledge queue depth, storage use and free space, last backup time.
+Done 2026-11-18 ([ADR-0074](docs/adr/0074-production-logs-and-status.md)). Readiness is split: backend `/api/py/health/ready` (database, storage free space `MIN_FREE_STORAGE_BYTES`, JWKS) and frontend `/api/health` (users.db, signing a JWT). nginx passes its `$request_id`. `backup create` writes `.last-backup.json` for the status view. Found: every logger was pinned to DEBUG.
+
+- [x] Production log profile: INFO by default, `LOG_LEVEL` setting, optional JSON format; request ID per HTTP request and WebSocket session, propagated to job logs.
+- [x] Log hygiene test: no message content, file text, About you, tokens or secrets at INFO and above.
+- [x] Readiness endpoint: both databases writable, storage free space above a threshold, auth keys loadable; container health check uses it.
+- [x] Admin Settings → Status: version, uptime, active chats against admission limits, knowledge queue depth, storage use and free space, last backup time.
 
 ### US-86.7: Capacity check and sizing guide
 

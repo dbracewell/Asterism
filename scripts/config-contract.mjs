@@ -24,6 +24,9 @@ export const CATALOG = {
   DB_URL: { classification: "sensitive-url" },
   PORT: { classification: "public", defaultValue: "3000" },
   MAX_CHARS_FOR_RETRIEVAL: { classification: "tuning", defaultValue: "50000" },
+  // Backend logs (US-86.6): level and text or JSON lines.
+  LOG_LEVEL: { classification: "tuning", defaultValue: "INFO" },
+  LOG_FORMAT: { classification: "tuning", defaultValue: "text" },
   // One upload limit for nginx, the Next.js proxy and the backend (US-86.5).
   MAX_UPLOAD_FILE_SIZE_BYTES: {
     classification: "tuning",
@@ -306,6 +309,12 @@ export function validateConfiguration({
       const size = Number(selected.value);
       if (!Number.isInteger(size) || size < 1 || size > MAX_UPLOAD_BYTES_LIMIT)
         message = `must be an integer from 1 to ${MAX_UPLOAD_BYTES_LIMIT}`;
+    } else if (name === "LOG_LEVEL" && selected.value !== undefined) {
+      if (!["DEBUG", "INFO", "WARNING", "ERROR"].includes(selected.value))
+        message = "must be DEBUG, INFO, WARNING or ERROR";
+    } else if (name === "LOG_FORMAT" && selected.value !== undefined) {
+      if (!["text", "json"].includes(selected.value))
+        message = "must be text or json";
     } else if (name === "TRUSTED_PROXIES") {
       message = validateProxyList(selected.value);
     } else if (

@@ -411,6 +411,9 @@ import type {
   GroupRenameData,
   GroupRenameErrors,
   GroupRenameResponses,
+  HealthReadyData,
+  HealthReadyErrors,
+  HealthReadyResponses,
   ImageGenerationAvailabilityData,
   ImageGenerationAvailabilityErrors,
   ImageGenerationAvailabilityResponses,
@@ -597,6 +600,9 @@ import type {
   SkillUpdateData,
   SkillUpdateErrors,
   SkillUpdateResponses,
+  StatusGetData,
+  StatusGetErrors,
+  StatusGetResponses,
   StudyCardCreateData,
   StudyCardCreateErrors,
   StudyCardCreateResponses,
@@ -6764,6 +6770,40 @@ export class ApiClient extends HeyApiClient {
         "Content-Type": "application/json",
         ...options.headers,
       },
+    });
+  }
+
+  /**
+   * Ready
+   *
+   * 200 when the backend can serve: database writable, storage free space, auth keys loadable; else 503.
+   */
+  public healthReady<ThrowOnError extends boolean = false>(
+    options?: Options<HealthReadyData, ThrowOnError>,
+  ): RequestResult<HealthReadyResponses, HealthReadyErrors, ThrowOnError> {
+    return (options?.client ?? this.client).get<
+      HealthReadyResponses,
+      HealthReadyErrors,
+      ThrowOnError
+    >({ url: "/health/ready", ...options });
+  }
+
+  /**
+   * Instance Status
+   *
+   * Version, uptime, chat admission, knowledge queue, storage and last backup.
+   */
+  public statusGet<ThrowOnError extends boolean = false>(
+    options?: Options<StatusGetData, ThrowOnError>,
+  ): RequestResult<StatusGetResponses, StatusGetErrors, ThrowOnError> {
+    return (options?.client ?? this.client).get<
+      StatusGetResponses,
+      StatusGetErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/status",
+      ...options,
     });
   }
 
