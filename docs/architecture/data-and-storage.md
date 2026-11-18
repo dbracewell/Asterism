@@ -98,7 +98,8 @@ and [`asterism/db/migrate.py`](../../apps/backend/asterism/db/migrate.py) runs t
   code does not know (newer, or another branch) and a non-empty database with no
   revision (created before the baseline), naming both revisions and changing
   nothing. The API server also refuses a database behind head. There are no
-  downgrades; the way back is restoring a backup.
+  downgrades; the way back is restoring a backup
+  ([backup and restore](backup-and-restore.md), [ADR-0072](../adr/0072-backup-and-restore.md)).
 - **Parity.** `tests/test_migrations.py` builds one database by migrations and one
   by `create_all` plus the current FTS definitions, and requires the same tables,
   columns, constraints, indexes, triggers, FTS tables and seed groups, plus an

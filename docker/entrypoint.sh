@@ -21,6 +21,38 @@ load_secret() {
     fi
 }
 
+backend_python() {
+    (cd /app/apps/backend && env -u BETTER_AUTH_SECRET -u ADMIN_PASSPHRASE \
+        ASTERISM_CONFIG_PROFILE=backend-init .venv/bin/python -m asterism.backup "$@")
+}
+
+# Backup and restore (US-86.4). `backup` runs beside the live app (docker exec);
+# `restore` runs in place of it, into an empty storage volume.
+command="${1:-}"
+case "$command" in
+    "") ;;
+    backup)
+        shift
+        export BETTER_AUTH_DB_PATH="${BETTER_AUTH_DB_PATH:-${STORAGE_ROOT:-/storage}/users.db}"
+        backend_python create --output-dir "${BACKUP_DIR:-/backups}" "$@"
+        exit
+        ;;
+    verify)
+        shift
+        backend_python verify "$@"
+        exit
+        ;;
+    restore)
+        shift
+        # Never fall through to starting the app: that would run it on the storage being restored.
+        (( $# >= 1 )) || { echo "usage: restore /backups/asterism-backup-<time>.tar.gz" >&2; exit 2; }
+        ;;
+    *)
+        echo "Unknown command: $1 (expected backup, verify or restore)" >&2
+        exit 2
+        ;;
+esac
+
 load_secret BETTER_AUTH_SECRET
 load_secret SYSTEM_KEY
 load_secret ADMIN_PASSPHRASE
@@ -35,6 +67,20 @@ node /app/scripts/config-check.mjs --profile production --scope all --env none
 cd /app/apps/backend
 env -u BETTER_AUTH_SECRET -u ADMIN_PASSPHRASE -u BETTER_AUTH_DB_PATH \
     .venv/bin/python -c 'from asterism.core import config; config.validate_runtime()'
+
+if [[ "$command" == restore ]]; then
+    export BETTER_AUTH_DB_PATH="${BETTER_AUTH_DB_PATH:-${STORAGE_ROOT:-/storage}/users.db}"
+    # Checks the archive, restores it, and applies pending backend migrations.
+    backend_python restore "$@"
+    cd /app/apps/frontend
+    env -u SYSTEM_KEY -u ADMIN_PASSPHRASE -u DB_URL \
+        -u MAX_CHARS_FOR_RETRIEVAL -u CORS_ALLOWED_ORIGINS \
+        -u DEFAULT_ALLOWED_TOOLS ASTERISM_CONFIG_PROFILE=auth-migrate \
+        node node_modules/auth/dist/index.mjs migrate --config ./src/lib/auth-cli.ts --yes
+    echo "Restore complete; start the app normally"
+    exit 0
+fi
+[[ -z "$command" ]] || { echo "Refusing to start the app for command $command" >&2; exit 2; }
 
 cd /app/apps/frontend
 env -u SYSTEM_KEY -u ADMIN_PASSPHRASE -u DB_URL \

@@ -83,10 +83,12 @@ Source: the 2026-11-06 multi-user web decision. [EPIC-86](docs/epics/EPIC-86-MUL
 
 ### US-86.4: Backup and restore
 
-- [ ] `backup` command (package script and container entrypoint subcommand): SQLite online backup of `users.db` and `database.db`, plus files, vectors and themes, into one timestamped archive with a manifest and checksums.
-- [ ] `restore` command: offline, into an empty storage root, verifies checksums and the migration revision, then runs the normal startup checks (applying pending migrations).
-- [ ] Documented schedule and retention example (cron / Compose) and an upgrade procedure (backup → new image → start → verify → roll back by restore).
-- [ ] Tests: backup during an active chat restores to a working instance; corrupted archive refused; a backup from a newer revision refused.
+Done 2026-11-18 ([ADR-0072](docs/adr/0072-backup-and-restore.md), [guide](docs/architecture/backup-and-restore.md)). Added `verify` (every restore check, into a scratch directory). Vectors are exported at one table version; model bundles are not backed up; restore refuses a different `SYSTEM_KEY`.
+
+- [x] `backup` command (package script and container entrypoint subcommand): SQLite online backup of `users.db` and `database.db`, plus files, vectors and themes, into one timestamped archive with a manifest and checksums.
+- [x] `restore` command: offline, into an empty storage root, verifies checksums and the migration revision, then runs the normal startup checks (applying pending migrations).
+- [x] Documented schedule and retention example (cron / Compose) and an upgrade procedure (backup → new image → start → verify → roll back by restore).
+- [x] Tests: backup during an active chat restores to a working instance; corrupted archive refused; a backup from a newer revision refused.
 
 ### US-86.5: Edge hardening
 
