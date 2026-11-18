@@ -738,9 +738,24 @@ import type {
   UserDeleteData,
   UserDeleteError,
   UserDeleteResponse,
+  UserDeletionRequestCreateData,
+  UserDeletionRequestCreateError,
+  UserDeletionRequestCreateResponse,
+  UserDeletionRequestDismissData,
+  UserDeletionRequestDismissError,
+  UserDeletionRequestDismissResponse,
+  UserDeletionRequestGetData,
+  UserDeletionRequestGetError,
+  UserDeletionRequestGetResponse,
+  UserDeletionRequestWithdrawData,
+  UserDeletionRequestWithdrawError,
+  UserDeletionRequestWithdrawResponse,
   UserGetManyData,
   UserGetManyError,
   UserGetManyResponse,
+  UserReactivateData,
+  UserReactivateError,
+  UserReactivateResponse,
   UserSettingDeleteData,
   UserSettingDeleteError,
   UserSettingsBulkUpdateData,
@@ -752,6 +767,9 @@ import type {
   UserSettingUpdateData,
   UserSettingUpdateError,
   UserSettingUpdateResponse,
+  UserSuspendData,
+  UserSuspendError,
+  UserSuspendResponse,
 } from "../types.gen";
 
 /**
@@ -8603,9 +8621,7 @@ export const userGetManyQueryKey = (options?: Options<UserGetManyData>) =>
 /**
  * List accounts (admin only)
  *
- * List accounts with their name, email, educator status and first-seen date.
- *
- * Read-only: deactivating and deleting accounts are not part of this list.
+ * List accounts with their name, email, group, educator status, suspension and deletion request.
  */
 export const userGetManyOptions = (options?: Options<UserGetManyData>) =>
   queryOptions<
@@ -8634,9 +8650,7 @@ export const userGetManyInfiniteQueryKey = (
 /**
  * List accounts (admin only)
  *
- * List accounts with their name, email, educator status and first-seen date.
- *
- * Read-only: deactivating and deleting accounts are not part of this list.
+ * List accounts with their name, email, group, educator status, suspension and deletion request.
  */
 export const userGetManyInfiniteOptions = (
   options?: Options<UserGetManyData>,
@@ -8789,13 +8803,191 @@ export const userAboutUpdateMutation = (
 };
 
 /**
+ * Withdraw your account deletion request
+ */
+export const userDeletionRequestWithdrawMutation = (
+  options?: Partial<Options<UserDeletionRequestWithdrawData>>,
+): UseMutationOptions<
+  UserDeletionRequestWithdrawResponse,
+  UserDeletionRequestWithdrawError,
+  Options<UserDeletionRequestWithdrawData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UserDeletionRequestWithdrawResponse,
+    UserDeletionRequestWithdrawError,
+    Options<UserDeletionRequestWithdrawData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry
+        .get()
+        .userDeletionRequestWithdraw({
+          ...options,
+          ...fnOptions,
+          throwOnError: true,
+        });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const userDeletionRequestGetQueryKey = (
+  options?: Options<UserDeletionRequestGetData>,
+) => createQueryKey("userDeletionRequestGet", options);
+
+/**
+ * Your account deletion request
+ */
+export const userDeletionRequestGetOptions = (
+  options?: Options<UserDeletionRequestGetData>,
+) =>
+  queryOptions<
+    UserDeletionRequestGetResponse,
+    UserDeletionRequestGetError,
+    UserDeletionRequestGetResponse,
+    ReturnType<typeof userDeletionRequestGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry.get().userDeletionRequestGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: userDeletionRequestGetQueryKey(options),
+  });
+
+/**
+ * Ask an administrator to delete your account
+ *
+ * Ask for deletion. It grants nothing and changes nothing else; an administrator decides.
+ */
+export const userDeletionRequestCreateMutation = (
+  options?: Partial<Options<UserDeletionRequestCreateData>>,
+): UseMutationOptions<
+  UserDeletionRequestCreateResponse,
+  UserDeletionRequestCreateError,
+  Options<UserDeletionRequestCreateData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UserDeletionRequestCreateResponse,
+    UserDeletionRequestCreateError,
+    Options<UserDeletionRequestCreateData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry
+        .get()
+        .userDeletionRequestCreate({
+          ...options,
+          ...fnOptions,
+          throwOnError: true,
+        });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Dismiss a user's deletion request (admin only)
+ *
+ * Close the request without deleting anything.
+ */
+export const userDeletionRequestDismissMutation = (
+  options?: Partial<Options<UserDeletionRequestDismissData>>,
+): UseMutationOptions<
+  UserDeletionRequestDismissResponse,
+  UserDeletionRequestDismissError,
+  Options<UserDeletionRequestDismissData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UserDeletionRequestDismissResponse,
+    UserDeletionRequestDismissError,
+    Options<UserDeletionRequestDismissData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry
+        .get()
+        .userDeletionRequestDismiss({
+          ...options,
+          ...fnOptions,
+          throwOnError: true,
+        });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Reactivate a suspended account (admin only)
+ */
+export const userReactivateMutation = (
+  options?: Partial<Options<UserReactivateData>>,
+): UseMutationOptions<
+  UserReactivateResponse,
+  UserReactivateError,
+  Options<UserReactivateData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UserReactivateResponse,
+    UserReactivateError,
+    Options<UserReactivateData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().userReactivate({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Suspend an account (admin only)
+ *
+ * Refuse the account's tokens and stop its running work; data is kept. Idempotent.
+ *
+ * The frontend also bans the account in Better Auth, which blocks sign-in and
+ * revokes its sessions. Admins can't suspend themselves or the last administrator.
+ */
+export const userSuspendMutation = (
+  options?: Partial<Options<UserSuspendData>>,
+): UseMutationOptions<
+  UserSuspendResponse,
+  UserSuspendError,
+  Options<UserSuspendData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UserSuspendResponse,
+    UserSuspendError,
+    Options<UserSuspendData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().userSuspend({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
  * Delete a user
  *
  * Permanently delete a user (row, tombstone, files, and vectors).
  *
- * Admin-only via :data:`AdminUserDep`, and an admin may not delete their
- * own account — doing so would cascade-delete their data while their live
- * JWT keeps them able to re-enter the system.
+ * Admin-only via :data:`AdminUserDep`. An admin may not delete their own
+ * account or the last administrator. The frontend deletes the Better Auth
+ * account first; retrying after a partial failure is safe.
  *
  * Args:
  * user_id: The id of the user to delete (may differ from the caller).
@@ -8807,6 +8999,7 @@ export const userAboutUpdateMutation = (
  *
  * Raises:
  * ForbiddenException: If the caller tries to delete their own account.
+ * ConflictException: If the user is the last administrator.
  * NotFoundException: If no such user exists.
  */
 export const userDeleteMutation = (

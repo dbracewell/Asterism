@@ -64,13 +64,13 @@ Source: the 2026-11-06 multi-user web decision. [EPIC-86](docs/epics/EPIC-86-MUL
 
 ### US-86.2: Account lifecycle for admins
 
-- [ ] Suspend / reactivate: Better Auth ban plus session revocation; the backend refuses a suspended user's token (checked with the existing per-request user lookup) and stops their running jobs.
-- [ ] Admin-issued one-time password reset link (expiring, single use, shown once), modeled on invite links; reset revokes existing sessions.
-- [ ] Delete from the UI: deletes the Better Auth account and then the backend data (existing `delete_user`), with a confirmation naming what goes. A partial failure is reported and can be retried.
-- [ ] "Sign out everywhere" for the user in their own settings.
-- [ ] Deletion requests: a user who isn't an admin can ask for their account to be deleted (and withdraw the request); Users shows open requests, and the admin deletes or dismisses. A request changes nothing else.
-- [ ] Admins can't suspend or delete themselves or the last admin.
-- [ ] Tests: suspended token refused on HTTP and WebSocket, reset link reuse and expiry, delete leaves no auth account, last-admin guard.
+- [x] Suspend / reactivate: Better Auth ban plus session revocation; the backend refuses a suspended user's token (checked with the existing per-request user lookup) and stops their running jobs.
+- [x] Admin-issued one-time password reset link (expiring, single use, shown once), modeled on invite links; reset revokes existing sessions.
+- [x] Delete from the UI: deletes the Better Auth account and then the backend data (existing `delete_user`), with a confirmation naming what goes. A partial failure is reported and can be retried.
+- [x] "Sign out everywhere" for the user in their own settings.
+- [x] Deletion requests: a user who isn't an admin can ask for their account to be deleted (and withdraw the request); Users shows open requests, and the admin deletes or dismisses. A request changes nothing else.
+- [x] Admins can't suspend or delete themselves or the last admin.
+- [x] Tests: suspended token refused on HTTP and WebSocket, reset link reuse and expiry, delete leaves no auth account, last-admin guard.
 
 ### US-86.3: Usage limits and usage view
 

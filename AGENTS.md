@@ -46,6 +46,10 @@ deployments. Stored data must survive upgrades
 - Better Auth is the source of truth for identity. The backend `users` table keeps
   a display copy of each user's name and email, synced from verified token claims
   ([ADR-0057](docs/adr/0057-user-identity-copy.md)); it never authenticates with it.
+- Admins suspend, reactivate, reset (one-time links) and delete accounts through
+  server actions that change Better Auth and the backend together
+  ([ADR-0070](docs/adr/0070-account-lifecycle.md)). The backend refuses a
+  suspended account's tokens. Only admins delete accounts; others may request it.
 - Every user is in exactly one **group** ([ADR-0058](docs/adr/0058-user-groups.md)).
   Built-in groups: **admin**, **educator**, **student**; new users join student.
   The admin group mirrors the token's `admin` role and is never set by membership;

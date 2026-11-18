@@ -179,3 +179,17 @@ async def test_data_seeded_at_previous_revision_survives_upgrade(migration_db):
         assert connection.execute("SELECT chat_id FROM chat_search WHERE chat_search MATCH 'orbital'").fetchall() == [
             (chat_id,)
         ]
+
+
+@pytest.mark.asyncio
+async def test_account_lifecycle_upgrade_keeps_users_active(migration_db):
+    """e720dd8451d4: existing users get no suspension and no deletion request."""
+    await upgrade_to(migration_db, BASELINE)
+    with sqlite3.connect(migration_db) as connection:
+        connection.execute("INSERT INTO users (id, name) VALUES ('user-1', 'Ada')")
+
+    await upgrade_to(migration_db, "e720dd8451d4")
+
+    with sqlite3.connect(migration_db) as connection:
+        assert connection.execute("SELECT id, name, suspended_at FROM users").fetchall() == [("user-1", "Ada", None)]
+        assert connection.execute("SELECT count(*) FROM account_deletion_requests").fetchone() == (0,)

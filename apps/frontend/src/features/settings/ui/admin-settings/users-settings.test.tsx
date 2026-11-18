@@ -2,10 +2,26 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, expect, it, vi } from "vitest";
+import { UserContext } from "@/features/auth/components/user-context";
+import type { User } from "@/features/auth/types";
 import { UsersSettings } from "./users-settings";
 
-const mocks = vi.hoisted(() => ({ list: vi.fn(), move: vi.fn() }));
+const mocks = vi.hoisted(() => ({
+  list: vi.fn(),
+  move: vi.fn(),
+  dismiss: vi.fn(),
+  suspend: vi.fn(),
+  reactivate: vi.fn(),
+  remove: vi.fn(),
+  reset: vi.fn(),
+}));
 vi.mock("@/lib/api", () => ({ client: {} }));
+vi.mock("@/features/auth/server/account-lifecycle", () => ({
+  suspendAccount: mocks.suspend,
+  reactivateAccount: mocks.reactivate,
+  deleteAccount: mocks.remove,
+  issueResetLink: mocks.reset,
+}));
 vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
   userGetManyOptions: (options: { query: Record<string, unknown> }) => ({
     queryKey: ["users", options.query],
@@ -22,6 +38,7 @@ vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
       ].map(([id, name]) => ({ id, name })),
   }),
   groupMemberMoveMutation: () => ({ mutationFn: mocks.move }),
+  userDeletionRequestDismissMutation: () => ({ mutationFn: mocks.dismiss }),
 }));
 
 const GROUPS = {
@@ -42,17 +59,23 @@ const user = (
   educator,
   group: GROUPS[group],
   created_at: 1_700_000_000,
+  suspended: false,
+  deletion_requested_at: null as number | null,
 });
 
 function page(items: ReturnType<typeof user>[], total = items.length) {
   return { items, total, page: 1, page_size: 50 };
 }
 
-function setup() {
+function setup(selfId?: string) {
   render(
-    <QueryClientProvider client={new QueryClient()}>
-      <UsersSettings />
-    </QueryClientProvider>,
+    <UserContext.Provider
+      value={{ user: selfId ? ({ id: selfId } as User) : null }}
+    >
+      <QueryClientProvider client={new QueryClient()}>
+        <UsersSettings />
+      </QueryClientProvider>
+    </UserContext.Provider>,
   );
   return userEvent.setup();
 }
@@ -146,4 +169,120 @@ it("offers a retry when the list cannot load", async () => {
   mocks.list.mockRejectedValue(new Error("down"));
   setup();
   expect(await screen.findByText("Could not load users.")).toBeInTheDocument();
+});
+
+// --- US-86.2: account lifecycle -------------------------------------------
+
+it("hides account actions on the admin's own row", async () => {
+  setup("root");
+  expect(await screen.findByText("Root")).toBeInTheDocument();
+  expect(
+    screen.queryByRole("button", { name: "Account actions for Root" }),
+  ).not.toBeInTheDocument();
+  expect(
+    screen.getByRole("button", { name: "Account actions for Ann" }),
+  ).toBeInTheDocument();
+});
+
+it("suspends after confirmation and reactivates a suspended account", async () => {
+  mocks.list.mockResolvedValue(
+    page([user("ann", "Ann"), { ...user("bo", "Bo"), suspended: true }]),
+  );
+  mocks.suspend.mockResolvedValue({ ok: true });
+  mocks.reactivate.mockResolvedValue({ ok: true });
+  const events = setup("root");
+
+  await events.click(
+    await screen.findByRole("button", { name: "Account actions for Ann" }),
+  );
+  await events.click(screen.getByRole("menuitem", { name: "Suspend" }));
+  expect(
+    screen.getByRole("alertdialog", { name: "Suspend Ann?" }),
+  ).toHaveTextContent("Nothing is deleted");
+  expect(mocks.suspend).not.toHaveBeenCalled();
+  await events.click(screen.getByRole("button", { name: "Suspend" }));
+  await waitFor(() => expect(mocks.suspend).toHaveBeenCalledWith("ann"));
+  await waitFor(() =>
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument(),
+  );
+
+  expect(screen.getByText("Suspended")).toBeInTheDocument();
+  await events.click(
+    screen.getByRole("button", { name: "Account actions for Bo" }),
+  );
+  await events.click(screen.getByRole("menuitem", { name: "Reactivate" }));
+  await waitFor(() => expect(mocks.reactivate).toHaveBeenCalledWith("bo"));
+});
+
+it("names what deletion removes and offers a retry after a partial failure", async () => {
+  mocks.list.mockResolvedValue(page([user("ann", "Ann")]));
+  mocks.remove.mockResolvedValueOnce({
+    ok: false,
+    error:
+      "The sign-in account is deleted, but their Asterism data isn't yet: down Try again.",
+  });
+  mocks.remove.mockResolvedValueOnce({ ok: true });
+  const events = setup("root");
+
+  await events.click(
+    await screen.findByRole("button", { name: "Account actions for Ann" }),
+  );
+  await events.click(screen.getByRole("menuitem", { name: "Delete account" }));
+  const dialog = screen.getByRole("alertdialog", {
+    name: "Delete Ann's account?",
+  });
+  expect(dialog).toHaveTextContent("can't be undone");
+  expect(dialog).toHaveTextContent("any class they teach is deleted");
+  await events.click(screen.getByRole("button", { name: "Delete account" }));
+  expect(await screen.findByRole("alert")).toHaveTextContent(
+    "sign-in account is deleted",
+  );
+  await events.click(screen.getByRole("button", { name: "Try again" }));
+  await waitFor(() => expect(mocks.remove).toHaveBeenCalledTimes(2));
+  await waitFor(() =>
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument(),
+  );
+});
+
+it("shows a password reset link once", async () => {
+  mocks.list.mockResolvedValue(page([user("ann", "Ann")]));
+  mocks.reset.mockResolvedValue({
+    ok: true,
+    url: "https://asterism.test/reset-password?token=abc",
+    expiresAt: "2026-11-17T20:00:00.000Z",
+  });
+  const events = setup("root");
+
+  await events.click(
+    await screen.findByRole("button", { name: "Account actions for Ann" }),
+  );
+  await events.click(
+    screen.getByRole("menuitem", { name: "Create password reset link" }),
+  );
+  expect(
+    await screen.findByRole("textbox", { name: "Password reset link" }),
+  ).toHaveValue("https://asterism.test/reset-password?token=abc");
+  expect(screen.getByRole("dialog")).toHaveTextContent("It works once");
+  await events.click(screen.getByRole("button", { name: "Done" }));
+  expect(
+    screen.queryByRole("textbox", { name: "Password reset link" }),
+  ).not.toBeInTheDocument();
+});
+
+it("shows an open deletion request and dismisses it", async () => {
+  mocks.list.mockResolvedValue(
+    page([{ ...user("ann", "Ann"), deletion_requested_at: 1_700_000_000 }]),
+  );
+  mocks.dismiss.mockResolvedValue(true);
+  const events = setup("root");
+
+  expect(await screen.findByText(/Asked for deletion/)).toBeInTheDocument();
+  await events.click(
+    screen.getByRole("button", { name: "Dismiss Ann's deletion request" }),
+  );
+  await waitFor(() =>
+    expect(mocks.dismiss.mock.calls[0][0]).toEqual({
+      path: { user_id: "ann" },
+    }),
+  );
 });

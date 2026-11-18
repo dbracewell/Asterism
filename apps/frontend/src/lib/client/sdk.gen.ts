@@ -738,9 +738,24 @@ import type {
   UserDeleteData,
   UserDeleteErrors,
   UserDeleteResponses,
+  UserDeletionRequestCreateData,
+  UserDeletionRequestCreateErrors,
+  UserDeletionRequestCreateResponses,
+  UserDeletionRequestDismissData,
+  UserDeletionRequestDismissErrors,
+  UserDeletionRequestDismissResponses,
+  UserDeletionRequestGetData,
+  UserDeletionRequestGetErrors,
+  UserDeletionRequestGetResponses,
+  UserDeletionRequestWithdrawData,
+  UserDeletionRequestWithdrawErrors,
+  UserDeletionRequestWithdrawResponses,
   UserGetManyData,
   UserGetManyErrors,
   UserGetManyResponses,
+  UserReactivateData,
+  UserReactivateErrors,
+  UserReactivateResponses,
   UserSettingDeleteData,
   UserSettingDeleteErrors,
   UserSettingDeleteResponses,
@@ -753,6 +768,9 @@ import type {
   UserSettingUpdateData,
   UserSettingUpdateErrors,
   UserSettingUpdateResponses,
+  UserSuspendData,
+  UserSuspendErrors,
+  UserSuspendResponses,
 } from "./types.gen";
 
 export type Options<
@@ -6179,9 +6197,7 @@ export class ApiClient extends HeyApiClient {
   /**
    * List accounts (admin only)
    *
-   * List accounts with their name, email, educator status and first-seen date.
-   *
-   * Read-only: deactivating and deleting accounts are not part of this list.
+   * List accounts with their name, email, group, educator status, suspension and deletion request.
    */
   public userGetMany<ThrowOnError extends boolean = false>(
     options?: Options<UserGetManyData, ThrowOnError>,
@@ -6294,13 +6310,144 @@ export class ApiClient extends HeyApiClient {
   }
 
   /**
+   * Withdraw your account deletion request
+   */
+  public userDeletionRequestWithdraw<ThrowOnError extends boolean = false>(
+    options?: Options<UserDeletionRequestWithdrawData, ThrowOnError>,
+  ): RequestResult<
+    UserDeletionRequestWithdrawResponses,
+    UserDeletionRequestWithdrawErrors,
+    ThrowOnError
+  > {
+    return (options?.client ?? this.client).delete<
+      UserDeletionRequestWithdrawResponses,
+      UserDeletionRequestWithdrawErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/users/me/deletion-request",
+      ...options,
+    });
+  }
+
+  /**
+   * Your account deletion request
+   */
+  public userDeletionRequestGet<ThrowOnError extends boolean = false>(
+    options?: Options<UserDeletionRequestGetData, ThrowOnError>,
+  ): RequestResult<
+    UserDeletionRequestGetResponses,
+    UserDeletionRequestGetErrors,
+    ThrowOnError
+  > {
+    return (options?.client ?? this.client).get<
+      UserDeletionRequestGetResponses,
+      UserDeletionRequestGetErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/users/me/deletion-request",
+      ...options,
+    });
+  }
+
+  /**
+   * Ask an administrator to delete your account
+   *
+   * Ask for deletion. It grants nothing and changes nothing else; an administrator decides.
+   */
+  public userDeletionRequestCreate<ThrowOnError extends boolean = false>(
+    options?: Options<UserDeletionRequestCreateData, ThrowOnError>,
+  ): RequestResult<
+    UserDeletionRequestCreateResponses,
+    UserDeletionRequestCreateErrors,
+    ThrowOnError
+  > {
+    return (options?.client ?? this.client).put<
+      UserDeletionRequestCreateResponses,
+      UserDeletionRequestCreateErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/users/me/deletion-request",
+      ...options,
+    });
+  }
+
+  /**
+   * Dismiss a user's deletion request (admin only)
+   *
+   * Close the request without deleting anything.
+   */
+  public userDeletionRequestDismiss<ThrowOnError extends boolean = false>(
+    options: Options<UserDeletionRequestDismissData, ThrowOnError>,
+  ): RequestResult<
+    UserDeletionRequestDismissResponses,
+    UserDeletionRequestDismissErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).delete<
+      UserDeletionRequestDismissResponses,
+      UserDeletionRequestDismissErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/users/{user_id}/deletion-request",
+      ...options,
+    });
+  }
+
+  /**
+   * Reactivate a suspended account (admin only)
+   */
+  public userReactivate<ThrowOnError extends boolean = false>(
+    options: Options<UserReactivateData, ThrowOnError>,
+  ): RequestResult<
+    UserReactivateResponses,
+    UserReactivateErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).delete<
+      UserReactivateResponses,
+      UserReactivateErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/users/{user_id}/suspension",
+      ...options,
+    });
+  }
+
+  /**
+   * Suspend an account (admin only)
+   *
+   * Refuse the account's tokens and stop its running work; data is kept. Idempotent.
+   *
+   * The frontend also bans the account in Better Auth, which blocks sign-in and
+   * revokes its sessions. Admins can't suspend themselves or the last administrator.
+   */
+  public userSuspend<ThrowOnError extends boolean = false>(
+    options: Options<UserSuspendData, ThrowOnError>,
+  ): RequestResult<UserSuspendResponses, UserSuspendErrors, ThrowOnError> {
+    return (options.client ?? this.client).put<
+      UserSuspendResponses,
+      UserSuspendErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/users/{user_id}/suspension",
+      ...options,
+    });
+  }
+
+  /**
    * Delete a user
    *
    * Permanently delete a user (row, tombstone, files, and vectors).
    *
-   * Admin-only via :data:`AdminUserDep`, and an admin may not delete their
-   * own account — doing so would cascade-delete their data while their live
-   * JWT keeps them able to re-enter the system.
+   * Admin-only via :data:`AdminUserDep`. An admin may not delete their own
+   * account or the last administrator. The frontend deletes the Better Auth
+   * account first; retrying after a partial failure is safe.
    *
    * Args:
    * user_id: The id of the user to delete (may differ from the caller).
@@ -6312,6 +6459,7 @@ export class ApiClient extends HeyApiClient {
    *
    * Raises:
    * ForbiddenException: If the caller tries to delete their own account.
+   * ConflictException: If the user is the last administrator.
    * NotFoundException: If no such user exists.
    */
   public userDelete<ThrowOnError extends boolean = false>(

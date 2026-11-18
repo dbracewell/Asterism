@@ -56,6 +56,8 @@ async def test_lists_names_emails_educator_status_and_created_date(user_api, ses
         "educator": "approved",
         "group": {"id": "educator", "name": "Educator"},
         "created_at": 0,
+        "suspended": False,
+        "deletion_requested_at": None,
     }
     assert by_id["u-zed"]["educator"] == "pending" and by_id["u-zed"]["created_at"] == 1_700_000_000
     assert by_id["nobody"] == by_id["nobody"] | {"name": None, "email": None, "educator": None}

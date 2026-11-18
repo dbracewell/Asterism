@@ -3,7 +3,8 @@
 Better Auth remains the source of truth for identity and sign-in. The users
 row keeps a display copy of the current name and email (never used to
 authenticate; see ADR-0057) and the role stays in the token. The row also
-holds the user's one About you text and its revision (ADR-0066).
+holds the user's one About you text and its revision (ADR-0066), whether an
+admin has suspended the account, and an open request to delete it (US-86.2).
 """
 
 from sqlalchemy import CheckConstraint, ForeignKey, Integer, String, Text, text
@@ -55,6 +56,9 @@ class UserModel(Base):
     )
     about_md: Mapped[str] = mapped_column(Text, default="", server_default="", nullable=False)
     about_revision: Mapped[int] = mapped_column(Integer, default=1, server_default="1", nullable=False)
+    # Set while an admin has suspended the account: its tokens are refused and
+    # Better Auth refuses sign-in. Reactivating clears it; data is kept.
+    suspended_at: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
 
 class DeletedUserModel(Base):
@@ -72,3 +76,17 @@ class DeletedUserModel(Base):
         String,
         primary_key=True,
     )
+
+
+class AccountDeletionRequestModel(Base):
+    """A user's open request that an admin delete their account (US-86.2).
+
+    At most one per user. It grants nothing and changes no other data; the
+    admin deletes the account or dismisses the request. Withdrawing,
+    dismissing and deleting the account all remove the row.
+    """
+
+    __tablename__ = "account_deletion_requests"
+
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    requested_at: Mapped[int] = mapped_column(Integer, default=get_unix_timestamp, nullable=False)

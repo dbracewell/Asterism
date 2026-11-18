@@ -1,5 +1,6 @@
 import pytest
 from asterism.core.config import config
+from asterism.domains.user.lifecycle import clear_suspension_cache
 from asterism.domains.user.service import clear_user_cache
 
 # Tests run under the "test" profile, which skips the SYSTEM_KEY validation that
@@ -11,5 +12,7 @@ config.system_key = "unit-test-fernet-key-0123456789abcdef"
 @pytest.fixture(autouse=True)
 def _reset_user_caches():
     clear_user_cache()
+    clear_suspension_cache()
     yield
     clear_user_cache()
+    clear_suspension_cache()

@@ -2331,6 +2331,20 @@ export type DelegationRecord = {
 };
 
 /**
+ * DeletionRequest
+ *
+ * The signed-in user's own deletion request.
+ */
+export type DeletionRequest = {
+  /**
+   * Requested At
+   *
+   * When it was made, in Unix seconds; null when there is none
+   */
+  requested_at: number | null;
+};
+
+/**
  * Disagreement
  *
  * A point the sources cannot all be right about; positions come from distinct sources.
@@ -9791,6 +9805,18 @@ export type UserSummary = {
    * When the account was first seen, in Unix seconds
    */
   created_at: number;
+  /**
+   * Suspended
+   *
+   * True while an administrator has suspended the account
+   */
+  suspended: boolean;
+  /**
+   * Deletion Requested At
+   *
+   * When the user asked for their account to be deleted, in Unix seconds, or null
+   */
+  deletion_requested_at: number | null;
 };
 
 /**
@@ -20227,6 +20253,212 @@ export type UserAboutUpdateResponses = {
 
 export type UserAboutUpdateResponse =
   UserAboutUpdateResponses[keyof UserAboutUpdateResponses];
+
+export type UserDeletionRequestWithdrawData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/users/me/deletion-request";
+};
+
+export type UserDeletionRequestWithdrawErrors = {
+  /**
+   * Not found
+   */
+  404: ErrorDetail;
+};
+
+export type UserDeletionRequestWithdrawError =
+  UserDeletionRequestWithdrawErrors[keyof UserDeletionRequestWithdrawErrors];
+
+export type UserDeletionRequestWithdrawResponses = {
+  /**
+   * Successful Response
+   */
+  200: DeletionRequest;
+};
+
+export type UserDeletionRequestWithdrawResponse =
+  UserDeletionRequestWithdrawResponses[keyof UserDeletionRequestWithdrawResponses];
+
+export type UserDeletionRequestGetData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/users/me/deletion-request";
+};
+
+export type UserDeletionRequestGetErrors = {
+  /**
+   * Not found
+   */
+  404: ErrorDetail;
+};
+
+export type UserDeletionRequestGetError =
+  UserDeletionRequestGetErrors[keyof UserDeletionRequestGetErrors];
+
+export type UserDeletionRequestGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: DeletionRequest;
+};
+
+export type UserDeletionRequestGetResponse =
+  UserDeletionRequestGetResponses[keyof UserDeletionRequestGetResponses];
+
+export type UserDeletionRequestCreateData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/users/me/deletion-request";
+};
+
+export type UserDeletionRequestCreateErrors = {
+  /**
+   * Forbidden
+   */
+  403: ErrorDetail;
+  /**
+   * Not found
+   */
+  404: ErrorDetail;
+};
+
+export type UserDeletionRequestCreateError =
+  UserDeletionRequestCreateErrors[keyof UserDeletionRequestCreateErrors];
+
+export type UserDeletionRequestCreateResponses = {
+  /**
+   * Successful Response
+   */
+  200: DeletionRequest;
+};
+
+export type UserDeletionRequestCreateResponse =
+  UserDeletionRequestCreateResponses[keyof UserDeletionRequestCreateResponses];
+
+export type UserDeletionRequestDismissData = {
+  body?: never;
+  path: {
+    /**
+     * User Id
+     */
+    user_id: string;
+  };
+  query?: never;
+  url: "/users/{user_id}/deletion-request";
+};
+
+export type UserDeletionRequestDismissErrors = {
+  /**
+   * Not found
+   */
+  404: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type UserDeletionRequestDismissError =
+  UserDeletionRequestDismissErrors[keyof UserDeletionRequestDismissErrors];
+
+export type UserDeletionRequestDismissResponses = {
+  /**
+   * Response Userdeletionrequestdismiss
+   *
+   * Successful Response
+   */
+  200: boolean;
+};
+
+export type UserDeletionRequestDismissResponse =
+  UserDeletionRequestDismissResponses[keyof UserDeletionRequestDismissResponses];
+
+export type UserReactivateData = {
+  body?: never;
+  path: {
+    /**
+     * User Id
+     */
+    user_id: string;
+  };
+  query?: never;
+  url: "/users/{user_id}/suspension";
+};
+
+export type UserReactivateErrors = {
+  /**
+   * Not found
+   */
+  404: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type UserReactivateError =
+  UserReactivateErrors[keyof UserReactivateErrors];
+
+export type UserReactivateResponses = {
+  /**
+   * Response Userreactivate
+   *
+   * Successful Response
+   */
+  200: boolean;
+};
+
+export type UserReactivateResponse =
+  UserReactivateResponses[keyof UserReactivateResponses];
+
+export type UserSuspendData = {
+  body?: never;
+  path: {
+    /**
+     * User Id
+     */
+    user_id: string;
+  };
+  query?: never;
+  url: "/users/{user_id}/suspension";
+};
+
+export type UserSuspendErrors = {
+  /**
+   * Forbidden
+   */
+  403: ErrorDetail;
+  /**
+   * Not found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type UserSuspendError = UserSuspendErrors[keyof UserSuspendErrors];
+
+export type UserSuspendResponses = {
+  /**
+   * Response Usersuspend
+   *
+   * Successful Response
+   */
+  200: boolean;
+};
+
+export type UserSuspendResponse =
+  UserSuspendResponses[keyof UserSuspendResponses];
 
 export type UserDeleteData = {
   body?: never;

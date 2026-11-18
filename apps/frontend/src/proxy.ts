@@ -5,6 +5,8 @@ import { NextRequest, NextResponse } from "next/server";
 
 const publicRoutes = [
   "/sign-in",
+  // Admin-issued password reset links are opened while signed out (US-86.2).
+  "/reset-password",
   "/api/stream",
   "/api/theme",
   "/api/theme/list",

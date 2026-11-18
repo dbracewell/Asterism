@@ -40,3 +40,14 @@ export const InviteSignupSchema = BaseUserSchema.extend({
 });
 
 export type InviteSignupSchemaType = z.infer<typeof InviteSignupSchema>;
+
+/** A new password from an admin-issued reset link (US-86.2). */
+export const ResetPasswordSchema = z
+  .object({
+    password: BaseUserSchema.shape.password,
+    confirm: z.string().trim(),
+  })
+  .refine((data) => data.password === data.confirm, {
+    message: "The passwords don't match",
+    path: ["confirm"],
+  });
