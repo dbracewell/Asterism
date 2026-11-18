@@ -56,6 +56,7 @@ COPY --from=frontend-build /app/apps/frontend/public ./apps/frontend/public
 COPY --from=frontend-build /app/apps/frontend/package.json /app/apps/frontend/next.config.ts ./apps/frontend/
 # The official auth CLI needs the source configuration, not Next.js build chunks.
 COPY --from=frontend-build /app/apps/frontend/src/lib/auth-core.ts ./apps/frontend/src/lib/auth-core.ts
+COPY --from=frontend-build /app/apps/frontend/src/lib/auth-rate-limit.ts ./apps/frontend/src/lib/auth-rate-limit.ts
 COPY --from=frontend-build /app/apps/frontend/src/lib/auth-cli.ts ./apps/frontend/src/lib/auth-cli.ts
 COPY --from=frontend-build /app/apps/frontend/src/lib/server-config-core.ts ./apps/frontend/src/lib/server-config-core.ts
 # next.config.ts reads the security headers and the shared upload limit.

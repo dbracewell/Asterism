@@ -7,6 +7,7 @@ import { admin, jwt } from "better-auth/plugins";
 import Database from "better-sqlite3";
 
 import { getFrontendServerConfig } from "./server-config-core";
+import { AUTH_RATE_LIMIT } from "./auth-rate-limit";
 
 export function hashMatch(candidate: unknown, configured: string): boolean {
   if (typeof candidate !== "string" || !candidate || !configured) {
@@ -74,8 +75,9 @@ function createAuth() {
     secret: config.betterAuthSecret,
     database: new Database(config.authDbPath),
     // Browser tests run a production build and create many accounts and
-    // sessions from one address in parallel; production keeps the limiter.
-    ...(config.profile === "test" && { rateLimit: { enabled: false } }),
+    // sessions from one address in parallel; production keeps the limiter,
+    // sized for a class on one address.
+    rateLimit: config.profile === "test" ? { enabled: false } : AUTH_RATE_LIMIT,
     // Account lifecycle runs only through the admin server actions, which also
     // update the backend (US-86.2). Password resets use admin-issued links, so
     // there is no public "email me a link" request.

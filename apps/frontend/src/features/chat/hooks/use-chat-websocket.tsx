@@ -6,7 +6,7 @@ import {
 } from "@/features/chat/schemas";
 import { ToolTimings } from "@/features/chat/lib/agent-timeline";
 import { StreamingMessage } from "@/features/chat/types";
-import { authClient } from "@/lib/auth-client";
+import { backendToken, forgetBackendToken } from "@/lib/backend-token";
 import { chatWebSocketUrl } from "@/lib/backend-url";
 import { Message } from "@/lib/client";
 import { ComparisonTag, parseComparisonTag } from "../lib/comparison";
@@ -118,11 +118,13 @@ export const useChatWebSocket = ({
     };
   }, []);
 
-  const refreshToken = React.useCallback(async () => {
+  const refreshToken = React.useCallback(async (rejected: boolean) => {
     try {
-      const { data } = await authClient.token();
-      if (!didUnmount.current && data?.token) {
-        setActiveToken(data.token);
+      // 1008 is the backend refusing the token; any other close keeps it.
+      if (rejected) forgetBackendToken();
+      const token = await backendToken();
+      if (!didUnmount.current && token) {
+        setActiveToken(token);
       }
     } catch {
       // Keep the existing token if the refresh endpoint is unreachable.
@@ -148,7 +150,7 @@ export const useChatWebSocket = ({
     shouldReconnect: () => {
       return !didUnmount.current;
     },
-    onClose: () => {
+    onClose: (event) => {
       setToolProgress(null);
       if (flushTimerRef.current) {
         clearTimeout(flushTimerRef.current);
@@ -160,7 +162,7 @@ export const useChatWebSocket = ({
       }
       streamingMessageRef.current = null;
       if (!didUnmount.current) {
-        void refreshToken();
+        void refreshToken(event.code === 1008);
       }
     },
     onError: () => {

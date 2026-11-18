@@ -1,5 +1,5 @@
-import { authClient } from "@/lib/auth-client";
 import { BACKEND_API_URL, browserApiUrl } from "@/lib/backend-url";
+import { backendToken, forgetBackendToken } from "@/lib/backend-token";
 import { ApiClient } from "@/lib/client";
 import { client } from "@/lib/client/client.gen";
 
@@ -12,11 +12,17 @@ client.setConfig({
 });
 
 client.interceptors.request.use(async (request) => {
-  const { data } = await authClient.token();
-  if (data?.token) {
-    request.headers.set("Authorization", `Bearer ${data.token}`);
+  const token = await backendToken();
+  if (token) {
+    request.headers.set("Authorization", `Bearer ${token}`);
   }
   return request;
+});
+
+// A rejected token (expired early, or the account changed) is fetched afresh next time.
+client.interceptors.response.use((response) => {
+  if (response.status === 401) forgetBackendToken();
+  return response;
 });
 
 const api = new ApiClient({ client });

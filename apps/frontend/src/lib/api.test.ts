@@ -1,12 +1,19 @@
 import { afterEach, expect, it, vi } from "vitest";
 
-const mocks = vi.hoisted(() => ({ setConfig: vi.fn(), request: vi.fn() }));
+const mocks = vi.hoisted(() => ({
+  setConfig: vi.fn(),
+  request: vi.fn(),
+  response: vi.fn(),
+}));
 vi.mock("@/lib/auth-client", () => ({ authClient: {} }));
 vi.mock("@/lib/client", () => ({ ApiClient: class {} }));
 vi.mock("@/lib/client/client.gen", () => ({
   client: {
     setConfig: mocks.setConfig,
-    interceptors: { request: { use: mocks.request } },
+    interceptors: {
+      request: { use: mocks.request },
+      response: { use: mocks.response },
+    },
   },
 }));
 

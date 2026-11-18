@@ -12,6 +12,34 @@ is used by file, project, processing-profile, and captioning UI flows.
 
 ## Script reference
 
+### `capacity-check.mjs`
+
+Runs a class of simulated students against a disposable container sized like the
+target host (US-86.7), and reports against the capacity targets. It starts an
+OpenAI-compatible model double on the host that streams like a hosted model, a
+fresh container with `--cpus` and `--memory` limits and a new volume, and signs
+up an admin and the students. Then for `--duration` seconds the students sign in
+(spread over `--arrival` seconds) and chat, upload notes and review flashcards,
+with think time between actions. At `--burst-at` seconds every student asks at
+once. The container is removed afterwards unless `--keep` is given.
+
+```bash
+docker build -t asterism:local .
+pnpm capacity:check                                   # 30 students, 10 minutes, 4 CPUs, 8 GB
+pnpm capacity:check --students 60 --env MAX_ACTIVE_CHAT_JOBS=64
+```
+
+Options: `--image`, `--students`, `--duration`, `--arrival`, `--burst-at` (0 for
+none), `--think-min`/`--think-max`, `--cpus`, `--memory`, `--port`,
+`--addresses shared|each` (one school address, or one each), `--tokens
+cached|per-request` (how the browser gets backend tokens; per-request reproduces
+the behavior before US-86.7), the model double's `--model-ttft-ms`, `--model-tps`
+and `--reply-tokens`, repeatable `--env KEY=VALUE` for the container, and `--out`
+(default `.capacity/<time>`, which holds `summary.md`, `summary.json` and the
+container log). Exit codes: `0` when every target passes, `1` when one fails, `2`
+when the run could not complete. The scenario, targets and recorded results are
+in [docs/architecture/capacity.md](../docs/architecture/capacity.md).
+
 ### `check-client-secret-leaks.mjs`
 
 Scans one or more files or directories for the current process values of

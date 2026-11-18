@@ -203,8 +203,13 @@ class Config(BaseSettings):
     max_chat_controllers: int = 128
     max_chat_controllers_per_user: int = 16
 
-    max_concurrent_llm_requests: int = 8
-    """Maximum concurrent streaming requests across all configured LLM providers."""
+    max_concurrent_llm_requests: int = 32
+    """Maximum concurrent streaming requests across all configured LLM providers.
+
+    Calls past it wait. Sized like ``max_active_chat_jobs`` (US-86.7): at 8, a
+    class asking at once waited up to ~14 s for a first token. Lower it for a
+    model server that cannot stream that many replies at once.
+    """
 
     sub_agent_context_window_messages: int = 10
     """The maximum number of messages to include in the context window for sub-agents."""
