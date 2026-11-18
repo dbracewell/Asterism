@@ -30,7 +30,7 @@ Source: product direction discussion (2026-10-31). Suggested order: EPIC-51 → 
 
 ## Next epics (proposed 2026-11-07)
 
-EPIC-64 and EPIC-65 are complete and archived in the [2026-11-07 checklist](docs/archive/todo-completed-2026-11-07.md); EPIC-66 is complete and archived in the [2026-11-08 checklist](docs/archive/todo-completed-2026-11-08.md). Next: a multi-user deployment readiness epic (not yet written).
+EPIC-64 and EPIC-65 are complete and archived in the [2026-11-07 checklist](docs/archive/todo-completed-2026-11-07.md); EPIC-66 is complete and archived in the [2026-11-08 checklist](docs/archive/todo-completed-2026-11-08.md). Next: [EPIC-86](docs/epics/EPIC-86-MULTI-USER-DEPLOYMENT-READINESS.md), multi-user deployment readiness (below).
 
 ## Image generation (proposed 2026-11-09)
 
@@ -47,3 +47,63 @@ Source: [codebase review](codebase_review.md), verified against the code on 2026
 ## Feature consolidation (proposed 2026-11-17)
 
 Source: user request and the [feature overlap review](docs/reviews/2026-11-17-feature-overlap-review.md). Suggested order: [EPIC-83](docs/epics/EPIC-83-YOUR-ASTERISM-AND-PERSONA-REMOVAL.md) → [EPIC-84](docs/epics/EPIC-84-ONE-PROGRESS-PANEL.md) → [EPIC-85](docs/epics/EPIC-85-ONE-MODE-POLICY.md). Work one story at a time. EPIC-83, EPIC-84 and EPIC-85 are complete and archived in the [2026-11-17 checklist](docs/archive/todo-completed-2026-11-17.md).
+
+## Multi-user deployment readiness (proposed 2026-11-17)
+
+Source: the 2026-11-06 multi-user web decision. [EPIC-86](docs/epics/EPIC-86-MULTI-USER-DEPLOYMENT-READINESS.md). Suggested order: US-86.1 → 86.4 → 86.3 → 86.2 → 86.5 → 86.6 → 86.7. Open questions (migrations, self-service deletion, target load) must be decided before US-86.3. Work one story at a time.
+
+### US-86.1: Account lifecycle for admins
+
+- [ ] Suspend / reactivate with session revocation; backend refuses suspended tokens and stops their jobs
+- [ ] Admin-issued one-time password reset link; reset revokes sessions
+- [ ] Delete from the UI: Better Auth account then backend data, retryable
+- [ ] "Sign out everywhere" in user settings
+- [ ] Self and last-admin guards
+- [ ] Tests: HTTP and WebSocket refusal, reset link reuse/expiry, no leftover auth account, last-admin guard
+
+### US-86.2: Usage limits and usage view
+
+- [ ] Usage read per user and model, every generation path included
+- [ ] Group token budgets per user per day and month
+- [ ] Enforcement at admission with `reason: "usage_limit"`
+- [ ] Own usage and remaining budget in Your Asterism
+- [ ] Admin Settings → Usage page
+- [ ] Tests: boundaries, reset windows, admin exemption, all paths counted
+
+### US-86.3: Backup, restore and schema version
+
+- [ ] ADR deciding the upgrade path (migrations vs export/reset/import)
+- [ ] Schema version stamp; startup refuses a mismatch
+- [ ] Online `backup` command with manifest and checksums
+- [ ] Offline `restore` command with verification
+- [ ] Documented schedule, retention and upgrade/rollback procedure
+- [ ] Tests: backup during an active chat, corrupted archive, version mismatch
+
+### US-86.4: Edge hardening
+
+- [ ] Security headers (CSP, frame-ancestors, nosniff, Referrer-Policy, HSTS on HTTPS)
+- [ ] One upload limit across nginx, Next proxy and backend
+- [ ] nginx rate limits for auth, uploads and WebSocket handshake
+- [ ] Secure cookie flags under HTTPS
+- [ ] Playwright CSP check and smoke-test header assertions
+
+### US-86.5: Production logs and status
+
+- [ ] Production log profile, `LOG_LEVEL`, optional JSON, request IDs
+- [ ] Log hygiene test
+- [ ] Readiness endpoint used by the container health check
+- [ ] Admin Settings → Status
+
+### US-86.6: Capacity check and sizing guide
+
+- [ ] Repeatable load script with a stub provider
+- [ ] Measure at the agreed target
+- [ ] Fix findings within the single-process design
+- [ ] README sizing guide
+
+### US-86.7: Personal data and deployment guide
+
+- [ ] "Download my data" archive
+- [ ] Account deletion per the open-question decision
+- [ ] `docs/deployment.md`
+- [ ] Help entries for usage limits, suspension and data download
