@@ -207,9 +207,13 @@ CUDA if available, then Apple MPS, then CPU. An administrator can override it.
   Non-commercial licenses (Qwen-Image-2.1) must be accepted before download.
 - **Apple Silicon (local development):** MPS works with the default torch
   build. About 70% of unified memory is assumed usable by the GPU.
-- **NVIDIA in Docker:** the image runs on CPU by default. For CUDA, run the
-  container with the NVIDIA container runtime (`--gpus all`) and a CUDA build
-  of torch; check the admin page's hardware report shows `cuda`.
+- **NVIDIA in Docker:** the image installs CPU-only torch. For CUDA, build it
+  with `--build-arg TORCH_VARIANT=gpu` (see the
+  [GPU build](../../docs/deployment.md#gpu-build)), run the container with the
+  NVIDIA container runtime (`--gpus all`), and check the admin page's hardware
+  report shows `cuda`.
+- **Linux development:** `uv sync` installs CPU-only torch from PyTorch's CPU
+  index (`[tool.uv.sources]` in `pyproject.toml`); macOS uses PyPI's wheels.
 - **CPU** works for every model that fits in memory. The recommendation is
   the smallest: DreamShaper 8 LCM takes about 13 s per 512² image on an M5 Max
   CPU; large models take minutes.

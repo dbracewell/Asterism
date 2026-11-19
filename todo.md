@@ -92,13 +92,13 @@ Source: the follow-ups found during EPIC-87 to EPIC-89. [EPIC-90](docs/epics/EPI
   - [x] Update tests and E2E selectors that match the old text.
   - [x] Rerun the affected shots and update the guide pages that quote the labels.
 - [x] US-90.8: Slim the image and add Chromium
-  - [ ] Measure the current image and record the size of its largest parts.
-  - [ ] Install CPU-only `torch` and `torchvision` by default from PyTorch's CPU index, with a GPU (CUDA) build selected by a Docker build argument; image generation, embeddings and captioning tests pass on both.
-  - [ ] Ship only the frontend's runtime packages (Next standalone output or a production-only install), keeping the `auth` migration command working at startup; copy the Node runtime once.
-  - [ ] Install Playwright's headless Chromium shell with the minimal library set (no `install-deps`), and comment the `libgbm` step in the Dockerfile.
-  - [ ] Container test: the fetch tool renders a JavaScript-heavy page as the non-root user with its launch arguments.
-  - [ ] Measure again; record before and after sizes, the GPU build and the Chromium behavior in the deployment guide and release notes.
-- [ ] US-90.9: Serve the guide in the app and link the Help center to it
+  - [x] Measure the current image and record the size of its largest parts.
+  - [x] Install CPU-only `torch` and `torchvision` by default from PyTorch's CPU index, with a GPU (CUDA) build selected by a Docker build argument; image generation, embeddings and captioning tests pass on both.
+  - [x] Ship only the frontend's runtime packages (Next standalone output or a production-only install), keeping the `auth` migration command working at startup; copy the Node runtime once.
+  - [x] Install Playwright's headless Chromium shell with the minimal library set (no `install-deps`), and comment the `libgbm` step in the Dockerfile.
+  - [x] Container test: the fetch tool renders a JavaScript-heavy page as the non-root user with its launch arguments.
+  - [x] Measure again; record before and after sizes, the GPU build and the Chromium behavior in the deployment guide and release notes.
+- [x] US-90.9: Serve the guide in the app and link the Help center to it
   - [ ] Add a `/help/guide/[...slug]` route that renders `docs/guide/*.md` at build time with a trusted Markdown renderer, separate from the chat viewer (whose policy stays unchanged).
   - [ ] Serve `docs/guide/images`, turn relative `.md` links into app routes, and point links outside the guide to the repository.
   - [ ] Copy `docs/guide` into the Docker frontend build stage.

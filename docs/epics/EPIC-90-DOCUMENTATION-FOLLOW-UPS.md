@@ -153,19 +153,30 @@ As a user following the guide, the buttons say what the guide says.
 As an administrator, the web fetch tool reads JavaScript-heavy pages in the
 container, and the image is smaller than before.
 
-- [ ] Measure the current image and record the size of its largest parts.
-- [ ] Install CPU-only `torch` and `torchvision` by default from PyTorch's CPU
+- [x] Measure the current image and record the size of its largest parts.
+- [x] Install CPU-only `torch` and `torchvision` by default from PyTorch's CPU
       index, with a GPU (CUDA) build selected by a Docker build argument; image
       generation, embeddings and captioning tests pass on both.
-- [ ] Ship only the frontend's runtime packages (Next standalone output or a
+- [x] Ship only the frontend's runtime packages (Next standalone output or a
       production-only install), keeping the `auth` migration command working at
       startup; copy the Node runtime once.
-- [ ] Install Playwright's headless Chromium shell with the minimal library set
+- [x] Install Playwright's headless Chromium shell with the minimal library set
       (no `install-deps`), and comment the `libgbm` step in the Dockerfile.
-- [ ] Container test: the fetch tool renders a JavaScript-heavy page as the
+- [x] Container test: the fetch tool renders a JavaScript-heavy page as the
       non-root user with its launch arguments.
-- [ ] Measure again; record before and after sizes, the GPU build and the
+- [x] Measure again; record before and after sizes, the GPU build and the
       Chromium behavior in the deployment guide and release notes.
+
+Result (measured 2026-11-19, arm64): the image went from 10.8 GB on disk
+(3.55 GB compressed, 6.8 GB of files) to 4.4 GB (949 MB compressed, 3.3 GB of
+files). The backend environment fell from 5.6 GB to 1.8 GB (CPU `torch` 635 MB,
+no NVIDIA libraries or `triton`); the frontend's `node_modules` from 846 MB to
+755 MB (`shadcn` moved to the development packages); Node is copied once.
+Headless Chromium adds 344 MB and its libraries 20 MB. The GPU build was not
+built: with the CUDA wheels the environment is 5.6 GB, so the image is about
+8 GB. The image generation, captioning and embedding tests (81) pass with both
+builds on Linux; `pnpm check:fetch-browser-container` renders a JavaScript page
+as the non-root user with the fetch tool's launch arguments.
 
 ### US-90.9: Serve the guide in the app and link the Help center to it
 

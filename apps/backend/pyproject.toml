@@ -92,3 +92,16 @@ reportOptionalSubscript = "none"
 [tool.ruff.lint.per-file-ignores]
 # Migration scripts hold frozen, generated DDL and SQL; long lines are expected.
 "asterism/db/migrations/versions/*.py" = ["E501"]
+
+# Linux installs CPU-only torch from PyTorch's CPU index: Docker, CI and Linux
+# development need no CUDA libraries (US-90.8). The Docker GPU build reinstalls
+# the same versions from PyPI (see TORCH_VARIANT in the Dockerfile). macOS
+# keeps PyPI's wheels, which have no CUDA.
+[tool.uv.sources]
+torch = [{ index = "pytorch-cpu", marker = "sys_platform == 'linux'" }]
+torchvision = [{ index = "pytorch-cpu", marker = "sys_platform == 'linux'" }]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
