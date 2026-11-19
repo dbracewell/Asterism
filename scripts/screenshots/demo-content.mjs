@@ -106,6 +106,13 @@ DNA and ribosomes.</p>`,
   },
 ];
 
+/** A file that can't be read, so the Files library shows a failed upload and Retry. */
+export const brokenFile = {
+  name: "worksheet-photo.jpg",
+  type: "image/jpeg",
+  text: "Not a real photo: the upload was cut off.",
+};
+
 /** The project the student works in, with its files. */
 export const project = {
   name: "Biology 101",
@@ -516,6 +523,11 @@ example, and a quick question at the end to check understanding.
 
 /** Replies to other model calls, matched by the start of their system prompts. Strings are sent as they are. */
 export const helpers = [
+  {
+    prompt: "Describe this image accurately",
+    reply: () =>
+      "A simple diagram of a green leaf split along its midrib, labelled Sunlight above it, CO₂ in on the left and O₂ out on the right.",
+  },
   {
     prompt: "You are a prompt-writing coach",
     reply: () => ({

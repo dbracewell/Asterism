@@ -447,17 +447,126 @@ export const shots = [
   // --- Files and projects ----------------------------------------------------------
   {
     name: "files-library",
-    alt: "The Files library listing the student's notes, a PDF handout, a spreadsheet of results and a leaf diagram",
+    alt: "The Files library: the student's notes, a PDF handout, a spreadsheet of results and a captioned leaf diagram, each ready, and a worksheet photo whose processing failed",
     as: "student",
     path: () => "/files",
-    ready: ["photosynthesis-notes.md", "leaf-diagram.png"],
+    ready: ["photosynthesis-notes.md", "leaf-diagram.png", "Embedding: failed"],
   },
+
   {
     name: "project-overview",
     alt: "The Biology 101 project page with its goal, files and chats",
     as: "student",
     path: (ids) => `/projects/${ids.project}`,
     ready: ["Biology 101"],
+  },
+
+  {
+    name: "file-page",
+    alt: "The page for leaf-diagram.png: its caption describing the leaf, no extracted text, five similar files and the projects it's in",
+    as: "student",
+    path: () => "/files/leaf-diagram.png",
+    ready: ["Similar files", "A simple diagram of a green leaf"],
+  },
+  {
+    name: "files-delete",
+    alt: "The Delete selected files? message, warning that the file is removed for good from every project and chat, with Cancel and Confirm",
+    as: "student",
+    path: () => "/files",
+    ready: ["worksheet-photo.jpg"],
+    steps: async (page) => {
+      await page.getByText("worksheet-photo.jpg").first().click();
+      await page.getByRole("button", { name: "Delete selected files" }).click();
+      await page.getByText("Delete selected files?").waitFor();
+    },
+  },
+  {
+    name: "project-new",
+    alt: "The first step of New project, Starting point: Study a course, Ask my documents, Agent workspace or Blank",
+    as: "student",
+    path: () => "/projects",
+    ready: ["Biology 101"],
+    steps: async (page) => {
+      await page.getByRole("button", { name: "New project" }).click();
+      await page.getByText("Step 1 of").waitFor();
+    },
+  },
+  {
+    name: "project-files",
+    alt: "The Files tab of the Biology 101 project, with five files and the Add library files and Remove from project buttons",
+    as: "student",
+    path: (ids) => `/projects/${ids.project}?tab=files`,
+    ready: ["Project files", "lab-report-draft.txt"],
+  },
+  {
+    name: "project-add-files",
+    alt: "The Add files to this project window, listing library files to choose from; files already in the project can't be chosen again",
+    as: "student",
+    path: (ids) => `/projects/${ids.project}?tab=files`,
+    ready: ["Project files"],
+    steps: async (page) => {
+      await page.getByRole("button", { name: "Add library files" }).click();
+      await page
+        .getByRole("dialog")
+        .getByText("leaf-diagram.png")
+        .first()
+        .waitFor();
+    },
+  },
+  {
+    name: "project-remove-file",
+    alt: "The Remove selected files from this project? message, saying the file stays in your library and other projects, with Cancel and Confirm",
+    as: "student",
+    path: (ids) => `/projects/${ids.project}?tab=files`,
+    ready: ["lab-report-draft.txt"],
+    steps: async (page) => {
+      await page.getByText("lab-report-draft.txt").first().click();
+      await page.getByRole("button", { name: "Remove from project" }).click();
+      await page
+        .getByText("Remove selected files from this project?")
+        .waitFor();
+    },
+  },
+  {
+    name: "project-sub-agents",
+    alt: "The Sub-agents tab of Biology 101, with Lab report checker selected and its fixed model shown",
+    as: "student",
+    path: (ids) => `/projects/${ids.project}?tab=sub-agents`,
+    ready: ["Lab report checker", "Fixed model"],
+  },
+  {
+    name: "pack-export",
+    alt: "The Export team pack window: a pack name, a description, and boxes to tick for the project settings, the Lab report checker sub-agent and the lab-partner skill",
+    as: "student",
+    path: (ids) => `/projects/${ids.project}?tab=settings`,
+    ready: ["Feature areas"],
+    steps: async (page) => {
+      await page
+        .getByRole("button", { name: /Export team pack/ })
+        .first()
+        .click();
+      await page.getByText("Pack name").waitFor();
+    },
+  },
+  {
+    name: "pack-import",
+    alt: "The Import team pack page, with three starter packs to review and a box to choose a team pack file",
+    as: "student",
+    path: () => "/team-packs",
+    ready: ["Starter packs", "Study Buddy"],
+  },
+  {
+    name: "pack-review",
+    alt: "The review of the Study Buddy starter pack: who wrote it, a note that nothing is created until you confirm, and the start of its sub-agents",
+    as: "student",
+    path: () => "/team-packs",
+    ready: ["Study Buddy"],
+    steps: async (page) => {
+      await page.getByRole("button", { name: "Review Study Buddy" }).click();
+      const heading = page.getByText("Study Buddy 1.0.0");
+      await heading.waitFor();
+      await heading.evaluate((node) => node.scrollIntoView({ block: "start" }));
+    },
   },
 
   // --- Studying --------------------------------------------------------------------

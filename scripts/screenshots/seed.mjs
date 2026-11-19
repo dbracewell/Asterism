@@ -26,7 +26,7 @@ class DemoSession extends Session {
     return files[0];
   }
 
-  async waitProcessed(file) {
+  async waitProcessed(file, expected = "ready") {
     const started = Date.now();
     while (Date.now() - started < 600_000) {
       try {
@@ -35,9 +35,11 @@ class DemoSession extends Session {
           "GET",
           `/files/${encodeURIComponent(file.filename)}/knowledge`,
         );
-        if (status.status === "ready") return;
+        if (status.status === expected) return;
         if (status.status === "failed")
           throw new Error(`${file.original_name} failed to process`);
+        if (status.status === "ready" && expected !== "ready")
+          throw new Error(`${file.original_name} was processed after all`);
       } catch (error) {
         if (!(error instanceof HttpError && [404, 429].includes(error.status)))
           throw error;
@@ -174,7 +176,8 @@ export async function seedDemo({
         is_active: true,
         supports_tools: true,
         tools_source: "manual",
-        supports_vision: false,
+        // Demo Writer reads pictures, so it can caption the student's images.
+        supports_vision: model.name === demo.MODELS.writer,
         vision_source: "manual",
         context_window: 128_000,
         context_window_source: "manual",
@@ -184,6 +187,11 @@ export async function seedDemo({
     models[model.name] = model.id;
   }
   const tutor = models[demo.MODELS.tutor] ?? Object.values(models)[0];
+  // Captions for uploaded images, written by the picture-reading model.
+  await admin.api("captioning", "PUT", "/settings/app/captioning", {
+    mode: "provider",
+    provider_model_id: models[demo.MODELS.writer],
+  });
   await admin.api("canvas policy", "PUT", "/settings/app/canvas", {
     enabled: true,
   });
@@ -257,6 +265,12 @@ export async function seedDemo({
     uploaded[file.name] = await maya.uploadFile(file.name, file.type, data);
   }
   for (const file of Object.values(uploaded)) await maya.waitProcessed(file);
+  const broken = await maya.uploadFile(
+    demo.brokenFile.name,
+    demo.brokenFile.type,
+    demo.brokenFile.text,
+  );
+  await maya.waitProcessed(broken, "failed");
 
   const project = await maya.api("project", "POST", "/projects/", {
     name: demo.project.name,
