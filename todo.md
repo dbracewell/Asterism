@@ -54,51 +54,7 @@ Source: user request and the [feature overlap review](docs/reviews/2026-11-17-fe
 
 ## Documentation (proposed 2026-11-18)
 
-Source: user request (2026-11-18). Suggested order: [EPIC-87](docs/epics/EPIC-87-ARCHITECTURE-DOCS-REFRESH.md) → [EPIC-88](docs/epics/EPIC-88-PROJECT-README.md) → [EPIC-89](docs/epics/EPIC-89-USER-GUIDE.md). US-87.1 adds `pnpm docs:check`, which the later epics use; US-89.1 adds the screenshot pipeline. Work one story at a time.
-
-### EPIC-87: Architecture documentation refresh
-
-- [x] US-87.1: Audit, template and link check
-  - [x] Audit every guide against the code: for each, list stale claims, missing features and removed features. Record the audit in `docs/reviews/2026-11-18-architecture-docs-audit.md`.
-  - [x] Write the guide template and writing rules in `docs/architecture/CONTRIBUTING.md` (structure, tone, terminology, diagram and link conventions, a before/after example).
-  - [x] Add a terminology list shared with the user guide (EPIC-89) so the same thing has the same name everywhere (for example _main agent_, _sub-agent_, _General chat set_, _execution file scope_).
-  - [x] Add `pnpm docs:check`: broken relative links, missing anchors and missing images across `docs/` and `README.md`. Wire it into CI (see open question 2).
-  - [x] Rewrite `docs/architecture/README.md` as a map: a reading order for new contributors, then a table of "if you want to know X, read Y".
-- [x] US-87.2: System, security and request path
-  - [x] `overview.md`: topology diagram (nginx, Next.js, FastAPI, SQLite, LanceDB, file store), workspace layout, request and streaming flow.
-  - [x] `auth-and-security.md`: Better Auth and JWT/JWKS, the backend identity copy (ADR-0057), groups and roles, account lifecycle (suspend, reset links, deletion and deletion requests), edge hardening (CSP, HSTS, rate limits, trusted proxies), internal callbacks.
-  - [x] `chat-and-websocket.md`: protocol, reconnectable jobs, cancellation, admission limits, usage-limit refusals, with a job lifecycle diagram.
-  - [x] `capacity.md` and a new `operations.md`: process model, admission settings, logs and request IDs, readiness endpoints, Admin → Status, and admin settings export and import.
-  - [x] Remove story references and stale claims from these guides.
-- [x] US-87.3: Agents, tools and prompts
-  - [x] `execution-context.md`: one turn traced from membership through prompt layers (main-agent instructions, About you, learning mode, skills) to retrieval and provider access, as a diagram plus a worked example.
-  - [x] `agent-runtime.md`: bounded loop, events, delegation, traces, context compaction, verification.
-  - [x] `tool-authorization.md`: ordinary versus internal tools, a table of every internal tool (`sub_agent`, `search_knowledge`, `load_skill`, `canvas_*`, `generate_image`) and the conditions that offer it; approvals; the component registry of search providers and image generators.
-  - [x] `skills.md`, `prompt-templates.md`, `context-isolation.md`: refresh and remove history narration.
-  - [x] `llm-providers.md`: provider modes, model capabilities, ChatGPT plan connections, pricing used by the usage ledger.
-  - [x] New `learning-modes.md`: the modes, hint levels and show answer, how the effective mode is chosen (ADR-0068), and how class policy restricts it.
-- [x] US-87.4: Data, files and knowledge
-  - [x] `data-and-storage.md`: schema overview by domain (with an entity diagram), message tree, FTS search, migrations (ADR-0069); correct the serialization section, which names a `JSONB_COLUMN` helper that does not exist.
-  - [x] Merge or clearly divide `knowledge-retrieval.md` and `file-knowledge-processing.md` so each topic has one home: processing pipeline in one, scoped retrieval in the other.
-  - [x] `backup-and-restore.md`, `development-reset.md`: refresh against the current commands.
-  - [x] New `usage-and-budgets.md`: the usage ledger, what is recorded, group budgets, where refusals happen, what is never refused.
-  - [x] Add "Download my data" (ADR-0076) and user deletion to the data lifecycle section.
-- [x] US-87.5: Product domains without a guide
-  - [x] New `classes-and-courses.md`: classes, educators, invites, courses, course-managed content, mode policy and class insights.
-  - [x] New `canvas.md`: branch-aware canvas versions, the tools, trust rules and preview isolation.
-  - [x] New `image-generation.md`: provider configuration, group access, the prompt check, recording and produced files.
-  - [x] New `team-packs.md`: export and import, the manifest (ADR-0051) and what a pack never grants.
-  - [x] `study-tools.md`, `project-workspaces.md`: refresh against today's study pages (decks, review, quizzes, notes, summaries, guides, drafts) and project settings.
-- [x] US-87.6: Frontend
-  - [x] Split `frontend-and-themes.md` into `frontend.md` (app shell, routing, data loading with TanStack Query and Hey API, layout and scrolling rules, settings structure) and `themes.md` (ownership, tokens, Theme Editor).
-  - [x] Replace the product-surface inventory with the current admin and user settings sections; only Code Execution is still Planned.
-  - [x] `markdown-content.md`, `theme-storage.md`, `bundled-theme-palettes.md`: refresh; resolve open question 1 for the review matrix.
-  - [x] New section on the help system: help registry, page guides, help center and first-chat tour, and how they relate to the user guide (EPIC-89).
-- [ ] US-87.7: Final consistency pass
-  - [x] Read every guide end to end for tone, terminology and duplication; each topic has one home and other guides link to it.
-  - [x] No story or epic references remain in guide bodies.
-  - [x] `pnpm docs:check` passes; every new guide is in the index.
-  - [x] Update `CLAUDE.md`/`AGENTS.md` links that point at renamed or split guides.
+Source: user request (2026-11-18). Suggested order: [EPIC-87](docs/epics/EPIC-87-ARCHITECTURE-DOCS-REFRESH.md) (complete and archived in the [2026-11-18 checklist](docs/archive/todo-completed-2026-11-18.md)) → [EPIC-88](docs/epics/EPIC-88-PROJECT-README.md) → [EPIC-89](docs/epics/EPIC-89-USER-GUIDE.md). US-87.1 adds `pnpm docs:check`, which the later epics use; US-89.1 adds the screenshot pipeline. Work one story at a time.
 
 Follow-ups found during EPIC-87 (code, not documentation; each needs its own story):
 

@@ -1,6 +1,6 @@
 # EPIC-87: Architecture documentation refresh
 
-Status: in progress (US-87.1 to US-87.6 complete; US-87.7 awaiting confirmation). Proposed 2026-11-18. Source: user request (2026-11-18).
+Status: complete (2026-11-18; US-87.1 through US-87.7 merged). Proposed 2026-11-18. Source: user request (2026-11-18).
 
 ## Objective
 
