@@ -70,3 +70,55 @@
   - [x] Readability review by someone non-technical (or against the reading-level target), and fix what confuses them.
   - [x] Link the guide from `README.md` and, if agreed (open question 1), from the in-app Help center.
   - [x] `pnpm docs:check` passes, including every image reference.
+
+## Fixes found while writing the documentation
+
+[EPIC-90](../epics/EPIC-90-DOCUMENTATION-FOLLOW-UPS.md) is complete: US-90.1 to US-90.10 were each confirmed and merged with `--no-ff`. Admin routes refuse non-admins with 403 and 401 is kept for credential checks; the image is 4.4 GB instead of 10.8 GB and includes headless Chromium; the user guide is served in the app at `/help/guide`. Configuration and data changes are in the [release notes](../release-notes.md).
+
+- [x] US-90.1: Admin routes refuse non-admins with 403
+  - [x] `get_current_admin` raises a 403 (forbidden) for an authenticated non-admin; a missing or invalid token still gets 401.
+  - [x] The frontend keeps its cached token on 403 and shows "not allowed" rather than signing the person out.
+  - [x] Backend and frontend tests for both cases; check nothing else relies on the 401.
+  - [x] Folded in: `POST /users/` refuses a signed-in non-admin without the system key with 403; another user's agent reads as 404, like a missing one.
+- [x] US-90.2: The branch switcher shows after regenerating a tool-using answer
+  - [x] Reproduce: a project chat whose answer used `search_knowledge`; regenerate.
+  - [x] Decide where the fix belongs: create the sibling at the visible answer, or show the switcher for the step that holds the branches. Record the choice.
+  - [x] Fix, with a test that the earlier answer is reachable.
+  - [x] Add a project-chat branch shot to the screenshot pipeline and use it in `docs/guide/02-chatting/regenerating-and-branches.md`.
+- [x] US-90.3: Compaction summaries name their model
+  - [x] Look up the run model's name when compacting outside a run, instead of using its id.
+  - [x] Test the Compact now path; check stored records and the divider.
+  - [x] Consider repairing stored records whose name is an id (data migration if the stored value changes).
+- [x] US-90.4: The source page shows the passage
+  - [x] Show the cited passage (and its place in the file where known) on the scoped file page, with plain wording instead of "Authorized source in the current file scope of this conversation."
+  - [x] Keep Download source and Back to conversation.
+  - [x] Tests; update `docs/guide/02-chatting/sources-and-citations.md` and add a shot of the page.
+- [x] US-90.5: Help text covers Spot the error and the Users page
+  - [x] Add `concept.mode-spot-the-error` to the help registry and list it under `concept.learning-mode`.
+  - [x] Rewrite the `admin.users` page guide for suspend, reactivate, reset links, delete and deletion requests.
+  - [x] Mirror any changed definitions in `docs/terminology.md`; registry tests pass.
+- [x] US-90.6: A new sub-agent shows no error before it's submitted
+  - [x] Show the "saved binding" message only when editing a sub-agent whose bound model is unavailable; a new sub-agent shows a plain hint until submitted.
+  - [x] Tests for new and edited sub-agents; retake `sub-agent-new`.
+- [x] US-90.7: Consistent labels
+  - [x] Rename **Login** to **Sign in**, **New Chat** to **New chat** and **Default Model** to **Default model**; check other title-case labels in settings (for example **Font Size**, **Show Thinking**, **Prompt Coach**) and fix them the same way.
+  - [x] Update tests and E2E selectors that match the old text.
+  - [x] Rerun the affected shots and update the guide pages that quote the labels.
+- [x] US-90.8: Slim the image and add Chromium
+  - [x] Measure the current image and record the size of its largest parts.
+  - [x] Install CPU-only `torch` and `torchvision` by default from PyTorch's CPU index, with a GPU (CUDA) build selected by a Docker build argument; image generation, embeddings and captioning tests pass on both.
+  - [x] Ship only the frontend's runtime packages (Next standalone output or a production-only install), keeping the `auth` migration command working at startup; copy the Node runtime once.
+  - [x] Install Playwright's headless Chromium shell with the minimal library set (no `install-deps`), and comment the `libgbm` step in the Dockerfile.
+  - [x] Container test: the fetch tool renders a JavaScript-heavy page as the non-root user with its launch arguments.
+  - [x] Measure again; record before and after sizes, the GPU build and the Chromium behavior in the deployment guide and release notes.
+- [x] US-90.9: Serve the guide in the app and link the Help center to it
+  - [x] Add a `/help/guide/[...slug]` route that renders `docs/guide/*.md` at build time with a trusted Markdown renderer, separate from the chat viewer (whose policy stays unchanged).
+  - [x] Serve `docs/guide/images`, turn relative `.md` links into app routes, and point links outside the guide to the repository.
+  - [x] Copy `docs/guide` into the Docker frontend build stage.
+  - [x] Add a "Read the full walkthrough" link to each page guide that has a guide page, with a test that every link resolves.
+  - [x] The Markdown files stay readable on GitHub and `pnpm docs:check` passes.
+- [x] US-90.10: 403 is the rule for "signed in but not allowed"
+  - [x] State the convention in `docs/architecture/auth-and-security.md`: 401 means "sign in again" (missing, expired or forged token, suspended or deleted account, wrong system key); 403 means "signed in but not allowed"; another user's resource is 404.
+  - [x] Audit every `UnauthorizedException` raise and move any role, group or policy check to `ForbiddenException` (or `NotFoundException` for ownership), with tests updated.
+  - [x] Add a backend test that fails when `UnauthorizedException` is raised outside an allowlist of token, suspension, deletion and system-key checks, with a message that points to the convention.
+  - [x] Note the convention in `apps/backend/README.md` where routes and dependencies are described.

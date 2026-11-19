@@ -1,6 +1,7 @@
 # EPIC-90: Fixes found while writing the documentation
 
-Status: proposed (2026-11-19). Source: user request (2026-11-19), from the
+Status: complete (2026-11-19); archived in the
+[2026-11-19 checklist](../archive/todo-completed-2026-11-19.md). Source: user request (2026-11-19), from the
 follow-ups recorded during EPIC-87 to EPIC-89.
 
 ## Objective
