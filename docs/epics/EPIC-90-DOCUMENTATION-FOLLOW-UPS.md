@@ -207,15 +207,15 @@ As a signed-in person refused by any route, I'm told it's not allowed, and I
 stay signed in. As a contributor, I can't accidentally answer a role or
 permission check with 401.
 
-- [ ] State the convention in `docs/architecture/auth-and-security.md`: 401
+- [x] State the convention in `docs/architecture/auth-and-security.md`: 401
       means "sign in again" (missing, expired or forged token, suspended or
       deleted account, wrong system key); 403 means "signed in but not
       allowed"; another user's resource is 404.
-- [ ] Audit every `UnauthorizedException` raise and move any role, group or
+- [x] Audit every `UnauthorizedException` raise and move any role, group or
       policy check to `ForbiddenException` (or `NotFoundException` for
       ownership), with tests updated.
-- [ ] Add a backend test that fails when `UnauthorizedException` is raised
+- [x] Add a backend test that fails when `UnauthorizedException` is raised
       outside an allowlist of token, suspension, deletion and system-key
       checks, with a message that points to the convention.
-- [ ] Note the convention in `apps/backend/README.md` where routes and
+- [x] Note the convention in `apps/backend/README.md` where routes and
       dependencies are described.

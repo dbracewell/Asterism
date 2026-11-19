@@ -248,6 +248,13 @@ keeps a narrow lifecycle protocol while controllers bind the concrete orchestrat
 Chat read/delete queries are owner-scoped and return the same 404 for foreign and
 missing identities. Uvicorn transport diagnostics redact token query values.
 
+**Status codes for refusals.** 401 means "sign in again" (a bad token, a
+suspended or deleted account, a wrong system key or download link), 403 means
+signed in but not allowed (`ForbiddenException`), and 404 covers another user's
+resource. A test fails on any new `UnauthorizedException` outside the credential
+checks; see
+[Limits and failures](../../docs/architecture/auth-and-security.md#limits-and-failures).
+
 From the repository root:
 
 ```bash
