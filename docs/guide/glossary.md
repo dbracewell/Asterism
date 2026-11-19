@@ -3,6 +3,9 @@
 Words you will see in Asterism, in plain language. The chapters link here the
 first time they use a term.
 
+**About you.** A few facts about you that Asterism keeps in mind when it
+answers, written in Settings, Your Asterism. It's information, not instructions.
+
 **Administrator (admin).** The person who runs your Asterism: they connect the AI
 models, manage accounts and decide what each group may use.
 
@@ -19,6 +22,9 @@ Every attempt is kept.
 **Branch.** Another version of an answer. When you ask Asterism to try again, the
 new answer is kept next to the old one, and the arrows under the answer switch
 between them.
+
+**Budget.** A daily or monthly limit on how many tokens your group may use. When
+it's used up, new messages wait until it resets.
 
 **Canvas.** A panel beside the chat for a longer piece of work, such as an essay
 outline or some code. You and Asterism can both edit it, and every saved version
@@ -132,6 +138,9 @@ chats may use.
 **Team pack.** A file that shares a setup (sub-agents, skills, templates,
 rubrics and project settings) with someone else. It never holds your files,
 chats or keys.
+
+**Token.** A small piece of text that a model reads or writes. Your usage is
+counted in tokens.
 
 **Tool.** An action Asterism can take while answering, such as searching your
 files or reading a web page.

@@ -419,3 +419,17 @@ test("a reflection draft gets the two answers the dialog expects", () => {
   const draft = JSON.parse(reply.content);
   assert.ok(draft.learned && draft.unclear);
 });
+
+test("a skill draft is one skill block with a name and a description", () => {
+  const reply = respond({
+    messages: [
+      { role: "system", content: "You are writing a skill for the user: ..." },
+      { role: "user", content: "Quiz me on a topic." },
+    ],
+  }).content;
+  const blocks = [...reply.matchAll(/^```skill\n([\s\S]*?)\n```$/gm)];
+  assert.equal(blocks.length, 1);
+  const [, frontmatter] = blocks[0][1].split("---");
+  assert.match(frontmatter, /^name: [a-z0-9]+(?:-[a-z0-9]+)*$/m);
+  assert.match(frontmatter, /^description: .+$/m);
+});

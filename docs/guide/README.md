@@ -101,16 +101,32 @@ what your group can use.
 4. [Following your progress](05-studying/progress.md): topics, what needs
    practice, and unclear items from your reflections.
 
+## Making Asterism yours
+
+1. [General settings](06-making-it-yours/general-settings.md): theme, font size,
+   your default model, the prompt coach and the canvas.
+2. [About you and your usage](06-making-it-yours/about-you-and-usage.md): what to
+   write about yourself, and your token use and budget.
+3. [Agents](06-making-it-yours/agents.md): your main agent's instructions and
+   tools, sub-agents, and the General chat set.
+4. [Skills](06-making-it-yours/skills.md): writing one, having Asterism draft one,
+   and assigning it.
+5. [Templates and rubrics](06-making-it-yours/templates-and-rubrics.md): making
+   your own from the ones that come with Asterism.
+6. [Connecting a ChatGPT plan](06-making-it-yours/connecting-chatgpt.md): using
+   your own ChatGPT Plus or Pro plan.
+7. [Your data and your account](06-making-it-yours/your-data-and-account.md):
+   downloading your data and asking for your account to be deleted.
+
 ## Chapters
 
 The other chapters are being written. Each one will appear here when it is ready.
 
-| Chapter               | What it covers                                                                     |
-| --------------------- | ---------------------------------------------------------------------------------- |
-| Making Asterism yours | Your settings, About you, agents, skills, templates and your data                  |
-| For educators         | Classes, invites, courses, learning-mode rules and class insights                  |
-| For administrators    | First-time setup, providers, users, groups and budgets, usage, policies and themes |
-| Troubleshooting       | Common messages and what to do                                                     |
+| Chapter            | What it covers                                                                     |
+| ------------------ | ---------------------------------------------------------------------------------- |
+| For educators      | Classes, invites, courses, learning-mode rules and class insights                  |
+| For administrators | First-time setup, providers, users, groups and budgets, usage, policies and themes |
+| Troubleshooting    | Common messages and what to do                                                     |
 
 ## For people writing this guide
 
