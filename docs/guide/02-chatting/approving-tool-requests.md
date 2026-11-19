@@ -40,7 +40,7 @@ If you don't answer within a minute, the request is denied for you.
 
 - Approve when the action matches what you asked for, for example reading the
   page you named.
-- Deny when you don't recognise the address, or the action isn't what you
+- Deny when you don't recognize the address, or the action isn't what you
   expected.
 - Remember that whatever a tool sends, such as a search, leaves Asterism. Don't
   approve sending private information.

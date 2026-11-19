@@ -7,7 +7,7 @@ readers have never used an AI chat tool, and many are not technical.
 ## Where pages go
 
 Each chapter is a numbered folder with one Markdown file per page. Add the page to
-the chapter table in [README.md](README.md) when the chapter has its first page.
+its chapter's list in [README.md](README.md).
 
 ```
 docs/guide/

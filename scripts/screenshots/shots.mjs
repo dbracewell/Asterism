@@ -1112,10 +1112,119 @@ export const shots = [
   // --- Administrators --------------------------------------------------------------
   {
     name: "admin-users",
-    alt: "Admin Settings, Users: the administrator, an educator and two students with their groups",
+    alt: "Admin Settings, Users: the administrator, an educator and two students with their groups, a menu button for each account, and Leo Martins marked as having asked for deletion",
     as: "admin",
     path: () => "/settings?t=admin&setting=user-permissions",
-    ready: ["Dana Okafor", "Maya Chen"],
+    ready: ["Dana Okafor", "Maya Chen", "Asked for deletion"],
+  },
+  {
+    name: "admin-account-menu",
+    alt: "The account menu for Leo Martins in Admin Settings, Users, with Suspend, Create password reset link and Delete account",
+    as: "admin",
+    path: () => "/settings?t=admin&setting=user-permissions",
+    ready: ["Leo Martins"],
+    steps: async (page) => {
+      await page
+        .getByRole("button", { name: "Account actions for Leo Martins" })
+        .click();
+      await page.getByRole("menuitem", { name: "Delete account" }).waitFor();
+    },
+  },
+  {
+    name: "admin-reset-link",
+    alt: "The Password reset link for Leo Martins window: a link to send them yourself, when it stops working, and Copy link and Done",
+    as: "admin",
+    path: () => "/settings?t=admin&setting=user-permissions",
+    ready: ["Leo Martins"],
+    steps: async (page) => {
+      await page
+        .getByRole("button", { name: "Account actions for Leo Martins" })
+        .click();
+      await page
+        .getByRole("menuitem", { name: "Create password reset link" })
+        .click();
+      await page.getByRole("button", { name: "Copy link" }).waitFor();
+      await page.evaluate(() => document.activeElement?.blur?.());
+    },
+  },
+  {
+    name: "admin-providers",
+    alt: "Admin Settings, Providers: the Demo models provider with its type, name, base URL and key, and its models listed with context window, input and output prices, vision input, tool calls and Set draft",
+    as: "admin",
+    path: () => "/settings?t=admin&setting=providers",
+    ready: ["Demo models", "Browse 2 models"],
+    steps: async (page) => {
+      await page.getByRole("button", { name: /Browse 2 models/ }).click();
+      await page.getByText("Input $ / 1M tokens").first().waitFor();
+    },
+  },
+  {
+    name: "admin-groups",
+    alt: "Admin Settings, Groups: the built-in Admin, Educator and Student groups, with Student's access open to choose which models and tools it may use, and a box to create a new group",
+    as: "admin",
+    path: () => "/settings?t=admin&setting=group-settings",
+    ready: ["Edit access for Student"],
+    steps: async (page) => {
+      await page.getByText("Edit access for Student").click();
+      await page
+        .getByRole("button", { name: "Save access for Student" })
+        .waitFor();
+    },
+  },
+  {
+    name: "admin-budget",
+    alt: "The usage budget for the Student group: tokens per member per day and per month, both empty, meaning no budget",
+    as: "admin",
+    path: () => "/settings?t=admin&setting=group-settings",
+    ready: ["Edit usage budget for Student"],
+    steps: async (page) => {
+      await page.getByText("Edit usage budget for Student").click();
+      const day = page.getByText("Tokens per member per day");
+      await day.waitFor();
+      await day.evaluate((node) => node.scrollIntoView({ block: "center" }));
+    },
+  },
+  {
+    name: "admin-usage",
+    alt: "Admin Settings, Usage: tokens and estimated cost per group and per person and model this month, and the Budget day time zone",
+    as: "admin",
+    path: () => "/settings?t=admin&setting=usage",
+    ready: ["Budget day", "Estimated cost"],
+  },
+  {
+    name: "admin-status",
+    alt: "Admin Settings, Status: the instance is Ready, its version, the replies running and chat connections open against their limits, storage, and No backup has been recorded",
+    as: "admin",
+    path: () => "/settings?t=admin&setting=status",
+    ready: ["Replies running", "Backups"],
+  },
+  {
+    name: "admin-tools",
+    alt: "Admin Settings, Tools: each tool with a box to turn it on, its description, and a provider to choose for the web and image search tools",
+    as: "admin",
+    path: () => "/settings?t=admin&setting=tools",
+    ready: ["web_fetch", "Only Active Tools"],
+  },
+  {
+    name: "admin-image-generation",
+    alt: "Admin Settings, Image generation: the ComfyUI generator with its server address and checkpoint, and Save generator",
+    as: "admin",
+    path: () => "/settings?t=admin&setting=image-generation",
+    ready: ["Generator", "Checkpoint"],
+  },
+  {
+    name: "admin-educators",
+    alt: "Admin Settings, Educators: Dana Okafor marked Educator, with a Revoke button",
+    as: "admin",
+    path: () => "/settings?t=admin&setting=educators",
+    ready: ["Revoke"],
+  },
+  {
+    name: "admin-theme-editor",
+    alt: "Admin Settings, Theme editor: the light and dark themes, each with a copy button, and New theme",
+    as: "admin",
+    path: () => "/settings?t=admin&setting=theme_editor",
+    ready: ["Theme editor", "Night Atlas"],
   },
 ];
 

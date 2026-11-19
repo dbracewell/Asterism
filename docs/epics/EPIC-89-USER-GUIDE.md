@@ -1,6 +1,6 @@
 # EPIC-89: User guide
 
-Status: in progress (US-89.1 to US-89.8 complete 2026-11-19; US-89.9 next). Proposed 2026-11-18. Source: user request (2026-11-18).
+Status: complete (US-89.1 to US-89.9, 2026-11-19). Proposed 2026-11-18. Source: user request (2026-11-18).
 
 ## Objective
 
@@ -70,7 +70,9 @@ docs/guide/
 1. Should the in-app Help center link to the matching guide page from each page
    guide? Proposed: yes, as a "Read the full walkthrough" link, added in US-89.9.
    That needs the guide to be reachable from a deployed instance (for example a
-   link to the repository, or the guide served by the app).
+   link to the repository, or the guide served by the app). **Decided
+   (2026-11-19): later.** US-89.9 links the guide from `README.md` only; the
+   in-app links are a follow-up in `todo.md`.
 2. Should screenshots be committed or produced in CI? Proposed: committed, so the
    guide reads correctly on GitHub; CI checks only that each referenced image
    exists.
@@ -357,23 +359,55 @@ As an educator, I can run a class in Asterism.
 As an administrator, I can run Asterism from Admin Settings; as any reader, I
 can fix common problems; and the guide has been checked by following it.
 
-- [ ] First-time setup: the admin passphrase, connecting a provider, enabling a
+- [x] First-time setup: the admin passphrase, connecting a provider, enabling a
       model.
-- [ ] Providers and models, including pricing.
-- [ ] Users: invites, suspend and reactivate, reset links, deletion and deletion
+- [x] Providers and models, including pricing.
+- [x] Users: invites, suspend and reactivate, reset links, deletion and deletion
       requests.
-- [ ] Groups and budgets, Usage, Status.
-- [ ] Policies: Tools, Skills, Canvas, ChatGPT Plans, Context Compaction, Image
+- [x] Groups and budgets, Usage, Status.
+- [x] Policies: Tools, Skills, Canvas, ChatGPT Plans, Context Compaction, Image
       Generation, Image Captioning, Educators, Export; Code Execution is marked
       Planned.
-- [ ] Theme Editor.
-- [ ] Troubleshooting page: capacity full, usage limit, suspended account, too
+- [x] Theme Editor.
+- [x] Troubleshooting page: capacity full, usage limit, suspended account, too
       many requests, failed file processing, model unavailable.
-- [ ] Glossary aligned with the help registry and the terminology list.
-- [ ] Walkthrough review: follow every page on a fresh demo instance and fix any
+- [x] Glossary aligned with the help registry and the terminology list.
+- [x] Walkthrough review: follow every page on a fresh demo instance and fix any
       step that does not match the app.
-- [ ] Readability review by someone non-technical (or against the reading-level
+- [x] Readability review by someone non-technical (or against the reading-level
       target), and fix what confuses them.
-- [ ] Link the guide from `README.md` and, if agreed (open question 1), from the
+- [x] Link the guide from `README.md` and, if agreed (open question 1), from the
       in-app Help center.
-- [ ] `pnpm docs:check` passes, including every image reference.
+- [x] `pnpm docs:check` passes, including every image reference.
+
+#### Notes (US-89.9)
+
+- **Pages.** Six pages in `docs/guide/08-for-administrators/` (first-time setup,
+  providers and models with pricing, users and accounts with educators, groups,
+  budgets, usage and status, policies, the theme editor) and
+  `docs/guide/troubleshooting.md`. The guide's start page now lists every
+  chapter, and the root README links to the guide.
+- **Open question 1 is decided: not now.** The in-app Help center doesn't link to
+  the guide yet; that needs the guide to be reachable from a deployed instance.
+- **Glossary.** Compared with the help registry's concepts and the terminology
+  list. Added deletion request, Files library, image generation, provider,
+  student and suspended account, and aligned the source definition with the
+  terminology list (passages, not files). Developer-only terms from the
+  terminology list (execution, provenance, work slot) are left out on purpose.
+- **Walkthrough review, and its limits.** Every screenshot is taken by driving
+  the real app through the step it illustrates, so each pictured flow ran
+  against a fresh demo instance. A script also checked every bold label in the
+  guide against the frontend and backend source: everything that wasn't
+  emphasis was found, or is built at run time (such as "Tutor locked" and
+  "Browse 2 models"); one step was reworded. No person has followed every page
+  by hand.
+- **Readability review, and its limits.** No non-technical reader has reviewed
+  the guide. Against the target instead: every page scores below grade 7 on the
+  Flesch-Kincaid formula (median 4.8), no word from the terminology list's
+  Avoid column appears, and spelling is now American throughout to match the
+  app. A review by a real student or teacher is still worth doing.
+- **Demo additions.** Leo asks for his account to be deleted, so Users shows a
+  deletion request. Eleven new admin shots.
+- **Found (help text, not fixed):** the Users page guide in the help registry
+  still says accounts aren't changed there, though the page now suspends,
+  resets and deletes them. In `todo.md`.

@@ -57,8 +57,8 @@ then:
    processing failed, an example chat for each learning mode, reflections,
    About you, a ChatGPT policy that allows connections, flashcards with
    reviews, a quiz with an attempt, topics, a
-   summary, and a class with a two-version course, class rules and one unused
-   invite link;
+   summary, a class with a two-version course, class rules and one unused
+   invite link, and a deletion request;
 3. takes every shot in the shot list. Each person signs in once; later shots
    reuse the session, so a long list stays under the sign-in rate limit.
 

@@ -21,11 +21,11 @@ this project, never from your chats.
 
 - a level: **Not started**, **Needs work**, **Developing** or **Mastered**;
 - a score, from your latest rating or answer on each card and question;
-- how many of the topic's items you've practised;
+- how many of the topic's items you've practiced;
 - a small line showing how it changed over the last eight weeks.
 
 **Mastered** needs a score of at least 80%, with at least 80% of the topic's items
-practised.
+practiced.
 
 To get topics, add them to your decks (**Edit deck**) and quizzes
 (**Edit details**).
@@ -38,8 +38,8 @@ quiz, and it leaves the list.
 
 ![The lower part of the Progress panel: Needs practice with a missed quiz question and a card rated Again, and From your reflections with an unclear item ready to become a flashcard](../images/progress-reflections.png)
 
-To practise them, select **Practice weak spots**. Asterism builds a short quiz of
-up to 10 of them. To practise one topic instead, choose it under **Topic** first:
+To practice them, select **Practice weak spots**. Asterism builds a short quiz of
+up to 10 of them. To practice one topic instead, choose it under **Topic** first:
 the quiz then uses that topic's weakest and unpractised items.
 
 ## From your reflections
@@ -52,7 +52,7 @@ project says something is still unclear, it's listed under
 2. Check the **Question**; reword it if you like.
 3. Write the **Answer** once you've found it. Not sure yet? Note where to look it
    up.
-4. Leave **Also add to Needs practice** ticked if you want to practise it until you
+4. Leave **Also add to Needs practice** ticked if you want to practice it until you
    remember it.
 5. Select **Add card**.
 
