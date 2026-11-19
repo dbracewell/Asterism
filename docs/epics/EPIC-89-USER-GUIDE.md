@@ -1,6 +1,6 @@
 # EPIC-89: User guide
 
-Status: in progress (US-89.1 to US-89.7 complete 2026-11-19; US-89.8 next). Proposed 2026-11-18. Source: user request (2026-11-18).
+Status: in progress (US-89.1 to US-89.8 complete 2026-11-19; US-89.9 next). Proposed 2026-11-18. Source: user request (2026-11-18).
 
 ## Objective
 
@@ -331,10 +331,26 @@ As a user, I can set Asterism up the way I work and manage my own data.
 
 As an educator, I can run a class in Asterism.
 
-- [ ] Creating a class and inviting students.
-- [ ] Courses and course-managed content: what students see and cannot change.
-- [ ] Setting mode policy for a class.
-- [ ] Reading class insights.
+- [x] Creating a class and inviting students.
+- [x] Courses and course-managed content: what students see and cannot change.
+- [x] Setting mode policy for a class.
+- [x] Reading class insights.
+
+#### Notes (US-89.8)
+
+- **Pages.** Four pages in `docs/guide/07-for-educators/`: running a class
+  (requesting educator access, creating a class, the class code, invite links,
+  students, deleting), sharing a course (publishing versions, and the student's
+  side: adding, updating, what's managed, leaving), the learning-mode rules, and
+  class insights. The glossary gained class insights and course.
+- **Insights are shown empty.** They need at least five sharing students who
+  have practised from course files. The demo has two, and five more sign-ups
+  would hit the sign-up rate limit, so the guide shows the "2 have so far" state
+  and explains what appears once five share.
+- **Demo additions.** The educator publishes a second course version (one more
+  file and a note), so students see "Version 2 is available" and the change.
+- **Invite links in a picture** are from the disposable demo instance; they are
+  never valid anywhere else.
 
 ### US-89.9: For administrators, troubleshooting and review
 
