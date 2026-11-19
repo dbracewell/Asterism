@@ -53,6 +53,7 @@ After that, read whichever guide covers the part you are changing.
 | What happens to an upload, from bytes to searchable text                   | [File knowledge processing](file-knowledge-processing.md)       |
 | How file search stays inside a chat's allowed files, and how captions work | [Knowledge retrieval](knowledge-retrieval.md)                   |
 | How backups, restores and upgrades work                                    | [Backup and restore](backup-and-restore.md)                     |
+| How usage is counted and how group budgets refuse work                     | [Usage and budgets](usage-and-budgets.md)                       |
 | How to initialize or reset a development database                          | [Development initialization and reset](development-reset.md)    |
 | How projects, project files and project sub-agents work                    | [Project workspaces](project-workspaces.md)                     |
 | How flashcards, quizzes, notes and progress work                           | [Study tools](study-tools.md)                                   |
@@ -63,10 +64,9 @@ After that, read whichever guide covers the part you are changing.
 | Which theme and layout checks run, and which are manual                    | [Theme and layout review matrix](theme-layout-review-matrix.md) |
 
 Some shipped features do not have a guide of their own yet: classes and courses,
-canvas, image generation, usage budgets and team packs. Until they do,
+canvas, image generation and team packs. Until they do,
 their ADRs are the reference: [classes](../adr/0053-classes-and-educators.md),
 [canvas](../adr/0063-canvas.md), [image generation](../adr/0064-image-generation.md),
-[usage and budgets](../adr/0073-usage-ledger-and-budgets.md) and
 [team packs](../adr/0051-team-pack-format.md). The
 [2026-11-18 audit](../reviews/2026-11-18-architecture-docs-audit.md) lists the
 known gaps and errors in the existing guides, and

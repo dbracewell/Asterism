@@ -1,6 +1,6 @@
 # EPIC-87: Architecture documentation refresh
 
-Status: in progress (US-87.1 and US-87.2 complete; US-87.3 awaiting confirmation). Proposed 2026-11-18. Source: user request (2026-11-18).
+Status: in progress (US-87.1 to US-87.3 complete; US-87.4 awaiting confirmation). Proposed 2026-11-18. Source: user request (2026-11-18).
 
 ## Objective
 
@@ -131,17 +131,17 @@ can and cannot grant a capability.
 As a contributor, I know where each piece of data lives, who can read it, and
 what happens to it on upload, deletion, backup and upgrade.
 
-- [ ] `data-and-storage.md`: schema overview by domain (with an entity
+- [x] `data-and-storage.md`: schema overview by domain (with an entity
       diagram), message tree, FTS search, migrations (ADR-0069); correct the
       serialization section, which names a `JSONB_COLUMN` helper that does not exist.
-- [ ] Merge or clearly divide `knowledge-retrieval.md` and
+- [x] Merge or clearly divide `knowledge-retrieval.md` and
       `file-knowledge-processing.md` so each topic has one home: processing
       pipeline in one, scoped retrieval in the other.
-- [ ] `backup-and-restore.md`, `development-reset.md`: refresh against the
+- [x] `backup-and-restore.md`, `development-reset.md`: refresh against the
       current commands.
-- [ ] New `usage-and-budgets.md`: the usage ledger, what is recorded, group
+- [x] New `usage-and-budgets.md`: the usage ledger, what is recorded, group
       budgets, where refusals happen, what is never refused.
-- [ ] Add "Download my data" (ADR-0076) and user deletion to the data lifecycle
+- [x] Add "Download my data" (ADR-0076) and user deletion to the data lifecycle
       section.
 
 ### US-87.5: Product domains without a guide

@@ -16,7 +16,7 @@ an in-process generation, projects, full-text search, and estimated context-wind
 usage. Sub-agents run within their own tool allowlist and emit correlated live
 activity and persisted execution traces. Chat/project full-text search composes
 owner and workspace scope in SQL before pagination and batches snippets only for
-the selected page; see the [search design](docs/architecture/data-and-storage.md#search-indexes).
+the selected page; see the [search design](docs/architecture/data-and-storage.md#search).
 
 The supported deployment has one backend process and one application instance.
 Package and container launches reject `WEB_CONCURRENCY`/`UVICORN_WORKERS` unless
