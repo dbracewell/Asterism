@@ -17,6 +17,7 @@ const requiredGlossary: HelpId[] = [
   "concept.mode-tutor",
   "concept.mode-explain-back",
   "concept.mode-review",
+  "concept.mode-spot-the-error",
   "concept.hint-levels",
   "concept.answer-reveal",
   "concept.mode-policy",

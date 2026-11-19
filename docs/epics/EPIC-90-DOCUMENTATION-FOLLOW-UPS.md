@@ -122,11 +122,11 @@ only the file name.
 As a reader of the in-app help, I find Spot the error explained and the Users
 page described correctly.
 
-- [ ] Add `concept.mode-spot-the-error` to the help registry and list it under
+- [x] Add `concept.mode-spot-the-error` to the help registry and list it under
       `concept.learning-mode`.
-- [ ] Rewrite the `admin.users` page guide for suspend, reactivate, reset links,
+- [x] Rewrite the `admin.users` page guide for suspend, reactivate, reset links,
       delete and deletion requests.
-- [ ] Mirror any changed definitions in `docs/terminology.md`; registry tests pass.
+- [x] Mirror any changed definitions in `docs/terminology.md`; registry tests pass.
 
 ### US-90.6: A new sub-agent shows no error before it's submitted
 
