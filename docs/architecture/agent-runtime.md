@@ -312,7 +312,7 @@ unknown, it compacts first (`chat/compaction.py`). See
   the verbatim tail regardless of usage, inside the chat's work slot. Progress is
   reported as `compaction` packets; the transcript draws a divider after each
   anchor from the chat's `compactions`.
-- Admins edit the policy in Admin Settings → Context Compaction
+- Admins edit the policy in Admin Settings → Context compaction
   (`GET/PUT /settings/app/compaction`); a dedicated summarizer must be an active
   model of an admin-managed provider.
 

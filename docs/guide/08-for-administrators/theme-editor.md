@@ -5,7 +5,7 @@ in their [General settings](../06-making-it-yours/general-settings.md#appearance
 
 > **Who can do this:** administrators.
 
-Open **Admin Settings** › **Theme Editor**.
+Open **Admin Settings** › **Theme editor**.
 
 ![Admin Settings, Theme editor: the light and dark themes, each with a copy button, and New theme](../images/admin-theme-editor.png)
 

@@ -334,7 +334,7 @@ const ThemeForm = ({
                   {...field}
                   id="form-theme-name"
                   aria-invalid={fieldState.invalid}
-                  placeholder="Theme Name"
+                  placeholder="Theme name"
                   autoComplete="off"
                   required
                 />

@@ -88,12 +88,12 @@ const ToolsSettingsForm = ({ appSettings }: { appSettings: ToolSettings }) => {
       ({
         WebSearch: {
           settings_key: "web_search_provider",
-          title: "Web Search",
+          title: "Web search",
           default_value: appSettings.web_search_provider,
         },
         ImageSearch: {
           settings_key: "image_search_provider",
-          title: "Image Search",
+          title: "Image search",
           default_value: appSettings.image_search_provider,
         },
       }) as ComponentRegistry,

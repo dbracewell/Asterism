@@ -26,13 +26,13 @@ describe("admin pane states", () => {
 
   it("shows an accessible pane-specific failure", () => {
     render(
-      <AdminPaneErrorBoundary paneLabel="Theme Editor">
+      <AdminPaneErrorBoundary paneLabel="Theme editor">
         <BrokenPane />
       </AdminPaneErrorBoundary>,
     );
 
     expect(screen.getByRole("alert")).toHaveTextContent(
-      "Theme Editor settings could not be loaded.",
+      "Theme editor settings could not be loaded.",
     );
   });
 });

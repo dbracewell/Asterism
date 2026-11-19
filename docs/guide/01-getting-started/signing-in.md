@@ -40,11 +40,11 @@ Already have an account? Don't use the invite link. Ask your educator for the
 
 1. Open your Asterism's web address. You see the sign-in page.
 
-   ![The Asterism sign-in page, with boxes for your email and password and a Login button](../images/sign-in.png)
+   ![The Asterism sign-in page, with boxes for your email and password and a Sign in button](../images/sign-in.png)
 
 2. Type your email address in **Email**.
 3. Type your password in **Password**.
-4. Select **Login**.
+4. Select **Sign in**.
 
 Asterism opens a new chat, ready for your first question. If you opened a link to
 a page in Asterism before you signed in, you go back to that page instead.

@@ -129,7 +129,7 @@ user_id, file_id, generation, chunk_ordinal, content, vector
 
 Captions make images findable by what they show, not just by visual similarity.
 Captioning is off by default. The admin chooses one of three settings in Admin
-Settings → Image Captioning:
+Settings → Image captioning:
 
 - **Off.**
 - **A provider model.** The image is sent to one admin-chosen model that the

@@ -2,7 +2,7 @@
 
 This guide explains where theme files live, how they are read and validated, how a
 save stays atomic, and how themes survive upgrades, backups and resets. Read it
-before changing the theme repository or the Theme Editor's saving.
+before changing the theme repository or the theme editor's saving.
 [Themes](themes.md) explains what a theme contains and how it is applied.
 
 ## Where themes live

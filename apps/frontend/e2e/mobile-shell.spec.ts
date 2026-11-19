@@ -94,7 +94,7 @@ for (const width of [320, 390]) {
   }) => {
     await page.setViewportSize({ width, height: 600 });
     await page.goto("/projects");
-    const trigger = page.getByRole("button", { name: "Toggle Sidebar" });
+    const trigger = page.getByRole("button", { name: "Toggle sidebar" });
     await expect(trigger).toBeVisible();
     const header = trigger.locator("..");
     expect(
@@ -170,7 +170,7 @@ for (const width of [320, 390]) {
     await next.tap();
     await page.goto("/settings");
     const model = page.getByRole("combobox", {
-      name: "Default Model",
+      name: "Default model",
       exact: true,
     });
     await expect(model).toBeAttached();
@@ -245,7 +245,7 @@ for (const width of [320, 390]) {
     await expect(
       page.getByRole("link", { name: "Mobile chat 20", exact: true }),
     ).toBeAttached();
-    await page.getByRole("button", { name: "Toggle Sidebar" }).tap();
+    await page.getByRole("button", { name: "Toggle sidebar" }).tap();
     const drawer = page.getByRole("dialog", { name: "Sidebar", exact: true });
     await expect(
       drawer.getByRole("button", { name: /Mobile tester/ }),
@@ -346,7 +346,7 @@ for (const width of [320, 390]) {
       }),
     ).toBe(true);
     await expect(
-      page.getByRole("button", { name: "Toggle Sidebar" }),
+      page.getByRole("button", { name: "Toggle sidebar" }),
     ).toBeInViewport({ ratio: 1 });
     expect(
       await page.evaluate(() => document.documentElement.scrollWidth),

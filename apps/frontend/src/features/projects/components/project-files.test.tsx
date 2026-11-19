@@ -101,7 +101,7 @@ it("uses the project query, shows shared memberships and unavailable artifacts, 
   expect(
     screen.queryByRole("button", { name: "Delete selected files" }),
   ).not.toBeInTheDocument();
-  await userEvent.click(screen.getByRole("button", { name: "Toggle Search" }));
+  await userEvent.click(screen.getByRole("button", { name: "Toggle search" }));
   await userEvent.type(
     screen.getByRole("textbox", { name: "Search files" }),
     "missing",
@@ -234,7 +234,7 @@ it("clears selection when changing the page or search", async () => {
   expect(
     screen.getByRole("button", { name: "Remove from project" }),
   ).toBeEnabled();
-  await userEvent.click(screen.getByRole("button", { name: "Toggle Search" }));
+  await userEvent.click(screen.getByRole("button", { name: "Toggle search" }));
   await userEvent.type(screen.getByLabelText("Search files"), "new");
   expect(
     screen.getByRole("button", { name: "Remove from project" }),

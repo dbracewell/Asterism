@@ -92,7 +92,7 @@ export const ComponentSettings = ({
   return (
     <div className={cn("flex flex-col", className)}>
       <div className={cn("flex flex-1 flex-col gap-2 overflow-y-auto")}>
-        <Label>Select Your Provider</Label>
+        <Label>Select your provider</Label>
         <Select
           value={providerName}
           onValueChange={(name) => {

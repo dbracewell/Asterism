@@ -401,7 +401,7 @@ function ConfigurationForm({
             </Field>
             <div className="flex flex-col gap-3">
               <h1 className="text-muted-foreground text-sm">
-                Generation Settings
+                Generation settings
               </h1>
               <FieldSet className="grid grid-cols-1 gap-2 @xl/agent:grid-cols-2 @4xl/agent:grid-cols-3">
                 <Field>

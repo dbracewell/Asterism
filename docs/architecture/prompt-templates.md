@@ -165,7 +165,7 @@ optional fields in sections.
 An optional **Review prompt** item in the composer's **+** menu critiques the
 current draft against a fixed rubric: goal, audience, context, constraints,
 output format and examples. It is off by default; each user turns it on with
-**User Settings → General → Prompt Coach** (user setting `prompt_coach_enabled`,
+**User Settings → General → Prompt coach** (user setting `prompt_coach_enabled`,
 boolean).
 
 | Route                                 | Contract                                                                                                        |

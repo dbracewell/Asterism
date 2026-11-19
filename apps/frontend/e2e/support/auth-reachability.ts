@@ -90,13 +90,13 @@ export async function exerciseAuth(
         form.getByLabel("Name", { exact: true }),
         form.getByLabel("Email"),
         form.getByLabel("Password", { exact: true }),
-        form.getByLabel("Admin Passkey"),
+        form.getByLabel("Admin passkey"),
         form.getByRole("button", { name: "Sign up" }),
       ]
     : [
         form.getByLabel("Email"),
         form.getByLabel("Password", { exact: true }),
-        form.getByRole("button", { name: "Login" }),
+        form.getByRole("button", { name: "Sign in" }),
       ];
   await expect(form).toBeVisible();
   await expect(page.locator("html")).toHaveCSS(
@@ -126,7 +126,7 @@ export async function exerciseAuth(
   const error = form.getByRole("alert");
   await expect(error).toBeFocused();
   await expect(error).toContainText(
-    setup ? "Name and Admin Passkey required" : /invalid|incorrect/i,
+    setup ? "Name and admin passkey required" : /invalid|incorrect/i,
   );
   await expectReachable(error);
   await expectAuthFits(page);

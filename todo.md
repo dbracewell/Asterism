@@ -88,10 +88,10 @@ Source: the follow-ups found during EPIC-87 to EPIC-89. [EPIC-90](docs/epics/EPI
   - [x] Show the "saved binding" message only when editing a sub-agent whose bound model is unavailable; a new sub-agent shows a plain hint until submitted.
   - [x] Tests for new and edited sub-agents; retake `sub-agent-new`.
 - [x] US-90.7: Consistent labels
-  - [ ] Rename **Login** to **Sign in**, **New Chat** to **New chat** and **Default Model** to **Default model**; check other title-case labels in settings (for example **Font Size**, **Show Thinking**, **Prompt Coach**) and fix them the same way.
-  - [ ] Update tests and E2E selectors that match the old text.
-  - [ ] Rerun the affected shots and update the guide pages that quote the labels.
-- [ ] US-90.8: Slim the image and add Chromium
+  - [x] Rename **Login** to **Sign in**, **New Chat** to **New chat** and **Default Model** to **Default model**; check other title-case labels in settings (for example **Font Size**, **Show Thinking**, **Prompt Coach**) and fix them the same way.
+  - [x] Update tests and E2E selectors that match the old text.
+  - [x] Rerun the affected shots and update the guide pages that quote the labels.
+- [x] US-90.8: Slim the image and add Chromium
   - [ ] Measure the current image and record the size of its largest parts.
   - [ ] Install CPU-only `torch` and `torchvision` by default from PyTorch's CPU index, with a GPU (CUDA) build selected by a Docker build argument; image generation, embeddings and captioning tests pass on both.
   - [ ] Ship only the frontend's runtime packages (Next standalone output or a production-only install), keeping the `auth` migration command working at startup; copy the Node runtime once.

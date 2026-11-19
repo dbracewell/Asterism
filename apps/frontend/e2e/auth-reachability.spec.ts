@@ -76,7 +76,7 @@ test("a long unbroken login error wraps, scrolls and leaves fields/submit reacha
   const form = page.getByRole("form", { name: "Sign in", exact: true });
   await form.getByLabel("Email").fill("absent-321@example.test");
   await form.getByLabel("Password", { exact: true }).fill("Reachability-321!");
-  await form.getByRole("button", { name: "Login" }).tap();
+  await form.getByRole("button", { name: "Sign in" }).tap();
   const error = form.getByRole("alert");
   await expect(error).toBeFocused();
   await expect(error).toContainText("Long error");
@@ -89,7 +89,7 @@ test("a long unbroken login error wraps, scrolls and leaves fields/submit reacha
   await expectReachable(form.getByLabel("Email"), true);
   await page.keyboard.press("Tab");
   await page.keyboard.press("Tab");
-  await expectReachable(form.getByRole("button", { name: "Login" }), true);
+  await expectReachable(form.getByRole("button", { name: "Sign in" }), true);
 });
 test("a focused login can shrink to a keyboard-sized viewport and recover", async ({
   page,
@@ -106,7 +106,7 @@ test("a focused login can shrink to a keyboard-sized viewport and recover", asyn
   await expect(form.getByLabel("Password", { exact: true })).toBeFocused();
   await page.setViewportSize({ width: 390, height: 300 });
   await page.keyboard.press("Tab");
-  await expectReachable(form.getByRole("button", { name: "Login" }), true);
+  await expectReachable(form.getByRole("button", { name: "Sign in" }), true);
   await expectAuthFits(page);
   await page.setViewportSize({ width: 390, height: 800 });
   await expectAuthFits(page);
@@ -132,11 +132,11 @@ test("successful login remains reachable at 320x300 with 200% text", async ({
     .getByRole("main", { name: "Authentication" })
     .hover({ position: { x: 8, y: 8 } });
   await page.mouse.wheel(0, 10000);
-  await expect(form.getByRole("button", { name: "Login" })).toBeInViewport({
+  await expect(form.getByRole("button", { name: "Sign in" })).toBeInViewport({
     ratio: 1,
   });
-  await expectReachable(form.getByRole("button", { name: "Login" }));
-  await form.getByRole("button", { name: "Login" }).tap();
+  await expectReachable(form.getByRole("button", { name: "Sign in" }));
+  await form.getByRole("button", { name: "Sign in" }).tap();
   await expect(page).toHaveURL(/\/e2e\/themes$/);
   const session = await context.request.get("/api/auth/get-session");
   expect((await session.json()).user.email).toBe(accountEmail);

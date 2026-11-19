@@ -32,12 +32,12 @@ for (const viewport of [
     await expect(tabs.getByText("Planned", { exact: true })).toHaveCount(1);
     for (const label of [
       "Providers",
-      "Theme Editor",
+      "Theme editor",
       "Groups",
       "Users",
       "Tools",
-      "Image Generation",
-      "Image Captioning",
+      "Image generation",
+      "Image captioning",
       "Educators",
       "Export",
     ]) {
@@ -136,11 +136,11 @@ for (const viewport of [
       );
     };
     const execution = tabs.getByRole("tab", {
-      name: "Code Execution Planned",
+      name: "Code execution Planned",
       exact: true,
     });
     await execution.focus();
-    await verify("Code Execution", "Code execution");
+    await verify("Code execution", "Code execution");
     expect(requests).toEqual([]);
     await page.keyboard.press("End");
     await expect(

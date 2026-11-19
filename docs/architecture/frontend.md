@@ -92,7 +92,7 @@ panes and with text enlarged to 200%:
 - **Dialogs** are capped at `calc(100dvh - 2rem)` and scroll their whole content, so a
   long form never pushes its footer out of reach. A model picker inside a dialog opens
   inside that dialog, and Escape closes the picker before the dialog.
-- **Containers, not viewports.** The Theme Editor, file lists and agent forms switch
+- **Containers, not viewports.** The theme editor, file lists and agent forms switch
   layout by their own container width, so they work the same in a narrow pane as on a
   narrow screen.
 - **Sign-in pages** own a `100dvh` scroll area. Short forms are centered and tall ones
@@ -139,17 +139,17 @@ load lazily.
 
 | User Settings                                                               | Admin Settings                                           |
 | --------------------------------------------------------------------------- | -------------------------------------------------------- |
-| General: appearance, Show thinking, default model, Canvas, account and data | Providers, Theme Editor, Groups, Users, Usage, Status    |
-| Your Asterism: About you and usage                                          | Tools, Skills, Canvas, ChatGPT Plans, Context Compaction |
-| Skills, Templates, Rubrics                                                  | Image Generation, Image Captioning, Educators, Export    |
-| Agents: the main agent, sub-agents and the General chat set                 | Code Execution (marked **Planned**)                      |
+| General: appearance, Show thinking, default model, Canvas, account and data | Providers, Theme editor, Groups, Users, Usage, Status    |
+| Your Asterism: About you and usage                                          | Tools, Skills, Canvas, ChatGPT Plans, Context compaction |
+| Skills, Templates, Rubrics                                                  | Image generation, Image captioning, Educators, Export    |
+| Agents: the main agent, sub-agents and the General chat set                 | Code execution (marked **Planned**)                      |
 | ChatGPT: a personal plan connection                                         |                                                          |
 
 The admin sections are defined in
 [`admin-settings/lazy-sections.tsx`](../../apps/frontend/src/features/settings/ui/admin-settings/lazy-sections.tsx)
 and the user sections in
 [`user-settings/index.tsx`](../../apps/frontend/src/features/settings/ui/user-settings/index.tsx).
-Code Execution is the only planned section: its pane explains what is coming and
+Code execution is the only planned section: its pane explains what is coming and
 offers no controls. Admin Settings isn't shown to other users, but that is
 presentation only; every admin route checks the role itself.
 

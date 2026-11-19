@@ -41,9 +41,9 @@ Open `http://localhost:3000`. Next.js allows only one dev process per app direct
 
 ## Current versus planned capabilities
 
-The admin navigation marks **Groups, Users, Image Generation, Code Execution and
+The admin navigation marks **Groups, Users, Image generation, Code execution and
 Export** as **Planned**. Their panes explain future scope and offer no configuration
-actions. Providers, Theme Editor, Tools and Image Captioning remain available;
+actions. Providers, Theme editor, Tools and Image captioning remain available;
 user settings expose General, Your Asterism, Skills, and Agents.
 
 | Capability           | Available now                                                                                                                                            | Planned                                                    |
@@ -51,12 +51,12 @@ user settings expose General, Your Asterism, Skills, and Agents.
 | Providers and models | Admin provider/model configuration; per-chat model selection                                                                                             | —                                                          |
 | Agents and tools     | User main/sub-agent settings; admin tool policy and provider settings                                                                                    | —                                                          |
 | Skills               | Private skills editor/assignments, admin policy, slash discovery, branch-local activation and provenance ([contract](../../docs/architecture/skills.md)) | Automatic skill selection                                  |
-| Appearance           | User theme/font preferences; admin Theme Editor                                                                                                          | —                                                          |
+| Appearance           | User theme/font preferences; admin Theme editor                                                                                                          | —                                                          |
 | Image captioning     | Admin captioning policy and file-processing integration                                                                                                  | —                                                          |
 | Users and access     | Admin/user access checks, owner scoping and backend user lifecycle                                                                                       | Users management screens and permission-policy controls    |
 | Groups               | —                                                                                                                                                        | Group management and group policy settings                 |
-| Image Generation     | Image search and captioning are separate existing capabilities                                                                                           | Image-generation providers, models and generation workflow |
-| Code Execution       | —                                                                                                                                                        | Sandboxed execution and runtime settings                   |
+| Image generation     | Image search and captioning are separate existing capabilities                                                                                           | Image-generation providers, models and generation workflow |
+| Code execution       | —                                                                                                                                                        | Sandboxed execution and runtime settings                   |
 | Export               | Individual file downloads                                                                                                                                | Data/conversation export tools                             |
 | About you and memory | About you text in Your Asterism, pinned on each accepted turn                                                                                            | Long-term memory engine                                    |
 
@@ -82,7 +82,7 @@ See the
 ## Settings, dialogs and file panes
 
 Settings section navigation follows the pane width and preserves unrelated URL
-parameters. Theme Editor stacks its list and form in narrow containers; file grids
+parameters. Theme editor stacks its list and form in narrow containers; file grids
 fit below 250px. Dialogs share a dynamic viewport height cap and scroll through long
 content to their footer and close actions. See the
 [container and scroll contracts](../../docs/architecture/frontend.md#layout-and-scrolling-rules).
@@ -413,7 +413,7 @@ of a message. A removable **Built with …** chip, kept with the draft across
 reloads, records the template and level on the sent message, which then shows a small label (marked unavailable if the template is
 later deleted).
 
-Turn on **Prompt Coach** under **User Settings → General** to add **Review
+Turn on **Prompt coach** under **User Settings → General** to add **Review
 prompt** to the composer's **+** menu. It checks the draft for a goal, audience,
 context, constraints, output format and examples, and lists suggestions you can
 apply to the message text one by one. After applying one, **Compare

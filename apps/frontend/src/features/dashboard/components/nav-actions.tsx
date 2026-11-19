@@ -26,9 +26,9 @@ export const NavActions = () => {
       <SidebarGroupContent>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton size="lgText" tooltip="New Chat" asChild>
+            <SidebarMenuButton size="lgText" tooltip="New chat" asChild>
               <Link href={projectId ? `/?project_id=${projectId}` : "/"}>
-                <MessageSquarePlusIcon /> <span>New Chat</span>
+                <MessageSquarePlusIcon /> <span>New chat</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>

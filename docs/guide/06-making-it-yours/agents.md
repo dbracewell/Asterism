@@ -26,7 +26,7 @@ Every chat uses your main agent, with whichever model you choose in that chat.
      "Keep answers short and use British spelling."
    - **Maximum steps**: how many steps it may take for one answer, such as
      searching and then answering. The default is fine for most people.
-   - **Generation Settings** such as **Temperature**: leave these empty unless you
+   - **Generation settings** such as **Temperature**: leave these empty unless you
      know what they do.
    - **Allowed tools**: tick the tools it may use. Tools that act outside Asterism,
      such as `web_fetch`, ask for your [approval](../02-chatting/approving-tool-requests.md)

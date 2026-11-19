@@ -56,7 +56,7 @@ Templates you save in **Settings** › **Templates** appear under
 ## Ask the prompt coach to review a draft
 
 First turn the coach on: in **Settings** › **General**, under **Chat**, tick
-**Prompt Coach**.
+**Prompt coach**.
 
 1. Type your draft in the message box, but don't send it yet.
 2. Select the **+** button, then select **Review prompt**.
