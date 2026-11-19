@@ -1,6 +1,6 @@
 # EPIC-87: Architecture documentation refresh
 
-Status: in progress (US-87.1 to US-87.3 complete; US-87.4 awaiting confirmation). Proposed 2026-11-18. Source: user request (2026-11-18).
+Status: in progress (US-87.1 to US-87.4 complete; US-87.5 awaiting confirmation). Proposed 2026-11-18. Source: user request (2026-11-18).
 
 ## Objective
 
@@ -148,15 +148,15 @@ what happens to it on upload, deletion, backup and upgrade.
 
 As a contributor, I can find an architecture guide for every shipped feature.
 
-- [ ] New `classes-and-courses.md`: classes, educators, invites, courses,
+- [x] New `classes-and-courses.md`: classes, educators, invites, courses,
       course-managed content, mode policy and class insights.
-- [ ] New `canvas.md`: branch-aware canvas versions, the tools, trust rules and
+- [x] New `canvas.md`: branch-aware canvas versions, the tools, trust rules and
       preview isolation.
-- [ ] New `image-generation.md`: provider configuration, group access, the
+- [x] New `image-generation.md`: provider configuration, group access, the
       prompt check, recording and produced files.
-- [ ] New `team-packs.md`: export and import, the manifest (ADR-0051) and what
+- [x] New `team-packs.md`: export and import, the manifest (ADR-0051) and what
       a pack never grants.
-- [ ] `study-tools.md`, `project-workspaces.md`: refresh against today's study
+- [x] `study-tools.md`, `project-workspaces.md`: refresh against today's study
       pages (decks, review, quizzes, notes, summaries, guides, drafts) and
       project settings.
 
