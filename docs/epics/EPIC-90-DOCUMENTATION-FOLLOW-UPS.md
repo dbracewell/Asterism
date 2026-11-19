@@ -27,6 +27,7 @@ open question 1).
 | New sub-agent shows an error    | Create sub-agent shows "Choose an available model. The saved binding remains until you save a replacement." under Model before anything is chosen, though nothing is saved                                      | US-89.7          |
 | Labels disagree                 | The sign-in button says **Login** (the form, toast and guide say "sign in"); the sidebar says **New Chat** and the General page **New chat**; Settings says **Default Model**                                   | US-89.2          |
 | No Chromium in the image        | The web fetch tool falls back badly on short or JavaScript-heavy pages it would render with Playwright (`tools/builtin/fetch.py`), because the container image has no Chromium                                  | US-88.1          |
+| 401 for permission checks       | Nothing stops a new role, group or policy check from raising `UnauthorizedException`, which signs the person out in the browser. US-90.1 fixed the admin checks found so far                                                    | US-90.1          |
 
 ## Decisions
 
@@ -58,7 +59,7 @@ open question 1).
 ## User stories
 
 Suggested order: US-90.1 → 90.2 → 90.3 → 90.4 → 90.5 → 90.6 → 90.7 → 90.8 →
-90.9.
+90.9 → 90.10.
 
 ### US-90.1: Admin routes refuse non-admins with 403
 
@@ -171,3 +172,22 @@ version of Asterism I'm using.
 - [ ] Add a "Read the full walkthrough" link to each page guide that has a guide
       page, with a test that every link resolves.
 - [ ] The Markdown files stay readable on GitHub and `pnpm docs:check` passes.
+
+### US-90.10: 403 is the rule for "signed in but not allowed"
+
+As a signed-in person refused by any route, I'm told it's not allowed, and I
+stay signed in. As a contributor, I can't accidentally answer a role or
+permission check with 401.
+
+- [ ] State the convention in `docs/architecture/auth-and-security.md`: 401
+      means "sign in again" (missing, expired or forged token, suspended or
+      deleted account, wrong system key); 403 means "signed in but not
+      allowed"; another user's resource is 404.
+- [ ] Audit every `UnauthorizedException` raise and move any role, group or
+      policy check to `ForbiddenException` (or `NotFoundException` for
+      ownership), with tests updated.
+- [ ] Add a backend test that fails when `UnauthorizedException` is raised
+      outside an allowlist of token, suspension, deletion and system-key
+      checks, with a message that points to the convention.
+- [ ] Note the convention in `apps/backend/README.md` where routes and
+      dependencies are described.

@@ -58,7 +58,7 @@ Source: user request (2026-11-18). Suggested order: [EPIC-87](docs/epics/EPIC-87
 
 ## Documentation follow-ups (proposed 2026-11-19)
 
-Source: the follow-ups found during EPIC-87 to EPIC-89. [EPIC-90](docs/epics/EPIC-90-DOCUMENTATION-FOLLOW-UPS.md) turns each into a story. Suggested order: US-90.1 → 90.9. Work one story at a time.
+Source: the follow-ups found during EPIC-87 to EPIC-89. [EPIC-90](docs/epics/EPIC-90-DOCUMENTATION-FOLLOW-UPS.md) turns each into a story. Suggested order: US-90.1 → 90.10. Work one story at a time.
 
 ### EPIC-90: Fixes found while writing the documentation
 
@@ -104,3 +104,8 @@ Source: the follow-ups found during EPIC-87 to EPIC-89. [EPIC-90](docs/epics/EPI
   - [ ] Copy `docs/guide` into the Docker frontend build stage.
   - [ ] Add a "Read the full walkthrough" link to each page guide that has a guide page, with a test that every link resolves.
   - [ ] The Markdown files stay readable on GitHub and `pnpm docs:check` passes.
+- [ ] US-90.10: 403 is the rule for "signed in but not allowed"
+  - [ ] State the convention in `docs/architecture/auth-and-security.md`: 401 means "sign in again" (missing, expired or forged token, suspended or deleted account, wrong system key); 403 means "signed in but not allowed"; another user's resource is 404.
+  - [ ] Audit every `UnauthorizedException` raise and move any role, group or policy check to `ForbiddenException` (or `NotFoundException` for ownership), with tests updated.
+  - [ ] Add a backend test that fails when `UnauthorizedException` is raised outside an allowlist of token, suspension, deletion and system-key checks, with a message that points to the convention.
+  - [ ] Note the convention in `apps/backend/README.md` where routes and dependencies are described.
