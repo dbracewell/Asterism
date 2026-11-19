@@ -40,20 +40,41 @@ what your group can use.
 5. [Getting help](01-getting-started/getting-help.md): the Help center, help for
    each page, help icons and the chat tour.
 
+## Chatting
+
+1. [Choosing and comparing models](02-chatting/choosing-and-comparing-models.md):
+   picking the model that answers, and seeing two or three answers side by side.
+2. [Attaching files and files in context](02-chatting/attaching-files.md): giving
+   Asterism your own material, and seeing which files a chat can use.
+3. [Sources and citations](02-chatting/sources-and-citations.md): checking which
+   file each part of an answer came from.
+4. [Regenerating answers and switching branches](02-chatting/regenerating-and-branches.md):
+   getting another answer and going back to an earlier one.
+5. [Approving or denying a tool request](02-chatting/approving-tool-requests.md):
+   deciding whether Asterism may, for example, read a web page.
+6. [Working in the canvas](02-chatting/canvas.md): longer documents, code and web
+   pages beside the chat.
+7. [Creating images](02-chatting/creating-images.md): making a picture from a
+   description.
+8. [Skills, prompt templates and the prompt coach](02-chatting/skills-templates-and-the-prompt-coach.md):
+   writing clearer messages.
+9. [Long conversations](02-chatting/long-conversations.md): what happens when a
+   chat gets very long.
+10. [Finding old chats](02-chatting/finding-old-chats.md): the sidebar and search.
+
 ## Chapters
 
 The other chapters are being written. Each one will appear here when it is ready.
 
-| Chapter               | What it covers                                                                        |
-| --------------------- | ------------------------------------------------------------------------------------- |
-| Chatting              | Choosing models, attaching files, sources, branches, the canvas, images and templates |
-| Files and projects    | Your file library, projects, sub-agents and team packs                                |
-| Learning              | Learning modes, hints, reflections, your AI-use log and rubrics                       |
-| Studying              | Flashcards, practice quizzes, summaries, study guides and your progress               |
-| Making Asterism yours | Your settings, About you, agents, skills, templates and your data                     |
-| For educators         | Classes, invites, courses, learning-mode rules and class insights                     |
-| For administrators    | First-time setup, providers, users, groups and budgets, usage, policies and themes    |
-| Troubleshooting       | Common messages and what to do                                                        |
+| Chapter               | What it covers                                                                     |
+| --------------------- | ---------------------------------------------------------------------------------- |
+| Files and projects    | Your file library, projects, sub-agents and team packs                             |
+| Learning              | Learning modes, hints, reflections, your AI-use log and rubrics                    |
+| Studying              | Flashcards, practice quizzes, summaries, study guides and your progress            |
+| Making Asterism yours | Your settings, About you, agents, skills, templates and your data                  |
+| For educators         | Classes, invites, courses, learning-mode rules and class insights                  |
+| For administrators    | First-time setup, providers, users, groups and budgets, usage, policies and themes |
+| Troubleshooting       | Common messages and what to do                                                     |
 
 ## For people writing this guide
 

@@ -52,8 +52,9 @@ then:
 1. walks first-run setup in a browser, as the administrator would;
 2. seeds the fictional demo dataset through the API: an administrator, an educator
    and two students, files in several formats, a project with a sub-agent, chats
-   with sources, branches and a canvas, flashcards, a quiz, a summary, and a class
-   with a course and one unused invite link;
+   with sources, branches and a canvas, a long chat to compact, a skill, a web
+   page tool that asks for approval, image creation, flashcards, a quiz, a
+   summary, and a class with a course and one unused invite link;
 3. takes every shot in the shot list.
 
 The pieces live in [`screenshots/`](screenshots/):
@@ -67,7 +68,10 @@ The pieces live in [`screenshots/`](screenshots/):
   answers demo prompts with fixed text, searches project files and cites what it
   finds, and returns valid JSON to the flashcard, quiz, summary and study-guide
   generators. A script with `pace` streams slowly, so a shot can catch a reply
-  while it is still being written.
+  while it is still being written; `fetch` makes it read a web page (which asks
+  for approval) and `byModel` gives each model its own answer when comparing.
+  It also scripts the prompt coach and context compaction, and stands in for a
+  ComfyUI image server under `/comfy` that returns one fixed picture.
 - [`seed.mjs`](screenshots/seed.mjs) creates the dataset.
 
 Every picture uses the light Atlas theme, the default font size, a fixed locale and
@@ -77,8 +81,8 @@ Options: `--only name,name` takes only those shots (the setup and seed still run
 `--out` sets the image folder (default `docs/guide/images`; a shot with its own
 `file` still writes there), `--image` picks the
 image (default `asterism:local`), `--port` sets the host port (default `3970`), and
-`--keep` leaves the instance running and prints the seeded ids, so you can follow
-a page's steps by hand. The run exits `1` if any shot can't be taken, and lists
+`--keep` leaves the instance and the scripted model running (until Ctrl+C) and
+prints the seeded ids, so you can follow a page's steps by hand. The run exits `1` if any shot can't be taken, and lists
 images in the folder that no shot produces any more.
 
 ### `check-docs.mjs`

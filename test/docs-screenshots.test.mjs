@@ -3,6 +3,8 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { chats } from "../scripts/screenshots/demo-content.mjs";
 import {
+  comfy,
+  COMFY_CHECKPOINT,
   fillCitations,
   findChat,
   passagesFrom,
@@ -246,4 +248,104 @@ test("a script's pace reaches the reply, and visitors need no account", () => {
     ]),
     [],
   );
+});
+
+test("each model can have its own answer, for comparing models", () => {
+  const ask = (model) =>
+    respond({
+      model,
+      messages: [{ role: "user", content: "What is chlorophyll?" }],
+    }).content;
+  assert.match(ask("Demo Tutor"), /green pigment/);
+  assert.match(ask("Demo Writer"), /solar panel/);
+});
+
+test("a web page request calls web_fetch, then answers once it is denied", () => {
+  const fetchTool = {
+    type: "function",
+    function: { name: "web_fetch", parameters: {} },
+  };
+  const user = {
+    role: "user",
+    content: "Can you read https://example.org/leaf-structure?",
+  };
+  const first = respond({ messages: [user], tools: [fetchTool] });
+  assert.deepEqual(first.toolCall, {
+    name: "web_fetch",
+    arguments: { url: "https://example.org/leaf-structure" },
+  });
+  const denied = respond({
+    messages: [
+      user,
+      { role: "assistant", tool_calls: [] },
+      { role: "tool", content: "The user rejected this tool call." },
+    ],
+    tools: [fetchTool],
+  });
+  assert.match(denied.content, /wasn't able to read/);
+});
+
+test("Create image calls the image tool, and the reply shows the picture", () => {
+  const user = { role: "user", content: "A plant cell" };
+  const forced = respond({
+    messages: [user],
+    tool_choice: { type: "function", function: { name: "generate_image" } },
+  });
+  assert.deepEqual(forced.toolCall, {
+    name: "generate_image",
+    arguments: { prompt: "A plant cell" },
+  });
+  const embed = "![cell.png](asterism-file:abc)";
+  const reply = respond({
+    messages: [
+      user,
+      {
+        role: "assistant",
+        tool_calls: [{ function: { name: "generate_image" } }],
+      },
+      { role: "tool", content: JSON.stringify({ images: [{ embed }] }) },
+    ],
+  });
+  assert.ok(reply.content.startsWith(embed));
+});
+
+test("the prompt coach and compaction get scripted replies", () => {
+  const coach = respond({
+    messages: [
+      { role: "system", content: "You are a prompt-writing coach. ..." },
+      { role: "user", content: "Explain osmosis" },
+    ],
+  });
+  const review = JSON.parse(coach.content);
+  assert.deepEqual(
+    review.suggestions.map((item) => item.criterion),
+    ["audience", "output_format"],
+  );
+  const summary = respond({
+    messages: [
+      {
+        role: "system",
+        content: "You compact the earlier part of a conversation ...",
+      },
+      { role: "user", content: "transcript" },
+    ],
+  });
+  assert.match(summary.content, /revising unit 3/);
+});
+
+test("the stand-in ComfyUI server lists a checkpoint and returns the picture", () => {
+  const jobs = new Set();
+  const image = Buffer.from("png");
+  assert.deepEqual(
+    comfy("GET", "/object_info/CheckpointLoaderSimple", jobs, image)
+      .CheckpointLoaderSimple.input.required.ckpt_name,
+    [[COMFY_CHECKPOINT]],
+  );
+  const { prompt_id: id } = comfy("POST", "/prompt", jobs, image);
+  const entry = comfy("GET", `/history/${id}`, jobs, image)[id];
+  assert.equal(entry.status.completed, true);
+  assert.equal(entry.outputs[9].images[0].type, "output");
+  assert.equal(comfy("GET", "/view?filename=x.png", jobs, image), image);
+  assert.deepEqual(comfy("GET", "/history/unknown", jobs, image), {});
+  assert.equal(comfy("GET", "/ws", jobs, image), null);
 });
