@@ -1,6 +1,6 @@
 # EPIC-89: User guide
 
-Status: in progress (US-89.1 awaiting confirmation). Proposed 2026-11-18. Source: user request (2026-11-18).
+Status: in progress (US-89.1 complete 2026-11-19; US-89.2 next). Proposed 2026-11-18. Source: user request (2026-11-18).
 
 ## Objective
 

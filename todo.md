@@ -64,7 +64,7 @@ Follow-ups found during the documentation epics (code, not documentation; each n
 
 ### EPIC-89: User guide
 
-- [ ] US-89.1: Screenshot pipeline and guide skeleton
+- [x] US-89.1: Screenshot pipeline and guide skeleton
   - [x] `pnpm docs:screenshots`: boot a disposable instance (reuse `scripts/capacity/instance.mjs` and the stub provider), never touching the working database.
   - [x] Seed script for the demo dataset: an admin, an educator and two students in their groups; a model provider and models; files in several formats; a project with files and a sub-agent; chats with branches, sources and a canvas; flashcard decks, a quiz and notes; a class with a course.
   - [x] Stub provider serves scripted replies keyed to the demo prompts, so chat screenshots look like real answers.
