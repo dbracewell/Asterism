@@ -38,7 +38,7 @@ Tasks:
 - [x] Add a current-versus-planned capability inventory to READMEs and product planning.
 
 Completed checklist history: [archive](../archive/todo-completed-2026-10-24.md#us-351--planned-settings-and-capability-documentation).
-Implementation inventory: [current versus planned product surface](../architecture/frontend-and-themes.md#current-versus-planned-product-surface).
+Implementation inventory: [current versus planned product surface](../architecture/frontend.md#settings).
 Verification: [US-35.1](../reviews/us-35.1-verification-2026-10-24.md).
 This story does not activate the distinct persona/default-profile policy below.
 

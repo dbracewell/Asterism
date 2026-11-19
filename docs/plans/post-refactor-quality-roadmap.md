@@ -33,7 +33,7 @@ authorized by the user. The existing five Planned badges and explanations remain
 now distinguishes real authorization/backend lifecycle from future management
 screens, and coverage checks keyboard access, complete label/badge visibility and
 available-pane discoverability. The current-versus-planned inventory is in the
-[product guide](../architecture/frontend-and-themes.md#current-versus-planned-product-surface)
+[product guide](../architecture/frontend.md#settings)
 and all three READMEs. See [verification](../reviews/us-35.1-verification-2026-10-24.md).
 
 US-35.2 is implemented and verified, with completion and local merge authorized

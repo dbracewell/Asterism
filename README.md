@@ -45,7 +45,7 @@ US-34.3 establishes the [current browser baseline](docs/reviews/us-34.3-verifica
 122 isolated cases passed without retries, with current model-picker/dialog
 behavior, file-knowledge fixtures and a shared unhandled-page-error gate.
 Current theme editing and placeholder admin panes are described in the
-[frontend/theme guide](docs/architecture/frontend-and-themes.md).
+[frontend/theme guide](docs/architecture/frontend.md).
 
 The implementation-oriented architecture guides are in
 [`architecture/`](docs/architecture/README.md):
@@ -93,7 +93,7 @@ user settings expose General, Your Asterism, Skills, and Agents.
 The Users badge describes unfinished administration screens, not missing access
 control. Backend list/provision/delete routes already have authorization and
 lifecycle checks. Navigation visibility does not grant access. Your Asterism holds one About you
-text per user; each accepted turn pins the text and revision it was sent with. Long-term memory remains future work. See the [product-surface inventory](docs/architecture/frontend-and-themes.md#current-versus-planned-product-surface) for ownership
+text per user; each accepted turn pins the text and revision it was sent with. Long-term memory remains future work. See the [product-surface inventory](docs/architecture/frontend.md#settings) for ownership
 and limits.
 
 ## Configuration

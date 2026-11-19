@@ -1,7 +1,11 @@
-# Bundled palette mappings and contrast
+# Bundled theme palettes
 
-Atlas (light, the default) and Night Atlas (dark) are Asterism's native "star
-atlas" palettes (EPIC-41); the six presets below are optional. All eight are
+This guide records where each bundled palette comes from, how its source colors were
+mapped onto Asterism's semantic roles, where accessibility required changes, and how
+contrast was checked. Read it before changing a bundled palette or adding one.
+
+Atlas (light, the default) and Night Atlas (dark) are Asterism's own "star atlas"
+palettes; the six presets below are optional. All eight are
 application adaptations, owned by
 [`features/theme/bundled`](../../apps/frontend/src/features/theme/bundled).
 They are statically imported; administrator overrides in `STORAGE_ROOT/themes`
@@ -22,7 +26,7 @@ they do not prescribe accessible application controls on every possible surface.
 | Catppuccin Latte - Mauve     | [Catppuccin palette v1.7.1](https://github.com/catppuccin/palette/blob/v1.7.1/palette.json), [palette reference](https://catppuccin.com/palette/)                                                                                                                          | Base `#eff1f5` for main/card/popover; Mantle `#e6e9ef` for sidebar; Text `#4c4f69`; Mauve `#8839ef` for primary; Surface 0 `#ccd0da` for secondary/muted/accent.                                                                                                                                              |
 | Catppuccin Mocha             | Same Catppuccin v1.7.1 reference                                                                                                                                                                                                                                           | Base `#1e1e2e` for main/card/popover; Mantle `#181825` for sidebar; Text `#cdd6f4`; Lavender `#b4befe` for primary; Surface 0 `#313244` for secondary/muted/accent.                                                                                                                                           |
 | Black & Gold (`ucf-knights`) | Local application palette with historical UCF-inspired colors; **not an official UCF theme or current brand implementation**                                                                                                                                               | Retains local gold `#ffc904`, black and white. The existing filename alone does not establish an official branding requirement. [UCF's current visual guide](https://www.ucf.edu/brand/visual-expression/) now specifies Bold Gold `#edb80d`; this local palette deliberately makes no claim of following it. |
-| Atlas, Night Atlas           | EPIC-41 brand tokens: `field`, `ink`, `chart-line`, `star` (`flare` is reserved for EPIC-44 live state and is not a theme role)                                                                                                                                            | `field` → background, `ink` → all foregrounds, `chart-line` → border/sidebar border, `star` → primary, sidebar primary, ring and `chart-1`. Cards/popovers lift slightly off the field; sidebar sits slightly below it. Charts are a single star-blue family.                                                 |
+| Atlas, Night Atlas           | Asterism brand tokens: `field`, `ink`, `chart-line`, `star` (`flare` is reserved for running agents in the delegation graph and is not a theme role)                                                                                                                       | `field` → background, `ink` → all foregrounds, `chart-line` → border/sidebar border, `star` → primary, sidebar primary, ring and `chart-1`. Cards/popovers lift slightly off the field; sidebar sits slightly below it. Charts are a single star-blue family.                                                 |
 | Flowers                      | Local application palette, no external version or branding claim                                                                                                                                                                                                           | Preserve the pink/lilac Flowers identity. The checked-in JSON is their source of truth.                                                                                                                                                                                                                       |
 
 These are semantic application mappings rather than complete ports of upstream
@@ -32,7 +36,7 @@ syntax/UI themes. Decorative `border` and `sidebar-border` may remain subtle;
 ## Accessibility choices
 
 Every changed token, including its previous value, is retained in the
-[US-33.1 evidence](../reviews/us-33.1-theme-contrast-2026-10-18.json).
+[contrast evidence](../reviews/us-33.1-theme-contrast-2026-10-18.json).
 The original [80-pair audit](../reviews/2026-10-17-theme-contrast.json) remains
 unchanged so the 12 failing pairs can be compared directly.
 
@@ -84,8 +88,9 @@ The scoped [verification report](../reviews/us-33.1-verification-2026-10-18.md)
 links all eight screenshots and machine-readable results. This is evidence for the
 bundled palettes and the reviewed components, not whole-application accessibility
 certification or validation of user-authored themes. Feature-specific colors,
-syntax highlighting and typography are covered by the [US-33.2 implementation](frontend-and-themes.md#typography-labels-and-motion-us-332); the [US-33.3 review matrix](theme-layout-review-matrix.md) documents
-the reusable matrix and CI policy.
+syntax highlighting and typography are described in [themes](themes.md#type); the
+[theme and layout review matrix](../reviews/theme-layout-review-matrix.md) documents
+the reusable checks and CI policy.
 
 The [2026-10-19 select-readability follow-up](../reviews/us-33.1-select-readability-2026-10-19.md)
 adds the real chat model picker inside its animated primary-colored panel. Select

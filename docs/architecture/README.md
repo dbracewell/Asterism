@@ -34,38 +34,38 @@ After that, read whichever guide covers the part you are changing.
 
 ## Find a guide
 
-| If you want to know…                                                       | Read                                                            |
-| -------------------------------------------------------------------------- | --------------------------------------------------------------- |
-| How the pieces fit together and how a request flows                        | [System overview](overview.md)                                  |
-| How sign-in, tokens and per-user data isolation work                       | [Authentication and security](auth-and-security.md)             |
-| How messages are accepted, streamed, cancelled and compared                | [Chat and WebSocket](chat-and-websocket.md)                     |
-| How many people one instance serves, and how that was measured             | [Capacity check](capacity.md)                                   |
-| How logs, readiness checks, the Status page and settings export work       | [Operations](operations.md)                                     |
-| What a turn's prompt is made of and which files it may read                | [Execution context](execution-context.md)                       |
-| How learning modes, hint levels and mode restrictions work                 | [Learning modes](learning-modes.md)                             |
-| How the agent loop, delegation, traces and compaction work                 | [Agent runtime](agent-runtime.md)                               |
-| Which tools an agent is offered and how approval works                     | [Tool authorization](tool-authorization.md)                     |
-| What is recorded about each run and what stays private                     | [Context provenance and isolation](context-isolation.md)        |
-| How skills are stored, assigned and activated                              | [Skills](skills.md)                                             |
-| How prompt templates, the prompt coach and rubrics work                    | [Prompt templates](prompt-templates.md)                         |
-| How model providers and model capabilities are configured                  | [LLM providers](llm-providers.md)                               |
-| Where data lives: tables, search indexes, files, migrations                | [Data and storage](data-and-storage.md)                         |
-| What happens to an upload, from bytes to searchable text                   | [File knowledge processing](file-knowledge-processing.md)       |
-| How file search stays inside a chat's allowed files, and how captions work | [Knowledge retrieval](knowledge-retrieval.md)                   |
-| How backups, restores and upgrades work                                    | [Backup and restore](backup-and-restore.md)                     |
-| How usage is counted and how group budgets refuse work                     | [Usage and budgets](usage-and-budgets.md)                       |
-| How to initialize or reset a development database                          | [Development initialization and reset](development-reset.md)    |
-| How projects, project files and project sub-agents work                    | [Project workspaces](project-workspaces.md)                     |
-| How flashcards, quizzes, notes and progress work                           | [Study tools](study-tools.md)                                   |
-| How educators run classes, publish courses and see class insights          | [Classes and courses](classes-and-courses.md)                   |
-| How the canvas stores, versions and sandboxes documents                    | [Canvas](canvas.md)                                             |
-| How image generation works, from request to saved image                    | [Image generation](image-generation.md)                         |
-| How a setup is shared as a team pack, and what a pack can't do             | [Team packs](team-packs.md)                                     |
-| How the frontend is laid out, and how themes and chat components work      | [Frontend layout and themes](frontend-and-themes.md)            |
-| What Markdown, links, math and file content may do                         | [Markdown and file-content trust](markdown-content.md)          |
-| Where custom themes are stored and how they are saved                      | [Theme storage](theme-storage.md)                               |
-| Where the bundled palettes come from and how contrast was checked          | [Bundled theme palettes](bundled-theme-palettes.md)             |
-| Which theme and layout checks run, and which are manual                    | [Theme and layout review matrix](theme-layout-review-matrix.md) |
+| If you want to know…                                                                            | Read                                                         |
+| ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| How the pieces fit together and how a request flows                                             | [System overview](overview.md)                               |
+| How sign-in, tokens and per-user data isolation work                                            | [Authentication and security](auth-and-security.md)          |
+| How messages are accepted, streamed, cancelled and compared                                     | [Chat and WebSocket](chat-and-websocket.md)                  |
+| How many people one instance serves, and how that was measured                                  | [Capacity check](capacity.md)                                |
+| How logs, readiness checks, the Status page and settings export work                            | [Operations](operations.md)                                  |
+| What a turn's prompt is made of and which files it may read                                     | [Execution context](execution-context.md)                    |
+| How learning modes, hint levels and mode restrictions work                                      | [Learning modes](learning-modes.md)                          |
+| How the agent loop, delegation, traces and compaction work                                      | [Agent runtime](agent-runtime.md)                            |
+| Which tools an agent is offered and how approval works                                          | [Tool authorization](tool-authorization.md)                  |
+| What is recorded about each run and what stays private                                          | [Context provenance and isolation](context-isolation.md)     |
+| How skills are stored, assigned and activated                                                   | [Skills](skills.md)                                          |
+| How prompt templates, the prompt coach and rubrics work                                         | [Prompt templates](prompt-templates.md)                      |
+| How model providers and model capabilities are configured                                       | [LLM providers](llm-providers.md)                            |
+| Where data lives: tables, search indexes, files, migrations                                     | [Data and storage](data-and-storage.md)                      |
+| What happens to an upload, from bytes to searchable text                                        | [File knowledge processing](file-knowledge-processing.md)    |
+| How file search stays inside a chat's allowed files, and how captions work                      | [Knowledge retrieval](knowledge-retrieval.md)                |
+| How backups, restores and upgrades work                                                         | [Backup and restore](backup-and-restore.md)                  |
+| How usage is counted and how group budgets refuse work                                          | [Usage and budgets](usage-and-budgets.md)                    |
+| How to initialize or reset a development database                                               | [Development initialization and reset](development-reset.md) |
+| How projects, project files and project sub-agents work                                         | [Project workspaces](project-workspaces.md)                  |
+| How flashcards, quizzes, notes and progress work                                                | [Study tools](study-tools.md)                                |
+| How educators run classes, publish courses and see class insights                               | [Classes and courses](classes-and-courses.md)                |
+| How the canvas stores, versions and sandboxes documents                                         | [Canvas](canvas.md)                                          |
+| How image generation works, from request to saved image                                         | [Image generation](image-generation.md)                      |
+| How a setup is shared as a team pack, and what a pack can't do                                  | [Team packs](team-packs.md)                                  |
+| How the frontend is built: routes, data loading, layout, the chat transcript, settings and help | [Frontend](frontend.md)                                      |
+| How themes, color roles, shape and type tokens work                                             | [Themes](themes.md)                                          |
+| What Markdown, links, math and file content may do                                              | [Markdown and file-content trust](markdown-content.md)       |
+| Where custom themes are stored and how they are saved                                           | [Theme storage](theme-storage.md)                            |
+| Where the bundled palettes come from and how contrast was checked                               | [Bundled theme palettes](bundled-theme-palettes.md)          |
 
 The
 [2026-11-18 audit](../reviews/2026-11-18-architecture-docs-audit.md) lists the
