@@ -144,3 +144,19 @@ Done 2026-11-18 ([ADR-0076](../adr/0076-download-my-data.md), [deployment guide]
 - [x] No story or epic references remain in guide bodies.
 - [x] `pnpm docs:check` passes; every new guide is in the index.
 - [x] Update `CLAUDE.md`/`AGENTS.md` links that point at renamed or split guides.
+
+## A normal project README
+
+[EPIC-88](../epics/EPIC-88-PROJECT-README.md) is complete: US-88.1 and US-88.2 were each confirmed and merged with `--no-ff`. Both quick starts were verified from a clean clone; the epic records the results. One code follow-up stays in `todo.md` (the container image has no Chromium for the web fetch tool).
+
+- [x] US-88.1: Give displaced content a home
+  - [x] Map every README section to its destination in a checklist in the PR description; nothing is dropped silently.
+  - [x] Create `docs/development.md`: prerequisites, setup, migrations, `pnpm dev` and focused commands, mprocs, quality checks, isolated E2E and CI helpers.
+  - [x] Merge configuration, `.env` grammar, file secrets, edge protections, sizing and admission settings, backup and upgrade into `docs/deployment.md` where they are not already there; remove duplicates.
+  - [x] Update links elsewhere in `docs/` that point at README anchors.
+- [x] US-88.2: Rewrite the README
+  - [x] Rewrite `README.md` to the agreed sections; keep the CI badge.
+  - [x] Add one screenshot of the chat workspace (from the EPIC-89 screenshot pipeline once it exists; a manual capture from a disposable demo instance until then).
+  - [x] Feature list reflects shipped features only; link "planned" items to `todo.md` rather than listing them.
+  - [x] Verify both quick starts from a clean clone with disposable storage, and record the result in the PR.
+  - [x] `pnpm docs:check` (EPIC-87) and `pnpm format:check` pass.

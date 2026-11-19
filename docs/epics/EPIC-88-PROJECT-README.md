@@ -1,6 +1,6 @@
 # EPIC-88: A normal project README
 
-Status: in progress (US-88.1 complete; US-88.2 awaiting confirmation). Proposed 2026-11-18. Source: user request (2026-11-18).
+Status: complete (2026-11-18). Proposed 2026-11-18. Source: user request (2026-11-18).
 
 ## Objective
 
