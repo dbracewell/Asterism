@@ -198,6 +198,15 @@ export async function seedDemo({
   await admin.api("skills policy", "PUT", "/settings/app/skills", {
     enabled: true,
   });
+  // People may connect their own ChatGPT plan (the connection itself isn't made).
+  await admin.api(
+    "chatgpt policy",
+    "PUT",
+    "/settings/app/chatgpt_plan_enabled",
+    {
+      value: true,
+    },
+  );
   // Reading a web page, which waits for the reader's approval in chat.
   const tools = await admin.api("tools", "GET", "/settings/app/tools");
   await admin.api("tools", "PUT", "/settings/app/tools", {
@@ -293,6 +302,13 @@ export async function seedDemo({
       agent_ids: [checker.id],
     },
   );
+
+  // --- About you ----------------------------------------------------------------------
+  const about = await maya.api("about", "GET", "/users/me/about");
+  await maya.api("about", "PUT", "/users/me/about", {
+    about_md: demo.aboutYou,
+    expected_revision: about.revision,
+  });
 
   // --- The student's agent: a skill, web pages and the prompt coach ------------------
   await maya.api("prompt coach", "PUT", "/settings/user/prompt_coach_enabled", {

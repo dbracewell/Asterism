@@ -1,6 +1,6 @@
 # EPIC-89: User guide
 
-Status: in progress (US-89.1 to US-89.6 complete 2026-11-19; US-89.7 next). Proposed 2026-11-18. Source: user request (2026-11-18).
+Status: in progress (US-89.1 to US-89.7 complete 2026-11-19; US-89.8 next). Proposed 2026-11-18. Source: user request (2026-11-18).
 
 ## Objective
 
@@ -300,14 +300,32 @@ As a student, I can turn my material into study aids and practice.
 
 As a user, I can set Asterism up the way I work and manage my own data.
 
-- [ ] General settings: theme and fonts.
-- [ ] Your Asterism: About you (what to write, what not to), your usage and
+- [x] General settings: theme and fonts.
+- [x] Your Asterism: About you (what to write, what not to), your usage and
       budget.
-- [ ] Agents: main-agent instructions, sub-agents, the General chat set.
-- [ ] Skills: writing one, drafting one with Asterism, assigning it.
-- [ ] Templates and Rubrics settings.
-- [ ] Connecting a ChatGPT plan.
-- [ ] Download my data and asking for your account to be deleted.
+- [x] Agents: main-agent instructions, sub-agents, the General chat set.
+- [x] Skills: writing one, drafting one with Asterism, assigning it.
+- [x] Templates and Rubrics settings.
+- [x] Connecting a ChatGPT plan.
+- [x] Download my data and asking for your account to be deleted.
+
+#### Notes (US-89.7)
+
+- **Pages.** Seven pages in `docs/guide/06-making-it-yours/`: general settings,
+  About you and usage (what to write and what not to), agents (main agent,
+  sub-agents, the General chat set), skills (writing, drafting with Describe it,
+  assigning), templates and rubrics, connecting a ChatGPT plan, and your data and
+  account. The glossary gained About you, budget and token.
+- **ChatGPT only on the same computer.** OpenAI's sign-in returns to
+  `127.0.0.1` (ADR-0025), so a plan connects only when the browser runs on the
+  machine that runs Asterism. The page says so plainly; on a shared instance it
+  won't work.
+- **Demo additions.** Maya's About you text, the ChatGPT plan policy on (no
+  connection is made), and a scripted SKILL.md draft for Describe it.
+- **Found (app copy, not fixed):** a new sub-agent's form shows the red error
+  "Choose an available model. The saved binding remains until you save a
+  replacement." before anything is chosen, though there is no saved binding. In
+  `todo.md`.
 
 ### US-89.8: For educators
 

@@ -872,6 +872,156 @@ export const shots = [
     ready: ["Photosynthesis check"],
   },
 
+  // --- Making Asterism yours -------------------------------------------------------
+  {
+    name: "settings-appearance",
+    alt: "Settings, General: the light and dark themes to choose from, Font Size, Show Thinking, and the Chat section with Default Model, Prompt Coach and Canvas",
+    as: "student",
+    path: () => "/settings",
+    ready: ["Appearance", "Default Model"],
+    steps: async (page) => {
+      await page
+        .getByText("Dark", { exact: true })
+        .evaluate((node) => node.scrollIntoView({ block: "start" }));
+    },
+  },
+  {
+    name: "settings-about-you",
+    alt: "Settings, Your Asterism: today's and this month's token use, and the About you box with a few facts about the student",
+    as: "student",
+    path: () => "/settings?setting=your-asterism",
+    ready: ["About you", "Year 11"],
+  },
+  {
+    name: "settings-agents",
+    alt: "Settings, Agents: the main agent with Manage main-agent skills and an edit button, General chat sub-agents with none chosen, and the Lab report checker sub-agent",
+    as: "student",
+    path: () => "/settings?setting=agents",
+    ready: ["Main agent", "Lab report checker"],
+  },
+  {
+    name: "main-agent-config",
+    alt: "The Main configuration window: Instructions, Maximum steps, generation settings and Allowed tools, with Save configuration",
+    as: "student",
+    path: () => "/settings?setting=agents",
+    ready: ["Main agent"],
+    steps: async (page) => {
+      await page
+        .getByRole("button", { name: "Edit main configuration" })
+        .click();
+      await page.getByText("Allowed tools").waitFor();
+      await page.evaluate(() => document.activeElement?.blur?.());
+    },
+  },
+  {
+    name: "sub-agent-new",
+    alt: "The Create sub-agent window: a warning that sub-agent tools run without asking, then Name, Description, Model and Instructions",
+    as: "student",
+    path: () => "/settings?setting=agents",
+    ready: ["Sub-agents"],
+    steps: async (page) => {
+      await page.getByRole("button", { name: "Create sub-agent" }).click();
+      await page.getByText("Create sub-agent").first().waitFor();
+      await page.evaluate(() => document.activeElement?.blur?.());
+    },
+  },
+  {
+    name: "general-chat-sub-agents",
+    alt: "The General chat sub-agents window, with a box to tick beside Lab report checker, its fixed model and Available, and Save choices",
+    as: "student",
+    path: () => "/settings?setting=agents",
+    ready: ["Main agent"],
+    steps: async (page) => {
+      await page
+        .getByRole("button", { name: "Choose General chat sub-agents" })
+        .click();
+      await page.getByRole("button", { name: "Save choices" }).waitFor();
+    },
+  },
+  {
+    name: "settings-skills",
+    alt: "Settings, Skills: the lab-partner skill with Assigned to main agent switched on and a View or edit button, and New skill at the top",
+    as: "student",
+    path: () => "/settings?setting=skills",
+    ready: ["lab-partner", "Assigned to main agent"],
+  },
+  {
+    name: "skill-describe",
+    alt: "The Describe it tab of Create skill: a description of the skill in What should the skill do?, optional examples, a writer model and Write draft",
+    as: "student",
+    path: () => "/settings?setting=skills",
+    ready: ["lab-partner"],
+    steps: async (page) => {
+      await page.getByRole("button", { name: "New skill" }).click();
+      await page.getByRole("tab", { name: "Describe it" }).click();
+      await page
+        .getByLabel("What should the skill do?")
+        .fill(
+          "Quiz me on a topic, one question at a time, and tell me if I'm right.",
+        );
+      await page.evaluate(() => document.activeElement?.blur?.());
+    },
+  },
+  {
+    name: "skill-draft",
+    alt: "The draft skill Quiz me in the Write it tab's preview, with Ask for changes, Discard draft and Save skill",
+    as: "student",
+    path: () => "/settings?setting=skills",
+    ready: ["lab-partner"],
+    steps: async (page) => {
+      await page.getByRole("button", { name: "New skill" }).click();
+      await page.getByRole("tab", { name: "Describe it" }).click();
+      await page
+        .getByLabel("What should the skill do?")
+        .fill(
+          "Quiz me on a topic, one question at a time, and tell me if I'm right.",
+        );
+      await page.getByRole("button", { name: "Write draft" }).click();
+      await page.getByRole("button", { name: "Save skill" }).waitFor();
+      await page.getByText("After five questions").waitFor();
+    },
+  },
+  {
+    name: "settings-templates",
+    alt: "Settings, Templates: the RTF, CO-STAR, CRAFT, Few-shot and Step-by-step frameworks, each with Duplicate, and New template at the top",
+    as: "student",
+    path: () => "/settings?setting=templates",
+    ready: ["Frameworks", "CO-STAR"],
+  },
+  {
+    name: "settings-chatgpt",
+    alt: "Settings, ChatGPT: a Continue with ChatGPT button, a note that the browser must run on the same machine as Asterism, and Not connected",
+    as: "student",
+    path: () => "/settings?setting=chatgpt",
+    ready: ["Continue with ChatGPT", "Not connected"],
+  },
+  {
+    name: "settings-your-data",
+    alt: "Settings, General: Your data, with a message that the archive is ready, its size and when it will be deleted, a Download button and Prepare a new archive",
+    as: "student",
+    path: () => "/settings",
+    ready: ["Prepare my data"],
+    steps: async (page) => {
+      await page.getByRole("button", { name: "Prepare my data" }).click();
+      await page
+        .getByText("Your archive is ready")
+        .waitFor({ timeout: 120_000 });
+    },
+  },
+  {
+    name: "settings-delete-request",
+    alt: "The Ask to delete your account? message: an administrator decides, everything is deleted for good if they do, and the request can be withdrawn, with Cancel and Send request",
+    as: "student",
+    path: () => "/settings",
+    ready: ["Ask to delete my account"],
+    steps: async (page) => {
+      await page
+        .getByRole("button", { name: "Ask to delete my account" })
+        .click();
+      await page.getByText("Ask to delete your account?").waitFor();
+    },
+  },
+
   // --- Educators -------------------------------------------------------------------
   {
     name: "class-overview",

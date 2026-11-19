@@ -69,6 +69,8 @@ Follow-ups found during the documentation epics (code, not documentation; each n
 
 - [ ] The help registry has no entry for the Spot the error learning mode (`concept.learning-mode` lists the other six as related), so the Help center and the mode's help icon say nothing about it. Add `concept.mode-spot-the-error` and update the terminology list if needed. Found in US-89.5.
 
+- [ ] Creating a sub-agent shows the red error "Choose an available model. The saved binding remains until you save a replacement." under Model before anything is chosen. A new sub-agent has no saved binding; show a plain "Choose a model" hint until the form is submitted. Found in US-89.7.
+
 ### EPIC-89: User guide
 
 - [x] US-89.1: Screenshot pipeline and guide skeleton
@@ -112,14 +114,14 @@ Follow-ups found during the documentation epics (code, not documentation; each n
   - [x] Study notes, summaries and study guides.
   - [x] Following your progress.
 - [x] US-89.7: Making Asterism yours
-  - [ ] General settings: theme and fonts.
-  - [ ] Your Asterism: About you (what to write, what not to), your usage and budget.
-  - [ ] Agents: main-agent instructions, sub-agents, the General chat set.
-  - [ ] Skills: writing one, drafting one with Asterism, assigning it.
-  - [ ] Templates and Rubrics settings.
-  - [ ] Connecting a ChatGPT plan.
-  - [ ] Download my data and asking for your account to be deleted.
-- [ ] US-89.8: For educators
+  - [x] General settings: theme and fonts.
+  - [x] Your Asterism: About you (what to write, what not to), your usage and budget.
+  - [x] Agents: main-agent instructions, sub-agents, the General chat set.
+  - [x] Skills: writing one, drafting one with Asterism, assigning it.
+  - [x] Templates and Rubrics settings.
+  - [x] Connecting a ChatGPT plan.
+  - [x] Download my data and asking for your account to be deleted.
+- [x] US-89.8: For educators
   - [ ] Creating a class and inviting students.
   - [ ] Courses and course-managed content: what students see and cannot change.
   - [ ] Setting mode policy for a class.

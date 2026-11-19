@@ -718,6 +718,29 @@ example, and a quick question at the end to check understanding.
 /** Replies to other model calls, matched by the start of their system prompts. Strings are sent as they are. */
 export const helpers = [
   {
+    // Describe it: the main agent writes a SKILL.md draft in one ```skill block.
+    prompt: "You are writing a skill for the user",
+    reply:
+      () => `Here's a draft. It asks for one question at a time and waits for your answer before moving on.
+
+\`\`\`skill
+---
+name: quiz-me
+description: Quiz me on a topic with one short question at a time, and tell me whether I got it right.
+---
+# Quiz me
+
+Help the learner practise a topic by asking questions.
+
+1. Ask one short question about the topic.
+2. Wait for the learner's answer.
+3. Say whether it was right, and explain briefly in one or two sentences.
+4. Ask the next question, a little harder if they got it right.
+
+After five questions, list what they should review.
+\`\`\``,
+  },
+  {
     prompt: "You grade a learner's short answer",
     reply: () => ({
       verdict: "partial",
@@ -863,3 +886,8 @@ export const projectReflection = {
   learned: "The light-dependent reactions happen in the thylakoid membranes.",
   unclear: "Why does the Calvin cycle need ATP as well as NADPH?",
 };
+
+/** The student's About you text. */
+export const aboutYou = `I'm in Year 11 and taking biology, chemistry and English.
+Unit 3 of biology is photosynthesis and respiration; the test is soon.
+I understand things best with an everyday example first.`;

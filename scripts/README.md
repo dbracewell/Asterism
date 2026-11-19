@@ -55,7 +55,8 @@ then:
    with sources, branches and a canvas, a long chat to compact, a skill, a web
    page tool that asks for approval, image creation, image captions, a file whose
    processing failed, an example chat for each learning mode, reflections,
-   flashcards with reviews, a quiz with an attempt, topics, a
+   About you, a ChatGPT policy that allows connections, flashcards with
+   reviews, a quiz with an attempt, topics, a
    summary, and a class with a course and one unused invite link;
 3. takes every shot in the shot list. Each person signs in once; later shots
    reuse the session, so a long list stays under the sign-in rate limit.
@@ -75,7 +76,8 @@ The pieces live in [`screenshots/`](screenshots/):
   for approval) and `byModel` gives each model its own answer when comparing.
   Study drafts (cards, quiz questions, summary sections) are chosen by the file
   in each request, so they cite the right file. It also scripts the prompt
-  coach, context compaction, image captions and short-answer grading, and
+  coach, context compaction, image captions, short-answer grading and skill
+  drafts, and
   stands in for a
   ComfyUI image server under `/comfy` that returns one fixed picture.
 - [`seed.mjs`](screenshots/seed.mjs) creates the dataset.
