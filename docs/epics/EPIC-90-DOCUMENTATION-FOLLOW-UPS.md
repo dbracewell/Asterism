@@ -99,10 +99,10 @@ to the earlier answer.
 
 As a user who reads a compaction summary, I see which model wrote it.
 
-- [ ] Look up the run model's name when compacting outside a run, instead of
+- [x] Look up the run model's name when compacting outside a run, instead of
       using its id.
-- [ ] Test the Compact now path; check stored records and the divider.
-- [ ] Consider repairing stored records whose name is an id (data migration if
+- [x] Test the Compact now path; check stored records and the divider.
+- [x] Consider repairing stored records whose name is an id (data migration if
       the stored value changes).
 
 ### US-90.4: The source page shows the passage

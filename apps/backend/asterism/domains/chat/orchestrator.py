@@ -52,7 +52,7 @@ from asterism.domains.llm.schemas import (
     ToolCall,
     ToolResult,
 )
-from asterism.domains.llm.selection import SelectedModel, resolve_usable_model
+from asterism.domains.llm.selection import SelectedModel, resolve_usable_model, visible_model_name
 from asterism.domains.llm.token_counting import estimate_text_tokens
 from asterism.domains.projects.goals import render_goal
 from asterism.domains.prompt_templates.provenance import TemplateProvenance
@@ -625,11 +625,21 @@ class ChatOrchestrator:
 
     async def _summarizer(self, model_id: uuid.UUID | None, window: int) -> tuple[SelectedModel, int]:
         """The admin's compaction model if set, else this run's own model, with its window."""
+        from asterism.db.database import get_async_db_session
+
         if model_id is None:
-            name = self._execution.model.name if self._execution is not None else str(self.agent.model_id)
+            if self._execution is not None:
+                name = self._execution.model.name
+            else:
+                # Compact now runs outside a turn: name the chat's model, not its id (US-90.3).
+                async with get_async_db_session() as session:
+                    name = await visible_model_name(
+                        user_id=self.user_id,
+                        model_id=self.agent.model_id,  # type: ignore[arg-type]
+                        session=session,
+                    )
             client = with_source(await self.agent._get_client(), UsageSource.COMPACTION)
             return SelectedModel(id=self.agent.model_id, name=name, client=client), window  # type: ignore[arg-type]
-        from asterism.db.database import get_async_db_session
 
         async with get_async_db_session() as session:
             model = await resolve_usable_model(

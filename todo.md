@@ -73,10 +73,10 @@ Source: the follow-ups found during EPIC-87 to EPIC-89. [EPIC-90](docs/epics/EPI
   - [x] Fix, with a test that the earlier answer is reachable.
   - [x] Add a project-chat branch shot to the screenshot pipeline and use it in `docs/guide/02-chatting/regenerating-and-branches.md`.
 - [x] US-90.3: Compaction summaries name their model
-  - [ ] Look up the run model's name when compacting outside a run, instead of using its id.
-  - [ ] Test the Compact now path; check stored records and the divider.
-  - [ ] Consider repairing stored records whose name is an id (data migration if the stored value changes).
-- [ ] US-90.4: The source page shows the passage
+  - [x] Look up the run model's name when compacting outside a run, instead of using its id.
+  - [x] Test the Compact now path; check stored records and the divider.
+  - [x] Consider repairing stored records whose name is an id (data migration if the stored value changes).
+- [x] US-90.4: The source page shows the passage
   - [ ] Show the cited passage (and its place in the file where known) on the scoped file page, with plain wording instead of "Authorized source in the current file scope of this conversation."
   - [ ] Keep Download source and Back to conversation.
   - [ ] Tests; update `docs/guide/02-chatting/sources-and-citations.md` and add a shot of the page.
