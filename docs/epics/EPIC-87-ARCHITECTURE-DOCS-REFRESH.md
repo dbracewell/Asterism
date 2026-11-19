@@ -1,6 +1,6 @@
 # EPIC-87: Architecture documentation refresh
 
-Status: in progress (US-87.1 to US-87.4 complete; US-87.5 awaiting confirmation). Proposed 2026-11-18. Source: user request (2026-11-18).
+Status: in progress (US-87.1 to US-87.5 complete; US-87.6 awaiting confirmation). Proposed 2026-11-18. Source: user request (2026-11-18).
 
 ## Objective
 
@@ -49,9 +49,8 @@ does now.
 
 ## Open questions
 
-1. Should `bundled-theme-palettes.md` and `theme-layout-review-matrix.md` stay in
-   `architecture/`, or move to `docs/reviews/` as review evidence? Proposed: keep
-   the palette guide, move the review matrix.
+1. ~~Should `theme-layout-review-matrix.md` move to `docs/reviews/`?~~ Decided
+   2026-11-18: moved, as review evidence; the palette guide stays (US-87.6).
 2. ~~Should the link checker run in CI or only locally?~~ Decided 2026-11-18:
    CI, in `quality-gates` (US-87.1).
 
@@ -165,14 +164,14 @@ As a contributor, I can find an architecture guide for every shipped feature.
 As a frontend contributor, I know how the app shell, themes, content rendering
 and in-app help fit together.
 
-- [ ] Split `frontend-and-themes.md` into `frontend.md` (app shell, routing,
+- [x] Split `frontend-and-themes.md` into `frontend.md` (app shell, routing,
       data loading with TanStack Query and Hey API, layout and scrolling rules,
       settings structure) and `themes.md` (ownership, tokens, Theme Editor).
-- [ ] Replace the product-surface inventory with the current admin and user
+- [x] Replace the product-surface inventory with the current admin and user
       settings sections; only Code Execution is still Planned.
-- [ ] `markdown-content.md`, `theme-storage.md`, `bundled-theme-palettes.md`:
+- [x] `markdown-content.md`, `theme-storage.md`, `bundled-theme-palettes.md`:
       refresh; resolve open question 1 for the review matrix.
-- [ ] New section on the help system: help registry, page guides, help center
+- [x] New section on the help system: help registry, page guides, help center
       and first-chat tour, and how they relate to the user guide (EPIC-89).
 
 ### US-87.7: Final consistency pass

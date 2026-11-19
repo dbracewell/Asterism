@@ -182,7 +182,7 @@ user settings expose General, Your Asterism, Skills, and Agents.
 The Users badge describes unfinished administration screens, not missing access
 control. Backend list/provision/delete routes already have authorization and
 lifecycle checks. Navigation visibility does not grant access. Your Asterism holds one About you
-text per user; each accepted turn pins the text and revision it was sent with. Long-term memory remains future work. See the [product-surface inventory](../../docs/architecture/frontend-and-themes.md#current-versus-planned-product-surface) for ownership
+text per user; each accepted turn pins the text and revision it was sent with. Long-term memory remains future work. See the [product-surface inventory](../../docs/architecture/frontend.md#settings) for ownership
 and limits.
 
 ## Local image generation
@@ -272,7 +272,7 @@ The [2026-10-17 review](../../docs/reviews/2026-10-17-codebase-review.md)
 records these limits. US-34.1 keeps chat/project FTS matches in composable SQL
 relations, applies owner/scope predicates before count/pagination, and batches one
 chronological owned-message snippet per selected content-matched chat. The
-[search design](../../docs/architecture/data-and-storage.md#search-indexes) and
+[search design](../../docs/architecture/data-and-storage.md#search) and
 [query-bound measurements](../../docs/reviews/us-34.1-verification-2026-10-24.md)
 distinguish page-bounded application data and round trips from database scan work.
 SQLite is the only implemented search dialect; shared `db/queries.py` stays
@@ -338,7 +338,7 @@ US-54.4 runs a prompt on two or three models as sibling chat branches (`compare`
 on chat sends, `POST /chat/{chat_id}/message/{id}/compare` for an answered turn,
 and `GET`/`PUT /chat/{chat_id}/comparisons/{id}`). Columns run one after another
 within the chat's single work slot. See the
-[chat contract](../../docs/architecture/chat-and-websocket.md#side-by-side-comparison-us-544)
+[chat contract](../../docs/architecture/chat-and-websocket.md#comparing-models)
 and [ADR-0027](../../docs/adr/0027-side-by-side-comparison-branches.md).
 
 ## Prompt templates API

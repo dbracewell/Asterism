@@ -2,7 +2,8 @@
 /**
  * Checks relative links in the repository's Markdown documentation.
  *
- * Every relative link and image in README.md and docs/ must point at a file or
+ * Every relative link and image in docs/ and the maintained READMEs and agent
+ * playbooks listed below must point at a file or
  * directory that exists, and a link with a `#fragment` into a Markdown file must
  * name a heading (GitHub-style slug) or an explicit `<a id>` anchor in it.
  * External links (http, mailto and similar) are not fetched.
@@ -13,6 +14,19 @@ import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
 
 const ignoredDirectories = new Set([".git", "node_modules"]);
+/**
+ * Maintained documents outside docs/. CLAUDE.md is a symlink to AGENTS.md, and
+ * codebase_review.md is a dated review kept as written.
+ */
+const ENTRY_DOCUMENTS = [
+  "README.md",
+  "AGENTS.md",
+  "todo.md",
+  "apps/backend/README.md",
+  "apps/frontend/README.md",
+  "apps/frontend/AGENTS.md",
+  "scripts/README.md",
+];
 /** Dated records are evidence as written; their links are not maintained. */
 const historicalDirectories = new Set(["archive"]);
 
@@ -129,7 +143,9 @@ function markdownFiles(root) {
       } else if (entry.name.endsWith(".md")) files.push(path);
     }
   };
-  if (existsSync(join(root, "README.md"))) files.push(join(root, "README.md"));
+  for (const path of ENTRY_DOCUMENTS) {
+    if (existsSync(join(root, path))) files.push(join(root, path));
+  }
   if (existsSync(join(root, "docs"))) visit(join(root, "docs"));
   return files;
 }

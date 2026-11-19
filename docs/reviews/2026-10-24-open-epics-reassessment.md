@@ -17,7 +17,7 @@ of an open story or a new full browser/production certification.
 
 `70fcad8` is an ancestor of `main`. Its bundled-palette tests, rendered
 `theme-layout-matrix.spec.ts`, CI artifact retention and
-[manual matrix](../architecture/theme-layout-review-matrix.md) are present.
+[manual matrix](theme-layout-review-matrix.md) are present.
 The [US-33.3 record](us-33.3-verification-2026-10-19.md) records a historical
 119-case full browser pass, but still opens with "No commit, merge or push yet".
 The epic, roadmap and todo inherited that stale pre-commit state.

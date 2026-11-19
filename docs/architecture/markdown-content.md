@@ -1,6 +1,12 @@
-# Markdown and file-content trust boundary
+# Markdown and file-content trust
 
-## Decision — US-31.3
+This guide explains what rendered content may and may not do in Asterism: which
+Markdown is supported, why raw HTML is off, which links and resources are allowed,
+how math is constrained, and how file references and citations are resolved. Read it
+before changing `MarkdownViewer`, adding a Markdown plugin or rendering any text that
+came from a model, a user or a file.
+
+## The policy
 
 `MarkdownViewer` owns the content policy for main chat messages (including user
 messages) and sub-agent replies. Its inputs may include model output, user prompts,
@@ -36,7 +42,7 @@ can pass through it. No inline-image loading/approval flow is implemented.
 Authorized attachment previews remain separate application components; Markdown
 cannot turn an arbitrary endpoint into an authenticated image request.
 
-## File references — EPIC-56
+## File references
 
 [ADR-0039](../adr/0039-inline-file-references-in-markdown.md) defines the single
 allowed path from Markdown to a file. **Markdown never carries a fetchable URL.**
@@ -65,7 +71,7 @@ It carries an opaque token that the server resolved when the message was saved.
   disposition.
 - **Code.** Tokens inside inline code and fenced code remain literal text.
 
-Status: implemented for images (US-56.4) and document cards (US-56.5). `InlineFilesProvider` supplies the chat ID
+Images and document cards are rendered inline. `InlineFilesProvider` supplies the chat ID
 and resolved list for a message; `InlineFilesScope` narrows it to one sub-agent's
 output. The URL transform lets only an exact token reach the link/image
 components, which render `InlineFile` instead of an anchor or image element.
@@ -97,7 +103,7 @@ user-supplied HTML. The dependency remains part of the trusted implementation.
 See the primary [react-markdown security and HTML documentation](https://github.com/remarkjs/react-markdown#security)
 and [KaTeX options](https://katex.org/docs/options) for the library boundaries.
 
-## Claim citations — EPIC-55
+## Claim citations
 
 [ADR-0040](../adr/0040-claim-level-citations.md) adds one more opaque token.
 A link whose destination is exactly `asterism-cite:` plus one to four
@@ -150,7 +156,7 @@ Night Atlas cards.
 It preserves the literal-code copy path, local horizontal scrolling and existing
 Markdown/KaTeX security policy.
 
-## Verification and remaining work
+## Testing
 
 Unit tests exercise raw overlays/forms/frames/media, dangerous and entity-encoded
 URLs, credential-bearing URLs, same-origin/remote/data/blob images, math HTML/link/
@@ -159,8 +165,8 @@ literal copyable code. Browser coverage intercepts every adversarial resource UR
 and verifies zero requests while exercising the shared renderer, actual sub-agent
 panel, scoped citation component and plain-text file preview with synthetic data.
 
-[US-31.3 verification](../reviews/us-31.3-verification-2026-10-18.md) records executed
-gates and limitations. This policy closes the content trust boundary. Rich-content
-wrapping and local keyboard-scroll areas, with composer clearance, are implemented
-under [US-32.3](frontend-and-themes.md#rich-chat-content-and-composer-clearance-us-323).
-They preserve this trust policy; unrestricted HTML is not a prerequisite for layout.
+The [2026-10-18 verification](../reviews/us-31.3-verification-2026-10-18.md) records
+the gates run when the policy was adopted and their limits. Wrapping and scrolling of
+rich content are layout rules, described in
+[frontend](frontend.md#layout-and-scrolling-rules); they work within this policy and
+need no HTML.

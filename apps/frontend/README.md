@@ -63,7 +63,7 @@ user settings expose General, Your Asterism, Skills, and Agents.
 The Users badge describes unfinished administration screens, not missing access
 control. Backend list/provision/delete routes already have authorization and
 lifecycle checks. Navigation visibility does not grant access. Your Asterism holds one About you
-text per user; each accepted turn pins the text and revision it was sent with. Long-term memory remains future work. See the [product-surface inventory](../../docs/architecture/frontend-and-themes.md#current-versus-planned-product-surface) for ownership
+text per user; each accepted turn pins the text and revision it was sent with. Long-term memory remains future work. See the [product-surface inventory](../../docs/architecture/frontend.md#settings) for ownership
 and limits.
 
 ## Authentication layout
@@ -77,7 +77,7 @@ Validation failures focus a wrapping summary without discarding input. Keyboard
 scroll padding keeps focus rings visible. Auth-only viewport metadata requests
 layout resizing for supporting virtual keyboards while retaining browser zoom.
 See the
-[frontend layout guide](../../docs/architecture/frontend-and-themes.md#authentication-viewport-and-focus-contract-us-321).
+[frontend layout guide](../../docs/architecture/frontend.md#layout-and-scrolling-rules).
 
 ## Settings, dialogs and file panes
 
@@ -85,7 +85,7 @@ Settings section navigation follows the pane width and preserves unrelated URL
 parameters. Theme Editor stacks its list and form in narrow containers; file grids
 fit below 250px. Dialogs share a dynamic viewport height cap and scroll through long
 content to their footer and close actions. See the
-[container and scroll contracts](../../docs/architecture/frontend-and-themes.md#settings-dialogs-and-file-panes-us-322).
+[container and scroll contracts](../../docs/architecture/frontend.md#layout-and-scrolling-rules).
 
 ## Agents and the new-chat page
 
@@ -166,7 +166,7 @@ area for expanded context and attachments, so it cannot cover the last response.
 Wide Markdown tables, code and math scroll locally with keyboard focus; long text,
 filenames and tool arguments wrap. Query failures expose retry and distinguish an
 initial failure from a failed refresh of saved messages. See the
-[chat layout contract](../../docs/architecture/frontend-and-themes.md#rich-chat-content-and-composer-clearance-us-323).
+[chat layout contract](../../docs/architecture/frontend.md#layout-and-scrolling-rules).
 
 ## Sidebar navigation
 
@@ -187,7 +187,7 @@ opens the sidebar with one tap; its title does not overlap the trigger. Drawer
 navigation dismisses it, and closing restores focus and normal page interaction.
 Main pages scroll in the workspace inset, Settings panes scroll locally, and
 sidebar navigation scrolls between its header and user footer. See the
-[mobile shell contract](../../docs/architecture/frontend-and-themes.md#mobile-workspace-shell).
+[mobile shell contract](../../docs/architecture/frontend.md#the-app-shell).
 
 ## LLM provider administration
 
@@ -248,7 +248,7 @@ The combined deployment smoke test is documented in the root README.
 
 ## Quality and API generation
 
-See [Frontend layout, themes, and product surface](../../docs/architecture/frontend-and-themes.md)
+See [Frontend](../../docs/architecture/frontend.md) and [themes](../../docs/architecture/themes.md)
 for theme loading, scroll ownership and current-versus-planned settings. The
 [2026-10-17 review](../../docs/reviews/2026-10-17-codebase-review.md) records
 the original theme trust defects, short-screen setup clipping and palette contrast
@@ -262,10 +262,10 @@ see the [content policy](../../docs/architecture/markdown-content.md). EPIC-32 l
 control contrast. US-33.2 adds semantic feature states, named settings/icon controls,
 inherited body typography, JetBrains Mono code and reduced motion; the wordmark
 now uses the UI face (see [ADR 0024](../../docs/adr/0024-type-system.md) for the
-type scale: `text-display`, `text-title`, `text-heading`, `text-body`, `text-meta`). See [typography, labels and motion](../../docs/architecture/frontend-and-themes.md#typography-labels-and-motion-us-332)
+type scale: `text-display`, `text-title`, `text-heading`, `text-body`, `text-meta`). See [typography, labels and motion](../../docs/architecture/themes.md#type)
 and the [syntax mapping](../../docs/architecture/markdown-content.md#code-typography-and-syntax-palettes).
 US-33.3 extends these fixtures with all-theme schema/contrast gates and a
-container/height/text-size browser matrix; see the [review matrix](../../docs/architecture/theme-layout-review-matrix.md)
+container/height/text-size browser matrix; see the [review matrix](../../docs/reviews/theme-layout-review-matrix.md)
 for exact coverage, artifact locations, manual review and exceptions.
 
 For full browser verification, use the root isolated runner; it owns fresh auth,
@@ -329,19 +329,19 @@ accessibility adaptations. Every palette also defines `chart-1`…`chart-5`, and
 `:root` fallback in `globals.css` mirrors Atlas (enforced by `bundled-palettes.test.ts`,
 which also checks 3:1 input/focus boundaries). Themes may also set `radius`,
 `shadow` (soft/flat) and `density` (comfortable/compact); omitted values fall
-back to Atlas. See [shape values](../../docs/architecture/theme-storage.md#shape-values-us-413).
+back to Atlas. See [shape values](../../docs/architecture/theme-storage.md#shape-values).
 Feature code uses the `rounded-control`/`surface`/`overlay`, `rounded-chip`/`dot` and
-`shadow-raised`/`overlay` tokens; see [shape and elevation tokens](../../docs/architecture/frontend-and-themes.md#shape-and-elevation-tokens-us-414). Shared controls use distinct input boundaries, opaque focus rings and
+`shadow-raised`/`overlay` tokens; see [shape and elevation tokens](../../docs/architecture/themes.md#shape-and-elevation). Shared controls use distinct input boundaries, opaque focus rings and
 readable hover/selected states. See the [palette mapping and review contract](../../docs/architecture/bundled-theme-palettes.md).
 The test-only `/e2e/theme-contrast` route exercises production controls with each
 cookie-selected theme; `e2e/theme-contrast.spec.ts` records text, boundary and focus
 ratios plus screenshots. Custom theme overrides are not rewritten or certified.
 Icons come only from Lucide, with one stroke width set by `LucideProvider`
-([icons](../../docs/architecture/frontend-and-themes.md#icons-us-415)); UI colors
+([icons](../../docs/architecture/frontend.md#icons-and-brand-assets)); UI colors
 come only from theme tokens (`src/app/color-tokens.test.ts`). Brand icons, the web
 manifest and the Open Graph image are generated from `src/app/icon.svg` with
 `pnpm --filter @asterism/frontend generate:icons`; see
-[brand assets](../../docs/architecture/frontend-and-themes.md#brand-assets-us-416).
+[brand assets](../../docs/architecture/frontend.md#icons-and-brand-assets).
 
 ## About you
 

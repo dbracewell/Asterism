@@ -1,6 +1,11 @@
-# Theme storage and lifecycle
+# Theme storage
 
-## Decision — US-31.2, 2026-10-18
+This guide explains where theme files live, how they are read and validated, how a
+save stays atomic, and how themes survive upgrades, backups and resets. Read it
+before changing the theme repository or the Theme Editor's saving.
+[Themes](themes.md) explains what a theme contains and how it is applied.
+
+## Where themes live
 
 The frontend theme domain owns platform-wide presentation palettes, independent of
 user file uploads, backend FileStore, and relational settings. The image supplies
@@ -14,8 +19,7 @@ Application upgrades replace defaults without replacing custom files.
 lives in the theme domain. Catalog composition obtains the root from the existing
 server configuration. Server actions independently enforce administrator sessions.
 The editor uses TanStack mutations and the shared mutation-cache invalidation.
-No database schema, data migration, legacy directory reader, or fallback to former
-`public/themes` files is provided.
+Themes have no database tables.
 
 ## Files and reads
 
@@ -43,7 +47,7 @@ public presentation data; never store secrets there. It is served only through
 validated catalog APIs and server-rendered metadata, not from a writable public
 asset directory.
 
-## Shape values (US-41.3)
+## Shape values
 
 | Field     | Values                     | Atlas fallback | CSS variable                         |
 | --------- | -------------------------- | -------------- | ------------------------------------ |
@@ -116,13 +120,13 @@ reset theme customization, stop the app and separately remove only the reviewed
 next startup reads bundled defaults, and unavailable saved selections resolve to
 Light. Do not remove the whole storage root to reset themes.
 
-## Verification
+## Testing
 
-[`US-31.2 verification`](../reviews/us-31.2-verification-2026-10-18.md) records
-repository, editor, browser, production-build and isolated container results.
 The reusable container check is
 [`check-theme-storage-container.mjs`](../../scripts/check-theme-storage-container.mjs).
 It transpiles the actual repository into a test layer on a local application image
 and replaces three containers sharing a new disposable volume. It verifies
 persistence, UID `10001` and read-only bundled assets; it does not rebuild or test
-the whole application image. It removes only its own test image and volume.
+the whole application image. It removes only its own test image and volume. The
+[2026-10-18 verification](../reviews/us-31.2-verification-2026-10-18.md) records
+the repository, editor, browser and container results when this design was adopted.

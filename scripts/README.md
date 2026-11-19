@@ -233,7 +233,7 @@ artifacts. No existing application data is used. See [theme lifecycle](../docs/a
 
 ## Theme and layout review evidence
 
-The isolated browser runner includes the [theme/layout review matrix](../docs/architecture/theme-layout-review-matrix.md),
+The isolated browser runner includes the [theme/layout review matrix](../docs/reviews/theme-layout-review-matrix.md),
 with all bundled palettes, short viewports, narrow containers and enlarged text.
 Use `--retries=0` for deterministic final verification (also the Playwright default).
 The Playwright HTML report is under `apps/frontend/playwright-report`; JSON results,

@@ -83,17 +83,17 @@ Source: user request (2026-11-18). Suggested order: [EPIC-87](docs/epics/EPIC-87
   - [x] `backup-and-restore.md`, `development-reset.md`: refresh against the current commands.
   - [x] New `usage-and-budgets.md`: the usage ledger, what is recorded, group budgets, where refusals happen, what is never refused.
   - [x] Add "Download my data" (ADR-0076) and user deletion to the data lifecycle section.
-- [ ] US-87.5: Product domains without a guide
+- [x] US-87.5: Product domains without a guide
   - [x] New `classes-and-courses.md`: classes, educators, invites, courses, course-managed content, mode policy and class insights.
   - [x] New `canvas.md`: branch-aware canvas versions, the tools, trust rules and preview isolation.
   - [x] New `image-generation.md`: provider configuration, group access, the prompt check, recording and produced files.
   - [x] New `team-packs.md`: export and import, the manifest (ADR-0051) and what a pack never grants.
   - [x] `study-tools.md`, `project-workspaces.md`: refresh against today's study pages (decks, review, quizzes, notes, summaries, guides, drafts) and project settings.
 - [ ] US-87.6: Frontend
-  - [ ] Split `frontend-and-themes.md` into `frontend.md` (app shell, routing, data loading with TanStack Query and Hey API, layout and scrolling rules, settings structure) and `themes.md` (ownership, tokens, Theme Editor).
-  - [ ] Replace the product-surface inventory with the current admin and user settings sections; only Code Execution is still Planned.
-  - [ ] `markdown-content.md`, `theme-storage.md`, `bundled-theme-palettes.md`: refresh; resolve open question 1 for the review matrix.
-  - [ ] New section on the help system: help registry, page guides, help center and first-chat tour, and how they relate to the user guide (EPIC-89).
+  - [x] Split `frontend-and-themes.md` into `frontend.md` (app shell, routing, data loading with TanStack Query and Hey API, layout and scrolling rules, settings structure) and `themes.md` (ownership, tokens, Theme Editor).
+  - [x] Replace the product-surface inventory with the current admin and user settings sections; only Code Execution is still Planned.
+  - [x] `markdown-content.md`, `theme-storage.md`, `bundled-theme-palettes.md`: refresh; resolve open question 1 for the review matrix.
+  - [x] New section on the help system: help registry, page guides, help center and first-chat tour, and how they relate to the user guide (EPIC-89).
 - [ ] US-87.7: Final consistency pass
   - [ ] Read every guide end to end for tone, terminology and duplication; each topic has one home and other guides link to it.
   - [ ] No story or epic references remain in guide bodies.
