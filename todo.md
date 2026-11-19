@@ -81,10 +81,10 @@ Source: the follow-ups found during EPIC-87 to EPIC-89. [EPIC-90](docs/epics/EPI
   - [x] Keep Download source and Back to conversation.
   - [x] Tests; update `docs/guide/02-chatting/sources-and-citations.md` and add a shot of the page.
 - [x] US-90.5: Help text covers Spot the error and the Users page
-  - [ ] Add `concept.mode-spot-the-error` to the help registry and list it under `concept.learning-mode`.
-  - [ ] Rewrite the `admin.users` page guide for suspend, reactivate, reset links, delete and deletion requests.
-  - [ ] Mirror any changed definitions in `docs/terminology.md`; registry tests pass.
-- [ ] US-90.6: A new sub-agent shows no error before it's submitted
+  - [x] Add `concept.mode-spot-the-error` to the help registry and list it under `concept.learning-mode`.
+  - [x] Rewrite the `admin.users` page guide for suspend, reactivate, reset links, delete and deletion requests.
+  - [x] Mirror any changed definitions in `docs/terminology.md`; registry tests pass.
+- [x] US-90.6: A new sub-agent shows no error before it's submitted
   - [ ] Show the "saved binding" message only when editing a sub-agent whose bound model is unavailable; a new sub-agent shows a plain hint until submitted.
   - [ ] Tests for new and edited sub-agents; retake `sub-agent-new`.
 - [ ] US-90.7: Consistent labels

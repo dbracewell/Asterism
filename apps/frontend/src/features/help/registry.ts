@@ -22,6 +22,7 @@ export type HelpId =
   | "concept.mode-tutor"
   | "concept.mode-explain-back"
   | "concept.mode-review"
+  | "concept.mode-spot-the-error"
   | "concept.mode-draft-feedback"
   | "concept.mode-research"
   | "concept.rubric"
@@ -239,6 +240,7 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
       "concept.mode-tutor",
       "concept.mode-explain-back",
       "concept.mode-review",
+      "concept.mode-spot-the-error",
       "concept.mode-draft-feedback",
       "concept.mode-research",
       "concept.mode-policy",
@@ -292,6 +294,18 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
       "concept.attachment",
       "concept.learning-mode",
     ],
+    audience: "everyone",
+  },
+  "concept.mode-spot-the-error": {
+    title: "Spot the error mode",
+    summary:
+      "The assistant answers or explains a topic but puts one deliberate mistake in the answer for you to find. It's practice for checking AI answers.",
+    details: [
+      "Select the words you think are wrong and choose Check selection, or type them and choose Check. You're told whether you found it, whether your selection is too broad, or that it's not the mistake.",
+      "Choose Reveal answer, then Reveal, to see the mistake, the correction and, when there is one, the source that shows it.",
+      "Every answer in this mode contains a mistake, so don't rely on them for anything else.",
+    ],
+    related: ["concept.learning-mode", "concept.citation"],
     audience: "everyone",
   },
   "concept.mode-draft-feedback": {

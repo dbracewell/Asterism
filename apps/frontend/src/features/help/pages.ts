@@ -1110,7 +1110,7 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
   "admin.users": {
     title: "Users",
     purpose:
-      "See who has an account and move people between groups. Accounts are not otherwise changed here.",
+      "See who has an account, move people between groups, and suspend, reactivate, reset or delete accounts.",
     areas: [
       {
         name: "User list",
@@ -1123,14 +1123,26 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
           "Choose another group to change what someone may use. Moving someone into Educator approves educator access; moving them out revokes it. Administrators are always in Admin.",
       },
       {
+        name: "Account actions",
+        description:
+          "The … button beside an account. Suspend blocks sign-in without deleting anything, and Reactivate lets the person back in. Create password reset link makes a one-time link for you to send them. Delete account removes the account and everything it owns, and can't be undone. Your own row has no actions.",
+      },
+      {
+        name: "Deletion requests",
+        description:
+          "A row marked Asked for deletion is a person's request to delete their account. Nothing changes until you act: delete the account, or select Dismiss to decline.",
+      },
+      {
         name: "Search",
         description: "Find people by part of their name, email or user ID.",
       },
     ],
     tasks: [
+      "When someone forgets their password, create a reset link and send it to them yourself. It works once, until the time it shows.",
+      "To keep someone's work but stop them signing in, suspend the account instead of deleting it.",
       "Approve educators from the Educators section; their status shows here.",
     ],
-    terms: ["concept.group"],
+    terms: ["concept.group", "concept.suspension", "concept.deletion-request"],
     audience: "admin",
   },
   "admin.educators": {
