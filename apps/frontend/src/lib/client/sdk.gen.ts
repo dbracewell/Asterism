@@ -6265,7 +6265,8 @@ export class ApiClient extends HeyApiClient {
    * True if the user was created, False if they already existed.
    *
    * Raises:
-   * UnauthorizedException: If neither credential is valid.
+   * UnauthorizedException: If neither credential is valid and no one is signed in.
+   * ForbiddenException: If a signed-in non-admin presents no valid system key.
    * ConflictException: If the id belongs to a deleted (tombstoned) user.
    */
   public userCreateUser<ThrowOnError extends boolean = false>(

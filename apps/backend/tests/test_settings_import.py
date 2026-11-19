@@ -376,7 +376,7 @@ async def test_only_admins_may_preview_or_import(api):
     before = await state(sessions)
     for url in (PREVIEW, IMPORT):
         assert (await client.post(url, json=request())).status_code == 401
-        assert (await post(client, url, request(), user="b")).status_code == 401
+        assert (await post(client, url, request(), user="b")).status_code == 403
     assert await state(sessions) == before
 
 

@@ -77,9 +77,9 @@ async def test_only_admins_decide(api):
     await client.post("/educator-access", headers=auth("s1"))
     for user in ("s1", "teach"):
         headers = auth(user)
-        assert (await client.get("/educator-access/requests", headers=headers)).status_code == 401
-        assert (await client.post("/educator-access/requests/s1/approve", headers=headers)).status_code == 401
-        assert (await client.delete("/educator-access/requests/s1", headers=headers)).status_code == 401
+        assert (await client.get("/educator-access/requests", headers=headers)).status_code == 403
+        assert (await client.post("/educator-access/requests/s1/approve", headers=headers)).status_code == 403
+        assert (await client.delete("/educator-access/requests/s1", headers=headers)).status_code == 403
     assert (await client.get("/educator-access", headers=auth("s1"))).json() == {"status": "pending"}
 
 

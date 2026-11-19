@@ -305,7 +305,7 @@ async def test_admin_report_totals_per_user_model_and_group(usage_api, monkeypat
     await record_usage(meter("a", pricing=None), input_tokens=10)  # unpriced model
     await record_usage(meter("b", plan=True), input_tokens=5, output_tokens=5)
 
-    assert (await client.get("/usage/report", headers=auth())).status_code == 401
+    assert (await client.get("/usage/report", headers=auth())).status_code == 403
     monkeypatch.setattr(
         "asterism.core.security.verify_jwks_token",
         lambda token: __import__("asterism.core.schemas", fromlist=["AuthedUser"]).AuthedUser(

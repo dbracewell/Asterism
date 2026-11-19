@@ -536,7 +536,7 @@ async def test_reading_api_is_owner_scoped_and_follows_the_active_branch(canvas_
 
 async def test_policy_endpoints_and_user_setting(canvas_api):
     client, _ = canvas_api
-    assert (await client.get("/settings/app/canvas", headers=auth("a"))).status_code == 401
+    assert (await client.get("/settings/app/canvas", headers=auth("a"))).status_code == 403
     assert (await client.get("/settings/app/canvas", headers=auth("admin"))).json() == {"enabled": False}
     assert (await client.put("/settings/app/canvas", headers=auth("admin"), json={"enabled": "yes"})).status_code == 422
     assert (await client.put("/settings/app/canvas", headers=auth("admin"), json={"enabled": True})).json() == {

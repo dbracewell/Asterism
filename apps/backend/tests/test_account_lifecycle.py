@@ -74,8 +74,8 @@ async def test_suspension_requires_admin_and_never_self(accounts):
     client, _ = accounts
     await provision(client, "admin", "admin2", "a", "b")
 
-    assert (await client.put("/users/b/suspension", headers=auth("a"))).status_code == 401
-    assert (await client.delete("/users/b/suspension", headers=auth("a"))).status_code == 401
+    assert (await client.put("/users/b/suspension", headers=auth("a"))).status_code == 403
+    assert (await client.delete("/users/b/suspension", headers=auth("a"))).status_code == 403
     own = await client.put("/users/admin/suspension", headers=auth("admin"))
     assert own.status_code == 403 and "your own account" in own.json()["detail"]
     assert (await client.put("/users/ghost/suspension", headers=auth("admin"))).status_code == 404
@@ -150,7 +150,7 @@ async def test_deletion_request_lifecycle(accounts):
     # Withdraw, ask again, then an admin dismisses: nothing else changes.
     assert (await client.delete("/users/me/deletion-request", headers=auth("a"))).json() == {"requested_at": None}
     assert (await client.put("/users/me/deletion-request", headers=auth("a"))).status_code == 200
-    assert (await client.delete("/users/a/deletion-request", headers=auth("b"))).status_code == 401
+    assert (await client.delete("/users/a/deletion-request", headers=auth("b"))).status_code == 403
     assert (await client.delete("/users/a/deletion-request", headers=auth("admin"))).status_code == 200
     assert (await client.get("/users/me/deletion-request", headers=auth("a"))).json() == {"requested_at": None}
     async with sessions() as session:

@@ -149,7 +149,7 @@ async def test_internal_tools_hidden_from_users_admin_metadata_and_forged_settin
     assert [t["name"] for t in active["items"]] == ["web_search"]
     assert tool_registry["sub_agent"].policy == ToolPolicy.CONTEXT_MANAGED
     assert tool_registry["search_knowledge"].policy == ToolPolicy.CONTEXT_MANAGED
-    assert (await r.client.get("/tools/all", headers=auth())).status_code == 401
+    assert (await r.client.get("/tools/all", headers=auth())).status_code == 403
     all_tools = tool_registry.tools()
     assert {t.name for t in all_tools.items if t.policy == ToolPolicy.CONTEXT_MANAGED} == {
         "sub_agent",

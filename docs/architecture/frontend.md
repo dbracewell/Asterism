@@ -41,7 +41,7 @@ Every backend call goes through the generated client and TanStack Query:
   don't invalidate anything themselves.
 - **Tokens.** The client asks Better Auth for a short-lived JWT and reuses it until a
   minute before it expires ([`lib/backend-token.ts`](../../apps/frontend/src/lib/backend-token.ts)).
-  A 401 drops it.
+  A 401 drops it; a 403 (signed in but not allowed) keeps it.
 - **Interactive UI uses shadcn/ui components,** not raw HTML elements. A missing
   component is installed with approval rather than rebuilt by hand.
 

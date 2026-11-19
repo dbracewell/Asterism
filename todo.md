@@ -62,11 +62,12 @@ Source: the follow-ups found during EPIC-87 to EPIC-89. [EPIC-90](docs/epics/EPI
 
 ### EPIC-90: Fixes found while writing the documentation
 
-- [ ] US-90.1: Admin routes refuse non-admins with 403
-  - [ ] `get_current_admin` raises a 403 (forbidden) for an authenticated non-admin; a missing or invalid token still gets 401.
-  - [ ] The frontend keeps its cached token on 403 and shows "not allowed" rather than signing the person out.
-  - [ ] Backend and frontend tests for both cases; check nothing else relies on the 401.
-- [ ] US-90.2: The branch switcher shows after regenerating a tool-using answer
+- [x] US-90.1: Admin routes refuse non-admins with 403
+  - [x] `get_current_admin` raises a 403 (forbidden) for an authenticated non-admin; a missing or invalid token still gets 401.
+  - [x] The frontend keeps its cached token on 403 and shows "not allowed" rather than signing the person out.
+  - [x] Backend and frontend tests for both cases; check nothing else relies on the 401.
+  - [x] Folded in: `POST /users/` refuses a signed-in non-admin without the system key with 403; another user's agent reads as 404, like a missing one.
+- [x] US-90.2: The branch switcher shows after regenerating a tool-using answer
   - [ ] Reproduce: a project chat whose answer used `search_knowledge`; regenerate.
   - [ ] Decide where the fix belongs: create the sibling at the visible answer, or show the switcher for the step that holds the branches. Record the choice.
   - [ ] Fix, with a test that the earlier answer is reachable.

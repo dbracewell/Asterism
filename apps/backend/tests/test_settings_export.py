@@ -189,7 +189,7 @@ async def test_only_admins_may_export(api):
     client, _ = api
     assert (await client.post(URL, json={"passphrase": PASSPHRASE})).status_code == 401
     refused = await client.post(URL, headers=auth("b"), json={"passphrase": PASSPHRASE})
-    assert refused.status_code == 401
+    assert refused.status_code == 403
     assert "ciphertext" not in refused.text
 
 

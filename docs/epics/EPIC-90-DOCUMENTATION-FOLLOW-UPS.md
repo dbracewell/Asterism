@@ -65,11 +65,13 @@ Suggested order: US-90.1 → 90.2 → 90.3 → 90.4 → 90.5 → 90.6 → 90.7 �
 As a signed-in non-admin who opens an admin request, I'm told it's not allowed,
 and I stay signed in.
 
-- [ ] `get_current_admin` raises a 403 (forbidden) for an authenticated non-admin;
+- [x] `get_current_admin` raises a 403 (forbidden) for an authenticated non-admin;
       a missing or invalid token still gets 401.
-- [ ] The frontend keeps its cached token on 403 and shows "not allowed" rather
+- [x] The frontend keeps its cached token on 403 and shows "not allowed" rather
       than signing the person out.
-- [ ] Backend and frontend tests for both cases; check nothing else relies on the 401.
+- [x] Backend and frontend tests for both cases; check nothing else relies on the 401.
+- [x] Folded in: `POST /users/` refuses a signed-in non-admin without the system
+      key with 403; another user's agent reads as 404, like a missing one.
 
 ### US-90.2: The branch switcher shows after regenerating a tool-using answer
 

@@ -281,7 +281,7 @@ async def test_admin_endpoints_show_hardware_and_gate_licenses(local, monkeypatc
 
     monkeypatch.setattr(router, "detect", lambda device="auto": hardware("cuda", 24, ram=64))
     url = "/settings/app/image-generation/local"
-    assert (await client.get(url, headers=auth("a"))).status_code == 401
+    assert (await client.get(url, headers=auth("a"))).status_code == 403
     overview = (await client.get(url, headers=auth("admin"))).json()
     assert overview["hardware"]["device"] == "cuda" and overview["recommended_id"] == "qwen-image-2.1-turbo"
     plans = {model["id"]: model["plan"]["mode"] for model in overview["models"]}

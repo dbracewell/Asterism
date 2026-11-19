@@ -10,7 +10,7 @@ from typing import Annotated
 
 from fastapi import Depends
 
-from asterism.core.exceptions import UnauthorizedException
+from asterism.core.exceptions import ForbiddenException
 from asterism.core.schemas import AuthedUser
 from asterism.core.security import DependsJwtToken, optional_auth
 from asterism.db.dependencies import DBSessionDep
@@ -57,6 +57,9 @@ async def get_current_user(
 type AuthedUserDep = Annotated[AuthedUser, Depends(get_current_user)]
 
 
+ADMIN_REQUIRED_MESSAGE = "Only an administrator can do this"
+
+
 async def get_current_admin(
     authed_user: AuthedUserDep,
 ) -> AuthedUser:
@@ -64,7 +67,10 @@ async def get_current_admin(
 
     The role comes from the verified JWT claim (see
     :mod:`asterism.core.security`); nothing about roles is stored in this
-    service's database.
+    service's database. A signed-in non-admin gets 403, not 401: the token is
+    valid, so the browser keeps it and shows "not allowed" rather than treating
+    the person as signed out. A missing or invalid token still fails with 401 in
+    ``get_current_user``.
 
     Args:
         authed_user: The authenticated, DB-verified user from get_current_user.
@@ -73,10 +79,10 @@ async def get_current_admin(
         The authenticated admin user.
 
     Raises:
-        UnauthorizedException: If the user's role is not "admin".
+        ForbiddenException: If the user's role is not "admin".
     """
     if authed_user.role != "admin":
-        raise UnauthorizedException()
+        raise ForbiddenException(ADMIN_REQUIRED_MESSAGE)
     return authed_user
 
 
