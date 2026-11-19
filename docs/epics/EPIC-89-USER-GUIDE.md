@@ -1,6 +1,6 @@
 # EPIC-89: User guide
 
-Status: in progress (US-89.1 to US-89.3 complete 2026-11-19; US-89.4 next). Proposed 2026-11-18. Source: user request (2026-11-18).
+Status: in progress (US-89.1 to US-89.4 complete 2026-11-19; US-89.5 next). Proposed 2026-11-18. Source: user request (2026-11-18).
 
 ## Objective
 
@@ -218,13 +218,27 @@ As a user, I can use every chat feature with confidence.
 
 As a user, I can keep my material in one place and work on it in projects.
 
-- [ ] The Files library: uploading, processing status, retrying, image
+- [x] The Files library: uploading, processing status, retrying, image
       captions, downloading and deleting.
-- [ ] Projects: creating one, adding and removing files, project settings and
+- [x] Projects: creating one, adding and removing files, project settings and
       sub-agents for the project.
-- [ ] What removing a file from a project does, compared with deleting it.
-- [ ] Team packs: exporting and importing a project setup, and what a pack
+- [x] What removing a file from a project does, compared with deleting it.
+- [x] Team packs: exporting and importing a project setup, and what a pack
       never includes.
+
+#### Notes (US-89.4)
+
+- **Pages.** Five pages in `docs/guide/03-files-and-projects/`: the Files library,
+  projects (including project settings and sub-agents), project files, removing
+  versus deleting a file (one table for all three ways), and team packs. The
+  glossary gained caption, processing, project file, sub-agent and team pack.
+- **Demo additions.** Demo Writer reads pictures and is the captioning model, so
+  the leaf diagram has a real caption (and the model menu shows the picture
+  icon). A corrupt photo, `worksheet-photo.jpg`, fails processing so the failed
+  label and the retry button can be shown; a broken PDF and Word file still
+  process, an empty text file and a corrupt image fail.
+- **Ten new shots**, all static except the dialogs, which are opened and not
+  confirmed.
 
 ### US-89.5: Learning with Asterism
 

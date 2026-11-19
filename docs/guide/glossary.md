@@ -17,6 +17,9 @@ between them.
 outline or some code. You and Asterism can both edit it, and every saved version
 is kept.
 
+**Caption.** A short written description of a picture in your files, so Asterism
+can find the picture by what's in it.
+
 **Chat.** A conversation with Asterism. Chats are saved, so you can come back to
 them.
 
@@ -61,8 +64,14 @@ you can choose from.
 **Password reset link.** A link from your administrator that lets you choose a
 new password. It works once.
 
+**Processing.** What Asterism does to a file after you upload it: it reads the
+text and gets it ready to search. A file can be used once it's ready.
+
 **Project.** A place for one subject or piece of work. A project keeps its own
 chats, files and study material together.
+
+**Project file.** A file from your library that you added to a project, so every
+chat in the project can use it. No copy is made.
 
 **Prompt coach.** A review of your draft message before you send it, with
 suggestions you can apply.
@@ -80,6 +89,14 @@ files.
 
 **Source.** One of your files that Asterism read to answer a question. Sources are
 listed above the answer.
+
+**Sub-agent.** A helper with its own instructions and its own model, which your
+main agent can hand part of a task to. A project chooses which sub-agents its
+chats may use.
+
+**Team pack.** A file that shares a setup (sub-agents, skills, templates,
+rubrics and project settings) with someone else. It never holds your files,
+chats or keys.
 
 **Tool.** An action Asterism can take while answering, such as searching your
 files or reading a web page.

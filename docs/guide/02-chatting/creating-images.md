@@ -22,7 +22,7 @@ This way works with any model.
 
    ![The message box with an Image chip above it and the words Describe the image to create](../images/chat-image-chip.png)
 
-2. Describe the picture: what's in it, the style and the colours. For example: "A
+2. Describe the picture: what's in it, the style and the colors. For example: "A
    simple drawing of a plant cell with chloroplasts."
 3. Send the message.
 

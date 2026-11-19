@@ -62,13 +62,26 @@ what your group can use.
    chat gets very long.
 10. [Finding old chats](02-chatting/finding-old-chats.md): the sidebar and search.
 
+## Files and projects
+
+1. [The Files library](03-files-and-projects/the-files-library.md): uploading,
+   checking that a file is ready, trying again, captions, downloading and
+   deleting.
+2. [Projects](03-files-and-projects/projects.md): creating one, its tabs and
+   settings, and choosing its sub-agents.
+3. [Project files](03-files-and-projects/project-files.md): adding files to a
+   project and removing them.
+4. [Removing or deleting a file](03-files-and-projects/removing-or-deleting-a-file.md):
+   which to choose, and what each one does.
+5. [Team packs](03-files-and-projects/team-packs.md): sharing a setup, and what a
+   pack never holds.
+
 ## Chapters
 
 The other chapters are being written. Each one will appear here when it is ready.
 
 | Chapter               | What it covers                                                                     |
 | --------------------- | ---------------------------------------------------------------------------------- |
-| Files and projects    | Your file library, projects, sub-agents and team packs                             |
 | Learning              | Learning modes, hints, reflections, your AI-use log and rubrics                    |
 | Studying              | Flashcards, practice quizzes, summaries, study guides and your progress            |
 | Making Asterism yours | Your settings, About you, agents, skills, templates and your data                  |

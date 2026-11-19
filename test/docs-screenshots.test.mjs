@@ -349,3 +349,21 @@ test("the stand-in ComfyUI server lists a checkpoint and returns the picture", (
   assert.deepEqual(comfy("GET", "/history/unknown", jobs, image), {});
   assert.equal(comfy("GET", "/ws", jobs, image), null);
 });
+
+test("image captions get a scripted description", () => {
+  const caption = respond({
+    messages: [
+      {
+        role: "user",
+        content: [
+          {
+            type: "text",
+            text: "Describe this image accurately in a concise retrieval caption.",
+          },
+          { type: "image_url", image_url: { url: "data:image/png;base64," } },
+        ],
+      },
+    ],
+  });
+  assert.match(caption.content, /diagram of a green leaf/);
+});

@@ -94,11 +94,11 @@ Follow-ups found during the documentation epics (code, not documentation; each n
   - [x] Long conversations and context compaction, in plain terms.
   - [x] Finding old chats with search.
 - [x] US-89.4: Files and projects
-  - [ ] The Files library: uploading, processing status, retrying, image captions, downloading and deleting.
-  - [ ] Projects: creating one, adding and removing files, project settings and sub-agents for the project.
-  - [ ] What removing a file from a project does, compared with deleting it.
-  - [ ] Team packs: exporting and importing a project setup, and what a pack never includes.
-- [ ] US-89.5: Learning with Asterism
+  - [x] The Files library: uploading, processing status, retrying, image captions, downloading and deleting.
+  - [x] Projects: creating one, adding and removing files, project settings and sub-agents for the project.
+  - [x] What removing a file from a project does, compared with deleting it.
+  - [x] Team packs: exporting and importing a project setup, and what a pack never includes.
+- [x] US-89.5: Learning with Asterism
   - [ ] Learning modes: Standard, Tutor, Explain-back, Review my work, Draft feedback, Research assistant; when to use each, with an example chat.
   - [ ] Hint levels and Show answer.
   - [ ] Mode restrictions set by a class, and how they appear to you.
