@@ -63,17 +63,17 @@ Follow-ups found during the documentation epics (code, not documentation; each n
 
 ### EPIC-88: A normal project README
 
-- [ ] US-88.1: Give displaced content a home
+- [x] US-88.1: Give displaced content a home
   - [x] Map every README section to its destination in a checklist in the PR description; nothing is dropped silently.
   - [x] Create `docs/development.md`: prerequisites, setup, migrations, `pnpm dev` and focused commands, mprocs, quality checks, isolated E2E and CI helpers.
   - [x] Merge configuration, `.env` grammar, file secrets, edge protections, sizing and admission settings, backup and upgrade into `docs/deployment.md` where they are not already there; remove duplicates.
   - [x] Update links elsewhere in `docs/` that point at README anchors.
 - [ ] US-88.2: Rewrite the README
-  - [ ] Rewrite `README.md` to the agreed sections; keep the CI badge.
-  - [ ] Add one screenshot of the chat workspace (from the EPIC-89 screenshot pipeline once it exists; a manual capture from a disposable demo instance until then).
-  - [ ] Feature list reflects shipped features only; link "planned" items to `todo.md` rather than listing them.
-  - [ ] Verify both quick starts from a clean clone with disposable storage, and record the result in the PR.
-  - [ ] `pnpm docs:check` (EPIC-87) and `pnpm format:check` pass.
+  - [x] Rewrite `README.md` to the agreed sections; keep the CI badge.
+  - [x] Add one screenshot of the chat workspace (from the EPIC-89 screenshot pipeline once it exists; a manual capture from a disposable demo instance until then).
+  - [x] Feature list reflects shipped features only; link "planned" items to `todo.md` rather than listing them.
+  - [x] Verify both quick starts from a clean clone with disposable storage, and record the result in the PR.
+  - [x] `pnpm docs:check` (EPIC-87) and `pnpm format:check` pass.
 
 ### EPIC-89: User guide
 

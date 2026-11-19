@@ -2,466 +2,98 @@
 
 [![CI](https://github.com/dbracewell/Asterism/actions/workflows/ci.yml/badge.svg)](https://github.com/dbracewell/Asterism/actions/workflows/ci.yml)
 
-Asterism is a self-hosted, full-stack AI chat application. It combines a Next.js
-frontend with a FastAPI agent runtime, a main-agent configuration and delegated-worker definitions,
-capability-scoped tools, streaming chat, administrator-managed OpenAI-compatible
-models, and a file library. Every eligible upload is processed once into a
-file-owned knowledge artifact; projects share references to those files without
-duplicating processing.
+Asterism is a self-hosted AI assistant for learning. A school, a class or a team
+runs it on their own server, connects the language models they choose, and gets
+a chat workspace built to help people learn rather than just hand them answers.
 
-Each user has one model-free main-agent configuration. Chats select their models
-independently and record per-execution provenance. They support
-branching/regeneration, cancellation with retained partial output, reconnection to
-an in-process generation, projects, full-text search, and estimated context-window
-usage. Sub-agents run within their own tool allowlist and emit correlated live
-activity and persisted execution traces. Chat/project full-text search composes
-owner and workspace scope in SQL before pagination and batches snippets only for
-the selected page; see the [search design](docs/architecture/data-and-storage.md#search).
+![The Asterism chat workspace, with a project's chats in the sidebar and a tutoring answer about photosynthesis](docs/images/asterism-chat.png)
 
-The supported deployment has one backend process and one application instance.
-Package and container launches reject `WEB_CONCURRENCY`/`UVICORN_WORKERS` unless
-unset or exactly `1`, and reject CLI worker counts other than one. Multiple
-replicas and bypassing the supported launcher are unsupported; see the
-[deployment/storage decision](docs/adr/0019-single-process-runtime-and-storage-seams.md).
+## What it does
 
-## Architecture
+- **Chat with the models you choose.** Connect OpenAI or any OpenAI-compatible
+  server, pick a model per chat, compare two or three side by side, and branch a
+  conversation without losing anything. Replies keep streaming if you close the tab.
+- **Work from your own material.** Upload notes, PDFs, documents and images to one
+  library and group them in projects. Answers cite the passages they used, and you
+  can ask Asterism to check an answer's claims against your files.
+- **Learn, not just get answers.** Learning modes change how the assistant helps:
+  Tutor guides with questions and gives stronger hints only when asked, Explain-back checks your
+  explanation, Review my work comments on your attempt, Spot the error hides a
+  mistake for you to find, Draft feedback assesses writing against a rubric, and
+  Research assistant helps with sources and outlines but writes no prose.
+- **Study.** Turn a project's files into flashcards with spaced-repetition review,
+  practice quizzes with feedback, summaries and exam study plans, and follow your
+  progress.
+- **Run a class.** Educators invite students, publish a course that each student
+  gets their own copy of, limit which learning modes it allows, and see which topics the
+  class finds hard, from class totals that students opt into.
+- **Shape your assistant.** Write instructions for your main agent, add sub-agents
+  with their own models and tools, save skills, prompt templates and rubrics, and
+  share a whole setup as a team pack. A canvas holds long documents and code, and
+  image generation creates pictures in chat.
+- **Run it for a group.** One container with one storage volume. Admins manage
+  accounts and groups, decide which models and tools each group may use, set token
+  budgets, see usage and cost, and back up and restore while it runs.
 
-Active and pending work is tracked in [`todo.md`](todo.md). Completed checklist
-history is preserved in the dated files under [`docs/archive`](docs/archive).
+Planned work, such as sandboxed code execution, is tracked in [`todo.md`](todo.md).
 
-The [2026-10-17 codebase review](docs/reviews/2026-10-17-codebase-review.md)
-assesses architecture, UI reachability, theme contrast and known trust-boundary
-defects. Its [quality roadmap](docs/plans/post-refactor-quality-roadmap.md) defines
-EPIC-31–EPIC-35. EPIC-31 and EPIC-32 are confirmed complete, including
-authentication, mobile workspace, settings, file panes, dialogs and rich chat
-content reachability. EPIC-33 / US-33.1, repairing bundled palette mappings and
-contrast, is confirmed complete, including the select-text repair. US-33.2, unifying
-semantic states, labels and typography, is confirmed complete;
-the Montserrat logo is preserved. US-33.3, the theme/layout review matrix, is confirmed complete. Palette sources and control contrast are documented in
-the [bundled palette guide](docs/architecture/bundled-theme-palettes.md). The shared
-[content policy](docs/architecture/markdown-content.md) defines allowed Markdown,
-links, resources and math.
-US-34.3 establishes the [current browser baseline](docs/reviews/us-34.3-verification-2026-10-24.md):
-122 isolated cases passed without retries, with current model-picker/dialog
-behavior, file-knowledge fixtures and a shared unhandled-page-error gate.
-Current theme editing and placeholder admin panes are described in the
-[frontend/theme guide](docs/architecture/frontend.md).
+## Quick start with Docker
 
-The implementation-oriented architecture guides are in
-[`architecture/`](docs/architecture/README.md):
-
-- [System overview](docs/architecture/overview.md) — topology, workspace layout, request flow, and chat lifecycle
-- [Authentication and security](docs/architecture/auth-and-security.md) — Better Auth, JWT/JWKS, tenancy, and internal callbacks
-- [Agent runtime](docs/architecture/agent-runtime.md) and [tool authorization](docs/architecture/tool-authorization.md) — bounded execution, delegation, and approvals
-- [Chat and WebSocket](docs/architecture/chat-and-websocket.md) — streaming protocol, reconnectable jobs, cancellation, and controller lifecycle
-- [Data and storage](docs/architecture/data-and-storage.md) — SQLite, FTS search, file storage, and attachments
-- [Knowledge retrieval](docs/architecture/knowledge-retrieval.md) — file-owned processing, private retrieval, and captioning
-- [LLM providers](docs/architecture/llm-providers.md) — supported provider modes and model capabilities
-
-The [execution-context guide](docs/architecture/execution-context.md) traces one turn
-from project/chat membership through prompts, Agent, scoped retrieval, and provider
-access. [ADR-0017](docs/adr/0017-project-file-and-chat-boundaries.md) records current
-accepted contracts. [Memory isolation](docs/architecture/context-isolation.md)
-distinguishes implemented provenance/key boundaries from future memory storage.
-
-Chat work and connections have [finite admission limits](docs/adr/0020-chat-capacity-admission.md):
-defaults are 32 active chat-work slots (four per owner) and 128 controllers (16 per
-owner). Saturation returns a retryable socket error; reconnecting preserves active
-work. These process-local limits are separate from model/knowledge concurrency.
-
-## Current versus planned capabilities
-
-The admin navigation marks **Groups, Users, Image Generation, Code Execution and
-Export** as **Planned**. Their panes explain future scope and offer no configuration
-actions. Providers, Theme Editor, Tools and Image Captioning remain available;
-user settings expose General, Your Asterism, Skills, and Agents.
-
-| Capability           | Available now                                                                                                                                      | Planned                                                    |
-| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
-| Providers and models | Admin provider/model configuration; per-chat model selection                                                                                       | —                                                          |
-| Agents and tools     | User main/sub-agent settings; admin tool policy and provider settings                                                                              | —                                                          |
-| Skills               | Private skills editor/assignments, admin policy, slash discovery, branch-local activation and provenance ([contract](docs/architecture/skills.md)) | Automatic skill selection                                  |
-| Appearance           | User theme/font preferences; admin Theme Editor                                                                                                    | —                                                          |
-| Image captioning     | Admin captioning policy and file-processing integration                                                                                            | —                                                          |
-| Users and access     | Admin/user access checks, owner scoping and backend user lifecycle                                                                                 | Users management screens and permission-policy controls    |
-| Groups               | —                                                                                                                                                  | Group management and group policy settings                 |
-| Image Generation     | Image search and captioning are separate existing capabilities                                                                                     | Image-generation providers, models and generation workflow |
-| Code Execution       | —                                                                                                                                                  | Sandboxed execution and runtime settings                   |
-| Export               | Individual file downloads                                                                                                                          | Data/conversation export tools                             |
-| About you and memory | About you text in Your Asterism, pinned on each accepted turn                                                                                      | Long-term memory engine                                    |
-
-The Users badge describes unfinished administration screens, not missing access
-control. Backend list/provision/delete routes already have authorization and
-lifecycle checks. Navigation visibility does not grant access. Your Asterism holds one About you
-text per user; each accepted turn pins the text and revision it was sent with. Long-term memory remains future work. See the [product-surface inventory](docs/architecture/frontend.md#settings) for ownership
-and limits.
-
-## Configuration
-
-Copy the shared example to the repository root and replace the placeholder secrets:
+You need Docker with Compose and an API key for OpenAI or an OpenAI-compatible
+server.
 
 ```bash
+git clone https://github.com/dbracewell/Asterism.git
+cd Asterism
 cp .env.example .env
-# Generate separate persistent secrets with: openssl rand -base64 32
 ```
 
-- `PUBLIC_URL`: the browser-facing origin, default `http://localhost:3000`, without
-  a trailing slash. This also sets Better Auth's base URL and JWT issuer/audience.
-- `BETTER_AUTH_SECRET`: persistent secret protecting authentication data.
-- `SYSTEM_KEY`: shared secret for internal privileged requests.
-- `ADMIN_PASSPHRASE`: passphrase for first-time administrator setup.
-- `STORAGE_ROOT`: absolute writable directory for local development. Docker Compose
-  uses its named volume at `/storage`, regardless of this local setting.
-- Optional: `BETTER_AUTH_DB_PATH` and `DB_URL` override database locations.
-- Optional: `PORT` changes the Compose host port; update `PUBLIC_URL` to match.
-- Optional: `MAX_UPLOAD_FILE_SIZE_BYTES` (default and maximum 104857600, 100 MiB)
-  is the largest upload request, one file or several together. nginx, the Next.js
-  proxy and the backend all apply it. A lower value also lowers the file processing
-  and vision image limits unless those are set explicitly.
-- Optional: `LOG_LEVEL` (`DEBUG`, `INFO` (default), `WARNING`, `ERROR`) and
-  `LOG_FORMAT` (`text` (default) or `json`, one object per line) set the backend's
-  logs. Each line names the request id of the HTTP request or WebSocket session it
-  ran under, and nginx logs the same id. At INFO and above, logs never contain
-  message text, file text, About you, tokens or secrets. DEBUG is for development.
-- Optional: `TRUSTED_PROXIES` is a comma-separated list of addresses or CIDR
-  networks, for example `10.0.0.0/8,192.0.2.7`. nginx takes the client address from
-  `X-Forwarded-For` only when the connection comes from one of these.
-
-### Strict portable `.env` syntax
-
-The root `.env` is intentionally limited to syntax that produces identical bytes in
-Node.js, Docker Compose, and `docker run --env-file`:
-
-```dotenv
-# Full-line comments and blank lines are allowed.
-PUBLIC_URL=http://localhost:3000
-BETTER_AUTH_SECRET=abcDEF0123+/=_-.
-EMPTY_OPTIONAL_VALUE=
-```
-
-Each assignment must be a single unquoted `KEY=VALUE` line with no surrounding
-whitespace. Keys use letters, digits, and underscores and cannot begin with a digit.
-Values may contain additional `=` characters. LF and CRLF line endings are supported.
-
-The following are rejected before an application starts:
-
-```dotenv
-VALUE="quoted"              # quotes
-VALUE=two words             # whitespace
-VALUE=$HOME                 # interpolation or dollar characters
-VALUE=secret # comment      # inline comments
-VALUE=line\nnext            # escapes and backslashes
-export VALUE=secret         # shell syntax
-```
-
-Quotes, `$`, escapes, interpolation, multiline values, inline comments, and whitespace
-in values are forbidden because common dotenv implementations interpret them
-differently. Use whitespace-free paths and generated URL-safe/base64 secrets. If a
-value cannot use this grammar, inject it directly into the process environment instead
-of putting it in the shared file.
-
-Explicitly inherited process variables take precedence over the root file, including
-an explicitly empty value; later validation may reject an empty required setting.
-Changing `.env` requires restarting the root development launcher, not merely an
-individual mprocs pane.
-
-Validate development configuration without opening databases, creating storage, or
-printing values:
-
-```bash
-pnpm config:check
-```
-
-The check reports each setting's source (`process`, `root-dotenv`, `file-secret`,
-`default`, or `missing`) and status. Runtime profiles reject empty values and known
-placeholders; production additionally enforces HTTPS outside loopback and minimum
-secret strength. Canonical `/run/secrets/BETTER_AUTH_SECRET`, `SYSTEM_KEY`, and
-`ADMIN_PASSPHRASE` files are fallback sources when process/root values are absent.
-The complete variable catalog and command validation matrix are in
-[ADR-0010](docs/adr/0010-configuration-validation-secrets-and-safe-migration.md).
-
-Browsers always use same-origin `/api/py`, `/api/stream`, and chat WebSocket URLs.
-Server-side API requests use loopback port 8000. Signing-key discovery and webhooks
-use loopback port 3000. These internal ports are fixed in both development and Docker.
-There are no separate JWT issuer/audience or browser API URL settings.
-
-The backend schema is versioned with Alembic
-([ADR-0069](docs/adr/0069-versioned-schema-migrations.md)): upgrades apply pending
-migrations in place, and configuration changes are listed in release notes.
-
-## Docker
-
-**Deploying for real users?** Follow the [deployment guide](docs/deployment.md):
-prerequisites, TLS proxy examples, secrets, the first administrator, backups and
-upgrades, limits, monitoring and an incident checklist.
-
-The root `Dockerfile` packages Next.js, FastAPI, and nginx in one non-root container.
-pnpm builds the frontend workspace; uv installs locked Python dependencies. The split
-container configuration is no longer supported.
+Edit `.env`: replace the three `replace-with-…` values with secrets made by
+`openssl rand -base64 32` (one each). Leave `PUBLIC_URL` as
+`http://localhost:3000` to try it on your own machine. Then start it:
 
 ```bash
 docker compose up -d --build
-docker compose logs -f
+docker compose ps    # wait until it says "healthy"
 ```
 
-Or build and run directly:
+The first build takes a while and the image is large. On first start Asterism also
+downloads the model it uses to search files.
 
-```bash
-docker build -t asterism:local .
-docker run -d --name asterism --restart unless-stopped --stop-timeout 30 \
-  -p 127.0.0.1:3000:3000 --env-file .env -e STORAGE_ROOT=/storage \
-  -v asterism-storage:/storage asterism:local
-```
+Open <http://localhost:3000>, create the administrator account with your
+`ADMIN_PASSPHRASE`, and follow the setup card to connect a model provider.
 
-Open <http://localhost:3000>. To use another local port, set `PORT=8080` and
-`PUBLIC_URL=http://localhost:8080` for Compose. Changing the public origin does not
-require rebuilding the image, only recreating the container. Image builds neither
-read `.env` nor require runtime credentials.
-
-For orchestrators with file secrets, mount canonical uppercase files at
-`/run/secrets/BETTER_AUTH_SECRET`, `/run/secrets/SYSTEM_KEY`, and
-`/run/secrets/ADMIN_PASSPHRASE`. Explicit environment values take precedence. Do not
-mount lowercase aliases.
-
-For remote HTTPS access, put a trusted TLS proxy in front of port 3000 and set
-`PUBLIC_URL` to its external origin. Forward Host, X-Forwarded-Proto, and WebSocket
-upgrades. Do not expose internal ports 3001 or 8000. Add the proxy's address to
-`TRUSTED_PROXIES` and have it set `X-Forwarded-For`; otherwise every request seems
-to come from the proxy, and the rate limits below apply to everyone at once.
-
-Edge protections are on by default
-([ADR-0071](docs/adr/0071-edge-hardening.md)):
-
-- Pages send a Content Security Policy with a fresh script nonce on every request:
-  no inline or third-party scripts, no frames except the canvas preview, and
-  connections only to the app's own origin. API responses may not run, load or be
-  framed. Every response sends `X-Content-Type-Options: nosniff` and
-  `Referrer-Policy: same-origin`.
-- With an `https://` `PUBLIC_URL`, responses send HSTS (one year) and the
-  authentication cookies are `Secure`, `HttpOnly` and `SameSite=Lax`.
-- nginx limits each client address to 60 auth writes, 60 uploads and 120 chat
-  WebSocket connections per minute, each with a burst of 60. That is enough for a
-  class of about 30 behind one school address. Refused requests get a 429 with
-  `Retry-After`. Better Auth's own limiter allows the same 60 sign-ins per minute
-  per address, and its defaults elsewhere.
-
-### Storage and lifecycle
-
-`/storage` contains `users.db`, `database.db`, uploaded files, people's "Download my
-data" archives under `exports` (kept 7 days, not backed up), and custom themes
-under `themes` (see [theme lifecycle](docs/architecture/theme-storage.md)). Auth migrations
-run on each startup using the bundled, pinned official Better Auth CLI and explicit
-`src/lib/auth-cli.ts` configuration (no startup downloads). The backend initializer
-runs on every startup and applies pending schema migrations to `database.db` in one
-transaction (`upgrade head`), keeping existing data. Startup refuses a database whose
-schema revision is newer than, or unknown to, the image and names both revisions;
-migrations never go backwards, so the way back from an upgrade is restoring a
-backup. Bind mounts must be writable by UID **10001**. Reset is a development tool for disposable data, never part of an upgrade;
-see [initialization and reset](docs/architecture/development-reset.md).
-
-Never use `docker compose down -v` unless deleting all persisted data is intentional.
-
-### Backup, restore and upgrades
-
-Back up while the app runs with
-`docker compose exec asterism /app/docker/entrypoint.sh backup --keep 14`, which writes
-one checked archive of both databases, files, vectors and themes into the `backups`
-volume. Check an archive with `verify`. Restore into an empty storage volume with the
-app stopped: `docker compose run --rm asterism restore /backups/<file>`. Restore
-checks every file, the schema revision and the `SYSTEM_KEY`, then applies pending
-migrations. Secrets are not in the archive. From a source checkout, use
-`pnpm backup --output-dir <dir>`, `pnpm backup:verify <file>` and `pnpm restore <file>`.
-Back up before every upgrade. The [backup and restore guide](docs/architecture/backup-and-restore.md)
-has a cron schedule with retention and the upgrade and roll-back procedure.
-
-The container health check calls two public readiness endpoints. `/api/py/health/ready`
-checks that the backend database takes writes, that storage has `MIN_FREE_STORAGE_BYTES`
-free (default 1 GiB) and that the auth signing keys load. `/api/health` checks that the
-Better Auth database takes writes and its signing key works. Each returns 503 naming
-what failed. Admin Settings → Status shows readiness, version, uptime, replies running
-and chat connections against their limits, the file processing queue, storage use and
-the last backup. If a
-service exits, the container stops so its restart policy can recover. SIGTERM stops
-all services. ML/CUDA dependencies make builds and images large; allow substantial
-free Docker disk space. Optional tools requiring Playwright browsers need those
-browser binaries installed separately.
-
-Deployment checks use only generated disposable configuration, containers, volumes,
-and accounts:
-
-```bash
-pnpm test:container-config
-python3 docker/smoke-test.py asterism:local
-```
-
-The parity check verifies byte-identical strict-file values in the repository loader,
-Compose, and direct Docker. The smoke test exercises both environment and canonical
-file-secret modes with two runtime origins and scans browser assets, image metadata,
-and logs for synthetic secret canaries.
-
-### Sizing and capacity
-
-One instance runs as one process with one SQLite database, so it grows by host size,
-not by replicas. Measured with `pnpm capacity:check`
-([capacity check](docs/architecture/capacity.md)):
-
-- **30 active students on 4 vCPU / 8 GB** passes every target with room to spare: peak
-  memory under 2 GiB, CPU under one core on average, first token p95 1.3 s even when
-  the whole class asks at once. Plan on 8 GB for the embedding model, Next.js and
-  page caches. Disk is the files people upload, plus the `backups` volume (about the
-  size of storage times the number of archives kept), plus `MIN_FREE_STORAGE_BYTES`.
-- **Larger groups** were not measured. Raise the limits below together, then run
-  `pnpm capacity:check --students <n> --env ...` on the target host before relying
-  on it.
-- **The model provider** usually sets the pace: its latency, and its own rate limits
-  on your API key.
-
-Admission settings (environment variables; defaults suit about 30 active users):
-
-| Setting | Default | What it limits |
-| --- | --- | --- |
-| `MAX_ACTIVE_CHAT_JOBS` | 32 | replies and chat titles running at once; the burst of 30 peaked at 25 |
-| `MAX_ACTIVE_CHAT_JOBS_PER_USER` | 4 | the same, for one person |
-| `MAX_CHAT_CONTROLLERS` | 128 | open chat connections (a chat open in a tab) |
-| `MAX_CHAT_CONTROLLERS_PER_USER` | 16 | the same, for one person |
-| `MAX_CONCURRENT_LLM_REQUESTS` | 32 | model streams at once; more wait for a slot. Lower it for a local model server |
-| `MAX_CONCURRENT_KNOWLEDGE_JOBS` | 4 | files being indexed at once; more wait in the queue |
-
-What "full" looks like to people:
-
-- **Replies at their limit:** the chat says "Chat capacity is full. Retry shortly." and
-  offers a retry. Nothing is lost; the message waits.
-- **Connections at their limit:** opening one more chat says "Chat connection capacity
-  is full. Close an unused chat connection and retry."
-- **Model streams at their limit:** replies start later, with no error.
-- **Budget used up** (Admin Settings → Groups): sending says the limit is reached and
-  when it resets.
-- **Too many requests from one address:** "Too many requests. Wait a minute and try
-  again."
-- **Disk nearly full:** readiness turns not ready and the container health check fails.
-
-Admin Settings → Status shows replies and connections against their limits, the file
-queue and free space, so watch it during a first busy class.
+To run Asterism for real users, behind HTTPS with backups, follow the
+[deployment guide](docs/deployment.md).
 
 ## Local development
 
-Requires Node.js 22.13+, pnpm 11+, Python 3.13+, uv, mprocs 0.9.6+, and Python
-linked against SQLite **3.45+** (the backend uses JSONB functions).
-
-1. Run `pnpm install` and `pnpm --filter @asterism/backend sync`.
-2. Configure the root `.env` as above, with an absolute writable `STORAGE_ROOT`.
-3. Initialize or upgrade the databases (run again after pulling schema changes;
-   the backend refuses to start until its database is at the current revision):
-
-   ```bash
-   # Create your configured STORAGE_ROOT directory first.
-   pnpm --filter @asterism/frontend migrate:db
-   pnpm --filter @asterism/backend init:db
-   ```
-
-   Both commands preserve existing data; `init:db` applies pending backend
-   migrations. To intentionally delete and
-   recreate both local SQLite databases and clear disposable source/knowledge storage, run `pnpm reset:db`, inspect the displayed
-   absolute targets, and type `RESET`. Noninteractive execution is canceled unless
-   `pnpm reset:db -- --yes` is supplied explicitly. Reset supports only validated
-   local SQLite targets; back up any data you need first.
-
-4. Start both applications from the repository root:
-
-   ```bash
-   pnpm dev
-   ```
-
-Install mprocs 0.9.6 or newer (`brew install mprocs`, or use its documented npm/cargo
-installation), then run `pnpm dev`. The root launcher validates and loads `.env` before
-mprocs starts separate frontend and backend panes. Press `q` in mprocs to stop both.
-The backend child does not receive Better Auth or administrator secrets.
-
-Open `http://localhost:3000`, not the backend port. Next.js proxies `/api/py/*`
-(including WebSocket upgrades) to FastAPI on port 8000. Docker uses nginx for the
-same routing. API schema: `http://localhost:3000/api/py/openapi.json`.
-
-To run without mprocs, start one app in each of two terminals. These focused commands
-use the same root loader and configuration contract:
+You need Node.js 22.13+, pnpm 11+, Python 3.13+ (with SQLite 3.45+), uv and
+mprocs 0.9.6+.
 
 ```bash
-pnpm --filter @asterism/frontend dev
-pnpm --filter @asterism/backend dev
+pnpm install
+pnpm --filter @asterism/backend sync
+cp .env.example .env    # set the three secrets and an absolute STORAGE_ROOT
+mkdir -p <your STORAGE_ROOT>
+pnpm --filter @asterism/frontend migrate:db
+pnpm --filter @asterism/backend init:db
+pnpm dev
 ```
 
-Documented package scripts are the supported entrypoints. Raw `next`, `uvicorn`, and
-`python -m` commands must be given a complete environment by their caller.
+Open <http://localhost:3000>. The [development guide](docs/development.md) covers
+the configuration check, running each app on its own, resetting local data and
+the checks CI runs.
 
-## First-time administrator setup
+## Documentation
 
-Open the app and complete the initial account setup using `ADMIN_PASSPHRASE`.
-The same setup card then offers to connect a model provider and enable a model
-(`/setup`), then confirms you're ready before opening the first chat; it can be skipped and is shown only to an administrator while no model
-is active. Keep this passphrase private. The frontend and backend must use the same `SYSTEM_KEY`.
-
-## Files, project context, and captions
-
-**Files** is the canonical library for uploaded sources and derived knowledge.
-Eligible uploads automatically queue knowledge ingestion or image embedding. Processing
-status is visible; failed or canceled work can be retried from Files.
-
-Projects share references to library files. Chats combine current project files
-with attachments on their active message branch. Removing a project membership
-preserves the library source and artifacts; deleting the file removes references,
-source bytes, artifacts, and vectors. Runtime retrieval checks the authenticated
-owner and live execution file scope before querying and again before release.
-
-Image captions are derived outputs managed in **Files**. Successful captions are
-indexed automatically; users can regenerate a file's embedding and caption.
-Administrators configure the single versioned `knowledge.processing` policy under **Settings →
-Admin Settings → Image Captioning**, choosing disabled, a vision provider, or a
-reviewed local model. An external provider receives source images when selected.
-Policy changes queue replacement generations while current ready generations
-remain searchable until replacement succeeds.
-
-## Quality checks
-
-```bash
-pnpm lint
-pnpm typecheck
-pnpm test
-node scripts/run-isolated-e2e.mjs
-```
-
-Existing local CI helpers are also available via `pnpm ci:local:quality` and
-`pnpm ci:local:e2e`. Unit and E2E jobs do not load dotenv files; the E2E helper creates,
-migrates, and removes a unique temporary auth database and configuration directory.
-CI also builds the Docker frontend stage without runtime credentials. See each
-application's README for focused commands.
-
-## Usage and budgets
-
-Every model call is recorded per user: chats, sub-agents, verification, study tools,
-titles, captions and images. Each record keeps the price at call time
-([ADR-0073](docs/adr/0073-usage-ledger-and-budgets.md)). Users see today's and this
-month's usage, and what is left of their budget, in User Settings → Your Asterism.
-Admins see tokens and estimated cost per user, model and group in Admin
-Settings → Usage, and set when a budget day starts there. Set daily and monthly token
-budgets per group in Admin Settings → Groups. Admins have none. Over budget, new sends,
-regenerations, study tools and images are refused with a 409 (`reason: "usage_limit"`)
-that says when the budget resets. Replies already running finish, and background work
-(titles, captions, compaction) is never refused. Usage is recorded from the upgrade
-that added it; earlier runs are not backfilled.
-
-## About you
-
-User Settings → Your Asterism holds one **About you** text per user: facts about
-who they are and what they know, used when Asterism answers. It starts empty, is
-limited to 16,000 characters, and saves with a revision check that keeps the draft
-after a conflict. Each accepted turn pins the text and revision; resume reuses
-them and regeneration uses the current text. A blank text adds nothing to the
-prompt. Delegates inherit the recorded text within their existing capability
-ceilings. About you grants no tools or files, and no long-term memory engine is
-active. See [ADR-0066](docs/adr/0066-about-you.md).
-
-Schema changes ship as versioned migrations; `init:db` upgrades an existing
-database in place. Story tests use disposable storage and do not touch the working
-database.
+| If you want to…                                     | Read                                               |
+| --------------------------------------------------- | -------------------------------------------------- |
+| Run Asterism for real users                         | [Deployment guide](docs/deployment.md)             |
+| Set up a development environment and run the checks | [Development guide](docs/development.md)           |
+| Understand how the system is built                  | [Architecture guides](docs/architecture/README.md) |
+| Know why it is built that way                       | [Architecture decision records](docs/adr/)         |
+| See what is being worked on                         | [`todo.md`](todo.md) and [epics](docs/epics/)      |
 
 ## License
 
