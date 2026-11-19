@@ -63,7 +63,7 @@ async def test_admins_set_access_to_shared_models_and_configurable_tools_only(ap
         assert (await client.put("/groups/student/access", headers=auth("admin"), json=body)).status_code == 400
     assert (
         await client.put("/groups/student/access", headers=auth("teach"), json={"models": None, "tools": None})
-    ).status_code == 401
+    ).status_code == 403
     assert (
         await client.put("/groups/nope/access", headers=auth("admin"), json={"models": None, "tools": None})
     ).status_code == 404
@@ -157,4 +157,4 @@ async def test_admins_get_the_models_and_tools_a_group_list_can_name(api):
     assert [model["id"] for model in options["models"]] == [str(MODEL), str(OTHER_MODEL)]
     tools = {tool["name"]: tool["enabled"] for tool in options["tools"]}
     assert tools["web_fetch"] is True and "sub_agent" not in tools and "search_knowledge" not in tools
-    assert (await client.get("/groups/access-options", headers=auth("s1"))).status_code == 401
+    assert (await client.get("/groups/access-options", headers=auth("s1"))).status_code == 403

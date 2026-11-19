@@ -171,6 +171,18 @@ it("offers a retry when the list cannot load", async () => {
   expect(await screen.findByText("Could not load users.")).toBeInTheDocument();
 });
 
+it("says a signed-in non-admin is not allowed (US-90.1)", async () => {
+  mocks.list.mockRejectedValue({
+    code: 403,
+    detail: "Only an administrator can do this",
+  });
+  setup();
+  expect(await screen.findByText("Could not load users.")).toBeInTheDocument();
+  expect(
+    screen.getByText("Only an administrator can do this"),
+  ).toBeInTheDocument();
+});
+
 // --- US-86.2: account lifecycle -------------------------------------------
 
 it("hides account actions on the admin's own row", async () => {

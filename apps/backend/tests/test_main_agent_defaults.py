@@ -5,7 +5,7 @@ import uuid
 
 import pytest
 import pytest_asyncio
-from asterism.core.exceptions import BadDataException, UnauthorizedException
+from asterism.core.exceptions import BadDataException, NotFoundException
 from asterism.db.model_registry import Base
 from asterism.domains.agent.models import AgentProfileModel
 from asterism.domains.agent.schemas import GenerationDefaults, MainAgentUpdate, SubAgentCreate
@@ -127,7 +127,7 @@ async def test_main_update_is_model_free_owner_scoped_and_cannot_delete(main_age
     assert (await get_main_agent("user-b", session)).system_prompt == ""
     with pytest.raises(BadDataException, match="cannot be deleted"):
         await delete_agent_profile("user-a", before.id, session)
-    with pytest.raises(UnauthorizedException):
+    with pytest.raises(NotFoundException):
         await delete_agent_profile("user-b", before.id, session)
     with pytest.raises(ValidationError):
         MainAgentUpdate(model_id=uuid.uuid4())
@@ -144,7 +144,7 @@ async def test_sub_agents_fixed_binding_isolation_and_unavailable_model(main_age
     worker = await save_sub_agent("user-a", payload, session=session)
     assert worker.model_id == model.id and worker.model_available
     assert await get_sub_agents("user-b", session) == []
-    with pytest.raises(UnauthorizedException):
+    with pytest.raises(NotFoundException):
         await save_sub_agent("user-b", payload, worker.id, session)
     main = await get_main_agent("user-a", session)
     with pytest.raises(BadDataException):

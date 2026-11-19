@@ -18,13 +18,13 @@ from fastapi import APIRouter, Query
 
 import asterism.domains.user.service as user_service
 from asterism.core import config
-from asterism.core.exceptions import UnauthorizedException
+from asterism.core.exceptions import ForbiddenException, UnauthorizedException
 from asterism.core.schemas import ErrorDetail
 from asterism.db.dependencies import DBSessionDep
 
 from . import about, admin, lifecycle
 from .about_schemas import AboutYou, AboutYouUpdate
-from .dependencies import AdminUserDep, AuthedUserDep, OptionalAuthedUser
+from .dependencies import ADMIN_REQUIRED_MESSAGE, AdminUserDep, AuthedUserDep, OptionalAuthedUser
 from .schemas import CreateUserRequest, DeletionRequest, UserSummaryPage
 
 user_router = APIRouter(
@@ -56,6 +56,7 @@ async def list_users(
     response_model=bool,
     operation_id="userCreateUser",
     summary="Create a new user with a given user ID",
+    responses={401: {"model": ErrorDetail}, 403: {"model": ErrorDetail}},
 )
 async def create_user(
     payload: CreateUserRequest,
@@ -81,7 +82,8 @@ async def create_user(
         True if the user was created, False if they already existed.
 
     Raises:
-        UnauthorizedException: If neither credential is valid.
+        UnauthorizedException: If neither credential is valid and no one is signed in.
+        ForbiddenException: If a signed-in non-admin presents no valid system key.
         ConflictException: If the id belongs to a deleted (tombstoned) user.
     """
     # Constant-time comparison on bytes: avoids timing side channels and the
@@ -91,8 +93,10 @@ async def create_user(
         and config.system_key
         and hmac.compare_digest(payload.system_key.encode(), config.system_key.encode())
     )
-    can_add = bool((user and user.role == "admin") or has_valid_system_key)
-    if not can_add:
+    if not (has_valid_system_key or (user and user.role == "admin")):
+        # A valid token is not the problem for a signed-in non-admin (US-90.1).
+        if user:
+            raise ForbiddenException(ADMIN_REQUIRED_MESSAGE)
         raise UnauthorizedException()
     return (
         await user_service.create_user(

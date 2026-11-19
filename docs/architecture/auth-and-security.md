@@ -51,7 +51,8 @@ only; to call the backend, the page exchanges it for a short-lived JWT at
 `/api/auth/token`. The browser keeps that token in memory and reuses it until a
 minute before it expires, so a page doesn't sign a new token for every request
 ([`backend-token.ts`](../../apps/frontend/src/lib/backend-token.ts)). A 401 from the
-backend drops the cached token.
+backend drops the cached token; a 403 keeps it, because the token is valid and
+the person is only not allowed to do that one thing.
 
 HTTP requests carry the token in the `Authorization: Bearer` header. The chat
 WebSocket carries it as a `token` query parameter, because browsers cannot set
@@ -99,7 +100,8 @@ under that user's own directory.
 
 **Administrators are decided by the token.** `get_current_admin` (`AdminUserDep`)
 requires the `admin` role from the verified token. Hiding a page in the interface
-is never the check; the route refuses the request itself.
+is never the check; the route refuses the request itself, with 403 "Only an
+administrator can do this" for a signed-in non-admin.
 
 **Educators are decided by group, read live.** Educator routes read the user's
 group on every request, so revoking educator access takes effect at once.
@@ -277,7 +279,7 @@ a time per user and never fall back to another user's connection
 | -------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
 | Missing, expired or forged token                   | 401                                                                                                 |
 | Another user's resource, or one that doesn't exist | 404                                                                                                 |
-| Not an administrator on an admin route             | 401                                                                                                 |
+| Not an administrator on an admin route             | 403                                                                                                 |
 | Suspended account                                  | Sign-in refused with "This account is suspended. Ask your administrator."; backend requests refused |
 | Chat WebSocket refused                             | Closed with code 1008 and a reason (`Unauthorized`, `Chat not found`, `Forbidden`)                  |
 | Too many requests from one address                 | 429 with `Retry-After: 60`                                                                          |

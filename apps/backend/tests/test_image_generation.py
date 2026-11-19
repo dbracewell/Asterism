@@ -166,7 +166,7 @@ async def test_prompts_pairing_minors_with_sexual_content_are_refused():
 
 async def test_policy_endpoints_and_availability(images):
     client, sessions, provider = images
-    assert (await client.get("/settings/app/image-generation", headers=auth("a"))).status_code == 401
+    assert (await client.get("/settings/app/image-generation", headers=auth("a"))).status_code == 403
     assert (await client.get("/settings/app/image-generation", headers=auth("admin"))).json() == {
         "enabled": False,
         "group_ids": None,
@@ -227,7 +227,7 @@ async def test_an_admin_can_test_the_generator_before_turning_it_on(images):
     client, sessions, provider = images
     url = "/settings/app/image-generation/test"
     await set_policy(sessions, enabled=False, provider=None)
-    assert (await client.post(url, headers=auth("a"), json={"prompt": "A heron"})).status_code == 401
+    assert (await client.post(url, headers=auth("a"), json={"prompt": "A heron"})).status_code == 403
     none = await client.post(url, headers=auth("admin"), json={"prompt": "A heron"})
     assert none.status_code == 400 and "No image provider is set up" in none.text
 

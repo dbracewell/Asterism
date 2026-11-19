@@ -173,8 +173,8 @@ async def test_assignment_and_admin_policy_intersection_with_cas_and_deletion(sk
     foreign = await create(client, "foreign", user="b")
     current = (await client.get(ASSIGNMENTS, headers=auth())).json()
     assert current["skill_ids"] == []
-    assert (await client.get(POLICY, headers=auth())).status_code == 401
-    assert (await client.put(POLICY, headers=auth(), json={"enabled": True})).status_code == 401
+    assert (await client.get(POLICY, headers=auth())).status_code == 403
+    assert (await client.put(POLICY, headers=auth(), json={"enabled": True})).status_code == 403
     assert (await client.get(POLICY, headers=auth("admin"))).json() == {"enabled": False}
     for ids, code in [([foreign["id"]], 404), ([one["id"], one["id"]], 400), ([str(uuid.uuid4())], 404)]:
         response = await client.put(
@@ -219,7 +219,7 @@ async def test_generic_policy_routes_validate_boolean_and_do_not_bypass_admin(sk
     url = "/settings/app/skills_enabled"
     for value in ["true", 1, {}, []]:
         assert (await client.put(url, headers=auth("admin"), json={"value": value})).status_code == 400
-    assert (await client.put(url, headers=auth(), json={"value": True})).status_code == 401
+    assert (await client.put(url, headers=auth(), json={"value": True})).status_code == 403
     assert (await client.put(url, headers=auth("admin"), json={"value": True})).status_code == 200
     assert (await client.get(POLICY, headers=auth("admin"))).json()["enabled"] is True
     assert (await client.delete(url, headers=auth("admin"))).status_code == 200

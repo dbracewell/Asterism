@@ -14,7 +14,12 @@ from .schemas import SettingsExportRequest, SettingsImportRequest, SettingsImpor
 settings_transfer_router = APIRouter(
     prefix="/settings/app/transfer",
     tags=["settings"],
-    responses={400: {"model": ErrorDetail}, 401: {"model": ErrorDetail}, 409: {"model": ErrorDetail}},
+    responses={
+        400: {"model": ErrorDetail},
+        401: {"model": ErrorDetail},
+        403: {"model": ErrorDetail},
+        409: {"model": ErrorDetail},
+    },
 )
 
 

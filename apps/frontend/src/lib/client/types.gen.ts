@@ -13362,6 +13362,10 @@ export type AppSettingsExportErrors = {
    */
   401: ErrorDetail;
   /**
+   * Forbidden
+   */
+  403: ErrorDetail;
+  /**
    * Conflict
    */
   409: ErrorDetail;
@@ -13401,6 +13405,10 @@ export type AppSettingsImportPreviewErrors = {
    */
   401: ErrorDetail;
   /**
+   * Forbidden
+   */
+  403: ErrorDetail;
+  /**
    * Conflict
    */
   409: ErrorDetail;
@@ -13439,6 +13447,10 @@ export type AppSettingsImportErrors = {
    * Unauthorized
    */
   401: ErrorDetail;
+  /**
+   * Forbidden
+   */
+  403: ErrorDetail;
   /**
    * Conflict
    */
@@ -20610,6 +20622,14 @@ export type UserCreateUserData = {
 };
 
 export type UserCreateUserErrors = {
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Forbidden
+   */
+  403: ErrorDetail;
   /**
    * Not found
    */

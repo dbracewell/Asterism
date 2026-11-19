@@ -46,7 +46,7 @@ async def test_the_admin_group_mirrors_the_token_role(api, monkeypatch):
 
     # The role is taken away in sign-in: the next request drops them to Student.
     monkeypatch.setitem(ROLES, "admin", "user")
-    assert (await client.get("/groups", headers=auth("admin"))).status_code == 401
+    assert (await client.get("/groups", headers=auth("admin"))).status_code == 403
     assert await group_of(sessions, "admin") == "student"
 
     # And a user given the role joins Admin, whatever group they were in.
@@ -57,11 +57,11 @@ async def test_the_admin_group_mirrors_the_token_role(api, monkeypatch):
 
 async def test_only_administrators_manage_groups(api):
     client, _ = api
-    assert (await client.get("/groups", headers=auth("s1"))).status_code == 401
-    assert (await client.post("/groups", headers=auth("teach"), json={"name": "Night"})).status_code == 401
+    assert (await client.get("/groups", headers=auth("s1"))).status_code == 403
+    assert (await client.post("/groups", headers=auth("teach"), json={"name": "Night"})).status_code == 403
     assert (
         await client.put("/groups/members/s1", headers=auth("teach"), json={"group_id": "educator"})
-    ).status_code == 401
+    ).status_code == 403
     assert await group_of(api[1], "s1") == "student"
 
 

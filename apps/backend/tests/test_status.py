@@ -97,7 +97,7 @@ async def test_admin_status_reports_runtime_storage_and_last_backup(project_api,
     monkeypatch.setattr(service.shutil, "disk_usage", lambda _: Usage(total=10_000, used=4_000, free=6_000))
     service._storage_size = None
 
-    assert (await client.get("/status", headers=auth())).status_code == 401
+    assert (await client.get("/status", headers=auth())).status_code == 403
     monkeypatch.setattr(
         "asterism.core.security.verify_jwks_token",
         lambda token: AuthedUser(id=token, email=f"{token}@example.test", name=token, role="admin"),

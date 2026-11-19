@@ -182,8 +182,10 @@ async def test_create_requires_admin_or_system_key(user_api, monkeypatch):
     assert (await client.post("/users/", json={"user_id": "a"})).status_code == 401
     # A wrong system key is rejected like no key.
     assert (await client.post("/users/", json={"user_id": "a", "system_key": "wrong"})).status_code == 401
-    # A non-admin JWT without the key cannot create.
-    assert (await client.post("/users/", json={"user_id": "a"}, headers=auth("a"))).status_code == 401
+    # A non-admin JWT without the key cannot create: signed in, but not allowed.
+    refused = await client.post("/users/", json={"user_id": "a"}, headers=auth("a"))
+    assert refused.status_code == 403
+    assert refused.json()["detail"] == "Only an administrator can do this"
     # The system key alone works, and the body distinguishes created from existing.
     first = await client.post("/users/", json={"user_id": "a", "system_key": "s3cret-key"})
     assert first.status_code == 200 and first.json() is True
@@ -209,7 +211,7 @@ async def test_create_rejects_tombstoned_ids(user_api, monkeypatch):
 async def test_delete_requires_admin_and_never_self(user_api):
     client, _, _ = user_api
     # A non-admin cannot delete anyone.
-    assert (await client.delete("/users/a", headers=auth("a"))).status_code == 401
+    assert (await client.delete("/users/a", headers=auth("a"))).status_code == 403
     # An admin may not delete their own account.
     assert (await client.delete("/users/admin", headers=auth("admin"))).status_code == 403
     # Deleting an unknown user is a 404, not a silent success.
@@ -225,7 +227,7 @@ async def test_delete_requires_admin_and_never_self(user_api):
 async def test_deleted_users_are_rejected_on_their_next_request(user_api):
     client, _, _ = user_api
     # "a" authenticates fine while they exist (this also provisions them).
-    assert (await client.get("/users/", headers=auth("a"))).status_code == 401  # non-admin: list is admin-only
+    assert (await client.get("/users/", headers=auth("a"))).status_code == 403  # non-admin: list is admin-only
     assert (await client.delete("/users/a", headers=auth("admin"))).status_code == 200
     # Their still-valid JWT now hits the tombstone instead of re-creating them.
     response = await client.get("/users/", headers=auth("a"))
@@ -357,7 +359,7 @@ async def test_a_renamed_token_updates_the_backend_copy(user_api, user_api_db, m
 
     monkeypatch.setattr("asterism.core.security.verify_jwks_token", verify_token)
     # Any authenticated route provisions and syncs; this one is admin-only.
-    assert (await client.get("/users/", headers=auth("ada"))).status_code == 401
+    assert (await client.get("/users/", headers=auth("ada"))).status_code == 403
     sessions = user_api_db
     assert await stored_identity(sessions, "ada") == ("Ada", "ada@example.test")
 

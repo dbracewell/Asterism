@@ -171,7 +171,7 @@ def redirect_result(response: httpx.Response) -> str:
 async def test_policy_defaults_disabled_is_admin_only_and_gates_authorization(chatgpt):
     client, _, _ = chatgpt
     assert (await client.get(POLICY, headers=auth("admin"))).json() == {"enabled": False}
-    assert (await client.put(POLICY, headers=auth("a"), json={"enabled": True})).status_code == 401
+    assert (await client.put(POLICY, headers=auth("a"), json={"enabled": True})).status_code == 403
     assert (await client.get("/chatgpt/connection", headers=auth("a"))).json()["policy_enabled"] is False
     assert (await client.post("/chatgpt/connection/authorize", headers=auth("a"))).status_code == 400
     await enable(client)

@@ -525,8 +525,8 @@ async def test_admins_read_and_save_the_compaction_policy(project_api, monkeypat
         await session.execute(update(LLMModel).where(LLMModel.id == uuid.UUID(A)).values(is_active=False))
         await session.commit()
     assert (await client.put(url, headers=auth(), json=body)).status_code == 400
-    assert (await client.get(url, headers=auth("b"))).status_code == 401
-    assert (await client.put(url, headers=auth("b"), json=body)).status_code == 401
+    assert (await client.get(url, headers=auth("b"))).status_code == 403
+    assert (await client.put(url, headers=auth("b"), json=body)).status_code == 403
 
 
 @pytest.mark.asyncio

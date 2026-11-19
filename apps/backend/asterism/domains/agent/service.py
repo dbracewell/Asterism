@@ -9,7 +9,6 @@ from asterism.core.exceptions import (
     BadDataException,
     CodedException,
     NotFoundException,
-    UnauthorizedException,
 )
 from asterism.db.database import get_async_db_session
 from asterism.db.queries import paginate_select
@@ -56,10 +55,9 @@ async def get_agent_profile(
 ) -> AgentProfile:
     async with get_async_db_session(session) as session:
         result = await session.get(AgentProfileModel, agent_id)
-        if not result:
+        # Another user's agent reads as missing, so its existence isn't revealed.
+        if not result or user_id != result.user_id:
             raise NotFoundException(f"Agent with id {agent_id} not found")
-        if user_id != result.user_id:
-            raise UnauthorizedException()
         profile = await _ensure_valid_tools(AgentProfile.model_validate(result), session=session)
         return profile
 

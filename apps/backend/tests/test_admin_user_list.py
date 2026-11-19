@@ -36,9 +36,14 @@ async def listing(client, **params):
 
 
 async def test_only_administrators_see_the_list(user_api):
+    """US-90.1: no or a bad token is 401 (signed out); a signed-in non-admin is 403."""
     client, _, _ = user_api
     assert (await client.get("/users/")).status_code == 401
-    assert (await client.get("/users/", headers=auth("a"))).status_code == 401
+    bad = await client.get("/users/", headers={"Authorization": "Bearer not-a-token"})
+    assert bad.status_code == 401
+    refused = await client.get("/users/", headers=auth("a"))
+    assert refused.status_code == 403
+    assert refused.json() == {"code": 403, "detail": "Only an administrator can do this"}
 
 
 async def test_lists_names_emails_educator_status_and_created_date(user_api, sessions):
