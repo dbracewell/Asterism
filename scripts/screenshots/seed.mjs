@@ -538,6 +538,14 @@ export async function seedDemo({
     note: demo.courseUpdate.note,
   });
 
+  // Leo asks for his account to be deleted, so Admin Settings, Users shows a request.
+  await classmate.browser.api(
+    "deletion request",
+    "PUT",
+    "/users/me/deletion-request",
+    {},
+  );
+
   // Maya's own copy of the course, a project in her sidebar.
   const mayaProjects = await maya.api("projects", "GET", "/projects/");
   const courseCopy = (

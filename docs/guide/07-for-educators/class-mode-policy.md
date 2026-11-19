@@ -2,7 +2,7 @@
 
 You can decide which [learning modes](../04-learning/learning-modes.md) students
 may use in your course, and whether they can see full answers. For example, you
-might allow only Tutor and Explain-back while the class practises, so students
+might allow only Tutor and Explain-back while the class practices, so students
 work answers out themselves.
 
 > **Who can do this:** educators.

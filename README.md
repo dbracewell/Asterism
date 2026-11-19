@@ -87,13 +87,14 @@ the checks CI runs.
 
 ## Documentation
 
-| If you want to…                                     | Read                                               |
-| --------------------------------------------------- | -------------------------------------------------- |
-| Run Asterism for real users                         | [Deployment guide](docs/deployment.md)             |
-| Set up a development environment and run the checks | [Development guide](docs/development.md)           |
-| Understand how the system is built                  | [Architecture guides](docs/architecture/README.md) |
-| Know why it is built that way                       | [Architecture decision records](docs/adr/)         |
-| See what is being worked on                         | [`todo.md`](todo.md) and [epics](docs/epics/)      |
+| If you want to…                                                | Read                                               |
+| -------------------------------------------------------------- | -------------------------------------------------- |
+| Learn to use Asterism, as a student, educator or administrator | [User guide](docs/guide/README.md)                 |
+| Run Asterism for real users                                    | [Deployment guide](docs/deployment.md)             |
+| Set up a development environment and run the checks            | [Development guide](docs/development.md)           |
+| Understand how the system is built                             | [Architecture guides](docs/architecture/README.md) |
+| Know why it is built that way                                  | [Architecture decision records](docs/adr/)         |
+| See what is being worked on                                    | [`todo.md`](todo.md) and [epics](docs/epics/)      |
 
 ## License
 

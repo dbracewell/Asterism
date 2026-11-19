@@ -71,6 +71,10 @@ Follow-ups found during the documentation epics (code, not documentation; each n
 
 - [ ] Creating a sub-agent shows the red error "Choose an available model. The saved binding remains until you save a replacement." under Model before anything is chosen. A new sub-agent has no saved binding; show a plain "Choose a model" hint until the form is submitted. Found in US-89.7.
 
+- [ ] The Users page guide in the help registry (`admin.users` in `features/help/pages.ts`) says "Accounts are not otherwise changed here", but the page suspends, reactivates, creates reset links, deletes accounts and dismisses deletion requests. Update the guide's purpose and areas. Found in US-89.9.
+
+- [ ] Link each in-app page guide in the Help center to its user-guide page ("Read the full walkthrough"), once the guide is reachable from a deployed instance (a repository link or the guide served by the app). Deferred from EPIC-89 open question 1 (decided 2026-11-19).
+
 ### EPIC-89: User guide
 
 - [x] US-89.1: Screenshot pipeline and guide skeleton
@@ -127,15 +131,15 @@ Follow-ups found during the documentation epics (code, not documentation; each n
   - [x] Setting mode policy for a class.
   - [x] Reading class insights.
 - [x] US-89.9: For administrators, troubleshooting and review
-  - [ ] First-time setup: the admin passphrase, connecting a provider, enabling a model.
-  - [ ] Providers and models, including pricing.
-  - [ ] Users: invites, suspend and reactivate, reset links, deletion and deletion requests.
-  - [ ] Groups and budgets, Usage, Status.
-  - [ ] Policies: Tools, Skills, Canvas, ChatGPT Plans, Context Compaction, Image Generation, Image Captioning, Educators, Export; Code Execution is marked Planned.
-  - [ ] Theme Editor.
-  - [ ] Troubleshooting page: capacity full, usage limit, suspended account, too many requests, failed file processing, model unavailable.
-  - [ ] Glossary aligned with the help registry and the terminology list.
-  - [ ] Walkthrough review: follow every page on a fresh demo instance and fix any step that does not match the app.
-  - [ ] Readability review by someone non-technical (or against the reading-level target), and fix what confuses them.
-  - [ ] Link the guide from `README.md` and, if agreed (open question 1), from the in-app Help center.
-  - [ ] `pnpm docs:check` passes, including every image reference.
+  - [x] First-time setup: the admin passphrase, connecting a provider, enabling a model.
+  - [x] Providers and models, including pricing.
+  - [x] Users: invites, suspend and reactivate, reset links, deletion and deletion requests.
+  - [x] Groups and budgets, Usage, Status.
+  - [x] Policies: Tools, Skills, Canvas, ChatGPT Plans, Context Compaction, Image Generation, Image Captioning, Educators, Export; Code Execution is marked Planned.
+  - [x] Theme Editor.
+  - [x] Troubleshooting page: capacity full, usage limit, suspended account, too many requests, failed file processing, model unavailable.
+  - [x] Glossary aligned with the help registry and the terminology list.
+  - [x] Walkthrough review: follow every page on a fresh demo instance and fix any step that does not match the app.
+  - [x] Readability review by someone non-technical (or against the reading-level target), and fix what confuses them.
+  - [x] Link the guide from `README.md` and, if agreed (open question 1), from the in-app Help center.
+  - [x] `pnpm docs:check` passes, including every image reference.

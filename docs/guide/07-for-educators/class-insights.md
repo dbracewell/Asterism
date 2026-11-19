@@ -19,7 +19,7 @@ Sharing is **off** until each student turns it on, with
 stop sharing at any time.
 
 To protect students, nothing shows until **at least five students share**, and a
-file only shows once five of them have practised from it. Until then, the section
+file only shows once five of them have practiced from it. Until then, the section
 says how many share so far.
 
 ![Where the class struggles: an explanation of the totals, and a note that insights appear once at least 5 students share their results, with 2 sharing so far](../images/class-insights.png)

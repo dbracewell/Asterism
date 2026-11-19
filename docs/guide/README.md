@@ -1,7 +1,7 @@
 # Asterism user guide
 
 Asterism is an AI assistant built to help you learn. You can ask it questions,
-give it your notes and handouts to work from, practise with flashcards and
+give it your notes and handouts to work from, practice with flashcards and
 quizzes, and choose how it helps: it can guide you with questions instead of
 handing you the answer.
 
@@ -17,7 +17,7 @@ browser.
   the chapters you need. You don't have to read them in order.
 - **Looking for a word?** The [glossary](glossary.md) explains the terms the app
   uses.
-- **Something not working?** _Troubleshooting_ lists the messages you might see
+- **Something not working?** [Troubleshooting](troubleshooting.md) lists the messages you might see
   and what to do about them.
 
 Pages for educators and administrators say so at the top. Everything else is for
@@ -131,14 +131,28 @@ These pages are for educators: people who run classes in Asterism.
 4. [Class insights](07-for-educators/class-insights.md): where the class
    struggles, without seeing anyone's work.
 
-## Chapters
+## For administrators
 
-The other chapters are being written. Each one will appear here when it is ready.
+These pages are for administrators: the people who run Asterism for everyone.
+Installing and running the server is in the [deployment guide](../deployment.md).
 
-| Chapter            | What it covers                                                                     |
-| ------------------ | ---------------------------------------------------------------------------------- |
-| For administrators | First-time setup, providers, users, groups and budgets, usage, policies and themes |
-| Troubleshooting    | Common messages and what to do                                                     |
+1. [First-time setup](08-for-administrators/first-time-setup.md): the
+   administrator account, a model provider and the first models.
+2. [Providers and models](08-for-administrators/providers-and-models.md): adding
+   providers, choosing models and setting prices.
+3. [Users and accounts](08-for-administrators/users-and-accounts.md): groups,
+   suspending, reset links, deleting accounts, deletion requests and educators.
+4. [Groups, budgets, usage and status](08-for-administrators/groups-budgets-and-usage.md):
+   what each group may use, token budgets, usage and costs, and health.
+5. [Policies](08-for-administrators/policies.md): tools, skills, the canvas,
+   ChatGPT plans, context compaction, images, captions and exporting settings.
+6. [Theme editor](08-for-administrators/theme-editor.md): making themes in your
+   school's colors.
+
+## When something goes wrong
+
+- [Troubleshooting](troubleshooting.md): messages you might see, and what to do.
+- [Glossary](glossary.md): the words Asterism uses, in plain language.
 
 ## For people writing this guide
 

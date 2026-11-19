@@ -60,11 +60,17 @@ own copy, which only the educator's updates can change.
 
 **Deck.** A group of flashcards in a project.
 
+**Deletion request.** Asking an administrator to delete your account. Nothing
+changes until they decide, and you can withdraw it.
+
 **Educator.** Someone who can create classes and share course material with
 students.
 
 **Files in context.** The files Asterism may use in a chat: the project's files
 plus the chat's own attachments.
+
+**Files library.** Everything you've uploaded, in one place: Files in the
+sidebar.
 
 **Flashcard.** A card with a question on the front and the answer on the back.
 Cards you find hard come back for review sooner.
@@ -76,6 +82,9 @@ decides which models and tools you can use.
 
 **Hint levels.** In Tutor mode, help that gets stronger one step at a time:
 Nudge, Hint, then Worked example.
+
+**Image generation.** Asterism making a picture from a description, when your
+administrator allows it.
 
 **Invite link.** A link from an educator that creates your account and puts you
 in their class. Each link works once.
@@ -96,7 +105,7 @@ you can choose from.
 new password. It works once.
 
 **Practice quiz.** A saved set of questions that Asterism writes from a
-project's files, for you to practise with.
+project's files, for you to practice with.
 
 **Processing.** What Asterism does to a file after you upload it: it reads the
 text and gets it ready to search. A file can be used once it's ready.
@@ -116,6 +125,9 @@ suggestions you can apply.
 **Prompt template.** A form that builds a clear message from a few fields, such
 as role, task and format.
 
+**Provider.** A service that runs AI models, such as OpenAI or a server your
+school hosts. Your administrator connects providers.
+
 **Reflection.** A short note at the end of a session about what you learned and
 what's still unclear. Only you can see it.
 
@@ -132,8 +144,11 @@ left.
 `/`. A skill adds instructions only; it doesn't give Asterism new tools or
 files.
 
-**Source.** One of your files that Asterism read to answer a question. Sources are
-listed above the answer.
+**Source.** The parts of your files that an answer relied on. They're listed
+above the answer by file, so you can check them.
+
+**Student.** The group new accounts join. Your administrator decides what
+students may use.
 
 **Study notes.** Summaries of a project's files and study plans for an exam,
 saved in the project's Study tab.
@@ -141,6 +156,9 @@ saved in the project's Study tab.
 **Sub-agent.** A helper with its own instructions and its own model, which your
 main agent can hand part of a task to. A project chooses which sub-agents its
 chats may use.
+
+**Suspended account.** An account an administrator has blocked. It can't sign
+in, but nothing is deleted, and it can be reactivated.
 
 **Team pack.** A file that shares a setup (sub-agents, skills, templates,
 rubrics and project settings) with someone else. It never holds your files,
