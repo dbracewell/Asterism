@@ -76,13 +76,26 @@ what your group can use.
 5. [Team packs](03-files-and-projects/team-packs.md): sharing a setup, and what a
    pack never holds.
 
+## Learning
+
+1. [Learning modes](04-learning/learning-modes.md): Standard, Tutor, Explain-back,
+   Review my work, Spot the error, Draft feedback and Research assistant, and when
+   to use each.
+2. [Hints and Show answer](04-learning/hints-and-show-answer.md): help one step at
+   a time, and locking a mode to keep yourself on track.
+3. [Mode restrictions](04-learning/mode-restrictions.md): your own lock and your
+   class's rules.
+4. [Reflections and the AI-use log](04-learning/reflections-and-the-ai-use-log.md):
+   noting what you learned, and sharing how you used AI.
+5. [Rubrics and draft feedback](04-learning/rubrics-and-draft-feedback.md):
+   feedback on your writing, and entering your assignment's rubric.
+
 ## Chapters
 
 The other chapters are being written. Each one will appear here when it is ready.
 
 | Chapter               | What it covers                                                                     |
 | --------------------- | ---------------------------------------------------------------------------------- |
-| Learning              | Learning modes, hints, reflections, your AI-use log and rubrics                    |
 | Studying              | Flashcards, practice quizzes, summaries, study guides and your progress            |
 | Making Asterism yours | Your settings, About you, agents, skills, templates and your data                  |
 | For educators         | Classes, invites, courses, learning-mode rules and class insights                  |

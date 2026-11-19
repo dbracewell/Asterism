@@ -1,6 +1,6 @@
 # EPIC-89: User guide
 
-Status: in progress (US-89.1 to US-89.4 complete 2026-11-19; US-89.5 next). Proposed 2026-11-18. Source: user request (2026-11-18).
+Status: in progress (US-89.1 to US-89.5 complete 2026-11-19; US-89.6 next). Proposed 2026-11-18. Source: user request (2026-11-18).
 
 ## Objective
 
@@ -244,12 +244,31 @@ As a user, I can keep my material in one place and work on it in projects.
 
 As a student, I can use Asterism to learn rather than just get answers.
 
-- [ ] Learning modes: Standard, Tutor, Explain-back, Review my work, Draft
+- [x] Learning modes: Standard, Tutor, Explain-back, Review my work, Draft
       feedback, Research assistant; when to use each, with an example chat.
-- [ ] Hint levels and Show answer.
-- [ ] Mode restrictions set by a class, and how they appear to you.
-- [ ] Reflections, the AI-use log and exporting it.
-- [ ] Rubrics: writing one and using it for feedback.
+- [x] Hint levels and Show answer.
+- [x] Mode restrictions set by a class, and how they appear to you.
+- [x] Reflections, the AI-use log and exporting it.
+- [x] Rubrics: writing one and using it for feedback.
+
+#### Notes (US-89.5)
+
+- **Pages.** Five pages in `docs/guide/04-learning/`: learning modes, hints and
+  Show answer (with locking a mode), mode restrictions, reflections and the
+  AI-use log, and rubrics with draft feedback. The glossary gained AI-use log,
+  hint levels, mode restrictions, reflection, rubric and Show answer.
+- **Seven modes, not six.** The app also has **Spot the error** (one deliberate
+  mistake to find), so the guide covers it. The help registry has no entry for
+  that mode; it is in `todo.md`.
+- **Demo additions.** One seeded chat per mode with a reply in that mode's
+  format (Explain-back headings, a Draft feedback reply against the bundled Lab
+  report rubric whose quotes match the draft, a Spot the error answer with its
+  hidden error record), a scripted Nudge, a saved reflection and a scripted
+  reflection draft, and a class mode policy (Tutor, Explain-back, Review my work
+  and Spot the error only; no answer reveal) with a Tutor chat in Maya's course
+  project.
+- **Sessions are reused.** About 70 shots now sign in more often than the
+  sign-in rate limit allows, so each person signs in once per run.
 
 ### US-89.6: Studying
 

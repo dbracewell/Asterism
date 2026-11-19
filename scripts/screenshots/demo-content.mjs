@@ -234,6 +234,122 @@ It sits in the thylakoid membranes inside chloroplasts. It absorbs mostly red an
     title: "Plant cell drawing",
     answer: "Here's a simple drawing of a plant cell.",
   },
+  // --- One example chat per learning mode (US-89.5) ---
+  {
+    // Tutor: the reply to the Nudge button.
+    match: "give me a nudge",
+    title: "Photosynthesis for Friday's test",
+    answer: `Here's a nudge: think about what a plant takes in through its **roots**, what it takes in through its **leaves**, and what it needs from the **Sun**.
+
+Which three things does that give you?`,
+  },
+  {
+    match: "let me explain photosynthesis",
+    title: "Explaining photosynthesis",
+    answer: `### What you got right
+- Plants take in **carbon dioxide** and **water** and use **light energy** to make **glucose**.
+- **Oxygen** is released as a by-product.
+
+### What was missing or wrong
+- It doesn't happen in "the leaves" in general, but in the **chloroplasts** inside leaf cells.
+- You left out the two stages: the light-dependent reactions and the Calvin cycle.
+
+### Follow-up questions
+1. Where in the chloroplast does each stage happen?
+2. What do the light-dependent reactions pass on to the Calvin cycle?`,
+  },
+  {
+    match: "here's my answer",
+    title: "Why the rate levels off",
+    answer: `Good start: you've spotted that something limits the rate once there's plenty of light.
+
+**The first thing to look at:** the plant doesn't run out of chlorophyll. Chlorophyll isn't used up during photosynthesis; it's reused again and again.
+
+**Next step:** look at your list of limiting factors. If light is no longer the one in shortest supply, which of the other two could be holding the rate back in your experiment?`,
+  },
+  {
+    match: "teach me about cellular respiration",
+    title: "Cellular respiration",
+    answer: `Cellular respiration is how cells release the energy stored in glucose. It is roughly the reverse of photosynthesis: glucose and oxygen go in, and carbon dioxide, water and ATP come out.
+
+It has three main stages. Glycolysis happens in the mitochondria and splits each glucose molecule into two pyruvate molecules. The **Krebs cycle** and the **electron transport chain** then make most of the ATP.
+
+Without oxygen, cells fall back on fermentation, which makes far less ATP.
+
+\`\`\`asterism-exercise
+{"quote": "Glycolysis happens in the mitochondria", "correction": "Glycolysis happens in the cytoplasm. Only the Krebs cycle and the electron transport chain happen in the mitochondria.", "source": null}
+\`\`\``,
+  },
+  {
+    match: "feedback on my lab report draft",
+    title: "Lab report feedback",
+    answer: `### Question and hypothesis
+Estimated level: Developing
+
+> Aim: to find out how light intensity affects the rate of photosynthesis in pondweed.
+
+The aim is clear and testable, but there's no hypothesis: say what you expected to happen, and why.
+
+Next step: add one sentence that predicts how the bubble rate will change as light increases.
+
+### Method
+Estimated level: Developing
+
+> we placed pondweed in water under a lamp and counted oxygen bubbles for one minute at six light levels.
+
+Someone could roughly repeat this, but it doesn't say how you controlled temperature or how many times you repeated each level.
+
+Next step: list what you kept the same, and how many repeats you did.
+
+### Results
+Estimated level: Proficient
+
+> the bubble rate rose quickly up to 60% light and then levelled off.
+
+A clear description of the pattern. Refer to your table or graph, and give the numbers with units.
+
+### Analysis and conclusion
+Estimated level: Beginning
+
+> more light always means more photosynthesis.
+
+This contradicts your own results, which level off after 60% light.
+
+Next step: explain the levelling off using limiting factors.
+
+### Scientific writing
+Estimated level: Proficient
+
+> Results: the bubble rate rose quickly up to 60% light and then levelled off.
+
+Clear and concise. Use the past tense and the passive voice consistently through the report.
+
+### Overall
+A solid start with a clear aim and results. The biggest improvement is a conclusion that matches your data.`,
+  },
+  {
+    // A Tutor chat in the course project, where the class's mode rules apply.
+    match: "what should i focus on for unit 3",
+    title: "Unit 3 focus",
+    answer: `Let's find out together. Your course overview lists three goals for unit 3.
+
+Which of them feels hardest to you right now: the two stages of photosynthesis, what limits its rate, or how it compares with respiration?`,
+  },
+  {
+    match: "where can i find good sources",
+    title: "Sources on limiting factors",
+    answer: `Here are some places to look, and how to judge what you find.
+
+**Search angles**
+- "limiting factors photosynthesis light intensity" in your textbook's index or your school library's database.
+- Your exam board's specification, to see exactly which factors you need to know.
+
+**Judging a source**
+- Who wrote it, and are they an expert? A university or exam board page is more reliable than an anonymous forum.
+- Is it recent, and does it show its evidence?
+
+Share a source you've found and I'll help you check its credibility, relevance and bias.`,
+  },
   // A longer revision chat, so it can be compacted.
   {
     match: "revise unit 3",
@@ -524,6 +640,15 @@ example, and a quick question at the end to check understanding.
 /** Replies to other model calls, matched by the start of their system prompts. Strings are sent as they are. */
 export const helpers = [
   {
+    prompt: "You help a learner reflect",
+    reply: () => ({
+      learned:
+        "I learned that photosynthesis needs carbon dioxide, water and light, and that it happens in two stages in the chloroplast.",
+      unclear:
+        "I'm still not sure what the Calvin cycle does with the ATP and NADPH.",
+    }),
+  },
+  {
     prompt: "Describe this image accurately",
     reply: () =>
       "A simple diagram of a green leaf split along its midrib, labelled Sunlight above it, CO₂ in on the left and O₂ out on the right.",
@@ -577,4 +702,47 @@ export const generatedImage = {
     </g>
   </svg>
 </div>`,
+};
+
+/** The example chats for the learning modes, created in their modes (US-89.5). */
+export const modeChats = {
+  explainBack: {
+    learning_mode: "explain_back",
+    user_prompt:
+      "Let me explain photosynthesis: plants take in carbon dioxide and water, and use light energy to make glucose. Oxygen is released. It all happens in the leaves.",
+  },
+  review: {
+    learning_mode: "review",
+    user_prompt:
+      "Here's my answer to 'Why does the rate of photosynthesis level off at high light?': The rate levels off because the plant runs out of chlorophyll.",
+  },
+  spotTheError: {
+    learning_mode: "spot_the_error",
+    user_prompt: "Teach me about cellular respiration.",
+  },
+  draftFeedback: {
+    learning_mode: "draft_feedback",
+    rubric: { source: "bundled", id: "lab-report" },
+    user_prompt: `Can you give me feedback on my lab report draft?
+
+${LAB_REPORT_DRAFT}`,
+  },
+  research: {
+    learning_mode: "research",
+    user_prompt:
+      "Where can I find good sources about limiting factors for my essay?",
+  },
+};
+
+/** A saved reflection on the Tutor chat, for the Reflections list. */
+export const reflection = {
+  learned:
+    "Photosynthesis needs carbon dioxide, water and light, and it has two stages.",
+  unclear: "What the Calvin cycle does with ATP and NADPH.",
+};
+
+/** The class's learning-mode rules for its course project. */
+export const classModePolicy = {
+  allowed_modes: ["tutor", "explain_back", "review", "spot_the_error"],
+  answer_reveal: false,
 };

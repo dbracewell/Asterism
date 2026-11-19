@@ -349,6 +349,14 @@ export async function seedDemo({
     user_prompt: "Can you help me write an outline for my lab report?",
   });
   await maya.api("canvas", "POST", `/chat/${lab.info.id}/canvas`, demo.canvas);
+  // One example chat for each learning mode that has its own way of answering.
+  const modeChats = {};
+  for (const [key, body] of Object.entries(demo.modeChats))
+    modeChats[key] = (await maya.newChat({ model_id: tutor, ...body })).info.id;
+  await maya.api("reflection", "POST", "/reflections/", {
+    chat_id: general.info.id,
+    ...demo.reflection,
+  });
   // Four turns, one more than compaction keeps in full, so it can be compacted.
   const [opening, ...followUps] = demo.revisionTurns;
   let revision = await maya.newChat({ model_id: tutor, user_prompt: opening });
@@ -426,6 +434,12 @@ export async function seedDemo({
     "POST",
     `/classes/${room.id}/join-code`,
   );
+  await teacher.api(
+    "mode policy",
+    "PUT",
+    `/classes/${room.id}/mode-policy`,
+    demo.classModePolicy,
+  );
   for (const browser of [maya, classmate.browser]) {
     await browser.api("join", "POST", "/classes/join", { code });
     const course = await browser.api(
@@ -451,8 +465,26 @@ export async function seedDemo({
     );
   }
 
+  // Maya's own copy of the course, a project in her sidebar.
+  const mayaProjects = await maya.api("projects", "GET", "/projects/");
+  const courseCopy = (
+    mayaProjects.items ??
+    mayaProjects.projects ??
+    mayaProjects
+  ).find((item) => item.name === demo.classroom.name);
+  if (!courseCopy) throw new Error("the course copy was not found");
+  const courseChat = await maya.newChat({
+    model_id: tutor,
+    project_id: courseCopy.id,
+    learning_mode: "tutor",
+    user_prompt: "What should I focus on for unit 3?",
+  });
+
   return {
     models,
+    modeChats,
+    courseCopy: courseCopy.id,
+    courseChat: courseChat.info.id,
     project: project.id,
     chats: {
       general: general.info.id,

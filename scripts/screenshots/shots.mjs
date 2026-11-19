@@ -440,7 +440,7 @@ export const shots = [
     ready: ["Find chats and projects"],
     steps: async (page) => {
       await page.getByPlaceholder("Search chats and projects").fill("calvin");
-      await page.getByText("Chat content").waitFor();
+      await page.getByText("Chat content").first().waitFor();
     },
   },
 
@@ -566,6 +566,193 @@ export const shots = [
       const heading = page.getByText("Study Buddy 1.0.0");
       await heading.waitFor();
       await heading.evaluate((node) => node.scrollIntoView({ block: "start" }));
+    },
+  },
+
+  // --- Learning --------------------------------------------------------------------
+  {
+    name: "learning-mode-menu",
+    alt: "The learning mode menu open above the message box: Standard, Tutor, Explain-back, Review my work, Spot the error and Draft feedback, each with a one-line description",
+    as: "student",
+    path: () => "/",
+    ready: ["What should we work on?"],
+    steps: async (page) => {
+      await page.locator('[data-tour="learning-mode"]').click();
+      await page.getByText("Guides you with questions and hints").waitFor();
+    },
+  },
+  {
+    name: "tutor-nudge",
+    alt: "A Tutor chat after asking for a Nudge: Asterism hints at roots, leaves and the Sun, and the help bar above the message box now says Help level: Nudge",
+    as: "student",
+    path: (ids) => `/c/${ids.chats.general}`,
+    ready: ["what do you think a plant needs"],
+    steps: async (page) => {
+      await page.getByRole("button", { name: "Nudge", exact: true }).click();
+      await page.getByText("Here's a nudge").waitFor();
+      await page.getByText("Help level:").waitFor();
+    },
+  },
+  {
+    name: "tutor-show-answer",
+    alt: "The Show the full answer? message, suggesting a hint or worked example first, with Keep trying and Show answer buttons",
+    as: "student",
+    path: (ids) => `/c/${ids.chats.general}`,
+    ready: ["what do you think a plant needs"],
+    steps: async (page) => {
+      await page.getByRole("button", { name: "Show answer" }).click();
+      await page.getByText("Show the full answer?").waitFor();
+    },
+  },
+  {
+    name: "mode-explain-back",
+    alt: "An Explain-back chat: the student explains photosynthesis, and Asterism answers under What you got right, What was missing or wrong and Follow-up questions",
+    as: "student",
+    path: (ids) => `/c/${ids.modeChats.explainBack}`,
+    ready: ["What you got right", "Follow-up questions"],
+  },
+  {
+    name: "mode-review",
+    alt: "A Review my work chat: the student's answer says the plant runs out of chlorophyll, and Asterism points out that first mistake and suggests a next step",
+    as: "student",
+    path: (ids) => `/c/${ids.modeChats.review}`,
+    ready: ["Next step"],
+  },
+  {
+    name: "mode-spot-the-error",
+    alt: "A Spot the error chat: an explanation of cellular respiration with an Exercise box underneath, saying the answer contains one deliberate error, with Check selection and Reveal answer",
+    as: "student",
+    path: (ids) => `/c/${ids.modeChats.spotTheError}`,
+    ready: ["one deliberate error", "Reveal answer"],
+  },
+  {
+    name: "mode-draft-feedback",
+    alt: "Draft feedback on a lab report against the Lab report rubric: each criterion with an estimated level and a quote from the draft, an Overall note, and a Review draft with comments button",
+    as: "student",
+    path: (ids) => `/c/${ids.modeChats.draftFeedback}`,
+    ready: ["Review draft with comments"],
+  },
+  {
+    name: "draft-review",
+    alt: "Your draft with comments: the lab report draft on the left with the quoted passages highlighted, and a comment for each rubric criterion on the right, each with a Resolved box",
+    as: "student",
+    path: (ids) => `/c/${ids.modeChats.draftFeedback}`,
+    ready: ["Review draft with comments"],
+    steps: async (page) => {
+      await page
+        .getByRole("button", { name: /Review draft with comments/ })
+        .click();
+      await page.getByText("Your draft with comments").waitFor();
+    },
+  },
+  {
+    name: "mode-lock",
+    alt: "The Lock Tutor mode? message, explaining that switching to Standard or revealing an answer will then ask you to confirm and wait, with Cancel and Lock mode",
+    as: "student",
+    path: (ids) => `/c/${ids.chats.general}`,
+    ready: ["what do you think a plant needs"],
+    steps: async (page) => {
+      await page.getByRole("button", { name: "Lock Tutor mode" }).click();
+      await page.getByText("Lock Tutor mode?").waitFor();
+    },
+  },
+  {
+    name: "mode-course-menu",
+    alt: "The learning mode menu in the class's course project: a line with the class's rules at the top, and Standard, Draft feedback and Research assistant greyed out as Not allowed in this course",
+    as: "student",
+    path: (ids) => `/?project_id=${ids.courseCopy}`,
+    ready: ["What should we work on?"],
+    steps: async (page) => {
+      await page.locator('[data-tour="learning-mode"]').click();
+      await page.getByText("Not allowed in this course").first().waitFor();
+    },
+  },
+  {
+    name: "mode-course-limits",
+    alt: "The Lock Tutor mode? message in the class's course project, with a line saying Biology 101, Period 3 allows only the Tutor, Explain-back, Review my work or Spot the error modes and answers can't be revealed, set by Dana Okafor",
+    as: "student",
+    path: (ids) => `/c/${ids.courseChat}`,
+    ready: ["Which of them feels hardest"],
+    steps: async (page) => {
+      await page.getByRole("button", { name: "Lock Tutor mode" }).click();
+      await page.getByLabel("Course policy").waitFor();
+    },
+  },
+  {
+    name: "reflect",
+    alt: "The Reflect on this session window, with What did I learn? and What's still unclear? filled in by Suggest a draft, and a Save reflection button",
+    as: "student",
+    path: (ids) => `/c/${ids.chats.general}`,
+    ready: ["what do you think a plant needs"],
+    steps: async (page) => {
+      // The chat's own menu in the top bar, not one in the sidebar's chat list.
+      await page
+        .locator("header")
+        .getByRole("button", { name: "Chat actions" })
+        .click();
+      await page
+        .getByRole("menuitem", { name: "Reflect on this session" })
+        .click();
+      await page.getByRole("button", { name: "Suggest a draft" }).click();
+      await page.getByText("Suggested from this chat").waitFor();
+    },
+  },
+  {
+    name: "reflections-list",
+    alt: "The General page with a saved reflection under Reflections, showing what the student learned and what is still unclear",
+    as: "student",
+    path: () => "/general",
+    ready: ["Reflections", "What the Calvin cycle does"],
+    steps: async (page) => {
+      await page
+        .getByRole("heading", { name: "Reflections" })
+        .evaluate((node) => node.scrollIntoView({ block: "start" }));
+    },
+  },
+  {
+    name: "ai-use-log-chats",
+    alt: "The Export AI-use log window, listing the project's chats with a box to tick for each, and a Choose prompts button",
+    as: "student",
+    path: (ids) => `/projects/${ids.project}`,
+    ready: ["Biology 101"],
+    steps: async (page) => {
+      await page.getByRole("button", { name: "Export AI-use log" }).click();
+      await page
+        .getByRole("checkbox", { name: "Light-dependent reactions" })
+        .check();
+    },
+  },
+  {
+    name: "ai-use-log-prompts",
+    alt: "The Choose prompts step of the AI-use log: the chat's prompt with its mode and model, a preview of the log, and Save as PDF and Download Markdown buttons",
+    as: "student",
+    path: (ids) => `/projects/${ids.project}`,
+    ready: ["Biology 101"],
+    steps: async (page) => {
+      await page.getByRole("button", { name: "Export AI-use log" }).click();
+      await page
+        .getByRole("checkbox", { name: "Light-dependent reactions" })
+        .check();
+      await page.getByRole("button", { name: /Choose prompts/ }).click();
+      await page.getByRole("button", { name: "Download Markdown" }).waitFor();
+    },
+  },
+  {
+    name: "rubrics-settings",
+    alt: "Settings, Rubrics: the bundled Argumentative essay, Lab report and Personal narrative rubrics, each with a Duplicate button, and an empty Your rubrics list",
+    as: "student",
+    path: () => "/settings?setting=rubrics",
+    ready: ["Bundled rubrics", "Lab report"],
+  },
+  {
+    name: "rubric-editor",
+    alt: "The Create rubric window, with a name, performance levels and criteria to fill in",
+    as: "student",
+    path: () => "/settings?setting=rubrics",
+    ready: ["Bundled rubrics"],
+    steps: async (page) => {
+      await page.getByRole("button", { name: "New rubric" }).click();
+      await page.getByText("Create rubric").first().waitFor();
     },
   },
 

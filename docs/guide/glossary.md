@@ -6,6 +6,10 @@ first time they use a term.
 **Administrator (admin).** The person who runs your Asterism: they connect the AI
 models, manage accounts and decide what each group may use.
 
+**AI-use log.** A record of how you used AI (your prompts, modes, models and
+files, with times) that you can share with a teacher. It never contains
+Asterism's answers.
+
 **Attachment.** A file you add to one chat, such as your notes or a photo of
 your work, so Asterism can read it.
 
@@ -49,6 +53,9 @@ plus the chat's own attachments.
 **Group.** Everyone belongs to one group, such as student or educator. Your group
 decides which models and tools you can use.
 
+**Hint levels.** In Tutor mode, help that gets stronger one step at a time:
+Nudge, Hint, then Worked example.
+
 **Invite link.** A link from an educator that creates your account and puts you
 in their class. Each link works once.
 
@@ -57,6 +64,9 @@ normally; in Tutor mode it guides you with questions and hints instead.
 
 **Main agent.** The assistant that answers your chats. You can give it
 instructions and choose its tools in Settings.
+
+**Mode restrictions.** Limits on which learning modes a chat can use and whether
+answers can be shown. They come from your own lock, your class's rules, or both.
 
 **Model.** The AI that writes the answers. Your administrator decides which models
 you can choose from.
@@ -78,6 +88,14 @@ suggestions you can apply.
 
 **Prompt template.** A form that builds a clear message from a few fields, such
 as role, task and format.
+
+**Reflection.** A short note at the end of a session about what you learned and
+what's still unclear. Only you can see it.
+
+**Rubric.** A list of what your work is assessed on, and what each level looks
+like. Draft feedback mode uses one.
+
+**Show answer.** Seeing the full answer in Tutor mode, after you confirm.
 
 **Sidebar.** The column down the left side of the screen with **New Chat**, your
 chats and projects, and your name. On a phone, open it with the button at the top

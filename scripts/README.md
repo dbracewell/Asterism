@@ -54,9 +54,11 @@ then:
    and two students, files in several formats, a project with a sub-agent, chats
    with sources, branches and a canvas, a long chat to compact, a skill, a web
    page tool that asks for approval, image creation, image captions, a file whose
-   processing failed, flashcards, a quiz, a
+   processing failed, an example chat for each learning mode, a reflection,
+   flashcards, a quiz, a
    summary, and a class with a course and one unused invite link;
-3. takes every shot in the shot list.
+3. takes every shot in the shot list. Each person signs in once; later shots
+   reuse the session, so a long list stays under the sign-in rate limit.
 
 The pieces live in [`screenshots/`](screenshots/):
 
