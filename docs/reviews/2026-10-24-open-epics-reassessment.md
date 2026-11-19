@@ -52,7 +52,7 @@ agent/retrieval and composition-root contracts; scan nested packages rather than
 repeat the same top-level tests.
 
 The one-backend-process/SQLite limitation is already documented in
-[overview](../architecture/overview.md#technology-stack). Supported launch paths
+[overview](../architecture/overview.md#technology). Supported launch paths
 still need explicit validation/testing of configurable worker modes. Scope that
 enforcement to launch configurations the project controls; arbitrary external
 replicas cannot be detected by a local configuration check. Retain a small ADR

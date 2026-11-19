@@ -1,206 +1,288 @@
-# Chat acceptance and real-time transport
+# Chat and WebSocket
 
-New user messages are accepted through authenticated REST. The WebSocket starts or
-reconnects persisted work, streams results, accepts tool decisions, and cancels or
-regenerates turns. Sending filename-based messages over the socket is unsupported.
+This guide explains how a chat message travels: how it is accepted, how its reply
+is streamed, and what happens when the user closes the tab, cancels or
+regenerates. Read it before changing the chat routes, the socket protocol or the
+chat job.
 
-## Acceptance and attachment lifecycle
+## Concepts
 
-| Operation                                     | Contract                                                                                                                      |
-| --------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| `POST /chat/`                                 | Create a chat with `request_id`, `model_id`, `user_prompt`, nullable `project_id`, optional `draft_id`, and file UUIDs        |
-| `POST /chat/{chat_id}/message`                | Accept a turn with `request_id`, `expected_model_revision`, `user_prompt`, nullable parent ID, optional draft, and file UUIDs |
-| `POST /chat/drafts`                           | Create an owned staging draft for a new or existing chat                                                                      |
-| `POST /chat/drafts/{draft_id}/uploads`        | Upload durable library sources and add draft references                                                                       |
-| `POST/DELETE /chat/drafts/{draft_id}/files`   | Stage/remove library references using `file_ids`                                                                              |
-| `DELETE /chat/drafts/{draft_id}`              | Discard references without deleting shared library sources                                                                    |
-| `PUT /chat/{chat_id}/model`                   | Change next-turn selection with `model_id` and `expected_model_revision`                                                      |
-| `PUT /chat/drafts/{draft_id}/model`           | Compare-and-set draft model using `model_id` and `expected_model_id`                                                          |
-| `POST /chat/{chat_id}/message/{id}/compare`   | Make an answered turn column 0 of a comparison and queue 1–2 more `targets`                                                   |
-| `GET /chat/{chat_id}/comparisons/{id}`        | Columns with their turn, replies, target model, status and usage totals                                                       |
-| `PUT /chat/{chat_id}/comparisons/{id}/active` | Continue the conversation from column `index`                                                                                 |
+- **Accepting and answering are separate.** The browser sends a message over REST,
+  and the backend stores it. The reply is produced afterwards, by a chat job, and
+  streamed over a WebSocket. A message is never sent over the socket.
+- **A chat job** runs the work for one chat: the reply, the chat's title, or a
+  compaction. It lives in the backend's memory and belongs to the chat, not to any
+  connection, so a reply keeps going when the tab closes.
+- **A controller** is the server side of one open chat socket. Several tabs on the
+  same chat each have a controller, and each receives the whole stream.
+- **A pending turn** is an accepted user message that has no finished reply yet.
+  It is stored in the database, so it survives a restart and can be resumed.
+- **A request ID** (`request_id`) is a UUID the browser picks for each send. Sending
+  again with the same ID returns the original result instead of a second message.
 
-Draft references expire after 24 hours and grant no runtime file access. Before
-send, the UI verifies that the persisted draft exactly matches visible selections.
-Acceptance validates owner, model/revision, project, parent branch, and exact draft
-membership. It commits the user message, active-child relationship, local file
-references, fingerprinted receipt, and draft consumption atomically.
+## How it works
 
-Retry the same logical send with its original request UUID and payload. A matching
-receipt returns the existing accepted chat/message; a changed fingerprint rejects
-reuse. Do not silently send a new request after an uncertain acknowledgement or
-reattach files when replaying a receipt. Failed uploads/sends keep explicit retry
-state in the composer; draft discard does not delete a source from the library.
-
-The shared deterministic branch reader supplies both visible history and file
-provenance. Runtime scope is current project files plus active-branch local
-snapshots intersected with current chat memberships and owned source rows. General
-has only the local set. Historical attachment snapshots retain immutable file IDs
-and unavailable states after removal; filename reuse cannot redirect them.
-
-## Side-by-side comparison (US-54.4)
-
-`POST /chat/` and `POST /chat/{chat_id}/message` accept optional `compare`: two
-or three targets `{model_id, user_prompt?, label?}` that must differ in model or
-prompt; a label (1–40 characters) heads the column.
-Acceptance creates one sibling user turn per target, sharing a `comparison_id`,
-each with a fixed `target_model_id`; column 0 becomes the active branch (the
-parent's active child, or the chat's `active_root_id` at the start of a chat).
-Resume answers the pending columns one after another in the chat's single work
-slot, each on its own history and target model. Their packets carry
-`comparison: {id, column_id}`. Sends are refused while a column is pending;
-cancelling marks the remaining columns cancelled. See
-[ADR-0027](../adr/0027-side-by-side-comparison-branches.md).
-
-## Transport and job ownership
+### Sending a message
 
 ```mermaid
 sequenceDiagram
     participant Browser
-    participant REST as REST acceptance
+    participant REST as REST (sending)
     participant DB as SQLite
-    participant Socket as ChatController
-    participant Job as ChatJob and orchestrator
+    participant Socket as Controller
+    participant Job as Chat job
     participant Agent
-    Browser->>REST: Accept request and file UUIDs
-    REST->>DB: Atomic turn, references, receipt, draft consumption
-    REST-->>Browser: Accepted chat/message identity
-    Browser->>Socket: Connect /chat/stream/chat_id with JWT
-    Socket->>Job: Attach; resume pending work if idle
-    Job->>DB: Record execution snapshot before provider use
-    Job->>Agent: Execute with injected context and services
-    Agent-->>Job: Text, tools, child events, usage
-    Job-->>Socket: Outbound packets
-    Socket-->>Browser: Stream updates
-    Browser->>Socket: Tool approval or cancel
-    Socket->>Job: Immediate decision/cancellation
+
+    Browser->>REST: POST message: request_id, model revision, text, files
+    REST->>DB: One transaction: message, file references, receipt
+    REST-->>Browser: The accepted chat and message
+    Browser->>Socket: Open /chat/stream/{chat_id}?token=…
+    Socket->>Job: Attach; start the pending turn if idle
+    Job->>DB: Record what this run may use, before calling the model
+    Job->>Agent: Run with that recorded context
+    Agent-->>Job: Text, tool calls, sub-agent events, usage
+    Job-->>Socket: Packets
+    Socket-->>Browser: Streamed reply
+    Browser->>Socket: Approve a tool, or cancel
 ```
 
-The public path is `/api/py/chat/stream/{chat_id}?token={jwt}`.
-`WebSocketConnection` handles JSON framing and heartbeat. Owner authorization occurs
-before attaching to a process-local `ChatJob`. Failures before `accept()` close the
-socket with code 1008 and a reason: `Unauthorized` for a bad token, `Chat not found`
-for an unknown chat or another user's chat, `Forbidden` for a refused agent lookup,
-and `This chat has no assigned main agent`. The reserved controller admission is
-always released (US-77.5). A controller owns its socket worker
-tasks; the chat job owns provider generation. Disconnecting cancels connection
-workers without canceling the generation task. Explicit `cancel` stops generation
-and persists canceled status plus any partial assistant output.
+**Acceptance.** `POST /chat/` starts a new chat with its first message, and
+`POST /chat/{chat_id}/message` adds one to an existing chat. The backend checks
+that the user owns the chat, that the model is still available and unchanged
+(`expected_model_revision`), that the parent message is on the chat, and that the
+files belong to the user. It then commits the message, its file references and a
+_receipt_ for the `request_id` in one transaction
+([`sending.py`](../../apps/backend/asterism/domains/chat/sending.py)).
 
-The controller reads commands, processes normal commands sequentially, drains its
-own outbound queue, emits status every 0.5 seconds, and sends heartbeat pongs
-every 10 seconds. The chat's `ChatStream` broadcasts every packet to each attached
-controller's bounded queue (256 packets, dropping the oldest), so several tabs on
-one chat each get the full stream (US-77.3). While no controller is attached the
-stream buffers packets under the same bound and replays them to the first one that
-attaches; a controller that is the last to leave hands its unsent packets back to
-that buffer. A stream with attached controllers is pinned; only idle streams use the
-cache TTL, and retiring the chat discards it. Tool approvals and cancellation bypass the sequential queue so
-they can resolve a run that is waiting. Jobs are process-local; pending snapshots
-are persisted, but an interrupted provider connection is not durable. See
-[resource lifecycle contracts](../adr/adr-0016-memory-resource-contracts.md#operations) for
-bounds and cleanup ownership.
+**Retrying a send.** If the browser isn't sure a send arrived (say the
+connection dropped), it repeats the same request with the same `request_id`. A
+matching receipt returns the message that was already accepted. A different
+payload under the same ID is refused, so a retry can never turn into a different
+message.
 
-## Capacity and overload
+**Drafts.** Files are attached before sending through a _draft_: the composer
+creates one, uploads or picks files into it, and names it on send. Acceptance
+checks that the draft holds exactly the files shown in the composer, then consumes
+it. Draft references expire after 24 hours and give no access to the files by
+themselves. Discarding a draft never deletes a file from the library.
 
-The backend admits at most 32 active chat-work slots (four per owner), and 128
-controller reservations/connections (16 per owner), by default. A work slot covers
-generation, title work and approval waits for one chat. Controller admission
-precedes history/Agent allocation; work admission precedes task creation. Both
-checks reject immediately without a capacity waiting queue.
+**Budgets.** If the user's group has a token budget and it is used up, the send is
+refused with a 409 (`reason: "usage_limit"`) that says when the budget resets.
+Regenerate and fork are refused the same way. Replies already running finish
+([usage budgets](../adr/0073-usage-ledger-and-budgets.md)).
 
-Overload sends an `error` packet with `code: 503`,
-`error_code: "chat_capacity"` and `retryable: true`. Connection saturation closes
-with 1013; work saturation leaves the control channel open for retry, cancellation
-and approvals. The client displays the error and retains its bounded reconnect
-policy. REST acceptance can leave a pending turn: retry resume/reconnect rather
-than creating another message.
+### Streaming the reply
 
-Disconnects release controller capacity while active work continues. Work releases
-after generation, title work and approvals end, including failure/cancellation;
-deletion and shutdown await cleanup. See [ADR-0020](../adr/0020-chat-capacity-admission.md)
-for environment settings, ranges, accounting and separate knowledge/model gates.
-These are process-local count limits, not load certification or byte limits.
+When a controller attaches to a chat with a pending turn and no running job, it
+starts the turn. The job records, before it calls the model, everything the run
+may use: the model, the agent's configuration, the composed prompt, and the files
+and sub-agents it may reach. [Execution context](execution-context.md) explains
+that record; [agent runtime](agent-runtime.md) explains the loop that follows.
 
-## Socket commands and packets
+Each piece of output becomes a packet on the socket: text as it is written, tool
+calls and their results, progress from sub-agents. The final `complete` packet
+carries the stored messages, so the browser replaces its streamed copy with the
+saved version.
 
-Client commands:
+### Several tabs, closed tabs and reconnecting
 
-```json
-{ "type": "resume" }
+Each chat's stream keeps a queue of up to 256 packets for every attached
+controller, dropping the oldest if a tab falls behind, so every tab gets the full
+stream. When no tab is attached, the stream buffers packets under the same limit
+and replays them to the next tab that connects.
+
+Closing a tab stops that controller's tasks and nothing else; the reply keeps
+running. Reopening the chat attaches a new controller, which receives the
+buffered packets and the rest of the stream.
+
+### Cancelling, regenerating and failing
+
+```mermaid
+stateDiagram-v2
+    [*] --> Pending: Message accepted
+    Pending --> Running: A controller attaches and a work slot is free
+    Running --> Waiting: A tool needs approval
+    Waiting --> Running: Approved, denied or timed out
+    Running --> Complete: The agent finishes
+    Running --> Cancelled: The user cancels
+    Running --> Failed: Error or empty reply
+    Complete --> [*]
+    Cancelled --> [*]
+    Failed --> [*]
 ```
 
-```json
-{ "type": "regenerate", "parent_message_id": "<persisted-parent-uuid>" }
-```
+- **Cancel** stops the reply at once and stores it as cancelled, keeping whatever
+  text was already written.
+- **Regenerate** creates a new reply to the same message, as a sibling branch. It
+  records its context afresh, so it sees current settings and files. Earlier
+  replies keep the model and context they were made with.
+- **Resume** continues a pending turn with the context it recorded. It can lose
+  access that was revoked meanwhile, but never gains new files or sub-agents.
+  An interrupted call to the model is not continued; the step runs again.
+- **A failure** (an error from the agent, an empty reply, an unexpected exception)
+  is stored like a cancellation, as a `failed` reply with any text written so far
+  and the error. Resume never reruns it. The browser gets `complete` with the
+  stored messages, then `error`.
 
-```json
-{
-  "type": "tool_approval",
-  "tool_id": "call_abc123",
-  "approved": true,
-  "always_allow": false
-}
-```
+If something the turn depends on has gone, such as a disabled model or a revoked
+file, the run stops with an explicit error. It never substitutes another model or
+a wider context.
 
-```json
-{ "type": "cancel" }
-```
+### Comparing models
 
-```json
-{ "type": "compact" }
-```
+A send may include `compare`: two or three targets, each a model and optionally a
+different prompt and a label of up to 40 characters. Acceptance creates one
+sibling user message per target, sharing a `comparison_id`. The first becomes the
+active branch. The job then answers each column in turn, each with its own
+history and its fixed model, and their packets carry `comparison: {id, column_id}`.
+New sends wait until every column is answered; cancelling cancels the columns
+still waiting ([ADR-0027](../adr/0027-side-by-side-comparison-branches.md)).
 
-`compact` is "Compact now" (ADR-0060). It runs in the chat's work slot, like a
-turn, and is refused while one is active.
+### Compacting a long chat
 
-```json
-{ "type": "ping" }
-```
+When a turn's request would exceed most of the model's context window, the job
+first summarizes the start of the branch, then runs the turn
+([agent runtime](agent-runtime.md#context-compaction-us-691)). The user can also ask for
+it with the `compact` command ("Compact now"). Compaction takes the chat's work
+slot like a turn, so it never overlaps one, and it reports progress in
+`compaction` packets that are never part of an answer.
 
-Server packets include `start` (with recorded execution metadata when available),
-`delta` (content/thinking), `tool_call`, `tool_permission_request`, `tool_update`,
-`status`, `pong`, `regenerate`, `complete`, and `error`. `sub_agent` envelopes carry
-execution UUID, target identity/name, depth, and a nested child event. Child progress
-renders separately from the final parent answer. Completion supplies updated
-serialized messages; persisted assistant turns carry actual model/provider and
-execution provenance rather than the chat's current picker value.
+### Files and models
 
-`compaction` packets report context compaction and are never part of an answer
-stream: `{"status": "started", "trigger": "automatic" | "manual"}`, then
-`{"status": "completed", "compaction": ChatCompactionView}` or
-`{"status": "failed", "content": "<reason>"}`. An automatic compaction runs before
-the turn's `start`; if it fails, the turn ends with an ordinary `error`. `GET
-/chat/{id}` returns the active branch's `compactions`, oldest first, so the
-transcript can draw a divider after each anchor message.
+Attached files reach the model under the same checks as file search: the file must
+still belong to the user and still be in the chat's scope. Text and converted
+documents are included as bounded text. Images are included as image parts only
+when the model is marked as supporting vision (`supports_vision = true`); for any
+other model, and for missing, failed, unsupported or oversized files, the model
+gets a short note instead, naming the file and the reason. Seeing a file in the
+library or staging it in a draft never grants access by itself.
 
-Resume reuses the pending model/configuration/prompt/file/target snapshot and
-rechecks live authorization. Explicit regeneration validates current selection and
-captures a new execution; earlier turns keep their provenance. Source revocation,
-model disablement, changed identity, or target revocation can make replay unavailable
-and must not silently substitute a model or broader context.
+The context-usage meter in the composer is an estimate built from the same prompt
+composition. The token counts the provider reports after each call are the
+authoritative figures.
 
-## File and provider boundaries
+### The AI-use log
 
-Inline files and tool retrieval share live execution authorization. Text/documents
-are bounded converted content; only explicit vision support permits bounded image
-bytes to become provider `image_url` parts. Missing, failed, unsupported, oversized,
-or non-vision inputs produce explicit notices. Neither library browsing nor draft
-staging grants runtime access.
+`POST /chat/ai-use-log` returns, for up to 50 of the user's chats, what each turn
+on the active branch used: its prompt, time, learning mode, About you revision,
+template, rubric, skills and files, and its reply's model, tools, cited files and
+verification counts. It never returns answer text. The browser renders the log as
+Markdown or prints it to PDF ([ADR-0046](../adr/0046-ai-use-log.md)).
 
-Context estimates use the shared prompt/file/tool composition and token estimator;
-provider usage is authoritative. Moves preserve existing history/local attachments
-and apply the new project context on later turns. Historical messages may contain
-prior project information even after live file access is revoked.
+## Rules
 
-See [execution context](execution-context.md), [agent runtime](agent-runtime.md),
-[project UI](project-workspaces.md), and [tool approval](tool-authorization.md).
+- A message is accepted only over REST, in one transaction with its receipt.
+- A chat job belongs to the chat. Only an explicit cancel, chat deletion or
+  shutdown stops it; a closed connection does not.
+- Resume uses the context the turn recorded. Regenerate records new context. Both
+  recheck access when they run.
+- No run silently changes its model or widens its files.
+- Tool approvals and cancels skip the controller's command queue, so they reach a
+  run that is waiting on them.
 
-## AI-use log (US-57.4)
+## Limits and failures
 
-`POST /chat/ai-use-log` returns recorded provenance for up to 50 of the
-owner's chats: each active-branch turn's prompt, time, mode, About you revision
-(null when the text was blank), template, rubric, skills and files, and its reply's model, tools, cited files,
-exercise flag, verification counts and draft-comment summary. It never returns
-answer text. The client chooses turns and renders Markdown, or prints it as a
-PDF through the browser. See [ADR-0046](../adr/0046-ai-use-log.md).
+**Admission.** The backend admits a fixed number of chat jobs and connections
+([ADR-0020](../adr/0020-chat-capacity-admission.md)):
+
+| Limit                                                                     | Default | Setting                         |
+| ------------------------------------------------------------------------- | ------- | ------------------------------- |
+| Work slots running at once (replies, titles, compactions, approval waits) | 32      | `MAX_ACTIVE_CHAT_JOBS`          |
+| Work slots per user                                                       | 4       | `MAX_ACTIVE_CHAT_JOBS_PER_USER` |
+| Open chat connections                                                     | 128     | `MAX_CHAT_CONTROLLERS`          |
+| Open chat connections per user                                            | 16      | `MAX_CHAT_CONTROLLERS_PER_USER` |
+
+There is no waiting queue. A connection over the limit gets an error packet and is
+closed with code 1013. Work over the limit gets an error packet and the socket
+stays open, so the user can retry or cancel. Both packets have
+`error_code: "chat_capacity"` and `retryable: true`. The message is already
+stored, so retrying resumes it rather than sending it again.
+
+**Timeouts and bounds.**
+
+- A tool approval waits 60 seconds, then counts as denied.
+- The controller sends a `status` packet every 0.5 seconds and answers `ping`
+  with `pong`.
+- Each controller's queue holds 256 packets.
+
+**Refused connections.** A socket refused before it is accepted closes with code
+1008 and a reason: `Unauthorized` for a bad token or a suspended account,
+`Chat not found` for a missing chat or someone else's, `Forbidden` for a refused
+agent lookup, and `This chat has no assigned main agent`.
+
+## Reference
+
+### Routes
+
+| Route                                                    | Purpose                                                                                                                                  |
+| -------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `POST /chat/`                                            | Create a chat with its first message: `request_id`, `model_id`, `user_prompt`, optional `project_id`, `draft_id`, file IDs and `compare` |
+| `POST /chat/{chat_id}/message`                           | Add a message: `request_id`, `expected_model_revision`, `user_prompt`, optional parent ID, `draft_id`, file IDs and `compare`            |
+| `POST /chat/drafts`                                      | Create a draft for a new or existing chat                                                                                                |
+| `POST /chat/drafts/{draft_id}/uploads`                   | Upload files into the library and add them to the draft                                                                                  |
+| `POST`, `DELETE /chat/drafts/{draft_id}/files`           | Add or remove library files by `file_ids`                                                                                                |
+| `DELETE /chat/drafts/{draft_id}`                         | Discard a draft, keeping the library files                                                                                               |
+| `PUT /chat/{chat_id}/model`                              | Change the model for the next turn, with `expected_model_revision`                                                                       |
+| `PUT /chat/drafts/{draft_id}/model`                      | Change a draft's model, with `expected_model_id`                                                                                         |
+| `POST /chat/{chat_id}/message/{message_id}/compare`      | Turn an answered message into column 0 of a comparison and queue one or two more targets                                                 |
+| `GET /chat/{chat_id}/comparisons/{comparison_id}`        | A comparison's columns, replies, models, status and usage                                                                                |
+| `PUT /chat/{chat_id}/comparisons/{comparison_id}/active` | Continue the chat from one column                                                                                                        |
+| `WS /chat/stream/{chat_id}?token=…`                      | The chat's socket                                                                                                                        |
+
+All paths are under `/api/py`.
+
+### Commands from the browser
+
+| Command         | Fields                | Effect                                              |
+| --------------- | --------------------- | --------------------------------------------------- |
+| `resume`        |                       | Start the pending turn, if nothing is running       |
+| `regenerate`    | `parent_message_id`   | Write a new reply to that message                   |
+| `tool_approval` | `tool_id`, `approved` | Answer a tool approval request                      |
+| `cancel`        |                       | Stop the running work                               |
+| `compact`       |                       | Compact the chat now; refused while work is running |
+| `ping`          |                       | Ask for a `pong`                                    |
+
+### Packets from the server
+
+| Packet                    | When                                                                                                                                                                 |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `start`                   | A run begins; carries the recorded execution details when available                                                                                                  |
+| `delta`                   | A piece of answer text or reasoning                                                                                                                                  |
+| `tool_call`               | The model asked for tools                                                                                                                                            |
+| `tool_permission_request` | A tool call waits for approval: its ID, name and arguments                                                                                                           |
+| `tool_update`             | An approval was answered; the prompt can close                                                                                                                       |
+| `tool_progress`           | A long tool's progress, such as image generation steps: `tool_call_id`, `name`, `stage`, `step`, `total`                                                             |
+| `sub_agent`               | An event from a sub-agent, wrapped with its execution ID, name, model and depth ([agent runtime](agent-runtime.md#selected-delegation-projects-and-the-general-set)) |
+| `compaction`              | `started`, then `completed` with the new summary record, or `failed` with a reason                                                                                   |
+| `status`                  | `is_processing`: whether work is running, every 0.5 seconds                                                                                                          |
+| `regenerate`              | A regeneration was accepted; `parent_id` names the message being answered again                                                                                      |
+| `complete`                | The run ended; carries the stored messages                                                                                                                           |
+| `error`                   | Something failed: `content`, `code`, and for special cases `error_code` (`chat_capacity`, `usage_limit`), `retryable` and `resets_at`                                |
+| `pong`                    | The reply to `ping`                                                                                                                                                  |
+
+## Where the code lives
+
+1. [`chat/sending.py`](../../apps/backend/asterism/domains/chat/sending.py):
+   accepting a message, receipts and drafts.
+2. [`chat/router.py`](../../apps/backend/asterism/domains/chat/router.py): the
+   routes and the socket's checks before it is accepted.
+3. [`chat/controller.py`](../../apps/backend/asterism/domains/chat/controller.py):
+   one connection's command and packet loops.
+4. [`chat/jobs.py`](../../apps/backend/asterism/domains/chat/jobs.py) and
+   [`chat/capacity.py`](../../apps/backend/asterism/domains/chat/capacity.py): chat
+   jobs, work slots and admission.
+5. [`chat/message_queue.py`](../../apps/backend/asterism/domains/chat/message_queue.py):
+   the per-chat stream and its buffers.
+6. [`chat/orchestrator.py`](../../apps/backend/asterism/domains/chat/orchestrator.py):
+   runs a turn and turns agent events into packets.
+7. [`use-chat-websocket.tsx`](../../apps/frontend/src/features/chat/hooks/use-chat-websocket.tsx):
+   the browser side.
+
+## Related
+
+- [Execution context](execution-context.md): what a run may use
+- [Agent runtime](agent-runtime.md): the loop, delegation and compaction
+- [Tool authorization](tool-authorization.md): approvals
+- [ADR-0020](../adr/0020-chat-capacity-admission.md): admission limits
+- [ADR-0016](../adr/adr-0016-memory-resource-contracts.md#operations): memory bounds
+  and cleanup

@@ -1,8 +1,9 @@
 # Capacity check
 
 How many people one Asterism instance serves, how that was measured, and how to
-measure it again ([US-86.7](../epics/EPIC-86-MULTI-USER-DEPLOYMENT-READINESS.md),
-[ADR-0075](../adr/0075-capacity-check-and-sizing.md)). The sizing guide for
+measure it again ([ADR-0075](../adr/0075-capacity-check-and-sizing.md)). Read it
+before changing an admission limit, a rate limit or how the browser fetches
+tokens, and rerun the check afterwards. The sizing guide for
 operators is in the [README](../../README.md#sizing-and-capacity).
 
 ## The scenario
@@ -11,7 +12,7 @@ operators is in the [README](../../README.md#sizing-and-capacity).
 plays one class against a disposable container:
 
 - **The host.** The release image runs with `--cpus 4 --memory 8g` (swap off) on a new
-  volume. The target agreed for EPIC-86 is 30 active students on 4 vCPU / 8 GB.
+  volume. The target is 30 active students on 4 vCPU / 8 GB.
 - **The model.** An OpenAI-compatible double on the host streams like a hosted model.
   The first token arrives after 700 ms, then 40 tokens per second, 250 tokens per
   reply (about 7 s). Title requests answer after 800 ms. Measured times include the
@@ -40,37 +41,38 @@ plays one class against a disposable container:
 
 ## Targets
 
-| Target | Limit |
-| --- | --- |
-| Every student signs in | sign-in p95 ≤ 15 s, nobody gives up |
-| First token, steady | p95 ≤ 3 s |
-| First token, everyone at once | p95 ≤ 5 s |
-| Turns | every turn finishes; no admission refusals |
-| Requests | no 429 apart from retried sign-ins, no 5xx, no network errors |
-| SQLite | no busy errors |
-| Uploads | all indexed, p95 ≤ 120 s |
-| Memory | peak ≤ 6 GiB (three quarters of the host) |
+| Target                        | Limit                                                         |
+| ----------------------------- | ------------------------------------------------------------- |
+| Every student signs in        | sign-in p95 ≤ 15 s, nobody gives up                           |
+| First token, steady           | p95 ≤ 3 s                                                     |
+| First token, everyone at once | p95 ≤ 5 s                                                     |
+| Turns                         | every turn finishes; no admission refusals                    |
+| Requests                      | no 429 apart from retried sign-ins, no 5xx, no network errors |
+| SQLite                        | no busy errors                                                |
+| Uploads                       | all indexed, p95 ≤ 120 s                                      |
+| Memory                        | peak ≤ 6 GiB (three quarters of the host)                     |
 
 The script exits `1` when a target fails.
 
 ## Results (2026-11-18)
 
-Run on Docker Desktop (4 CPUs, Apple silicon), image built from this branch.
+Run on Docker Desktop (4 CPUs, Apple silicon), image built from `main`. The "Before" column is the same
+scenario before the four fixes described below.
 
-| Measure | Before US-86.7 | After |
-| --- | --- | --- |
-| Sign-in | p95 69 s, max 84 s; 73 attempts refused | p95 0.10 s; none refused |
-| Chat turns | 288; **95 failed** on refused token requests | 251; none failed |
-| First token, steady | p95 0.92 s | p95 0.99 s |
-| First token, everyone at once | p95 7.4 s | p95 1.3 s |
-| Whole reply, everyone at once | p95 13.5 s | p95 7.6 s |
-| Uploads | 34; 11 failed; indexed p95 12 s | 33; none failed; indexed p95 3 s |
-| Refused requests (429) | 224 | 0 |
-| Token requests | 1,262 | 30 |
-| Provider streams at once | max 8 | max 29 |
-| Peak memory | 1.75 GiB | 1.82 GiB |
-| CPU (100 % = one core) | mean 20 %, max 154 % | mean 31 %, max 220 % |
-| SQLite busy errors | 0 | 0 |
+| Measure                       | Before                                       | After                            |
+| ----------------------------- | -------------------------------------------- | -------------------------------- |
+| Sign-in                       | p95 69 s, max 84 s; 73 attempts refused      | p95 0.10 s; none refused         |
+| Chat turns                    | 288; **95 failed** on refused token requests | 251; none failed                 |
+| First token, steady           | p95 0.92 s                                   | p95 0.99 s                       |
+| First token, everyone at once | p95 7.4 s                                    | p95 1.3 s                        |
+| Whole reply, everyone at once | p95 13.5 s                                   | p95 7.6 s                        |
+| Uploads                       | 34; 11 failed; indexed p95 12 s              | 33; none failed; indexed p95 3 s |
+| Refused requests (429)        | 224                                          | 0                                |
+| Token requests                | 1,262                                        | 30                               |
+| Provider streams at once      | max 8                                        | max 29                           |
+| Peak memory                   | 1.75 GiB                                     | 1.82 GiB                         |
+| CPU (100 % = one core)        | mean 20 %, max 154 %                         | mean 31 %, max 220 %             |
+| SQLite busy errors            | 0                                            | 0                                |
 
 ### What the run found
 
@@ -109,7 +111,7 @@ was steady at under 2 GiB, mostly the embedding model and the Next.js server.
 docker build -t asterism:local .
 pnpm capacity:check                         # the scenario above
 pnpm capacity:check --students 60 --env MAX_ACTIVE_CHAT_JOBS=64 --env MAX_CONCURRENT_LLM_REQUESTS=64
-pnpm capacity:check --tokens per-request    # the browser's behavior before US-86.7
+pnpm capacity:check --tokens per-request    # the browser's old behavior: a token per request
 ```
 
 Results go to `.capacity/<time>/`: `summary.md` (the tables above), `summary.json`

@@ -32,7 +32,7 @@ resolve to Light without a saved-preference refresh loop.
 
 See [theme storage and lifecycle](theme-storage.md) for schema, single-writer
 ownership, backup/reset, container permissions and cache freshness. The
-[theme trust boundary](auth-and-security.md#theme-trust-boundary) documents access.
+[theme trust boundary](auth-and-security.md#theme-files) documents access.
 
 Bundled palette sources, semantic mappings, accessibility deviations and the
 rendered control contract are documented in [bundled theme palettes](bundled-theme-palettes.md).

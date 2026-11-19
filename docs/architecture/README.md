@@ -40,6 +40,7 @@ After that, read whichever guide covers the part you are changing.
 | How sign-in, tokens and per-user data isolation work                       | [Authentication and security](auth-and-security.md)             |
 | How messages are accepted, streamed, cancelled and compared                | [Chat and WebSocket](chat-and-websocket.md)                     |
 | How many people one instance serves, and how that was measured             | [Capacity check](capacity.md)                                   |
+| How logs, readiness checks, the Status page and settings export work       | [Operations](operations.md)                                     |
 | What a turn's prompt is made of and which files it may read                | [Execution context](execution-context.md)                       |
 | How the agent loop, delegation, traces and compaction work                 | [Agent runtime](agent-runtime.md)                               |
 | Which tools an agent is offered and how approval works                     | [Tool authorization](tool-authorization.md)                     |
