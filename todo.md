@@ -67,6 +67,8 @@ Follow-ups found during the documentation epics (code, not documentation; each n
 - [ ] Compact now records the summarizer's model id as its name: with no run in progress, `ChatOrchestrator._summarizer` falls back to `str(self.agent.model_id)`, so the divider reads "Written by a09bb3f6-… when you chose Compact now". Look the model's name up instead. Found in US-89.3.
 - [ ] Opening a source or citation shows a page with only the file name, "Authorized source in the current file scope of this conversation." and Download source; the passage itself is only in the hover preview. Show the passage (and plainer text) on that page. Found in US-89.3; update `docs/guide/02-chatting/sources-and-citations.md` after.
 
+- [ ] The help registry has no entry for the Spot the error learning mode (`concept.learning-mode` lists the other six as related), so the Help center and the mode's help icon say nothing about it. Add `concept.mode-spot-the-error` and update the terminology list if needed. Found in US-89.5.
+
 ### EPIC-89: User guide
 
 - [x] US-89.1: Screenshot pipeline and guide skeleton
@@ -99,12 +101,12 @@ Follow-ups found during the documentation epics (code, not documentation; each n
   - [x] What removing a file from a project does, compared with deleting it.
   - [x] Team packs: exporting and importing a project setup, and what a pack never includes.
 - [x] US-89.5: Learning with Asterism
-  - [ ] Learning modes: Standard, Tutor, Explain-back, Review my work, Draft feedback, Research assistant; when to use each, with an example chat.
-  - [ ] Hint levels and Show answer.
-  - [ ] Mode restrictions set by a class, and how they appear to you.
-  - [ ] Reflections, the AI-use log and exporting it.
-  - [ ] Rubrics: writing one and using it for feedback.
-- [ ] US-89.6: Studying
+  - [x] Learning modes: Standard, Tutor, Explain-back, Review my work, Draft feedback, Research assistant; when to use each, with an example chat.
+  - [x] Hint levels and Show answer.
+  - [x] Mode restrictions set by a class, and how they appear to you.
+  - [x] Reflections, the AI-use log and exporting it.
+  - [x] Rubrics: writing one and using it for feedback.
+- [x] US-89.6: Studying
   - [ ] Flashcard decks: drafting from files, reviewing drafts, studying.
   - [ ] Practice quizzes: creating, taking and reviewing attempts.
   - [ ] Study notes, summaries and study guides.

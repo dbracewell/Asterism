@@ -1,7 +1,7 @@
 // The user-guide screenshot pipeline: scripted model replies and the shot list (US-89.1).
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { chats } from "../scripts/screenshots/demo-content.mjs";
+import { chats, modeChats } from "../scripts/screenshots/demo-content.mjs";
 import {
   comfy,
   COMFY_CHECKPOINT,
@@ -366,4 +366,33 @@ test("image captions get a scripted description", () => {
     ],
   });
   assert.match(caption.content, /diagram of a green leaf/);
+});
+
+test("Draft feedback quotes and the Spot the error quote match their text exactly", () => {
+  const draft = findChat(modeChats.draftFeedback.user_prompt);
+  const quotes = [...draft.answer.matchAll(/^> (.+)$/gm)].map((m) => m[1]);
+  assert.equal(quotes.length, 5);
+  // Matching ignores line breaks and runs of spaces, as the app's does.
+  const fold = (text) => text.replace(/\s+/g, " ");
+  for (const quote of quotes)
+    assert.ok(
+      fold(modeChats.draftFeedback.user_prompt).includes(fold(quote)),
+      `the draft contains: ${quote}`,
+    );
+
+  const spot = findChat(modeChats.spotTheError.user_prompt);
+  const [, block] = spot.answer.split("```asterism-exercise");
+  const record = JSON.parse(block.replace(/```\s*$/, ""));
+  assert.ok(spot.answer.split("```")[0].includes(record.quote));
+});
+
+test("a reflection draft gets the two answers the dialog expects", () => {
+  const reply = respond({
+    messages: [
+      { role: "system", content: "You help a learner reflect at the end ..." },
+      { role: "user", content: "transcript" },
+    ],
+  });
+  const draft = JSON.parse(reply.content);
+  assert.ok(draft.learned && draft.unclear);
 });

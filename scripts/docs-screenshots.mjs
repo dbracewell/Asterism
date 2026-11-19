@@ -212,23 +212,29 @@ try {
     student: people.student,
     classmate: people.classmate,
   };
+  const sessions = new Map();
   for (const shot of shots.filter(
     (entry) => entry.stage !== "first-run" && selected(entry),
   )) {
     const context = await newContext(browser, instance.base, shot.viewport);
     try {
       // A visitor isn't signed in, for the sign-in, invite and reset pages.
+      // Everyone else signs in once; later shots reuse the session cookies,
+      // so a long shot list stays under the sign-in rate limit.
       const person = personas[shot.as];
       if (person) {
-        const signIn = await context.request.post(
-          `${instance.base}/api/auth/sign-in/email`,
-          {
-            data: { email: person.email, password: PASSWORD },
-            headers: { Origin: instance.publicUrl },
-          },
-        );
-        if (!signIn.ok())
-          throw new Error(`sign-in as ${shot.as} failed: ${signIn.status()}`);
+        if (!sessions.has(shot.as)) {
+          const signIn = await context.request.post(
+            `${instance.base}/api/auth/sign-in/email`,
+            {
+              data: { email: person.email, password: PASSWORD },
+              headers: { Origin: instance.publicUrl },
+            },
+          );
+          if (!signIn.ok())
+            throw new Error(`sign-in as ${shot.as} failed: ${signIn.status()}`);
+          sessions.set(shot.as, (await context.storageState()).cookies);
+        } else await context.addCookies(sessions.get(shot.as));
       }
       const page = await context.newPage();
       page.setDefaultTimeout(30_000);
