@@ -1,264 +1,265 @@
-# Execution context and module boundaries
+# Execution context
 
-A project supplies task instructions, source references, and selected delegation
-targets. A chat supplies history, an active branch, local attachments, and model
-selection. The runtime composes these through domain readers; library ownership
-alone never grants an execution access to a file.
+This guide explains what one turn is allowed to use, and where each part comes
+from: the prompt's layers, the files it may read, the sub-agents it may call. It
+also explains why a turn's access is fixed when it starts and checked again at
+every use. Read it before changing anything that feeds a run: prompts, project or
+chat files, delegation, or the code that reads them.
 
-## Ownership and dependencies
+## Concepts
 
-| Module      | Owns                                                                                                 | Consumer boundary                                                                                 |
-| ----------- | ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| `projects`  | Private flat projects, context revision, file and sub-agent memberships                              | `queries.py`, lifecycle services, project scope reader                                            |
-| `chat`      | Project binding, model selection, messages/branches, drafts, receipts, local references              | Owner-checked scope readers and runtime composition roots                                         |
-| `files`     | Immutable sources, metadata, opaque storage keys, source reading for the knowledge domain            | `FileStore`, `RuntimeFileReader`, owned base selects, the source reader                           |
-| `knowledge` | Derived generations, embeddings, captions, vector adapter, bounded jobs, the whole processing policy | Artifact queries, the published artifact service, embedding/vector interfaces, policy transitions |
-| `agent`     | Main/sub configuration, immutable execution scope, prompts, bounded loop                             | Injected scope, client, file reader, retrieval service                                            |
-| `retrieval` | Authorized bounded search and citations                                                              | `RetrievalService` with injected live scope, embeddings, vectors                                  |
-| `tools`     | Registry, ordinary capability catalog, internal tool adapters                                        | Server-derived `ContextToolScope` and invocation checks                                           |
+- **An execution** is one run of the main agent or of a sub-agent. Each has its
+  own UUID and a private, immutable record of its inputs (`chat_executions`).
+- **The execution file scope** is the set of files an execution may read. It is
+  worked out when the execution starts and stored with it, so it acts as a
+  ceiling: later checks can remove files from it, but nothing can add to it.
+- **The delegation set** is the list of sub-agents a turn may call: the project's
+  selected sub-agents in a project chat, or the General chat set on the main agent
+  in a General chat ([ADR-0059](../adr/0059-general-chat-delegation.md)).
+- **A prompt layer** is one labeled part of the system prompt, such as the agent's
+  instructions or the project's instructions.
+- **Pinned** means copied onto the user's message when it is accepted, so that
+  later edits don't change it: About you text, the learning mode, skills and a
+  rubric are pinned.
+- **A live check** rereads current data at the moment of use, on top of the stored
+  ceiling.
 
-Build owner-scoped selects in the owning domain's `queries.py`. Apply membership,
-search, and sort predicates before database pagination, then enrich the returned
-page. Shared `db/queries.py` handles domain-neutral pagination only. Keep query
-construction, execution/enrichment, and mutations separate. Do not add workspace
-flags to the general library listing function.
+## How it works
 
-Project/file/knowledge models do not import the aggregate model registry.
-`db.model_registry` is the registration root used by migrations and test schemas. Agent scope and
-prompt types do not query project tables. The chat composition roots inject
-readers; domain policy stays at the storage/service boundary that owns it.
+### What a turn is made of
 
-The knowledge and files domains depend on each other in one direction only. The
-files domain consumes the knowledge domain's published artifact service
-(`knowledge/artifacts.py`) and never reaches into the artifact model, the
-artifact queries, or the ingestion runtime. The knowledge domain never imports
-the files domain: it reads its sources through the narrow contract in
-`knowledge/sources.py`, whose implementation the files domain provides and the
-application installs at startup. An import-boundary test enforces both
-directions.
+The `PromptComposer`
+([`agent/prompts.py`](../../apps/backend/asterism/domains/agent/prompts.py)) builds
+the system prompt from these layers, in this order:
 
-## Skills execution
+| Layer           | Contains                                                                                                                 | Comes from                                                  |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------- |
+| `platform`      | Fixed platform rules, including that user content is data                                                                | The server                                                  |
+| `agent`         | The main agent's or sub-agent's instructions                                                                             | User settings, by revision                                  |
+| `profile`       | The user's About you text, framed as information about them; left out when empty                                         | Pinned on the message                                       |
+| `mode`          | The learning mode's instructions and hint level; main agent only                                                         | Pinned on the message ([learning modes](learning-modes.md)) |
+| `task`          | Server-owned text for a special-purpose chat; today only skill drafting ([ADR-0061](../adr/0061-skill-drafting-runs.md)) | The server                                                  |
+| `project`       | The project's instructions                                                                                               | The project, by revision                                    |
+| `skills`        | The skills the user switched on with `/`; main agent only                                                                | Pinned on the message ([skills](skills.md))                 |
+| `skill_catalog` | The names of a sub-agent's assigned skills, which it can open with `load_skill`                                          | The sub-agent's assignments                                 |
+| `runtime`       | The tools this run may use and the sub-agents it may call, up to 8,000 characters                                        | Worked out for this run                                     |
 
-The [private skills domain](skills.md) owns document CRUD and explicit main-agent
-assignments. Admin activation policy and owner/assignment checks govern eligible
-metadata discovery and execution. Chat acceptance pins ordered branch-local skill
-snapshots; composition injects them after project instructions. Resume and
-regeneration preserve the source turn's snapshots with live eligibility checks.
-The Agent consumes injected snapshots and named chat authorization readers rather
-than querying skill tables/services/policy directly. Delegates do not inherit them.
+Order sets precedence: the agent's role and what the user says about themselves
+come first, and project text refines the task within them. Everything the user
+types, every file and every search result is task data, which the platform rules
+tell the model to treat as content, not instructions.
 
-## Trace one turn
+No layer grants anything. What the model can actually do is decided by the
+effective tool set and the execution file scope, which are enforced in code, not
+by the prompt ([tool authorization](tool-authorization.md)).
+
+The same composition is used for the context-usage estimate, the main run,
+sub-agents and replays, so they never disagree about what a turn contains.
+
+### Which files a turn may use
+
+A turn's files are worked out on the server from where the chat is:
+
+- **In a project chat:** the project's current files, plus the files attached to
+  messages on the chat's active branch.
+- **In a General chat:** only the files attached on the active branch.
+
+Each file must also still belong to the user and still exist. Files staged in an
+unsent draft give no access. Owning a file in the library gives no access either:
+a file is available to a turn only through a project or an attachment.
+
+Attachments are recorded on messages by file ID, which never changes. If a file is
+deleted and another is uploaded with the same name, old messages don't start
+pointing at the new one.
+
+### Which sub-agents a turn may call
+
+The delegation set comes from where the chat is, read live: a project chat uses
+the project's selected sub-agents, and any other chat uses the General chat set.
+Both start empty. Each target must still be owned by the user and have its fixed
+model available. A sub-agent called during the turn inherits the caller's file
+scope and delegation set, or a narrower one, never a wider one.
+
+Moving a chat into or out of a project changes its delegation set, so delegation
+is refused until a new turn records the new one.
+
+### Tracing one turn
 
 ```mermaid
 sequenceDiagram
     participant UI as Browser
-    participant Send as Chat REST acceptance
-    participant Run as Chat execution root
-    participant Scope as Project/chat readers
-    participant Agent as Agent
+    participant Send as Sending (REST)
+    participant Run as Chat execution
+    participant Scope as Project and chat readers
+    participant Agent
     participant Retrieval as RetrievalService
-    participant Vector as VectorStore
-    UI->>Send: request_id, model revision, draft, file IDs
-    Send->>Send: Owner-check; persist turn and receipt atomically
-    UI->>Run: WebSocket resume
-    Run->>Scope: Read active branch, project, memberships, model/configuration
-    Scope-->>Run: Server-derived file and target ceiling
-    Run->>Run: Compose prompt and execution provenance
-    Run->>Agent: Inject scope, model, file reader, retrieval
-    Agent->>Retrieval: Search within execution scope
-    Retrieval->>Scope: Recheck live authorization and current artifacts
-    Retrieval->>Vector: Query filtered by owner and allowed file IDs
-    Vector-->>Retrieval: Candidate chunks
-    Retrieval->>Scope: Recheck scope and generations before release
-    Retrieval-->>Agent: Bounded excerpts and citations
+    participant Vector as Vector store
+
+    UI->>Send: Message, model revision, draft, file IDs
+    Send->>Send: Check ownership; store message and receipt
+    UI->>Run: WebSocket: resume
+    Run->>Scope: Read active branch, project, files, delegation set
+    Scope-->>Run: File scope and sub-agent targets
+    Run->>Run: Compose prompt; record the execution
+    Run->>Agent: Run with scope, model, file reader, retrieval
+    Agent->>Retrieval: search_knowledge within the scope
+    Retrieval->>Scope: Recheck files and their processing
+    Retrieval->>Vector: Search, filtered by user and allowed file IDs
+    Vector-->>Retrieval: Candidate passages
+    Retrieval->>Scope: Recheck again before release
+    Retrieval-->>Agent: Bounded passages with citations
 ```
 
-Start with these files, in order:
+A worked example: Sam asks a question in their _Biology 101_ project chat, with a
+lab report attached to the message.
 
-1. [Sending](../../apps/backend/asterism/domains/chat/sending.py) accepts a
-   fingerprinted, owner-scoped request and consumes its draft in the same
-   transaction as messages, references, and receipt.
-2. [Execution](../../apps/backend/asterism/domains/chat/execution.py),
-   [execution provenance](../../apps/backend/asterism/domains/chat/execution_context.py),
-   and [prompt composition](../../apps/backend/asterism/domains/chat/prompt_composition.py)
-   assemble recorded model/configuration, instruction sources, and context identity.
-3. [Scope readers](../../apps/backend/asterism/domains/chat/scope.py) expose
-   `ChatScopeSnapshot` and `ProjectScopeSnapshot`.
-   [resolve_execution_scope](../../apps/backend/asterism/domains/agent/execution_scope.py)
-   combines their file provenance and eligible targets without storage imports.
-4. [Tool policy](../../apps/backend/asterism/domains/chat/tool_policy.py) derives
-   effective tools; [delegation](../../apps/backend/asterism/domains/chat/delegation.py)
-   validates current project targets and fixed-model availability.
-5. [Agent](../../apps/backend/asterism/domains/agent/agent.py) consumes injected
-   `ExecutionScope`, `RuntimeFileReader`, and `RetrievalService`.
-   [search_knowledge](../../apps/backend/asterism/domains/tools/builtin/search_knowledge.py)
-   is a thin adapter, without membership queries or embedding logic.
-6. [Retrieval composition](../../apps/backend/asterism/domains/chat/retrieval.py)
-   injects [live execution file authorization](../../apps/backend/asterism/domains/chat/runtime_files.py)
-   into [RetrievalService](../../apps/backend/asterism/domains/retrieval/service.py).
-   Inline model-facing reads use [RuntimeFileReader](../../apps/backend/asterism/domains/files/runtime_access.py)
-   with that same authorization boundary.
+1. **Sending** checks that Sam owns the chat, the project and the lab report, and
+   stores the message with the report attached and the current About you text,
+   learning mode and skills pinned.
+2. **The execution** reads the active branch and the project. The file scope is the
+   project's three lecture notes plus the lab report. The delegation set is the
+   project's selected _Citation checker_ sub-agent.
+3. **The prompt** is composed from Sam's main-agent instructions, About you, the
+   Tutor mode, the project's instructions and a runtime layer listing
+   `search_knowledge` and `sub_agent`. The execution, with its file scope, is
+   stored before the model is called.
+4. **The model asks to search.** `search_knowledge` passes the query to the
+   retrieval service, which checks that the four files are still in the chat's
+   scope, searches only those four, and checks again before returning passages.
+5. **Meanwhile, Sam removes a lecture note from the project** in another tab. The
+   next search, and the release of any passage from that note, fail the live check.
+   The note can't come back into this turn, even if Sam adds it again: the
+   execution's ceiling is fixed.
+6. **The model calls _Citation checker_.** The sub-agent runs with the same four
+   files (now three), its own fixed model and its own tools, and no learning mode.
 
-## Scope, replay, and revocation
+To follow this in the code, read these in order:
 
-Project chats see current project files plus local references on the active branch.
-General sees only active-branch local references and has no delegation targets.
-Draft references grant no runtime access. Stored message snapshots use immutable
-file IDs; removing a source cannot retarget them to a newly uploaded filename.
+1. [`chat/sending.py`](../../apps/backend/asterism/domains/chat/sending.py): accepts
+   the message, its receipt and its draft in one transaction.
+2. [`chat/execution.py`](../../apps/backend/asterism/domains/chat/execution.py),
+   [`chat/execution_context.py`](../../apps/backend/asterism/domains/chat/execution_context.py)
+   and [`chat/prompt_composition.py`](../../apps/backend/asterism/domains/chat/prompt_composition.py):
+   assemble the model, configuration, prompt and recorded context.
+3. [`chat/scope.py`](../../apps/backend/asterism/domains/chat/scope.py): the readers
+   that return `ChatScopeSnapshot` and `ProjectScopeSnapshot`.
+   [`agent/execution_scope.py`](../../apps/backend/asterism/domains/agent/execution_scope.py)
+   combines them without importing any storage code.
+4. [`chat/tool_policy.py`](../../apps/backend/asterism/domains/chat/tool_policy.py)
+   and [`chat/delegation.py`](../../apps/backend/asterism/domains/chat/delegation.py):
+   the effective tools and the delegation set.
+5. [`agent/agent.py`](../../apps/backend/asterism/domains/agent/agent.py): the loop,
+   which receives `ExecutionScope`, a `RuntimeFileReader` and a `RetrievalService`
+   rather than querying projects or chats itself.
+6. [`chat/retrieval.py`](../../apps/backend/asterism/domains/chat/retrieval.py) and
+   [`chat/runtime_files.py`](../../apps/backend/asterism/domains/chat/runtime_files.py):
+   wire live file checks into
+   [`retrieval/service.py`](../../apps/backend/asterism/domains/retrieval/service.py)
+   and [`files/runtime_access.py`](../../apps/backend/asterism/domains/files/runtime_access.py).
 
-An execution records a file/target ceiling, branch, model, configuration revision,
-project revision, and instruction provenance. Resume uses that recorded execution;
-it can lose revoked access but cannot acquire newly added files or targets.
-Explicit regeneration captures a new execution under current selection and context.
-Prompt edits apply to new execution snapshots; live authorization remains mandatory
-for recorded snapshots too.
+### Resume, regenerate and revocation
 
-`read_execution_files` validates owner, model/provider identity, request/execution,
-active branch, chat project, and delegated configuration/selection, then intersects
-live references with the ceiling. Retrieval rechecks after embedding/vector work
-and releases only current authorized generations. Empty scopes, changed identity,
-revoked targets, and failed processing are explicit unavailable/error states.
+The stored execution decides what a replay may use:
 
-Moves retain history and local references, change future project context, and are
-blocked during active runs or approvals. Project deletion cancels affected work,
-detaches chats to General, and removes memberships while preserving library files.
-Physical deletion revokes all references, cancels jobs, and cleans artifacts,
-vectors, and source bytes. Historical answers may still contain earlier quoted
-information; revocation cannot erase that history.
+- **Resume** continues a turn with its recorded model, configuration, prompt,
+  file scope and delegation set. It can lose access that was revoked meanwhile; it
+  can never gain files or sub-agents added since.
+- **Regenerate** records a new execution under the chat's current settings, files
+  and mode. Earlier turns keep their own records.
+- **Every read rechecks.** `read_execution_files` checks the user, the model and
+  provider, the request and execution, the active branch, the chat's project and,
+  for a sub-agent, its configuration and selection, then intersects the current
+  files with the ceiling. Retrieval checks again after searching and releases only
+  passages from current, authorized processing results.
 
-## Extension constraints
+An empty scope, a changed identity, a revoked sub-agent or failed processing each
+produce an explicit "unavailable" or error state. Nothing falls back to a wider
+scope or another model.
 
-A new consumer must accept injected owner-scoped readers and preserve the immutable
-ceiling plus live rechecks. A new provider must implement existing file, embedding,
-vector, or LLM interfaces rather than query workspace memberships itself. A matching
-provenance or cache key is never an authorization grant.
+### About you on a turn
 
-See [agent runtime](agent-runtime.md), [tool authorization](tool-authorization.md),
-[context and memory isolation](context-isolation.md), and
-[ADR-0017](../adr/0017-project-file-and-chat-boundaries.md) for the remaining contracts.
+When a user sends a message, Asterism copies their current About you text onto it
+(`accepted_about`). The copy cannot change afterwards: a database trigger refuses
+updates. So editing About you never changes the context an earlier answer was
+given ([ADR-0066](../adr/0066-about-you.md)).
 
-## About you binding
+- **Resume** continues an interrupted turn, so it uses the copy on that turn.
+- **Regenerate** asks for a fresh answer, so it reads the user's current text.
+- **A sub-agent** called during the turn receives the same text as the main agent,
+  through `ExecutionScope.about_layer`, and gains no capabilities from it.
 
-Each accepted user message pins the user's About you text and revision
-(`accepted_about`); a trigger keeps it immutable. A blank text adds no profile
-layer. Resume uses the pinned or recorded text and checks only ownership;
-regeneration reads the current text. `MessageExecution.about` and
-`ContextProvenance.about_revision` record the revision only. Immutable
-`chat_executions` records store private prompts and public metadata. Messages
-separately reference their producing execution and any execution they start,
-preserving both when an assistant response is regenerated. Owner/chat composite
-foreign keys prevent cross-scope references. Public chat responses never serialize
-the About you text. Children inherit the recorded layer through
-`ExecutionScope.about_layer` without expanding capabilities. No memory store is
-activated. See [ADR-0066](../adr/0066-about-you.md).
+An empty About you adds nothing to the prompt. Execution records
+(`MessageExecution.about`, `ContextProvenance.about_revision`) store only the
+revision, never the text, and public chat responses never include it.
 
-## Learning modes
+### Moving and deleting
 
-A chat stores its current learning-mode selection and revision. Each accepted user
-turn pins a snapshot of the selected server-owned mode: ID, name, version and
-instruction text. Composition order is
-`platform → agent → profile → mode → task → project → skills → runtime`. The
-`task` layer is server-owned text for a special-purpose chat, today only skill
-drafting ([ADR-0061](../adr/0061-skill-drafting-runs.md)). A first run uses
-the pinned snapshot; resume reuses the recorded prompt; regeneration captures the
-current selection. The mode ID must still be in the catalog when a run starts or
-resumes. Execution provenance records the mode's ID, name and version, never its
-text. Delegates do not inherit the mode, and mode text grants no capabilities. See
-[ADR-0028](../adr/0028-learning-mode-layer.md).
+- **Moving a chat** to another project, or to General, keeps its history and its
+  attachments and changes the project files and delegation set of later turns. It
+  is refused while a run or an approval is in progress.
+- **Deleting a project** cancels its running work, moves its chats to General and
+  removes its file and sub-agent selections. The library files stay.
+- **Deleting a file** removes every reference to it, cancels its processing, and
+  deletes its processed text, vectors and bytes.
 
-### Hint levels
+None of these can erase what earlier answers already said. A moved chat's history
+may contain information from its old project, even though later turns can no
+longer search those files.
 
-Each user turn records the branch hint level (`none`, `nudge`, `hint`,
-`worked_example`, `answer`). The active branch's latest user turn sets the current
-level, so branches keep separate levels. A send raises the level only through an
-explicit `hint` request, which the current mode must offer; the answer level
-needs `confirm_reveal`. The pinned mode snapshot includes the level's
-instructions and records the applied level in provenance. Regeneration keeps the
-turn's level under the current mode. Tutor offers every level; Review my work
-offers only `answer`, its confirmed corrected-solution reveal. See
-[ADR-0029](../adr/0029-branch-local-hint-levels.md).
+### Module boundaries
 
-### Mode policy
+The turn's inputs come from several domains, and each owns its part:
 
-One effective policy per chat restricts learning modes and answer reveals
-([ADR-0068](../adr/0068-effective-mode-policy.md)). It combines two sources,
-read live on every check, and the stricter rule wins:
+| Domain               | Owns                                                                                                    | Others use it through                                                     |
+| -------------------- | ------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| `projects`           | Projects, their revision, file and sub-agent selections                                                 | Its `queries.py`, lifecycle services and the project scope reader         |
+| `chat`               | Chats, messages and branches, model selection, drafts, receipts, attachments, the execution composition | Owner-checked scope readers and the composition roots                     |
+| `files`              | Uploaded files, their metadata and storage keys                                                         | `FileStore`, `RuntimeFileReader`, its owned queries and its source reader |
+| `knowledge`          | Processing results, embeddings, captions, the vector store and processing policy                        | The published artifact service and the embedding and vector interfaces    |
+| `agent`              | Main agent and sub-agent configuration, `ExecutionScope`, prompts, the loop                             | Injected scope, model client, file reader and retrieval service           |
+| `retrieval`          | Bounded, authorized search with citations                                                               | `RetrievalService`, given a live scope                                    |
+| `tools`              | The registry and tool catalog                                                                           | `ContextToolScope` and the checks at each call                            |
+| `skills`, `learning` | Skill documents and assignments; the learning-mode catalog                                              | Pinned snapshots and named authorization readers                          |
 
-- **Learner lock** (`chats.learning_mode_locked`,
-  [ADR-0031](../adr/0031-self-imposed-mode-lock.md)): allows every learning
-  mode except Standard; reveals need `override_lock`. The learner can lift it.
-- **Course policy** (`classes.allowed_modes`, `classes.answer_reveal`,
-  [ADR-0055](../adr/0055-class-mode-policy.md)): applies to a student's course
-  project while they are a current member. Only the educator can change it.
+Three rules keep these boundaries:
 
-Allowed modes are the catalog ∩ both sources (possibly empty); reveal is
-`forbidden` over `override_required` over `allowed`. `chat/mode_policy.py`
-builds the policy and holds the one check that sends, mode changes, hint
-requests and every run (first execution, resume, regeneration) call. Runs check
-with the learner source lifted: the lock gated the turn at acceptance and is
-not pinned on turns. `override_lock` lifts only the learner source; selecting
-Standard releases the lock and is refused when the course forbids Standard. A
-lock that would leave no mode is refused. Refusals are 409 with
-`reason: "mode_policy"` and name each source.
+- **The agent never reads domain tables.** It receives readers and services from
+  the chat composition roots. Policy stays with the domain that owns the data.
+- **Queries are built where the data lives.** Each domain's `queries.py` builds
+  owner-scoped selects; callers add filters before pagination. Shared
+  `db/queries.py` holds only domain-neutral helpers such as pagination.
+- **`files` and `knowledge` depend on each other in one direction only.** `files`
+  uses the knowledge domain's published artifact service
+  ([`knowledge/artifacts.py`](../../apps/backend/asterism/domains/knowledge/artifacts.py)).
+  `knowledge` never imports `files`: it reads sources through the contract in
+  [`knowledge/sources.py`](../../apps/backend/asterism/domains/knowledge/sources.py),
+  which `files` implements and the application installs at startup. A test
+  enforces both directions.
 
-`ChatInfo.mode_policy` carries the policy on single-chat responses, and
-`GET /chat/mode-policy?project_id=` returns it for a new chat. The frontend's
-`ModePolicyNotice` lists each source, and `ModePolicyControl` in the chat
-header locks the mode or unlocks it after a five-second confirmation. The mode
-picker disables modes that only the course refuses, and the reveal button is
-hidden, delayed or shown by `mode_policy.reveal`.
+## Rules
 
-### Attempts in Review my work
+- A turn's file scope and delegation set are worked out on the server and stored
+  with the execution. Resume can shrink them, never grow them.
+- Every read and every delegation rechecks access against current data.
+- Owning a file grants nothing; only a project or an attachment does.
+- A sub-agent's scope is its caller's or narrower.
+- Prompt layers, pinned text and file content never grant tools, files or
+  sub-agents.
+- A matching record, key or cache entry is never treated as permission.
 
-Review mode adds no attachment path of its own. Attached files reach the model
-through the normal chat attachment flow: text inline under an `Attached file:`
-heading, images as image parts on vision models, and a short notice when a
-file is unavailable or not included. The mode text tells the model to review
-that content as the learner's attempt and to treat it as work, not
-instructions, in line with the platform rule that file contents are untrusted
-task data.
+## Extending
 
-### Structured feedback
+A new consumer of turn context must accept injected, owner-scoped readers and keep
+both the stored ceiling and the live checks. A new provider (of files, embeddings,
+vectors or models) implements the existing interface rather than reading project or
+chat membership itself.
 
-A mode may define fixed feedback sections. Explain-back defines three, in order:
-`correct` ("What you got right"), `gaps` ("What was missing or wrong") and
-`follow_up` ("Follow-up questions"). The mode text tells the model to use these
-exact Markdown headings after the learner explains, and not to use them
-otherwise. `GET /learning-modes` serves the section IDs and headings (never the
-instruction text), so the UI renders each section from the catalog rather than a
-copy. Replies that do not start with the first heading render as plain Markdown.
-The streaming `start` event's execution carries the mode, so sections render
-while the reply streams. See [ADR-0030](../adr/0030-structured-feedback-sections.md).
+## Related
 
-### Rubric feedback
-
-Draft feedback mode (`draft_feedback`) assesses a draft against a rubric. A send
-in a mode with `rubric_feedback` may name a bundled or owned rubric; acceptance
-pins a copy of its current document on the user turn (`accepted_rubric`,
-immutable). The model reads it as a text part after the learner's message, so
-resume, regeneration and later turns use that copy even after the rubric changes.
-A rubric adds no prompt layer and grants nothing. `MessageExecution.rubric`
-records its identity and level and criterion names; the UI parses the reply into
-one section per criterion (with an `Estimated level:` line) and a closing
-`Overall` section. See [ADR-0044](../adr/0044-rubric-draft-feedback.md).
-
-Since version 2 of the mode, each quoted passage is followed by a note about it,
-and a section may end with a `Next step:` line. Saving a reply stores each
-quote and note as an inline comment. `GET /chat/{id}/messages/{mid}/draft-review`
-returns the documents the request turn sent (the message text and its attached
-text files, rechecked against live chat scope) and each comment anchored by
-quote when read; `PUT …/draft-review/comments/{cid}` marks a comment resolved.
-See [ADR-0045](../adr/0045-inline-draft-comments.md).
-
-### Research assistant mode
-
-`research` (US-57.3) is a prompt-only mode: it suggests search angles,
-evaluates sources (`### Source:` headings with Credibility, Relevance, Bias and
-"Use it for" bullets) and builds outlines in a fixed format (`### Outline: …`, a
-numbered list of short phrases with `[S<n>]` labels or `[needs source]`, then
-`### Sources` defining each label). It declines to write prose (introductions,
-paragraphs, conclusions) and explains why. It must not invent sources and only
-uses search results from the run, sources the learner shares or attached files;
-search capability comes from the agent's normal tool rules, never the mode. The
-evaluation adds `outline` (format and label checks) and `max_prose_words`
-(no paragraph of running text over the limit) to the fixture checks.
+- [Agent runtime](agent-runtime.md): the loop that uses this context
+- [Tool authorization](tool-authorization.md): the effective tool set
+- [Learning modes](learning-modes.md): the mode layer and mode policy
+- [Context provenance and isolation](context-isolation.md): what is recorded and
+  what stays private
+- [ADR-0017](../adr/0017-project-file-and-chat-boundaries.md): the project, file and
+  chat contracts

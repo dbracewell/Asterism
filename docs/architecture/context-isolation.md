@@ -1,4 +1,9 @@
-# Context provenance and memory isolation (US-26.4)
+# Context provenance and isolation
+
+This guide explains what Asterism records about each run without recording its
+content, why nothing from one chat leaks into another, and the boundary that a
+future memory feature must keep. Read it before adding anything that stores,
+caches or reuses information across turns or chats.
 
 Execution context is specific to a user, chat, active branch, and optional project.
 Reusing a main agent or About you text across chats does not grant access to the other

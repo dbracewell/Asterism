@@ -1,10 +1,14 @@
-# Private instruction skills — US-40.1 through US-40.4
+# Skills
 
-Private document CRUD, main-agent assignments, admin activation policy,
-eligible-skill discovery, and the Skills editor/settings UI are implemented.
-Chat acceptance and execution support pinned, ordered branch-local activations.
-Slash discovery, active-skill composer controls, and per-message labels are implemented in
-[EPIC-40](../epics/EPIC-40-USER-SKILLS-AND-CHAT-SLASH-COMMANDS.md).
+This guide explains skills: private, Markdown instruction documents that a user
+writes once and switches on when they need them. It covers how skills are stored,
+assigned to the main agent or to sub-agents, switched on in a chat with `/`, and
+pinned on each message, and why a skill can never grant a capability. Read it
+before changing the skills domain, the Skills settings or slash commands.
+
+A skill is instructions only. It grants no tools, files, MCP servers or
+delegation, and the admin's Skills policy (off by default) decides whether skills
+can be used at all.
 
 ## Document contract
 
@@ -80,7 +84,7 @@ reply) leaves the previous draft in place. Starting, reading and every turn requ
 (403 when off). A draft is never stored as a skill; saving uses `POST /skills/`.
 
 In User Settings → Skills, New skill offers **Write it** (the SKILL.md editor)
-and **Describe it** (US-71.2). Describe it takes a description, optional examples
+and **Describe it**. Describe it takes a description, optional examples
 and a writer model, starts the draft, and follows the chat WebSocket with the
 chat's `resume` and `cancel` commands (`useSkillDraft`), showing the streamed
 text and sub-agent activity. A `ready` draft opens in the editor with its
@@ -140,7 +144,7 @@ catalog skills with the grants `agent_assignment` and `admin_policy`. A pack
 sub-agent can request pack skills (`requested_skills`); import assigns only
 those the user approves (`approved_skills`) and imports, while the policy is on.
 
-In the UI (US-75.4), the sub-agent editor has a searchable, paged **Skills**
+In the UI, the sub-agent editor has a searchable, paged **Skills**
 picker under its tools. Saving stores the definition first, then the skills
 against the revision that save returned; unchanged skills are not sent. It
 warns when the chosen model can't use tools. Timelines name each `load_skill`
@@ -180,7 +184,7 @@ New skill, and removing the last row of a later page returns to a valid page.
 
 A full-width notice above the list says whether the admin policy is on and that
 a skill needs a main-agent assignment before chats can use it. Each row has an
-"Assigned to main agent" switch (US-75.2). A switch change submits the loaded
+"Assigned to main agent" switch. A switch change submits the loaded
 assigned IDs with that one skill added or removed, plus the loaded
 configuration revision, and it disables the other switches until it finishes.
 A conflict shows the server message and reloads the assignments, so the

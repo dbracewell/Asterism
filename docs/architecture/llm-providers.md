@@ -1,7 +1,15 @@
-# LLM Providers and Model Capabilities
+# LLM providers
 
-Asterism supports two provider configurations that share the OpenAI protocol and
-runtime SDK but differ in URL ownership and capability discovery.
+This guide explains how Asterism talks to language models: the kinds of provider
+an admin can configure, how a model's capabilities are discovered and recorded,
+how prices are set, and how a user's own ChatGPT plan fits in. Read it before
+adding a provider type or changing how capabilities gate tools and images.
+
+Asterism supports two admin-configured provider types that share the OpenAI
+protocol and SDK but differ in URL ownership and capability discovery, plus
+personal ChatGPT plan connections. Image generation uses its own providers, chosen
+in Admin Settings → Image Generation
+([tool authorization](tool-authorization.md#components-behind-the-tools)).
 
 ## Provider types
 
@@ -107,7 +115,7 @@ drops possibly truncated tool calls. `response.failed`, `error` events, HTTP
 errors and streams that end early produce one `ERROR` event whose exception is
 an `LLMProviderError` keeping the provider code, status, param and request ID.
 SDK retries are disabled for this client, so usage-limit (429) errors surface
-once. The ChatGPT plan capabilities (EPIC-49) send no `temperature`, `top_p`,
+once. The ChatGPT plan capabilities send no `temperature`, `top_p`,
 `max_tokens` or `seed` and only function tools.
 
 ## ChatGPT plan providers
@@ -121,8 +129,8 @@ current access token through `ChatGPTPlanClient`, which pauses the plan on a
 usage limit, retries temporary unavailability with bounded backoff, refreshes
 once on a rejected session, and reports `chatgpt_plan_<reason>` codes for the
 recovery UI. Without a usable draft model, chat titles run on the chat owner's
-own available plan model (`chat/title_model.py`); prompt-coach reviews (US-51.6)
-use the same resolution. See
+own available plan model (`chat/title_model.py`); prompt-coach reviews use the
+same resolution. See
 [ADR-0025](../adr/0025-chatgpt-plan-connection.md).
 
 Main-agent settings have no model binding. Chat selection and per-execution model
@@ -131,9 +139,29 @@ replacement. Sub-agent definitions each bind one model; restrictive references
 require explicit rebinding/removal before provider/model deletion. See
 [agent runtime](agent-runtime.md) for replay and revocation.
 
+## Model pricing
+
+An admin may set a price per model: US dollars per million input tokens and per
+million output tokens, both or neither (`ModelPricing`). Prices are edited only
+through `PUT /app/providers/{provider_id}/models/{model_id}`, and provider saves and
+catalog refreshes keep them.
+
+A price is copied onto each run that uses the model, and onto each entry in the
+usage ledger, at the time of the call. Changing a price therefore affects only
+later calls; past runs and usage reports keep the cost they had
+([agent runtime](agent-runtime.md#run-usage-and-cost),
+[ADR-0073](../adr/0073-usage-ledger-and-budgets.md)). A model without a price shows
+tokens only.
+
 ## File-input capability gating
 
-Chat consumes `supports_vision` conservatively: only `true` permits an uploaded PNG, JPEG, WebP, GIF, or BMP to become an OpenAI-compatible `image_url` data part. `false` and `null` both omit bytes and add an explicit text note; unknown is therefore secure by default. Images also observe the configured vision-byte limit. Text and MarkItDown-converted documents are bounded text parts, while unsupported or failed files are disclosed by name and reason rather than silently assumed readable.
+Chat treats `supports_vision` conservatively. Only `true` lets an uploaded PNG,
+JPEG, WebP, GIF or BMP become an `image_url` part. For `false` and unknown, the
+image bytes are left out and the model gets a short note instead, so an unknown
+capability is safe by default. Images also respect the configured vision byte limit
+(`MAX_VISION_IMAGE_BYTES`). Text and converted documents are bounded text parts, and
+unsupported or failed files are named, with the reason, rather than silently
+assumed readable.
 
 ## Verification
 
