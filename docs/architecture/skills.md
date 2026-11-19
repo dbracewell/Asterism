@@ -10,6 +10,15 @@ A skill is instructions only. It grants no tools, files, MCP servers or
 delegation, and the admin's Skills policy (off by default) decides whether skills
 can be used at all.
 
+- **A skill document** is a `SKILL.md`-style file: YAML frontmatter with a `name`
+  and `description`, then Markdown instructions.
+- **An assignment** makes a skill available to one agent: the main agent, for `/`
+  in chats, or a sub-agent, which loads it itself with `load_skill`.
+- **Activation** is switching a skill on in a chat with `/name`. The active set is
+  ordered, belongs to one branch, and is pinned on each message.
+- **A skill draft** is a skill the main agent writes from a description, in a
+  hidden chat; it becomes a skill only when the user saves it.
+
 ## Document contract
 
 The `skills` domain owns the `skills` table and derives indexed `name` and
@@ -155,15 +164,12 @@ skill is imported and skills are on.
 
 ## Module and storage boundaries
 
-Document validation, owner-scoped base queries, lifecycle service, assignment
-service, and policy access are separate modules. The runtime cannot import skill
-storage/service/policy modules; the architecture guard enforces that boundary.
-Chat composition roots resolve and inject authorized typed snapshots.
-Settings storage continues through SQLAlchemy and the existing application-setting
-service. Fresh initialization imports both new models through `db.model_registry`;
-no data migrations, compatibility paths, or verification resets of working data
-are introduced. Generated Hey API types, SDK, queries and Zod schemas include the
-new routes and the application-policy field.
+Document validation, owner-scoped base queries, the lifecycle service, the
+assignment service and policy access are separate modules. The agent runtime never
+imports skill storage, services or policy; an architecture test enforces this, and
+the chat composition roots inject already authorized skill snapshots instead. The
+policy is an ordinary application setting. Schema changes ship as migrations, and
+the generated Hey API client covers every route above.
 
 ## Settings UI and draft lifecycle
 

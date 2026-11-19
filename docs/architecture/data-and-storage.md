@@ -192,18 +192,18 @@ These are JSON snapshots, never foreign keys: they describe what happened and
 grant nothing. Reads recheck any file or source they mention against the chat's
 current scope and mark it `available` or not.
 
-| Field                                                                     | Holds                                                                                                                                |
-| ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| `files`                                                                   | Snapshots of the files attached to a user message, by immutable file ID                                                              |
-| `inline_files`                                                            | `asterism-file:` references the server resolved in the content ([ADR-0039](../adr/0039-inline-file-references-in-markdown.md))       |
-| `citations`                                                               | `asterism-cite:` claim citations, with an excerpt of each passage ([ADR-0040](../adr/0040-claim-level-citations.md))                 |
-| `delegations`                                                             | One record per sub-agent call made in this step ([agent runtime](agent-runtime.md#selected-delegation-projects-and-the-general-set)) |
-| `verification`                                                            | The latest verify pass, one label per claim ([ADR-0041](../adr/0041-verify-pass.md))                                                 |
-| `disagreements`                                                           | The latest disagreement pass ([ADR-0042](../adr/0042-disagreement-display.md))                                                       |
-| `exercise_record`                                                         | Spot the error's hidden error, attempts and reveal ([learning modes](learning-modes.md#spot-the-error-a-hidden-graded-mistake))      |
-| `draft_comments`                                                          | Inline comments from a Draft feedback reply; only their resolved state changes later                                                 |
-| `accepted_about`, `accepted_rubric`, skill and mode snapshots             | What the user message was sent with, pinned ([execution context](execution-context.md#about-you-on-a-turn))                          |
-| `input_tokens`, `output_tokens`, `total_tokens`, `generation_duration_ms` | What the provider reported for this step                                                                                             |
+| Field                                                                     | Holds                                                                                                                            |
+| ------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `files`                                                                   | Snapshots of the files attached to a user message, by immutable file ID                                                          |
+| `inline_files`                                                            | `asterism-file:` references the server resolved in the content ([ADR-0039](../adr/0039-inline-file-references-in-markdown.md))   |
+| `citations`                                                               | `asterism-cite:` claim citations, with an excerpt of each passage ([ADR-0040](../adr/0040-claim-level-citations.md))             |
+| `delegations`                                                             | One record per sub-agent call made in this step ([agent runtime](agent-runtime.md#delegation-projects-and-the-general-chat-set)) |
+| `verification`                                                            | The latest verify pass, one label per claim ([ADR-0041](../adr/0041-verify-pass.md))                                             |
+| `disagreements`                                                           | The latest disagreement pass ([ADR-0042](../adr/0042-disagreement-display.md))                                                   |
+| `exercise_record`                                                         | Spot the error's hidden error, attempts and reveal ([learning modes](learning-modes.md#spot-the-error-a-hidden-graded-mistake))  |
+| `draft_comments`                                                          | Inline comments from a Draft feedback reply; only their resolved state changes later                                             |
+| `accepted_about`, `accepted_rubric`, skill and mode snapshots             | What the user message was sent with, pinned ([execution context](execution-context.md#about-you-on-a-turn))                      |
+| `input_tokens`, `output_tokens`, `total_tokens`, `generation_duration_ms` | What the provider reported for this step                                                                                         |
 
 Pinned inputs are immutable: SQLite triggers refuse updates to them and to
 `chat_executions` records. Composite foreign keys keep a message's execution in the

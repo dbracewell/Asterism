@@ -244,21 +244,21 @@ All paths are under `/api/py`.
 
 ### Packets from the server
 
-| Packet                    | When                                                                                                                                                                 |
-| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `start`                   | A run begins; carries the recorded execution details when available                                                                                                  |
-| `delta`                   | A piece of answer text or reasoning                                                                                                                                  |
-| `tool_call`               | The model asked for tools                                                                                                                                            |
-| `tool_permission_request` | A tool call waits for approval: its ID, name and arguments                                                                                                           |
-| `tool_update`             | An approval was answered; the prompt can close                                                                                                                       |
-| `tool_progress`           | A long tool's progress, such as image generation steps: `tool_call_id`, `name`, `stage`, `step`, `total`                                                             |
-| `sub_agent`               | An event from a sub-agent, wrapped with its execution ID, name, model and depth ([agent runtime](agent-runtime.md#selected-delegation-projects-and-the-general-set)) |
-| `compaction`              | `started`, then `completed` with the new summary record, or `failed` with a reason                                                                                   |
-| `status`                  | `is_processing`: whether work is running, every 0.5 seconds                                                                                                          |
-| `regenerate`              | A regeneration was accepted; `parent_id` names the message being answered again                                                                                      |
-| `complete`                | The run ended; carries the stored messages                                                                                                                           |
-| `error`                   | Something failed: `content`, `code`, and for special cases `error_code` (`chat_capacity`, `usage_limit`), `retryable` and `resets_at`                                |
-| `pong`                    | The reply to `ping`                                                                                                                                                  |
+| Packet                    | When                                                                                                                                                             |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `start`                   | A run begins; carries the recorded execution details when available                                                                                              |
+| `delta`                   | A piece of answer text or reasoning                                                                                                                              |
+| `tool_call`               | The model asked for tools                                                                                                                                        |
+| `tool_permission_request` | A tool call waits for approval: its ID, name and arguments                                                                                                       |
+| `tool_update`             | An approval was answered; the prompt can close                                                                                                                   |
+| `tool_progress`           | A long tool's progress, such as image generation steps: `tool_call_id`, `name`, `stage`, `step`, `total`                                                         |
+| `sub_agent`               | An event from a sub-agent, wrapped with its execution ID, name, model and depth ([agent runtime](agent-runtime.md#delegation-projects-and-the-general-chat-set)) |
+| `compaction`              | `started`, then `completed` with the new summary record, or `failed` with a reason                                                                               |
+| `status`                  | `is_processing`: whether work is running, every 0.5 seconds                                                                                                      |
+| `regenerate`              | A regeneration was accepted; `parent_id` names the message being answered again                                                                                  |
+| `complete`                | The run ended; carries the stored messages                                                                                                                       |
+| `error`                   | Something failed: `content`, `code`, and for special cases `error_code` (`chat_capacity`, `usage_limit`), `retryable` and `resets_at`                            |
+| `pong`                    | The reply to `ping`                                                                                                                                              |
 
 ## Where the code lives
 

@@ -67,7 +67,7 @@ rest and 15% on hover, retaining their destructive text role. Sidebar group labe
 use the full sidebar foreground; inactive tabs use muted foreground. Active tabs
 retain their accent surface on hover so the text/surface pair stays valid.
 
-The input-role audit also covers direct consumers: appearance selectors no longer
+The input-role audit also covers direct consumers: appearance selectors don't
 force an input-colored fill, model-picker menus use popover surfaces and a standard
 Input for filtering, and the actual chat composer uses a muted surface with a visible
 container boundary/focus ring. Only non-text toggle indicators retain input-colored

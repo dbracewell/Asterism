@@ -36,13 +36,13 @@ actual model/provider used even after the chat selection changes.
 
 [Execution context](execution-context.md) traces the domain boundary into Agent and
 RetrievalService. The chat composition root resolves the recorded configuration,
-model, active branch, project instructions, file ceiling, target ceiling, and
+model, active branch, project instructions, execution file scope, delegation set, and
 internal tool policy. Agent receives those values plus injected live file and
 retrieval providers. It does not query project/file memberships itself.
 
 ```mermaid
 flowchart TD
-    Settings[Singleton main configuration]
+    Settings[The user's main agent]
     Model[Chat model selection]
     Readers[Project and active-branch chat readers]
     Policy[Live capability and target policy]
@@ -122,16 +122,16 @@ Agent events include `START`, `DELTA`, `TOOL_CALL`, `COMPLETE`, `ERROR`, and
 provider, configuration, prompt provenance, token usage, and context provenance.
 Provider-reported usage is authoritative; UI context estimates are advisory.
 
-## Selected delegation: projects and the General set
+## Delegation: projects and the General chat set
 
 A chat's delegation scope comes from where it is, read live: a project chat uses
 its project's selections, any other chat uses the main agent's General chat set.
-`DelegationScope.project_id` is `None` for the General set, and
+`DelegationScope.project_id` is `None` for the General chat set, and
 `context_revision` is then the set's own revision. Both sources follow the same
 rules below; moving a chat between them refuses delegation until a new turn.
 
 `GET/PUT /settings/user/main-agent/general-sub-agents` reads or replaces the
-ordered General set under `expected_revision`. A new user's set is empty, saving
+ordered General chat set under `expected_revision`. A new user's set is empty, saving
 the same list keeps the revision, and deleting a definition removes it and bumps
 the revision. Capability entries say which source granted a target
 (`project_selection` or `general_selection`), and sub-agent traces store
@@ -144,7 +144,7 @@ the revision. Selected definitions must still be owned, model-available,
 and eligible when advertised, invoked, and used during execution.
 
 The runtime catalog includes only eligible selected targets, excluding the caller.
-The child inherits the same file ceiling and can only narrow internal tool scope.
+The child inherits the same execution file scope and can only narrow internal tool scope.
 Its ordinary capabilities come from its own configuration intersected with active
 admin policy; they need not duplicate the parent's ordinary capabilities.
 
@@ -156,7 +156,7 @@ forwarded block is token-bounded. No sibling-chat history is fetched.
 
 The child uses `AllowlistApprovalPolicy`, so its authorized tools execute without
 nested interactive prompts. Live checks cancel/reject work after deselection,
-project or General set revision/identity changes, configuration/model revocation,
+project or General chat set revision/identity changes, configuration/model revocation,
 or cancellation;
 an in-flight silent child is polled rather than allowed to complete unchecked.
 Child text deltas are rechecked at most once per poll interval; every other child
