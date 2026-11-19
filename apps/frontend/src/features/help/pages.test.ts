@@ -36,6 +36,7 @@ const ROUTE_GUIDES: Record<string, PageGuideId> = {
   "/files/[filename]": "file",
   "/search": "search",
   "/help": "help",
+  "/help/guide/[[...slug]]": "help",
   "/settings": "settings.general",
 };
 

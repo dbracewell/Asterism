@@ -20,6 +20,7 @@ import {
   type HelpId,
 } from "@/features/help/registry";
 import { SearchIcon, SearchXIcon } from "lucide-react";
+import { GUIDE_ROUTE, walkthroughHref } from "@/features/guide/links";
 import Link from "next/link";
 import React from "react";
 import { flushSync } from "react-dom";
@@ -70,6 +71,13 @@ export function HelpCenter() {
         title="Help center"
         description="Every explanation in Asterism in one place: what each term means and what each page is for."
       />
+      <p className="text-sm">
+        For step-by-step walkthroughs with screenshots, read the{" "}
+        <Link className="underline" href={GUIDE_ROUTE}>
+          user guide
+        </Link>
+        .
+      </p>
       <search className="flex flex-col gap-2">
         <div className="relative">
           <SearchIcon
@@ -321,6 +329,14 @@ function GuideItem({
               ))}
             </ul>
           </div>
+        )}
+        {guide.walkthrough && (
+          <Link
+            className="w-fit underline"
+            href={walkthroughHref(guide.walkthrough)}
+          >
+            Read the full walkthrough
+          </Link>
         )}
         <TermLinks label="Terms used here" ids={terms} jumpTo={jumpTo} />
       </article>

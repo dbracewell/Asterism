@@ -172,6 +172,13 @@ export const shots = [
     ready: ["Help center", "Glossary"],
   },
   {
+    name: "user-guide",
+    alt: "The user guide inside Asterism, open on Your first chat, with links back to the Help center and the guide's contents",
+    as: "student",
+    path: () => "/help/guide/01-getting-started/your-first-chat",
+    ready: ["Your first chat", "User guide contents"],
+  },
+  {
     name: "page-help",
     alt: "The help panel for the New chat page, open on the right, explaining each part of the page",
     as: "student",

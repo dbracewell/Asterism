@@ -174,6 +174,14 @@ editor, so help changes in the same commit as the behavior it describes.
   or section has no guide.
 - **The help center** at `/help` searches the glossary, control help and page guides
   together, and links to each entry by anchor.
+- **The user guide** at `/help/guide` serves `docs/guide` for the installed version
+  ([`features/guide/`](../../apps/frontend/src/features/guide/), US-90.9). Pages are
+  read when requested, only from the files the folder lists, and rendered by the
+  guide's own Markdown renderer, not the chat viewer. Links to other guide pages
+  become routes, screenshots come from `/help/guide/images`, and links that leave
+  the guide go to the repository. The image copies `docs/guide` to
+  `/app/docs/guide`. Each page guide's `walkthrough` names its guide page, shown as
+  "Read the full walkthrough"; a test checks every one resolves.
 - **The first-chat tour** ([`tour.ts`](../../apps/frontend/src/features/help/tour.ts))
   highlights the composer's controls one at a time, skipping any that aren't on the
   page. New users are offered it until they finish or dismiss it, stored as their

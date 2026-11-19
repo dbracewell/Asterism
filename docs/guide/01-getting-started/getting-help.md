@@ -28,6 +28,12 @@ The Help center has three parts. Select a name near the top to jump to it:
 
 Under a topic, select a name under **Related** to read about a connected idea.
 
+At the top of the Help center, **user guide** opens this guide inside Asterism, for
+the version you're using. A page guide's **Read the full walkthrough** opens the
+guide page about that page.
+
+![The user guide inside Asterism, open on Your first chat, with links back to the Help center and the guide's contents](../images/user-guide.png)
+
 ## Help for this page
 
 Most pages have their own short guide.
