@@ -11,9 +11,9 @@ app match what the guide tells people, or removes a confusing message. Where a
 fix changes what a screen shows, the matching guide page and screenshot are
 updated in the same story.
 
-Out of scope: new features. Linking the in-app Help center to the user guide
-(EPIC-89 open question 1) is US-90.9, and only after its open question is
-decided.
+Out of scope: new features, apart from two decided below: a headless Chromium
+in the image (US-90.8) and the user guide served from the app (US-90.9, EPIC-89
+open question 1).
 
 ## Where things stand (verified 2026-11-19)
 
@@ -38,22 +38,27 @@ decided.
   definition is mirrored in `docs/terminology.md`.
 - **Labels use sentence case** ("New chat", "Default model") and "Sign in" for
   the action, matching the guide's voice.
-
-## Open questions
-
-1. **Chromium (US-90.8):** install a headless Chromium in the image (larger
-   image, real rendering), or make the plain fetch the documented behavior and
-   improve its fallback? Proposed: measure the image-size cost first, then decide
-   in the story.
-2. **Help center links (US-90.9):** where should the links point? A repository
-   URL works only if the repository is reachable by every deployment's users;
-   serving the guide from the app keeps it in step with the installed version but
-   adds a build step. Proposed: decide before starting US-90.9.
+- **Chromium goes in, and the image gets smaller** (decided 2026-11-19).
+  Measured on the current image, 10.8 GB in total: the backend `.venv` is 5.6 GB, of which the NVIDIA libraries are 2.9 GB, `torch` 914 MB and
+  `triton` 652 MB; the root `node_modules` is 846 MB, development packages
+  included; Node is copied twice (about 140 MB). CPU-only `torch` is 585 MB (ARM)
+  to 700 MB (x86-64) against about 4.6 GB with its GPU packages, so it becomes
+  the default, with a GPU build as a build option. A headless Chromium shell is
+  340 MB plus 26 MB of libraries; Playwright's `install-deps` would add 333 MB
+  (a virtual display, LLVM and Mesa, extra fonts) that a headless browser does
+  not need. `libgbm.so.1` is unpacked from its package on its own so LLVM and
+  Mesa stay out. Tried in a throwaway container: JavaScript pages render and
+  screenshots work as the non-root user with the fetch tool's launch arguments.
+  Expected result: about 6.5–7 GB.
+- **The guide is served from the app** (decided 2026-11-19), so it matches the
+  installed version and works where the repository is unreachable. The Markdown in `docs/guide/` stays the source and still reads on
+  GitHub. It gets its own trusted renderer; the chat Markdown viewer's URL policy
+  (`components/markdown-viewer/policy.ts`) is not loosened.
 
 ## User stories
 
-Suggested order: US-90.1 → 90.2 → 90.3 → 90.4 → 90.5 → 90.6 → 90.7 → 90.8, then
-US-90.9 once its question is decided.
+Suggested order: US-90.1 → 90.2 → 90.3 → 90.4 → 90.5 → 90.6 → 90.7 → 90.8 →
+90.9.
 
 ### US-90.1: Admin routes refuse non-admins with 403
 
@@ -131,20 +136,36 @@ As a user following the guide, the buttons say what the guide says.
 - [ ] Update tests and E2E selectors that match the old text.
 - [ ] Rerun the affected shots and update the guide pages that quote the labels.
 
-### US-90.8: Decide and fix web page reading without Chromium
+### US-90.8: Slim the image and add Chromium
 
-As an administrator, the web fetch tool behaves as documented in the container.
+As an administrator, the web fetch tool reads JavaScript-heavy pages in the
+container, and the image is smaller than before.
 
-- [ ] Measure the image-size cost of a headless Chromium.
-- [ ] Decide (open question 1) and record it in the deployment guide.
-- [ ] Either install it and test rendering in the container, or make the plain
-      fetch the documented behavior with a clear message when a page needs a
-      browser.
+- [ ] Measure the current image and record the size of its largest parts.
+- [ ] Install CPU-only `torch` and `torchvision` by default from PyTorch's CPU
+      index, with a GPU (CUDA) build selected by a Docker build argument; image
+      generation, embeddings and captioning tests pass on both.
+- [ ] Ship only the frontend's runtime packages (Next standalone output or a
+      production-only install), keeping the `auth` migration command working at
+      startup; copy the Node runtime once.
+- [ ] Install Playwright's headless Chromium shell with the minimal library set
+      (no `install-deps`), and comment the `libgbm` step in the Dockerfile.
+- [ ] Container test: the fetch tool renders a JavaScript-heavy page as the
+      non-root user with its launch arguments.
+- [ ] Measure again; record before and after sizes, the GPU build and the
+      Chromium behavior in the deployment guide and release notes.
 
-### US-90.9: Link the Help center to the user guide (after open question 2)
+### US-90.9: Serve the guide in the app and link the Help center to it
 
-As a user reading the in-app help, I can open the full walkthrough.
+As a user reading the in-app help, I can open the full walkthrough for the
+version of Asterism I'm using.
 
-- [ ] Decide where the guide is reached from a deployed instance.
+- [ ] Add a `/help/guide/[...slug]` route that renders `docs/guide/*.md` at build
+      time with a trusted Markdown renderer, separate from the chat viewer
+      (whose policy stays unchanged).
+- [ ] Serve `docs/guide/images`, turn relative `.md` links into app routes, and
+      point links outside the guide to the repository.
+- [ ] Copy `docs/guide` into the Docker frontend build stage.
 - [ ] Add a "Read the full walkthrough" link to each page guide that has a guide
       page, with a test that every link resolves.
+- [ ] The Markdown files stay readable on GitHub and `pnpm docs:check` passes.

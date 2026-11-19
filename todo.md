@@ -58,7 +58,7 @@ Source: user request (2026-11-18). Suggested order: [EPIC-87](docs/epics/EPIC-87
 
 ## Documentation follow-ups (proposed 2026-11-19)
 
-Source: the follow-ups found during EPIC-87 to EPIC-89. [EPIC-90](docs/epics/EPIC-90-DOCUMENTATION-FOLLOW-UPS.md) turns each into a story. Suggested order: US-90.1 → 90.8, then US-90.9 once its open question is decided. Work one story at a time.
+Source: the follow-ups found during EPIC-87 to EPIC-89. [EPIC-90](docs/epics/EPIC-90-DOCUMENTATION-FOLLOW-UPS.md) turns each into a story. Suggested order: US-90.1 → 90.9. Work one story at a time.
 
 ### EPIC-90: Fixes found while writing the documentation
 
@@ -90,10 +90,16 @@ Source: the follow-ups found during EPIC-87 to EPIC-89. [EPIC-90](docs/epics/EPI
   - [ ] Rename **Login** to **Sign in**, **New Chat** to **New chat** and **Default Model** to **Default model**; check other title-case labels in settings (for example **Font Size**, **Show Thinking**, **Prompt Coach**) and fix them the same way.
   - [ ] Update tests and E2E selectors that match the old text.
   - [ ] Rerun the affected shots and update the guide pages that quote the labels.
-- [ ] US-90.8: Decide and fix web page reading without Chromium
-  - [ ] Measure the image-size cost of a headless Chromium.
-  - [ ] Decide (open question 1) and record it in the deployment guide.
-  - [ ] Either install it and test rendering in the container, or make the plain fetch the documented behavior with a clear message when a page needs a browser.
-- [ ] US-90.9: Link the Help center to the user guide (after open question 2)
-  - [ ] Decide where the guide is reached from a deployed instance.
+- [ ] US-90.8: Slim the image and add Chromium
+  - [ ] Measure the current image and record the size of its largest parts.
+  - [ ] Install CPU-only `torch` and `torchvision` by default from PyTorch's CPU index, with a GPU (CUDA) build selected by a Docker build argument; image generation, embeddings and captioning tests pass on both.
+  - [ ] Ship only the frontend's runtime packages (Next standalone output or a production-only install), keeping the `auth` migration command working at startup; copy the Node runtime once.
+  - [ ] Install Playwright's headless Chromium shell with the minimal library set (no `install-deps`), and comment the `libgbm` step in the Dockerfile.
+  - [ ] Container test: the fetch tool renders a JavaScript-heavy page as the non-root user with its launch arguments.
+  - [ ] Measure again; record before and after sizes, the GPU build and the Chromium behavior in the deployment guide and release notes.
+- [ ] US-90.9: Serve the guide in the app and link the Help center to it
+  - [ ] Add a `/help/guide/[...slug]` route that renders `docs/guide/*.md` at build time with a trusted Markdown renderer, separate from the chat viewer (whose policy stays unchanged).
+  - [ ] Serve `docs/guide/images`, turn relative `.md` links into app routes, and point links outside the guide to the repository.
+  - [ ] Copy `docs/guide` into the Docker frontend build stage.
   - [ ] Add a "Read the full walkthrough" link to each page guide that has a guide page, with a test that every link resolves.
+  - [ ] The Markdown files stay readable on GitHub and `pnpm docs:check` passes.
