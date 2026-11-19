@@ -224,3 +224,26 @@ test("the shot list is valid, and validation catches mistakes", () => {
     );
   }
 });
+
+test("a script's pace reaches the reply, and visitors need no account", () => {
+  const slow = chats.find((script) => script.pace);
+  assert.ok(slow, "one scripted reply streams slowly for the stop shot");
+  const reply = respond({ messages: [{ role: "user", content: slow.match }] });
+  assert.equal(reply.pace, slow.pace);
+  assert.equal(
+    respond({ messages: [{ role: "user", content: chats[0].match }] }).pace,
+    undefined,
+  );
+  assert.deepEqual(
+    validateShots([
+      {
+        name: "signed-out",
+        alt: "The sign-in page",
+        as: "visitor",
+        path: () => "/sign-in",
+        ready: [],
+      },
+    ]),
+    [],
+  );
+});

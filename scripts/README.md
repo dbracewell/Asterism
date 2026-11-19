@@ -53,26 +53,29 @@ then:
 2. seeds the fictional demo dataset through the API: an administrator, an educator
    and two students, files in several formats, a project with a sub-agent, chats
    with sources, branches and a canvas, flashcards, a quiz, a summary, and a class
-   with a course;
+   with a course and one unused invite link;
 3. takes every shot in the shot list.
 
 The pieces live in [`screenshots/`](screenshots/):
 
 - [`shots.mjs`](screenshots/shots.mjs) is the shot list. Each entry names the image,
-  its alt text, whose browser takes it, the page and the text to wait for.
+  its alt text, whose browser takes it (or `visitor`, signed out), the page and
+  the text to wait for.
 - [`demo-content.mjs`](screenshots/demo-content.mjs) holds the people, files and
   scripted replies.
 - [`demo-provider.mjs`](screenshots/demo-provider.mjs) is the scripted model. It
   answers demo prompts with fixed text, searches project files and cites what it
   finds, and returns valid JSON to the flashcard, quiz, summary and study-guide
-  generators.
+  generators. A script with `pace` streams slowly, so a shot can catch a reply
+  while it is still being written.
 - [`seed.mjs`](screenshots/seed.mjs) creates the dataset.
 
 Every picture uses the light Atlas theme, the default font size, a fixed locale and
 time zone, and either a desktop viewport (1440×900) or a phone viewport (390×844).
 
 Options: `--only name,name` takes only those shots (the setup and seed still run),
-`--out` sets the image folder (default `docs/guide/images`), `--image` picks the
+`--out` sets the image folder (default `docs/guide/images`; a shot with its own
+`file` still writes there), `--image` picks the
 image (default `asterism:local`), `--port` sets the host port (default `3970`), and
 `--keep` leaves the instance running and prints the seeded ids, so you can follow
 a page's steps by hand. The run exits `1` if any shot can't be taken, and lists

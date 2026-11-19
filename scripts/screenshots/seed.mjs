@@ -190,9 +190,11 @@ export async function seedDemo({ instance, renderFile, log = () => {} }) {
   const maya = student.browser;
 
   for (const browser of [admin, teacher, maya, classmate.browser]) {
-    await browser.api("tour", "PUT", "/settings/user/first_chat_tour", {
-      value: "dismissed",
-    });
+    // Leo keeps the first-chat tour offer, as a new person sees it.
+    if (browser !== classmate.browser)
+      await browser.api("tour", "PUT", "/settings/user/first_chat_tour", {
+        value: "dismissed",
+      });
     await browser.api("canvas", "PUT", "/settings/user/canvas_enabled", {
       value: true,
     });
@@ -326,6 +328,11 @@ export async function seedDemo({ instance, renderFile, log = () => {} }) {
     project_id: courseProject.id,
     note: "Unit 3 notes and practice.",
   });
+  const {
+    items: [invite],
+  } = await teacher.api("invite", "POST", `/classes/${room.id}/invites`, {
+    labels: [demo.classroom.invitee],
+  });
   const { join_code: code } = await teacher.api(
     "join code",
     "POST",
@@ -368,6 +375,7 @@ export async function seedDemo({ instance, renderFile, log = () => {} }) {
     deck: deck.id,
     quiz: quiz.id,
     classroom: room.id,
+    invite: invite.token,
     courseProject: courseProject.id,
     files: Object.fromEntries(
       Object.entries(uploaded).map(([name, file]) => [name, file.id]),
