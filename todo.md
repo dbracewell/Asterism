@@ -2,7 +2,7 @@
 
 Completed Projects/Chat Context and provider-settings work remains in the existing archives. This checklist tracks the findings from the [2026-10-17 review](docs/reviews/2026-10-17-codebase-review.md). See the [sequenced roadmap](docs/plans/post-refactor-quality-roadmap.md).
 
-Archives: [2026-11-18](docs/archive/todo-completed-2026-11-18.md), [2026-11-17](docs/archive/todo-completed-2026-11-17.md), [2026-11-06](docs/archive/todo-completed-2026-11-06.md), [2026-11-03](docs/archive/todo-completed-2026-11-03.md), [2026-11-02](docs/archive/todo-completed-2026-11-02.md), [2026-11-01](docs/archive/todo-completed-2026-11-01.md), [2026-10-31](docs/archive/todo-completed-2026-10-31.md), [2026-10-14](docs/archive/todo-completed-2026-10-14.md), [2026-10-15](docs/archive/todo-completed-2026-10-15.md), [2026-10-16](docs/archive/todo-completed-2026-10-16.md), [2026-10-17](docs/archive/todo-completed-2026-10-17.md), [2026-10-18](docs/archive/todo-completed-2026-10-18.md), [2026-10-19](docs/archive/todo-completed-2026-10-19.md), [2026-10-23](docs/archive/todo-completed-2026-10-23.md), [2026-10-24](docs/archive/todo-completed-2026-10-24.md), [2026-10-25](docs/archive/todo-completed-2026-10-25.md), [2026-10-27](docs/archive/todo-completed-2026-10-27.md), [2026-10-28](docs/archive/todo-completed-2026-10-28.md), [2026-10-29](docs/archive/todo-completed-2026-10-29.md), [2026-10-30](docs/archive/todo-completed-2026-10-30.md), and [US-28.3 verification](docs/archive/us-28.3-verification-2026-10-17.md).
+Archives: [2026-11-19](docs/archive/todo-completed-2026-11-19.md), [2026-11-18](docs/archive/todo-completed-2026-11-18.md), [2026-11-17](docs/archive/todo-completed-2026-11-17.md), [2026-11-06](docs/archive/todo-completed-2026-11-06.md), [2026-11-03](docs/archive/todo-completed-2026-11-03.md), [2026-11-02](docs/archive/todo-completed-2026-11-02.md), [2026-11-01](docs/archive/todo-completed-2026-11-01.md), [2026-10-31](docs/archive/todo-completed-2026-10-31.md), [2026-10-14](docs/archive/todo-completed-2026-10-14.md), [2026-10-15](docs/archive/todo-completed-2026-10-15.md), [2026-10-16](docs/archive/todo-completed-2026-10-16.md), [2026-10-17](docs/archive/todo-completed-2026-10-17.md), [2026-10-18](docs/archive/todo-completed-2026-10-18.md), [2026-10-19](docs/archive/todo-completed-2026-10-19.md), [2026-10-23](docs/archive/todo-completed-2026-10-23.md), [2026-10-24](docs/archive/todo-completed-2026-10-24.md), [2026-10-25](docs/archive/todo-completed-2026-10-25.md), [2026-10-27](docs/archive/todo-completed-2026-10-27.md), [2026-10-28](docs/archive/todo-completed-2026-10-28.md), [2026-10-29](docs/archive/todo-completed-2026-10-29.md), [2026-10-30](docs/archive/todo-completed-2026-10-30.md), and [US-28.3 verification](docs/archive/us-28.3-verification-2026-10-17.md).
 
 EPIC-31 and EPIC-32 are confirmed complete and archived above. US-38.1 through US-38.6 are confirmed complete and archived above. EPIC-33 (US-33.1 through US-33.3) is confirmed complete and archived above. EPIC-36 (US-36.1) and EPIC-37 (US-37.1) are complete; their already-merged implementation and completed checklists are reconciled and archived above. See the [2026-10-24 reassessment](docs/reviews/2026-10-24-open-epics-reassessment.md). EPIC-34 (US-34.1 through US-34.4) is confirmed complete and archived above, including finite chat admission and the current browser baseline; the old agent-selector repairs are already present. EPIC-35 (US-35.1 and US-35.2) is confirmed complete and archived above. Execute one story at a time; obtain completion confirmation before merge.
 
@@ -54,92 +54,17 @@ Source: user request and the [feature overlap review](docs/reviews/2026-11-17-fe
 
 ## Documentation (proposed 2026-11-18)
 
-Source: user request (2026-11-18). Suggested order: [EPIC-87](docs/epics/EPIC-87-ARCHITECTURE-DOCS-REFRESH.md) (complete and archived in the [2026-11-18 checklist](docs/archive/todo-completed-2026-11-18.md)) → [EPIC-88](docs/epics/EPIC-88-PROJECT-README.md) (complete and archived) → [EPIC-89](docs/epics/EPIC-89-USER-GUIDE.md). US-87.1 adds `pnpm docs:check`, which the later epics use; US-89.1 adds the screenshot pipeline. Work one story at a time.
+Source: user request (2026-11-18). Suggested order: [EPIC-87](docs/epics/EPIC-87-ARCHITECTURE-DOCS-REFRESH.md) (complete and archived in the [2026-11-18 checklist](docs/archive/todo-completed-2026-11-18.md)) → [EPIC-88](docs/epics/EPIC-88-PROJECT-README.md) (complete and archived) → [EPIC-89](docs/epics/EPIC-89-USER-GUIDE.md) (complete and archived in the [2026-11-19 checklist](docs/archive/todo-completed-2026-11-19.md)). All three documentation epics are complete. US-87.1 adds `pnpm docs:check`, which the later epics use; US-89.1 adds the screenshot pipeline. Work one story at a time.
 
 Follow-ups found during the documentation epics (code, not documentation; each needs its own story):
 
 - [ ] Admin-only routes refuse a non-admin with 401 rather than 403 (`get_current_admin` raises `UnauthorizedException`). The browser treats a 401 as an expired token and drops its cached token, so a non-admin opening an admin request costs a token refetch and reads as "signed out" rather than "not allowed".
 - [ ] The container image has no Chromium, so the web fetch tool fails on short or JavaScript-heavy pages it would render with Playwright (`tools/builtin/fetch.py`). Decide whether to install a headless Chromium in the image or fall back to the plain fetch. Found in US-88.1; documented in `docs/deployment.md`.
 - [ ] Regenerating an answer that used a tool (a file search, for example) puts the new branch on the hidden tool-call step: the API reports `2 / 2` on that step, but the chat shows no switcher, so the earlier answer can't be reached. Found in US-89.1; reproduce in a project chat that cites files, then fix in the chat UI or in where regeneration branches.
-
 - [ ] UI labels disagree with each other and with the guide's voice: the sign-in button says **Login** (the form, toast and guide say "sign in"), the sidebar has **New Chat** but the General page **New chat**, and Settings has **Default Model**. Found in US-89.2; if the labels change, rerun `pnpm docs:screenshots` and update `docs/guide/01-getting-started/`.
-
 - [ ] Compact now records the summarizer's model id as its name: with no run in progress, `ChatOrchestrator._summarizer` falls back to `str(self.agent.model_id)`, so the divider reads "Written by a09bb3f6-… when you chose Compact now". Look the model's name up instead. Found in US-89.3.
 - [ ] Opening a source or citation shows a page with only the file name, "Authorized source in the current file scope of this conversation." and Download source; the passage itself is only in the hover preview. Show the passage (and plainer text) on that page. Found in US-89.3; update `docs/guide/02-chatting/sources-and-citations.md` after.
-
 - [ ] The help registry has no entry for the Spot the error learning mode (`concept.learning-mode` lists the other six as related), so the Help center and the mode's help icon say nothing about it. Add `concept.mode-spot-the-error` and update the terminology list if needed. Found in US-89.5.
-
 - [ ] Creating a sub-agent shows the red error "Choose an available model. The saved binding remains until you save a replacement." under Model before anything is chosen. A new sub-agent has no saved binding; show a plain "Choose a model" hint until the form is submitted. Found in US-89.7.
-
 - [ ] The Users page guide in the help registry (`admin.users` in `features/help/pages.ts`) says "Accounts are not otherwise changed here", but the page suspends, reactivates, creates reset links, deletes accounts and dismisses deletion requests. Update the guide's purpose and areas. Found in US-89.9.
-
 - [ ] Link each in-app page guide in the Help center to its user-guide page ("Read the full walkthrough"), once the guide is reachable from a deployed instance (a repository link or the guide served by the app). Deferred from EPIC-89 open question 1 (decided 2026-11-19).
-
-### EPIC-89: User guide
-
-- [x] US-89.1: Screenshot pipeline and guide skeleton
-  - [x] `pnpm docs:screenshots`: boot a disposable instance (reuse `scripts/capacity/instance.mjs` and the stub provider), never touching the working database.
-  - [x] Seed script for the demo dataset: an admin, an educator and two students in their groups; a model provider and models; files in several formats; a project with files and a sub-agent; chats with branches, sources and a canvas; flashcard decks, a quiz and notes; a class with a course.
-  - [x] Stub provider serves scripted replies keyed to the demo prompts, so chat screenshots look like real answers.
-  - [x] Shot list file: each entry names the image, the page, the setup steps and the viewport. The script fails if a shot cannot be taken.
-  - [x] Fixed theme, fonts, dates and viewport so reruns produce the same images apart from real UI changes. (Dates the app shows and class join codes still vary; see the US-89.1 notes in EPIC-89.)
-  - [x] Create `docs/guide/README.md`, the folder structure, a page template and the writing rules (voice, steps, screenshots, alt text).
-- [x] US-89.2: Getting started
-  - [x] What Asterism is and what it can help with, in plain words.
-  - [x] Signing in: accepting an invite link, signing in, resetting a password with a link from an admin, signing out and "sign out everywhere".
-  - [x] A tour of the screen: sidebar, General chats, projects, Files, search, settings, help, on desktop and phone.
-  - [x] Your first chat: typing a message, stopping a reply, choosing a model, what the progress panel shows.
-  - [x] Getting help: the Help center, help icons and the first-chat tour.
-- [x] US-89.3: Chatting
-  - [x] Choosing and comparing models.
-  - [x] Attaching files and seeing which files are in context.
-  - [x] Reading sources and citations.
-  - [x] Editing, regenerating and switching between branches.
-  - [x] Approving or denying a tool request.
-  - [x] Canvas: creating, editing and reading a document with Asterism.
-  - [x] Generating images (when your group allows it).
-  - [x] Using `/` skills, prompt templates and the prompt coach.
-  - [x] Long conversations and context compaction, in plain terms.
-  - [x] Finding old chats with search.
-- [x] US-89.4: Files and projects
-  - [x] The Files library: uploading, processing status, retrying, image captions, downloading and deleting.
-  - [x] Projects: creating one, adding and removing files, project settings and sub-agents for the project.
-  - [x] What removing a file from a project does, compared with deleting it.
-  - [x] Team packs: exporting and importing a project setup, and what a pack never includes.
-- [x] US-89.5: Learning with Asterism
-  - [x] Learning modes: Standard, Tutor, Explain-back, Review my work, Draft feedback, Research assistant; when to use each, with an example chat.
-  - [x] Hint levels and Show answer.
-  - [x] Mode restrictions set by a class, and how they appear to you.
-  - [x] Reflections, the AI-use log and exporting it.
-  - [x] Rubrics: writing one and using it for feedback.
-- [x] US-89.6: Studying
-  - [x] Flashcard decks: drafting from files, reviewing drafts, studying.
-  - [x] Practice quizzes: creating, taking and reviewing attempts.
-  - [x] Study notes, summaries and study guides.
-  - [x] Following your progress.
-- [x] US-89.7: Making Asterism yours
-  - [x] General settings: theme and fonts.
-  - [x] Your Asterism: About you (what to write, what not to), your usage and budget.
-  - [x] Agents: main-agent instructions, sub-agents, the General chat set.
-  - [x] Skills: writing one, drafting one with Asterism, assigning it.
-  - [x] Templates and Rubrics settings.
-  - [x] Connecting a ChatGPT plan.
-  - [x] Download my data and asking for your account to be deleted.
-- [x] US-89.8: For educators
-  - [x] Creating a class and inviting students.
-  - [x] Courses and course-managed content: what students see and cannot change.
-  - [x] Setting mode policy for a class.
-  - [x] Reading class insights.
-- [x] US-89.9: For administrators, troubleshooting and review
-  - [x] First-time setup: the admin passphrase, connecting a provider, enabling a model.
-  - [x] Providers and models, including pricing.
-  - [x] Users: invites, suspend and reactivate, reset links, deletion and deletion requests.
-  - [x] Groups and budgets, Usage, Status.
-  - [x] Policies: Tools, Skills, Canvas, ChatGPT Plans, Context Compaction, Image Generation, Image Captioning, Educators, Export; Code Execution is marked Planned.
-  - [x] Theme Editor.
-  - [x] Troubleshooting page: capacity full, usage limit, suspended account, too many requests, failed file processing, model unavailable.
-  - [x] Glossary aligned with the help registry and the terminology list.
-  - [x] Walkthrough review: follow every page on a fresh demo instance and fix any step that does not match the app.
-  - [x] Readability review by someone non-technical (or against the reading-level target), and fix what confuses them.
-  - [x] Link the guide from `README.md` and, if agreed (open question 1), from the in-app Help center.
-  - [x] `pnpm docs:check` passes, including every image reference.

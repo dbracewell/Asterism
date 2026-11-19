@@ -1,6 +1,6 @@
 # EPIC-89: User guide
 
-Status: complete (US-89.1 to US-89.9, 2026-11-19). Proposed 2026-11-18. Source: user request (2026-11-18).
+Status: complete (US-89.1 to US-89.9, 2026-11-19; checklist archived in the [2026-11-19 checklist](../archive/todo-completed-2026-11-19.md)). Proposed 2026-11-18. Source: user request (2026-11-18).
 
 ## Objective
 

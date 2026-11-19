@@ -1,0 +1,72 @@
+# Completed checklist: 2026-11-19
+
+## A user guide
+
+[EPIC-89](../epics/EPIC-89-USER-GUIDE.md) is complete: US-89.1 to US-89.9 were each confirmed and merged with `--no-ff`. The guide is in [`docs/guide/`](../guide/README.md), with its screenshots made by `pnpm docs:screenshots`. Follow-ups found while writing it, in the app's code and help text, stay in `todo.md`; open question 1 (in-app links to the guide) was deferred there too.
+
+- [x] US-89.1: Screenshot pipeline and guide skeleton
+  - [x] `pnpm docs:screenshots`: boot a disposable instance (reuse `scripts/capacity/instance.mjs` and the stub provider), never touching the working database.
+  - [x] Seed script for the demo dataset: an admin, an educator and two students in their groups; a model provider and models; files in several formats; a project with files and a sub-agent; chats with branches, sources and a canvas; flashcard decks, a quiz and notes; a class with a course.
+  - [x] Stub provider serves scripted replies keyed to the demo prompts, so chat screenshots look like real answers.
+  - [x] Shot list file: each entry names the image, the page, the setup steps and the viewport. The script fails if a shot cannot be taken.
+  - [x] Fixed theme, fonts, dates and viewport so reruns produce the same images apart from real UI changes. (Dates the app shows and class join codes still vary; see the US-89.1 notes in EPIC-89.)
+  - [x] Create `docs/guide/README.md`, the folder structure, a page template and the writing rules (voice, steps, screenshots, alt text).
+- [x] US-89.2: Getting started
+  - [x] What Asterism is and what it can help with, in plain words.
+  - [x] Signing in: accepting an invite link, signing in, resetting a password with a link from an admin, signing out and "sign out everywhere".
+  - [x] A tour of the screen: sidebar, General chats, projects, Files, search, settings, help, on desktop and phone.
+  - [x] Your first chat: typing a message, stopping a reply, choosing a model, what the progress panel shows.
+  - [x] Getting help: the Help center, help icons and the first-chat tour.
+- [x] US-89.3: Chatting
+  - [x] Choosing and comparing models.
+  - [x] Attaching files and seeing which files are in context.
+  - [x] Reading sources and citations.
+  - [x] Editing, regenerating and switching between branches.
+  - [x] Approving or denying a tool request.
+  - [x] Canvas: creating, editing and reading a document with Asterism.
+  - [x] Generating images (when your group allows it).
+  - [x] Using `/` skills, prompt templates and the prompt coach.
+  - [x] Long conversations and context compaction, in plain terms.
+  - [x] Finding old chats with search.
+- [x] US-89.4: Files and projects
+  - [x] The Files library: uploading, processing status, retrying, image captions, downloading and deleting.
+  - [x] Projects: creating one, adding and removing files, project settings and sub-agents for the project.
+  - [x] What removing a file from a project does, compared with deleting it.
+  - [x] Team packs: exporting and importing a project setup, and what a pack never includes.
+- [x] US-89.5: Learning with Asterism
+  - [x] Learning modes: Standard, Tutor, Explain-back, Review my work, Draft feedback, Research assistant; when to use each, with an example chat.
+  - [x] Hint levels and Show answer.
+  - [x] Mode restrictions set by a class, and how they appear to you.
+  - [x] Reflections, the AI-use log and exporting it.
+  - [x] Rubrics: writing one and using it for feedback.
+- [x] US-89.6: Studying
+  - [x] Flashcard decks: drafting from files, reviewing drafts, studying.
+  - [x] Practice quizzes: creating, taking and reviewing attempts.
+  - [x] Study notes, summaries and study guides.
+  - [x] Following your progress.
+- [x] US-89.7: Making Asterism yours
+  - [x] General settings: theme and fonts.
+  - [x] Your Asterism: About you (what to write, what not to), your usage and budget.
+  - [x] Agents: main-agent instructions, sub-agents, the General chat set.
+  - [x] Skills: writing one, drafting one with Asterism, assigning it.
+  - [x] Templates and Rubrics settings.
+  - [x] Connecting a ChatGPT plan.
+  - [x] Download my data and asking for your account to be deleted.
+- [x] US-89.8: For educators
+  - [x] Creating a class and inviting students.
+  - [x] Courses and course-managed content: what students see and cannot change.
+  - [x] Setting mode policy for a class.
+  - [x] Reading class insights.
+- [x] US-89.9: For administrators, troubleshooting and review
+  - [x] First-time setup: the admin passphrase, connecting a provider, enabling a model.
+  - [x] Providers and models, including pricing.
+  - [x] Users: invites, suspend and reactivate, reset links, deletion and deletion requests.
+  - [x] Groups and budgets, Usage, Status.
+  - [x] Policies: Tools, Skills, Canvas, ChatGPT Plans, Context Compaction, Image Generation, Image Captioning, Educators, Export; Code Execution is marked Planned.
+  - [x] Theme Editor.
+  - [x] Troubleshooting page: capacity full, usage limit, suspended account, too many requests, failed file processing, model unavailable.
+  - [x] Glossary aligned with the help registry and the terminology list.
+  - [x] Walkthrough review: follow every page on a fresh demo instance and fix any step that does not match the app.
+  - [x] Readability review by someone non-technical (or against the reading-level target), and fix what confuses them.
+  - [x] Link the guide from `README.md` and, if agreed (open question 1), from the in-app Help center.
+  - [x] `pnpm docs:check` passes, including every image reference.
