@@ -42,6 +42,7 @@ After that, read whichever guide covers the part you are changing.
 | How many people one instance serves, and how that was measured             | [Capacity check](capacity.md)                                   |
 | How logs, readiness checks, the Status page and settings export work       | [Operations](operations.md)                                     |
 | What a turn's prompt is made of and which files it may read                | [Execution context](execution-context.md)                       |
+| How learning modes, hint levels and mode restrictions work                 | [Learning modes](learning-modes.md)                             |
 | How the agent loop, delegation, traces and compaction work                 | [Agent runtime](agent-runtime.md)                               |
 | Which tools an agent is offered and how approval works                     | [Tool authorization](tool-authorization.md)                     |
 | What is recorded about each run and what stays private                     | [Context provenance and isolation](context-isolation.md)        |
@@ -62,11 +63,9 @@ After that, read whichever guide covers the part you are changing.
 | Which theme and layout checks run, and which are manual                    | [Theme and layout review matrix](theme-layout-review-matrix.md) |
 
 Some shipped features do not have a guide of their own yet: classes and courses,
-canvas, image generation, usage budgets and team packs. Learning modes are
-described inside [Execution context](execution-context.md#learning-modes). Until they do,
+canvas, image generation, usage budgets and team packs. Until they do,
 their ADRs are the reference: [classes](../adr/0053-classes-and-educators.md),
 [canvas](../adr/0063-canvas.md), [image generation](../adr/0064-image-generation.md),
-[mode policy](../adr/0068-effective-mode-policy.md),
 [usage and budgets](../adr/0073-usage-ledger-and-budgets.md) and
 [team packs](../adr/0051-team-pack-format.md). The
 [2026-11-18 audit](../reviews/2026-11-18-architecture-docs-audit.md) lists the

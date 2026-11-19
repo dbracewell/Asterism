@@ -1,6 +1,6 @@
 # EPIC-87: Architecture documentation refresh
 
-Status: in progress (US-87.1 complete; US-87.2 awaiting confirmation). Proposed 2026-11-18. Source: user request (2026-11-18).
+Status: in progress (US-87.1 and US-87.2 complete; US-87.3 awaiting confirmation). Proposed 2026-11-18. Source: user request (2026-11-18).
 
 ## Objective
 
@@ -110,20 +110,20 @@ back, and I know every check it passes.
 As a contributor, I understand how one turn is assembled and executed, and what
 can and cannot grant a capability.
 
-- [ ] `execution-context.md`: one turn traced from membership through prompt
+- [x] `execution-context.md`: one turn traced from membership through prompt
       layers (main-agent instructions, About you, learning mode, skills) to
       retrieval and provider access, as a diagram plus a worked example.
-- [ ] `agent-runtime.md`: bounded loop, events, delegation, traces, context
+- [x] `agent-runtime.md`: bounded loop, events, delegation, traces, context
       compaction, verification.
-- [ ] `tool-authorization.md`: ordinary versus internal tools, a table of every
+- [x] `tool-authorization.md`: ordinary versus internal tools, a table of every
       internal tool (`sub_agent`, `search_knowledge`, `load_skill`, `canvas_*`,
       `generate_image`) and the conditions that offer it; approvals; the component
       registry of search providers and image generators.
-- [ ] `skills.md`, `prompt-templates.md`, `context-isolation.md`: refresh and
+- [x] `skills.md`, `prompt-templates.md`, `context-isolation.md`: refresh and
       remove history narration.
-- [ ] `llm-providers.md`: provider modes, model capabilities, ChatGPT plan
+- [x] `llm-providers.md`: provider modes, model capabilities, ChatGPT plan
       connections, pricing used by the usage ledger.
-- [ ] New `learning-modes.md`: the modes, hint levels and show answer, how the
+- [x] New `learning-modes.md`: the modes, hint levels and show answer, how the
       effective mode is chosen (ADR-0068), and how class policy restricts it.
 
 ### US-87.4: Data, files and knowledge

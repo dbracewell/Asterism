@@ -64,19 +64,19 @@ Source: user request (2026-11-18). Suggested order: [EPIC-87](docs/epics/EPIC-87
   - [x] Add a terminology list shared with the user guide (EPIC-89) so the same thing has the same name everywhere (for example _main agent_, _sub-agent_, _General chat set_, _execution file scope_).
   - [x] Add `pnpm docs:check`: broken relative links, missing anchors and missing images across `docs/` and `README.md`. Wire it into CI (see open question 2).
   - [x] Rewrite `docs/architecture/README.md` as a map: a reading order for new contributors, then a table of "if you want to know X, read Y".
-- [ ] US-87.2: System, security and request path
+- [x] US-87.2: System, security and request path
   - [x] `overview.md`: topology diagram (nginx, Next.js, FastAPI, SQLite, LanceDB, file store), workspace layout, request and streaming flow.
   - [x] `auth-and-security.md`: Better Auth and JWT/JWKS, the backend identity copy (ADR-0057), groups and roles, account lifecycle (suspend, reset links, deletion and deletion requests), edge hardening (CSP, HSTS, rate limits, trusted proxies), internal callbacks.
   - [x] `chat-and-websocket.md`: protocol, reconnectable jobs, cancellation, admission limits, usage-limit refusals, with a job lifecycle diagram.
   - [x] `capacity.md` and a new `operations.md`: process model, admission settings, logs and request IDs, readiness endpoints, Admin → Status, and admin settings export and import.
   - [x] Remove story references and stale claims from these guides.
 - [ ] US-87.3: Agents, tools and prompts
-  - [ ] `execution-context.md`: one turn traced from membership through prompt layers (main-agent instructions, About you, learning mode, skills) to retrieval and provider access, as a diagram plus a worked example.
-  - [ ] `agent-runtime.md`: bounded loop, events, delegation, traces, context compaction, verification.
-  - [ ] `tool-authorization.md`: ordinary versus internal tools, a table of every internal tool (`sub_agent`, `search_knowledge`, `load_skill`, `canvas_*`, `generate_image`) and the conditions that offer it; approvals; the component registry of search providers and image generators.
-  - [ ] `skills.md`, `prompt-templates.md`, `context-isolation.md`: refresh and remove history narration.
-  - [ ] `llm-providers.md`: provider modes, model capabilities, ChatGPT plan connections, pricing used by the usage ledger.
-  - [ ] New `learning-modes.md`: the modes, hint levels and show answer, how the effective mode is chosen (ADR-0068), and how class policy restricts it.
+  - [x] `execution-context.md`: one turn traced from membership through prompt layers (main-agent instructions, About you, learning mode, skills) to retrieval and provider access, as a diagram plus a worked example.
+  - [x] `agent-runtime.md`: bounded loop, events, delegation, traces, context compaction, verification.
+  - [x] `tool-authorization.md`: ordinary versus internal tools, a table of every internal tool (`sub_agent`, `search_knowledge`, `load_skill`, `canvas_*`, `generate_image`) and the conditions that offer it; approvals; the component registry of search providers and image generators.
+  - [x] `skills.md`, `prompt-templates.md`, `context-isolation.md`: refresh and remove history narration.
+  - [x] `llm-providers.md`: provider modes, model capabilities, ChatGPT plan connections, pricing used by the usage ledger.
+  - [x] New `learning-modes.md`: the modes, hint levels and show answer, how the effective mode is chosen (ADR-0068), and how class policy restricts it.
 - [ ] US-87.4: Data, files and knowledge
   - [ ] `data-and-storage.md`: schema overview by domain (with an entity diagram), message tree, FTS search, migrations (ADR-0069); correct the serialization section, which names a `JSONB_COLUMN` helper that does not exist.
   - [ ] Merge or clearly divide `knowledge-retrieval.md` and `file-knowledge-processing.md` so each topic has one home: processing pipeline in one, scoped retrieval in the other.

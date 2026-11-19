@@ -1,11 +1,14 @@
-# Prompt templates — US-51.1 through US-51.7
+# Prompt templates and rubrics
 
-Private template CRUD and the bundled, read-only framework catalog are
-implemented in the `prompt_templates` backend domain. The composer's template
-builder (US-51.2), slash discovery and message provenance (US-51.3) and the
-settings library and editor (US-51.4), scaffolding levels (US-51.5) and the
-prompt coach (US-51.6) and the before/after comparison (US-51.7) are
-implemented, completing [EPIC-51](../epics/EPIC-51-PROMPT-FRAMEWORKS-AND-TEMPLATES.md).
+This guide explains the two kinds of reusable document in the `prompt_templates`
+domain. A **prompt template** is a form that builds a well-structured prompt from
+fields; a **rubric** lists the criteria a piece of work is assessed on, for Draft
+feedback mode. It also covers the bundled framework catalog, the composer's
+template builder, scaffolding levels and the prompt coach. Read it before changing
+any of these.
+
+Users own their templates and rubrics privately. Bundled frameworks and rubrics are
+read-only and versioned with the code.
 
 The document format, bounds, placeholder grammar, assembly semantics and catalog
 versioning are decided in
@@ -38,7 +41,7 @@ integers. Templates cascade with their owner.
 Template text is prompt content only. It grants no tools, files, MCP or
 delegation, and assembly output is ordinary editable composer text.
 
-## Builder (US-51.2)
+## Builder
 
 `src/features/templates` owns the frontend. `lib/assemble.ts` mirrors the
 ADR-0026 grammar and assembly rules in TypeScript; the server has already
@@ -48,7 +51,7 @@ loading a template's document only when it is chosen. Assembly happens entirely
 in the browser and is never sent as a separate request: "Use prompt" inserts the
 text at the composer cursor.
 
-## Slash discovery and provenance (US-51.3)
+## Slash discovery and provenance
 
 At the start of a message, typing `/` lists eligible skills first, then
 `/template` (opens the list), bundled frameworks by ID (`/rtf`, `/co-star`) and
@@ -66,7 +69,7 @@ with the composer draft in this tab's session storage (scoped to user and
 workspace) and survives a reload. A restored chip is only a client claim; the
 server re-resolves it on send, so a template deleted meanwhile rejects the send
 with 404 until the chip is removed.
-`level` is the scaffolding level the prompt was built at (US-51.5) and is
+`level` is the scaffolding level the prompt was built at and is
 required.
 
 The server resolves the claim before accepting the message: a framework must be
@@ -83,7 +86,7 @@ framework no longer in the catalog, keeps its recorded name and is shown as
 "Built with <name> · unavailable". The label is provenance only: it does not
 change execution, prompt composition or capabilities.
 
-## Library and editor (US-51.4)
+## Library and editor
 
 **User Settings → Templates** (`?t=user&setting=templates`) lists the bundled
 frameworks (read-only, with their catalog revision) and a searchable, paged list
@@ -118,7 +121,7 @@ picker, so saves refresh both).
   is confirmed; messages built with the template keep their label, shown as
   unavailable.
 
-## Scaffolding levels (US-51.5)
+## Scaffolding levels
 
 Every template supports three levels, chosen with the **Guided / Standard /
 Freeform** tabs at the top of the builder (composer and editor preview alike).
@@ -140,7 +143,8 @@ as `template.level`. The server stores it in the message's provenance, and the
 history label shows it too. A restored draft whose stored level is unknown drops
 the chip.
 
-The document additions behind the levels are in ADR-0026's US-51.5 addendum:
+The document additions behind the levels are in an addendum to
+[ADR-0026](../adr/0026-prompt-template-documents-and-framework-catalog.md):
 
 - `fields[].example`: an optional hint of up to 500 characters, shown only at the
   guided level and never inserted into the prompt.
@@ -156,7 +160,7 @@ The bundled frameworks are at revision 2 (`CATALOG_VERSION` 2). Each has a
 checklist and field examples, and RTF, CO-STAR, CRAFT and step-by-step wrap their
 optional fields in sections.
 
-## Prompt coach (US-51.6)
+## Prompt coach
 
 An optional **Review prompt** item in the composer's **+** menu critiques the
 current draft against a fixed rubric: goal, audience, context, constraints,
@@ -196,12 +200,13 @@ Nothing is sent to the chat; sending stays an explicit action.
 `Cache-Control: no-store`, the draft text is never logged, and the frontend
 keeps the review only in component state (not in the saved composer draft). It
 is cleared on dismiss and when the message is sent. The coach keeps the
-reviewed draft in memory as the "before" prompt for the US-51.7 comparison.
+reviewed draft in memory as the "before" prompt for the
+[before/after comparison](#beforeafter-comparison).
 
 **Trust.** The draft is untrusted text and the review only produces suggested
 composer text. Neither grants tools, files, MCP or delegation.
 
-## Before/after comparison (US-51.7)
+## Before/after comparison
 
 Once at least one suggestion has been applied, the review panel offers
 **Compare before/after** (when the composer has a selected model and the draft
@@ -216,7 +221,7 @@ another on the same model, are headed **Before** and **After** with the model na
 beside them, and the conversation continues from **Before** until the user picks
 **After**. Sending clears the composer and the review like any send.
 
-## Rubrics (US-57.1)
+## Rubrics
 
 Rubrics are the `rubric` kind of this domain: rows of `prompt_templates` with
 `kind = "rubric"` and their own document format, owner-scoped selects and API

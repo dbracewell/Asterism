@@ -142,7 +142,7 @@ still waiting ([ADR-0027](../adr/0027-side-by-side-comparison-branches.md)).
 
 When a turn's request would exceed most of the model's context window, the job
 first summarizes the start of the branch, then runs the turn
-([agent runtime](agent-runtime.md#context-compaction-us-691)). The user can also ask for
+([agent runtime](agent-runtime.md#context-compaction)). The user can also ask for
 it with the `compact` command ("Compact now"). Compaction takes the chat's work
 slot like a turn, so it never overlaps one, and it reports progress in
 `compaction` packets that are never part of an answer.

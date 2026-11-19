@@ -44,7 +44,7 @@ Moving a chat rejects the former project's pending prompt until regeneration.
 Forwarded history is user-message task data with a total token budget, and private
 system messages are excluded from delegated trace history. Profile layers are
 supported by the composer; runtime persona binding remains absent. See
-[agent runtime](../architecture/agent-runtime.md#composable-prompts).
+[agent runtime](../architecture/execution-context.md#what-a-turn-is-made-of).
 
 | Gate                           | Result                                                                                          |
 | ------------------------------ | ----------------------------------------------------------------------------------------------- |
@@ -98,7 +98,7 @@ message citations retain scope revision provenance.
 Agent knowledge-base assignment storage, endpoints, response fields, service
 enrichment, and editing controls are removed. Standalone knowledge-base management
 remains scheduled for EPIC-28. See [retrieval architecture](../architecture/knowledge-retrieval.md)
-and [agent runtime](../architecture/execution-context.md#ownership-and-dependencies).
+and [agent runtime](../architecture/execution-context.md#module-boundaries).
 
 | Gate                           | Result                                                                                                   |
 | ------------------------------ | -------------------------------------------------------------------------------------------------------- |

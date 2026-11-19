@@ -70,7 +70,7 @@ project always shows Study, whatever the educator's project hides.
 While a student is a current member of the class, the class's mode policy limits
 learning modes and answer reveals in their course project. It combines with the
 student's own lock into one effective mode policy where the stricter rule wins;
-see [Mode policy](execution-context.md#mode-policy).
+see [Mode policy](learning-modes.md#mode-policy-the-learners-lock-and-course-rules).
 
 "New project" opens a wizard (US-65.3) in a dialog: starting point (Study a
 course, Ask my documents, Agent workspace, Blank), name and description, files

@@ -1,4 +1,9 @@
-# Agent runtime and execution lifecycle
+# Agent runtime
+
+This guide explains the agent loop: how a configured agent and a chosen model
+turn into a bounded run that streams text, calls tools and delegates to
+sub-agents, and what each run records. Read it before changing the loop,
+delegation, compaction or the records the chat footer shows.
 
 Each user has one model-free main-agent configuration. Chats use that configuration
 and independently persist a selected model. Sub-agent definitions each bind exactly
@@ -61,46 +66,25 @@ flowchart TD
     Scope -->|same or narrower ceiling| Child
 ```
 
-## Composable prompts
+## Prompts and what a run records
 
-[PromptComposer](../../apps/backend/asterism/domains/agent/prompts.py) composes unique
-layers in this order:
+The [execution context guide](execution-context.md#what-a-turn-is-made-of) lists
+the prompt layers and where each comes from. Here it matters how they are kept.
 
-| Layer      | Authority and source                                                                   |
-| ---------- | -------------------------------------------------------------------------------------- |
-| `platform` | Mandatory platform rules and capability restrictions                                   |
-| `agent`    | Versioned main or delegated role/instructions                                          |
-| `profile`  | Pinned About you text, framed as information about the user; omitted when blank        |
-| `mode`     | Pinned server-owned learning-mode instructions; main-agent only                        |
-| `project`  | Project task instructions and context revision, when applicable                        |
-| `skills`   | Explicit ordered, pinned skill instructions; main-agent only                           |
-| `runtime`  | Server-authorized tool names and eligible target metadata; bounded to 8,000 characters |
+Each run stores a private `PromptSnapshot` with the layers' text, so a replay can
+send exactly what was sent before, and a public `PromptProvenance` with only the
+composer revision and each source's ID, revision and digest. Both live in the
+immutable `chat_executions` record. Chat responses carry the provenance, never the
+text.
 
-Agent role and what the user says about themselves remain authoritative; project text
-refines the task within them. User requests, files, retrieved excerpts, and forwarded
-conversation are untrusted task data. Prompt order and instructions cannot grant
-capabilities, delegation, or file access; executable authorization enforces them.
-
-Estimation, main execution, delegation, and replay use the shared composition path.
-Private `PromptSnapshot` stores replay inputs; public `PromptProvenance` records
-composer revision plus source IDs/revisions/digests without instruction text.
-Project edits affect new turns/regeneration; resume uses its existing snapshot
-with current access rechecks. The profile layer uses the turn's pinned About you
-text (source `about-you`) and records its revision. Edits affect new turns;
-regeneration explicitly reads the current text. Delegates inherit the same
-recorded layer. Private immutable `chat_executions` records
-preserve historical prompts, while public metadata contains identity and digests.
-Skills retain the source turn's pinned snapshots during regeneration as well as
-resume; changes require explicit accepted selection/refresh. Live owner, assignment
-and admin-policy checks run before generation and provider output. Delegates do
-not inherit parent activations. See the [skills contract](skills.md).
-See [ADR-0066](../adr/0066-about-you.md).
-The `mode` layer uses the turn's pinned learning-mode snapshot; resume replays it,
-and regeneration captures the chat's current selection. It outranks project and
-skill text but not About you. Delegates do not receive it. See
-[ADR-0028](../adr/0028-learning-mode-layer.md). Modes with tiered hints append
-the turn's branch hint level to the layer; see
-[ADR-0029](../adr/0029-branch-local-hint-levels.md).
+- **Project, agent and mode edits** affect new turns and regenerations. Resume
+  uses the snapshot, with live access checks.
+- **About you, skills and the learning mode** are pinned on the user's message
+  ([execution context](execution-context.md#about-you-on-a-turn)). Regenerate keeps
+  the pinned skills but reads the current About you text and mode. Live owner,
+  assignment and admin-policy checks run before generation.
+- **Sub-agents** inherit the recorded About you layer but not the mode or the
+  parent's skills ([skills](skills.md), [learning modes](learning-modes.md)).
 
 ## Bounded loop and streaming
 
@@ -130,8 +114,8 @@ current effective allowlist. See [tool authorization](tool-authorization.md).
 Live authorization (`authorization_check`: skills, sub-agent target)
 runs at the start of the run and of each loop step, when the provider stream
 starts, and on each completed step before it is recorded or its tools run. It
-does not run per text or thinking delta, since each check reads the database
-(US-77.1); a revocation mid-stream stops the turn at that step's completion.
+does not run per text or thinking delta, since each check reads the database;
+a revocation mid-stream stops the turn at that step's completion.
 
 Agent events include `START`, `DELTA`, `TOOL_CALL`, `COMPLETE`, `ERROR`, and
 `SUB_AGENT`. The chat layer maps them to socket packets and persists actual model,
@@ -164,8 +148,8 @@ The child inherits the same file ceiling and can only narrow internal tool scope
 Its ordinary capabilities come from its own configuration intersected with active
 admin policy; they need not duplicate the parent's ordinary capabilities.
 
-`sub_agent` checks the call stack for cycles and bounds recursion with
-`MAX_SUB_AGENT_DEPTH` (default 3). It forwards bounded caller notes, file metadata,
+`sub_agent` checks the call stack for cycles and bounds recursion with the
+`max_sub_agent_depth` setting (default 3). It forwards bounded caller notes, file metadata,
 and recent parent history as untrusted data, not authoritative system instructions.
 The default history window is 10 messages and 4,000 estimated tokens; the combined
 forwarded block is token-bounded. No sibling-chat history is fetched.
@@ -176,7 +160,7 @@ project or General set revision/identity changes, configuration/model revocation
 or cancellation;
 an in-flight silent child is polled rather than allowed to complete unchecked.
 Child text deltas are rechecked at most once per poll interval; every other child
-event is checked before it is forwarded (US-77.1).
+event is checked before it is forwarded.
 See [context isolation](context-isolation.md) for source ceilings and history limits.
 
 Each forwarded child event is wrapped in a `SubAgentEventEnvelope` and sent as a
@@ -208,28 +192,30 @@ persists (`Message.delegations`), so each record belongs to the step that ran it
 - Records live in the owner's chat and are deleted with it. The audit trail stays
   in `sub_agent_traces` (digests only).
 
-### Run usage and cost (US-54.1)
+### Run usage and cost
 
-Each main-agent model call persists as one assistant message with its
-provider-reported `input_tokens`/`output_tokens`. Each `DelegationRecord` adds
-`steps` (one `UsageStep` per child `COMPLETE` event) and the child model's
-`model_id`, `provider_type` and `pricing`, taken from the resolved model.
+Each main-agent model call is stored as one assistant message with the
+`input_tokens` and `output_tokens` the provider reported. Each `DelegationRecord`
+adds `steps` (one `UsageStep` per child `COMPLETE` event) and the child model's
+`model_id`, `provider_type` and `pricing`.
 
-Admins may set optional `pricing` per model (`ModelPricing`: US dollars per
-million input and output tokens, both or neither; edited only through
-`PUT /app/providers/{id}/models/{model_id}`, kept by provider saves and catalog
-refreshes). It is snapshotted at execution time: into `ChatModelChoice.pricing`
-on the main execution when the turn is accepted, and into delegation records
-when the child resolves its model. Usage views read only these recorded values, so
-later price edits never rewrite past runs.
+Prices are copied onto the run when it uses a model: into `ChatModelChoice.pricing`
+for the main execution when the turn is accepted, and into the delegation record
+when the child resolves its model. So later price edits never change what a past
+run cost. The admin sets prices per model
+([LLM providers](llm-providers.md#model-pricing)).
 
-The chat footer of a turn's final step sums the turn's steps
-(`features/chat/lib/run-usage.ts`). Models without prices show tokens only, and
-a cost that leaves out unpriced steps is marked partial. Steps on a ChatGPT plan
-(`provider_type = chatgpt`) show "ChatGPT plan" instead of dollars. Opening the
-summary breaks totals down per agent and per model call.
+The chat footer of a turn's last step adds up its steps
+(`features/chat/lib/run-usage.ts`). Models without prices show tokens only, a cost
+that leaves out unpriced steps is marked partial, and steps on a ChatGPT plan show
+"ChatGPT plan" instead of dollars. Opening the summary breaks the totals down per
+agent and per model call.
 
-### Capability manifest (US-54.2)
+Separately, every model call, including titles, captions, study tools and images,
+is written to the usage ledger, which drives usage views and group budgets
+([ADR-0073](../adr/0073-usage-ledger-and-budgets.md)).
+
+### Capability manifest
 
 Each agent run records a `CapabilityManifest` (`agent/capabilities.py`). It
 lists the run's tools, skills, sub-agents and files. Each entry names the grants
@@ -258,7 +244,7 @@ manifests and never recomputes them from current settings.
 `features/chat/lib/capability-manifest.ts` supplies the dialog's data. MCP
 servers are not implemented yet, so manifests have no MCP entries.
 
-### Context inspector (US-54.3)
+### Context inspector
 
 Each persisted assistant step records a `ContextManifest`
 (`agent/context_manifest.py`) of what the model was given. It holds references
@@ -298,7 +284,7 @@ The chat footer's "Context" dialog fetches the layer text only when opened.
 Retrieved excerpts come from the step's persisted tool results and render as
 untrusted plain text. File names come from the scope-checked file-info query.
 
-### Context compaction (US-69.1)
+### Context compaction
 
 Before each main-agent run, after prompt assembly, the orchestrator estimates
 the request (system prompt, history, tool schemas, image allowance, reserved
@@ -322,7 +308,7 @@ unknown, it compacts first (`chat/compaction.py`). See
 - If compaction fails, or the request still exceeds the full window, the run
   emits an error and sends no model request; the turn stays pending.
 - Sub-agent runs are not compacted.
-- "Compact now" (US-69.2) is the `compact` socket command. It summarizes all but
+- "Compact now" is the `compact` socket command. It summarizes all but
   the verbatim tail regardless of usage, inside the chat's work slot. Progress is
   reported as `compaction` packets; the transcript draws a divider after each
   anchor from the chat's `compactions`.
@@ -330,7 +316,7 @@ unknown, it compacts first (`chat/compaction.py`). See
   (`GET/PUT /settings/app/compaction`); a dedicated summarizer must be an active
   model of an admin-managed provider.
 
-### Fork from a step (US-54.5)
+### Fork from a step
 
 A delegation node's "Fork from here" re-runs a finished run from that
 delegation, with that sub-agent's instructions changed for this run only. See
@@ -358,7 +344,7 @@ delegation, with that sub-agent's instructions changed for this run only. See
 - Saving the instructions to the definition is a separate action:
   `PUT /agents/sub-agents/{agent_id}/instructions` with the expected revision.
 
-### Run diff (US-54.6)
+### Run diff
 
 Two runs on different branches can be compared: comparison columns ("Diff
 answers" under a comparison), and a turn whose branch was regenerated, edited
@@ -372,6 +358,26 @@ chain. `features/chat/lib/run-diff.ts` compares two runs from their records
 only: a word-level diff of the final answers (line-level, then whole-text, for
 long answers), agents and their models, tool calls by name, usage totals and
 capability-manifest entries. Answers render as plain untrusted text.
+
+## Grounded answers
+
+Three features help a user judge an answer. None of them edits it, and those that
+read files use only the answer's recorded file scope, through `RetrievalService`.
+
+- **Claim citations.** The model may mark a claim with an `asterism-cite:` token
+  pointing at a passage its run retrieved. The server resolves each token against
+  that run's results and the chat's current files; anything else renders as an
+  unavailable citation ([ADR-0040](../adr/0040-claim-level-citations.md)).
+- **Verify.** `POST /chat/{chat_id}/messages/{message_id}/verify` lists up to 12
+  claims in a finished answer and labels each `supported`, `contradicted` or
+  `unsupported` from the user's files, within a 120-second budget, on a model the
+  user chooses. It never edits the answer
+  ([ADR-0041](../adr/0041-verify-pass.md)).
+- **Disagreements.** For a comparison, or for a step whose sub-agents returned
+  conflicting results, one model call lists where the answers disagree and points
+  back to each one, without choosing a winner. It compares two or three comparison
+  columns, or up to six delegation outputs
+  ([ADR-0042](../adr/0042-disagreement-display.md)).
 
 ## Resume, regeneration, and audit
 
@@ -387,7 +393,7 @@ snapshot without changing earlier turns' model labels.
 
 A turn that ends in an error (an agent `ERROR` event, an empty model response, or
 an unhandled exception) is finalized like a cancellation, so resume never re-runs
-it (US-77.2). The orchestrator records a `failed` assistant step with any streamed
+it. The orchestrator records a `failed` assistant step with any streamed
 output and the error text under the step it was answering, then marks the request
 `failed`. A failed fork step is recorded `failed` with its finished results. The
 client gets a `complete` packet with the recorded messages and then the `error`
