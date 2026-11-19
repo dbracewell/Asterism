@@ -1,9 +1,17 @@
-# Study tools (EPIC-53)
+# Study tools
 
-The `study` backend domain turns project material into study records. Decisions
-are recorded in [ADR-0033](../adr/0033-study-domain-and-scheduling.md).
+This guide explains how the `study` domain turns a project's files into study
+material: flashcard decks and spaced-repetition review, practice quizzes and their
+grading, summaries, exam study plans and notes, and the progress panel that ties
+them together. Read it before changing any study route or page. Decisions are
+recorded in [ADR-0033](../adr/0033-study-domain-and-scheduling.md).
 
-## Decks and cards (US-53.1)
+Everything here belongs to one project and one user. Drafting and grading run on a
+model the learner chooses and are subject to their usage budget
+([usage and budgets](usage-and-budgets.md)). Citations point at chunks of the
+project's files and are rechecked against the project's live files when read.
+
+## Decks and cards
 
 Decks belong to one user and one project; cards belong to one deck. Composite
 foreign keys pin each row to its owner, and deleting a project (or its user)
@@ -31,7 +39,7 @@ The project overview lists decks under **Study decks**. Each deck opens at
 `/projects/{projectId}/study/{deckId}`, where the learner edits the deck and
 adds, edits and deletes cards. Editing a card keeps its citations.
 
-## Card drafts (US-53.2)
+## Card drafts
 
 `POST /projects/{project_id}/study/decks/{deck_id}/card-drafts` takes
 `{model_id, count, file_ids}` and returns `{drafts, files}` with
@@ -53,7 +61,7 @@ discards each draft. **Accept all** saves the remaining drafts. Accepting uses
 the ordinary card create route, so citations are checked again on save.
 Drafting again with unaccepted drafts asks for confirmation first.
 
-## Spaced-repetition review (US-53.3)
+## Spaced-repetition review
 
 | Route                                            | Behavior                                                         |
 | ------------------------------------------------ | ---------------------------------------------------------------- |
@@ -77,7 +85,7 @@ Cards still in a short learning step (due within 20 minutes) come back later in
 the same session. Only an explicit **Review more due cards** starts a new
 session; background refetches never reset one.
 
-## Practice quizzes (US-53.4)
+## Practice quizzes
 
 Decisions are recorded in [ADR-0035](../adr/0035-practice-quizzes-and-grading.md).
 
@@ -112,7 +120,7 @@ defaults to the generating model. Submitting opens the results at
 rubric, explanation, feedback and source citations. Question, option, rubric
 and feedback text are untrusted and render through `MarkdownViewer`.
 
-## Progress panel (ADR-0067)
+## Progress panel
 
 Weak spots, topics and unclear items are three views of one study record. They
 are read together and practised through one route
@@ -143,7 +151,7 @@ Each part has an empty state: no topics yet, no practice yet or nothing needs
 practice right now, and no unclear items. Prompts and reflection text are
 untrusted; prompts render through `MarkdownViewer` and items as plain text.
 
-## Weak spots (US-53.5)
+## Weak spots
 
 Decisions are recorded in [ADR-0036](../adr/0036-weak-spots-and-practice.md),
 amended by [ADR-0067](../adr/0067-progress-panel.md).
@@ -161,7 +169,7 @@ questions keep their answer key (options reshuffled), and weak cards become
 short-answer questions graded against the card's back. Answering a copy counts
 towards its original. With no weak spots the route returns 400.
 
-## Summaries, study guides and notes (US-53.6)
+## Summaries, study guides and notes
 
 Decisions are recorded in [ADR-0037](../adr/0037-study-notes-summaries-and-guides.md).
 
@@ -188,7 +196,7 @@ renders the body through `MarkdownViewer`, lists its sources, and offers edit
 (title and Markdown body) and delete. Generating again with an unsaved draft
 asks for confirmation.
 
-## Topics and mastery (US-58.3)
+## Topics and mastery
 
 Decisions are recorded in [ADR-0049](../adr/0049-topic-mastery.md), amended by
 [ADR-0067](../adr/0067-progress-panel.md).
@@ -221,13 +229,13 @@ without items is 400.
 Deck forms and the quiz **Edit details** dialog edit topics as
 comma-separated text.
 
-## Unclear items (US-58.4)
+## Unclear items
 
 Decisions are recorded in [ADR-0050](../adr/0050-unclear-items-feed-review.md),
 amended by [ADR-0067](../adr/0067-progress-panel.md).
 
-| Route                                             | Behavior                                                                                                   |
-| ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| Route                                             | Behavior                                                                                                            |
+| ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
 | `POST /projects/{project_id}/study/unclear-cards` | `{reflection_id, item, deck_id?, front, back, weak_spot}`; one card (201), 400 for an unknown item, 409 if repeated |
 
 The server splits each project reflection's unclear text into items: one per

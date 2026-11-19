@@ -77,18 +77,18 @@ Source: user request (2026-11-18). Suggested order: [EPIC-87](docs/epics/EPIC-87
   - [x] `skills.md`, `prompt-templates.md`, `context-isolation.md`: refresh and remove history narration.
   - [x] `llm-providers.md`: provider modes, model capabilities, ChatGPT plan connections, pricing used by the usage ledger.
   - [x] New `learning-modes.md`: the modes, hint levels and show answer, how the effective mode is chosen (ADR-0068), and how class policy restricts it.
-- [ ] US-87.4: Data, files and knowledge
+- [x] US-87.4: Data, files and knowledge
   - [x] `data-and-storage.md`: schema overview by domain (with an entity diagram), message tree, FTS search, migrations (ADR-0069); correct the serialization section, which names a `JSONB_COLUMN` helper that does not exist.
   - [x] Merge or clearly divide `knowledge-retrieval.md` and `file-knowledge-processing.md` so each topic has one home: processing pipeline in one, scoped retrieval in the other.
   - [x] `backup-and-restore.md`, `development-reset.md`: refresh against the current commands.
   - [x] New `usage-and-budgets.md`: the usage ledger, what is recorded, group budgets, where refusals happen, what is never refused.
   - [x] Add "Download my data" (ADR-0076) and user deletion to the data lifecycle section.
 - [ ] US-87.5: Product domains without a guide
-  - [ ] New `classes-and-courses.md`: classes, educators, invites, courses, course-managed content, mode policy and class insights.
-  - [ ] New `canvas.md`: branch-aware canvas versions, the tools, trust rules and preview isolation.
-  - [ ] New `image-generation.md`: provider configuration, group access, the prompt check, recording and produced files.
-  - [ ] New `team-packs.md`: export and import, the manifest (ADR-0051) and what a pack never grants.
-  - [ ] `study-tools.md`, `project-workspaces.md`: refresh against today's study pages (decks, review, quizzes, notes, summaries, guides, drafts) and project settings.
+  - [x] New `classes-and-courses.md`: classes, educators, invites, courses, course-managed content, mode policy and class insights.
+  - [x] New `canvas.md`: branch-aware canvas versions, the tools, trust rules and preview isolation.
+  - [x] New `image-generation.md`: provider configuration, group access, the prompt check, recording and produced files.
+  - [x] New `team-packs.md`: export and import, the manifest (ADR-0051) and what a pack never grants.
+  - [x] `study-tools.md`, `project-workspaces.md`: refresh against today's study pages (decks, review, quizzes, notes, summaries, guides, drafts) and project settings.
 - [ ] US-87.6: Frontend
   - [ ] Split `frontend-and-themes.md` into `frontend.md` (app shell, routing, data loading with TanStack Query and Hey API, layout and scrolling rules, settings structure) and `themes.md` (ownership, tokens, Theme Editor).
   - [ ] Replace the product-surface inventory with the current admin and user settings sections; only Code Execution is still Planned.

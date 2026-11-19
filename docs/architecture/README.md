@@ -57,17 +57,17 @@ After that, read whichever guide covers the part you are changing.
 | How to initialize or reset a development database                          | [Development initialization and reset](development-reset.md)    |
 | How projects, project files and project sub-agents work                    | [Project workspaces](project-workspaces.md)                     |
 | How flashcards, quizzes, notes and progress work                           | [Study tools](study-tools.md)                                   |
+| How educators run classes, publish courses and see class insights          | [Classes and courses](classes-and-courses.md)                   |
+| How the canvas stores, versions and sandboxes documents                    | [Canvas](canvas.md)                                             |
+| How image generation works, from request to saved image                    | [Image generation](image-generation.md)                         |
+| How a setup is shared as a team pack, and what a pack can't do             | [Team packs](team-packs.md)                                     |
 | How the frontend is laid out, and how themes and chat components work      | [Frontend layout and themes](frontend-and-themes.md)            |
 | What Markdown, links, math and file content may do                         | [Markdown and file-content trust](markdown-content.md)          |
 | Where custom themes are stored and how they are saved                      | [Theme storage](theme-storage.md)                               |
 | Where the bundled palettes come from and how contrast was checked          | [Bundled theme palettes](bundled-theme-palettes.md)             |
 | Which theme and layout checks run, and which are manual                    | [Theme and layout review matrix](theme-layout-review-matrix.md) |
 
-Some shipped features do not have a guide of their own yet: classes and courses,
-canvas, image generation and team packs. Until they do,
-their ADRs are the reference: [classes](../adr/0053-classes-and-educators.md),
-[canvas](../adr/0063-canvas.md), [image generation](../adr/0064-image-generation.md),
-[team packs](../adr/0051-team-pack-format.md). The
+The
 [2026-11-18 audit](../reviews/2026-11-18-architecture-docs-audit.md) lists the
 known gaps and errors in the existing guides, and
 [EPIC-87](../epics/EPIC-87-ARCHITECTURE-DOCS-REFRESH.md) fixes them.

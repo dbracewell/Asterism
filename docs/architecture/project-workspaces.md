@@ -1,4 +1,14 @@
-# Project workspaces (US-27.1–27.3)
+# Project workspaces
+
+This guide explains projects as the user sees and edits them: the sidebar's
+General and Projects lists, project pages and their settings, project files,
+which files a chat can see, project sub-agents and the chat model picker, learning
+goals and reflections. Read it before changing project or sidebar components. How a
+turn uses a project's files and sub-agents is in
+[execution context](execution-context.md); course projects, which a student can't
+edit while in the class, are in
+[classes and courses](classes-and-courses.md#course-managed-records); sharing a
+project's setup is in [team packs](team-packs.md).
 
 The sidebar exposes General and Projects with expandable lists. General always
 queries chats with a null project ID and shows five chats per page, independently
@@ -42,7 +52,7 @@ text, including “No chats yet.”, and removes those controls from keyboard ac
 | `/?project_id=[projectId]`        | New chat composer with explicit project identity and model selection         |
 | `/c/[chatId]`                     | Existing chat with linked workspace identity and move dialog                 |
 
-The workspace is organized into tabs (US-65.1): Overview (goal and the five
+The workspace is organized into tabs: Overview (goal and the five
 latest chats, linking to all), Chats, Files, Study (decks, the Progress panel,
 quizzes and notes), Reflections, Sub-agents and Settings (details, team
 pack export and deletion). The active tab is the `tab` search parameter. Tab
@@ -52,7 +62,7 @@ tab and the page never remounts. Only the active tab's content is mounted,
 except Settings, which stays mounted (hidden) so an unsaved draft survives
 switching tabs. Study pages link back to the Study tab.
 
-Each project stores its feature areas (US-65.2) in `projects.areas`, a JSON
+Each project stores its feature areas in `projects.areas`, a JSON
 object with four required booleans: `study`, `reflections`, `goal` and
 `sub_agents`. New projects, and team packs without `areas`, start with all four
 on. Settings shows a switch for each, saved with the other settings. An area
@@ -72,7 +82,7 @@ learning modes and answer reveals in their course project. It combines with the
 student's own lock into one effective mode policy where the stricter rule wins;
 see [Mode policy](learning-modes.md#mode-policy-the-learners-lock-and-course-rules).
 
-"New project" opens a wizard (US-65.3) in a dialog: starting point (Study a
+"New project" opens a wizard in a dialog: starting point (Study a
 course, Ask my documents, Agent workspace, Blank), name and description, files
 and instructions, goal (only while the Goal area is on) and review. A starting
 point only pre-fills instructions and areas; changing it replaces pre-filled
@@ -118,24 +128,7 @@ attachments remain, library files remain, project memberships/instructions are
 removed, and active runs are canceled. Deletion sends the current context revision.
 The backend remains responsible for ownership and live authorization on all paths.
 
-## Story boundary and verification
-
-Chat model selection and project sub-agent selection are described below.
-Standalone folder and knowledge-base domains, API paths, generated contracts, and
-UI routes are removed. Fresh initialization creates only the supported schema;
-the current database is retained during verification.
-
-Component tests cover project creation/search/pagination, loading/error/empty and
-cached refresh failures, scoped new-chat links, guarded settings edits/conflicts,
-deletion confirmation/cancel, moves/rejections, and active-run disabling. Browser
-coverage mounts the same production components on a test-only, unauthenticated
-harness with mocked generated-client HTTP endpoints. It verifies navigation links,
-request scopes/bodies/revisions, project settings, deletion, moves, retries, and
-desktop/mobile layout. Existing backend project/chat tests cover real ownership,
-revision, move, and deletion behavior. Harness tests do not exercise an authenticated
-end-to-end project workflow or external model providers.
-
-## Composable project files (US-27.2)
+## Composable project files
 
 The project overview and library compose the same FileManager provider, ribbon,
 list/grid, selection, search/sort/pagination, upload control, drop zone, processing
@@ -177,7 +170,7 @@ harness with mocked HTTP endpoints; it checks membership requests, upload, filte
 selection, links, deletion separation, and desktop/mobile layout. It does not test
 an authenticated project workflow against a real backend or external providers.
 
-## Visible chat attachment scope (US-27.3)
+## Visible chat attachment scope
 
 The new-chat and saved-chat composers expose a collapsible **Files in context**
 display. Project files and active-branch chat attachments are separate groups.
@@ -220,7 +213,7 @@ moving chats never automatically promote it. Active generation disables these co
 the backend independently enforces lifecycle and live scope boundaries.
 
 Retrieval sources read validated `search_knowledge` tool-result metadata and
-render as numbered chips, one per file in first-retrieval order (US-43.5). A chip's
+render as numbered chips, one per file in first-retrieval order. A chip's
 hover/focus preview shows the file name, the first matched `excerpt` (whitespace
 collapsed, 280 characters, plain text), project/chat provenance at retrieval,
 artifact generation, match kind and the passage count. Each chip rechecks live chat
@@ -330,7 +323,7 @@ selection atomicity, execution snapshots, and candidate filtering before paginat
 The browser harness does not invoke real provider services or authenticated user
 sessions against the real backend.
 
-## Learning goals (US-58.1)
+## Learning goals
 
 A project has an optional `goal` (up to 1,000 characters) and
 `goal_target_date` (ISO date; explicit `null` clears it on `PATCH`). Both are
@@ -349,7 +342,7 @@ lists it. The toggle follows the latest turn until the learner changes it. The
 goal is the learner's own text: it adds no prompt layer and grants nothing.
 See [ADR-0047](../adr/0047-project-learning-goals.md).
 
-## Session reflections (US-58.2)
+## Session reflections
 
 `reflections` rows hold a learner's answers to "What did I learn?" and "What's
 still unclear?" (each up to 2,000 characters; at least one non-blank). Each row
