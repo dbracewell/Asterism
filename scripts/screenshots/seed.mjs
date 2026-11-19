@@ -512,6 +512,32 @@ export async function seedDemo({
     );
   }
 
+  // Version 2 adds practice questions, so students see an update to take.
+  const practice = await teacher.uploadFile(
+    demo.courseUpdate.file.name,
+    demo.courseUpdate.file.type,
+    demo.courseUpdate.file.text,
+  );
+  await teacher.waitProcessed(practice);
+  const coursePage = await teacher.api(
+    "course project",
+    "GET",
+    `/projects/${courseProject.id}`,
+  );
+  await teacher.api(
+    "course file",
+    "POST",
+    `/projects/${courseProject.id}/files`,
+    {
+      expected_context_revision: coursePage.context_revision,
+      file_ids: [practice.id],
+    },
+  );
+  await teacher.api("publish course", "POST", `/classes/${room.id}/course`, {
+    project_id: courseProject.id,
+    note: demo.courseUpdate.note,
+  });
+
   // Maya's own copy of the course, a project in her sidebar.
   const mayaProjects = await maya.api("projects", "GET", "/projects/");
   const courseCopy = (

@@ -1024,8 +1024,86 @@ export const shots = [
 
   // --- Educators -------------------------------------------------------------------
   {
+    name: "educator-classes",
+    alt: "The Classes page for an educator: under Teaching, the Biology 101, Period 3 class with 2 students, and a form with Class name, Description and Create class",
+    as: "educator",
+    path: () => "/classes",
+    ready: ["Teaching", "Create class"],
+    steps: async (page) => {
+      await page
+        .getByRole("heading", { name: "Teaching" })
+        .evaluate((node) => node.scrollIntoView({ block: "start" }));
+    },
+  },
+  {
+    name: "class-invites",
+    alt: "Invites for new students after Create invites: a new link for each name typed, with a button to copy each one, and a note that the links aren't shown again",
+    as: "educator",
+    path: (ids) => `/classes/${ids.classroom}`,
+    ready: ["Invites for new students"],
+    steps: async (page) => {
+      await page
+        .getByLabel("Student names, one per line")
+        .fill("Priya Natarajan\nTom Okonkwo");
+      await page.getByRole("button", { name: "Create invites" }).click();
+      const links = page.locator('[aria-label="New invite links"]');
+      await links.waitFor();
+      await links.evaluate((node) => node.scrollIntoView({ block: "center" }));
+    },
+  },
+  {
+    name: "class-course",
+    alt: "The Course section of a class: Project to publish, What's new, Publish version 3, and the two published versions with their notes",
+    as: "educator",
+    path: (ids) => `/classes/${ids.classroom}`,
+    ready: ["Project to publish"],
+    steps: async (page) => {
+      await page
+        .getByRole("heading", { name: "Course" })
+        .evaluate((node) => node.scrollIntoView({ block: "start" }));
+    },
+  },
+  {
+    name: "class-mode-policy",
+    alt: "The Learning mode policy of a class: Tutor, Explain-back, Review my work and Spot the error ticked, Let students reveal answers and solutions switched off, and Save policy",
+    as: "educator",
+    path: (ids) => `/classes/${ids.classroom}`,
+    ready: ["Learning mode policy"],
+    steps: async (page) => {
+      await page
+        .getByRole("heading", { name: "Learning mode policy" })
+        .evaluate((node) => node.scrollIntoView({ block: "start" }));
+    },
+  },
+  {
+    name: "class-insights",
+    alt: "Where the class struggles: an explanation of the totals, and a note that insights appear once at least 5 students share their results, with 2 sharing so far",
+    as: "educator",
+    path: (ids) => `/classes/${ids.classroom}`,
+    ready: ["Where the class struggles"],
+    steps: async (page) => {
+      await page
+        .getByRole("heading", { name: "Where the class struggles" })
+        .evaluate((node) => node.scrollIntoView({ block: "center" }));
+    },
+  },
+  {
+    name: "student-classes",
+    alt: "A student's Classes page: Biology 101, Period 3 run by Dana Okafor, with Version 2 is available, the change it makes, Update to version 2, and Share my practice results in class totals switched on",
+    as: "student",
+    path: () => "/classes",
+    ready: ["Your classes", "Update to version 2"],
+  },
+  {
+    name: "course-managed",
+    alt: "A student's copy of the course: the project's Settings tab, marked Managed by Biology 101, Period 3, with every field greyed out and a note that only course updates can change it",
+    as: "student",
+    path: (ids) => `/projects/${ids.courseCopy}?tab=settings`,
+    ready: ["only course updates can change it"],
+  },
+  {
     name: "class-overview",
-    alt: "The educator's class page for Biology 101, Period 3, with two students and the published course",
+    alt: "The educator's page for Biology 101, Period 3: the class code with Copy join link and Replace code, Invites for new students with one unused invite, and the two students",
     as: "educator",
     path: (ids) => `/classes/${ids.classroom}`,
     ready: ["Period 3"],

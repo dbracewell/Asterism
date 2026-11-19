@@ -118,13 +118,25 @@ what your group can use.
 7. [Your data and your account](06-making-it-yours/your-data-and-account.md):
    downloading your data and asking for your account to be deleted.
 
+## For educators
+
+These pages are for educators: people who run classes in Asterism.
+
+1. [Running a class](07-for-educators/running-a-class.md): becoming an educator,
+   creating a class, the class code, invite links and students.
+2. [Sharing a course](07-for-educators/sharing-a-course.md): publishing a project
+   to the class, and what students see and can't change.
+3. [Setting the class's learning-mode rules](07-for-educators/class-mode-policy.md):
+   which modes students may use, and whether they can see answers.
+4. [Class insights](07-for-educators/class-insights.md): where the class
+   struggles, without seeing anyone's work.
+
 ## Chapters
 
 The other chapters are being written. Each one will appear here when it is ready.
 
 | Chapter            | What it covers                                                                     |
 | ------------------ | ---------------------------------------------------------------------------------- |
-| For educators      | Classes, invites, courses, learning-mode rules and class insights                  |
 | For administrators | First-time setup, providers, users, groups and budgets, usage, policies and themes |
 | Troubleshooting    | Common messages and what to do                                                     |
 

@@ -45,11 +45,18 @@ material with the class, and it shows up as a project in your sidebar.
 **Class code.** A short code from your educator. If you already have an account,
 you join a class by entering it under **Classes**.
 
+**Class insights.** Totals that show an educator which course files the class
+finds hard, from students who choose to share. Never chats, answers or one
+student's results.
+
 **Compare models.** Sending the same message to two or three models and seeing
 their answers side by side.
 
 **Context compaction.** When a chat gets very long, Asterism summarizes the
 earlier messages so the chat keeps working. Your messages are never deleted.
+
+**Course.** A project an educator shares with a class. Each student gets their
+own copy, which only the educator's updates can change.
 
 **Deck.** A group of flashcards in a project.
 

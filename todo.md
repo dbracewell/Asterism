@@ -122,11 +122,11 @@ Follow-ups found during the documentation epics (code, not documentation; each n
   - [x] Connecting a ChatGPT plan.
   - [x] Download my data and asking for your account to be deleted.
 - [x] US-89.8: For educators
-  - [ ] Creating a class and inviting students.
-  - [ ] Courses and course-managed content: what students see and cannot change.
-  - [ ] Setting mode policy for a class.
-  - [ ] Reading class insights.
-- [ ] US-89.9: For administrators, troubleshooting and review
+  - [x] Creating a class and inviting students.
+  - [x] Courses and course-managed content: what students see and cannot change.
+  - [x] Setting mode policy for a class.
+  - [x] Reading class insights.
+- [x] US-89.9: For administrators, troubleshooting and review
   - [ ] First-time setup: the admin passphrase, connecting a provider, enabling a model.
   - [ ] Providers and models, including pricing.
   - [ ] Users: invites, suspend and reactivate, reset links, deletion and deletion requests.

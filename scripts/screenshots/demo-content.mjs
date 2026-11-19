@@ -891,3 +891,19 @@ export const projectReflection = {
 export const aboutYou = `I'm in Year 11 and taking biology, chemistry and English.
 Unit 3 of biology is photosynthesis and respiration; the test is soon.
 I understand things best with an everyday example first.`;
+
+/** The course's second version: one more file, and a note for the students. */
+export const courseUpdate = {
+  note: "Added practice questions for the unit test.",
+  file: {
+    name: "unit-3-practice-questions.md",
+    type: "text/markdown",
+    text: `# Unit 3 practice questions
+
+1. Where in the chloroplast do the light-dependent reactions happen?
+2. What does the Calvin cycle use ATP and NADPH for?
+3. Name the three factors that can limit the rate of photosynthesis.
+4. Where in the cell does glycolysis happen?
+`,
+  },
+};
