@@ -26,17 +26,14 @@ Out of scope: new features, hosting, and automatic updates.
 
 - **One story at a time,** each confirmed and merged on its own.
 - **The CPU image is the one CI checks and publishes.** The GPU build stays a
-  build option (US-90.8).
-
-## Open questions (decide before the story that needs them)
-
-1. **Version scheme** (US-91.1): semantic versions from 0.2.0, or calendar
-   versions such as 2026.11.0?
-2. **Registry** (US-91.5): GitHub Container Registry (`ghcr.io/dbracewell/asterism`)
-   or another?
-3. **Architectures** (US-91.5): amd64 only, or amd64 and arm64? arm64 builds on
-   GitHub's hosted runners are slower or need arm runners.
-4. **GPU image** (US-91.5): publish a `-gpu` tag as well, or keep it build-only?
+  build option (US-90.8), and no GPU image is published.
+- **Semantic versions, starting at 0.2.0** (decided 2026-11-19). The project has
+  never released, and 0.x says the API and storage may still change between
+  minor versions; ADR-0069 keeps stored data upgradable either way.
+- **GitHub Container Registry,** as `ghcr.io/dbracewell/asterism` (decided
+  2026-11-19), next to the repository and its Actions.
+- **amd64 and arm64 images** (decided 2026-11-19): servers are mostly amd64, and
+  arm64 covers Apple Silicon and ARM servers. Both are checked before publishing.
 
 ## User stories
 
@@ -46,7 +43,7 @@ Suggested order: US-91.1 → 91.2 → 91.3 → 91.4 → 91.5 → 91.6.
 
 As an administrator, Status, backups and the image all name the same version.
 
-- [ ] Choose the single source of the version (open question 1) and make the
+- [ ] Set the version to 0.2.0 in one source and make the
       root, frontend and backend packages agree with it; a check in
       `pnpm check:workspace-tasks` (or its own script) fails when they differ.
 - [ ] Status and the backup manifest report that version, plus the git commit
@@ -98,12 +95,13 @@ As a maintainer, one command prepares a release the same way every time.
 As an administrator, I install and upgrade by pulling an image instead of
 building one.
 
-- [ ] On a `v*` tag, CI builds the CPU image (architectures per open question 3),
-      runs the US-91.2 checks, and pushes it to the registry (open question 2)
-      as the version and `latest`.
+- [ ] On a `v*` tag, CI builds the CPU image for amd64 and arm64, runs the
+      US-91.2 checks, and pushes it to `ghcr.io/dbracewell/asterism` as the
+      version and `latest`.
 - [ ] `docker-compose.yml` can use the published image, with building from source
       still documented; the deployment guide's install and upgrade steps use it.
-- [ ] The release notes link the image; a GPU tag per open question 4.
+- [ ] The release notes link the image, and say the GPU build is built from
+      source (`TORCH_VARIANT=gpu`).
 
 ### US-91.6: Test upgrading from the previous release
 

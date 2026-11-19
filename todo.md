@@ -58,12 +58,12 @@ Source: user request (2026-11-18). Suggested order: [EPIC-87](docs/epics/EPIC-87
 
 ## Release readiness (proposed 2026-11-19)
 
-Source: user request (2026-11-19), following EPIC-90. [EPIC-91](docs/epics/EPIC-91-RELEASE-READINESS.md) has four open questions to decide first (version scheme, registry, architectures, GPU image). Suggested order: US-91.1 → 91.6. Work one story at a time.
+Source: user request (2026-11-19), following EPIC-90. [EPIC-91](docs/epics/EPIC-91-RELEASE-READINESS.md): semantic versions from 0.2.0, images on GitHub Container Registry for amd64 and arm64, GPU build from source only (decided 2026-11-19). Suggested order: US-91.1 → 91.6. Work one story at a time.
 
 ### EPIC-91: Release readiness
 
 - [ ] US-91.1: One version for the app
-  - [ ] Choose the single source of the version (open question 1) and make the root, frontend and backend packages agree with it; a check in `pnpm check:workspace-tasks` (or its own script) fails when they differ.
+  - [ ] Set the version to 0.2.0 in one source and make the root, frontend and backend packages agree with it; a check in `pnpm check:workspace-tasks` (or its own script) fails when they differ.
   - [ ] Status and the backup manifest report that version, plus the git commit the image was built from (a build argument; "unknown" outside Docker).
   - [ ] The image carries OCI labels for version, commit and source.
   - [ ] Tests; update the deployment guide's upgrade steps ("Status shows the new version").
@@ -82,9 +82,9 @@ Source: user request (2026-11-19), following EPIC-90. [EPIC-91](docs/epics/EPIC-
   - [ ] It refuses a version that isn't newer, or empty release notes.
   - [ ] Document the steps, including pushing the tag, in `docs/development.md`.
 - [ ] US-91.5: Publish the image
-  - [ ] On a `v*` tag, CI builds the CPU image (architectures per open question 3), runs the US-91.2 checks, and pushes it to the registry (open question 2) as the version and `latest`.
+  - [ ] On a `v*` tag, CI builds the CPU image for amd64 and arm64, runs the US-91.2 checks, and pushes it to `ghcr.io/dbracewell/asterism` as the version and `latest`.
   - [ ] `docker-compose.yml` can use the published image, with building from source still documented; the deployment guide's install and upgrade steps use it.
-  - [ ] The release notes link the image; a GPU tag per open question 4.
+  - [ ] The release notes link the image, and say the GPU build is built from source (`TORCH_VARIANT=gpu`).
 - [ ] US-91.6: Test upgrading from the previous release
   - [ ] A CI job starts the previous release's image on a fresh volume, seeds data through the API (an account, a chat, a file with vectors, a theme), then starts the new image on the same volume.
   - [ ] It checks the container becomes healthy, both databases migrated, and the seeded data is there; and that the previous image refuses the upgraded volume with its version message.
