@@ -1,6 +1,6 @@
 # EPIC-89: User guide
 
-Status: proposed (2026-11-18). Source: user request (2026-11-18).
+Status: in progress (US-89.1 awaiting confirmation). Proposed 2026-11-18. Source: user request (2026-11-18).
 
 ## Objective
 
@@ -85,21 +85,56 @@ US-89.1 must come first; the chapter stories can be reordered.
 As a writer, I can regenerate every screenshot with one command against
 realistic, fictional data.
 
-- [ ] `pnpm docs:screenshots`: boot a disposable instance (reuse
+- [x] `pnpm docs:screenshots`: boot a disposable instance (reuse
       `scripts/capacity/instance.mjs` and the stub provider), never touching the
       working database.
-- [ ] Seed script for the demo dataset: an admin, an educator and two students in
+- [x] Seed script for the demo dataset: an admin, an educator and two students in
       their groups; a model provider and models; files in several formats; a
       project with files and a sub-agent; chats with branches, sources and a
       canvas; flashcard decks, a quiz and notes; a class with a course.
-- [ ] Stub provider serves scripted replies keyed to the demo prompts, so chat
+- [x] Stub provider serves scripted replies keyed to the demo prompts, so chat
       screenshots look like real answers.
-- [ ] Shot list file: each entry names the image, the page, the setup steps and
+- [x] Shot list file: each entry names the image, the page, the setup steps and
       the viewport. The script fails if a shot cannot be taken.
-- [ ] Fixed theme, fonts, dates and viewport so reruns produce the same images
-      apart from real UI changes.
-- [ ] Create `docs/guide/README.md`, the folder structure, a page template and
+- [x] Fixed theme, fonts, dates and viewport so reruns produce the same images
+      apart from real UI changes. (Dates the app shows and class join codes still
+      vary; see the notes below.)
+- [x] Create `docs/guide/README.md`, the folder structure, a page template and
       the writing rules (voice, steps, screenshots, alt text).
+
+#### Notes (US-89.1)
+
+- **Command.** `pnpm docs:screenshots` ([scripts README](../../scripts/README.md#docs-screenshotsmjs)).
+  A full run takes under two minutes on a cached image: about 10 s to start, 10 s
+  to set up and seed, and 3 s a shot.
+- **What is fixed, and what is not.** Theme (light Atlas), font size, viewport,
+  device scale, locale, time zone, reduced motion, the demo text and every model
+  reply are fixed. Dates and times shown by the app ("First seen", "Next review",
+  "1 minute ago") and the class join code come from the server clock and random
+  generator, so they change from run to run. Fixing them would need a fake clock
+  inside the container; not worth it for the guide.
+- **A scripted model, not the capacity stub.** The run reuses the capacity
+  check's container and session helpers, but the capacity stub only streams a
+  fixed list of words. The guide needs real answers, tool calls and JSON for the
+  study generators, so `scripts/screenshots/demo-provider.mjs` is a separate
+  double.
+- **First-run setup is photographed live.** The administrator account and provider
+  are created in the browser, so the setup screens are real. The passkey field is
+  masked before its picture is taken.
+- **Default model.** With more than one model enabled, only the administrator gets
+  a default model from setup; everyone else sees "Select a model…" until they
+  choose one. The seed sets a default for each demo person. US-89.2 and US-89.3
+  must explain choosing a model.
+- **Branches come from Regenerate.** There is no way to edit a sent message;
+  "Editing" in US-89.3 means regenerating. Found a probable bug: regenerating an
+  answer that searched files puts the new branch on the hidden tool-call step, so
+  its switcher never shows (tracked in `todo.md`). The demo branch is a General
+  chat without a search step.
+- **README picture.** The `chat-tutor` shot also writes `docs/images/asterism-chat.png`,
+  so the README's picture is regenerated with the guide's.
+- **Open question 2 (commit screenshots) is decided: yes.** They are committed so
+  the guide reads on GitHub; `pnpm docs:check` checks that every referenced image
+  exists.
 
 ### US-89.2: Getting started
 

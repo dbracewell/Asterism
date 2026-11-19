@@ -40,6 +40,50 @@ container log). Exit codes: `0` when every target passes, `1` when one fails, `2
 when the run could not complete. The scenario, targets and recorded results are
 in [docs/architecture/capacity.md](../docs/architecture/capacity.md).
 
+### `docs-screenshots.mjs`
+
+Regenerates the [user guide](../docs/guide/README.md)'s screenshots with
+`pnpm docs:screenshots`. Build the image first (`docker build -t asterism:local .`).
+
+The run starts a scripted model on the host and a disposable container on a fresh
+volume, so it never touches your working database or your own containers. It
+then:
+
+1. walks first-run setup in a browser, as the administrator would;
+2. seeds the fictional demo dataset through the API: an administrator, an educator
+   and two students, files in several formats, a project with a sub-agent, chats
+   with sources, branches and a canvas, flashcards, a quiz, a summary, and a class
+   with a course;
+3. takes every shot in the shot list.
+
+The pieces live in [`screenshots/`](screenshots/):
+
+- [`shots.mjs`](screenshots/shots.mjs) is the shot list. Each entry names the image,
+  its alt text, whose browser takes it, the page and the text to wait for.
+- [`demo-content.mjs`](screenshots/demo-content.mjs) holds the people, files and
+  scripted replies.
+- [`demo-provider.mjs`](screenshots/demo-provider.mjs) is the scripted model. It
+  answers demo prompts with fixed text, searches project files and cites what it
+  finds, and returns valid JSON to the flashcard, quiz, summary and study-guide
+  generators.
+- [`seed.mjs`](screenshots/seed.mjs) creates the dataset.
+
+Every picture uses the light Atlas theme, the default font size, a fixed locale and
+time zone, and either a desktop viewport (1440×900) or a phone viewport (390×844).
+
+Options: `--only name,name` takes only those shots (the setup and seed still run),
+`--out` sets the image folder (default `docs/guide/images`), `--image` picks the
+image (default `asterism:local`), `--port` sets the host port (default `3970`), and
+`--keep` leaves the instance running and prints the seeded ids, so you can follow
+a page's steps by hand. The run exits `1` if any shot can't be taken, and lists
+images in the folder that no shot produces any more.
+
+### `check-docs.mjs`
+
+Checks every link, heading anchor and image in the documentation (`pnpm
+docs:check`): the root README and other entry documents, and everything under
+`docs/` except the archive. CI runs it in the quality job.
+
 ### `check-client-secret-leaks.mjs`
 
 Scans one or more files or directories for the current process values of
