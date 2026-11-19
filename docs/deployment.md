@@ -13,7 +13,8 @@ storage volume.
   4 vCPU and 8 GB of memory, measured with the
   [capacity check](architecture/capacity.md). See
   [Sizing and limits](#7-sizing-and-limits) for other sizes.
-- **Disk:** the image is large (ML libraries). Storage holds uploaded files, the
+- **Disk:** the image is about 4.4 GB on disk (under 1 GB to download), or
+  about 8 GB with the [GPU build](#gpu-build). Storage holds uploaded files, the
   databases and vectors. Backups need about the size of storage per kept archive.
   Keep at least `MIN_FREE_STORAGE_BYTES` (1 GiB) free, or readiness fails.
 - **A DNS name and a TLS proxy** in front of the container (examples below).
@@ -22,10 +23,10 @@ storage volume.
   (hosted, or a local server such as one on the same network).
 - **Outbound internet on first start**, to download the pinned embedding model
   used to index files.
-- **Known limitation: no browser in the image.** The web fetch tool reads most pages
-  directly, but renders short or JavaScript-heavy pages in headless Chromium, which
-  the image doesn't include. In the container, fetching those pages fails with an
-  error the agent reports.
+- **A browser for the web fetch tool is included.** The tool reads most pages
+  directly and renders short or JavaScript-heavy pages in the image's headless
+  Chromium, which runs as the container's user with no network of its own: every
+  request it makes goes through the tool's checked connection.
 
 ## 2. Configure
 
@@ -86,6 +87,23 @@ on the same host reaches it.
   ```
 
   With `--env-file`, every setting in `.env` reaches the container.
+
+### GPU build
+
+The image installs CPU-only PyTorch. Embeddings, captioning and local image
+generation all run on it, and a GPU isn't needed for them. To use an NVIDIA GPU
+for local image generation, build with CUDA PyTorch instead. It adds about
+4 GB to the image (estimated from the CUDA libraries it installs):
+
+```bash
+docker compose build --build-arg TORCH_VARIANT=gpu
+docker compose up -d
+```
+
+Without Compose: `docker build --build-arg TORCH_VARIANT=gpu -t asterism:local .`
+Pass the container the GPU as your Docker host requires (for example
+`--gpus all` with the NVIDIA Container Toolkit). Rebuild with the same argument
+on every upgrade, or the next `--build` returns to the CPU build.
 
 The image refuses to start with more than one backend worker
 (`WEB_CONCURRENCY` or `UVICORN_WORKERS` other than 1), and running more than one
@@ -201,7 +219,7 @@ Copy the `backups` volume off the host. The cron schedule, restore steps and the
 upgrade and roll-back procedure are in
 [Backup and restore](architecture/backup-and-restore.md). In short, to upgrade:
 
-1. Read the release notes for configuration changes.
+1. Read the [release notes](release-notes.md) for configuration changes.
 2. Back up and verify.
 3. `git pull && docker compose up -d --build`. Migrations run on start and only go
    forward.

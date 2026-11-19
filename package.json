@@ -29,7 +29,8 @@
     "format": "pnpm --filter @asterism/backend format && pnpm --filter @asterism/frontend format",
     "format:check": "pnpm --filter @asterism/backend format:check && pnpm --filter @asterism/frontend format:check",
     "capacity:check": "node scripts/capacity-check.mjs",
-    "test:container-launch": "uv run --project apps/backend python docker/test-backend-launch.py"
+    "test:container-launch": "uv run --project apps/backend python docker/test-backend-launch.py",
+    "check:fetch-browser-container": "node scripts/check-fetch-browser-container.mjs"
   },
   "keywords": [],
   "author": "",
