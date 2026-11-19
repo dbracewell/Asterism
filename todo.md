@@ -56,15 +56,44 @@ Source: user request and the [feature overlap review](docs/reviews/2026-11-17-fe
 
 Source: user request (2026-11-18). Suggested order: [EPIC-87](docs/epics/EPIC-87-ARCHITECTURE-DOCS-REFRESH.md) (complete and archived in the [2026-11-18 checklist](docs/archive/todo-completed-2026-11-18.md)) → [EPIC-88](docs/epics/EPIC-88-PROJECT-README.md) (complete and archived) → [EPIC-89](docs/epics/EPIC-89-USER-GUIDE.md) (complete and archived in the [2026-11-19 checklist](docs/archive/todo-completed-2026-11-19.md)). All three documentation epics are complete. US-87.1 adds `pnpm docs:check`, which the later epics use; US-89.1 adds the screenshot pipeline. Work one story at a time.
 
-Follow-ups found during the documentation epics (code, not documentation; each needs its own story):
+## Documentation follow-ups (proposed 2026-11-19)
 
-- [ ] Admin-only routes refuse a non-admin with 401 rather than 403 (`get_current_admin` raises `UnauthorizedException`). The browser treats a 401 as an expired token and drops its cached token, so a non-admin opening an admin request costs a token refetch and reads as "signed out" rather than "not allowed".
-- [ ] The container image has no Chromium, so the web fetch tool fails on short or JavaScript-heavy pages it would render with Playwright (`tools/builtin/fetch.py`). Decide whether to install a headless Chromium in the image or fall back to the plain fetch. Found in US-88.1; documented in `docs/deployment.md`.
-- [ ] Regenerating an answer that used a tool (a file search, for example) puts the new branch on the hidden tool-call step: the API reports `2 / 2` on that step, but the chat shows no switcher, so the earlier answer can't be reached. Found in US-89.1; reproduce in a project chat that cites files, then fix in the chat UI or in where regeneration branches.
-- [ ] UI labels disagree with each other and with the guide's voice: the sign-in button says **Login** (the form, toast and guide say "sign in"), the sidebar has **New Chat** but the General page **New chat**, and Settings has **Default Model**. Found in US-89.2; if the labels change, rerun `pnpm docs:screenshots` and update `docs/guide/01-getting-started/`.
-- [ ] Compact now records the summarizer's model id as its name: with no run in progress, `ChatOrchestrator._summarizer` falls back to `str(self.agent.model_id)`, so the divider reads "Written by a09bb3f6-… when you chose Compact now". Look the model's name up instead. Found in US-89.3.
-- [ ] Opening a source or citation shows a page with only the file name, "Authorized source in the current file scope of this conversation." and Download source; the passage itself is only in the hover preview. Show the passage (and plainer text) on that page. Found in US-89.3; update `docs/guide/02-chatting/sources-and-citations.md` after.
-- [ ] The help registry has no entry for the Spot the error learning mode (`concept.learning-mode` lists the other six as related), so the Help center and the mode's help icon say nothing about it. Add `concept.mode-spot-the-error` and update the terminology list if needed. Found in US-89.5.
-- [ ] Creating a sub-agent shows the red error "Choose an available model. The saved binding remains until you save a replacement." under Model before anything is chosen. A new sub-agent has no saved binding; show a plain "Choose a model" hint until the form is submitted. Found in US-89.7.
-- [ ] The Users page guide in the help registry (`admin.users` in `features/help/pages.ts`) says "Accounts are not otherwise changed here", but the page suspends, reactivates, creates reset links, deletes accounts and dismisses deletion requests. Update the guide's purpose and areas. Found in US-89.9.
-- [ ] Link each in-app page guide in the Help center to its user-guide page ("Read the full walkthrough"), once the guide is reachable from a deployed instance (a repository link or the guide served by the app). Deferred from EPIC-89 open question 1 (decided 2026-11-19).
+Source: the follow-ups found during EPIC-87 to EPIC-89. [EPIC-90](docs/epics/EPIC-90-DOCUMENTATION-FOLLOW-UPS.md) turns each into a story. Suggested order: US-90.1 → 90.8, then US-90.9 once its open question is decided. Work one story at a time.
+
+### EPIC-90: Fixes found while writing the documentation
+
+- [ ] US-90.1: Admin routes refuse non-admins with 403
+  - [ ] `get_current_admin` raises a 403 (forbidden) for an authenticated non-admin; a missing or invalid token still gets 401.
+  - [ ] The frontend keeps its cached token on 403 and shows "not allowed" rather than signing the person out.
+  - [ ] Backend and frontend tests for both cases; check nothing else relies on the 401.
+- [ ] US-90.2: The branch switcher shows after regenerating a tool-using answer
+  - [ ] Reproduce: a project chat whose answer used `search_knowledge`; regenerate.
+  - [ ] Decide where the fix belongs: create the sibling at the visible answer, or show the switcher for the step that holds the branches. Record the choice.
+  - [ ] Fix, with a test that the earlier answer is reachable.
+  - [ ] Add a project-chat branch shot to the screenshot pipeline and use it in `docs/guide/02-chatting/regenerating-and-branches.md`.
+- [ ] US-90.3: Compaction summaries name their model
+  - [ ] Look up the run model's name when compacting outside a run, instead of using its id.
+  - [ ] Test the Compact now path; check stored records and the divider.
+  - [ ] Consider repairing stored records whose name is an id (data migration if the stored value changes).
+- [ ] US-90.4: The source page shows the passage
+  - [ ] Show the cited passage (and its place in the file where known) on the scoped file page, with plain wording instead of "Authorized source in the current file scope of this conversation."
+  - [ ] Keep Download source and Back to conversation.
+  - [ ] Tests; update `docs/guide/02-chatting/sources-and-citations.md` and add a shot of the page.
+- [ ] US-90.5: Help text covers Spot the error and the Users page
+  - [ ] Add `concept.mode-spot-the-error` to the help registry and list it under `concept.learning-mode`.
+  - [ ] Rewrite the `admin.users` page guide for suspend, reactivate, reset links, delete and deletion requests.
+  - [ ] Mirror any changed definitions in `docs/terminology.md`; registry tests pass.
+- [ ] US-90.6: A new sub-agent shows no error before it's submitted
+  - [ ] Show the "saved binding" message only when editing a sub-agent whose bound model is unavailable; a new sub-agent shows a plain hint until submitted.
+  - [ ] Tests for new and edited sub-agents; retake `sub-agent-new`.
+- [ ] US-90.7: Consistent labels
+  - [ ] Rename **Login** to **Sign in**, **New Chat** to **New chat** and **Default Model** to **Default model**; check other title-case labels in settings (for example **Font Size**, **Show Thinking**, **Prompt Coach**) and fix them the same way.
+  - [ ] Update tests and E2E selectors that match the old text.
+  - [ ] Rerun the affected shots and update the guide pages that quote the labels.
+- [ ] US-90.8: Decide and fix web page reading without Chromium
+  - [ ] Measure the image-size cost of a headless Chromium.
+  - [ ] Decide (open question 1) and record it in the deployment guide.
+  - [ ] Either install it and test rendering in the container, or make the plain fetch the documented behavior with a clear message when a page needs a browser.
+- [ ] US-90.9: Link the Help center to the user guide (after open question 2)
+  - [ ] Decide where the guide is reached from a deployed instance.
+  - [ ] Add a "Read the full walkthrough" link to each page guide that has a guide page, with a test that every link resolves.

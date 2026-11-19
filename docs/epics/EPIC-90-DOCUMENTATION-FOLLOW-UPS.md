@@ -1,0 +1,150 @@
+# EPIC-90: Fixes found while writing the documentation
+
+Status: proposed (2026-11-19). Source: user request (2026-11-19), from the
+follow-ups recorded during EPIC-87 to EPIC-89.
+
+## Objective
+
+Fix the small app problems found while writing the architecture guides, the
+README and the user guide. Each is a code, copy or help-text fix that makes the
+app match what the guide tells people, or removes a confusing message. Where a
+fix changes what a screen shows, the matching guide page and screenshot are
+updated in the same story.
+
+Out of scope: new features. Linking the in-app Help center to the user guide
+(EPIC-89 open question 1) is US-90.9, and only after its open question is
+decided.
+
+## Where things stand (verified 2026-11-19)
+
+| Problem                         | What happens today                                                                                                                                                                                              | Found in         |
+| ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- |
+| Admin routes answer 401         | `get_current_admin` raises `UnauthorizedException` for a signed-in non-admin. The browser treats 401 as an expired token, drops it and refetches, so the request reads as "signed out" instead of "not allowed" | EPIC-87          |
+| Hidden branch after a tool step | Regenerating an answer that searched files puts the new branch on the hidden tool-call step. The API reports `2 / 2` there, but no switcher shows, so the earlier answer can't be reached                       | US-89.1          |
+| Compaction names a model id     | With no run in progress, `ChatOrchestrator._summarizer` uses `str(self.agent.model_id)` as the name, so a Compact now divider reads "Written by a09bb3f6-…"                                                     | US-89.3          |
+| Source page shows no passage    | Opening a source or citation shows the file name, "Authorized source in the current file scope of this conversation." and Download source. The passage is only in the hover preview                             | US-89.3          |
+| Help text gaps                  | The help registry has no entry for Spot the error. The `admin.users` page guide says "Accounts are not otherwise changed here", but the page suspends, resets and deletes accounts                              | US-89.5, US-89.9 |
+| New sub-agent shows an error    | Create sub-agent shows "Choose an available model. The saved binding remains until you save a replacement." under Model before anything is chosen, though nothing is saved                                      | US-89.7          |
+| Labels disagree                 | The sign-in button says **Login** (the form, toast and guide say "sign in"); the sidebar says **New Chat** and the General page **New chat**; Settings says **Default Model**                                   | US-89.2          |
+| No Chromium in the image        | The web fetch tool falls back badly on short or JavaScript-heavy pages it would render with Playwright (`tools/builtin/fetch.py`), because the container image has no Chromium                                  | US-88.1          |
+
+## Decisions
+
+- **One problem per story**, so each can be confirmed and merged on its own.
+- **Guide and screenshots move with the app.** A story that changes visible text
+  or behavior updates the affected `docs/guide/` page and reruns the affected
+  shots (`pnpm docs:screenshots --only …`), and `pnpm docs:check` passes.
+- **Help text follows the help registry rules (ADR-0032)**, and any change to a
+  definition is mirrored in `docs/terminology.md`.
+- **Labels use sentence case** ("New chat", "Default model") and "Sign in" for
+  the action, matching the guide's voice.
+
+## Open questions
+
+1. **Chromium (US-90.8):** install a headless Chromium in the image (larger
+   image, real rendering), or make the plain fetch the documented behavior and
+   improve its fallback? Proposed: measure the image-size cost first, then decide
+   in the story.
+2. **Help center links (US-90.9):** where should the links point? A repository
+   URL works only if the repository is reachable by every deployment's users;
+   serving the guide from the app keeps it in step with the installed version but
+   adds a build step. Proposed: decide before starting US-90.9.
+
+## User stories
+
+Suggested order: US-90.1 → 90.2 → 90.3 → 90.4 → 90.5 → 90.6 → 90.7 → 90.8, then
+US-90.9 once its question is decided.
+
+### US-90.1: Admin routes refuse non-admins with 403
+
+As a signed-in non-admin who opens an admin request, I'm told it's not allowed,
+and I stay signed in.
+
+- [ ] `get_current_admin` raises a 403 (forbidden) for an authenticated non-admin;
+      a missing or invalid token still gets 401.
+- [ ] The frontend keeps its cached token on 403 and shows "not allowed" rather
+      than signing the person out.
+- [ ] Backend and frontend tests for both cases; check nothing else relies on the 401.
+
+### US-90.2: The branch switcher shows after regenerating a tool-using answer
+
+As a user, when I regenerate an answer that searched my files, I can switch back
+to the earlier answer.
+
+- [ ] Reproduce: a project chat whose answer used `search_knowledge`; regenerate.
+- [ ] Decide where the fix belongs: create the sibling at the visible answer, or
+      show the switcher for the step that holds the branches. Record the choice.
+- [ ] Fix, with a test that the earlier answer is reachable.
+- [ ] Add a project-chat branch shot to the screenshot pipeline and use it in
+      `docs/guide/02-chatting/regenerating-and-branches.md`.
+
+### US-90.3: Compaction summaries name their model
+
+As a user who reads a compaction summary, I see which model wrote it.
+
+- [ ] Look up the run model's name when compacting outside a run, instead of
+      using its id.
+- [ ] Test the Compact now path; check stored records and the divider.
+- [ ] Consider repairing stored records whose name is an id (data migration if
+      the stored value changes).
+
+### US-90.4: The source page shows the passage
+
+As a user who opens a source or citation, I see the passage Asterism used, not
+only the file name.
+
+- [ ] Show the cited passage (and its place in the file where known) on the
+      scoped file page, with plain wording instead of "Authorized source in the
+      current file scope of this conversation."
+- [ ] Keep Download source and Back to conversation.
+- [ ] Tests; update `docs/guide/02-chatting/sources-and-citations.md` and add a
+      shot of the page.
+
+### US-90.5: Help text covers Spot the error and the Users page
+
+As a reader of the in-app help, I find Spot the error explained and the Users
+page described correctly.
+
+- [ ] Add `concept.mode-spot-the-error` to the help registry and list it under
+      `concept.learning-mode`.
+- [ ] Rewrite the `admin.users` page guide for suspend, reactivate, reset links,
+      delete and deletion requests.
+- [ ] Mirror any changed definitions in `docs/terminology.md`; registry tests pass.
+
+### US-90.6: A new sub-agent shows no error before it's submitted
+
+As a user creating a sub-agent, I'm not warned about a saved model that doesn't
+exist.
+
+- [ ] Show the "saved binding" message only when editing a sub-agent whose bound
+      model is unavailable; a new sub-agent shows a plain hint until submitted.
+- [ ] Tests for new and edited sub-agents; retake `sub-agent-new`.
+
+### US-90.7: Consistent labels
+
+As a user following the guide, the buttons say what the guide says.
+
+- [ ] Rename **Login** to **Sign in**, **New Chat** to **New chat** and
+      **Default Model** to **Default model**; check other title-case labels in
+      settings (for example **Font Size**, **Show Thinking**, **Prompt Coach**)
+      and fix them the same way.
+- [ ] Update tests and E2E selectors that match the old text.
+- [ ] Rerun the affected shots and update the guide pages that quote the labels.
+
+### US-90.8: Decide and fix web page reading without Chromium
+
+As an administrator, the web fetch tool behaves as documented in the container.
+
+- [ ] Measure the image-size cost of a headless Chromium.
+- [ ] Decide (open question 1) and record it in the deployment guide.
+- [ ] Either install it and test rendering in the container, or make the plain
+      fetch the documented behavior with a clear message when a page needs a
+      browser.
+
+### US-90.9: Link the Help center to the user guide (after open question 2)
+
+As a user reading the in-app help, I can open the full walkthrough.
+
+- [ ] Decide where the guide is reached from a deployed instance.
+- [ ] Add a "Read the full walkthrough" link to each page guide that has a guide
+      page, with a test that every link resolves.
