@@ -33,6 +33,7 @@ import {
   LibraryBigIcon,
   MousePointerClickIcon,
 } from "lucide-react";
+import { walkthroughHref } from "@/features/guide/links";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import React from "react";
@@ -186,6 +187,15 @@ function PageGuideView({
               ))}
             </ul>
           </section>
+        )}
+        {guide.walkthrough && (
+          <Link
+            className="w-fit underline"
+            href={walkthroughHref(guide.walkthrough)}
+            onClick={onNavigate}
+          >
+            Read the full walkthrough
+          </Link>
         )}
         {terms.length > 0 && (
           <section aria-labelledby="page-help-terms">

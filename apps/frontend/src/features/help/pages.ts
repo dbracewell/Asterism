@@ -53,6 +53,11 @@ export type PageGuideId =
 
 export interface PageGuide {
   title: string;
+  /**
+   * The user guide page that walks through this page, as a path under
+   * `docs/guide` without `.md`, optionally with `#anchor` (US-90.9).
+   */
+  walkthrough?: string;
   /** One or two sentences: what this page is for. */
   purpose: string;
   areas: readonly { name: string; description: string }[];
@@ -64,6 +69,7 @@ export interface PageGuide {
 export const pageGuides: Record<PageGuideId, PageGuide> = {
   "new-chat": {
     title: "New chat",
+    walkthrough: "01-getting-started/your-first-chat",
     purpose:
       "Start a conversation. Choose where it lives, how the assistant should help, then write your first message.",
     areas: [
@@ -100,6 +106,7 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
   },
   chat: {
     title: "Chat",
+    walkthrough: "01-getting-started/your-first-chat",
     purpose:
       "A conversation with the assistant. Read the replies, keep the conversation going, and change how the assistant helps at any time.",
     areas: [
@@ -146,6 +153,7 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
   },
   file: {
     title: "File",
+    walkthrough: "03-files-and-projects/the-files-library",
     purpose:
       "One file from your library: what was read from it, similar files, and the projects that share it.",
     areas: [
@@ -169,6 +177,7 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
   },
   general: {
     title: "General",
+    walkthrough: "01-getting-started/finding-your-way-around",
     purpose:
       "Chats that don't belong to a project. Each one has its own attachments and no project instructions.",
     areas: [
@@ -196,6 +205,7 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
   },
   projects: {
     title: "Projects",
+    walkthrough: "03-files-and-projects/projects",
     purpose:
       "All your projects. A project groups related chats and shares files and instructions with each of them.",
     areas: [
@@ -244,6 +254,7 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
   },
   project: {
     title: "Project",
+    walkthrough: "03-files-and-projects/projects",
     purpose:
       "One project's workspace, organized in tabs. The open tab is in the address, so you can link to it and Back returns to it.",
     areas: [
@@ -306,6 +317,7 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
   },
   files: {
     title: "Files",
+    walkthrough: "03-files-and-projects/the-files-library",
     purpose:
       "Your file library. Upload files here, then add them to projects or attach them to chats.",
     areas: [
@@ -324,6 +336,7 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
   },
   search: {
     title: "Search",
+    walkthrough: "02-chatting/finding-old-chats",
     purpose: "Search across your chats and projects.",
     areas: [
       {
@@ -338,6 +351,7 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
   },
   help: {
     title: "Help center",
+    walkthrough: "01-getting-started/getting-help",
     purpose:
       "Every explanation in Asterism in one place: what each term means and what each page is for.",
     areas: [
@@ -359,6 +373,7 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
   },
   classes: {
     title: "Classes",
+    walkthrough: "07-for-educators/running-a-class",
     purpose:
       "Join a class with a code from your educator, or run classes yourself once you're an educator.",
     areas: [
@@ -393,6 +408,7 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
   },
   class: {
     title: "Class",
+    walkthrough: "07-for-educators/running-a-class",
     purpose:
       "Run one class you teach: let students in, publish its course, set its rules and see where the class struggles.",
     areas: [
@@ -446,6 +462,7 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
   },
   "team-packs": {
     title: "Import team pack",
+    walkthrough: "03-files-and-projects/team-packs",
     purpose:
       "Add sub-agents, skills, templates, rubrics and a project from a team pack file, after seeing exactly what it asks for.",
     areas: [
@@ -475,6 +492,7 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
   },
   "study.deck": {
     title: "Flashcard deck",
+    walkthrough: "05-studying/flashcards",
     purpose:
       "One deck of flashcards in this project. Add and edit cards, draft them from files and review the ones that are due.",
     areas: [
@@ -495,6 +513,7 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
   },
   "study.drafts": {
     title: "Draft cards",
+    walkthrough: "05-studying/flashcards",
     purpose:
       "Have a model suggest flashcards from this project's files. Nothing is saved until you accept a draft.",
     areas: [
@@ -519,6 +538,7 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
   },
   "study.review": {
     title: "Review session",
+    walkthrough: "05-studying/flashcards",
     purpose:
       "Go through the cards that are due. How well you recall each one decides when you see it next.",
     areas: [
@@ -541,6 +561,7 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
   },
   "study.quiz-new": {
     title: "New practice quiz",
+    walkthrough: "05-studying/practice-quizzes",
     purpose:
       "Generate a quiz from this project's files. Each question cites the file it came from.",
     areas: [
@@ -561,6 +582,7 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
   },
   "study.quiz": {
     title: "Practice quiz",
+    walkthrough: "05-studying/practice-quizzes",
     purpose: "One saved quiz: your scores and every attempt.",
     areas: [
       {
@@ -580,6 +602,7 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
   },
   "study.quiz-take": {
     title: "Take quiz",
+    walkthrough: "05-studying/practice-quizzes",
     purpose: "Answer the quiz's questions, then submit to see your results.",
     areas: [
       {
@@ -599,6 +622,7 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
   },
   "study.quiz-attempt": {
     title: "Quiz results",
+    walkthrough: "05-studying/practice-quizzes",
     purpose: "How one attempt went: your score and feedback on every answer.",
     areas: [
       {
@@ -620,6 +644,7 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
   },
   "study.summary-new": {
     title: "Summarize files",
+    walkthrough: "05-studying/study-notes",
     purpose:
       "Summarize this project's files at the depth you need. Nothing is saved until you save it as a note.",
     areas: [
@@ -640,6 +665,7 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
   },
   "study.guide-new": {
     title: "Plan for an exam",
+    walkthrough: "05-studying/study-notes",
     purpose:
       "Get a day-by-day study plan up to your exam, linked to this project's decks and quizzes. Nothing is saved until you save it as a note.",
     areas: [
@@ -660,6 +686,7 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
   },
   "study.note": {
     title: "Study note",
+    walkthrough: "05-studying/study-notes",
     purpose: "A saved summary or study plan from this project.",
     areas: [
       {
@@ -677,6 +704,7 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
   },
   "settings.general": {
     title: "General settings",
+    walkthrough: "06-making-it-yours/general-settings",
     purpose:
       "Your appearance and chat defaults: theme, text size, the model new chats start with, and the chat tour.",
     areas: [
@@ -728,6 +756,7 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
   },
   "settings.your-asterism": {
     title: "Your Asterism",
+    walkthrough: "06-making-it-yours/about-you-and-usage",
     purpose:
       "Tell Asterism about yourself so its answers fit you. What you write is used in every chat.",
     areas: [
@@ -755,6 +784,7 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
   },
   "settings.skills": {
     title: "Skills",
+    walkthrough: "06-making-it-yours/skills",
     purpose:
       "Write reusable instructions once and switch them on in any chat with /.",
     areas: [
@@ -778,6 +808,7 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
   },
   "settings.templates": {
     title: "Templates",
+    walkthrough: "06-making-it-yours/templates-and-rubrics",
     purpose:
       "Prompt templates turn a form into a clear prompt. Browse the built-in frameworks or make your own.",
     areas: [
@@ -797,6 +828,7 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
   },
   "settings.rubrics": {
     title: "Rubrics",
+    walkthrough: "06-making-it-yours/templates-and-rubrics",
     purpose:
       "Assessment rubrics for Draft feedback mode. Choose one in the composer and feedback is organized by its criteria.",
     areas: [
@@ -819,6 +851,7 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
   },
   "settings.agents": {
     title: "Agents",
+    walkthrough: "06-making-it-yours/agents",
     purpose:
       "Configure your main agent, and create sub-agents it can hand work to in General chats and projects.",
     areas: [
@@ -853,6 +886,7 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
   },
   "settings.chatgpt": {
     title: "ChatGPT",
+    walkthrough: "06-making-it-yours/connecting-chatgpt",
     purpose:
       "Connect your own ChatGPT plan to run chats on its models. Only you can use your connection.",
     areas: [
@@ -868,6 +902,7 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
   },
   "admin.providers": {
     title: "Providers",
+    walkthrough: "08-for-administrators/providers-and-models",
     purpose:
       "Connect the services that run AI models, and choose which of their models users can pick.",
     areas: [
@@ -883,6 +918,7 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
   },
   "admin.theme-editor": {
     title: "Theme editor",
+    walkthrough: "08-for-administrators/theme-editor",
     purpose: "Create and edit the color themes users can choose.",
     areas: [
       {
@@ -896,6 +932,7 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
   },
   "admin.tools": {
     title: "Tools",
+    walkthrough: "08-for-administrators/policies#tools",
     purpose:
       "Turn on the tools agents may be assigned, and configure the services behind them.",
     areas: [
@@ -911,6 +948,7 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
   },
   "admin.skills": {
     title: "Skills policy",
+    walkthrough: "08-for-administrators/policies#skills",
     purpose: "Turn skills on or off for every user.",
     areas: [
       {
@@ -925,6 +963,7 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
   },
   "admin.canvas": {
     title: "Canvas policy",
+    walkthrough: "08-for-administrators/policies#canvas",
     purpose:
       "Turn the canvas, the panel where the main agent writes documents and code, on or off for every user.",
     areas: [
@@ -940,6 +979,7 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
   },
   "admin.chatgpt": {
     title: "ChatGPT plans",
+    walkthrough: "08-for-administrators/policies#chatgpt-plans",
     purpose:
       "Control whether users can connect their own ChatGPT plan and run chats on it.",
     areas: [
@@ -955,6 +995,7 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
   },
   "admin.context-compaction": {
     title: "Context compaction",
+    walkthrough: "08-for-administrators/policies#context-compaction",
     purpose:
       "Control how long chats are summarized so they keep working near the model's context limit.",
     areas: [
@@ -977,6 +1018,7 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
   },
   "admin.image-generation": {
     title: "Image generation",
+    walkthrough: "08-for-administrators/policies#image-generation",
     purpose:
       "Choose what creates images, try it, and decide who may create images in chat.",
     areas: [
@@ -1014,6 +1056,7 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
   },
   "admin.image-captioning": {
     title: "Image captioning",
+    walkthrough: "08-for-administrators/policies#image-captioning",
     purpose:
       "Choose how images in uploaded files are described so they can be searched.",
     areas: [
@@ -1029,6 +1072,7 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
   },
   "admin.groups": {
     title: "Groups",
+    walkthrough: "08-for-administrators/groups-budgets-and-usage#groups",
     purpose:
       "Limit which models and tools each group of users may use. Everyone is in exactly one group.",
     areas: [
@@ -1058,6 +1102,7 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
   },
   "admin.usage": {
     title: "Usage",
+    walkthrough: "08-for-administrators/groups-budgets-and-usage#usage",
     purpose:
       "See how many tokens each person used on each model, what it is estimated to have cost, and set when budget days start.",
     areas: [
@@ -1081,6 +1126,7 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
   },
   "admin.status": {
     title: "Status",
+    walkthrough: "08-for-administrators/groups-budgets-and-usage#status",
     purpose:
       "See whether the instance is ready and how busy it is, without opening the server's logs.",
     areas: [
@@ -1109,6 +1155,7 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
   },
   "admin.users": {
     title: "Users",
+    walkthrough: "08-for-administrators/users-and-accounts",
     purpose:
       "See who has an account, move people between groups, and suspend, reactivate, reset or delete accounts.",
     areas: [
@@ -1147,6 +1194,7 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
   },
   "admin.educators": {
     title: "Educators",
+    walkthrough: "08-for-administrators/users-and-accounts#educators",
     purpose: "Decide who may run classes. Educators are not administrators.",
     areas: [
       {
@@ -1161,6 +1209,7 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
   },
   "admin.export": {
     title: "Export and import settings",
+    walkthrough: "08-for-administrators/policies#export",
     purpose:
       "Move every application setting between installations in one file. Users, chats and files are not included.",
     areas: [
@@ -1245,6 +1294,8 @@ export function pageGuideFor(
     return studyGuides.find(([pattern]) => pattern.test(study[1]))?.[1] ?? null;
   if (/^\/classes\/[^/]+\/?$/.test(pathname)) return "class";
   if (/^\/files\/[^/]+/.test(pathname)) return "file";
+  // The user guide is part of help (US-90.9).
+  if (/^\/help\/guide(\/|$)/.test(pathname)) return "help";
   switch (pathname) {
     case "/general":
       return "general";

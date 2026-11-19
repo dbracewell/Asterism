@@ -111,6 +111,21 @@ app changes.
 - The demo data is fictional. Never take a screenshot of a real instance or
   real people.
 
+## Links
+
+The guide is also shown inside Asterism, at `/help/guide`, so keep links relative:
+
+- Link to another guide page by its file, such as `../02-chatting/canvas.md`; the
+  app turns it into a guide page. Anchors work as on GitHub.
+- Show a screenshot from `../images/`; the app serves those files.
+- A link that leaves `docs/guide`, such as `../../deployment.md`, opens on GitHub in
+  the app. Keep these for administrators.
+- No raw HTML: the app doesn't render it.
+
+When a page describes one of the app's pages, set that page guide's `walkthrough`
+in `apps/frontend/src/features/help/pages.ts`, so its help offers **Read the full
+walkthrough**.
+
 ## Before you finish
 
 - Follow your own steps on a fresh demo instance (`pnpm docs:screenshots --keep`

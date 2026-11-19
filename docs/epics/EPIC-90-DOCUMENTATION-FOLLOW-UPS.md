@@ -183,15 +183,23 @@ as the non-root user with the fetch tool's launch arguments.
 As a user reading the in-app help, I can open the full walkthrough for the
 version of Asterism I'm using.
 
-- [ ] Add a `/help/guide/[...slug]` route that renders `docs/guide/*.md` at build
+- [x] Add a `/help/guide/[...slug]` route that renders `docs/guide/*.md` at build
       time with a trusted Markdown renderer, separate from the chat viewer
       (whose policy stays unchanged).
-- [ ] Serve `docs/guide/images`, turn relative `.md` links into app routes, and
+- [x] Serve `docs/guide/images`, turn relative `.md` links into app routes, and
       point links outside the guide to the repository.
-- [ ] Copy `docs/guide` into the Docker frontend build stage.
-- [ ] Add a "Read the full walkthrough" link to each page guide that has a guide
+- [x] Copy `docs/guide` into the Docker frontend build stage.
+- [x] Add a "Read the full walkthrough" link to each page guide that has a guide
       page, with a test that every link resolves.
-- [ ] The Markdown files stay readable on GitHub and `pnpm docs:check` passes.
+- [x] The Markdown files stay readable on GitHub and `pnpm docs:check` passes.
+
+Decision (2026-11-19): pages are read from `docs/guide` when requested, not
+compiled in at build time. Every page renders per request (the CSP nonce and the
+session), and Turbopack can't bundle a dynamic import of a raw `.md` file (it
+fails the build), so bundling would need a hand-kept list of imports or a
+generator before every build, dev and test run. The image copies `docs/guide`
+into the runtime stage instead, so the guide always matches the installed
+version. Only files the folder lists are read.
 
 ### US-90.10: 403 is the rule for "signed in but not allowed"
 

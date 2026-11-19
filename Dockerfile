@@ -103,6 +103,8 @@ COPY --from=frontend-build /app/scripts/config-check.mjs \
   /app/scripts/config-contract.mjs /app/scripts/run-with-env.mjs \
   /app/scripts/edge-config.mjs ./scripts/
 COPY --from=backend-build /app/apps/backend ./apps/backend
+# The user guide, served at /help/guide for this version (US-90.9).
+COPY docs/guide ./docs/guide
 COPY docker/entrypoint.sh docker/healthcheck.py docker/nginx.conf docker/nginx-api-headers.conf ./docker/
 RUN chmod +x /app/docker/entrypoint.sh
 ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 \
