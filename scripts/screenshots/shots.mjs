@@ -758,6 +758,106 @@ export const shots = [
 
   // --- Studying --------------------------------------------------------------------
   {
+    name: "study-tab",
+    alt: "The Study tab of Biology 101: the Photosynthesis deck with the cards due for review, and the Progress panel with two topics at Developing and two items that need practice",
+    as: "student",
+    path: (ids) => `/projects/${ids.project}?tab=study`,
+    ready: ["Study decks", "Needs practice"],
+  },
+  {
+    name: "study-drafts",
+    alt: "Draft cards: suggested flashcards, each with a front, a back and the file it came from, and Discard, Edit and Accept buttons",
+    as: "student",
+    path: (ids) => `/projects/${ids.project}/study/${ids.deck}/drafts`,
+    ready: ["Draft cards"],
+    steps: async (page) => {
+      await page.getByRole("button", { name: "Draft cards" }).click();
+      await page.getByRole("button", { name: /Accept all/ }).waitFor();
+      await page
+        .getByRole("heading", { name: "Drafts" })
+        .evaluate((node) => node.scrollIntoView({ block: "start" }));
+    },
+  },
+  {
+    name: "study-review",
+    alt: "A review session: the card What does the enzyme RuBisCO do? with its answer shown, and Again, Hard, Good and Easy buttons that say when the card comes back",
+    as: "student",
+    path: (ids) => `/projects/${ids.project}/study/${ids.deck}/review`,
+    ready: ["cards left"],
+    steps: async (page) => {
+      await page.getByRole("button", { name: /Show answer/ }).click();
+      await page.getByRole("button", { name: /Easy/ }).waitFor();
+    },
+  },
+  {
+    name: "quiz-new",
+    alt: "The New practice quiz form: source files, question types, the number of questions, an optional title, a model and Generate quiz",
+    as: "student",
+    path: (ids) => `/projects/${ids.project}/study/quizzes/new`,
+    ready: ["New practice quiz", "Generate quiz"],
+  },
+  {
+    name: "quiz-take",
+    alt: "Taking the Photosynthesis check quiz: numbered questions, each with options to choose from",
+    as: "student",
+    path: (ids) => `/projects/${ids.project}/study/quizzes/${ids.quiz}/take`,
+    ready: ["Photosynthesis check", "1."],
+  },
+  {
+    name: "quiz-results",
+    alt: "Quiz results: 3 of 4 points (75%), then each answer marked Correct or Incorrect, with the correct answer, an explanation and the source file",
+    as: "student",
+    path: (ids) =>
+      `/projects/${ids.project}/study/quizzes/${ids.quiz}/attempts/${ids.attempt}`,
+    ready: ["points", "Answers"],
+  },
+  {
+    name: "study-summary",
+    alt: "Summarize files: the files used and the summary that was written, one section for each file with its source, ready to save as a note",
+    as: "student",
+    path: (ids) => `/projects/${ids.project}/study/summaries/new`,
+    ready: ["Summarize files"],
+    steps: async (page) => {
+      await page.getByRole("button", { name: "Summarize" }).click();
+      await page
+        .getByText(/Save as note/)
+        .first()
+        .waitFor();
+      await page
+        .getByRole("heading", { name: "Summary", exact: true })
+        .evaluate((node) => node.scrollIntoView({ block: "start" }));
+    },
+  },
+  {
+    name: "study-guide",
+    alt: "Plan for an exam: a study plan up to the exam, with each day's focus and links to the Photosynthesis deck",
+    as: "student",
+    path: (ids) => `/projects/${ids.project}/study/guides/new`,
+    ready: ["Plan for an exam"],
+    steps: async (page) => {
+      await page.getByRole("button", { name: "Plan study days" }).click();
+      await page
+        .getByText(/Save as note/)
+        .first()
+        .waitFor();
+      await page
+        .getByRole("heading", { name: "Study plan" })
+        .evaluate((node) => node.scrollIntoView({ block: "start" }));
+    },
+  },
+  {
+    name: "progress-reflections",
+    alt: "The lower part of the Progress panel: Needs practice with a missed quiz question and a card rated Again, and From your reflections with an unclear item ready to become a flashcard",
+    as: "student",
+    path: (ids) => `/projects/${ids.project}?tab=study`,
+    ready: ["From your reflections"],
+    steps: async (page) => {
+      await page
+        .getByRole("heading", { name: "Needs practice" })
+        .evaluate((node) => node.scrollIntoView({ block: "start" }));
+    },
+  },
+  {
     name: "study-deck",
     alt: "The Photosynthesis flashcard deck with its cards and the number due for review",
     as: "student",
@@ -766,7 +866,7 @@ export const shots = [
   },
   {
     name: "study-quiz",
-    alt: "The Photosynthesis check practice quiz, ready to take",
+    alt: "The Photosynthesis check quiz page: its topics, best and last scores, one attempt, and Retake quiz, Edit details and Delete quiz buttons",
     as: "student",
     path: (ids) => `/projects/${ids.project}/study/quizzes/${ids.quiz}`,
     ready: ["Photosynthesis check"],

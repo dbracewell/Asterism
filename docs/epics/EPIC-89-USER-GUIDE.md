@@ -1,6 +1,6 @@
 # EPIC-89: User guide
 
-Status: in progress (US-89.1 to US-89.5 complete 2026-11-19; US-89.6 next). Proposed 2026-11-18. Source: user request (2026-11-18).
+Status: in progress (US-89.1 to US-89.6 complete 2026-11-19; US-89.7 next). Proposed 2026-11-18. Source: user request (2026-11-18).
 
 ## Objective
 
@@ -274,10 +274,27 @@ As a student, I can use Asterism to learn rather than just get answers.
 
 As a student, I can turn my material into study aids and practice.
 
-- [ ] Flashcard decks: drafting from files, reviewing drafts, studying.
-- [ ] Practice quizzes: creating, taking and reviewing attempts.
-- [ ] Study notes, summaries and study guides.
-- [ ] Following your progress.
+- [x] Flashcard decks: drafting from files, reviewing drafts, studying.
+- [x] Practice quizzes: creating, taking and reviewing attempts.
+- [x] Study notes, summaries and study guides.
+- [x] Following your progress.
+
+#### Notes (US-89.6)
+
+- **Pages.** Four pages in `docs/guide/05-studying/`: flashcards (decks, drafting
+  from files, reviewing), practice quizzes (making, taking, results, the quiz
+  page), summaries and study plans, and the Progress panel. The glossary gained
+  attempt, deck, flashcard, practice quiz, progress and study notes.
+- **Drafts follow the file.** The app asks the model once per file. The scripted
+  model now picks cards, quiz questions and summary sections by a phrase that
+  appears in only one demo file, so each draft cites the file it came from and
+  no question repeats (before, every file got the same list).
+- **Progress has data.** The seed tags the deck and quiz with topics, submits a
+  quiz attempt with one wrong and one half-right answer (by option text, since
+  options are shuffled; the short answer is graded by a scripted reply), and
+  adds a reflection on a project chat with an unclear item.
+- **Due counts vary.** How many cards are due depends on the time of the run, so
+  the guide and alt text don't give a number.
 
 ### US-89.7: Making Asterism yours
 

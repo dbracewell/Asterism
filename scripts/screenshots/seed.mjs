@@ -389,13 +389,44 @@ export async function seedDemo({
   }
   const { quiz } = await maya.api("quiz", "POST", `${study}/quizzes`, {
     model_id: tutor,
-    question_count: 4,
+    question_count: 6,
     kinds: ["multiple_choice", "short_answer"],
     title: "Photosynthesis check",
   });
   if (!quiz) throw new Error("The scripted model did not produce a quiz");
   for (const note of demo.notes)
     await maya.api("note", "POST", `${study}/notes`, note);
+  // Topics and one attempt with a miss and a half-right answer, so Progress
+  // has levels, items that need practice, and an unclear item from a reflection.
+  await maya.api("deck topics", "PATCH", `${study}/decks/${deck.id}`, {
+    tags: demo.studyTopics.deck,
+  });
+  await maya.api("quiz topics", "PATCH", `${study}/quizzes/${quiz.id}`, {
+    tags: demo.studyTopics.quiz,
+  });
+  const attempt = await maya.api(
+    "quiz attempt",
+    "POST",
+    `${study}/quizzes/${quiz.id}/attempts`,
+    {
+      model_id: tutor,
+      answers: quiz.questions.map((question) => {
+        const answer = demo.quizAttempt[question.prompt] ?? {};
+        return answer.text
+          ? { question_id: question.id, text: answer.text }
+          : question.options.includes(answer.option)
+            ? {
+                question_id: question.id,
+                choice: question.options.indexOf(answer.option),
+              }
+            : { question_id: question.id };
+      }),
+    },
+  );
+  await maya.api("project reflection", "POST", "/reflections/", {
+    chat_id: sourced.info.id,
+    ...demo.projectReflection,
+  });
 
   // --- The educator's class ------------------------------------------------------------
   log("Seeding: a class with a course");
@@ -495,6 +526,7 @@ export async function seedDemo({
     },
     deck: deck.id,
     quiz: quiz.id,
+    attempt: attempt.id,
     classroom: room.id,
     invite: invite.token,
     courseProject: courseProject.id,

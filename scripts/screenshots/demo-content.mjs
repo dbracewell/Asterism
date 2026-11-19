@@ -459,6 +459,7 @@ Light intensity, carbon dioxide concentration and temperature. The one in shorte
 const quizQuestions = [
   {
     type: "multiple_choice",
+    from: "called grana",
     prompt: "Where do the light-dependent reactions take place?",
     options: [
       "In the stroma",
@@ -473,6 +474,7 @@ const quizQuestions = [
   },
   {
     type: "multiple_choice",
+    from: "releases oxygen as a by-product",
     prompt: "Which gas is released as a by-product of splitting water?",
     options: ["Carbon dioxide", "Nitrogen", "Oxygen"],
     answer: 2,
@@ -481,6 +483,7 @@ const quizQuestions = [
   },
   {
     type: "short_answer",
+    from: "shortest supply",
     prompt:
       "Explain why the rate of photosynthesis stops rising at high light intensity.",
     rubric:
@@ -489,6 +492,7 @@ const quizQuestions = [
   },
   {
     type: "multiple_choice",
+    from: "RuBisCO",
     prompt: "Which enzyme performs the first step of the Calvin cycle?",
     options: ["Amylase", "RuBisCO", "ATP synthase", "Catalase"],
     answer: 1,
@@ -496,6 +500,92 @@ const quizQuestions = [
     source: "S1",
   },
 ];
+
+// Each card and question belongs to the one file whose text contains its
+// `from` phrase, so drafts cite the right file and no file repeats another's.
+quizQuestions.push(
+  {
+    type: "multiple_choice",
+    from: "Glycolysis happens in the cytoplasm",
+    prompt: "Where in the cell does glycolysis happen?",
+    options: ["In the mitochondria", "In the cytoplasm", "In the nucleus"],
+    answer: 1,
+    explanation:
+      "The reading summary says glycolysis happens in the cytoplasm.",
+    source: "S1",
+  },
+  {
+    type: "multiple_choice",
+    from: "bubbles_per_minute",
+    prompt: "In the pondweed experiment, what was counted at each light level?",
+    options: ["Leaves", "Oxygen bubbles per minute", "Drops of water"],
+    answer: 1,
+    explanation:
+      "The results record bubbles per minute at each light intensity.",
+    source: "S1",
+  },
+);
+
+const draftCards = [
+  { ...cards[0], from: "called grana" },
+  { ...cards[1], from: "releases oxygen as a by-product" },
+  { ...cards[2], from: "ATP and NADPH" },
+  { ...cards[3], from: "where the Calvin cycle runs" },
+  { ...cards[4], from: "RuBisCO" },
+  { ...cards[5], from: "shortest supply" },
+  {
+    front: "Where in the cell does glycolysis happen?",
+    back: "In the cytoplasm.",
+    from: "Glycolysis happens in the cytoplasm",
+  },
+  {
+    front: "What did the pondweed experiment measure?",
+    back: "Oxygen bubbles per minute at six light intensities.",
+    from: "bubbles_per_minute",
+  },
+];
+
+const summarySections = [
+  {
+    from: "shortest supply",
+    heading: "Two stages and what limits them",
+    text: "Photosynthesis has two stages: the light-dependent reactions in the thylakoids, which store energy in ATP and NADPH, and the Calvin cycle in the stroma, which uses it to fix carbon dioxide into sugar. Light intensity, carbon dioxide and temperature limit the rate; the one in shortest supply sets it.",
+    sources: ["S1"],
+  },
+  {
+    from: "called grana",
+    heading: "Inside the chloroplast",
+    text: "A chloroplast has two membranes. Stacks of thylakoids (grana) hold the light-dependent reactions, and the fluid around them, the stroma, holds the Calvin cycle.",
+    sources: ["S1"],
+  },
+  {
+    from: "Glycolysis happens in the cytoplasm",
+    heading: "Cellular respiration",
+    text: "Respiration releases the energy in glucose. Glycolysis happens in the cytoplasm; the Krebs cycle and the electron transport chain, in the mitochondria, make most of the ATP. Without oxygen, cells use fermentation.",
+    sources: ["S1"],
+  },
+  {
+    from: "bubbles_per_minute",
+    heading: "Pondweed results",
+    text: "The bubble rate rose with light intensity and levelled off at high light, as another factor became limiting.",
+    sources: ["S1"],
+  },
+  {
+    from: "Lab report draft",
+    heading: "Lab report draft",
+    text: "The draft states the aim, the method and the results. Its conclusion, that more light always means more photosynthesis, doesn't match the results.",
+    sources: ["S1"],
+  },
+];
+
+/** The items from the file in this request, up to the number it asks for. */
+function fromFile(items, user) {
+  const limit = Number(/Write up to (\d+)/.exec(user)?.[1] ?? items.length);
+  return items
+    .filter((item) => user.includes(item.from))
+    .slice(0, limit)
+    .map(({ from: _from, ...item }) => ({ ...item, source: "S1" }));
+}
 
 /** The days from the study guide request, so the plan stays inside its range. */
 function guideDays(user) {
@@ -560,29 +650,17 @@ function guideDays(user) {
 export const study = [
   {
     prompt: "You write study flashcards",
-    reply: () => ({ cards: cards.map((card) => ({ ...card, source: "S1" })) }),
+    reply: (user) => ({ cards: fromFile(draftCards, user) }),
   },
   {
     prompt: "You write practice quiz questions",
-    reply: () => ({ questions: quizQuestions }),
+    reply: (user) => ({ questions: fromFile(quizQuestions, user) }),
   },
   {
     prompt: "You summarize a learner's course material",
-    reply: () => ({
-      sections: [
-        {
-          heading: "Two stages",
-          text: "The light-dependent reactions in the thylakoids capture light and store energy in ATP and NADPH. The Calvin cycle in the stroma uses that energy to fix carbon dioxide into sugar.",
-          sources: ["S1"],
-        },
-        {
-          heading: "Limiting factors",
-          text: "Light intensity, carbon dioxide concentration and temperature limit the rate.",
-          sources: ["S1"],
-        },
-      ],
-    }),
+    reply: (user) => ({ sections: fromFile(summarySections, user) }),
   },
+
   {
     prompt: "You plan a learner's study days",
     reply: (user) => ({ days: guideDays(user) }),
@@ -639,6 +717,14 @@ example, and a quick question at the end to check understanding.
 
 /** Replies to other model calls, matched by the start of their system prompts. Strings are sent as they are. */
 export const helpers = [
+  {
+    prompt: "You grade a learner's short answer",
+    reply: () => ({
+      verdict: "partial",
+      explanation:
+        "You're right that something else stops the rate rising, but name the factor: carbon dioxide concentration or temperature becomes limiting.",
+    }),
+  },
   {
     prompt: "You help a learner reflect",
     reply: () => ({
@@ -745,4 +831,35 @@ export const reflection = {
 export const classModePolicy = {
   allowed_modes: ["tutor", "explain_back", "review", "spot_the_error"],
   answer_reveal: false,
+};
+
+/** Topics on the deck and the quiz, so the Progress panel can group results. */
+export const studyTopics = {
+  deck: ["Photosynthesis"],
+  quiz: ["Photosynthesis", "Calvin cycle"],
+};
+
+/** The student's answers to the seeded quiz, by question and option text (options are shuffled): one wrong, one half right. */
+export const quizAttempt = {
+  "Where do the light-dependent reactions take place?": {
+    option: "In the thylakoid membranes",
+  },
+  "Which gas is released as a by-product of splitting water?": {
+    option: "Carbon dioxide",
+  },
+  "Explain why the rate of photosynthesis stops rising at high light intensity.":
+    { text: "Because the plant can't use any more light." },
+  "Which enzyme performs the first step of the Calvin cycle?": {
+    option: "RuBisCO",
+  },
+  "Where in the cell does glycolysis happen?": { option: "In the cytoplasm" },
+  "In the pondweed experiment, what was counted at each light level?": {
+    option: "Oxygen bubbles per minute",
+  },
+};
+
+/** A reflection on a project chat, whose unclear item shows in Progress. */
+export const projectReflection = {
+  learned: "The light-dependent reactions happen in the thylakoid membranes.",
+  unclear: "Why does the Calvin cycle need ATP as well as NADPH?",
 };

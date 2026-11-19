@@ -54,8 +54,8 @@ then:
    and two students, files in several formats, a project with a sub-agent, chats
    with sources, branches and a canvas, a long chat to compact, a skill, a web
    page tool that asks for approval, image creation, image captions, a file whose
-   processing failed, an example chat for each learning mode, a reflection,
-   flashcards, a quiz, a
+   processing failed, an example chat for each learning mode, reflections,
+   flashcards with reviews, a quiz with an attempt, topics, a
    summary, and a class with a course and one unused invite link;
 3. takes every shot in the shot list. Each person signs in once; later shots
    reuse the session, so a long list stays under the sign-in rate limit.
@@ -73,7 +73,9 @@ The pieces live in [`screenshots/`](screenshots/):
   generators. A script with `pace` streams slowly, so a shot can catch a reply
   while it is still being written; `fetch` makes it read a web page (which asks
   for approval) and `byModel` gives each model its own answer when comparing.
-  It also scripts the prompt coach, context compaction and image captions, and
+  Study drafts (cards, quiz questions, summary sections) are chosen by the file
+  in each request, so they cite the right file. It also scripts the prompt
+  coach, context compaction, image captions and short-answer grading, and
   stands in for a
   ComfyUI image server under `/comfy` that returns one fixed picture.
 - [`seed.mjs`](screenshots/seed.mjs) creates the dataset.
