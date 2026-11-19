@@ -295,7 +295,7 @@ it("shows retrieval provenance but denies links when the source is no longer aut
   const link = await screen.findByRole("link", {
     name: `Source 1: ${F}.txt`,
   });
-  expect(link).toHaveAttribute("href", `/c/a/files/${F}`);
+  expect(link).toHaveAttribute("href", `/c/a/files/${F}?passage=chunk`);
   await userEvent.hover(link);
   expect(await screen.findByRole("tooltip")).toHaveTextContent(
     "This chat · generation 2 · text",

@@ -23,3 +23,17 @@ class SpanCitation(BaseModel):
     match_kind: str | None = None
     name: str | None = None
     excerpt: str | None = None
+
+
+class ChatFilePassage(BaseModel):
+    """One retrieved passage of a scoped file, for the source page (US-90.4).
+
+    ``text`` is untrusted file content. ``position`` counts from 1 within the
+    file's current chunks; ``kind`` is ``caption`` for an image's description.
+    """
+
+    chunk_id: str
+    kind: str
+    position: int = Field(ge=1)
+    total: int = Field(ge=1)
+    text: str

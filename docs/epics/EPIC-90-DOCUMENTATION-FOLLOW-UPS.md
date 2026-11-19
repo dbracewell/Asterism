@@ -110,11 +110,11 @@ As a user who reads a compaction summary, I see which model wrote it.
 As a user who opens a source or citation, I see the passage Asterism used, not
 only the file name.
 
-- [ ] Show the cited passage (and its place in the file where known) on the
+- [x] Show the cited passage (and its place in the file where known) on the
       scoped file page, with plain wording instead of "Authorized source in the
       current file scope of this conversation."
-- [ ] Keep Download source and Back to conversation.
-- [ ] Tests; update `docs/guide/02-chatting/sources-and-citations.md` and add a
+- [x] Keep Download source and Back to conversation.
+- [x] Tests; update `docs/guide/02-chatting/sources-and-citations.md` and add a
       shot of the page.
 
 ### US-90.5: Help text covers Spot the error and the Users page

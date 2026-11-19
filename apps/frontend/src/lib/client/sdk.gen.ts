@@ -177,6 +177,9 @@ import type {
   ChatFileGetInfoData,
   ChatFileGetInfoErrors,
   ChatFileGetInfoResponses,
+  ChatFileGetPassageData,
+  ChatFileGetPassageErrors,
+  ChatFileGetPassageResponses,
   ChatFileGetPreviewData,
   ChatFileGetPreviewErrors,
   ChatFileGetPreviewResponses,
@@ -1530,6 +1533,29 @@ export class ApiClient extends HeyApiClient {
     >({
       security: [{ scheme: "bearer", type: "http" }],
       url: "/chat/{chat_id}/files/{file_id}/info",
+      ...options,
+    });
+  }
+
+  /**
+   * Get Chat File Passage
+   *
+   * One cited passage of a scoped file, with its place in the file (US-90.4).
+   */
+  public chatFileGetPassage<ThrowOnError extends boolean = false>(
+    options: Options<ChatFileGetPassageData, ThrowOnError>,
+  ): RequestResult<
+    ChatFileGetPassageResponses,
+    ChatFileGetPassageErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).get<
+      ChatFileGetPassageResponses,
+      ChatFileGetPassageErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/chat/{chat_id}/files/{file_id}/passages/{chunk_id}",
       ...options,
     });
   }

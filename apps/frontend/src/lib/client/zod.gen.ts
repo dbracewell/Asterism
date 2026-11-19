@@ -320,6 +320,22 @@ export const zChatDraftModelUpdate = z.object({
 });
 
 /**
+ * ChatFilePassage
+ *
+ * One retrieved passage of a scoped file, for the source page (US-90.4).
+ *
+ * ``text`` is untrusted file content. ``position`` counts from 1 within the
+ * file's current chunks; ``kind`` is ``caption`` for an image's description.
+ */
+export const zChatFilePassage = z.object({
+  chunk_id: z.string(),
+  kind: z.string(),
+  position: z.int().gte(1),
+  total: z.int().gte(1),
+  text: z.string(),
+});
+
+/**
  * ChatGPTAuthorizationStart
  *
  * Where the user's browser goes next to continue with ChatGPT.
@@ -5637,6 +5653,17 @@ export const zChatFileGetInfoPath = z.object({
  * Successful Response
  */
 export const zChatFileGetInfoResponse = zUserFile;
+
+export const zChatFileGetPassagePath = z.object({
+  chat_id: z.uuid(),
+  file_id: z.uuid(),
+  chunk_id: z.string().min(1).max(200),
+});
+
+/**
+ * Successful Response
+ */
+export const zChatFileGetPassageResponse = zChatFilePassage;
 
 export const zChatFileGetPreviewPath = z.object({
   chat_id: z.uuid(),

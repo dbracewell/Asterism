@@ -800,6 +800,37 @@ export type ChatDraftModelUpdate = {
 };
 
 /**
+ * ChatFilePassage
+ *
+ * One retrieved passage of a scoped file, for the source page (US-90.4).
+ *
+ * ``text`` is untrusted file content. ``position`` counts from 1 within the
+ * file's current chunks; ``kind`` is ``caption`` for an image's description.
+ */
+export type ChatFilePassage = {
+  /**
+   * Chunk Id
+   */
+  chunk_id: string;
+  /**
+   * Kind
+   */
+  kind: string;
+  /**
+   * Position
+   */
+  position: number;
+  /**
+   * Total
+   */
+  total: number;
+  /**
+   * Text
+   */
+  text: string;
+};
+
+/**
  * ChatFileScope
  */
 export type ChatFileScope = {
@@ -11634,6 +11665,50 @@ export type ChatFileGetInfoResponses = {
 
 export type ChatFileGetInfoResponse =
   ChatFileGetInfoResponses[keyof ChatFileGetInfoResponses];
+
+export type ChatFileGetPassageData = {
+  body?: never;
+  path: {
+    /**
+     * Chat Id
+     */
+    chat_id: string;
+    /**
+     * File Id
+     */
+    file_id: string;
+    /**
+     * Chunk Id
+     */
+    chunk_id: string;
+  };
+  query?: never;
+  url: "/chat/{chat_id}/files/{file_id}/passages/{chunk_id}";
+};
+
+export type ChatFileGetPassageErrors = {
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type ChatFileGetPassageError =
+  ChatFileGetPassageErrors[keyof ChatFileGetPassageErrors];
+
+export type ChatFileGetPassageResponses = {
+  /**
+   * Successful Response
+   */
+  200: ChatFilePassage;
+};
+
+export type ChatFileGetPassageResponse =
+  ChatFileGetPassageResponses[keyof ChatFileGetPassageResponses];
 
 export type ChatFileGetPreviewData = {
   body?: never;

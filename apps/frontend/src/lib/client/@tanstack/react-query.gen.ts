@@ -177,6 +177,9 @@ import type {
   ChatFileGetInfoData,
   ChatFileGetInfoError,
   ChatFileGetInfoResponse,
+  ChatFileGetPassageData,
+  ChatFileGetPassageError,
+  ChatFileGetPassageResponse,
   ChatFileGetPreviewData,
   ChatFileGetPreviewError,
   ChatFileGetPreviewResponse,
@@ -1848,6 +1851,36 @@ export const chatFileGetInfoOptions = (options: Options<ChatFileGetInfoData>) =>
       return data;
     },
     queryKey: chatFileGetInfoQueryKey(options),
+  });
+
+export const chatFileGetPassageQueryKey = (
+  options: Options<ChatFileGetPassageData>,
+) => createQueryKey("chatFileGetPassage", options);
+
+/**
+ * Get Chat File Passage
+ *
+ * One cited passage of a scoped file, with its place in the file (US-90.4).
+ */
+export const chatFileGetPassageOptions = (
+  options: Options<ChatFileGetPassageData>,
+) =>
+  queryOptions<
+    ChatFileGetPassageResponse,
+    ChatFileGetPassageError,
+    ChatFileGetPassageResponse,
+    ReturnType<typeof chatFileGetPassageQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry.get().chatFileGetPassage({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: chatFileGetPassageQueryKey(options),
   });
 
 export const chatFileGetPreviewQueryKey = (

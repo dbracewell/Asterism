@@ -77,10 +77,10 @@ Source: the follow-ups found during EPIC-87 to EPIC-89. [EPIC-90](docs/epics/EPI
   - [x] Test the Compact now path; check stored records and the divider.
   - [x] Consider repairing stored records whose name is an id (data migration if the stored value changes).
 - [x] US-90.4: The source page shows the passage
-  - [ ] Show the cited passage (and its place in the file where known) on the scoped file page, with plain wording instead of "Authorized source in the current file scope of this conversation."
-  - [ ] Keep Download source and Back to conversation.
-  - [ ] Tests; update `docs/guide/02-chatting/sources-and-citations.md` and add a shot of the page.
-- [ ] US-90.5: Help text covers Spot the error and the Users page
+  - [x] Show the cited passage (and its place in the file where known) on the scoped file page, with plain wording instead of "Authorized source in the current file scope of this conversation."
+  - [x] Keep Download source and Back to conversation.
+  - [x] Tests; update `docs/guide/02-chatting/sources-and-citations.md` and add a shot of the page.
+- [x] US-90.5: Help text covers Spot the error and the Users page
   - [ ] Add `concept.mode-spot-the-error` to the help registry and list it under `concept.learning-mode`.
   - [ ] Rewrite the `admin.users` page guide for suspend, reactivate, reset links, delete and deletion requests.
   - [ ] Mirror any changed definitions in `docs/terminology.md`; registry tests pass.
