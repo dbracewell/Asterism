@@ -1,267 +1,138 @@
-# Knowledge Retrieval and Image Captioning
+# Knowledge retrieval
 
-The knowledge subsystem uses separate stores for private retrieval and its
-locally provisioned model artifacts. Every eligible uploaded file has a
-file-owned artifact generation independent of project/chat references. Image
-captioning is globally disabled by default. When an administrator enables it,
-generated captions are stored in the artifact's `captioning` extraction and
-indexed as soon as caption generation and vector storage succeed. Captioning uses
-the shared `pending | running | ready | failed | canceled` processing statuses;
-there is no caption approval step. Users can regenerate a file's embedding and
-caption from the File Manager. See the [caption lifecycle](file-knowledge-processing.md#caption-generation)
-for the per-extraction timestamps and regeneration behavior.
-Image CLIP vectors remain independently indexed throughout.
+This guide explains how a turn uses the user's processed files: how
+`search_knowledge` finds passages, how attached files are read into the prompt,
+how features that work through a whole file read it in order, and the checks that
+keep every one of these inside the turn's allowed files. Read it before changing
+retrieval, file reads at run time, or anything that returns file content to a model.
+[File knowledge processing](file-knowledge-processing.md) explains how files become
+searchable in the first place.
 
-| Data                                                        | Owner                | Storage                                                 |
-| ----------------------------------------------------------- | -------------------- | ------------------------------------------------------- |
-| File artifacts and project/chat references                  | Relational database  | SQLite through SQLAlchemy; direct schema initialization |
-| Chunk content, provenance IDs, and vectors                  | `LanceDbVectorStore` | `STORAGE_ROOT/knowledge/lancedb`                        |
-| Pinned local embedding model and tokenizer/processor assets | Operator             | `STORAGE_ROOT/models/knowledge-clip`                    |
-| Pinned local caption bundle and its integrity manifest      | Admin or operator    | `STORAGE_ROOT/models/captioning-smolvlm2`               |
+## Concepts
 
-`knowledge_chunks` is one LanceDB table. Every row includes `user_id`, `file_id`,
-and artifact generation provenance. Retrieval intersects a server-derived execution ceiling with live project and
-active-branch chat file memberships before it queries LanceDB; the
-adapter exposes only owner- and allowed-file-filtered search, file/chunk
-deletion, and no unfiltered search API.
+- **The execution file scope** is the set of files a turn may read, fixed when the
+  turn starts ([execution context](execution-context.md#which-files-a-turn-may-use)).
+- **The live scope** is the set of files the chat could use right now: the project's
+  current files and the active branch's attachments. A read must be allowed by both
+  the stored scope and the live one.
+- **`RetrievalService`** searches processed files. It doesn't know about chats,
+  projects or tools; the chat code gives it a reader for the live scope, an
+  embedding provider and a vector store.
+- **`RuntimeFileReader`** reads whole files into the prompt, under the same checks.
+- **A hit** is one passage returned by a search, with the file, chunk and
+  generation it came from.
 
-## Model contract
+## How it works
 
-The pinned initial provider is `Xenova/clip-vit-base-patch32` at reviewed
-revision `dcb5f6119fdbb94f1053e98bd74da0ac582ed2a7`, selected by the
-repository's `onnx/model_quantized.onnx` SHA-256:
+### Searching with `search_knowledge`
 
-```text
-90d3b30b11fc99c781a147df7cb3b8dff38b02b2d838b3b28392e7dfb34920b9
-```
+When the model calls `search_knowledge`, the tool validates its arguments and
+passes the query to the `RetrievalService`
+([`retrieval/service.py`](../../apps/backend/asterism/domains/retrieval/service.py))
+with the turn's `ExecutionScope`. The tool has no database access of its own. The
+service then:
 
-The artifact is exactly 152,998,734 bytes (about 146 MiB), produces normalized
-512-dimensional image and text vectors, and is executed with CPU ONNX Runtime.
-The provider accepts no model-defined Python code and loads tokenizer/processor
-assets only from the local directory (`local_files_only=True`). Its combined
-CLIP graph requires both modality inputs, so it supplies deterministic blank
-images for text embedding and empty text for image embedding; only the requested
-output (`text_embeds` or `image_embeds`) is retained.
+1. **Works out which files to search.** It intersects the stored scope with the live
+   scope and keeps only files whose current generation is ready and has text
+   embeddings. An empty set returns no results, and a scope of more than
+   `MAX_KNOWLEDGE_ALLOWED_FILES` (1,000) files is refused.
+2. **Embeds the query** with the same CLIP model used for the files.
+3. **Searches LanceDB filtered by user and by those file IDs.** The vector store has
+   no search without both filters, so it is never searched globally and filtered
+   afterwards.
+4. **Checks again before releasing anything.** Every hit must belong to the user,
+   to a file still in scope, and to a generation that was ready when searched and is
+   still current now. A hit from a generation replaced during the search is dropped.
+5. **Returns bounded results:** at most `MAX_KNOWLEDGE_QUERY_TOP_K` (10) hits, with
+   excerpts sharing `MAX_KNOWLEDGE_RESULT_BYTES` (16 KiB), cut on UTF-8 boundaries.
+   The limits hold even if the vector store returns too many.
 
-At startup, Asterism automatically provisions the reviewed bundle when it is
-missing or invalid. It downloads only the following allowlisted files from that
-exact revision into a temporary sibling directory, verifies every required file
-and the exact ONNX size/SHA-256, writes a manifest of file digests, then atomically
-promotes the bundle to `STORAGE_ROOT/models/knowledge-clip`. The selected ONNX
-artifact is renamed to `model.onnx`:
+Each hit names the file, chunk and generation, whether it matched the text or a
+caption, and how the file reached the turn (project file or attachment, with the
+message). The response also records the chat, project, agent and model, and both
+the context revision the turn started with and the current one.
 
-- `onnx/model_quantized.onnx` → `model.onnx`
-- `config.json`, `preprocessor_config.json`, `tokenizer.json`, `tokenizer_config.json`
-- `special_tokens_map.json`, `vocab.json`, `merges.txt`
+If embedding or the vector store fails, the service still checks access again and
+returns "unavailable", so an outage can never hide a revocation.
 
-Startup creates/opens LanceDB without blocking on the model download. Files that
-arrive while provisioning is in progress remain pending and are automatically
-resumed only after the verified bundle is promoted. The admin settings page exposes
-safe readiness/progress diagnostics; there is no manual embedding-model install
-step. A failed provisioning attempt remains retryable on a later runtime start.
+Hits feed claim citations: the model can cite a passage it retrieved with an
+`asterism-cite:` token, and the server resolves it only against that run's hits
+([agent runtime](agent-runtime.md#grounded-answers)).
 
-## Local image-captioning provisioning and benchmark
+### Reading attached files into the prompt
 
-Image captioning is disabled unless an administrator selects a provider model or
-local mode. A provider selection must be active and have provider/catalog-derived
-vision capability; manually asserted or unknown vision metadata is insufficient.
-The local adapter is CPU-only and never downloads a model during initialization
-or captioning. It loads with `local_files_only=True` and `trust_remote_code=False`.
-In provider mode, source image data is sent only to the exact administrator-selected
-vision-capable provider model; there is no provider fallback. Administrators should
-therefore choose a provider consistent with their data-processing requirements.
+Attachments and project files are also included directly, as text or images, when
+a turn starts. `RuntimeFileReader`
+([`files/runtime_access.py`](../../apps/backend/asterism/domains/files/runtime_access.py))
+does these reads through the same live-scope reader as retrieval
+([`chat/runtime_files.py`](../../apps/backend/asterism/domains/chat/runtime_files.py)):
 
-Operators must review and download a specific SmolVLM2 revision out of band into
-`STORAGE_ROOT/models/captioning-smolvlm2`. No unreviewed model ID or revision is
-implicitly selected by Asterism. For local mode, Asterism supports two provisioning paths:
+- It checks the agent and model, the project, the active branch, that the turn
+  hasn't been cancelled or replaced, and, for a sub-agent, its selection and
+  configuration.
+- It checks before converting or reading bytes, and again after, so a file removed
+  during a slow conversion isn't sent.
+- Content prepared earlier is checked again before every model request.
+- Image bytes are bounded by both the file's recorded size and the bytes actually
+  read, and are sent only to models marked as supporting vision. Other models get a
+  short note instead ([LLM providers](llm-providers.md#file-input-capability-gating)).
 
-1. **Admin-initiated download:** An administrator triggers `POST /api/py/settings/app/caption-model/download`
-   from the configuration UI. A background task downloads the pinned, reviewed
-   SmolVLM2 revision (`HuggingFaceTB/SmolVLM2-256M-Video-Instruct`), builds the
-   integrity manifest, and activates the local runtime once verified.
-2. **Manual operator provisioning:** Operators may download the bundle out of band into
-   `STORAGE_ROOT/models/captioning-smolvlm2` and generate the manifest:
+File content always goes into the user or tool part of the conversation, as data,
+never into the system prompt.
 
-```bash
-cd apps/backend
-uv run python scripts/provision_local_caption_bundle.py \
-  --model-root /storage/models/captioning-smolvlm2 \
-  --model-id HuggingFaceTB/SmolVLM2-256M-Video-Instruct \
-  --revision 067788b187b95ebe7b2e040b3e4299e342e5b8fd
-```
+### Reading a file in order
 
-The manifest hashes every regular bundle file. Set its emitted checksum in
-`LOCAL_CAPTION_MODEL_BUNDLE_SHA256` for manual provisioning. Missing, modified,
-external, or malformed artifacts leave local captioning unavailable with a safe
-readiness error; caption requests never make a network call. Keep the model
-bundle backed up alongside knowledge files and the relational database.
+Some features work through a whole file rather than searching it, such as drafting
+flashcards from a chapter. `SourceReader`
+([`retrieval/sources.py`](../../apps/backend/asterism/domains/retrieval/sources.py))
+reads a file's opening chunks in document order through
+`VectorStore.get_file_chunks`. Like `RetrievalService`, it takes a live-scope reader,
+and stops with "unavailable" if the scope, the file's readiness or its generation
+changes during the read ([ADR-0034](../adr/0034-bounded-flashcard-draft-generation.md)).
 
-Before enabling local mode in production, benchmark every supported CPU target:
+### Revocation
 
-```bash
-uv run python scripts/benchmark_local_captioning.py \
-  --model-root /storage/models/captioning-smolvlm2 \
-  --bundle-sha256 <manifest-sha256> --concurrency 1 \
-  --output caption-benchmark-$(uname -s)-$(uname -m).json
-```
+Because every read checks the live scope, access ends as soon as it is removed:
 
-The record includes disk size, cold initialization/caption latency, warm latency,
-concurrent elapsed time, peak RSS, and generated fixture captions for manual
-quality review.
+- Removing a file from a project, or the attachment's message from the active
+  branch, stops later searches and reads in a running turn.
+- Deleting a file removes its vectors, so there is nothing left to find.
+- Changing the chat's project, or a sub-agent's selection, fails the identity
+  checks.
 
-### SmolVLM2 CPU benchmark record
+What a model has already been sent can't be taken back. Earlier answers keep
+whatever they quoted.
 
-The pinned bundle was benchmarked on 2026-09-22 with Python 3.13, Torch 2.13,
-Transformers 5.14.1, `torchvision` 0.28, and `num2words` 0.5.14. The fixture is
-a generated 224px red square. Its returned caption accurately identifies the
-red, otherwise-empty image. Each value is one run; the Linux container shares
-the Apple M5 Max host but is a separate Linux arm64 runtime.
+## Rules
 
-| Target                                  |  Bundle | Initialize | Cold caption | Warm caption | 2 concurrent captions | Peak RSS (1 / 2) |
-| --------------------------------------- | ------: | ---------: | -----------: | -----------: | --------------------: | ---------------: |
-| macOS arm64, Apple M5 Max               | 983 MiB |     2.66 s |       3.98 s |       3.78 s |                6.56 s |  2.53 / 3.72 GiB |
-| Linux arm64, Docker/Colima on same host | 983 MiB |     2.65 s |      11.94 s |      11.86 s |               26.66 s |  2.56 / 3.38 GiB |
+- Every search and every file read must be allowed by both the turn's stored scope
+  and the chat's live scope.
+- The vector store is only ever searched with a user filter and a file filter.
+- Results are checked again before release, and limited in number and size.
+- Only the current, ready generation of a file is searched.
+- A failure never widens access or skips a check.
+- Owning a file grants nothing at run time; the library and background processing
+  are owner-scoped management, not turn reads.
 
-**Deployment threshold:** local mode defaults to one concurrent caption and
-requires at least 4 GiB process RSS headroom. Do not enable it on
-memory-constrained hosts. Two concurrent captions do not improve throughput on
-the measured targets and increase RSS substantially, so retain the default of
-one unless the deployment is independently benchmarked.
+## Where the code lives
 
-## Bounds and lifecycle
+1. [`retrieval/service.py`](../../apps/backend/asterism/domains/retrieval/service.py):
+   search, checks and limits.
+2. [`chat/retrieval.py`](../../apps/backend/asterism/domains/chat/retrieval.py): builds
+   the service for a turn, with its limits and live-scope reader.
+3. [`chat/runtime_files.py`](../../apps/backend/asterism/domains/chat/runtime_files.py):
+   the live-scope checks shared by search and file reads.
+4. [`files/runtime_access.py`](../../apps/backend/asterism/domains/files/runtime_access.py):
+   `RuntimeFileReader`.
+5. [`retrieval/sources.py`](../../apps/backend/asterism/domains/retrieval/sources.py):
+   ordered reads.
+6. [`tools/builtin/search_knowledge.py`](../../apps/backend/asterism/domains/tools/builtin/search_knowledge.py):
+   the tool, a thin adapter.
 
-`MAX_CONCURRENT_KNOWLEDGE_EMBEDDINGS` and
-`MAX_CONCURRENT_KNOWLEDGE_VECTOR_OPERATIONS` both default to 2 and are validated
-between 1 and 16. Blocking ONNX and LanceDB calls run in worker threads behind
-those semaphores. `MAX_CONCURRENT_LOCAL_CAPTIONS` defaults to 1 and is validated
-from 1 through 4; its CPU-only provider has a separate semaphore. The caption
-bundle is never fetched during initialization or inference. The admin download
-service permits only one in-flight download, exposes safe status/progress,
-supports cancellation/retry, and validates the pinned manifest before reporting
-an existing bundle ready.
+## Related
 
-`init_system` opens LanceDB and starts bounded ingestion and caption-job recovery; FastAPI
-shutdown cancels caption jobs and downloads, releases caption/embedding runtime
-references, closes the vector-store service, then closes the database engine.
-Caption jobs are one per file artifact generation, have a strict timeout and bounded
-concurrency. Their status, source/model identity, and safe error reason remain on
-the file artifact; ordinary structured logs omit image bytes and caption text. A
-failed or canceled replacement keeps the prior current artifact available.
-Ingestion jobs are likewise bounded and idempotent; their processing status and
-safe error reason are available from the File Manager, which offers retry and
-cancellation.
-
-Breaking relational/vector schema changes use the explicit disposable-data reset
-workflow. Initialization does not migrate existing tables. See
-[development initialization and reset](development-reset.md) for exact removed and
-retained paths; it preserves provider model bundles.
-
-## Operations, limits, and security
-
-Back up `STORAGE_ROOT` together with the relational database. In particular,
-preserve `knowledge/lancedb`, `models/knowledge-clip`,
-`models/captioning-smolvlm2`, and uploaded source files; LanceDB vectors alone
-cannot recreate the immutable source files and their relational artifact records. The caption bundle is
-reprovisionable from its pinned revision, but preserve its manifest/checksum so
-an operator can verify the restored bundle before enabling local mode.
-There is no operator-facing index-version switch or general migration/reindex
-command. For a disposable development cutover, use the full reset runbook. Do not
-claim that deleting vectors alone will recreate a consistent searchable store;
-processing state and source ownership are relational too.
-
-Defaults bound local work to two concurrent embedding, vector, and ingestion
-operations; a file artifact produces at most 200 chunks of 1,000 characters with a
-150-character overlap. Retrieval accepts at most 10 results and returns at most
-16 KiB of excerpts. Source file conversion remains bounded by
-`MAX_PROCESS_FILE_SIZE_BYTES` (100 MiB), `MAX_CONVERTED_CHARS` (100,000), and
-`FILE_CONVERSION_TIMEOUT_S` (60 seconds). Superseded artifact generations are
-bounded by `KNOWLEDGE_GENERATION_RETENTION` (1 by default): the current
-generation plus that many superseded generations are kept per file, and the rest
-are pruned together with their vectors. Operators may tune the documented
-configuration values only within their validated ranges and must reserve at
-least 1.25 GiB RSS per embedding worker.
-
-`RetrievalService` is independent of tools and chat storage. The chat composition
-root injects a live scope/artifact reader and the existing `EmbeddingProvider` and
-`VectorStore` interfaces. The `search_knowledge` tool validates its arguments and
-calls that service with the server-derived `ExecutionScope`; it has no database or
-provider globals of its own. The same service is injected into main/delegated tool
-contexts. An empty file scope or absent internal-tool authorization fails closed.
-
-Only ready, current artifacts with text embeddings are sent to the owner- and
-file-filtered vector query. Scope is rechecked after embedding and vector search.
-Results must belong to the requesting owner and a generation that was both ready
-at query time and still current at release. Replacement during search discards the
-hit; a subsequent request can use the new generation. Provider failures return an
-unavailable response after another authorization check, so revocation cannot be
-hidden by an embedding/vector outage. Response size and result counts are bounded,
-including if an adapter returns too many hits; excerpts preserve UTF-8 boundaries.
-
-Each result identifies file/chunk/generation, project/chat source membership, and
-attachment message IDs, with `caption` or `text` match kind. The response includes
-chat/project/agent/model identity and captured prompt versus current context
-revision. Text queries preserve caption indexing; original images remain available
-through the model-facing file reader when the selected model supports vision.
-
-`RuntimeFileReader` uses the same live authorization reader for text, conversion
-cache, and image bytes. Ownership alone is insufficient: the immutable execution
-ceiling and current memberships must both allow the file. Reads validate agent and
-model identity, project, active branch, canceled/replaced turn, and delegated
-selection/configuration. Authorization is checked before processing and after
-processing/byte reads, and cached inline attachment payloads are rechecked before
-every provider request. Image bytes are bounded by both metadata and actual read
-size; non-vision models receive an explicit notice. File and retrieval content stay
-in user/tool messages as task data.
-
-User library APIs and background knowledge ingestion/captioning retain their owner-scoped
-management roles; they are not agent execution reads. Agent knowledge-base
-assignments, their table/API/schema fields, and settings controls have been removed.
-Standalone collection management remains until EPIC-28. No migration or fallback is
-provided; fresh development schema initialization is required. Already delivered or
-persisted message text cannot be withdrawn from a model's past context.
-
-Only the current artifact generation is reported for a file, so the file library
-and knowledge retrieval always agree on which generation a file is using. A
-file that has never been processed has no current generation yet; the generation
-still being built is reported for it instead.
-
-## Benchmark record
-
-A deterministic benchmark was run on 2026-09-22 with Python 3.13 and ONNX
-Runtime 1.20.1. Its fixed corpus contains generated 224px red and blue squares;
-`a red square` must rank red above blue and `a blue square` must rank blue above
-red. Both rankings passed on every measured target.
-
-| Target                                      | Initialize | 2 text embeddings | 2 image embeddings |  Peak RSS |
-| ------------------------------------------- | ---------: | ----------------: | -----------------: | --------: |
-| macOS arm64, Apple M5 Max                   |    0.312 s |           0.044 s |            0.034 s |  ~849 MiB |
-| Linux arm64, Docker/Colima on the same host |    0.406 s |           0.031 s |            0.018 s | ~1.11 GiB |
-
-The artifact bundle satisfies the <400 MB disk-model constraint and the
-relevance smoke threshold, so it is the selected initial provider. Its CPU
-process RSS is substantially larger than its artifact; operators must reserve
-at least 1.25 GiB per embedding worker process until a deployment-specific
-measurement proves a lower safe bound. Linux x86_64 and macOS Intel remain
-release-environment preflight targets, not an untested alternative runtime.
-
-## File-centric processing
-
-`UserFile` is the immutable source revision. `FileKnowledgeArtifact` owns each
-derived generation, including the text extraction, chunks, embeddings, and canonical
-image captions. `project_files` and `chat_files` hold source references. Runtime retrieval resolves project/chat execution scope before searching and sends
-both owner and allowed file IDs to LanceDB; it never searches globally then
-filters in application code. Removing a membership preserves the file and its
-artifacts; deleting a file cancels work and removes memberships, artifacts,
-vectors, and source bytes. An administrator updates the one global
-`knowledge.processing` policy; a policy identity change creates and queues
-replacement generations for the full eligible library, while a ready previous generation remains searchable
-until its replacement is complete.
-
-## Ordered source reads
-
-`retrieval.sources.SourceReader` reads the opening chunks of one authorized file
-in document order through `VectorStore.get_file_chunks`, for features that work
-through a whole file rather than a query (flashcard drafting, US-53.2). Like
-`RetrievalService` it takes an injected live-scope reader and fails the file
-closed when scope, readiness or the artifact generation changes during the read.
-See [ADR-0034](../adr/0034-bounded-flashcard-draft-generation.md).
+- [File knowledge processing](file-knowledge-processing.md)
+- [Execution context](execution-context.md)
+- [Tool authorization](tool-authorization.md)
+- [ADR-0017](../adr/0017-project-file-and-chat-boundaries.md): project, file and chat
+  boundaries

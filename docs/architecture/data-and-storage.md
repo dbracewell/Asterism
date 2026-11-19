@@ -1,413 +1,384 @@
-# Data Model & Storage Architecture
+# Data and storage
 
-Asterism's persistence layer is engineered for high-concurrency local development and production deployments while maintaining clean abstraction boundaries for future database engine swaps.
+This guide explains where Asterism keeps its data, how the schema is organized
+and versioned, how chats and files are stored, and what happens to data when
+something is deleted. Read it before adding a table or column, changing what a
+message stores, or touching deletion.
 
----
+## Concepts
 
-## Storage Engine Architecture
+- **Two databases.** Better Auth's `users.db` holds accounts, sessions and
+  signing keys. The backend's `database.db` holds everything users create. They
+  share only the user ID.
+- **Everything is owned.** Nearly every backend row belongs to one user, and
+  every query on it filters by that user's ID.
+- **Records versus references.** Some data is a _reference_ that grants access,
+  such as a project's file membership, enforced with foreign keys. Some is a
+  _record_ of what happened, such as the files attached to a past message, stored
+  as an immutable JSON snapshot that never grants access by itself. Deleting a file
+  removes its references; records stay and show the file as unavailable.
+- **Storage behind interfaces.** SQLAlchemy for relational data, `VectorStore` for
+  search vectors, `FileStore` for file bytes, so each could be replaced later
+  ([ADR-0019](../adr/0019-single-process-runtime-and-storage-seams.md)).
 
-The backend database system is managed by [`DatabaseSessionManager`](../../apps/backend/asterism/db/database.py) using SQLAlchemy 2.0 Asyncio.
+## Where data lives
 
-```mermaid
-flowchart TD
-    FastAPIRoute["FastAPI Route / Service"]
-    Dep["DBSessionDep / get_async_db_session()"]
-    Mgr["DatabaseSessionManager"]
-    Engine["AsyncEngine (SQLAlchemy 2.0)"]
-    SQLite["SQLite File (WAL Mode)"]
+Everything is under one directory, `STORAGE_ROOT` (`/storage` in the container):
 
-    FastAPIRoute --> Dep
-    Dep --> Mgr
-    Mgr --> Engine
-    Engine --> SQLite
+| Path                 | Holds                                                              | Backed up            |
+| -------------------- | ------------------------------------------------------------------ | -------------------- |
+| `users.db`           | Better Auth: accounts, sessions, signing keys                      | Yes                  |
+| `database.db`        | All backend data                                                   | Yes                  |
+| `files/`             | Uploaded and generated files, by user                              | Yes                  |
+| `knowledge/lancedb/` | Search vectors for processed files                                 | Yes                  |
+| `themes/`            | Custom and edited themes ([theme storage](theme-storage.md))       | Yes                  |
+| `models/`            | Downloaded model bundles: embeddings, captioning, image generation | No; downloaded again |
+| `exports/`           | Users' "Download my data" archives, kept 7 days                    | No                   |
+| `.last-backup.json`  | When the last backup ran, for the Status page                      | No                   |
 
-    subgraph PragmaSettings["SQLite PRAGMA Optimizations"]
-        WAL["PRAGMA journal_mode = WAL"]
-        Sync["PRAGMA synchronous = NORMAL"]
-        FK["PRAGMA foreign_keys = ON"]
-        Timeout["PRAGMA busy_timeout = 5000"]
-        Cache["PRAGMA cache_size = -64000 (64MB)"]
-    end
+[Backup and restore](backup-and-restore.md) explains how the backed-up parts are
+copied consistently while the app runs.
 
-    Engine -.-> PragmaSettings
-```
+## The relational database
 
-### High-Concurrency SQLite Configuration
+`DatabaseSessionManager`
+([`db/database.py`](../../apps/backend/asterism/db/database.py)) runs SQLAlchemy 2
+in async mode on SQLite 3.45 or later. Routes get a session through `DBSessionDep`,
+and services through `get_async_db_session()`.
 
-Asterism applies production-grade PRAGMA settings upon establishing every raw connection:
+Every connection sets these SQLite options:
 
-1. **Write-Ahead Logging (`WAL`)**: Allows concurrent readers without blocking writers, and writers without blocking readers.
-2. **Synchronous Normal (`NORMAL`)**: Drastically reduces filesystem sync operations without risking database corruption in WAL mode.
-3. **Foreign Keys Enforcement (`foreign_keys = ON`)**: Ensures cascade deletions (`ondelete="CASCADE"`) work reliably at the SQLite engine level.
-4. **Busy Timeout (`busy_timeout = 5000`)**: Waits up to 5 seconds during lock contention rather than immediately failing with `database is locked`.
-5. **Memory Cache (`cache_size = -64000`)**: Allocates 64MB of in-memory page cache for lightning-fast queries.
+| Setting                | Why                                                |
+| ---------------------- | -------------------------------------------------- |
+| `journal_mode = WAL`   | Readers and a writer don't block each other        |
+| `synchronous = NORMAL` | Fewer disk syncs, still safe under WAL             |
+| `foreign_keys = ON`    | Cascading deletes actually happen                  |
+| `busy_timeout = 5000`  | Wait up to 5 seconds for a lock instead of failing |
+| `cache_size = -64000`  | About 64 MB of page cache                          |
 
----
+**JSON columns.** Structured values (tool calls, citations, snapshots) are stored
+in JSON columns made with `jsonb_type()`
+([`db/columns.py`](../../apps/backend/asterism/db/columns.py)). The column type
+`PydanticJSONB` validates values with a Pydantic model or `TypeAdapter` on the way
+in and out, so code reads typed objects, not dictionaries. On SQLite it stores
+binary JSON with `jsonb()` and reads it back with `json()`, which is why SQLite 3.45
+is the minimum. A PostgreSQL variant exists, but migrations and full-text search
+assume SQLite.
 
-## Entity Relationship Diagram (ERD)
+## The schema by domain
 
-This diagram shows the source-reference and execution ownership boundaries.
+The schema has 55 tables. Each domain owns its tables and the queries over them.
+
+| Domain             | Tables                                                                                                                                                 | Holds                                                                                                                |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------- |
+| `user`             | `users`, `deleted_users`, `account_deletion_requests`                                                                                                  | Backend user rows with About you and the display copy of name and email; tombstones; deletion requests               |
+| `groups`           | `groups`                                                                                                                                               | Groups, their model and tool lists, their token budgets                                                              |
+| `agent`            | `agent_profiles`, `general_sub_agents`, `sub_agent_traces`                                                                                             | The main agent and sub-agents; the General chat set; content-free delegation audit                                   |
+| `chat`             | `chats`, `messages`, `chat_files`, `chat_executions`, `chat_drafts`, `chat_draft_files`, `chat_send_receipts`, `chat_compactions`                      | Chats and the message tree; attachments; immutable execution records; drafts and send receipts; compaction summaries |
+| `projects`         | `projects`, `project_files`, `project_sub_agents`                                                                                                      | Projects and their file and sub-agent selections                                                                     |
+| `files`            | `user_files`                                                                                                                                           | The file library: names, type, hash, processing cache, origin                                                        |
+| `knowledge`        | `file_knowledge_artifacts`, `file_knowledge_extractions`                                                                                               | Processing results per file ([file knowledge processing](file-knowledge-processing.md))                              |
+| `skills`           | `skills`, `agent_skills`                                                                                                                               | Skill documents and their assignments                                                                                |
+| `prompt_templates` | `prompt_templates`                                                                                                                                     | Prompt templates and rubrics, told apart by `kind`                                                                   |
+| `study`            | `study_decks`, `study_cards`, `study_review_logs`, `study_quizzes`, `study_quiz_questions`, `study_quiz_attempts`, `study_quiz_answers`, `study_notes` | Flashcards and reviews, quizzes and attempts, notes ([study tools](study-tools.md))                                  |
+| `reflections`      | `reflections`                                                                                                                                          | End-of-session reflections                                                                                           |
+| `canvas`           | `canvas_items`, `canvas_versions`                                                                                                                      | Canvas documents and every version of each                                                                           |
+| `classes`          | `classes`, `class_members`, `class_invites`, `educator_requests`                                                                                       | Classes, rosters, invite links, requests for educator access                                                         |
+| `courses`          | `course_versions`, `course_files`, `course_copies`, `course_copy_items`                                                                                | Published courses and each student's copy                                                                            |
+| `image_generation` | `image_generations`                                                                                                                                    | Every image request and its outcome                                                                                  |
+| `chatgpt`          | `chatgpt_connections`, `chatgpt_authorizations`, `chatgpt_host`                                                                                        | Personal ChatGPT plan connections, encrypted                                                                         |
+| `packs`            | `pack_imports`, `pack_import_items`                                                                                                                    | Team pack imports and what each created                                                                              |
+| `settings`         | `app_settings`, `user_settings`, `providers`, `models`                                                                                                 | Instance and user settings, providers and models                                                                     |
+| `usage`            | `usage_records`                                                                                                                                        | The usage ledger                                                                                                     |
+| `data_export`      | `data_exports`                                                                                                                                         | "Download my data" archive state                                                                                     |
+
+Two FTS5 virtual tables, `chat_search` and `project_search`, back search
+([below](#search)).
+
+The core of the schema, the part every turn touches, looks like this:
 
 ```mermaid
 erDiagram
     users ||--o{ projects : owns
     users ||--o{ chats : owns
-    users ||--o{ agent_profiles : configures
     users ||--o{ user_files : owns
-    projects |o--o{ chats : contextualizes
-    projects ||--o{ project_files : references
+    users ||--o{ agent_profiles : configures
+    groups ||--o{ users : contains
+    projects |o--o{ chats : "holds (null = General)"
+    projects ||--o{ project_files : selects
     projects ||--o{ project_sub_agents : selects
-    agent_profiles ||--o{ project_sub_agents : delegates
+    agent_profiles ||--o{ project_sub_agents : "is selected by"
+    agent_profiles ||--o{ general_sub_agents : "General chat set"
     chats ||--o{ messages : contains
-    chats ||--o{ chat_files : references
-    user_files ||--o{ project_files : supplies
-    user_files ||--o{ chat_files : supplies
-    user_files ||--o{ file_knowledge_artifacts : derives
-    file_knowledge_artifacts ||--o{ file_knowledge_extractions : produces
-    messages ||--o{ sub_agent_traces : records
-    agent_profiles ||--o{ sub_agent_traces : executes
-    providers ||--o{ models : provides
+    chats ||--o{ chat_files : attaches
+    chats ||--o{ chat_executions : records
+    user_files ||--o{ project_files : "referenced by"
+    user_files ||--o{ chat_files : "referenced by"
+    user_files ||--o{ file_knowledge_artifacts : "processed into"
+    providers ||--o{ models : offers
 ```
 
-`agent_profiles` stores the singleton model-free main configuration and separately
-managed fixed-model sub-agent definitions. Chats retain independent model selection;
-messages record immutable execution provenance. Project memberships and local chat
-references authorize file context without duplicating source or artifact data.
-
-The [single-process/storage ADR](../adr/0019-single-process-runtime-and-storage-seams.md)
-records why SQLite/FTS initialization and FileStore's local `Path` are current
-implementation constraints, how process-local queues/guards limit deployment,
-and what future adapter work must preserve.
+`agent_profiles` holds both the user's single main agent, which has no model, and
+their sub-agents, each bound to one model. Database constraints keep those roles
+consistent, and restrictive foreign keys stop a model from being deleted while a
+sub-agent is bound to it.
 
 ## Schema versioning
 
 The backend schema is versioned with Alembic
-([ADR-0069](../adr/0069-versioned-schema-migrations.md)); the revision in
-`alembic_version` is the schema version. Scripts live in
-[`asterism/db/migrations/versions/`](../../apps/backend/asterism/db/migrations/versions/)
-and [`asterism/db/migrate.py`](../../apps/backend/asterism/db/migrate.py) runs them.
+([ADR-0069](../adr/0069-versioned-schema-migrations.md)). The revision in
+`alembic_version` is the schema version. Migrations live in
+[`db/migrations/versions/`](../../apps/backend/asterism/db/migrations/versions/), and
+[`db/migrate.py`](../../apps/backend/asterism/db/migrate.py) runs them.
 
-- **Baseline.** The first revision creates the schema as adopted on 2026-11-17:
-  every model table and index, the built-in groups, the FTS5 indexes and their
-  triggers, and the record immutability triggers, as frozen SQL. `create_all` is
-  not an initialization path; tests may still use it for disposable schemas.
-- **Upgrade.** `init:db` and container startup run `upgrade head` in one SQLite
-  transaction (explicit `BEGIN`, so DDL rolls back too) on a dedicated engine
-  without the application PRAGMAs, so foreign keys are off during table rebuilds.
-- **Guards.** `init:db` and the API server refuse a database whose revision the
-  code does not know (newer, or another branch) and a non-empty database with no
-  revision (created before the baseline), naming both revisions and changing
-  nothing. The API server also refuses a database behind head. There are no
-  downgrades; the way back is restoring a backup
-  ([backup and restore](backup-and-restore.md), [ADR-0072](../adr/0072-backup-and-restore.md)).
-- **Parity.** `tests/test_migrations.py` builds one database by migrations and one
-  by `create_all` plus the current FTS definitions, and requires the same tables,
-  columns, constraints, indexes, triggers, FTS tables and seed groups, plus an
-  empty autogenerate diff. A model or trigger change without a migration fails CI.
-- **Better Auth** migrates `users.db` with its pinned CLI and is outside Alembic.
+- **Baseline.** The first revision creates the schema as it stood on 2026-11-17,
+  as frozen SQL: every table and index, the built-in groups, the FTS5 tables and
+  their triggers, and the triggers that keep records immutable. `create_all` is
+  not a way to initialize a database; tests may use it for throwaway schemas.
+- **Upgrading.** `init:db` and container startup run `upgrade head` in one SQLite
+  transaction, so a failed migration rolls back completely, DDL included. They use
+  a separate engine without the application's PRAGMAs, so foreign keys are off
+  while tables are rebuilt.
+- **Refusing a mismatch.** `init:db` and the API server refuse a database whose
+  revision the code doesn't know (newer, or from another branch), and a non-empty
+  database with no revision. The API server also refuses a database that is behind.
+  Each refusal names both revisions and changes nothing. There are no downgrades:
+  the way back from an upgrade is restoring a backup.
+- **Keeping models and migrations in step.** `tests/test_migrations.py` builds one
+  database by migrations and one from the models, and requires the same tables,
+  columns, constraints, indexes, triggers, FTS tables and seed groups, plus an empty
+  autogenerate diff. A model change without a migration fails CI.
+- **Better Auth** migrates `users.db` itself, with its pinned CLI, outside Alembic.
 
-Contributor workflow and the upgrade-test harness are in the
-[backend README](../../apps/backend/README.md#database-initialization-and-migrations).
-`pnpm reset:db` remains a development tool for disposable data
-([initialization and reset](development-reset.md)).
+The [backend README](../../apps/backend/README.md#database-initialization-and-migrations)
+explains how to write a migration and its upgrade test. `pnpm reset:db` deletes
+local data and is for development only ([initialization and reset](development-reset.md)).
 
-## Usage ledger
+## Chats and messages
 
-`usage_records` ([ADR-0073](../adr/0073-usage-ledger-and-budgets.md)) holds one
-append-only row per completed model call or image request. Each row records the
-user, source, model id and name, chat, tokens, images, the model's prices at call
-time, and whether it ran on a ChatGPT plan. Rows have no foreign key to models or
-chats, so a deleted model or chat never rewrites past usage. Deleting the user
-deletes their rows. Clients are metered where `create_llm_client` builds them.
-Budgets are `groups.daily_token_budget` and `groups.monthly_token_budget`. Their
-days and months follow the `usage_timezone` app setting (UTC by default). Reads
-and budget checks aggregate over the `(user_id, created_at)` index.
+### The message tree
 
-## Data exports
-
-`data_exports` ([ADR-0076](../adr/0076-download-my-data.md)) holds at most one row
-per user: a "Download my data" archive that is pending, running, ready or failed,
-with its completion and expiry times and size. The zip itself is
-`exports/<hash of the user id>/<export id>.zip` under the storage root. It is written
-as `.partial` and renamed when complete, kept for 7 days, and deleted with the
-account. `exports/` is outside every backed-up tree. A restart marks interrupted
-builds failed and removes expired archives.
-
-## Search indexes
-
-SQLite FTS5 virtual tables, `chat_search` and `project_search`, provide
-owner-scoped keyword search over chat titles/persisted message text and project
-names/descriptions. Project prompts, attachments and extracted file content are not
-indexed. Migrations install the indexes and insert/update/delete triggers; their
-current definitions live in `chat/search_index.py`, and a change there needs a migration.
-The service parses at most ten case-folded word terms; the adapter quotes and
-joins them with `AND`, so user input is never passed through as FTS syntax.
-`chat/search_index.py` exposes composable SQL ID selects through `ChatSearchIndex`.
-Its SQLite implementation owns `MATCH`; it does not execute the selects or return
-Python candidate-ID collections. Only SQLite has an implemented initializer and
-search adapter; the SQL contract does not imply PostgreSQL/MySQL support.
-
-`chat/search.py` composes those relations with owner-scoped base selects from
-`chat/queries.py` and `projects/queries.py`. Owner and General/project predicates
-are applied before the shared count/page relation is executed. General/project
-search excludes project results; explicit project scope requires an owned project,
-even for an empty query. Mixed results sort by updated time descending, kind and
-UUID ascending. `db/queries.py` remains domain-neutral and owns no search policy.
-
-Enrichment loads only selected-page chats and project identities. It requests
-snippets only for chats without an all-term title match. The owning chat query
-uses `row_number()` partitioned by chat, ordered by message timestamp and UUID,
-to return one owned message containing any term per requested chat in one round
-trip. All terms still have to match the chat's aggregate FTS document; they may
-span multiple messages. Title matches retain their title snippet. Empty and
-title-only pages issue no snippet query. The remaining expanded ID lists are
-bounded by the page size, never by the full match set.
-
-This bounds application candidate materialization, query round trips and bind
-counts, not total database work: exact counts, FTS matching, sorting and message
-ranking can scan many rows, and selected message bodies can be large. The current
-SQLite 3.45+ runtime supports the required FTS5 and window functions. See the
-[US-34.1 measurements](../reviews/us-34.1-verification-2026-10-24.md) for tested
-scope, dataset sizes and limits.
-
-## Chat binding, context, and message tree
-
-Each chat stores the singleton main configuration identity in `agent_id`; callers
-cannot choose another main agent. Chat model UUID/snapshot and positive revision
-are stored independently. Sub-agent fixed models remain on their definitions.
-Messages retain immutable actual execution/model/provider and prompt/context
-provenance across picker changes. Main settings contain no model binding.
-
-Messages retain provider-reported `input_tokens`, `output_tokens`, `total_tokens`,
-and `generation_duration_ms`. The UI's preflight context meter is not persisted
-usage: it is an estimate assembled from the active thread, system prompt, tool
-schemas, text attachments, and accepted images.
-
-## The Message Tree Model
-
-Asterism models conversation history as a **directed acyclic tree** rather than a flat linear list.
+A chat's history is a tree, not a list, so editing or regenerating never loses
+anything:
 
 ```mermaid
 graph TD
-    User1["User Msg 1 (id: M1)"]
-    Assistant1["Assistant Msg 1 (id: M2, parent: M1)"]
-
-    User2["User Msg 2 (id: M3, parent: M2)"]
-
-    Assistant2A["Assistant 2 (Attempt A) (id: M4, parent: M3)"]
-    Assistant2B["Assistant 2 (Attempt B - Regenerated) (id: M5, parent: M3)"]
-
-    User1 --> Assistant1
-    Assistant1 --> User2
-    User2 --> Assistant2A
-    User2 -->|active_child_id points here| Assistant2B
+    U1["User: first question"] --> A1["Assistant: answer"]
+    A1 --> U2["User: follow-up"]
+    U2 --> A2a["Assistant: first answer"]
+    U2 -->|active child| A2b["Assistant: regenerated answer"]
 ```
 
-### Tree Capabilities
+- **Regenerating** adds a sibling reply and points the parent's `active_child_id`
+  at it. The old reply stays, with its tool calls and reasoning.
+- **Editing** a message adds a sibling user message, starting a new branch.
+- **Cancelling** marks the turn cancelled and keeps any text already written.
+- **Switching branches** reads siblings (`sibling_count`,
+  `current_sibling_index`) without deleting anything.
 
-- **Regeneration without Data Loss**: When the user requests regeneration, the original assistant response is kept in the database with its tool calls and reasoning. The parent message's `active_child_id` is simply pointed to the newly generated child message.
-- **Cancellation without Data Loss**: Explicit cancellation marks the active user message cancelled. If output had already streamed, a cancelled assistant child retains that partial content and thinking.
-- **Branch Traversal**: Clients can inspect siblings (`has_siblings`, `sibling_count`, `current_sibling_index`) and switch branches without destroying alternate histories.
+The _active branch_ is the path from the root following each message's active
+child. It decides what the user sees, what the model is sent, and which
+attachments are in scope.
 
----
+Each chat stores its main agent (`agent_id`, always the user's own), its selected
+model with a revision, its project (or null for General), its learning mode and
+its `purpose` (an ordinary conversation, or a hidden special-purpose chat such as
+skill drafting).
 
-## JSONB Columns & Serialization
+### What a message stores
 
-Asterism provides type-safe JSON serialization directly into SQLite columns using [`JSONB_COLUMN`](../../apps/backend/asterism/db/columns.py):
+Besides its role, content and tree links, a message keeps records of its turn.
+These are JSON snapshots, never foreign keys: they describe what happened and
+grant nothing. Reads recheck any file or source they mention against the chat's
+current scope and mark it `available` or not.
 
-- Uses SQLite 3.45+ `jsonb()` on writes and `json()` on reads. Older SQLite is not
-  supported by a text fallback. A PostgreSQL JSONB column variant exists, but the
-  application initializer and full-text search currently require SQLite.
-- Built-in integration with **Pydantic `TypeAdapter`**, ensuring stored JSON is validated and deserialized directly into strong domain types (such as `list[ToolCall]`, `list[ToolResult]`, and `ChatCompletionParams`).
+| Field                                                                     | Holds                                                                                                                                |
+| ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `files`                                                                   | Snapshots of the files attached to a user message, by immutable file ID                                                              |
+| `inline_files`                                                            | `asterism-file:` references the server resolved in the content ([ADR-0039](../adr/0039-inline-file-references-in-markdown.md))       |
+| `citations`                                                               | `asterism-cite:` claim citations, with an excerpt of each passage ([ADR-0040](../adr/0040-claim-level-citations.md))                 |
+| `delegations`                                                             | One record per sub-agent call made in this step ([agent runtime](agent-runtime.md#selected-delegation-projects-and-the-general-set)) |
+| `verification`                                                            | The latest verify pass, one label per claim ([ADR-0041](../adr/0041-verify-pass.md))                                                 |
+| `disagreements`                                                           | The latest disagreement pass ([ADR-0042](../adr/0042-disagreement-display.md))                                                       |
+| `exercise_record`                                                         | Spot the error's hidden error, attempts and reveal ([learning modes](learning-modes.md#spot-the-error-a-hidden-graded-mistake))      |
+| `draft_comments`                                                          | Inline comments from a Draft feedback reply; only their resolved state changes later                                                 |
+| `accepted_about`, `accepted_rubric`, skill and mode snapshots             | What the user message was sent with, pinned ([execution context](execution-context.md#about-you-on-a-turn))                          |
+| `input_tokens`, `output_tokens`, `total_tokens`, `generation_duration_ms` | What the provider reported for this step                                                                                             |
 
----
+Pinned inputs are immutable: SQLite triggers refuse updates to them and to
+`chat_executions` records. Composite foreign keys keep a message's execution in the
+same chat and owner.
 
-## User file storage and model input
+### Sending records
 
-Uploaded bytes pass through the `FileStore` protocol; `LocalFileStore` currently
-places them below `{storage_root}/files/{encoded_user_id}/{shard1}/{shard2}/{file_id}/source{extension}`.
-Consumers pass opaque keys through the adapter and do not reconstruct paths. Reads use the async
-`read_bytes` (with an optional byte `limit`) and `exists`, which run off the event loop. `local_path()`
-is the only method that exposes a filesystem path, reserved for consumers that need a real file:
-streamed downloads (`FileResponse`), the conversion worker and document page counts. An object-store
-adapter would materialize a temporary copy there. The `user_files` table records
-ownership, sanitized and original names, MIME/kind classification, SHA-256, and a
-bounded processing cache. `messages.files` stores typed snapshots/references rather
-than a relational foreign key, so deleting a file removes its bytes and row without
-rewriting history; affected historical attachments render as unavailable.
+Three tables make sending safe to retry ([chat and WebSocket](chat-and-websocket.md#sending-a-message)):
 
-The authenticated, user-scoped API provides `POST /files/`, paginated `GET /files/`,
-`GET /files/{filename}`, and `DELETE /files/{filename}`. Uploads sanitize names,
-reject configured executable extensions and oversized input, and never expose
-another user's bytes or metadata. An intact existing object with the same user,
-sanitized filename, and SHA-256 is reused. Different bytes receive filename collision
-suffixes; deduplication never crosses users or filenames.
+- **`chat_drafts` and `chat_draft_files`**: a draft and the library files staged
+  in it. A draft lasts 24 hours and grants no access. Discarding it removes the
+  references, never the files.
+- **`chat_send_receipts`**: one row per accepted `request_id`, with a fingerprint
+  of the payload, so a retry returns the original message.
 
-`user_files.origin` is `upload` or `agent`. Agent-produced files (US-56.2,
-[ADR-0039](../adr/0039-inline-file-references-in-markdown.md)) are registered by
-tool code through `files/produced.py`, never through an HTTP route. They carry
-historical, non-foreign-key provenance (`produced_chat_id`,
-`produced_execution_id`, `produced_agent_id`, `produced_tool`), have their type
-detected from content, are never deduplicated against existing rows, and are
-capped per run by `MAX_PRODUCED_FILES_PER_RUN` and `MAX_PRODUCED_BYTES_PER_RUN`.
-Registration adds a `chat_files` membership; branch scope admits the file only
-while a message of its producing run is on the active branch. Deleting the chat
-leaves the file in the library.
+Accepting a message writes the message, its branch link, its attachments, its
+receipt and the draft's consumption in one transaction. Creating a new chat
+serializes per user, so two identical requests racing can't create two chats.
 
-`messages.inline_files` and `DelegationRecord.inline_files` hold the
-server-resolved `asterism-file:` references in a step's content or a sub-agent's
-output (US-56.3). Like `messages.files`, they are JSON snapshots, not foreign
-keys; message reads recheck their `available` flag against live chat scope.
+## Files
 
-`messages.citations` and `DelegationRecord.citations` hold the server-resolved
-`asterism-cite:` claim citations (US-55.1, [ADR-0040](../adr/0040-claim-level-citations.md)):
-the cited chunk, file name and an excerpt snapshot. They resolve only against
-chunks the saving run retrieved, and reads recheck `available` against live chat scope.
+### Storing bytes
 
-`messages.verification` holds the latest verify pass of an answer (US-55.2,
-[ADR-0041](../adr/0041-verify-pass.md)): verifier model, time, searched files,
-one label per claim with evidence snapshots, and usage. It never changes the
-answer; reads recheck evidence availability against live chat scope.
+`FileStore` ([`files/store.py`](../../apps/backend/asterism/domains/files/store.py)) is
+the only way to read or write file bytes. `LocalFileStore` writes each file to
+`files/{encoded user id}/{shard}/{shard}/{file id}/source{extension}`. Callers pass
+opaque storage keys and never build paths themselves. Reads are async
+(`read_bytes`, with an optional byte limit, and `exists`). Only `local_path()` returns
+a real path, for the few consumers that need a file on disk: streamed downloads,
+the document converter and page counting. An object-store adapter would make a
+temporary copy there.
 
-`messages.disagreements` holds the latest disagreement pass (US-55.3,
-[ADR-0042](../adr/0042-disagreement-display.md)), anchored on a comparison's
-first column turn or on the step whose sub-agents were compared: model, time,
-the compared sources (with the reply or delegation each one was) and the
-conflicting points.
+### The library
 
-`messages.exercise_record` holds a spot-the-error answer's hidden record
-(US-55.4, [ADR-0043](../adr/0043-spot-the-error-exercise.md)): the recorded
-error, its correction and source, the learner's attempts and when it was
-revealed. The API returns only `exercise`, a view that omits the error until
-reveal.
+`user_files` records each file's owner, safe and original names, type, SHA-256 hash
+and a bounded cache of its converted text. The API is `POST /files/`, `GET /files/`
+(paginated), `GET /files/{filename}` and `DELETE /files/{filename}`, all scoped to
+the user.
 
-`messages.accepted_rubric` pins the rubric a Draft feedback user turn is
-assessed against (US-57.1, [ADR-0044](../adr/0044-rubric-draft-feedback.md)):
-source, ID, revision and a copy of the rubric document. It is immutable (SQLite
-trigger), and the API returns it as `rubric` with live `available`. Rubrics
-themselves are rows of `prompt_templates` with `kind = "rubric"`; prompt
-templates have `kind = "prompt"`, and each kind has its own owner-scoped selects
-and API.
+- **Uploads** sanitize names, refuse executable extensions and anything over the
+  upload limit, and are limited per address at nginx.
+- **Duplicates.** Uploading identical bytes under the same name reuses the
+  existing file. Different bytes under a taken name get a numbered suffix.
+  Deduplication never crosses users or names.
+- **Generated files.** Files a tool creates, such as generated images, have
+  `origin = "agent"` and record which chat, execution, agent and tool produced them.
+  They are registered by tool code through
+  [`files/produced.py`](../../apps/backend/asterism/domains/files/produced.py), never
+  through an HTTP route, and are limited per run by `MAX_PRODUCED_FILES_PER_RUN` and
+  `MAX_PRODUCED_BYTES_PER_RUN`. A generated file is in a chat's scope only while a
+  message from the run that produced it is on the active branch. Deleting the chat
+  leaves the file in the library.
 
-`messages.draft_comments` holds the inline comments parsed from a Draft
-feedback reply when it is saved (US-57.2, [ADR-0045](../adr/0045-inline-draft-comments.md)):
-an ID, the criterion and level, the quoted passage, the note and when it was
-resolved. Only the resolved state changes later. Anchors are not stored; the
-draft review computes them when read. The API returns `draft_comment_summary`
-(total and resolved counts) on the message.
+What happens after upload, from conversion to searchable vectors, is in
+[file knowledge processing](file-knowledge-processing.md).
 
-On first attachment, `MarkItDownFileProcessor` reads text directly where possible
-or converts supported documents in a worker thread. Processing is bounded by input
-size, timeout, and converted-character limits; its status and safe error message are
-stored on the file. Chat builds document/text cache into text parts. Image bytes are
-included only for models whose `supports_vision` capability is explicitly `true` and
-only below the configured vision limit; unknown capability is intentionally treated
-as non-vision. See [LLM providers](llm-providers.md#file-input-capability-gating).
+### References
 
-## File-owned knowledge artifacts
+A file reaches a turn only through a reference: `project_files` (the project's
+files) or `chat_files` (attachments in a chat). Both are unique, owner-consistent
+rows pointing at the library file. Neither copies the bytes or the processing
+results, so a file shared by ten projects is stored and processed once.
 
-`file_knowledge_artifacts` holds the versioned derived state for an immutable
-`user_files` revision: its lifecycle, the denormalized searchable aggregate, the
-chunk count, safe error state, and whether the generation is current. The
-database permits one current generation per file. `processing_profile_generation`
-records the policy revision used for artifact reuse; the policy fingerprint stays
-in the `knowledge.processing` setting, rather than being duplicated per artifact. A pending replacement cannot
-displace a ready generation; it becomes current only after processing and its
-vector writes complete.
+## Search
 
-`file_knowledge_extractions` holds one row per derived output of an artifact —
-its text extraction, its embedding, and its captioning. Each row owns that
-output's own status, the provider and model that produced it, its safe errors,
-and its kind-specific payload. The database permits at most one row per
-`(artifact_id, kind)`, and removing an artifact removes its outputs. Both artifacts
-and their outputs use `KnowledgeExtractionStatus` (`pending | running | ready |
-failed | canceled`). Each extraction owns nullable `started_at` and `completed_at`
-Unix timestamps, separate from the artifact's ingestion timestamps. The captioning
-payload contains `text`; a successful caption is indexed immediately without a
-review lifecycle or acceptance timestamp. The API exposes it under
-`extractions.captioning`, including its own status and execution timestamps.
+Two SQLite FTS5 tables give keyword search: `chat_search` over chat titles and
+message text, and `project_search` over project names and descriptions. Project
+instructions, attachments and file content are not indexed. Triggers keep the
+indexes current; their definitions live in
+[`chat/search_index.py`](../../apps/backend/asterism/domains/chat/search_index.py),
+and changing them needs a migration.
 
-Superseded generations are bounded by `KNOWLEDGE_GENERATION_RETENTION`: the
-current generation plus that many superseded generations are kept per file, and
-the remaining rows and their vectors are pruned. Without this bound every
-processing-policy change would grow the relational and vector stores forever.
+**Queries are built safely.** The service takes at most ten case-folded words; the
+adapter quotes each and joins them with `AND`, so user input is never read as FTS
+syntax. `ChatSearchIndex` returns composable SQL selects of matching IDs rather
+than running queries itself.
 
-`project_files` and `chat_files` hold references, without processing state,
-vectors, or caption fields. The execution resolver derives a bounded allowed-file
-set from current project memberships and active-branch chat references. Retrieval
-supplies that set and the owner to LanceDB and rechecks authorization before
-release. File deletion cancels work and removes references and artifacts before
-source bytes; project membership deletion removes only the relationship. See
-[Knowledge retrieval](knowledge-retrieval.md) for runtime and operator behavior.
+**Ownership comes before pagination.**
+[`chat/search.py`](../../apps/backend/asterism/domains/chat/search.py) joins those
+selects with the owner-scoped base selects from `chat/queries.py` and
+`projects/queries.py`, applies the General or project filter, and only then counts
+and pages. Results sort by last update, newest first, then by kind and ID.
 
-## Related Documentation
+**Snippets are fetched only for the page.** After paging, the service loads the
+selected chats and projects, and fetches a snippet only for chats whose title
+doesn't already match every word. One query returns, per chat, the earliest message
+containing any of the words. All words must match the chat as a whole, but they may
+be spread over several messages.
 
-- [System Overview](overview.md)
-- [Chat & Real-Time WebSocket](chat-and-websocket.md)
-- [Agent Runtime & Execution Loop](agent-runtime.md)
+This bounds what the application holds in memory and how many queries it sends,
+not the database's own work: counting, matching and sorting can still scan many
+rows. Measurements are in the
+[2026-10-24 search verification](../reviews/us-34.1-verification-2026-10-24.md).
 
-## Project/chat source references (US-25.1)
+## The usage ledger
 
-Chats bind to zero or one owned project, with General represented by null. ProjectFile
-and ChatFile are unique owner-consistent references to independent source rows; they do
-not own bytes or knowledge generations. Message JSON attachment snapshots include
-immutable file IDs and metadata, so source deletion cannot make an old filename refer
-to a later upload. Composite keys constrain message and branch-edge ownership.
+`usage_records` holds one append-only row per completed model call or image
+request: the user, the source (chat, sub-agent, title, study tool and so on), the
+model, the chat, tokens, images, the model's prices at that moment, and whether it
+ran on a ChatGPT plan. Rows have no foreign key to models or chats, so deleting
+either never changes past usage. [Usage and budgets](usage-and-budgets.md) explains
+how the ledger is written and read.
 
-The active branch is traversed once through shared chat-domain logic. Its local file
-IDs must also appear in current ChatFile memberships and owned source rows; project
-memberships supply the other allowed set. Sibling/inactive-branch/unselected library
-files are excluded. The chat file scope API exposes source provenance and project
-revision/instructions; scoped source downloads and attachment assembly use that reader.
-The injected execution-context, prompt, and retrieval paths consume this boundary;
-see [execution context](execution-context.md).
+## The data lifecycle
 
-Original bytes remain in user-scoped, file-ID-sharded FileStore storage. Organization is
-relational; source consumers resolve opaque keys and listings query the database.
-Deleting a source removes memberships while retaining message snapshots for unavailable
-history. Project deletion sets chat project_id to null and preserves local references.
-Guarded moves and explicit lifecycle coordination are implemented in US-25.2.
+| When this is deleted             | This happens                                                                                                                                                                       |
+| -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A file is removed from a project | Only the `project_files` row goes. The file stays in the library.                                                                                                                  |
+| A file is deleted                | Its processing jobs are cancelled. Every reference, its processing results and vectors, then its bytes are removed. Past messages keep their snapshots and show it as unavailable. |
+| A chat is deleted                | Its messages, attachments, drafts, receipts, executions, compactions and canvas go by cascade. Library files stay, including files the chat generated.                             |
+| A project is deleted             | Its running work is cancelled, its chats move to General keeping their attachments, and its selections go. Library files stay.                                                     |
+| A user is deleted                | See below.                                                                                                                                                                         |
 
-## Draft references and durable message acceptance
+**Deleting a user** is permanent
+([`user/service.py`](../../apps/backend/asterism/domains/user/service.py),
+`delete_user`; [ADR-0070](../adr/0070-account-lifecycle.md)):
 
-US-25.3 adds ChatDraft (owner, optional target chat, fixed 24-hour expiry and selected-ID
-snapshot), ChatDraftFile (unique owner-consistent source membership) and ChatSendReceipt
-(owner/request UUID, payload fingerprint and owner-consistent chat/message acknowledgement).
-The draft snapshot is data, not an authorization grant: consumption validates all live
-source owners and memberships again. It retains unavailable IDs after physical deletion,
-so an incomplete draft cannot silently send a partial set. Draft discard/lazy expiry
-cleans references, never source bytes/generations. Message/chat deletion cascades receipts;
-target-chat deletion cascades its unsent drafts.
+1. Their running chats and file jobs are stopped.
+2. One transaction deletes the `users` row, which cascades to everything they own,
+   including classes they teach, and writes a tombstone in `deleted_users` so the
+   ID can never be recreated.
+3. Work that started meanwhile is stopped again.
+4. Their file folder, their vectors and their export archives are removed. These
+   steps log failures rather than stopping, because the database already says the
+   user is gone.
 
-Source ingest commits before draft staging; cancellation/expiry between them can leave a
-library source without granting any chat access. Message acceptance commits user history,
-branch linkage, local references, receipt and draft consumption together. Request replay
-returns that accepted message's current status/availability and cannot rebind revoked files
-or switch branches. New-chat creation serializes owner writes for duplicate-request races;
-follow-up acceptance/removal share the process-local idle-change gate with moves. The DB
-write lock and explicit parent check detect concurrent branch changes before mutation.
+Better Auth's account is removed before any of this, by the admin action that
+calls it.
 
-Socket generation resumes persisted pending messages after reloading current history and
-scope. Cancellation is terminal but preserves references; regeneration uses the current
-persisted branch/memberships. Response-only file availability prevents historical snapshots
-from authorizing removed/deleted files. Project membership is independent of local removal.
-Knowledge bytes/state remain owned by Files/Knowledge. No migration or old API fallback
-is added. Execution snapshots preserve the recorded ceiling and recheck live access;
-see [agent runtime](agent-runtime.md).
+**Downloading my data.** Settings → General → Your data builds one zip archive of
+everything the user owns ([ADR-0076](../adr/0076-download-my-data.md)): account
+details, settings, About you, each chat as Markdown and JSON with all branches and
+canvas versions, skills, library files, and records from an allowlist of tables
+(projects, study material, reflections, templates, image requests, usage, class
+memberships and requests). It leaves out credentials, bookkeeping such as receipts
+and drafts, processing results and vectors, which can be rebuilt from the files,
+and agent traces. A new table is not exported until it is added to the allowlist in
+`data_export/records.py`.
 
-## About you and execution records
+Builds run one at a time for the whole instance, in the background, and each user
+has at most one archive. The archive is written to `exports/` as `.partial`, renamed
+when complete and kept for 7 days. It is downloaded through a link valid for five
+minutes, signed with `SYSTEM_KEY`, so the browser can stream it straight to disk.
 
-`users.about_md` holds each user's About you text (empty by default) and
-`users.about_revision` its revision. Check constraints bound it to 16,000
-characters and 64,000 UTF-8 bytes with no NUL; edits compare the expected
-revision on the locked user row. There is no persona table, default pointer or
-per-chat override.
+## Rules
 
-Messages pin accepted About you inputs privately (`accepted_about`). Immutable `chat_executions`
-records hold public execution metadata and private prompt snapshots; separate
-response/request references preserve regeneration history. Composite keys enforce
-owner/chat scope, and database triggers reject record/input rewrites. Chat/user
-deletion cascades records. No About you text is serialized into public execution
-metadata or indexed by chat search. These objects are part of the migration
-baseline; tests use disposable storage. See
-[ADR-0066](../adr/0066-about-you.md).
+- Every query on user data filters by owner, in the owning domain's `queries.py`,
+  before pagination.
+- References grant access; snapshots record history and grant nothing.
+- Pinned inputs and execution records never change after they are written.
+- Every schema change ships as a migration with an upgrade test.
+- Bytes go through `FileStore`, vectors through `VectorStore`; nothing else builds a
+  storage path.
+- Deleting a user leaves a tombstone, and their ID is never reused.
+
+## Where the code lives
+
+1. [`db/database.py`](../../apps/backend/asterism/db/database.py): the session
+   manager and SQLite settings.
+2. [`db/columns.py`](../../apps/backend/asterism/db/columns.py): typed JSON columns.
+3. [`db/migrations/`](../../apps/backend/asterism/db/migrations/) and
+   [`db/migrate.py`](../../apps/backend/asterism/db/migrate.py): migrations.
+4. [`chat/models.py`](../../apps/backend/asterism/domains/chat/models.py): chats,
+   messages and execution records.
+5. [`files/store.py`](../../apps/backend/asterism/domains/files/store.py) and
+   [`files/service.py`](../../apps/backend/asterism/domains/files/service.py): file
+   storage and the library.
+6. [`chat/search.py`](../../apps/backend/asterism/domains/chat/search.py) and
+   [`chat/search_index.py`](../../apps/backend/asterism/domains/chat/search_index.py):
+   search.
+
+## Related
+
+- [File knowledge processing](file-knowledge-processing.md) and
+  [knowledge retrieval](knowledge-retrieval.md)
+- [Backup and restore](backup-and-restore.md)
+- [Usage and budgets](usage-and-budgets.md)
+- [ADR-0069](../adr/0069-versioned-schema-migrations.md): migrations

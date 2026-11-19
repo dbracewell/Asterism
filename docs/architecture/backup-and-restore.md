@@ -8,17 +8,19 @@ it into an empty storage root. The design is recorded in
 
 One archive, `asterism-backup-<UTC time>.tar.gz`, written with mode `0600`:
 
-| Archive path | Source |
-| --- | --- |
-| `databases/users.db` | Better Auth database (`BETTER_AUTH_DB_PATH`, default `users.db` in the storage root) |
-| `databases/database.db` | Backend database (`DB_URL`, default `database.db` in the storage root) |
-| `knowledge/lancedb/` | Knowledge vectors, exported from one table version |
-| `files/` | Uploaded and produced files |
-| `themes/` | Custom themes |
-| `manifest.json` | Format version, schema revision, `SYSTEM_KEY` fingerprint, size and SHA-256 of every other member |
+| Archive path            | Source                                                                                            |
+| ----------------------- | ------------------------------------------------------------------------------------------------- |
+| `databases/users.db`    | Better Auth database (`BETTER_AUTH_DB_PATH`, default `users.db` in the storage root)              |
+| `databases/database.db` | Backend database (`DB_URL`, default `database.db` in the storage root)                            |
+| `knowledge/lancedb/`    | Knowledge vectors, exported from one table version                                                |
+| `files/`                | Uploaded and produced files                                                                       |
+| `themes/`               | Custom themes                                                                                     |
+| `manifest.json`         | Format version, schema revision, `SYSTEM_KEY` fingerprint, size and SHA-256 of every other member |
 
-Not included: downloaded model bundles under `models/` (Asterism fetches them
-again) and old LanceDB table versions. **Secrets are not in the backup.** Keep
+Not included: downloaded model bundles under `models/` and old LanceDB table
+versions. After a restore, the embedding model downloads again on first start; a
+local captioning model must be downloaded again from Admin Settings → Image
+Captioning before local captions work. **Secrets are not in the backup.** Keep
 `SYSTEM_KEY` and `BETTER_AUTH_SECRET` separately; a restore needs the same values.
 Restore refuses a different `SYSTEM_KEY`, because stored provider keys could not
 be decrypted with it. A different `BETTER_AUTH_SECRET` cannot be checked and
@@ -42,10 +44,10 @@ for compression, so schedule it outside lessons when you can.
 
 ## Commands
 
-| Where | Back up | Check an archive | Restore |
-| --- | --- | --- | --- |
-| Container | `docker compose exec asterism /app/docker/entrypoint.sh backup [--keep N]` | `docker compose exec asterism /app/docker/entrypoint.sh verify /backups/<file>` | `docker compose run --rm asterism restore /backups/<file>` |
-| Source checkout | `pnpm backup --output-dir <dir> [--keep N]` | `pnpm backup:verify <file>` | `pnpm restore <file>` |
+| Where           | Back up                                                                    | Check an archive                                                                | Restore                                                    |
+| --------------- | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| Container       | `docker compose exec asterism /app/docker/entrypoint.sh backup [--keep N]` | `docker compose exec asterism /app/docker/entrypoint.sh verify /backups/<file>` | `docker compose run --rm asterism restore /backups/<file>` |
+| Source checkout | `pnpm backup --output-dir <dir> [--keep N]`                                | `pnpm backup:verify <file>`                                                     | `pnpm restore <file>`                                      |
 
 - **backup** writes into `/backups` in the container (the `backups` volume in
   `docker-compose.yml`, or `BACKUP_DIR`), or into `--output-dir`. The directory must

@@ -70,7 +70,7 @@ Source: user request (2026-11-18). Suggested order: [EPIC-87](docs/epics/EPIC-87
   - [x] `chat-and-websocket.md`: protocol, reconnectable jobs, cancellation, admission limits, usage-limit refusals, with a job lifecycle diagram.
   - [x] `capacity.md` and a new `operations.md`: process model, admission settings, logs and request IDs, readiness endpoints, Admin → Status, and admin settings export and import.
   - [x] Remove story references and stale claims from these guides.
-- [ ] US-87.3: Agents, tools and prompts
+- [x] US-87.3: Agents, tools and prompts
   - [x] `execution-context.md`: one turn traced from membership through prompt layers (main-agent instructions, About you, learning mode, skills) to retrieval and provider access, as a diagram plus a worked example.
   - [x] `agent-runtime.md`: bounded loop, events, delegation, traces, context compaction, verification.
   - [x] `tool-authorization.md`: ordinary versus internal tools, a table of every internal tool (`sub_agent`, `search_knowledge`, `load_skill`, `canvas_*`, `generate_image`) and the conditions that offer it; approvals; the component registry of search providers and image generators.
@@ -78,11 +78,11 @@ Source: user request (2026-11-18). Suggested order: [EPIC-87](docs/epics/EPIC-87
   - [x] `llm-providers.md`: provider modes, model capabilities, ChatGPT plan connections, pricing used by the usage ledger.
   - [x] New `learning-modes.md`: the modes, hint levels and show answer, how the effective mode is chosen (ADR-0068), and how class policy restricts it.
 - [ ] US-87.4: Data, files and knowledge
-  - [ ] `data-and-storage.md`: schema overview by domain (with an entity diagram), message tree, FTS search, migrations (ADR-0069); correct the serialization section, which names a `JSONB_COLUMN` helper that does not exist.
-  - [ ] Merge or clearly divide `knowledge-retrieval.md` and `file-knowledge-processing.md` so each topic has one home: processing pipeline in one, scoped retrieval in the other.
-  - [ ] `backup-and-restore.md`, `development-reset.md`: refresh against the current commands.
-  - [ ] New `usage-and-budgets.md`: the usage ledger, what is recorded, group budgets, where refusals happen, what is never refused.
-  - [ ] Add "Download my data" (ADR-0076) and user deletion to the data lifecycle section.
+  - [x] `data-and-storage.md`: schema overview by domain (with an entity diagram), message tree, FTS search, migrations (ADR-0069); correct the serialization section, which names a `JSONB_COLUMN` helper that does not exist.
+  - [x] Merge or clearly divide `knowledge-retrieval.md` and `file-knowledge-processing.md` so each topic has one home: processing pipeline in one, scoped retrieval in the other.
+  - [x] `backup-and-restore.md`, `development-reset.md`: refresh against the current commands.
+  - [x] New `usage-and-budgets.md`: the usage ledger, what is recorded, group budgets, where refusals happen, what is never refused.
+  - [x] Add "Download my data" (ADR-0076) and user deletion to the data lifecycle section.
 - [ ] US-87.5: Product domains without a guide
   - [ ] New `classes-and-courses.md`: classes, educators, invites, courses, course-managed content, mode policy and class insights.
   - [ ] New `canvas.md`: branch-aware canvas versions, the tools, trust rules and preview isolation.
