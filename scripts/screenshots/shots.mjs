@@ -221,6 +221,13 @@ export const shots = [
     ready: ["three phases", "2 / 2"],
   },
   {
+    name: "chat-branches-project",
+    alt: "A project chat whose answer searched the files and was regenerated, with the switcher under the answer showing 2 / 2",
+    as: "student",
+    path: (ids) => `/c/${ids.chats.branchedProject}`,
+    ready: ["three phases", "2 / 2"],
+  },
+  {
     name: "chat-canvas",
     alt: "A chat with the canvas open beside it, showing a lab report outline",
     as: "student",

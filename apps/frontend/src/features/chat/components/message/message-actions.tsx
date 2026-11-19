@@ -5,6 +5,7 @@ import { Hint } from "@/components/ui/hint";
 import { VerifyAction } from "@/features/chat/components/verification/verify-dialog";
 import { messageCopyText } from "@/features/chat/lib/message-copy";
 import { StreamingMessage } from "@/features/chat/types";
+import type { Message } from "@/lib/client";
 import { client } from "@/lib/api";
 import { messageUpdateMutation } from "@/lib/client/@tanstack/react-query.gen";
 import { useMutation } from "@tanstack/react-query";
@@ -18,6 +19,7 @@ import {
 export const MessageActions = ({
   chatId,
   message,
+  branch = message,
   isProcessing,
   canRegenerate,
   onRegenerate,
@@ -25,6 +27,8 @@ export const MessageActions = ({
 }: {
   chatId: string;
   message: StreamingMessage;
+  /** The step whose versions the switcher moves between (see turnBranchStep). */
+  branch?: Message;
   isProcessing: boolean;
   canRegenerate: boolean;
   onRegenerate: (parentId?: string | null) => void;
@@ -32,11 +36,11 @@ export const MessageActions = ({
   onCompare?: () => void;
 }) => {
   const updateMessage = useMutation({ ...messageUpdateMutation({ client }) });
-  const nodeIndex = message.current_sibling_index ?? 1;
-  const nodeCount = message.sibling_count ?? 1;
+  const nodeIndex = branch.current_sibling_index ?? 1;
+  const nodeCount = branch.sibling_count ?? 1;
   const showSibling = (siblingId: string | null) =>
     updateMessage.mutate({
-      path: { chat_id: chatId, message_id: message.parent_message_id! },
+      path: { chat_id: chatId, message_id: branch.parent_message_id! },
       body: { active_child_id: siblingId },
     });
 
@@ -48,9 +52,9 @@ export const MessageActions = ({
             variant="ghost"
             size="icon-sm"
             className="rounded-control"
-            onClick={() => showSibling(message.previous_sibling_id ?? null)}
+            onClick={() => showSibling(branch.previous_sibling_id ?? null)}
             aria-label="Previous response version"
-            disabled={message.previous_sibling_id == null || isProcessing}
+            disabled={branch.previous_sibling_id == null || isProcessing}
           >
             <ChevronLeftIcon />
           </Button>
@@ -59,9 +63,9 @@ export const MessageActions = ({
             variant="ghost"
             size="icon-sm"
             className="rounded-control"
-            onClick={() => showSibling(message.next_sibling_id ?? null)}
+            onClick={() => showSibling(branch.next_sibling_id ?? null)}
             aria-label="Next response version"
-            disabled={message.next_sibling_id == null || isProcessing}
+            disabled={branch.next_sibling_id == null || isProcessing}
           >
             <ChevronRightIcon />
           </Button>

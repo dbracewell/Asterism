@@ -55,6 +55,15 @@ open question 1).
   installed version and works where the repository is unreachable. The Markdown in `docs/guide/` stays the source and still reads on
   GitHub. It gets its own trusted renderer; the chat Markdown viewer's URL policy
   (`components/markdown-viewer/policy.ts`) is not loosened.
+- **The switcher follows the step that holds the versions** (US-90.2, decided
+  2026-11-19). Regenerate re-runs from the visible answer's parent, so the new
+  version is a sibling of the run's first step. When that step calls a tool,
+  it has no footer, and nothing the backend does can put the version on the
+  visible answer: a run that searches again always starts with a tool step. So
+  the visible answer's switcher controls the nearest step in its turn that has
+  other versions (`features/chat/lib/turn-branch.ts`). The tree and the API
+  are unchanged. The run-diff dialog keeps its "first fork in the turn" rule;
+  the two differ only when one turn has forks at two different steps.
 
 ## User stories
 
@@ -79,11 +88,11 @@ and I stay signed in.
 As a user, when I regenerate an answer that searched my files, I can switch back
 to the earlier answer.
 
-- [ ] Reproduce: a project chat whose answer used `search_knowledge`; regenerate.
-- [ ] Decide where the fix belongs: create the sibling at the visible answer, or
+- [x] Reproduce: a project chat whose answer used `search_knowledge`; regenerate.
+- [x] Decide where the fix belongs: create the sibling at the visible answer, or
       show the switcher for the step that holds the branches. Record the choice.
-- [ ] Fix, with a test that the earlier answer is reachable.
-- [ ] Add a project-chat branch shot to the screenshot pipeline and use it in
+- [x] Fix, with a test that the earlier answer is reachable.
+- [x] Add a project-chat branch shot to the screenshot pipeline and use it in
       `docs/guide/02-chatting/regenerating-and-branches.md`.
 
 ### US-90.3: Compaction summaries name their model

@@ -359,6 +359,15 @@ export async function seedDemo({
       user_prompt: "Can you explain the Calvin cycle?",
     }),
   );
+  // The same question in the project: the answer searches the files first,
+  // so the regenerated version branches at a tool step (US-90.2).
+  const branchedProject = await maya.regenerate(
+    await maya.newChat({
+      model_id: tutor,
+      project_id: project.id,
+      user_prompt: "Can you explain the Calvin cycle?",
+    }),
+  );
   const lab = await maya.newChat({
     model_id: tutor,
     project_id: project.id,
@@ -571,6 +580,7 @@ export async function seedDemo({
       general: general.info.id,
       sourced: sourced.info.id,
       branched: branched.info.id,
+      branchedProject: branchedProject.info.id,
       lab: lab.info.id,
       revision: revision.info.id,
     },

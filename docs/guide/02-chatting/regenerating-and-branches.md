@@ -27,6 +27,12 @@ as **2 / 2**: this is the second of two versions.
 Whichever version is showing is the one the chat carries on from. If you send a
 new message, it follows the version on screen.
 
+In a [project](../03-files-and-projects/projects.md) chat, an answer often searches your
+files before it replies. The switcher is still under the answer, and the search
+steps above it change with the version.
+
+![A project chat whose answer searched the files and was regenerated, with the switcher under the answer showing 2 / 2](../images/chat-branches-project.png)
+
 Things that belong to a version change with it. For example, a
 [canvas](canvas.md) document that one version wrote is hidden when you switch to
 another.
