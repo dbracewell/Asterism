@@ -4,7 +4,7 @@ How many people one Asterism instance serves, how that was measured, and how to
 measure it again ([ADR-0075](../adr/0075-capacity-check-and-sizing.md)). Read it
 before changing an admission limit, a rate limit or how the browser fetches
 tokens, and rerun the check afterwards. The sizing guide for
-operators is in the [README](../../README.md#sizing-and-capacity).
+operators is in the [deployment guide](../deployment.md#7-sizing-and-limits).
 
 ## The scenario
 

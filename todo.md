@@ -56,17 +56,18 @@ Source: user request and the [feature overlap review](docs/reviews/2026-11-17-fe
 
 Source: user request (2026-11-18). Suggested order: [EPIC-87](docs/epics/EPIC-87-ARCHITECTURE-DOCS-REFRESH.md) (complete and archived in the [2026-11-18 checklist](docs/archive/todo-completed-2026-11-18.md)) → [EPIC-88](docs/epics/EPIC-88-PROJECT-README.md) → [EPIC-89](docs/epics/EPIC-89-USER-GUIDE.md). US-87.1 adds `pnpm docs:check`, which the later epics use; US-89.1 adds the screenshot pipeline. Work one story at a time.
 
-Follow-ups found during EPIC-87 (code, not documentation; each needs its own story):
+Follow-ups found during the documentation epics (code, not documentation; each needs its own story):
 
 - [ ] Admin-only routes refuse a non-admin with 401 rather than 403 (`get_current_admin` raises `UnauthorizedException`). The browser treats a 401 as an expired token and drops its cached token, so a non-admin opening an admin request costs a token refetch and reads as "signed out" rather than "not allowed".
+- [ ] The container image has no Chromium, so the web fetch tool fails on short or JavaScript-heavy pages it would render with Playwright (`tools/builtin/fetch.py`). Decide whether to install a headless Chromium in the image or fall back to the plain fetch. Found in US-88.1; documented in `docs/deployment.md`.
 
 ### EPIC-88: A normal project README
 
 - [ ] US-88.1: Give displaced content a home
-  - [ ] Map every README section to its destination in a checklist in the PR description; nothing is dropped silently.
-  - [ ] Create `docs/development.md`: prerequisites, setup, migrations, `pnpm dev` and focused commands, mprocs, quality checks, isolated E2E and CI helpers.
-  - [ ] Merge configuration, `.env` grammar, file secrets, edge protections, sizing and admission settings, backup and upgrade into `docs/deployment.md` where they are not already there; remove duplicates.
-  - [ ] Update links elsewhere in `docs/` that point at README anchors.
+  - [x] Map every README section to its destination in a checklist in the PR description; nothing is dropped silently.
+  - [x] Create `docs/development.md`: prerequisites, setup, migrations, `pnpm dev` and focused commands, mprocs, quality checks, isolated E2E and CI helpers.
+  - [x] Merge configuration, `.env` grammar, file secrets, edge protections, sizing and admission settings, backup and upgrade into `docs/deployment.md` where they are not already there; remove duplicates.
+  - [x] Update links elsewhere in `docs/` that point at README anchors.
 - [ ] US-88.2: Rewrite the README
   - [ ] Rewrite `README.md` to the agreed sections; keep the CI badge.
   - [ ] Add one screenshot of the chat workspace (from the EPIC-89 screenshot pipeline once it exists; a manual capture from a disposable demo instance until then).
