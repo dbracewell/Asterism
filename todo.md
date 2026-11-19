@@ -55,3 +55,37 @@ Source: user request and the [feature overlap review](docs/reviews/2026-11-17-fe
 ## Documentation (proposed 2026-11-18)
 
 Source: user request (2026-11-18). Suggested order: [EPIC-87](docs/epics/EPIC-87-ARCHITECTURE-DOCS-REFRESH.md) (complete and archived in the [2026-11-18 checklist](docs/archive/todo-completed-2026-11-18.md)) → [EPIC-88](docs/epics/EPIC-88-PROJECT-README.md) (complete and archived) → [EPIC-89](docs/epics/EPIC-89-USER-GUIDE.md) (complete and archived in the [2026-11-19 checklist](docs/archive/todo-completed-2026-11-19.md)). All three documentation epics are complete, and so is their follow-up, [EPIC-90](docs/epics/EPIC-90-DOCUMENTATION-FOLLOW-UPS.md) (archived in the [2026-11-19 checklist](docs/archive/todo-completed-2026-11-19.md)). US-87.1 adds `pnpm docs:check`, which the later epics use; US-89.1 adds the screenshot pipeline. Work one story at a time.
+
+## Release readiness (proposed 2026-11-19)
+
+Source: user request (2026-11-19), following EPIC-90. [EPIC-91](docs/epics/EPIC-91-RELEASE-READINESS.md) has four open questions to decide first (version scheme, registry, architectures, GPU image). Suggested order: US-91.1 → 91.6. Work one story at a time.
+
+### EPIC-91: Release readiness
+
+- [ ] US-91.1: One version for the app
+  - [ ] Choose the single source of the version (open question 1) and make the root, frontend and backend packages agree with it; a check in `pnpm check:workspace-tasks` (or its own script) fails when they differ.
+  - [ ] Status and the backup manifest report that version, plus the git commit the image was built from (a build argument; "unknown" outside Docker).
+  - [ ] The image carries OCI labels for version, commit and source.
+  - [ ] Tests; update the deployment guide's upgrade steps ("Status shows the new version").
+- [ ] US-91.2: CI builds and starts the real image
+  - [ ] A CI job builds the full CPU image with a layer cache.
+  - [ ] It starts the container with throwaway secrets, waits for healthy, and checks the `auth` migration ran, the sign-in page and `/api/py/health` answer, and the container runs as UID 10001.
+  - [ ] It runs `pnpm check:fetch-browser-container` and the theme storage check against that image.
+  - [ ] It fails when the image grows past a size budget (start at 5 GB), printing the largest parts, so growth is a decision.
+  - [ ] Document the job in `docs/development.md`; add it to the expected status checks in `AGENTS.md`.
+- [ ] US-91.3: Release notes are part of the work
+  - [ ] Add release notes to the Definition of Done in `AGENTS.md`: a story that changes configuration, stored data, the image or a documented behavior adds a line under "Unreleased".
+  - [ ] A check fails when a new Alembic revision or a change to the configuration contract (`scripts/config-contract.mjs`) lands without a change to `docs/release-notes.md`.
+  - [ ] Describe the sections (Configuration, Data, Image, Behavior) at the top of the file.
+- [ ] US-91.4: Cut a release
+  - [ ] `pnpm release <version>`: checks a clean, up-to-date `main` and passing checks; sets the version (US-91.1); turns "Unreleased" into the version and date and opens a new empty "Unreleased"; commits and tags `v<version>`.
+  - [ ] It refuses a version that isn't newer, or empty release notes.
+  - [ ] Document the steps, including pushing the tag, in `docs/development.md`.
+- [ ] US-91.5: Publish the image
+  - [ ] On a `v*` tag, CI builds the CPU image (architectures per open question 3), runs the US-91.2 checks, and pushes it to the registry (open question 2) as the version and `latest`.
+  - [ ] `docker-compose.yml` can use the published image, with building from source still documented; the deployment guide's install and upgrade steps use it.
+  - [ ] The release notes link the image; a GPU tag per open question 4.
+- [ ] US-91.6: Test upgrading from the previous release
+  - [ ] A CI job starts the previous release's image on a fresh volume, seeds data through the API (an account, a chat, a file with vectors, a theme), then starts the new image on the same volume.
+  - [ ] It checks the container becomes healthy, both databases migrated, and the seeded data is there; and that the previous image refuses the upgraded volume with its version message.
+  - [ ] Skip with a clear message until a previous release exists (after US-91.5).
