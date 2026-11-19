@@ -275,6 +275,21 @@ a time per user and never fall back to another user's connection
 
 ## Limits and failures
 
+**401, 403 and 404 mean different things** (US-90.1, US-90.10). The browser
+treats a 401 as a rejected token: it drops the cached token and fetches a new
+one. So a 401 must mean "sign in again", never "not allowed":
+
+- **401:** a missing, expired or forged token, a suspended or deleted account, or
+  a wrong server credential (the system key, a signed download link).
+- **403:** signed in, but not allowed: a role, group or policy check. Raise
+  `ForbiddenException` with a message that says why.
+- **404:** another user's resource, or one that doesn't exist. Both answer the
+  same, so the response doesn't reveal what exists.
+
+[`test_unauthorized_rule.py`](../../apps/backend/tests/test_unauthorized_rule.py)
+lists every place that raises a 401 and fails on a new one outside those
+credential checks.
+
 | Situation                                          | What the client sees                                                                                |
 | -------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
 | Missing, expired or forged token                   | 401                                                                                                 |
