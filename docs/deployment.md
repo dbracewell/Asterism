@@ -12,7 +12,7 @@ storage volume.
 - **A host with Docker** (Docker Engine with Compose v2). For about 30 active users,
   4 vCPU and 8 GB of memory, measured with the
   [capacity check](architecture/capacity.md). See
-  [Sizing and capacity](../README.md#sizing-and-capacity) for other sizes.
+  [Sizing and limits](#7-sizing-and-limits) for other sizes.
 - **Disk:** the image is large (ML libraries). Storage holds uploaded files, the
   databases and vectors. Backups need about the size of storage per kept archive.
   Keep at least `MIN_FREE_STORAGE_BYTES` (1 GiB) free, or readiness fails.
@@ -22,6 +22,10 @@ storage volume.
   (hosted, or a local server such as one on the same network).
 - **Outbound internet on first start**, to download the pinned embedding model
   used to index files.
+- **Known limitation: no browser in the image.** The web fetch tool reads most pages
+  directly, but renders short or JavaScript-heavy pages in headless Chromium, which
+  the image doesn't include. In the container, fetching those pages fails with an
+  error the agent reports.
 
 ## 2. Configure
 
@@ -33,16 +37,16 @@ openssl rand -base64 32   # run three times: one value for each secret below
 
 Set in `.env`:
 
-| Setting | Value |
-| --- | --- |
-| `PUBLIC_URL` | The browser-facing origin, e.g. `https://asterism.example.edu`, no trailing slash. It is also the JWT issuer and the cookie origin. |
-| `BETTER_AUTH_SECRET` | Random. Encrypts the auth signing keys. **Never change it**: every session and the signing keys depend on it. |
-| `SYSTEM_KEY` | Random. Signs internal requests and encrypts stored provider keys. **Never change it**: backups refuse to restore with a different one. |
-| `ADMIN_PASSPHRASE` | Random. Used once, to create the first administrator. |
-| `TRUSTED_PROXIES` | The TLS proxy's address or network, e.g. `172.18.0.0/16`. Without it, every request seems to come from the proxy, and the per-address rate limits apply to everyone at once. |
+| Setting              | Value                                                                                                                                                                        |
+| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PUBLIC_URL`         | The browser-facing origin, e.g. `https://asterism.example.edu`, no trailing slash. It is also the JWT issuer and the cookie origin.                                          |
+| `BETTER_AUTH_SECRET` | Random. Encrypts the auth signing keys. **Never change it**: every session and the signing keys depend on it.                                                                |
+| `SYSTEM_KEY`         | Random. Signs internal requests and encrypts stored provider keys. **Never change it**: backups refuse to restore with a different one.                                      |
+| `ADMIN_PASSPHRASE`   | Random. Used once, to create the first administrator.                                                                                                                        |
+| `TRUSTED_PROXIES`    | The TLS proxy's address or network, e.g. `172.18.0.0/16`. Without it, every request seems to come from the proxy, and the per-address rate limits apply to everyone at once. |
 
-All settings, with defaults: [Configuration](../README.md#configuration) and
-`.env.example`. The values are validated before anything starts, and a bad value
+All settings, with defaults: the [configuration reference](#configuration-reference)
+and `.env.example`. The file has a [strict syntax](#env-file-syntax). The values are validated before anything starts, and a bad value
 names the setting.
 
 **Secrets.** Keep `.env` readable only by the account that runs Compose
@@ -63,6 +67,30 @@ docker compose logs -f
 The first start downloads the embedding model, migrates both databases and then
 reports healthy. Compose publishes port 3000 on `127.0.0.1` only, so only the proxy
 on the same host reaches it.
+
+- **Another port.** Set `PORT=8080` and `PUBLIC_URL` to match. Changing the public
+  origin needs only a new container (`docker compose up -d`), not a rebuild; image
+  builds never read `.env` or need secrets.
+- **Other settings.** Compose passes only the settings named in
+  `docker-compose.yml` (`PUBLIC_URL`, the three secrets, `TRUSTED_PROXIES`,
+  `LOG_LEVEL`, `LOG_FORMAT` and `PORT`). To set anything else, such as an admission
+  limit, add it under the service's `environment:`, for example in a
+  `docker-compose.override.yml`.
+- **Without Compose:**
+
+  ```bash
+  docker build -t asterism:local .
+  docker run -d --name asterism --restart unless-stopped --stop-timeout 30 \
+    -p 127.0.0.1:3000:3000 --env-file .env -e STORAGE_ROOT=/storage \
+    -v asterism-storage:/storage asterism:local
+  ```
+
+  With `--env-file`, every setting in `.env` reaches the container.
+
+The image refuses to start with more than one backend worker
+(`WEB_CONCURRENCY` or `UVICORN_WORKERS` other than 1), and running more than one
+container on the same storage is not supported: the backend keeps chat work and
+queues in memory ([ADR-0019](adr/0019-single-process-runtime-and-storage-seams.md)).
 
 ## 4. TLS proxy
 
@@ -123,8 +151,7 @@ map $http_upgrade $connection_upgrade {
 With an `https://` `PUBLIC_URL`, responses send HSTS and the auth cookies are
 `Secure`. Check from outside: `curl -sI https://asterism.example.edu/sign-in` shows
 `strict-transport-security` and `content-security-policy`. The edge protections
-are described in [Docker](../README.md#docker) and
-[ADR-0071](adr/0071-edge-hardening.md).
+are listed under [security defaults](#security-defaults).
 
 ## 5. First administrator and setup
 
@@ -144,7 +171,24 @@ delete accounts. People can ask for deletion in Settings → General, and downlo
 their data first ([ADR-0070](adr/0070-account-lifecycle.md),
 [ADR-0076](adr/0076-download-my-data.md)).
 
-## 6. Backups and upgrades
+## 6. Storage, backups and upgrades
+
+The `storage` volume, mounted at `/storage`, holds everything:
+
+| Path                      | Holds                                                            |
+| ------------------------- | ---------------------------------------------------------------- |
+| `users.db`, `database.db` | The two databases: accounts and everything else                  |
+| `files/`, `knowledge/`    | Uploaded and generated files, and their search vectors           |
+| `themes/`                 | Custom themes                                                    |
+| `models/`                 | Downloaded models (fetched again if lost)                        |
+| `exports/`                | People's "Download my data" archives, kept 7 days, not backed up |
+
+A bind mount must be writable by UID **10001**, the user the container runs as.
+Both databases are migrated on every start, keeping data. The container refuses a
+database whose schema is newer than, or unknown to, the image, and names both
+versions; migrations never go backwards. **Never run `docker compose down -v`**
+unless you mean to delete every user's data. `pnpm reset:db` is a development tool,
+never part of an upgrade.
 
 Back up nightly, and before every upgrade, while the app runs:
 
@@ -169,22 +213,48 @@ data cannot be opened by the older image.
 People's "Download my data" archives are kept for 7 days under `exports/` in
 storage. They are not in backups.
 
-## 7. Limits
+## 7. Sizing and limits
 
-| What | Default | Where |
-| --- | --- | --- |
-| Replies running / per person | 32 / 4 | `MAX_ACTIVE_CHAT_JOBS`, `MAX_ACTIVE_CHAT_JOBS_PER_USER` |
-| Open chat connections / per person | 128 / 16 | `MAX_CHAT_CONTROLLERS`, `MAX_CHAT_CONTROLLERS_PER_USER` |
-| Model streams at once | 32 | `MAX_CONCURRENT_LLM_REQUESTS` (lower it for a small local model server) |
-| Files indexed at once | 4 | `MAX_CONCURRENT_KNOWLEDGE_JOBS` |
-| Upload size | 100 MiB | `MAX_UPLOAD_FILE_SIZE_BYTES` |
-| Auth writes, uploads, chat connections per client address | 60, 60, 120 a minute | nginx in the image |
-| Sign-ins per client address | 60 a minute | Better Auth |
-| Token budgets | none | Admin Settings → Groups |
-| Free storage before "not ready" | 1 GiB | `MIN_FREE_STORAGE_BYTES` |
+One instance is one process with one SQLite database, so it grows with its host,
+not by adding copies. The [capacity check](architecture/capacity.md) measured **30
+active students on 4 vCPU / 8 GB** with room to spare: peak memory under 2 GiB, CPU
+under one core on average, and first-token p95 of 1.3 s when the whole class asked
+at once. Plan on 8 GB anyway, for the embedding model, Next.js and page caches.
+
+- **Larger groups** weren't measured. Raise the limits below together, then run
+  `pnpm capacity:check --students <n> --env …` on the target host before relying on
+  it.
+- **The model provider** usually sets the pace: its latency and its own rate limits
+  on your API key.
+- **Disk** is the uploaded files, plus about the size of storage for each kept
+  backup, plus `MIN_FREE_STORAGE_BYTES`.
+
+| What                                                      | Default              | Where                                                                   |
+| --------------------------------------------------------- | -------------------- | ----------------------------------------------------------------------- |
+| Replies running / per person                              | 32 / 4               | `MAX_ACTIVE_CHAT_JOBS`, `MAX_ACTIVE_CHAT_JOBS_PER_USER`                 |
+| Open chat connections / per person                        | 128 / 16             | `MAX_CHAT_CONTROLLERS`, `MAX_CHAT_CONTROLLERS_PER_USER`                 |
+| Model streams at once                                     | 32                   | `MAX_CONCURRENT_LLM_REQUESTS` (lower it for a small local model server) |
+| Files indexed at once                                     | 4                    | `MAX_CONCURRENT_KNOWLEDGE_JOBS`                                         |
+| Upload size                                               | 100 MiB              | `MAX_UPLOAD_FILE_SIZE_BYTES`                                            |
+| Auth writes, uploads, chat connections per client address | 60, 60, 120 a minute | nginx in the image                                                      |
+| Sign-ins per client address                               | 60 a minute          | Better Auth                                                             |
+| Token budgets                                             | none                 | Admin Settings → Groups                                                 |
+| Free storage before "not ready"                           | 1 GiB                | `MIN_FREE_STORAGE_BYTES`                                                |
 
 What people see when a limit is reached:
-[Sizing and capacity](../README.md#sizing-and-capacity).
+
+- **Replies at their limit:** "Chat capacity is full. Retry shortly." with a retry.
+  Nothing is lost; the message waits.
+- **Connections at their limit:** "Chat connection capacity is full. Close an unused
+  chat connection and retry."
+- **Model streams at their limit:** replies start later, with no error.
+- **Budget used up:** sending says the limit is reached and when it resets.
+- **Too many requests from one address:** "Too many requests. Wait a minute and try
+  again."
+- **Disk nearly full:** readiness turns not ready and the container health check
+  fails.
+
+Watch Admin Settings → Status during a first busy class.
 
 ## 8. Monitoring
 
@@ -214,19 +284,19 @@ What people see when a limit is reached:
 3. **Read the logs** around the time, by request id if someone quoted one:
    `docker compose logs --since 30m | grep <request-id>`.
 4. **By symptom:**
-   - *Storage below the minimum:* free disk space (old images:
+   - _Storage below the minimum:_ free disk space (old images:
      `docker image prune`; move old backups off the host). The app recovers on its
      own once space is free.
-   - *Database busy:* a long write holds the lock. It usually clears within seconds;
+   - _Database busy:_ a long write holds the lock. It usually clears within seconds;
      if not, restart the container.
-   - *Auth keys can't load or sign-in fails for everyone:* check that
+   - _Auth keys can't load or sign-in fails for everyone:_ check that
      `BETTER_AUTH_SECRET` and `SYSTEM_KEY` match what the data was created with.
-   - *Replies slow or "capacity is full":* Status shows replies and connections
+   - _Replies slow or "capacity is full":_ Status shows replies and connections
      against their limits. Check the provider's status and rate limits, then
      consider raising the limits (see Limits).
-   - *"Too many requests" for a whole class:* check that `TRUSTED_PROXIES` names
+   - _"Too many requests" for a whole class:_ check that `TRUSTED_PROXIES` names
      your proxy, so each person has their own address.
-   - *Models fail:* Admin Settings → Providers. Check the key and endpoint.
+   - _Models fail:_ Admin Settings → Providers. Check the key and endpoint.
 5. **A compromised account:** suspend it in Admin Settings → Users. That ends its
    sessions and running work. Reset its password with a one-time link before
    reactivating it.
@@ -240,3 +310,83 @@ What people see when a limit is reached:
    ([Backup and restore](architecture/backup-and-restore.md)).
 8. **Afterwards:** note what happened and the request ids involved, and rerun
    `pnpm capacity:check` if load was the cause.
+
+## Configuration reference
+
+The settings an operator normally sets. `pnpm config:check` (from a source checkout)
+reports each one's source and status without printing values. The complete list,
+with validation rules, is in
+[ADR-0010](adr/0010-configuration-validation-secrets-and-safe-migration.md).
+
+| Setting                                                 | Default                               | Meaning                                                                                                                                                                    |
+| ------------------------------------------------------- | ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PUBLIC_URL`                                            | `http://localhost:3000`               | The browser-facing origin, without a trailing slash. Also the token issuer and audience, and the cookie origin. Production requires HTTPS unless it is a loopback address. |
+| `BETTER_AUTH_SECRET`                                    | none, required                        | Protects authentication data and signing keys                                                                                                                              |
+| `SYSTEM_KEY`                                            | none, required                        | Authorizes internal requests and encrypts stored provider keys                                                                                                             |
+| `ADMIN_PASSPHRASE`                                      | none, required                        | Creates the first administrator                                                                                                                                            |
+| `STORAGE_ROOT`                                          | `/storage` in the container           | Where all data lives; for local development, an absolute writable directory                                                                                                |
+| `PORT`                                                  | `3000`                                | The host port Compose publishes                                                                                                                                            |
+| `TRUSTED_PROXIES`                                       | none                                  | Addresses or CIDR networks, comma-separated, whose `X-Forwarded-For` nginx trusts                                                                                          |
+| `MAX_UPLOAD_FILE_SIZE_BYTES`                            | 104857600 (100 MiB), also the maximum | The largest upload request. A lower value also lowers the file processing and vision image limits unless they are set                                                      |
+| `LOG_LEVEL`                                             | `INFO`                                | `DEBUG`, `INFO`, `WARNING` or `ERROR`. `DEBUG` is for development                                                                                                          |
+| `LOG_FORMAT`                                            | `text`                                | `text`, or `json` for one object per line                                                                                                                                  |
+| `MIN_FREE_STORAGE_BYTES`                                | 1 GiB                                 | Free space below which readiness fails                                                                                                                                     |
+| `MAX_ACTIVE_CHAT_JOBS`, `MAX_ACTIVE_CHAT_JOBS_PER_USER` | 32, 4                                 | Replies and chat titles running at once                                                                                                                                    |
+| `MAX_CHAT_CONTROLLERS`, `MAX_CHAT_CONTROLLERS_PER_USER` | 128, 16                               | Open chat connections                                                                                                                                                      |
+| `MAX_CONCURRENT_LLM_REQUESTS`                           | 32                                    | Model streams at once; lower it for a small local model server                                                                                                             |
+| `MAX_CONCURRENT_KNOWLEDGE_JOBS`                         | 4                                     | Files processed at once                                                                                                                                                    |
+| `BETTER_AUTH_DB_PATH`, `DB_URL`                         | in `STORAGE_ROOT`                     | Override the database locations; normally unnecessary                                                                                                                      |
+
+**Secrets as files.** When `BETTER_AUTH_SECRET`, `SYSTEM_KEY` or `ADMIN_PASSPHRASE`
+isn't set, the container reads `/run/secrets/BETTER_AUTH_SECRET` and so on. Use
+exactly those uppercase names; an explicit environment value wins.
+
+**Precedence.** A variable set in the process environment wins over `.env`, even
+when it is empty, and an empty required value is then refused.
+
+## .env file syntax
+
+The `.env` file is read by the repository's launcher, by Docker Compose and by
+`docker run --env-file`, which interpret quoting and escapes differently. So it
+allows only syntax that means the same thing to all three:
+
+```dotenv
+# Full-line comments and blank lines are allowed.
+PUBLIC_URL=http://localhost:3000
+BETTER_AUTH_SECRET=abcDEF0123+/=_-.
+EMPTY_OPTIONAL_VALUE=
+```
+
+Each line is one unquoted `KEY=VALUE` with no spaces around it. Keys use letters,
+digits and underscores and don't start with a digit. Values may contain `=`. LF and
+CRLF line endings both work. These are refused before anything starts:
+
+```dotenv
+VALUE="quoted"              # quotes
+VALUE=two words             # whitespace
+VALUE=$HOME                 # interpolation or dollar signs
+VALUE=secret # comment      # inline comments
+VALUE=line\nnext            # escapes and backslashes
+export VALUE=secret         # shell syntax
+```
+
+Use paths without spaces and generated base64 or URL-safe secrets. A value that
+can't follow these rules must be passed in the process environment instead.
+
+## Security defaults
+
+These are on without configuration
+([ADR-0071](adr/0071-edge-hardening.md),
+[authentication and security](architecture/auth-and-security.md#the-edge-nginx-and-the-browser)):
+
+- Every page sends a content security policy with a fresh script nonce: no inline or
+  third-party scripts, no frames except the canvas preview, and connections only to
+  the app's own origin. API responses may not run, load or be framed.
+- Every response sends `X-Content-Type-Options: nosniff` and
+  `Referrer-Policy: same-origin`.
+- With an `https://` `PUBLIC_URL`, responses send HSTS for a year and the
+  authentication cookies are `Secure`, `HttpOnly` and `SameSite=Lax`.
+- nginx limits each client address to 60 authentication writes, 60 uploads and 120
+  chat connections a minute, each with a burst of 60. Refused requests get a 429 with
+  `Retry-After`.
+- nginx's log leaves out query strings, and the backend redacts tokens from its logs.

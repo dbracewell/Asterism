@@ -12,7 +12,8 @@ The guides below take that system apart one piece at a time.
 
 If you want to use Asterism rather than change it, read the user guide in
 `docs/guide/` instead. To install and run an instance, read the
-[deployment guide](../deployment.md).
+[deployment guide](../deployment.md); to set up a development environment, read the
+[development guide](../development.md).
 
 ## Where to start
 
