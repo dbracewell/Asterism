@@ -85,9 +85,9 @@ Source: the follow-ups found during EPIC-87 to EPIC-89. [EPIC-90](docs/epics/EPI
   - [x] Rewrite the `admin.users` page guide for suspend, reactivate, reset links, delete and deletion requests.
   - [x] Mirror any changed definitions in `docs/terminology.md`; registry tests pass.
 - [x] US-90.6: A new sub-agent shows no error before it's submitted
-  - [ ] Show the "saved binding" message only when editing a sub-agent whose bound model is unavailable; a new sub-agent shows a plain hint until submitted.
-  - [ ] Tests for new and edited sub-agents; retake `sub-agent-new`.
-- [ ] US-90.7: Consistent labels
+  - [x] Show the "saved binding" message only when editing a sub-agent whose bound model is unavailable; a new sub-agent shows a plain hint until submitted.
+  - [x] Tests for new and edited sub-agents; retake `sub-agent-new`.
+- [x] US-90.7: Consistent labels
   - [ ] Rename **Login** to **Sign in**, **New Chat** to **New chat** and **Default Model** to **Default model**; check other title-case labels in settings (for example **Font Size**, **Show Thinking**, **Prompt Coach**) and fix them the same way.
   - [ ] Update tests and E2E selectors that match the old text.
   - [ ] Rerun the affected shots and update the guide pages that quote the labels.

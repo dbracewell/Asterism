@@ -125,7 +125,12 @@ it("requires an explicit model for a new sub-agent instead of using the user's d
   expect(
     screen.getByRole("button", { name: "Save configuration" }),
   ).toBeDisabled();
-  expect(screen.getByRole("alert")).toHaveTextContent("saved binding remains");
+  // Nothing is saved yet, so no error about a saved binding (US-90.6).
+  expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  expect(screen.queryByText(/saved binding/)).not.toBeInTheDocument();
+  expect(
+    await screen.findByText("Choose the model this sub-agent always uses."),
+  ).toBeInTheDocument();
 });
 
 it("hides context-managed tools while retaining ordinary tool settings", async () => {
@@ -254,7 +259,10 @@ it("blocks saving when models cannot refresh, without replacing the saved bindin
     screen.getByRole("button", { name: "Save configuration" }),
   ).toBeDisabled();
   await userEvent.click(screen.getByRole("button", { name: "Retry models" }));
-  expect(await screen.findByText(/saved binding remains/)).toBeInTheDocument();
+  // Editing a sub-agent whose bound model is unavailable keeps the warning.
+  expect(await screen.findByRole("alert")).toHaveTextContent(
+    "saved binding remains",
+  );
 });
 
 beforeEach(() => {

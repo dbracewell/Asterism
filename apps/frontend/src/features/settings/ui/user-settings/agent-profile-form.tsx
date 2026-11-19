@@ -151,9 +151,10 @@ function ConfigurationForm({
   const [description, setDescription] = useState(
     configuration?.description ?? "",
   );
-  const [modelId, setModelId] = useState(
-    configuration && "model_id" in configuration ? configuration.model_id : "",
-  );
+  // The model a saved sub-agent is bound to; a new one has none yet (US-90.6).
+  const savedModelId =
+    configuration && "model_id" in configuration ? configuration.model_id : "";
+  const [modelId, setModelId] = useState(savedModelId);
   const [prompt, setPrompt] = useState(configuration?.system_prompt ?? "");
   const [maxSteps, setMaxSteps] = useState(configuration?.max_steps ?? 5);
   const [tools, setTools] = useState(configuration?.tools ?? []);
@@ -361,12 +362,17 @@ function ConfigurationForm({
                     )}
                   {invalidModel &&
                     !modelQuery.isPending &&
-                    !modelQuery.isError && (
+                    !modelQuery.isError &&
+                    (savedModelId && modelId === savedModelId ? (
                       <p role="alert" className="text-destructive text-sm">
                         Choose an available model. The saved binding remains
                         until you save a replacement.
                       </p>
-                    )}
+                    ) : (
+                      <p className="text-muted-foreground text-sm">
+                        Choose the model this sub-agent always uses.
+                      </p>
+                    ))}
                 </Field>
               </>
             )}

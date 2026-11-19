@@ -133,9 +133,9 @@ page described correctly.
 As a user creating a sub-agent, I'm not warned about a saved model that doesn't
 exist.
 
-- [ ] Show the "saved binding" message only when editing a sub-agent whose bound
+- [x] Show the "saved binding" message only when editing a sub-agent whose bound
       model is unavailable; a new sub-agent shows a plain hint until submitted.
-- [ ] Tests for new and edited sub-agents; retake `sub-agent-new`.
+- [x] Tests for new and edited sub-agents; retake `sub-agent-new`.
 
 ### US-90.7: Consistent labels
 
