@@ -1,6 +1,6 @@
 # EPIC-88: A normal project README
 
-Status: in progress (US-88.1 awaiting confirmation). Proposed 2026-11-18. Source: user request (2026-11-18).
+Status: in progress (US-88.1 complete; US-88.2 awaiting confirmation). Proposed 2026-11-18. Source: user request (2026-11-18).
 
 ## Objective
 
@@ -69,6 +69,26 @@ Where each section of the old README went:
 | About you                                                              | [Execution context](../architecture/execution-context.md#about-you-on-a-turn); [ADR-0066](../adr/0066-about-you.md)                         |
 | License                                                                | Stays in the README                                                                                                                         |
 
+## Verification (US-88.2, 2026-11-18)
+
+Both quick starts were run from fresh clones of `main` at `0f688075`, on macOS with
+Docker Desktop (4 CPUs, 16 GB), with generated secrets and throwaway storage.
+
+- **Docker.** `cp .env.example .env`, three generated secrets, then
+  `docker compose up -d --build`: built in 150 s from cached layers and reported
+  healthy; `/sign-in` answered 200. Deviations, to avoid clashing with a running
+  instance: a separate Compose project, `PORT=3950` with a matching `PUBLIC_URL`, and
+  `STORAGE_ROOT=/storage` (Compose doesn't pass `STORAGE_ROOT`, so this changes
+  nothing).
+- **Local development.** `pnpm install`, `pnpm --filter @asterism/backend sync`,
+  `.env` with secrets and an absolute `STORAGE_ROOT`, `migrate:db`, `init:db` (all
+  migrations to head) and `pnpm dev`: both `/api/py/health/ready` and `/api/health`
+  answered 200 through port 3000 after 12 s, and `/sign-in` rendered.
+- **Screenshot.** `docs/images/asterism-chat.png` was taken from the Docker
+  instance: first-run setup, an OpenAI-compatible provider pointing at a scripted
+  local model (`demo-tutor`), and one question in Tutor mode. The names and the
+  conversation are invented. EPIC-89's screenshot pipeline will regenerate it.
+
 ## User stories
 
 Suggested order: US-88.1 → 88.2.
@@ -91,12 +111,12 @@ easy to find.
 
 As a visitor, I understand what Asterism is and can run it.
 
-- [ ] Rewrite `README.md` to the agreed sections; keep the CI badge.
-- [ ] Add one screenshot of the chat workspace (from the EPIC-89 screenshot
+- [x] Rewrite `README.md` to the agreed sections; keep the CI badge.
+- [x] Add one screenshot of the chat workspace (from the EPIC-89 screenshot
       pipeline once it exists; a manual capture from a disposable demo instance
       until then).
-- [ ] Feature list reflects shipped features only; link "planned" items to
+- [x] Feature list reflects shipped features only; link "planned" items to
       `todo.md` rather than listing them.
-- [ ] Verify both quick starts from a clean clone with disposable storage, and
+- [x] Verify both quick starts from a clean clone with disposable storage, and
       record the result in the PR.
-- [ ] `pnpm docs:check` (EPIC-87) and `pnpm format:check` pass.
+- [x] `pnpm docs:check` (EPIC-87) and `pnpm format:check` pass.
