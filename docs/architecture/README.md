@@ -67,10 +67,8 @@ After that, read whichever guide covers the part you are changing.
 | Where custom themes are stored and how they are saved                                           | [Theme storage](theme-storage.md)                            |
 | Where the bundled palettes come from and how contrast was checked                               | [Bundled theme palettes](bundled-theme-palettes.md)          |
 
-The
-[2026-11-18 audit](../reviews/2026-11-18-architecture-docs-audit.md) lists the
-known gaps and errors in the existing guides, and
-[EPIC-87](../epics/EPIC-87-ARCHITECTURE-DOCS-REFRESH.md) fixes them.
+The [2026-11-18 audit](../reviews/2026-11-18-architecture-docs-audit.md) recorded
+the state of these guides before they were rewritten.
 
 ## The main boundaries
 

@@ -133,7 +133,7 @@ fixed model is still available. It then guards against runaway chains:
 
 While the sub-agent runs, the caller keeps checking that the delegation is still
 allowed, even when the sub-agent is silent, and cancels it if not. See
-[agent runtime](agent-runtime.md#selected-delegation-projects-and-the-general-set)
+[agent runtime](agent-runtime.md#delegation-projects-and-the-general-chat-set)
 for the delegation lifecycle.
 
 ### Components behind the tools

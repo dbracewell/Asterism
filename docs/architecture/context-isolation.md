@@ -34,7 +34,7 @@ A General chat has no project files: its children receive the chat's own
 attachments on the active branch, or fewer, never project files.
 
 Delegated audit records store task/context/result digests, message roles, timing,
-step/token counts, prompt source digests, and context provenance. They no longer
+step/token counts, prompt source digests, and context provenance. They never
 store task text, caller notes, message bodies, tool results, or generated answers.
 Agent diagnostics record event types and tool counts/names rather than arguments,
 responses, or generated content. Normal chat history and authorized retrieval

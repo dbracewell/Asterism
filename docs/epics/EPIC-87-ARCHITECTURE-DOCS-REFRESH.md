@@ -1,6 +1,6 @@
 # EPIC-87: Architecture documentation refresh
 
-Status: in progress (US-87.1 to US-87.5 complete; US-87.6 awaiting confirmation). Proposed 2026-11-18. Source: user request (2026-11-18).
+Status: in progress (US-87.1 to US-87.6 complete; US-87.7 awaiting confirmation). Proposed 2026-11-18. Source: user request (2026-11-18).
 
 ## Objective
 
@@ -178,8 +178,8 @@ and in-app help fit together.
 
 As a reader, the guides read as one set.
 
-- [ ] Read every guide end to end for tone, terminology and duplication; each
+- [x] Read every guide end to end for tone, terminology and duplication; each
       topic has one home and other guides link to it.
-- [ ] No story or epic references remain in guide bodies.
-- [ ] `pnpm docs:check` passes; every new guide is in the index.
-- [ ] Update `CLAUDE.md`/`AGENTS.md` links that point at renamed or split guides.
+- [x] No story or epic references remain in guide bodies.
+- [x] `pnpm docs:check` passes; every new guide is in the index.
+- [x] Update `CLAUDE.md`/`AGENTS.md` links that point at renamed or split guides.

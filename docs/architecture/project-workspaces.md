@@ -235,10 +235,10 @@ The harness does not run an authenticated full ChatSession/provider workflow; ba
 integration tests separately cover ownership, branches, durable receipts, and source
 lifecycle. No backend API/schema change or working-database reset is required.
 
-## Main configuration and sub-agent settings
+## Main agent and sub-agent settings
 
-The Agents settings pane queries the singleton main configuration and a paginated
-owned sub-agent list through generated TanStack Query options. Main configuration
+The Agents settings pane queries the user's main agent and a paginated
+owned sub-agent list through generated TanStack Query options. The main agent
 has one editor and no model binding, creation, deletion, or default-agent controls.
 It edits instructions, the step limit, ordinary tools, and the six supported
 generation defaults: temperature, top P, presence/frequency penalties, maximum
@@ -311,17 +311,15 @@ those definitions, while an existing selection can be removed. Deleted definitio
 leave the project selections through the existing revocation boundary. Removing
 selection revokes active delegated access while retaining historical answers/files.
 
-Browser verification includes the production `AppPage` and `ChatSession` (with
-mocked HTTP/WebSocket boundaries) for draft choice, reopening a persisted choice,
-model switching, regeneration under the selected model, active-run disablement,
-and restoring an older response's original provenance. Project scenarios use the
-production settings page for two independent selections, conflict/reload,
-unavailable fixed models, deselection, and deletion. These test routes are available
-only under the test configuration profile. Backend integration tests independently
-verify real ownership, runtime General non-delegation, capability revocation,
-selection atomicity, execution snapshots, and candidate filtering before pagination.
-The browser harness does not invoke real provider services or authenticated user
-sessions against the real backend.
+**Testing.** Browser tests mount the production `AppPage`, `ChatSession` and settings
+page on test-profile-only harness routes, with mocked HTTP and WebSocket responses.
+They cover choosing, reopening and switching a model, regenerating under the
+selected model, disabling controls during a run, and the original provenance of
+older responses, as well as project sub-agent selection, conflicts, unavailable
+models, deselection and deletion. Backend integration tests cover the real
+ownership, delegation-set, revocation, atomicity, execution-snapshot and
+candidate-filtering rules. The harness doesn't call real providers or sign in
+against the real backend.
 
 ## Learning goals
 

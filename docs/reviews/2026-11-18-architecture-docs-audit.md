@@ -127,3 +127,20 @@ guide needs restructuring or a substantial share of it is wrong.
   [`docs/terminology.md`](../terminology.md).
 - The index ([`architecture/README.md`](../architecture/README.md)) is a map with a
   reading order. Its duplicate topology diagram is removed; `overview.md` keeps its own.
+
+## Resolution (2026-11-18)
+
+Every finding above was fixed in EPIC-87, US-87.2 to US-87.7:
+
+- The stale claims are corrected, and every code name the guides use exists.
+- Nine new guides cover the missing domains: `operations.md`, `learning-modes.md`,
+  `usage-and-budgets.md`, `classes-and-courses.md`, `canvas.md`,
+  `image-generation.md`, `team-packs.md`, `frontend.md` and `themes.md`.
+  `frontend-and-themes.md` is split into the last two, and the review matrix moved
+  to `docs/reviews/`.
+- No guide body names the story that added a behavior, except links to planned work.
+- `pnpm docs:check` also covers the app and scripts READMEs and the agent
+  playbooks, where it found 16 more broken links.
+
+One code issue found along the way is recorded in `todo.md`: admin-only routes
+refuse a non-admin with 401 instead of 403.
