@@ -13,8 +13,8 @@ browser.
 
 ## How to use this guide
 
-- **New to Asterism?** Start with _Getting started_, then read the chapters you
-  need. You don't have to read them in order.
+- **New to Asterism?** Start with [Getting started](#getting-started), then read
+  the chapters you need. You don't have to read them in order.
 - **Looking for a word?** The [glossary](glossary.md) explains the terms the app
   uses.
 - **Something not working?** _Troubleshooting_ lists the messages you might see
@@ -27,13 +27,25 @@ The people, files and conversations in the pictures are invented. Your screen ma
 look a little different if your administrator has chosen another theme or limited
 what your group can use.
 
+## Getting started
+
+1. [What Asterism is](01-getting-started/what-is-asterism.md): what it can help
+   you with, and what to keep in mind.
+2. [Signing in and out](01-getting-started/signing-in.md): creating your account
+   from an invite link, signing in, setting a new password and signing out.
+3. [Finding your way around](01-getting-started/finding-your-way-around.md): the
+   sidebar, your chats and projects, settings and help, on a computer and a phone.
+4. [Your first chat](01-getting-started/your-first-chat.md): asking a question,
+   choosing a model, stopping an answer and what Asterism shows while it works.
+5. [Getting help](01-getting-started/getting-help.md): the Help center, help for
+   each page, help icons and the chat tour.
+
 ## Chapters
 
-The chapters are being written. Each one will appear here when it is ready.
+The other chapters are being written. Each one will appear here when it is ready.
 
 | Chapter               | What it covers                                                                        |
 | --------------------- | ------------------------------------------------------------------------------------- |
-| Getting started       | Signing in, finding your way around, your first chat, getting help                    |
 | Chatting              | Choosing models, attaching files, sources, branches, the canvas, images and templates |
 | Files and projects    | Your file library, projects, sub-agents and team packs                                |
 | Learning              | Learning modes, hints, reflections, your AI-use log and rubrics                       |

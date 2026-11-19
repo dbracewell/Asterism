@@ -217,16 +217,19 @@ try {
   )) {
     const context = await newContext(browser, instance.base, shot.viewport);
     try {
+      // A visitor isn't signed in, for the sign-in, invite and reset pages.
       const person = personas[shot.as];
-      const signIn = await context.request.post(
-        `${instance.base}/api/auth/sign-in/email`,
-        {
-          data: { email: person.email, password: PASSWORD },
-          headers: { Origin: instance.publicUrl },
-        },
-      );
-      if (!signIn.ok())
-        throw new Error(`sign-in as ${shot.as} failed: ${signIn.status()}`);
+      if (person) {
+        const signIn = await context.request.post(
+          `${instance.base}/api/auth/sign-in/email`,
+          {
+            data: { email: person.email, password: PASSWORD },
+            headers: { Origin: instance.publicUrl },
+          },
+        );
+        if (!signIn.ok())
+          throw new Error(`sign-in as ${shot.as} failed: ${signIn.status()}`);
+      }
       const page = await context.newPage();
       page.setDefaultTimeout(30_000);
       await page.goto(instance.base + shot.path(ids));

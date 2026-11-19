@@ -62,6 +62,8 @@ Follow-ups found during the documentation epics (code, not documentation; each n
 - [ ] The container image has no Chromium, so the web fetch tool fails on short or JavaScript-heavy pages it would render with Playwright (`tools/builtin/fetch.py`). Decide whether to install a headless Chromium in the image or fall back to the plain fetch. Found in US-88.1; documented in `docs/deployment.md`.
 - [ ] Regenerating an answer that used a tool (a file search, for example) puts the new branch on the hidden tool-call step: the API reports `2 / 2` on that step, but the chat shows no switcher, so the earlier answer can't be reached. Found in US-89.1; reproduce in a project chat that cites files, then fix in the chat UI or in where regeneration branches.
 
+- [ ] UI labels disagree with each other and with the guide's voice: the sign-in button says **Login** (the form, toast and guide say "sign in"), the sidebar has **New Chat** but the General page **New chat**, and Settings has **Default Model**. Found in US-89.2; if the labels change, rerun `pnpm docs:screenshots` and update `docs/guide/01-getting-started/`.
+
 ### EPIC-89: User guide
 
 - [x] US-89.1: Screenshot pipeline and guide skeleton
@@ -71,13 +73,13 @@ Follow-ups found during the documentation epics (code, not documentation; each n
   - [x] Shot list file: each entry names the image, the page, the setup steps and the viewport. The script fails if a shot cannot be taken.
   - [x] Fixed theme, fonts, dates and viewport so reruns produce the same images apart from real UI changes. (Dates the app shows and class join codes still vary; see the US-89.1 notes in EPIC-89.)
   - [x] Create `docs/guide/README.md`, the folder structure, a page template and the writing rules (voice, steps, screenshots, alt text).
-- [ ] US-89.2: Getting started
-  - [ ] What Asterism is and what it can help with, in plain words.
-  - [ ] Signing in: accepting an invite link, signing in, resetting a password with a link from an admin, signing out and "sign out everywhere".
-  - [ ] A tour of the screen: sidebar, General chats, projects, Files, search, settings, help, on desktop and phone.
-  - [ ] Your first chat: typing a message, stopping a reply, choosing a model, what the progress panel shows.
-  - [ ] Getting help: the Help center, help icons and the first-chat tour.
-- [ ] US-89.3: Chatting
+- [x] US-89.2: Getting started
+  - [x] What Asterism is and what it can help with, in plain words.
+  - [x] Signing in: accepting an invite link, signing in, resetting a password with a link from an admin, signing out and "sign out everywhere".
+  - [x] A tour of the screen: sidebar, General chats, projects, Files, search, settings, help, on desktop and phone.
+  - [x] Your first chat: typing a message, stopping a reply, choosing a model, what the progress panel shows.
+  - [x] Getting help: the Help center, help icons and the first-chat tour.
+- [x] US-89.3: Chatting
   - [ ] Choosing and comparing models.
   - [ ] Attaching files and seeing which files are in context.
   - [ ] Reading sources and citations.

@@ -1,6 +1,6 @@
 # EPIC-89: User guide
 
-Status: in progress (US-89.1 complete 2026-11-19; US-89.2 next). Proposed 2026-11-18. Source: user request (2026-11-18).
+Status: in progress (US-89.1 and US-89.2 complete 2026-11-19; US-89.3 next). Proposed 2026-11-18. Source: user request (2026-11-18).
 
 ## Objective
 
@@ -140,14 +140,39 @@ realistic, fictional data.
 
 As a new user, I can sign in, find my way around and have my first chat.
 
-- [ ] What Asterism is and what it can help with, in plain words.
-- [ ] Signing in: accepting an invite link, signing in, resetting a password
+- [x] What Asterism is and what it can help with, in plain words.
+- [x] Signing in: accepting an invite link, signing in, resetting a password
       with a link from an admin, signing out and "sign out everywhere".
-- [ ] A tour of the screen: sidebar, General chats, projects, Files, search,
+- [x] A tour of the screen: sidebar, General chats, projects, Files, search,
       settings, help, on desktop and phone.
-- [ ] Your first chat: typing a message, stopping a reply, choosing a model, what
+- [x] Your first chat: typing a message, stopping a reply, choosing a model, what
       the progress panel shows.
-- [ ] Getting help: the Help center, help icons and the first-chat tour.
+- [x] Getting help: the Help center, help icons and the first-chat tour.
+
+#### Notes (US-89.2)
+
+- **Pages.** `docs/guide/01-getting-started/`: what Asterism is, signing in and
+  out, finding your way around, your first chat, and getting help. The guide's
+  start page lists them, and the glossary gained class, class code, invite link,
+  password reset link and sidebar.
+- **How people get accounts.** Only the first administrator signs up directly.
+  Everyone else joins through a single-use class invite link from an educator (or
+  an administrator running a class); people who already have an account join with
+  the class code. There is no self-service "forgot password": an administrator
+  sends a reset link, and the guide says so.
+- **"Progress panel" in a chat.** The app's Progress panel is the study panel in a
+  project's Study tab (EPIC-84), which belongs in US-89.6. For a first chat the
+  guide explains what Asterism shows while it works instead: the twinkling star,
+  the steps row (**1 tool call**), sources and the status ring.
+- **New shots.** 15, listed under "Getting started" in the shot list. A `visitor`
+  persona takes the signed-out pages; the seed makes one unused class invite;
+  Leo Martins keeps the first-chat tour offer; and one scripted reply streams
+  slowly (`pace`) so the picture catches **Stop generating**. The reset-password
+  shot uses a placeholder token, since the form only checks it on submit.
+- **Label inconsistencies seen (not fixed; app copy).** The sign-in button says
+  **Login** while everything else says "sign in"; the sidebar says **New Chat** and
+  the General page **New chat**; Settings has **Default Model**. The guide quotes
+  the labels as they are.
 
 ### US-89.3: Chatting
 

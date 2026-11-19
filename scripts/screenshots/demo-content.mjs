@@ -134,7 +134,8 @@ export const DEFAULT_REPLY =
  * Scripted chat turns. `match` is found in the user's message; `search` makes
  * the model search the project's files first; `{cite:N}` cites the Nth passage
  * the search returned. A script with `answers` gives the next one each time it
- * answers, so a regenerated reply differs from the first.
+ * answers, so a regenerated reply differs from the first. `pace` is the
+ * pause in milliseconds between streamed chunks (default 5).
  */
 export const chats = [
   {
@@ -182,6 +183,21 @@ For every three turns of the cycle, one G3P molecule leaves to become glucose an
     answer: `I've started an outline for your lab report in the canvas. It follows the usual sections: aim, hypothesis, method, results, analysis and conclusion.
 
 Look at the **Conclusion** section first. Your draft says "more light always means more photosynthesis", but your results level off after 60% light. What might explain that?`,
+  },
+  {
+    // Streams slowly, so a shot can catch the reply while it is still being written.
+    match: "mitosis and meiosis",
+    title: "Mitosis and meiosis",
+    pace: 300,
+    answer: `Both are ways a cell divides, but they have different jobs.
+
+**Mitosis** makes two daughter cells that are identical to the parent cell. Each one has the full set of chromosomes. Your body uses mitosis to grow and to repair itself, for example when skin heals after a cut.
+
+**Meiosis** makes four cells, each with half the usual number of chromosomes. These are the sex cells: sperm and egg cells. Because the chromosomes are shuffled and split, every cell made by meiosis is genetically different.
+
+A quick way to remember it: mitosis is for **making more of me**, meiosis is for **making a new someone**.
+
+Which part would you like to look at more closely: the stages of each, or why the chromosome number halves?`,
   },
   {
     match: "flashcards",
@@ -416,6 +432,8 @@ The unit test is on the last Friday of the unit.
 export const classroom = {
   name: "Biology 101 · Period 3",
   description: "Unit 3: photosynthesis and respiration.",
+  // An unused invite, for the picture of the invite sign-up page.
+  invitee: "Ava Lindqvist",
   course: {
     name: "Biology 101 course",
     description: "Notes and practice for unit 3.",

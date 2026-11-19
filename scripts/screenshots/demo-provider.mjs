@@ -140,7 +140,7 @@ export function respond(payload, answered = new Map()) {
   const answer = script.answers
     ? script.answers[count % script.answers.length]
     : script.answer;
-  return { content: fillCitations(answer, passages) };
+  return { content: fillCitations(answer, passages), pace: script.pace };
 }
 
 function chunk(model, delta, finishReason = null) {
@@ -248,7 +248,8 @@ export async function startDemoProvider({
       );
       response.write(chunk(payload.model, {}, "tool_calls"));
     } else {
-      // Stream a few words at a time so the reply arrives like a real one, quickly.
+      // Stream a few words at a time so the reply arrives like a real one,
+      // quickly unless the script sets its own pace.
       const words = reply.content.split(/(?<=\s)/);
       for (let index = 0; index < words.length; index += 4) {
         response.write(
@@ -256,7 +257,7 @@ export async function startDemoProvider({
             content: words.slice(index, index + 4).join(""),
           }),
         );
-        await sleep(5);
+        await sleep(reply.pace ?? 5);
       }
       response.write(chunk(payload.model, {}, "stop"));
     }

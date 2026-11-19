@@ -5,7 +5,8 @@
 //
 //   name      image file name without extension, under docs/guide/images/
 //   alt       what the image shows, for the guide's alt text
-//   as        whose browser: admin, educator, student or classmate
+//   as        whose browser: admin, educator, student, classmate, or visitor
+//             (signed out)
 //   path      the page, given the ids the seed returned
 //   viewport  "desktop" (default) or "phone"
 //   ready     text that must be on screen before the picture is taken
@@ -40,6 +41,160 @@ export const shots = [
     stage: "first-run",
     name: "setup-enable-models",
     alt: "The setup card listing the models the provider offers, with a default model and a draft model chosen",
+  },
+
+  // --- Getting started -------------------------------------------------------------
+  {
+    name: "sign-in",
+    alt: "The Asterism sign-in page, with boxes for your email and password and a Login button",
+    as: "visitor",
+    path: () => "/sign-in",
+    ready: ["Where will your curiosity lead you today?"],
+  },
+  {
+    name: "invite-sign-up",
+    alt: "The invite page: You're invited to join Biology 101, Period 3 with Dana Okafor, with boxes for your name, email and a new password",
+    as: "visitor",
+    path: (ids) => `/invite/${ids.invite}`,
+    ready: ["You're invited to join", "Create account and join"],
+  },
+  {
+    name: "reset-password",
+    alt: "The page a password reset link opens, asking for a new password twice",
+    as: "visitor",
+    path: () => "/reset-password?token=demo-reset-link",
+    ready: ["Choose a new password."],
+  },
+  {
+    name: "account-menu",
+    alt: "The menu under your name at the bottom of the sidebar, with Settings, Help center and Sign out",
+    as: "student",
+    path: () => "/",
+    ready: ["What should we work on?"],
+    steps: async (page) => {
+      await page.getByRole("button", { name: /Maya Chen/ }).click();
+      await page.getByRole("menuitem", { name: "Sign out" }).waitFor();
+    },
+  },
+  {
+    name: "settings-sign-out-everywhere",
+    alt: "Settings, General: the Sign-in and account section with the Sign out everywhere and Ask to delete my account buttons",
+    as: "student",
+    path: () => "/settings",
+    ready: ["Sign out everywhere"],
+  },
+  {
+    name: "home-screen",
+    alt: "The new chat screen with the sidebar open: New Chat, Search, Files and Classes at the top, then General and Projects with their chats, and your name at the bottom",
+    as: "student",
+    path: () => "/",
+    ready: ["What should we work on?"],
+    steps: async (page) => {
+      for (const name of ["Toggle General", "Toggle Projects"])
+        await page.getByRole("button", { name, exact: true }).click();
+      await page
+        .getByRole("link", { name: "Biology 101", exact: true })
+        .waitFor();
+    },
+  },
+  {
+    name: "sidebar-phone",
+    viewport: "phone",
+    alt: "The sidebar open over the screen on a phone, with the same links as on a computer",
+    as: "student",
+    path: () => "/",
+    ready: ["What should we work on?"],
+    steps: async (page) => {
+      await page.getByRole("button", { name: "Toggle Sidebar" }).click();
+      for (const name of ["Toggle General", "Toggle Projects"])
+        await page.getByRole("button", { name, exact: true }).click();
+      await page
+        .getByRole("link", { name: "Biology 101", exact: true })
+        .waitFor();
+    },
+  },
+  {
+    name: "chat-model-menu",
+    alt: "The model menu open above the message box, listing Demo Tutor and Demo Writer with a tick beside the one chosen",
+    as: "student",
+    path: () => "/",
+    ready: ["What should we work on?"],
+    steps: async (page) => {
+      await page.locator('[data-tour="model"]').click();
+      await page.getByRole("option", { name: /Demo Writer/ }).waitFor();
+    },
+  },
+  {
+    name: "chat-reply-running",
+    alt: "A reply about mitosis and meiosis still being written, with the red Stop generating button where the send button was",
+    as: "classmate",
+    path: () => "/",
+    ready: ["What should we work on?"],
+    steps: async (page) => {
+      await page
+        .locator('[data-tour="message"]')
+        .fill("What is the difference between mitosis and meiosis?");
+      await page.keyboard.press("Enter");
+      await page.getByText("identical to the parent cell").waitFor();
+      await page.getByRole("button", { name: "Stop generating" }).waitFor();
+    },
+  },
+  {
+    name: "chat-steps",
+    alt: "A reply with its steps opened: one search of the student's files, marked Done, above the sources and the answer",
+    as: "student",
+    path: (ids) => `/c/${ids.chats.sourced}`,
+    ready: ["According to your files"],
+    steps: async (page) => {
+      await page.getByText("1 tool call").click();
+      await page.getByText("search_knowledge").waitFor();
+    },
+  },
+  {
+    name: "tour-offer",
+    alt: "The New here? card above the message box, with Start tour and No thanks buttons",
+    as: "classmate",
+    path: () => "/",
+    ready: ["New here?"],
+  },
+  {
+    name: "tour-step",
+    alt: "The first step of the chat tour, Write your message, pointing at the message box, with Skip tour, Back and Next buttons",
+    as: "student",
+    path: () => "/?tour=first-chat",
+    ready: ["Step 1 of"],
+  },
+  {
+    name: "help-center",
+    alt: "The Help center, with a search box, links to the Glossary, Controls and settings and Page guides, and the first glossary entries",
+    as: "student",
+    path: () => "/help",
+    ready: ["Help center", "Glossary"],
+  },
+  {
+    name: "page-help",
+    alt: "The help panel for the New chat page, open on the right, explaining each part of the page",
+    as: "student",
+    path: () => "/",
+    ready: ["What should we work on?"],
+    steps: async (page) => {
+      await page.getByRole("button", { name: "Help for this page" }).click();
+      await page.getByText("On this page").waitFor();
+    },
+  },
+  {
+    name: "help-topic",
+    alt: "A small help box opened from the question-mark icon beside Group in Settings, with a Learn more link",
+    as: "student",
+    path: () => "/settings",
+    ready: ["Group:"],
+    steps: async (page) => {
+      await page
+        .getByRole("button", { name: /^Help: / })
+        .first()
+        .click();
+      await page.getByRole("dialog").waitFor();
+    },
   },
 
   // --- Chatting --------------------------------------------------------------------
@@ -157,7 +312,11 @@ export function validateShots(list) {
     if (shot.stage === "first-run") continue;
     if (shot.stage !== undefined)
       problems.push(`${label}: unknown stage ${shot.stage}`);
-    if (!["admin", "educator", "student", "classmate"].includes(shot.as))
+    if (
+      !["admin", "educator", "student", "classmate", "visitor"].includes(
+        shot.as,
+      )
+    )
       problems.push(`${label}: unknown persona`);
     if (typeof shot.path !== "function")
       problems.push(`${label}: path must be a function of the seeded ids`);
