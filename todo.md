@@ -68,11 +68,11 @@ Source: the follow-ups found during EPIC-87 to EPIC-89. [EPIC-90](docs/epics/EPI
   - [x] Backend and frontend tests for both cases; check nothing else relies on the 401.
   - [x] Folded in: `POST /users/` refuses a signed-in non-admin without the system key with 403; another user's agent reads as 404, like a missing one.
 - [x] US-90.2: The branch switcher shows after regenerating a tool-using answer
-  - [ ] Reproduce: a project chat whose answer used `search_knowledge`; regenerate.
-  - [ ] Decide where the fix belongs: create the sibling at the visible answer, or show the switcher for the step that holds the branches. Record the choice.
-  - [ ] Fix, with a test that the earlier answer is reachable.
-  - [ ] Add a project-chat branch shot to the screenshot pipeline and use it in `docs/guide/02-chatting/regenerating-and-branches.md`.
-- [ ] US-90.3: Compaction summaries name their model
+  - [x] Reproduce: a project chat whose answer used `search_knowledge`; regenerate.
+  - [x] Decide where the fix belongs: create the sibling at the visible answer, or show the switcher for the step that holds the branches. Record the choice.
+  - [x] Fix, with a test that the earlier answer is reachable.
+  - [x] Add a project-chat branch shot to the screenshot pipeline and use it in `docs/guide/02-chatting/regenerating-and-branches.md`.
+- [x] US-90.3: Compaction summaries name their model
   - [ ] Look up the run model's name when compacting outside a run, instead of using its id.
   - [ ] Test the Compact now path; check stored records and the divider.
   - [ ] Consider repairing stored records whose name is an id (data migration if the stored value changes).

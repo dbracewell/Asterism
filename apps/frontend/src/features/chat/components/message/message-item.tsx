@@ -11,6 +11,7 @@ import {
   messageTimelineSteps,
 } from "@/features/chat/lib/agent-timeline";
 import { PermissionRequest, StreamingMessage } from "@/features/chat/types";
+import { turnBranchStep } from "@/features/chat/lib/turn-branch";
 import type { DelegationRecord, Message } from "@/lib/client";
 import { cn } from "@/lib/utils";
 import React from "react";
@@ -201,6 +202,7 @@ export const MessageItem = React.memo(
               <MessageActions
                 chatId={chatId}
                 message={message}
+                branch={turnBranchStep(message, turnSteps)}
                 isProcessing={isProcessing}
                 canRegenerate={canRegenerate}
                 onRegenerate={onRegenerate}

@@ -174,7 +174,11 @@ graph TD
 - **Editing** a message adds a sibling user message, starting a new branch.
 - **Cancelling** marks the turn cancelled and keeps any text already written.
 - **Switching branches** reads siblings (`sibling_count`,
-  `current_sibling_index`) without deleting anything.
+  `current_sibling_index`) without deleting anything. Regenerating re-runs from
+  the answer's parent, so in a turn that used tools the versions can sit on a
+  tool-call step with no footer. The answer's switcher then controls the
+  nearest step in the turn that has siblings
+  ([`turn-branch.ts`](../../apps/frontend/src/features/chat/lib/turn-branch.ts)).
 
 The _active branch_ is the path from the root following each message's active
 child. It decides what the user sees, what the model is sent, and which
