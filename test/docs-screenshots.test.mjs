@@ -118,29 +118,52 @@ test("titles and study generators get the replies their parsers expect", () => {
   assert.equal(title.content, "Photosynthesis for Friday's test");
 
   const system = (prompt) => ({ role: "system", content: `${prompt}…` });
+  // Cards and questions come from the file in the request, up to its count.
+  const handout =
+    "Write up to 2 flashcards from these excerpts.\n<sources>\nS1: stacks of thylakoids, called grana. The fluid around them is the stroma, where the Calvin cycle runs.\n</sources>";
   const cards = JSON.parse(
     respond({
       messages: [
         system("You write study flashcards"),
-        { role: "user", content: "x" },
+        { role: "user", content: handout },
       ],
     }).content,
   );
-  assert.ok(
-    cards.cards.length > 0 &&
-      cards.cards.every(
-        (card) => card.front && card.back && card.source === "S1",
-      ),
+  assert.deepEqual(
+    cards.cards.map((card) => card.front),
+    [
+      "Where do the light-dependent reactions take place?",
+      "Where does the Calvin cycle take place?",
+    ],
   );
+  assert.ok(
+    cards.cards.every(
+      (card) => card.back && card.source === "S1" && !("from" in card),
+    ),
+  );
+  const notFromThisFile = JSON.parse(
+    respond({
+      messages: [
+        system("You write study flashcards"),
+        { role: "user", content: "Write up to 5 flashcards: nothing matches" },
+      ],
+    }).content,
+  );
+  assert.deepEqual(notFromThisFile.cards, []);
 
   const quiz = JSON.parse(
     respond({
       messages: [
         system("You write practice quiz questions"),
-        { role: "user", content: "x" },
+        {
+          role: "user",
+          content:
+            "Write up to 3 questions. S1: RuBisCO … whichever is in shortest supply … releases oxygen as a by-product",
+        },
       ],
     }).content,
   );
+  assert.equal(quiz.questions.length, 3);
   for (const question of quiz.questions.filter(
     (entry) => entry.type === "multiple_choice",
   )) {

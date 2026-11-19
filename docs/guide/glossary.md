@@ -13,6 +13,9 @@ Asterism's answers.
 **Attachment.** A file you add to one chat, such as your notes or a photo of
 your work, so Asterism can read it.
 
+**Attempt.** One time you take a practice quiz, with its own score and feedback.
+Every attempt is kept.
+
 **Branch.** Another version of an answer. When you ask Asterism to try again, the
 new answer is kept next to the old one, and the arrows under the answer switch
 between them.
@@ -42,11 +45,16 @@ their answers side by side.
 **Context compaction.** When a chat gets very long, Asterism summarizes the
 earlier messages so the chat keeps working. Your messages are never deleted.
 
+**Deck.** A group of flashcards in a project.
+
 **Educator.** Someone who can create classes and share course material with
 students.
 
 **Files in context.** The files Asterism may use in a chat: the project's files
 plus the chat's own attachments.
+
+**Flashcard.** A card with a question on the front and the answer on the back.
+Cards you find hard come back for review sooner.
 
 **General chat.** A chat that isn't part of a project.
 
@@ -74,8 +82,14 @@ you can choose from.
 **Password reset link.** A link from your administrator that lets you choose a
 new password. It works once.
 
+**Practice quiz.** A saved set of questions that Asterism writes from a
+project's files, for you to practise with.
+
 **Processing.** What Asterism does to a file after you upload it: it reads the
 text and gets it ready to search. A file can be used once it's ready.
+
+**Progress.** The panel in a project's Study tab that shows your topics, what
+needs practice, and what your reflections said is unclear.
 
 **Project.** A place for one subject or piece of work. A project keeps its own
 chats, files and study material together.
@@ -107,6 +121,9 @@ files.
 
 **Source.** One of your files that Asterism read to answer a question. Sources are
 listed above the answer.
+
+**Study notes.** Summaries of a project's files and study plans for an exam,
+saved in the project's Study tab.
 
 **Sub-agent.** A helper with its own instructions and its own model, which your
 main agent can hand part of a task to. A project chooses which sub-agents its

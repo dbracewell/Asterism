@@ -90,13 +90,23 @@ what your group can use.
 5. [Rubrics and draft feedback](04-learning/rubrics-and-draft-feedback.md):
    feedback on your writing, and entering your assignment's rubric.
 
+## Studying
+
+1. [Flashcards](05-studying/flashcards.md): making a deck, drafting cards from your
+   files and reviewing them.
+2. [Practice quizzes](05-studying/practice-quizzes.md): making a quiz, taking it
+   and reading your results.
+3. [Summaries and study plans](05-studying/study-notes.md): summarizing your files
+   and planning for an exam.
+4. [Following your progress](05-studying/progress.md): topics, what needs
+   practice, and unclear items from your reflections.
+
 ## Chapters
 
 The other chapters are being written. Each one will appear here when it is ready.
 
 | Chapter               | What it covers                                                                     |
 | --------------------- | ---------------------------------------------------------------------------------- |
-| Studying              | Flashcards, practice quizzes, summaries, study guides and your progress            |
 | Making Asterism yours | Your settings, About you, agents, skills, templates and your data                  |
 | For educators         | Classes, invites, courses, learning-mode rules and class insights                  |
 | For administrators    | First-time setup, providers, users, groups and budgets, usage, policies and themes |

@@ -107,11 +107,11 @@ Follow-ups found during the documentation epics (code, not documentation; each n
   - [x] Reflections, the AI-use log and exporting it.
   - [x] Rubrics: writing one and using it for feedback.
 - [x] US-89.6: Studying
-  - [ ] Flashcard decks: drafting from files, reviewing drafts, studying.
-  - [ ] Practice quizzes: creating, taking and reviewing attempts.
-  - [ ] Study notes, summaries and study guides.
-  - [ ] Following your progress.
-- [ ] US-89.7: Making Asterism yours
+  - [x] Flashcard decks: drafting from files, reviewing drafts, studying.
+  - [x] Practice quizzes: creating, taking and reviewing attempts.
+  - [x] Study notes, summaries and study guides.
+  - [x] Following your progress.
+- [x] US-89.7: Making Asterism yours
   - [ ] General settings: theme and fonts.
   - [ ] Your Asterism: About you (what to write, what not to), your usage and budget.
   - [ ] Agents: main-agent instructions, sub-agents, the General chat set.
