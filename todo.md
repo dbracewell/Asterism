@@ -60,16 +60,17 @@ Follow-ups found during the documentation epics (code, not documentation; each n
 
 - [ ] Admin-only routes refuse a non-admin with 401 rather than 403 (`get_current_admin` raises `UnauthorizedException`). The browser treats a 401 as an expired token and drops its cached token, so a non-admin opening an admin request costs a token refetch and reads as "signed out" rather than "not allowed".
 - [ ] The container image has no Chromium, so the web fetch tool fails on short or JavaScript-heavy pages it would render with Playwright (`tools/builtin/fetch.py`). Decide whether to install a headless Chromium in the image or fall back to the plain fetch. Found in US-88.1; documented in `docs/deployment.md`.
+- [ ] Regenerating an answer that used a tool (a file search, for example) puts the new branch on the hidden tool-call step: the API reports `2 / 2` on that step, but the chat shows no switcher, so the earlier answer can't be reached. Found in US-89.1; reproduce in a project chat that cites files, then fix in the chat UI or in where regeneration branches.
 
 ### EPIC-89: User guide
 
-- [ ] US-89.1: Screenshot pipeline and guide skeleton
-  - [ ] `pnpm docs:screenshots`: boot a disposable instance (reuse `scripts/capacity/instance.mjs` and the stub provider), never touching the working database.
-  - [ ] Seed script for the demo dataset: an admin, an educator and two students in their groups; a model provider and models; files in several formats; a project with files and a sub-agent; chats with branches, sources and a canvas; flashcard decks, a quiz and notes; a class with a course.
-  - [ ] Stub provider serves scripted replies keyed to the demo prompts, so chat screenshots look like real answers.
-  - [ ] Shot list file: each entry names the image, the page, the setup steps and the viewport. The script fails if a shot cannot be taken.
-  - [ ] Fixed theme, fonts, dates and viewport so reruns produce the same images apart from real UI changes.
-  - [ ] Create `docs/guide/README.md`, the folder structure, a page template and the writing rules (voice, steps, screenshots, alt text).
+- [x] US-89.1: Screenshot pipeline and guide skeleton
+  - [x] `pnpm docs:screenshots`: boot a disposable instance (reuse `scripts/capacity/instance.mjs` and the stub provider), never touching the working database.
+  - [x] Seed script for the demo dataset: an admin, an educator and two students in their groups; a model provider and models; files in several formats; a project with files and a sub-agent; chats with branches, sources and a canvas; flashcard decks, a quiz and notes; a class with a course.
+  - [x] Stub provider serves scripted replies keyed to the demo prompts, so chat screenshots look like real answers.
+  - [x] Shot list file: each entry names the image, the page, the setup steps and the viewport. The script fails if a shot cannot be taken.
+  - [x] Fixed theme, fonts, dates and viewport so reruns produce the same images apart from real UI changes. (Dates the app shows and class join codes still vary; see the US-89.1 notes in EPIC-89.)
+  - [x] Create `docs/guide/README.md`, the folder structure, a page template and the writing rules (voice, steps, screenshots, alt text).
 - [ ] US-89.2: Getting started
   - [ ] What Asterism is and what it can help with, in plain words.
   - [ ] Signing in: accepting an invite link, signing in, resetting a password with a link from an admin, signing out and "sign out everywhere".
