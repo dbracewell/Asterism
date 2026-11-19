@@ -193,3 +193,47 @@ async def test_account_lifecycle_upgrade_keeps_users_active(migration_db):
     with sqlite3.connect(migration_db) as connection:
         assert connection.execute("SELECT id, name, suspended_at FROM users").fetchall() == [("user-1", "Ada", None)]
         assert connection.execute("SELECT count(*) FROM account_deletion_requests").fetchone() == (0,)
+
+
+@pytest.mark.asyncio
+async def test_compaction_names_saved_as_an_id_get_the_model_name(migration_db):
+    """c3a1f0d2b9e4 (US-90.3): an id stored as the name becomes the model's visible name."""
+    await upgrade_to(migration_db, "2a4c7bb2e747")
+    shown, plain, gone = uuid.uuid4(), uuid.uuid4(), uuid.uuid4()
+    rows = {
+        "id-shown": (shown, str(shown)),  # display name wins
+        "id-plain": (plain, str(plain)),  # no display name: the model's name
+        "id-gone": (gone, str(gone)),  # the model was deleted: left as stored
+        "named": (shown, "Already named"),  # a real name is never touched
+    }
+    with sqlite3.connect(migration_db) as connection:
+        for model_id, name, display in ((shown, "gpt-x", "Tutor model"), (plain, "plain-model", None)):
+            connection.execute(
+                "INSERT INTO models (id, provider_id, name, display_name, is_active) VALUES (?, ?, ?, ?, 1)",
+                (model_id.hex, uuid.uuid4().hex, name, display),
+            )
+        for anchor, (model_id, model_name) in rows.items():
+            connection.execute(
+                "INSERT INTO chat_compactions (id, user_id, chat_id, through_message_id, summary, "
+                "replaced_messages, model_id, model_name, input_tokens, output_tokens, "
+                "estimated_tokens_before, trigger, created_at) "
+                "VALUES (?, 'user-1', ?, ?, 'Summary', 1, ?, ?, 0, 0, 0, 'manual', 0)",
+                (
+                    uuid.uuid4().hex,
+                    uuid.uuid4().hex,
+                    uuid.uuid5(uuid.NAMESPACE_URL, anchor).hex,
+                    model_id.hex,
+                    model_name,
+                ),
+            )
+
+    await upgrade_to(migration_db, "head")
+
+    with sqlite3.connect(migration_db) as connection:
+        names = dict(connection.execute("SELECT through_message_id, model_name FROM chat_compactions").fetchall())
+    assert {anchor: names[uuid.uuid5(uuid.NAMESPACE_URL, anchor).hex] for anchor in rows} == {
+        "id-shown": "Tutor model",
+        "id-plain": "plain-model",
+        "id-gone": str(gone),
+        "named": "Already named",
+    }

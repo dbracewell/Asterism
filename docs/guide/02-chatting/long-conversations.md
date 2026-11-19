@@ -47,7 +47,8 @@ A line appears in the chat, such as
 
 ![A long chat after Compact now, with a line reading Conversation compacted: 2 earlier messages summarized between the messages](../images/chat-compacted.png)
 
-Select the line to read the summary.
+Select the line to read the summary. It says which model wrote it, and whether
+you chose Compact now or it ran automatically.
 
 ## Good to know
 

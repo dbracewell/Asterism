@@ -463,6 +463,10 @@ async def test_compact_now_summarizes_regardless_of_usage(project_api, monkeypat
     assert (started["status"], started["trigger"]) == ("started", "manual")
     [record] = await rig.records()
     assert record.trigger == "manual" and completed["compaction"]["trigger"] == "manual"
+    # Outside a run the summary names the chat's model, never its id (US-90.3).
+    assert record.model_name == "Chat A" and completed["compaction"]["model_name"] == "Chat A"
+    [divider] = (await client.get(f"/chat/{rig.chat_id}", headers=auth())).json()["compactions"]
+    assert divider["model_name"] == "Chat A"
     # Everything before the latest turn was replaced; no answer was streamed.
     branch = await rig.branch()
     assert record.through_message_id == branch[1].id and len(rig.seen) == 2
