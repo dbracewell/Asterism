@@ -275,7 +275,7 @@ describe("app header breadcrumbs", () => {
     await screen.findByRole("link", { name: "Research" });
     await userEvent.tab();
     expect(
-      screen.getByRole("button", { name: "Toggle Sidebar" }),
+      screen.getByRole("button", { name: "Toggle sidebar" }),
     ).toHaveFocus();
     await userEvent.tab();
     expect(screen.getByRole("link", { name: "Research" })).toHaveFocus();
@@ -433,7 +433,7 @@ describe("learning mode lock", () => {
 describe("mobile sidebar interactions", () => {
   it("toggles once when a touch is followed by the synthesized click", async () => {
     render(<Shell />);
-    const trigger = screen.getByRole("button", { name: "Toggle Sidebar" });
+    const trigger = screen.getByRole("button", { name: "Toggle sidebar" });
     fireEvent.touchEnd(trigger);
     fireEvent.click(trigger);
     expect(screen.getByRole("dialog", { name: "Sidebar" })).toBeVisible();
@@ -445,7 +445,7 @@ describe("mobile sidebar interactions", () => {
   });
   it("opens with the keyboard and closes after navigation", async () => {
     const view = render(<Shell />);
-    const trigger = screen.getByRole("button", { name: "Toggle Sidebar" });
+    const trigger = screen.getByRole("button", { name: "Toggle sidebar" });
     trigger.focus();
     await userEvent.keyboard("{Enter}");
     expect(screen.getByRole("dialog", { name: "Sidebar" })).toBeVisible();

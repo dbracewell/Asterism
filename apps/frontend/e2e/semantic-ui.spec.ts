@@ -134,11 +134,11 @@ for (const width of [320, 1280]) {
       name: "Theme",
       exact: true,
     });
-    const size = page.getByRole("combobox", { name: "Font Size" });
+    const size = page.getByRole("combobox", { name: "Font size" });
     await expect(gallery).toBeVisible();
     await expect(size).toBeVisible();
     await expect(
-      page.getByRole("combobox", { name: "Default Model", exact: true }),
+      page.getByRole("combobox", { name: "Default model", exact: true }),
     ).toBeVisible();
     // One tab stop; arrow keys move focus and selection between tiles.
     const first = gallery.getByRole("radio").first();
@@ -160,7 +160,7 @@ for (const width of [320, 1280]) {
       gallery.getByRole("link", { name: /^Edit .* theme$/ }),
     ).toHaveCount(1);
     await expect(
-      page.getByRole("checkbox", { name: "Show Thinking" }),
+      page.getByRole("checkbox", { name: "Show thinking" }),
     ).toBeEnabled();
     await page.goto("/e2e/responsiveness?setting=themes");
     const duplicate = page.getByRole("button", { name: /^Duplicate / }).first();

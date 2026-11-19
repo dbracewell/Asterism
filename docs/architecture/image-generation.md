@@ -117,7 +117,7 @@ and the precision and memory rules.
 
 ## Settings
 
-Admin Settings → Image Generation has four parts, in the order an admin works:
+Admin Settings → Image generation has four parts, in the order an admin works:
 
 | Part         | Does                                                                                                 |
 | ------------ | ---------------------------------------------------------------------------------------------------- |

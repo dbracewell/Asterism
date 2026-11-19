@@ -27,19 +27,19 @@ The **Your data** and **Sign-in and account** parts are explained in
 
 ## Appearance
 
-![Settings, General: the light and dark themes to choose from, Font Size, Show Thinking, and the Chat section with Default Model, Prompt Coach and Canvas](../images/settings-appearance.png)
+![Settings, General: the light and dark themes to choose from, Font size, Show thinking, and the Chat section with Default model, Prompt coach and Canvas](../images/settings-appearance.png)
 
 - **Theme**: choose one of the **Light** or **Dark** themes. Each card shows a
   small preview.
-- **Font Size**: make the text bigger or smaller.
-- **Show Thinking**: some models write out their reasoning before they answer.
+- **Font size**: make the text bigger or smaller.
+- **Show thinking**: some models write out their reasoning before they answer.
   Untick this to hide it.
 
 ## Chat
 
-- **Default Model**: the model new chats start with. Each chat keeps its own
+- **Default model**: the model new chats start with. Each chat keeps its own
   choice, so changing this doesn't change your old chats.
-- **Prompt Coach**: adds **Review prompt** to the **+** menu, so Asterism can
+- **Prompt coach**: adds **Review prompt** to the **+** menu, so Asterism can
   suggest how to make a draft clearer. See
   [the prompt coach](../02-chatting/skills-templates-and-the-prompt-coach.md#ask-the-prompt-coach-to-review-a-draft).
 - **Canvas**: lets Asterism put long documents, code and web pages in a panel

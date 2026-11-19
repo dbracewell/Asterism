@@ -24,7 +24,7 @@ running and you open its address for the first time.
    ![The first-run sign-up form, asking for the administrator's name, email, password and the admin passkey](../images/setup-admin-account.png)
 
 2. Type your **Name**, **Email** and a **Password**.
-3. Type the **Admin Passkey**.
+3. Type the **Admin passkey**.
 4. Select **Sign up**.
 
 ## Step 2: Connect a model provider

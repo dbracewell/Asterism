@@ -712,7 +712,7 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
       },
     ],
     tasks: [
-      "Turn on Prompt Coach to get feedback on your prompts before you send them.",
+      "Turn on Prompt coach to get feedback on your prompts before you send them.",
       "Download your data before asking to delete your account.",
     ],
     terms: [

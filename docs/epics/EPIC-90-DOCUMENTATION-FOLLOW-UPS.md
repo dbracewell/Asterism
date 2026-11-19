@@ -141,12 +141,12 @@ exist.
 
 As a user following the guide, the buttons say what the guide says.
 
-- [ ] Rename **Login** to **Sign in**, **New Chat** to **New chat** and
+- [x] Rename **Login** to **Sign in**, **New Chat** to **New chat** and
       **Default Model** to **Default model**; check other title-case labels in
       settings (for example **Font Size**, **Show Thinking**, **Prompt Coach**)
       and fix them the same way.
-- [ ] Update tests and E2E selectors that match the old text.
-- [ ] Rerun the affected shots and update the guide pages that quote the labels.
+- [x] Update tests and E2E selectors that match the old text.
+- [x] Rerun the affected shots and update the guide pages that quote the labels.
 
 ### US-90.8: Slim the image and add Chromium
 

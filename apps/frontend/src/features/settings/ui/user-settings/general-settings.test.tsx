@@ -44,20 +44,20 @@ describe("General settings labels", () => {
   it("names real selectors and makes the thinking label toggle its checkbox", () => {
     render(<GeneralSettings />, { wrapper: TooltipProvider });
     expect(screen.getByRole("radiogroup", { name: "Theme" })).toBeEnabled();
-    expect(screen.getByRole("combobox", { name: "Font Size" })).toBeEnabled();
+    expect(screen.getByRole("combobox", { name: "Font size" })).toBeEnabled();
     expect(
-      screen.getByRole("combobox", { name: "Default Model" }),
+      screen.getByRole("combobox", { name: "Default model" }),
     ).toBeEnabled();
     expect(
-      screen.getByRole("checkbox", { name: "Show Thinking" }),
+      screen.getByRole("checkbox", { name: "Show thinking" }),
     ).not.toBeChecked();
-    fireEvent.click(screen.getByText("Show Thinking"));
+    fireEvent.click(screen.getByText("Show thinking"));
     expect(updateSetting).toHaveBeenCalledWith("show_thinking", true, false);
   });
 
   it("offers the prompt coach as an opt-in, off by default", () => {
     render(<GeneralSettings />, { wrapper: TooltipProvider });
-    const toggle = screen.getByRole("checkbox", { name: "Prompt Coach" });
+    const toggle = screen.getByRole("checkbox", { name: "Prompt coach" });
     expect(toggle).not.toBeChecked();
     expect(toggle).toHaveAccessibleDescription(/Reviews are not saved/);
     fireEvent.click(toggle);

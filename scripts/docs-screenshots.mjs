@@ -123,10 +123,10 @@ async function firstRun(browser, instance, stubUrl) {
   await account.getByLabel("Email").fill(people.admin.email);
   await account.getByLabel("Password", { exact: true }).fill(PASSWORD);
   await account
-    .getByLabel("Admin Passkey")
+    .getByLabel("Admin passkey")
     .fill(instance.secrets.ADMIN_PASSPHRASE);
   // Never photograph the real passkey.
-  await account.getByLabel("Admin Passkey").evaluate((input) => {
+  await account.getByLabel("Admin passkey").evaluate((input) => {
     input.type = "password";
   });
   await maybe("setup-admin-account");

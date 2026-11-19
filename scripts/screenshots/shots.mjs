@@ -46,7 +46,7 @@ export const shots = [
   // --- Getting started -------------------------------------------------------------
   {
     name: "sign-in",
-    alt: "The Asterism sign-in page, with boxes for your email and password and a Login button",
+    alt: "The Asterism sign-in page, with boxes for your email and password and a Sign in button",
     as: "visitor",
     path: () => "/sign-in",
     ready: ["Where will your curiosity lead you today?"],
@@ -85,7 +85,7 @@ export const shots = [
   },
   {
     name: "home-screen",
-    alt: "The new chat screen with the sidebar open: New Chat, Search, Files and Classes at the top, then General and Projects with their chats, and your name at the bottom",
+    alt: "The new chat screen with the sidebar open: New chat, Search, Files and Classes at the top, then General and Projects with their chats, and your name at the bottom",
     as: "student",
     path: () => "/",
     ready: ["What should we work on?"],
@@ -105,7 +105,7 @@ export const shots = [
     path: () => "/",
     ready: ["What should we work on?"],
     steps: async (page) => {
-      await page.getByRole("button", { name: "Toggle Sidebar" }).click();
+      await page.getByRole("button", { name: "Toggle sidebar" }).click();
       for (const name of ["Toggle General", "Toggle Projects"])
         await page.getByRole("button", { name, exact: true }).click();
       await page
@@ -897,10 +897,10 @@ export const shots = [
   // --- Making Asterism yours -------------------------------------------------------
   {
     name: "settings-appearance",
-    alt: "Settings, General: the light and dark themes to choose from, Font Size, Show Thinking, and the Chat section with Default Model, Prompt Coach and Canvas",
+    alt: "Settings, General: the light and dark themes to choose from, Font size, Show thinking, and the Chat section with Default model, Prompt coach and Canvas",
     as: "student",
     path: () => "/settings",
-    ready: ["Appearance", "Default Model"],
+    ready: ["Appearance", "Default model"],
     steps: async (page) => {
       await page
         .getByText("Dark", { exact: true })

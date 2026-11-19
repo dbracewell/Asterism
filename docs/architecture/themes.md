@@ -15,7 +15,7 @@ tokens. Read it before changing a theme, a token or a component's colors.
   [`features/theme/bundled/`](../../apps/frontend/src/features/theme/bundled/): Atlas,
   Night Atlas, Catppuccin Latte (Mauve), Catppuccin Mocha, Dracula, One Dark, Flowers
   and Black & Gold. They are read-only.
-- **Custom themes** are saved by an admin in the Theme Editor, under
+- **Custom themes** are saved by an admin in the theme editor, under
   `STORAGE_ROOT/themes`. Editing a bundled theme saves an override there.
 - **Semantic roles** are what components ask for: `primary`, `muted`, `destructive`,
   `border` and so on, never a literal color.
@@ -41,9 +41,9 @@ anyone signs in. `/api/theme/list` lists theme IDs, and `/api/theme?name=<id>`
 returns one validated palette. A missing custom theme falls back to Atlas
 ([authentication and security](auth-and-security.md#theme-files)).
 
-### The Theme Editor
+### The theme editor
 
-Admin Settings → Theme Editor edits a theme's colors and shape and previews the
+Admin Settings → Theme editor edits a theme's colors and shape and previews the
 draft in a scoped element, without changing the page until it is saved. Saving goes
 through a server action that checks the admin role itself, then writes a synced
 temporary file and renames it into place. A failed save keeps the draft with a
@@ -75,7 +75,7 @@ A few conventions:
 
 [`src/app/color-tokens.test.ts`](../../apps/frontend/src/app/color-tokens.test.ts)
 fails on any Tailwind palette color (such as `text-amber-500`) anywhere in `src`, and
-on hex or `rgb()` literals outside the theme code and the Theme Editor.
+on hex or `rgb()` literals outside the theme code and the theme editor.
 
 Measuring a role pair's contrast is only a first check, because focus and
 destructive states add opacity. The

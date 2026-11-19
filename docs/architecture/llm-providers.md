@@ -8,7 +8,7 @@ adding a provider type or changing how capabilities gate tools and images.
 Asterism supports two admin-configured provider types that share the OpenAI
 protocol and SDK but differ in URL ownership and capability discovery, plus
 personal ChatGPT plan connections. Image generation uses its own providers, chosen
-in Admin Settings → Image Generation
+in Admin Settings → Image generation
 ([tool authorization](tool-authorization.md#components-behind-the-tools)).
 
 ## Provider types

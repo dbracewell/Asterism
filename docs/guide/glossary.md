@@ -136,7 +136,7 @@ like. Draft feedback mode uses one.
 
 **Show answer.** Seeing the full answer in Tutor mode, after you confirm.
 
-**Sidebar.** The column down the left side of the screen with **New Chat**, your
+**Sidebar.** The column down the left side of the screen with **New chat**, your
 chats and projects, and your name. On a phone, open it with the button at the top
 left.
 

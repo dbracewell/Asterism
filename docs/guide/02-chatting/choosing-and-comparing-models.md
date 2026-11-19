@@ -20,7 +20,7 @@ so you can compare their answers side by side.
 The choice is saved with the chat, and each answer records which model wrote it.
 You can change the model at any time; the new one answers from your next message.
 
-To start every new chat with the same model, choose a **Default Model** in
+To start every new chat with the same model, choose a **Default model** in
 **Settings**, under **General** › **Chat**.
 
 ### Which model should I pick?

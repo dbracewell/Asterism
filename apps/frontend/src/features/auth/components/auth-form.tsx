@@ -63,7 +63,7 @@ export function AuthForm({
       return;
     }
     if (view === "install" && (!name.trim() || !adminPassKey.trim())) {
-      showError("Name and Admin Passkey required");
+      showError("Name and admin passkey required");
       return;
     }
 
@@ -185,7 +185,7 @@ export function AuthForm({
           </Field>
           {view === "install" && (
             <Field>
-              <FieldLabel htmlFor="adminPasskey">Admin Passkey</FieldLabel>
+              <FieldLabel htmlFor="adminPasskey">Admin passkey</FieldLabel>
               <Input
                 id="adminPasskey"
                 type="password"
@@ -198,7 +198,7 @@ export function AuthForm({
           <Field>
             <Button type="submit" className="w-full" disabled={loading}>
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {view === "login" ? "Login" : "Sign up"}
+              {view === "login" ? "Sign in" : "Sign up"}
             </Button>
           </Field>
         </FieldGroup>

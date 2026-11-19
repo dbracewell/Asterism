@@ -15,7 +15,7 @@ test("fresh installation renders administrator setup form", async ({
   );
   await expect(page.getByLabel("Email")).toBeVisible();
   await expect(page.getByLabel("Password")).toBeVisible();
-  await expect(page.getByText("Admin Passkey", { exact: true })).toBeVisible();
+  await expect(page.getByText("Admin passkey", { exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Sign up" })).toBeVisible();
 });
 

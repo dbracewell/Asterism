@@ -27,7 +27,7 @@ it("focuses setup validation errors, including repeated failures, without losing
   fireEvent.click(submit);
   const summary = await screen.findByRole("alert");
   expect(summary).toHaveFocus();
-  expect(summary).toHaveTextContent("Name and Admin Passkey required");
+  expect(summary).toHaveTextContent("Name and admin passkey required");
   expect(
     screen.getByRole("form", { name: "Administrator setup" }),
   ).toHaveAttribute("aria-describedby", summary.id);
@@ -40,9 +40,9 @@ it("focuses setup validation errors, including repeated failures, without losing
 it("associates the passkey label with its own control", async () => {
   render(<AuthForm view="install" />);
   await userEvent.click(
-    screen.getByText("Admin Passkey", { selector: "label" }),
+    screen.getByText("Admin passkey", { selector: "label" }),
   );
-  expect(screen.getByLabelText("Admin Passkey")).toHaveFocus();
+  expect(screen.getByLabelText("Admin passkey")).toHaveFocus();
   expect(screen.getByLabelText("Name")).not.toHaveFocus();
 });
 it("focuses a long setup failure and retains editable credentials", async () => {
@@ -54,13 +54,13 @@ it("focuses a long setup failure and retains editable credentials", async () => 
   fireEvent.change(screen.getByLabelText("Name"), {
     target: { value: "Administrator" },
   });
-  fireEvent.change(screen.getByLabelText("Admin Passkey"), {
+  fireEvent.change(screen.getByLabelText("Admin passkey"), {
     target: { value: "wrong-passkey" },
   });
   fireEvent.click(screen.getByRole("button", { name: "Sign up" }));
   expect(await screen.findByRole("alert")).toHaveFocus();
   expect(screen.getByRole("alert")).toHaveTextContent("Setup failed:");
-  expect(screen.getByLabelText("Admin Passkey")).toHaveValue("wrong-passkey");
+  expect(screen.getByLabelText("Admin passkey")).toHaveValue("wrong-passkey");
   expect(screen.getByRole("button", { name: "Sign up" })).toBeEnabled();
 });
 it("focuses a rejected login without changing authentication behavior", async () => {
@@ -72,12 +72,12 @@ it("focuses a rejected login without changing authentication behavior", async ()
   );
   render(<AuthForm view="login" />);
   fillCredentials();
-  fireEvent.click(screen.getByRole("button", { name: "Login" }));
+  fireEvent.click(screen.getByRole("button", { name: "Sign in" }));
   expect(await screen.findByRole("alert")).toHaveFocus();
   expect(screen.getByRole("alert")).toHaveTextContent(
     "Invalid email or password",
   );
-  expect(screen.getByRole("button", { name: "Login" })).toBeEnabled();
+  expect(screen.getByRole("button", { name: "Sign in" })).toBeEnabled();
 });
 it("rejects external, protocol-relative, and javascript redirect targets", () => {
   expect(sanitizeRedirectPath("https://evil.example/phish")).toBe("/");
@@ -93,7 +93,7 @@ it("passes sanitized callbackURL to signIn.email", async () => {
   signIn.mockResolvedValueOnce(undefined);
   render(<AuthForm view="login" referer="https://evil.example/steal" />);
   fillCredentials();
-  fireEvent.click(screen.getByRole("button", { name: "Login" }));
+  fireEvent.click(screen.getByRole("button", { name: "Sign in" }));
   expect(signIn).toHaveBeenCalledWith(
     expect.objectContaining({
       callbackURL: "/",

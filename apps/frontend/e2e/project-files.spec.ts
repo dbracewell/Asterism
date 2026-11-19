@@ -172,7 +172,7 @@ test("shares explorer controls for project membership, library picking, upload, 
   await expect(explorer.getByText("new.txt", { exact: true })).toBeVisible();
   expect(writes[0].body.file_ids).toEqual([fileIds.new]);
   expect(regenerations).toBe(0);
-  await explorer.getByRole("button", { name: "Toggle Search" }).click();
+  await explorer.getByRole("button", { name: "Toggle search" }).click();
   await explorer.getByRole("textbox", { name: "Search files" }).fill("shared");
   await expect(explorer.getByText("new.txt", { exact: true })).toHaveCount(0);
   await explorer.getByRole("button", { name: "List view" }).click();

@@ -163,7 +163,7 @@ const SearchSection = () => {
   return (
     <RibbonSection title="Search">
       <Button
-        aria-label="Toggle Search"
+        aria-label="Toggle search"
         onClick={() => setIsSearchVisible((prev) => !prev)}
         size="icon-lg"
         variant={

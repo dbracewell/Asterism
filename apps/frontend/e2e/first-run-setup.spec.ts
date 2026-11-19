@@ -98,7 +98,7 @@ test("the administrator connects a provider right after creating the account", a
   await account.getByLabel("Name", { exact: true }).fill("First admin");
   await account.getByLabel("Email").fill(`${randomUUID()}@example.test`);
   await account.getByLabel("Password", { exact: true }).fill("First-run-321!");
-  await account.getByLabel("Admin Passkey").fill(process.env.ADMIN_PASSPHRASE!);
+  await account.getByLabel("Admin passkey").fill(process.env.ADMIN_PASSPHRASE!);
   await account.getByRole("button", { name: "Sign up" }).click();
 
   await expect(page).toHaveURL(/\/setup$/);

@@ -52,14 +52,14 @@ describe("getLazyAdminSettingsSections", () => {
       sections
         .filter((section) => section.badge === "Planned")
         .map((section) => section.label),
-    ).toEqual(["Code Execution"]);
+    ).toEqual(["Code execution"]);
     expect(
       sections
         .filter((section) => !section.badge)
         .map((section) => section.label),
     ).toEqual([
       "Providers",
-      "Theme Editor",
+      "Theme editor",
       "Groups",
       "Users",
       "Usage",
@@ -68,9 +68,9 @@ describe("getLazyAdminSettingsSections", () => {
       "Skills",
       "Canvas",
       "ChatGPT Plans",
-      "Context Compaction",
-      "Image Generation",
-      "Image Captioning",
+      "Context compaction",
+      "Image generation",
+      "Image captioning",
       "Educators",
       "Export",
     ]);

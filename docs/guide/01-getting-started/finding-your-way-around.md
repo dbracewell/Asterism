@@ -11,11 +11,11 @@ except for how you open the sidebar.
 The **sidebar** runs down the left side. The rest of the screen shows the page
 you're on. When you sign in, that's a new chat.
 
-![The new chat screen with the sidebar open: New Chat, Search, Files and Classes at the top, then General and Projects with their chats, and your name at the bottom](../images/home-screen.png)
+![The new chat screen with the sidebar open: New chat, Search, Files and Classes at the top, then General and Projects with their chats, and your name at the bottom](../images/home-screen.png)
 
 ### At the top of the sidebar
 
-- **New Chat** starts a new conversation. If you're in a project, the new chat is
+- **New chat** starts a new conversation. If you're in a project, the new chat is
   in that project too.
 - **Search** finds your chats and projects by their name, a project's
   description, or words in a conversation.

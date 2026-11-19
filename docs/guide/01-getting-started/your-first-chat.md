@@ -14,7 +14,7 @@ read what Asterism shows while it works.
 
 ## Ask a question
 
-1. Select **New Chat** at the top of the sidebar.
+1. Select **New chat** at the top of the sidebar.
 
    You see **What should we work on?** and the message box below it. The line
    under the heading says where the chat will be kept, for example
@@ -66,7 +66,7 @@ chat; the new model answers from your next message.
 
 If the chip says **Select a model...**, no model is chosen yet: choose one before
 you send. To start every new chat with the same model, choose a
-**Default Model** in **Settings**, under **General** › **Chat**.
+**Default model** in **Settings**, under **General** › **Chat**.
 
 The chip beside it, **Standard**, is the [learning mode](../glossary.md). Standard
 gives direct answers. To have Asterism guide you with questions and hints instead,

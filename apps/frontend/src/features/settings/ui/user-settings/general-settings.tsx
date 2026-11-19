@@ -66,14 +66,14 @@ export const GeneralSettings = () => {
           />
         </div>
         <div className="grid min-w-0 grid-cols-1 items-center gap-x-4 gap-y-3 @sm/general:grid-cols-[auto_minmax(0,1fr)]">
-          <Label htmlFor="general-font-size">Font Size</Label>
+          <Label htmlFor="general-font-size">Font size</Label>
           <FontSizeSelector
             id="general-font-size"
             disabled={isUpdatingUserSetting}
             currentSize={user.settings.font_size}
             onChange={(size) => updateSetting("font_size", size, false)}
           />
-          <Label htmlFor="general-show-thinking">Show Thinking</Label>
+          <Label htmlFor="general-show-thinking">Show thinking</Label>
           <Checkbox
             id="general-show-thinking"
             checked={user.settings.show_thinking ?? false}
@@ -89,7 +89,7 @@ export const GeneralSettings = () => {
         description="New chats start with this model; each chat keeps its own selection."
       >
         <div className="flex flex-col items-start gap-2">
-          <Label htmlFor="general-default-model">Default Model</Label>
+          <Label htmlFor="general-default-model">Default model</Label>
           <ModelSelector
             id="general-default-model"
             className="w-full max-w-80 min-w-0"
@@ -111,7 +111,7 @@ export const GeneralSettings = () => {
             }}
           />
           <div className="flex min-w-0 flex-col gap-1">
-            <Label htmlFor="general-prompt-coach">Prompt Coach</Label>
+            <Label htmlFor="general-prompt-coach">Prompt coach</Label>
             <p
               id="general-prompt-coach-description"
               className="text-muted-foreground text-xs"

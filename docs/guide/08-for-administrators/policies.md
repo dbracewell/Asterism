@@ -18,7 +18,7 @@ page) and `web_search` (search the web).
 
 1. Tick a tool to make it available.
 2. For `web_search` and `image_search`, choose a provider under
-   **Select Your Provider** and fill in its settings.
+   **Select your provider** and fill in its settings.
 3. Select **Save**.
 
 Turning a tool on doesn't give it to anyone yet: each person chooses it for their
@@ -53,7 +53,7 @@ Sign-in only works when the person's browser runs on the computer that runs
 Asterism, so this is mainly useful for a personal installation. Turning it off
 makes plan models unavailable; existing chats and sub-agents keep their choice.
 
-## Context Compaction
+## Context compaction
 
 Controls how long chats are [summarized](../02-chatting/long-conversations.md) so
 they keep working.
@@ -69,7 +69,7 @@ they keep working.
 
 Select **Save compaction settings**.
 
-## Image Generation
+## Image generation
 
 Lets people [create images](../02-chatting/creating-images.md) in chat.
 
@@ -92,7 +92,7 @@ Lets people [create images](../02-chatting/creating-images.md) in chat.
 Every request is recorded, and some requests are always refused, such as sexual
 content involving minors.
 
-## Image Captioning
+## Image captioning
 
 Captions describe pictures in uploaded files, so they can be searched.
 
@@ -104,7 +104,7 @@ Captions describe pictures in uploaded files, so they can be searched.
 
 Changing the mode reprocesses pictures. Files stay searchable while that happens.
 
-## Code Execution
+## Code execution
 
 Marked **Planned**: running code isn't available yet.
 
