@@ -1,6 +1,6 @@
 # EPIC-89: User guide
 
-Status: in progress (US-89.1 and US-89.2 complete 2026-11-19; US-89.3 next). Proposed 2026-11-18. Source: user request (2026-11-18).
+Status: in progress (US-89.1 to US-89.3 complete 2026-11-19; US-89.4 next). Proposed 2026-11-18. Source: user request (2026-11-18).
 
 ## Objective
 
@@ -178,16 +178,41 @@ As a new user, I can sign in, find my way around and have my first chat.
 
 As a user, I can use every chat feature with confidence.
 
-- [ ] Choosing and comparing models.
-- [ ] Attaching files and seeing which files are in context.
-- [ ] Reading sources and citations.
-- [ ] Editing, regenerating and switching between branches.
-- [ ] Approving or denying a tool request.
-- [ ] Canvas: creating, editing and reading a document with Asterism.
-- [ ] Generating images (when your group allows it).
-- [ ] Using `/` skills, prompt templates and the prompt coach.
-- [ ] Long conversations and context compaction, in plain terms.
-- [ ] Finding old chats with search.
+- [x] Choosing and comparing models.
+- [x] Attaching files and seeing which files are in context.
+- [x] Reading sources and citations.
+- [x] Editing, regenerating and switching between branches.
+- [x] Approving or denying a tool request.
+- [x] Canvas: creating, editing and reading a document with Asterism.
+- [x] Generating images (when your group allows it).
+- [x] Using `/` skills, prompt templates and the prompt coach.
+- [x] Long conversations and context compaction, in plain terms.
+- [x] Finding old chats with search.
+
+#### Notes (US-89.3)
+
+- **Pages.** Ten pages in `docs/guide/02-chatting/`, one per task, linked from the
+  guide's start page. The glossary gained attachment, compare models, context
+  compaction, files in context, main agent, prompt coach, prompt template, skill,
+  tool and tool approval.
+- **"Editing" is regenerating.** Sent messages can't be edited; the branches page
+  says so and suggests a follow-up message or a new chat.
+- **Shots taken live.** The scripted model runs during the shots, so comparing,
+  tool approval, image creation, the prompt coach and Compact now are
+  photographed as they happen. Image shots are Leo's, so the picture doesn't
+  appear in Maya's Files library.
+- **Demo additions.** `web_fetch` is enabled and on Maya's main agent (it asks for
+  approval); a `lab-partner` skill; the prompt coach on; a four-turn revision
+  chat to compact; and a stand-in ComfyUI server in the scripted model, with the
+  image generator pointed at it. The scripted model also obeys a forced
+  `generate_image` tool choice (Create image) and copies the image embed into
+  its reply, as a real model is asked to.
+- **`--keep` now keeps the scripted model running**, so a kept instance answers
+  chats for walkthroughs (previously chats failed on it).
+- **Found (code, not fixed here):** the compaction summary of a Compact now says
+  "Written by" and the model's id instead of its name; the page a source opens
+  shows only the file name, a technical line and Download source, not the
+  passage. Both are in `todo.md`.
 
 ### US-89.4: Files and projects
 

@@ -8,9 +8,15 @@
 //   then answers and cites the passages the tool returned.
 // - Study generation (flashcards, quizzes, summaries, study guides) and chat
 //   titles are recognized by their system prompts and get valid JSON or text.
+// - A script with `fetch` first calls `web_fetch` on that address, which waits
+//   for the reader's approval; `byModel` gives a model its own answer.
+// - The prompt coach and context compaction get scripted replies too.
 // - Anything else gets a short, neutral answer.
+//
+// The same server also stands in for a ComfyUI image server under /comfy: it
+// accepts any workflow and returns one fixed picture.
 import { createServer } from "node:http";
-import { chats, DEFAULT_REPLY, study } from "./demo-content.mjs";
+import { chats, DEFAULT_REPLY, helpers, study } from "./demo-content.mjs";
 
 const CITE = /asterism-cite:[0-9a-f]{12}/g;
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -113,10 +119,25 @@ export function respond(payload, answered = new Map()) {
       /<message>\s*([\s\S]*?)\s*<\/message>/.exec(user)?.[1] ?? user;
     return { content: findChat(message)?.title ?? "Study questions" };
   }
-  for (const generator of study) {
-    if (system.includes(generator.prompt))
-      return { content: JSON.stringify(generator.reply(user)) };
+  for (const generator of [...study, ...helpers]) {
+    if (
+      system.includes(generator.prompt) ||
+      user.startsWith(generator.prompt)
+    ) {
+      const reply = generator.reply(user);
+      return {
+        content: typeof reply === "string" ? reply : JSON.stringify(reply),
+      };
+    }
   }
+
+  // Create image forces the image tool on the first step; describe the result after.
+  const forced = payload.tool_choice?.function?.name;
+  if (forced === "generate_image")
+    return { toolCall: { name: forced, arguments: { prompt: user } } };
+  const last = after.at(-1);
+  if (last?.role === "tool" && after.some(madeImage))
+    return { content: `${imageEmbeds(text(last.content))}\n\n${IMAGE_REPLY}` };
 
   const script = findChat(user);
   if (!script) return { content: DEFAULT_REPLY };
@@ -124,6 +145,11 @@ export function respond(payload, answered = new Map()) {
     (payload.tools ?? []).map((tool) => tool.function?.name),
   );
   const searched = after.some((message) => message.role === "tool");
+  if (script.fetch && tools.has("web_fetch") && !searched) {
+    return {
+      toolCall: { name: "web_fetch", arguments: { url: script.fetch } },
+    };
+  }
   if (script.search && tools.has("search_knowledge") && !searched) {
     return {
       toolCall: {
@@ -137,9 +163,11 @@ export function respond(payload, answered = new Map()) {
     .flatMap((message) => passagesFrom(text(message.content)));
   const count = answered.get(script.match) ?? 0;
   answered.set(script.match, count + 1);
-  const answer = script.answers
-    ? script.answers[count % script.answers.length]
-    : script.answer;
+  const answer =
+    script.byModel?.[payload.model] ??
+    (script.answers
+      ? script.answers[count % script.answers.length]
+      : script.answer);
   return { content: fillCitations(answer, passages), pace: script.pace };
 }
 
@@ -158,6 +186,76 @@ const usage = (prompt, completion) => ({
   total_tokens: prompt + completion,
 });
 
+const IMAGE_REPLY =
+  "Here's your picture. Select it to see it full size or download it, or choose More like this for another version.";
+
+/** The Markdown that shows each made image, from the image tool's result. */
+function imageEmbeds(result) {
+  try {
+    return JSON.parse(result)
+      .images.map((image) => image.embed)
+      .join("\n");
+  } catch {
+    return "";
+  }
+}
+
+/** An assistant message in this turn that called the image tool. */
+function madeImage(message) {
+  return (message.tool_calls ?? []).some(
+    (call) => call.function?.name === "generate_image",
+  );
+}
+
+/** The checkpoint the fake ComfyUI server lists. */
+export const COMFY_CHECKPOINT = "demo-diagrams.safetensors";
+
+// A 1x1 green PNG, until the run renders the real picture.
+const PLACEHOLDER_PNG = Buffer.from(
+  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+  "base64",
+);
+
+/**
+ * The parts of ComfyUI's API that Asterism's ComfyUI generator uses. Every job
+ * finishes at once with one image. The progress socket (/ws) is left out;
+ * Asterism treats it as optional. Returns JSON, PNG bytes, or null for 404.
+ */
+export function comfy(method, path, jobs, image) {
+  const [route] = path.split("?");
+  if (method === "GET" && route === "/system_stats")
+    return { system: { comfyui_version: "demo" }, devices: [] };
+  if (method === "GET" && route === "/object_info/CheckpointLoaderSimple")
+    return {
+      CheckpointLoaderSimple: {
+        input: { required: { ckpt_name: [[COMFY_CHECKPOINT]] } },
+      },
+    };
+  if (method === "POST" && route === "/prompt") {
+    const id = `demo-${jobs.size + 1}`;
+    jobs.add(id);
+    return { prompt_id: id, number: jobs.size };
+  }
+  if (method === "GET" && route.startsWith("/history/")) {
+    const id = decodeURIComponent(route.slice("/history/".length));
+    if (!jobs.has(id)) return {};
+    return {
+      [id]: {
+        status: { status_str: "success", completed: true, messages: [] },
+        outputs: {
+          9: {
+            images: [{ filename: `${id}.png`, subfolder: "", type: "output" }],
+          },
+        },
+      },
+    };
+  }
+  if (method === "GET" && route === "/view") return image;
+  if (method === "POST" && (route === "/queue" || route === "/interrupt"))
+    return {};
+  return null;
+}
+
 /** Start the model double. `models` are the ids it lists. */
 export async function startDemoProvider({
   host = "127.0.0.1",
@@ -165,7 +263,21 @@ export async function startDemoProvider({
 } = {}) {
   let calls = 0;
   const answered = new Map();
+  let image = PLACEHOLDER_PNG;
+  const jobs = new Set();
   const server = createServer(async (request, response) => {
+    if (request.url.startsWith("/comfy/")) {
+      for await (const _ of request); // Drain any body.
+      const reply = comfy(request.method, request.url.slice(6), jobs, image);
+      if (!reply) response.writeHead(404).end();
+      else if (Buffer.isBuffer(reply))
+        response.writeHead(200, { "Content-Type": "image/png" }).end(reply);
+      else
+        response
+          .writeHead(200, { "Content-Type": "application/json" })
+          .end(JSON.stringify(reply));
+      return;
+    }
     if (request.method === "GET" && request.url === "/v1/models") {
       response.setHeader("Content-Type", "application/json");
       response.end(
@@ -270,6 +382,10 @@ export async function startDemoProvider({
   return {
     port: server.address().port,
     calls: () => calls,
+    /** The PNG the fake image server returns. */
+    setImage: (png) => {
+      image = Buffer.from(png);
+    },
     close: () =>
       new Promise((resolve) => {
         server.closeAllConnections();

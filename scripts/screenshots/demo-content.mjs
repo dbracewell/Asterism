@@ -200,6 +200,63 @@ A quick way to remember it: mitosis is for **making more of me**, meiosis is for
 Which part would you like to look at more closely: the stages of each, or why the chromosome number halves?`,
   },
   {
+    // Asked of two models at once; each model gives its own answer.
+    match: "what is chlorophyll",
+    title: "Chlorophyll",
+    answer: `Chlorophyll is the green pigment in plants that captures light energy for photosynthesis.
+
+It sits in the thylakoid membranes inside chloroplasts. It absorbs mostly red and blue light and reflects green light, which is why leaves look green.`,
+    byModel: {
+      "Demo Writer": `Think of chlorophyll as a plant's solar panel.
+
+- **What it is:** a green pigment found in chloroplasts.
+- **What it does:** absorbs light, mainly red and blue, and passes the energy on to make sugar.
+- **Why leaves are green:** green light is reflected rather than absorbed.`,
+    },
+  },
+  {
+    // Reading a web page needs the reader's approval first.
+    match: "example.org/leaf-structure",
+    title: "Leaf structure page",
+    fetch: "https://example.org/leaf-structure",
+    answer: `I wasn't able to read that page, so I can't summarize it. If you paste the part you need, or upload it to your files, I can work from that instead.`,
+  },
+  {
+    // Create image: the picture comes from the image generator; this names the chat.
+    match: "drawing of a plant cell",
+    title: "Plant cell drawing",
+    answer: "Here's a simple drawing of a plant cell.",
+  },
+  // A longer revision chat, so it can be compacted.
+  {
+    match: "revise unit 3",
+    title: "Unit 3 revision",
+    answer: `Good plan. Unit 3 has two big ideas: **photosynthesis**, how plants store energy from light, and **cellular respiration**, how every cell releases that energy. Let's take them one at a time. What do you remember about the two stages of photosynthesis?`,
+  },
+  {
+    match: "limiting factors",
+    title: "Limiting factors",
+    answer: `A limiting factor is whatever is in shortest supply. For photosynthesis that's **light intensity**, **carbon dioxide** or **temperature**. Raising the others won't help until you raise the one that limits the rate. That's why your pondweed results level off after 60% light.`,
+  },
+  {
+    match: "where does respiration happen",
+    title: "Respiration",
+    answer: `Glycolysis happens in the **cytoplasm**. The Krebs cycle and the electron transport chain happen in the **mitochondria**, and that's where most of the ATP is made.`,
+  },
+  {
+    match: "compare photosynthesis and respiration",
+    title: "Comparing the two",
+    answer: `They are roughly the reverse of each other:
+
+| | Photosynthesis | Respiration |
+|---|---|---|
+| Where | Chloroplasts | Cytoplasm and mitochondria |
+| Takes in | Carbon dioxide, water, light | Glucose, oxygen |
+| Gives out | Glucose, oxygen | Carbon dioxide, water, ATP |
+
+Which one would you like to practise first?`,
+  },
+  {
     match: "flashcards",
     title: "Making flashcards",
     answer: `Flashcards are a good way to review this unit. Open **Study** in your Biology 101 project and choose **Draft cards from files**. I'll suggest cards from your notes, and you decide which ones to keep.`,
@@ -438,4 +495,74 @@ export const classroom = {
     name: "Biology 101 course",
     description: "Notes and practice for unit 3.",
   },
+};
+
+/** The messages of the revision chat, sent in turn so it is long enough to compact. */
+export const revisionTurns = [
+  "Can we revise unit 3 together before the test?",
+  "What are the limiting factors again?",
+  "And where does respiration happen in the cell?",
+  "Can you compare photosynthesis and respiration in a table?",
+];
+
+/** A skill assigned to the student's main agent, for the / menu. */
+export const skill = `---
+name: lab-partner
+description: Explain things the way a friendly lab partner would, with an everyday example.
+---
+Explain ideas as a friendly lab partner would: short sentences, one everyday
+example, and a quick question at the end to check understanding.
+`;
+
+/** Replies to other model calls, matched by the start of their system prompts. Strings are sent as they are. */
+export const helpers = [
+  {
+    prompt: "You are a prompt-writing coach",
+    reply: () => ({
+      suggestions: [
+        {
+          criterion: "audience",
+          message:
+            "Say who the explanation is for, so the answer is pitched at the right level.",
+          find: null,
+          text: "I'm a high school biology student.",
+        },
+        {
+          criterion: "output_format",
+          message: "Say what shape you want the answer in.",
+          find: null,
+          text: "Please answer in three short bullet points.",
+        },
+      ],
+    }),
+  },
+  {
+    prompt: "You compact the earlier part of a conversation",
+    reply:
+      () => `- The student is revising unit 3 (photosynthesis and cellular respiration) for a test.
+- Covered so far: the two stages of photosynthesis; limiting factors (light intensity, carbon dioxide, temperature), linked to their pondweed results levelling off after 60% light; where respiration happens (glycolysis in the cytoplasm, the Krebs cycle and electron transport chain in the mitochondria).
+- Next: compare photosynthesis and respiration, then practise.`,
+  },
+];
+
+/** The picture the fake image generator returns, drawn in HTML and rendered to PNG. */
+export const generatedImage = {
+  name: "plant-cell-illustration.png",
+  type: "image/png",
+  html: `<div style="width:512px;height:512px;background:#eef6ea;display:flex;align-items:center;justify-content:center;font-family:Georgia,serif">
+  <svg width="460" height="460" viewBox="0 0 460 460" xmlns="http://www.w3.org/2000/svg">
+    <rect x="30" y="50" width="400" height="360" rx="40" fill="#cfe8b8" stroke="#3f7a2c" stroke-width="10"/>
+    <rect x="48" y="68" width="364" height="324" rx="28" fill="#e3f2d6" stroke="#7aa65f" stroke-width="4"/>
+    <ellipse cx="300" cy="230" rx="80" ry="110" fill="#d6ecf7" stroke="#6a9bbd" stroke-width="4"/>
+    <circle cx="160" cy="300" r="42" fill="#c9a6d9" stroke="#7b4f93" stroke-width="4"/>
+    <circle cx="150" cy="290" r="14" fill="#7b4f93"/>
+    <g fill="#5aa13b" stroke="#2f6b1e" stroke-width="3">
+      <ellipse cx="120" cy="140" rx="34" ry="18" transform="rotate(-20 120 140)"/>
+      <ellipse cx="200" cy="120" rx="34" ry="18" transform="rotate(15 200 120)"/>
+      <ellipse cx="110" cy="210" rx="34" ry="18" transform="rotate(10 110 210)"/>
+      <ellipse cx="210" cy="200" rx="34" ry="18" transform="rotate(-30 210 200)"/>
+      <ellipse cx="330" cy="370" rx="34" ry="18" transform="rotate(5 330 370)"/>
+    </g>
+  </svg>
+</div>`,
 };

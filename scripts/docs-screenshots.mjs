@@ -14,7 +14,12 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
 import { removeInstance, startInstance } from "./capacity/instance.mjs";
-import { MODELS, PASSWORD, people } from "./screenshots/demo-content.mjs";
+import {
+  generatedImage,
+  MODELS,
+  PASSWORD,
+  people,
+} from "./screenshots/demo-content.mjs";
 import { startDemoProvider } from "./screenshots/demo-provider.mjs";
 import { seedDemo } from "./screenshots/seed.mjs";
 import { VIEWPORTS, shots, validateShots } from "./screenshots/shots.mjs";
@@ -194,16 +199,11 @@ const failures = [];
 const browser = await chromium.launch();
 try {
   log("First-run setup");
-  await firstRun(
-    browser,
-    instance,
-    `http://host.docker.internal:${provider.port}/v1`,
-  );
-  const ids = await seedDemo({
-    instance,
-    renderFile: await renderer(browser),
-    log,
-  });
+  const modelUrl = `http://host.docker.internal:${provider.port}/v1`;
+  await firstRun(browser, instance, modelUrl);
+  const renderFile = await renderer(browser);
+  provider.setImage(await renderFile(generatedImage));
+  const ids = await seedDemo({ instance, renderFile, modelUrl, log });
   if (options.keep) log(`Seeded ids: ${JSON.stringify(ids)}`);
 
   const personas = {
@@ -248,12 +248,14 @@ try {
   failures.push(`setup: ${error.stack ?? error.message}`);
 } finally {
   await browser.close();
-  await provider.close();
   if (options.keep)
     log(
       `Kept ${instance.name} at ${instance.base}; remove it with docker rm -f and docker volume rm`,
     );
-  else await removeInstance(instance);
+  else {
+    await provider.close();
+    await removeInstance(instance);
+  }
 }
 
 // Images in the folder that no shot produces are left from renamed or removed shots.
@@ -268,6 +270,9 @@ if (failures.length) {
   console.error(
     `\n${failures.length} shot(s) could not be taken:\n- ${failures.join("\n- ")}`,
   );
-  process.exit(1);
-}
-log("All screenshots taken");
+  process.exitCode = 1;
+} else log("All screenshots taken");
+// A kept instance needs the scripted model to answer chats; it runs until Ctrl+C.
+if (options.keep)
+  log("The scripted model keeps answering; press Ctrl+C to stop it");
+else process.exit();

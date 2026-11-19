@@ -64,6 +64,9 @@ Follow-ups found during the documentation epics (code, not documentation; each n
 
 - [ ] UI labels disagree with each other and with the guide's voice: the sign-in button says **Login** (the form, toast and guide say "sign in"), the sidebar has **New Chat** but the General page **New chat**, and Settings has **Default Model**. Found in US-89.2; if the labels change, rerun `pnpm docs:screenshots` and update `docs/guide/01-getting-started/`.
 
+- [ ] Compact now records the summarizer's model id as its name: with no run in progress, `ChatOrchestrator._summarizer` falls back to `str(self.agent.model_id)`, so the divider reads "Written by a09bb3f6-… when you chose Compact now". Look the model's name up instead. Found in US-89.3.
+- [ ] Opening a source or citation shows a page with only the file name, "Authorized source in the current file scope of this conversation." and Download source; the passage itself is only in the hover preview. Show the passage (and plainer text) on that page. Found in US-89.3; update `docs/guide/02-chatting/sources-and-citations.md` after.
+
 ### EPIC-89: User guide
 
 - [x] US-89.1: Screenshot pipeline and guide skeleton
@@ -80,17 +83,17 @@ Follow-ups found during the documentation epics (code, not documentation; each n
   - [x] Your first chat: typing a message, stopping a reply, choosing a model, what the progress panel shows.
   - [x] Getting help: the Help center, help icons and the first-chat tour.
 - [x] US-89.3: Chatting
-  - [ ] Choosing and comparing models.
-  - [ ] Attaching files and seeing which files are in context.
-  - [ ] Reading sources and citations.
-  - [ ] Editing, regenerating and switching between branches.
-  - [ ] Approving or denying a tool request.
-  - [ ] Canvas: creating, editing and reading a document with Asterism.
-  - [ ] Generating images (when your group allows it).
-  - [ ] Using `/` skills, prompt templates and the prompt coach.
-  - [ ] Long conversations and context compaction, in plain terms.
-  - [ ] Finding old chats with search.
-- [ ] US-89.4: Files and projects
+  - [x] Choosing and comparing models.
+  - [x] Attaching files and seeing which files are in context.
+  - [x] Reading sources and citations.
+  - [x] Editing, regenerating and switching between branches.
+  - [x] Approving or denying a tool request.
+  - [x] Canvas: creating, editing and reading a document with Asterism.
+  - [x] Generating images (when your group allows it).
+  - [x] Using `/` skills, prompt templates and the prompt coach.
+  - [x] Long conversations and context compaction, in plain terms.
+  - [x] Finding old chats with search.
+- [x] US-89.4: Files and projects
   - [ ] The Files library: uploading, processing status, retrying, image captions, downloading and deleting.
   - [ ] Projects: creating one, adding and removing files, project settings and sub-agents for the project.
   - [ ] What removing a file from a project does, compared with deleting it.

@@ -8,6 +8,7 @@ import {
   newRequestId,
 } from "../capacity/session.mjs";
 import * as demo from "./demo-content.mjs";
+import { COMFY_CHECKPOINT } from "./demo-provider.mjs";
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -62,6 +63,17 @@ class DemoSession extends Session {
     return this.api("chat read", "GET", `/chat/${chatId}`);
   }
 
+  /** Send a follow-up message in an existing chat and wait for the reply. */
+  async reply(chat, prompt) {
+    await this.api("send", "POST", `/chat/${chat.info.id}/message`, {
+      request_id: newRequestId(),
+      user_prompt: prompt,
+      parent_message_id: chat.messages.at(-1).id,
+      expected_model_revision: chat.info.model_revision,
+    });
+    return this.runTurn(chat.info.id);
+  }
+
   async newChat(body) {
     const { info } = await this.api("chat create", "POST", "/chat/", {
       request_id: newRequestId(),
@@ -87,10 +99,16 @@ class DemoSession extends Session {
 
 /**
  * Create everything the shot list needs. `instance` is from startInstance;
- * `providerId` is the provider connected during first-run setup.
+ * `modelUrl` is the scripted model's address as the container sees it, which
+ * also serves the stand-in image generator.
  * Returns the ids the shots navigate to.
  */
-export async function seedDemo({ instance, renderFile, log = () => {} }) {
+export async function seedDemo({
+  instance,
+  renderFile,
+  modelUrl,
+  log = () => {},
+}) {
   const metrics = new Metrics();
   const session = () =>
     new DemoSession({
@@ -172,6 +190,30 @@ export async function seedDemo({ instance, renderFile, log = () => {} }) {
   await admin.api("skills policy", "PUT", "/settings/app/skills", {
     enabled: true,
   });
+  // Reading a web page, which waits for the reader's approval in chat.
+  const tools = await admin.api("tools", "GET", "/settings/app/tools");
+  await admin.api("tools", "PUT", "/settings/app/tools", {
+    ...tools,
+    active_tools: [...new Set([...tools.active_tools, "web_fetch"])],
+  });
+  // Image generation through the scripted model's stand-in ComfyUI server.
+  await admin.api(
+    "image generator",
+    "PUT",
+    "/settings/app/image_generator_provider",
+    {
+      value: {
+        name: "ComfyUI",
+        parameters: {
+          base_url: `${modelUrl.replace(/\/v1$/, "")}/comfy`,
+          checkpoint: COMFY_CHECKPOINT,
+        },
+      },
+    },
+  );
+  await admin.api("image policy", "PUT", "/settings/app/image-generation", {
+    enabled: true,
+  });
 
   // --- People and groups -------------------------------------------------------------
   log("Seeding: people and groups");
@@ -238,6 +280,34 @@ export async function seedDemo({ instance, renderFile, log = () => {} }) {
     },
   );
 
+  // --- The student's agent: a skill, web pages and the prompt coach ------------------
+  await maya.api("prompt coach", "PUT", "/settings/user/prompt_coach_enabled", {
+    value: true,
+  });
+  const labPartner = await maya.api("skill", "POST", "/skills/", {
+    content: demo.skill,
+  });
+  const assigned = await maya.api(
+    "skills",
+    "GET",
+    "/settings/user/main-agent/skills",
+  );
+  await maya.api("skills", "PUT", "/settings/user/main-agent/skills", {
+    skill_ids: [labPartner.id],
+    expected_revision: assigned.revision,
+  });
+  const mainAgent = await maya.api(
+    "main agent",
+    "GET",
+    "/settings/user/main-agent",
+  );
+  await maya.api("main agent", "PUT", "/settings/user/main-agent", {
+    system_prompt: mainAgent.system_prompt,
+    max_steps: mainAgent.max_steps,
+    chat_parameters: mainAgent.chat_parameters,
+    tools: [...new Set([...mainAgent.tools, "web_fetch"])],
+  });
+
   // --- Chats ---------------------------------------------------------------------------
   log("Seeding: chats");
   const general = await maya.newChat({
@@ -265,6 +335,10 @@ export async function seedDemo({ instance, renderFile, log = () => {} }) {
     user_prompt: "Can you help me write an outline for my lab report?",
   });
   await maya.api("canvas", "POST", `/chat/${lab.info.id}/canvas`, demo.canvas);
+  // Four turns, one more than compaction keeps in full, so it can be compacted.
+  const [opening, ...followUps] = demo.revisionTurns;
+  let revision = await maya.newChat({ model_id: tutor, user_prompt: opening });
+  for (const prompt of followUps) revision = await maya.reply(revision, prompt);
 
   // --- Study -------------------------------------------------------------------------
   log("Seeding: study material");
@@ -371,6 +445,7 @@ export async function seedDemo({ instance, renderFile, log = () => {} }) {
       sourced: sourced.info.id,
       branched: branched.info.id,
       lab: lab.info.id,
+      revision: revision.info.id,
     },
     deck: deck.id,
     quiz: quiz.id,
