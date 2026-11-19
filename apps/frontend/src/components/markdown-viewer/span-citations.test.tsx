@@ -74,7 +74,10 @@ describe("CitedClaim", () => {
     const marker = within(claim as HTMLElement).getByRole("link", {
       name: "Citation 1: notes.md",
     });
-    expect(marker).toHaveAttribute("href", `/c/chat/files/${FILE}`);
+    expect(marker).toHaveAttribute(
+      "href",
+      `/c/chat/files/${FILE}?passage=chunk`,
+    );
     expect(marker.getAttribute("href")).not.toContain("asterism-cite");
 
     await user.tab();

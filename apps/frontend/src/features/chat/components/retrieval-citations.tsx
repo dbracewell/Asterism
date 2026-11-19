@@ -188,7 +188,7 @@ function SourceChip({
     <Tooltip>
       <TooltipTrigger asChild>
         <Link
-          href={scopedFileHref(chatId, hit.file_id)}
+          href={scopedFileHref(chatId, hit.file_id, hit.chunk_id)}
           aria-label={`Source ${number}: ${name}`}
           data-state="available"
           className={cn(

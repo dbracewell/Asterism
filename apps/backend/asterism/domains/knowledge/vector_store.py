@@ -126,6 +126,10 @@ class VectorStore(Protocol):
         limit: int,
     ) -> list[StoredChunk]: ...
 
+    async def get_chunk(self, *, user_id: str, file_id: str, chunk_id: str) -> StoredChunk | None: ...
+
+    async def count_file_chunks(self, *, user_id: str, file_id: str, artifact_generation: int) -> int: ...
+
     async def delete_file(self, *, user_id: str, file_id: str) -> None: ...
 
     async def delete_user(self, *, user_id: str) -> None: ...
@@ -332,6 +336,48 @@ class LanceDbVectorStore:
             if row["user_id"] == user_id
         ]
         return sorted(chunks, key=lambda chunk: chunk.chunk_ordinal)
+
+    async def get_chunk(self, *, user_id: str, file_id: str, chunk_id: str) -> StoredChunk | None:
+        """One stored chunk of one file, or None when it no longer exists (e.g. re-ingested)."""
+        await self.initialize()
+        table = self._require_table()
+        predicate = (
+            f"user_id = {self._quote(user_id)} AND file_id = {self._quote(file_id)} AND id = {self._quote(chunk_id)}"
+        )
+        columns = ["id", "user_id", "file_id", "artifact_generation", "chunk_ordinal", "kind", "content"]
+        try:
+            async with self._semaphore:
+                rows = await asyncio.to_thread(
+                    lambda: table.search().where(predicate).select(columns).limit(1).to_list()
+                )
+        except Exception as error:
+            raise VectorStoreError("Knowledge chunks could not be read") from error
+        # Defense in depth: the predicate already constrains the owner.
+        row = next((row for row in rows if row["user_id"] == user_id), None)
+        if row is None:
+            return None
+        return StoredChunk(
+            id=row["id"],
+            file_id=row["file_id"],
+            artifact_generation=int(row["artifact_generation"]),
+            chunk_ordinal=int(row["chunk_ordinal"]),
+            kind=row["kind"],
+            content=row["content"],
+        )
+
+    async def count_file_chunks(self, *, user_id: str, file_id: str, artifact_generation: int) -> int:
+        """How many chunks one file generation has."""
+        await self.initialize()
+        table = self._require_table()
+        predicate = (
+            f"user_id = {self._quote(user_id)} AND file_id = {self._quote(file_id)} "
+            f"AND artifact_generation = {int(artifact_generation)}"
+        )
+        try:
+            async with self._semaphore:
+                return int(await asyncio.to_thread(table.count_rows, predicate))
+        except Exception as error:
+            raise VectorStoreError("Knowledge chunks could not be counted") from error
 
     async def delete_file(self, *, user_id: str, file_id: str) -> None:
         await self._delete(f"user_id = {self._quote(user_id)} AND file_id = {self._quote(file_id)}")

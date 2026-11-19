@@ -88,7 +88,7 @@ function CitationMarker({
     <Tooltip>
       <TooltipTrigger asChild>
         <Link
-          href={scopedFileHref(chatId, citation.file_id!)}
+          href={scopedFileHref(chatId, citation.file_id!, citation.chunk_id)}
           aria-label={`Citation ${number}: ${name}`}
           data-citation="available"
           className={cn(

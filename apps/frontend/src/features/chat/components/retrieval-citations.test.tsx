@@ -113,11 +113,17 @@ describe("RetrievalCitations", () => {
     const first = await within(region).findByRole("link", {
       name: "Source 1: gaia.md",
     });
-    expect(first).toHaveAttribute("href", `/c/chat/files/${id(1)}`);
+    expect(first).toHaveAttribute(
+      "href",
+      `/c/chat/files/${id(1)}?passage=chunk-1`,
+    );
     const second = await within(region).findByRole("link", {
       name: `Source 2: ${longName}`,
     });
-    expect(second).toHaveAttribute("href", `/c/chat/files/${id(2)}`);
+    expect(second).toHaveAttribute(
+      "href",
+      `/c/chat/files/${id(2)}?passage=chunk-2`,
+    );
     // Long names truncate visually; the accessible name keeps them whole.
     expect(within(second).getByText(longName)).toHaveClass("truncate");
     expect(within(region).getAllByRole("listitem")).toHaveLength(2);

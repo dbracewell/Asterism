@@ -24,6 +24,7 @@ from asterism.domains.user.dependencies import AuthedUserDep
 from asterism.domains.user.lifecycle import assert_active
 
 from .ai_use_log_schemas import AiUseLog, AiUseLogRequest
+from .citation_schemas import ChatFilePassage
 from .disagreement_schemas import DisagreementRequest, DisagreementSummary
 from .draft_comment_schemas import DraftCommentSummary, DraftCommentUpdate, DraftReview
 from .exercise_schemas import ExerciseAttemptRequest, ExerciseView
@@ -414,6 +415,29 @@ async def get_chat_file_info(chat_id: uuid.UUID, file_id: uuid.UUID, user: Authe
 
     await require_chat_file(user_id=user.id, chat_id=chat_id, file_id=file_id, session=db)
     return await get_file_info_by_id(user_id=user.id, file_id=file_id, session=db)
+
+
+@chat_router.get(
+    "/{chat_id}/files/{file_id}/passages/{chunk_id}",
+    response_model=ChatFilePassage,
+    operation_id="chatFileGetPassage",
+    responses={404: {"model": ErrorDetail}},
+)
+async def get_chat_file_passage(
+    chat_id: uuid.UUID,
+    file_id: uuid.UUID,
+    chunk_id: Annotated[str, Path(min_length=1, max_length=200)],
+    user: AuthedUserDep,
+    db: DBSessionDep,
+) -> ChatFilePassage:
+    """One cited passage of a scoped file, with its place in the file (US-90.4)."""
+    from asterism.domains.knowledge.vector_store import vector_store
+
+    from .passages import read_scoped_passage
+
+    return await read_scoped_passage(
+        user_id=user.id, chat_id=chat_id, file_id=file_id, chunk_id=chunk_id, vectors=vector_store, session=db
+    )
 
 
 @chat_router.get("/{chat_id}/files/{file_id}/preview", response_model=FilePreview, operation_id="chatFileGetPreview")

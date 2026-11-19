@@ -36,8 +36,16 @@ source 1.
 
    ![The pointer resting on the first source, chloroplast-handout.pdf, showing the passage Asterism used](../images/chat-source-preview.png)
 
-2. To open the file, select the chip or the number, then select
-   **Download source**. Select **Back to conversation** to return.
+2. To read more, select the chip or the number.
+
+   A page opens with the file's name and the whole passage Asterism used, with
+   its place in the file, such as **Passage 2 of 12 in this file**. For a
+   picture, the passage is the description Asterism wrote of it.
+
+   ![The page a citation opens: the file name, the passage Asterism used with its place in the file, and Download source](../images/chat-source-page.png)
+
+3. To open the whole file, select **Download source**. Select **Back to
+   conversation** to return.
 
 ## Why checking matters
 
@@ -50,6 +58,9 @@ that. If an answer has no sources, it didn't come from your files.
 - **A source says "Source unavailable in this chat".** The file was removed from
   the chat or the project, or deleted. Select the retry button beside it if you
   think it should still be there.
+- **The page says "This passage is no longer in the file".** The file was
+  changed and processed again since the answer was written. Select **Download
+  source** to read the current file.
 - **No sources appear.** Asterism didn't use your files for this answer. Check
   [Files in context](attaching-files.md#see-which-files-are-in-context), then ask
   again and mention the file, for example "According to my notes, …".

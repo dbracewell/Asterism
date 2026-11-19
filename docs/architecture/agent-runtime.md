@@ -368,6 +368,11 @@ read files use only the answer's recorded file scope, through `RetrievalService`
   pointing at a passage its run retrieved. The server resolves each token against
   that run's results and the chat's current files; anything else renders as an
   unavailable citation ([ADR-0040](../adr/0040-claim-level-citations.md)).
+  A citation or source chip opens the file's page with `?passage=<chunk_id>`;
+  the page reads the whole passage and its place in the file from
+  `GET /chat/{chat_id}/files/{file_id}/passages/{chunk_id}`, which rechecks the
+  chat's live file scope. A link's passage id grants nothing, and a chunk gone
+  since re-processing returns 404.
 - **Verify.** `POST /chat/{chat_id}/messages/{message_id}/verify` lists up to 12
   claims in a finished answer and labels each `supported`, `contradicted` or
   `unsupported` from the user's files, within a 120-second budget, on a model the

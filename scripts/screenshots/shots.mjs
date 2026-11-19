@@ -214,6 +214,21 @@ export const shots = [
     ready: ["According to your files"],
   },
   {
+    name: "chat-source-page",
+    alt: "The page a citation opens: the file name, the passage Asterism used with its place in the file, and Download source",
+    as: "student",
+    path: (ids) => `/c/${ids.chats.sourced}`,
+    ready: ["According to your files"],
+    steps: async (page) => {
+      await page
+        .getByRole("link", { name: /^Citation 1:/ })
+        .first()
+        .click();
+      await page.getByText("The passage Asterism used").waitFor();
+      await page.getByText(/ in this file\.$/).waitFor();
+    },
+  },
+  {
     name: "chat-branches",
     alt: "A chat whose answer was regenerated, with the switcher under the answer showing 2 / 2",
     as: "student",

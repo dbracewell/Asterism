@@ -29,8 +29,14 @@ import { QueryError } from "@/components/query-error";
 import { KnowledgeStatus } from "@/components/file-manager/knowledge-status";
 import { useConfirmationDialog } from "@/components/confirmation-dialog";
 
-export const scopedFileHref = (chatId: string, fileId: string) =>
-  `/c/${encodeURIComponent(chatId)}/files/${encodeURIComponent(fileId)}`;
+/** The scoped source page; with `passage`, it opens on that cited chunk (US-90.4). */
+export const scopedFileHref = (
+  chatId: string,
+  fileId: string,
+  passage?: string | null,
+) =>
+  `/c/${encodeURIComponent(chatId)}/files/${encodeURIComponent(fileId)}` +
+  (passage ? `?passage=${encodeURIComponent(passage)}` : "");
 
 export function ChatFileContext({
   open,
