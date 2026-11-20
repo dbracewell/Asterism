@@ -105,6 +105,19 @@ async function openStatus(page: Page) {
   await expect(page.getByRole("dialog")).toBeVisible();
 }
 
+/**
+ * Closes the status popover and waits until it has handed focus back to its
+ * button. It closes with an animation; focusing anything sooner loses focus
+ * to that return.
+ */
+async function closeStatus(page: Page) {
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: /^(Chat status|Context usage)/ }),
+  ).toBeFocused();
+}
+
 for (const theme of themes) {
   test(`${theme}: plan label and usage-limit recovery stay readable and keyboard reachable`, async ({
     page,
@@ -133,7 +146,7 @@ for (const theme of themes) {
     expect(
       await ratio(page, label.getByText("Using ChatGPT plan"), "plan-label"),
     ).toBeGreaterThanOrEqual(4.5);
-    await page.keyboard.press("Escape");
+    await closeStatus(page);
 
     // The plan stream fails with a usage limit after the request starts.
     socket.send(JSON.stringify({ type: "status", is_processing: true }));
@@ -194,7 +207,7 @@ test("a paused plan resumes only on the user's explicit retry", async ({
   await expect(
     page.getByRole("note").filter({ hasText: "Using ChatGPT plan" }),
   ).toHaveCount(0);
-  await page.keyboard.press("Escape");
+  await closeStatus(page);
   expect(resumes).toEqual([]);
 
   await notice.getByRole("button", { name: "Try my plan again" }).click();
@@ -207,7 +220,7 @@ test("a paused plan resumes only on the user's explicit retry", async ({
   await expect(
     page.getByRole("note").filter({ hasText: "Using ChatGPT plan" }),
   ).toBeVisible();
-  await page.keyboard.press("Escape");
+  await closeStatus(page);
   await expect(
     page.getByRole("alert", { name: "Usage limit reached" }),
   ).toHaveCount(0);
