@@ -151,14 +151,36 @@ jobs:
   publish:
     name: Publish ${{ needs.version.outputs.version }}
     needs: [version, image]
-    # A rehearsal (run by hand) stops before tagging.
-    if: github.ref_type == 'tag'
+    # Only a pushed tag publishes. Any run by hand is a rehearsal, even one
+    # started on a release tag.
+    if: github.event_name == 'push' && github.ref_type == 'tag'
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
 
     steps:
+      - name: Checkout, with every release tag
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Move latest only for the newest release
+        # A run for an older tag (finishing late, or re-run) tags its version
+        # but leaves latest on the newest release.
+        id: latest
+        env:
+          VERSION: ${{ needs.version.outputs.version }}
+        run: |
+          newest="$(git tag --list 'v*' | node --input-type=module -e '
+            import { latestRelease } from "./scripts/release.mjs";
+            let input = "";
+            for await (const chunk of process.stdin) input += chunk;
+            console.log(latestRelease(input.split("\n").filter(Boolean)) ?? "");
+          ')"
+          echo "Newest release tag: v$newest"
+          if [ "$newest" = "$VERSION" ]; then echo "move=true" >> "$GITHUB_OUTPUT"; else echo "move=false" >> "$GITHUB_OUTPUT"; fi
+
       - name: Collect the checked digests
         uses: actions/download-artifact@v4
         with:
@@ -176,15 +198,18 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Tag the version and latest
+      - name: Tag the version, and latest when it is the newest
         working-directory: ${{ runner.temp }}/digests
         env:
           VERSION: ${{ needs.version.outputs.version }}
+          MOVE_LATEST: ${{ steps.latest.outputs.move }}
         run: |
           annotation() { echo "--annotation" "index:org.opencontainers.image.$1=$2"; }
+          tags=(--tag "$IMAGE:$VERSION")
+          if [ "$MOVE_LATEST" = true ]; then tags+=(--tag "$IMAGE:latest"); fi
           # shellcheck disable=SC2046
           docker buildx imagetools create \
-            --tag "$IMAGE:$VERSION" --tag "$IMAGE:latest" \
+            "${tags[@]}" \
             $(annotation source "https://github.com/dbracewell/Asterism") \
             $(annotation version "$VERSION") \
             $(annotation revision "$GITHUB_SHA") \

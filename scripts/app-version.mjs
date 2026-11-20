@@ -1,7 +1,8 @@
 // One version for the app (US-91.1). The root package.json is the source; the
 // workspace packages, the backend's pyproject.toml and its uv.lock entry must
 // say the same, because Status and backups report the backend package version.
-// `pnpm release` (US-91.4) sets them all with setVersion.
+// So must .env.example's ASTERISM_VERSION, the image a fresh install runs
+// (US-91.5). `pnpm release` (US-91.4) sets them all with setVersion.
 import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
@@ -18,6 +19,10 @@ const lock = {
   pattern: /^(\[\[package\]\]\nname = "asterism-core"\nversion = ")([^"]*)(")/m,
 };
 
+const env = {
+  pattern: /^(ASTERISM_VERSION=)([^\s#]*)()/m,
+};
+
 export const SOURCE = "package.json";
 const FILES = {
   [SOURCE]: json,
@@ -25,6 +30,7 @@ const FILES = {
   "apps/backend/package.json": json,
   "apps/backend/pyproject.toml": pyproject,
   "apps/backend/uv.lock": lock,
+  ".env.example": env,
 };
 export const COPIES = Object.keys(FILES).filter((path) => path !== SOURCE);
 
