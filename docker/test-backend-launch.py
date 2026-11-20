@@ -42,11 +42,16 @@ def main():
                 "docker/entrypoint.sh",
             ):
                 shutil.copyfile(ROOT / source, context / Path(source).name)
+            # serve.py configures logging from asterism.common.log (standard library only).
+            (context / "common").mkdir()
+            for name in ("__init__.py", "log.py"):
+                shutil.copyfile(ROOT / "apps/backend/asterism/common" / name, context / "common" / name)
             (context / "Dockerfile").write_text(
                 "FROM python:3.13-slim-trixie\n"
                 "RUN python -m venv /app/apps/backend/.venv && "
                 f"/app/apps/backend/.venv/bin/pip install --no-cache-dir uvicorn=={version}\n"
                 "COPY serve.py __init__.py /app/apps/backend/asterism/\n"
+                "COPY common /app/apps/backend/asterism/common\n"
                 "COPY entrypoint.sh /app/docker/entrypoint.sh\n"
                 "WORKDIR /app/apps/backend\n"
                 'ENTRYPOINT ["/bin/bash", "/app/docker/entrypoint.sh"]\n'
