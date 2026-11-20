@@ -94,6 +94,73 @@ jobs:
       - name: Verify single-worker backend container launch contract
         run: pnpm test:container-launch
 
+  image-checks:
+    # US-91.2: a change that breaks the image fails here, not in an upgrade.
+    name: Build and check the image
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Make room for the image
+        # The runner's preinstalled SDKs leave too little disk for the image,
+        # its build cache and the loaded copy.
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+          df -h /
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22.13.0"
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Install dependencies for the theme storage check
+        # TypeScript and zod only; the checks need no native modules.
+        run: |
+          pnpm install --frozen-lockfile --config.strictDepBuilds=false --config.ignore-scripts=true
+          pnpm --filter @asterism/frontend install --frozen-lockfile --config.strictDepBuilds=false --config.ignore-scripts=true
+
+      - name: Read the app version
+        id: version
+        run: echo "version=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          # Leave the daemon's own builder as the default, so the theme storage
+          # check's `docker build` can use the loaded image as its base.
+          use: false
+
+      - name: Build the CPU image
+        uses: docker/build-push-action@v6
+        with:
+          builder: ${{ steps.buildx.outputs.name }}
+          context: .
+          load: true
+          tags: asterism:ci
+          build-args: |
+            ASTERISM_VERSION=${{ steps.version.outputs.version }}
+            ASTERISM_COMMIT=${{ github.sha }}
+          cache-from: type=gha,scope=asterism-image
+          cache-to: type=gha,scope=asterism-image,mode=max
+
+      - name: Start the image and check its size
+        run: pnpm check:image --image asterism:ci --max-size-gb 5
+
+      - name: Check the web fetch tool's browser in the image
+        run: pnpm check:fetch-browser-container --image asterism:ci
+
+      - name: Check theme storage in the image
+        run: pnpm check:theme-storage-container
+        env:
+          THEME_TEST_RUNTIME_IMAGE: asterism:ci
+
   frontend-e2e:
     name: Frontend E2E (Playwright)
     runs-on: ubuntu-latest

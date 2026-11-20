@@ -46,7 +46,7 @@ try {
   docker(["image", "inspect", base]);
   // Transpile the actual repository and schema; server-only is a Next import
   // boundary marker and is omitted solely from these standalone test artifacts.
-  for (const relative of ["server/repository", "schemas"]) {
+  for (const relative of ["server/repository", "schemas", "constants"]) {
     const source = readFileSync(
       join(frontend, "src/features/theme", `${relative}.ts`),
       "utf8",
@@ -66,10 +66,10 @@ try {
   cpSync(realpathSync(zod), join(root, "runtime/node_modules/zod"), {
     recursive: true,
   });
-  cpSync(
-    join(frontend, "src/features/theme/bundled/light.json"),
-    join(root, "runtime/light.json"),
-  );
+  // Any bundled palette serves as the read-only default the check replaces.
+  const bundled = join(frontend, "src/features/theme/bundled/atlas.json");
+  const bundledName = JSON.parse(readFileSync(bundled, "utf8")).name;
+  cpSync(bundled, join(root, "runtime/light.json"));
   writeFileSync(
     join(root, "Dockerfile"),
     `FROM ${base}\nUSER root\nCOPY runtime /theme-check\nRUN chmod -R a+rX /theme-check\nUSER 10001:10001\nENTRYPOINT ["node", "/theme-check/run.cjs"]\n`,
@@ -93,7 +93,7 @@ const light = require("./light.json");
     assert.equal((await repository.read("light")).name, "Container replaced");
   }
   await assert.rejects(fs.writeFile("/theme-check/light.json", "changed"), error => ["EROFS", "EACCES"].includes(error.code));
-  assert.equal(require("./light.json").name, "Default Light Theme");
+  assert.equal(require("./light.json").name, ${JSON.stringify(bundledName)});
   assert.equal((await fs.stat("/storage/themes/light.json")).mode & 0o777, 0o600);
   console.log(JSON.stringify({ step: process.argv[2], uid: process.getuid(), name: (await repository.read("light")).name }));
 })().catch(error => { console.error(error); process.exitCode = 1; });

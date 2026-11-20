@@ -277,6 +277,23 @@ The module also exports the portable parser, root loader, scope filtering, argum
 parsing, legacy-file detection, and subprocess runner for tests and other repository
 tools.
 
+### `check-image.mjs`
+
+Starts a built image the way CI does before a release (US-91.2). It runs the
+image on a fresh volume with generated, throwaway secrets (passed through the
+environment, never the command line), waits for its health check, and checks
+that the Better Auth migration ran and the backend database has a schema
+revision, that `/sign-in`, `/api/py/health/ready` and `/api/health` answer 200,
+and that every process runs as UID 10001. It also fails when the unpacked image
+is over a size budget (5 GB by default), listing the largest layers. On failure
+it prints the container's last log lines. The container and volume are removed
+afterwards.
+
+```bash
+pnpm check:image                                   # asterism:local, 5 GB budget
+pnpm check:image --image asterism:ci --max-size-gb 5
+```
+
 ### `check-theme-storage-container.mjs`
 
 Verifies the actual theme repository in a disposable test layer on the locally
@@ -285,7 +302,8 @@ dependencies; optional `THEME_TEST_RUNTIME_IMAGE` selects another local applicat
 runtime image. It makes no network requests during the image build or container runs.
 
 ```bash
-node scripts/check-theme-storage-container.mjs
+pnpm check:theme-storage-container
+THEME_TEST_RUNTIME_IMAGE=asterism:ci pnpm check:theme-storage-container
 ```
 
 Three fresh containers run as UID/GID `10001` with a read-only application filesystem

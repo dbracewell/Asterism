@@ -30,7 +30,9 @@
     "format:check": "pnpm --filter @asterism/backend format:check && pnpm --filter @asterism/frontend format:check",
     "capacity:check": "node scripts/capacity-check.mjs",
     "test:container-launch": "uv run --project apps/backend python docker/test-backend-launch.py",
-    "check:fetch-browser-container": "node scripts/check-fetch-browser-container.mjs"
+    "check:fetch-browser-container": "node scripts/check-fetch-browser-container.mjs",
+    "check:image": "node scripts/check-image.mjs",
+    "check:theme-storage-container": "node scripts/check-theme-storage-container.mjs"
   },
   "keywords": [],
   "author": "",
