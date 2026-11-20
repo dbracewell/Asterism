@@ -307,6 +307,18 @@ pnpm check:release-notes                    # against origin/main
 pnpm check:release-notes --base <ref>       # CI: the pull request's base, or the pushed-over commit
 ```
 
+### `release.mjs`
+
+Prepares a release (US-91.4): checks a clean `main` that matches `origin/main`
+and passed CI, refuses a version that isn't newer or empty release notes, then
+sets the version, dates the release notes, commits and tags `v<version>`. It
+never pushes. See [Releasing](../docs/development.md#releasing).
+
+```bash
+pnpm release 0.2.0 --dry-run    # every check, no changes
+pnpm release 0.2.0
+```
+
 ### `check-theme-storage-container.mjs`
 
 Verifies the actual theme repository in a disposable test layer on the locally

@@ -15,12 +15,13 @@ import {
   COPIES,
   SOURCE,
   appVersion,
+  setVersion,
   versionProblems,
 } from "../scripts/app-version.mjs";
 
 function copyRepo() {
   const root = mkdtempSync(join(tmpdir(), "asterism-version-"));
-  for (const path of [SOURCE, ...Object.keys(COPIES)]) {
+  for (const path of [SOURCE, ...COPIES]) {
     mkdirSync(dirname(join(root, path)), { recursive: true });
     cpSync(path, join(root, path));
   }
@@ -83,6 +84,33 @@ test("a missing or malformed version is a problem", () => {
         `apps/backend/package.json says no version, package.json says v${version}`,
       ),
     );
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("setting the version writes every copy and keeps the files' formatting", () => {
+  const root = copyRepo();
+  try {
+    const before = Object.fromEntries(
+      [SOURCE, ...COPIES].map((path) => [
+        path,
+        readFileSync(join(root, path), "utf8"),
+      ]),
+    );
+    const version = appVersion(root);
+    assert.deepEqual(setVersion("9.10.11", root), [SOURCE, ...COPIES]);
+    assert.equal(appVersion(root), "9.10.11");
+    assert.deepEqual(versionProblems(root), []);
+    for (const path of [SOURCE, ...COPIES]) {
+      // Only the version changed.
+      assert.equal(
+        readFileSync(join(root, path), "utf8").replace("9.10.11", version),
+        before[path],
+        path,
+      );
+    }
+    assert.throws(() => setVersion("v1.0.0", root), /not MAJOR.MINOR.PATCH/);
   } finally {
     rmSync(root, { recursive: true, force: true });
   }

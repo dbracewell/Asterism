@@ -33,6 +33,7 @@
     "check:fetch-browser-container": "node scripts/check-fetch-browser-container.mjs",
     "check:image": "node scripts/check-image.mjs",
     "check:release-notes": "node scripts/check-release-notes.mjs",
+    "release": "node scripts/release.mjs",
     "check:theme-storage-container": "node scripts/check-theme-storage-container.mjs"
   },
   "keywords": [],

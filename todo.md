@@ -77,10 +77,10 @@ Source: user request (2026-11-19), following EPIC-90. [EPIC-91](docs/epics/EPIC-
   - [x] Add release notes to the Definition of Done in `AGENTS.md`: a story that changes configuration, stored data, the image or a documented behavior adds a line under "Unreleased".
   - [x] A check fails when a new Alembic revision or a change to the configuration contract (`scripts/config-contract.mjs`) lands without a change to `docs/release-notes.md`.
   - [x] Describe the sections (Configuration, Data, Image, Behavior) at the top of the file.
-- [ ] US-91.4: Cut a release
-  - [ ] `pnpm release <version>`: checks a clean, up-to-date `main` and passing checks; sets the version (US-91.1); turns "Unreleased" into the version and date and opens a new empty "Unreleased"; commits and tags `v<version>`.
-  - [ ] It refuses a version that isn't newer, or empty release notes.
-  - [ ] Document the steps, including pushing the tag, in `docs/development.md`.
+- [~] US-91.4: Cut a release
+  - [x] `pnpm release <version>`: checks a clean, up-to-date `main` and passing checks; sets the version (US-91.1); turns "Unreleased" into the version and date and opens a new empty "Unreleased"; commits and tags `v<version>`.
+  - [x] It refuses a version that isn't newer, or empty release notes.
+  - [x] Document the steps, including pushing the tag, in `docs/development.md`.
 - [ ] US-91.5: Publish the image
   - [ ] On a `v*` tag, CI builds the CPU image for amd64 and arm64, runs the US-91.2 checks, and pushes it to `ghcr.io/dbracewell/asterism` as the version and `latest`.
   - [ ] `docker-compose.yml` can use the published image, with building from source still documented; the deployment guide's install and upgrade steps use it.
