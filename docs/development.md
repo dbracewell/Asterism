@@ -118,11 +118,22 @@ including a clean install.
 
 ### Container checks
 
+CI's **Build and check the image** job (`image-checks`, US-91.2) builds the full
+CPU image on every push and pull request, with the build cache kept in GitHub
+Actions, and runs the first three checks below against it. A change that breaks
+the image fails there, not in an upgrade. The image must stay within a **5 GB**
+budget (unpacked); when it grows past it, the job lists the largest layers.
+Raise `--max-size-gb` in `.github/workflows/ci.yml` only as a decision, noted in
+the release notes.
+
 With Docker, these check the image and its configuration using generated,
 throwaway secrets, containers and volumes:
 
 ```bash
 docker build -t asterism:local .
+pnpm check:image                      # starts it: healthy, both databases migrated, pages answer, UID 10001, size budget
+pnpm check:fetch-browser-container    # the web fetch tool's headless Chromium renders JavaScript
+pnpm check:theme-storage-container    # themes save and replace as UID 10001 on a fresh volume
 pnpm test:container-config            # the same .env values reach the repo loader, Compose and docker run
 python3 docker/smoke-test.py asterism:local   # both secret modes, two origins, headers, no leaked secrets
 pnpm test:container-launch            # the backend refuses more than one worker

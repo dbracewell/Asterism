@@ -345,6 +345,7 @@ Expected CI status checks:
 
 - `CI / Lint, Typecheck, Test` (job: `quality-gates`)
 - `CI / Frontend E2E (Playwright)` (job: `frontend-e2e`)
+- `CI / Build and check the image` (job: `image-checks`)
 
 ---
 

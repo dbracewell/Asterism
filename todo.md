@@ -67,12 +67,12 @@ Source: user request (2026-11-19), following EPIC-90. [EPIC-91](docs/epics/EPIC-
   - [x] Status and the backup manifest report that version, plus the git commit the image was built from (a build argument; "unknown" outside Docker).
   - [x] The image carries OCI labels for version, commit and source.
   - [x] Tests; update the deployment guide's upgrade steps ("Status shows the new version").
-- [ ] US-91.2: CI builds and starts the real image
-  - [ ] A CI job builds the full CPU image with a layer cache.
-  - [ ] It starts the container with throwaway secrets, waits for healthy, and checks the `auth` migration ran, the sign-in page and `/api/py/health` answer, and the container runs as UID 10001.
-  - [ ] It runs `pnpm check:fetch-browser-container` and the theme storage check against that image.
-  - [ ] It fails when the image grows past a size budget (start at 5 GB), printing the largest parts, so growth is a decision.
-  - [ ] Document the job in `docs/development.md`; add it to the expected status checks in `AGENTS.md`.
+- [~] US-91.2: CI builds and starts the real image
+  - [x] A CI job builds the full CPU image with a layer cache.
+  - [x] It starts the container with throwaway secrets, waits for healthy, and checks the `auth` migration ran, the sign-in page and `/api/py/health` answer, and the container runs as UID 10001.
+  - [x] It runs `pnpm check:fetch-browser-container` and the theme storage check against that image.
+  - [x] It fails when the image grows past a size budget (start at 5 GB), printing the largest parts, so growth is a decision.
+  - [x] Document the job in `docs/development.md`; add it to the expected status checks in `AGENTS.md`.
 - [ ] US-91.3: Release notes are part of the work
   - [ ] Add release notes to the Definition of Done in `AGENTS.md`: a story that changes configuration, stored data, the image or a documented behavior adds a line under "Unreleased".
   - [ ] A check fails when a new Alembic revision or a change to the configuration contract (`scripts/config-contract.mjs`) lands without a change to `docs/release-notes.md`.
