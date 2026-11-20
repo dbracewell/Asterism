@@ -22,6 +22,8 @@ Unreleased into its version and date.
 
 ## Unreleased
 
+## 0.2.0 (2026-11-20)
+
 ### Data
 
 - Compaction summaries written by **Compact now** named the model by its id.
