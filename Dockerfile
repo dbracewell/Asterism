@@ -111,6 +111,22 @@ ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 \
   PLAYWRIGHT_BROWSERS_PATH=/opt/ms-playwright \
   PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 \
   STORAGE_ROOT=/storage
+# What this image was built from (US-91.1). Status and backups report the app
+# version from the backend package and the commit from ASTERISM_COMMIT. A given
+# ASTERISM_VERSION must be that version, so the label cannot disagree with it.
+# These come last so that a new commit rebuilds only these layers.
+ARG ASTERISM_VERSION=unknown
+ARG ASTERISM_COMMIT=unknown
+RUN version="$(/app/apps/backend/.venv/bin/python -c 'import importlib.metadata as m; print(m.version("asterism-core"))')" \
+  && if [ "$ASTERISM_VERSION" != unknown ] && [ "$ASTERISM_VERSION" != "$version" ]; then \
+    echo "ASTERISM_VERSION is $ASTERISM_VERSION, but the app version is $version" >&2; exit 1; fi
+LABEL org.opencontainers.image.title="Asterism" \
+  org.opencontainers.image.description="A self-hosted AI assistant for learning" \
+  org.opencontainers.image.source="https://github.com/dbracewell/Asterism" \
+  org.opencontainers.image.licenses="Apache-2.0" \
+  org.opencontainers.image.version="$ASTERISM_VERSION" \
+  org.opencontainers.image.revision="$ASTERISM_COMMIT"
+ENV ASTERISM_COMMIT=$ASTERISM_COMMIT
 USER asterism
 EXPOSE 3000
 

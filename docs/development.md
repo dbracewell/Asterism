@@ -140,6 +140,10 @@ The [scripts README](../scripts/README.md) describes every root script and its o
 - **Changing the schema.** Every backend schema change ships as an Alembic migration
   with an upgrade test ([backend README](../apps/backend/README.md#database-initialization-and-migrations),
   [ADR-0069](adr/0069-versioned-schema-migrations.md)).
+- **The version.** The root `package.json` holds the app version. The frontend
+  and backend `package.json`, the backend's `pyproject.toml` and its `uv.lock`
+  entry repeat it, and `pnpm check:workspace-tasks` fails when one differs
+  (US-91.1). Status and backups read it from the backend package.
 - **Process.** Work is planned as epics and stories in `docs/epics/` and tracked in
   [`todo.md`](../todo.md); [`AGENTS.md`](../AGENTS.md) describes the workflow and the
   rules every change follows.

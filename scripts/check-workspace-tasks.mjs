@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
+import { versionProblems } from "./app-version.mjs";
 
 const readJson = (path) => JSON.parse(readFileSync(path, "utf8"));
 const root = readJson("package.json");
@@ -27,6 +28,12 @@ for (const task of required.frontend) {
     `root ${task} does not invoke the frontend workspace`,
   );
 }
+
+assert.deepEqual(
+  versionProblems(),
+  [],
+  "the app version differs between packages",
+);
 
 assert.equal(existsSync("turbo.json"), false, "turbo.json must not exist");
 assert.equal(

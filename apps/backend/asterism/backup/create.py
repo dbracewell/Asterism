@@ -28,6 +28,8 @@ from typing import Any
 
 import lancedb
 
+from asterism.core.build_info import app_commit, app_version
+
 from .archive import (
     ARCHIVE_PATTERN,
     AUTH_DB,
@@ -40,7 +42,6 @@ from .archive import (
     BackupError,
     HashingReader,
     StorageLayout,
-    app_version,
     encode_manifest,
     system_key_check,
 )
@@ -233,6 +234,7 @@ def create_backup(
                         "format_version": FORMAT_VERSION,
                         "created_at": moment.isoformat().replace("+00:00", "Z"),
                         "app_version": app_version(),
+                        "app_commit": app_commit(),
                         "schema_revision": revision,
                         "system_key_check": system_key_check(system_key),
                         "vector_tables": vector_tables,

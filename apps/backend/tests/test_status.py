@@ -3,6 +3,7 @@
 import json
 import sqlite3
 from collections import namedtuple
+from importlib import metadata
 
 import pytest
 import pytest_asyncio
@@ -102,7 +103,9 @@ async def test_admin_status_reports_runtime_storage_and_last_backup(project_api,
         "asterism.core.security.verify_jwks_token",
         lambda token: AuthedUser(id=token, email=f"{token}@example.test", name=token, role="admin"),
     )
+    monkeypatch.setenv("ASTERISM_COMMIT", "0123456789abcdef")
     body = (await client.get("/status", headers=auth("root"))).json()
+    assert (body["version"], body["commit"]) == (metadata.version("asterism-core"), "0123456789abcdef")
     assert body["uptime_seconds"] >= 0 and body["schema_revision"]
     assert body["active_chat_runs"]["limit"] == config.max_active_chat_jobs
     assert body["chat_connections"]["limit"] == config.max_chat_controllers

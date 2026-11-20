@@ -137,7 +137,9 @@ with a root `.env` is expected to fail this CI-oriented check.
 Validates repository task wiring and maintenance safeguards. It checks that root
 quality commands invoke the expected pnpm workspaces, required workspace scripts
 exist, Turbo and obsolete files remain removed, and reset/migration commands do not
-reintroduce `auth@latest`, shell sourcing, or developer-specific paths.
+reintroduce `auth@latest`, shell sourcing, or developer-specific paths. It also
+fails when a copy of the app version differs from the root `package.json`
+(`app-version.mjs`, US-91.1).
 
 ```bash
 pnpm check:workspace-tasks

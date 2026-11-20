@@ -3868,6 +3868,10 @@ export type InstanceStatus = {
    */
   version: string;
   /**
+   * Commit
+   */
+  commit: string;
+  /**
    * Schema Revision
    */
   schema_revision: string;

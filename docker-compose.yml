@@ -3,6 +3,11 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      # What the image was built from, shown in Admin Settings → Status (US-91.1):
+      # ASTERISM_COMMIT=$(git rev-parse HEAD) docker compose up -d --build
+      args:
+        ASTERISM_VERSION: ${ASTERISM_VERSION:-unknown}
+        ASTERISM_COMMIT: ${ASTERISM_COMMIT:-unknown}
     image: asterism:local
     extra_hosts:
       - "host.docker.internal:host-gateway"

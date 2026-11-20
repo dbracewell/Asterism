@@ -3644,6 +3644,7 @@ export const zStorageStatus = z.object({
  */
 export const zInstanceStatus = z.object({
   version: z.string(),
+  commit: z.string(),
   schema_revision: z.string(),
   started_at: z.int(),
   uptime_seconds: z.int(),

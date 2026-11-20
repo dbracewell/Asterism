@@ -17,7 +17,6 @@ import hmac
 import json
 import re
 from dataclasses import dataclass
-from importlib import metadata
 from pathlib import Path, PurePosixPath
 from typing import Any, BinaryIO
 
@@ -53,13 +52,6 @@ class StorageLayout:
 
     def tree(self, name: str) -> Path:
         return self.storage_root / name
-
-
-def app_version() -> str:
-    try:
-        return metadata.version("asterism-core")
-    except metadata.PackageNotFoundError:
-        return "unknown"
 
 
 def system_key_check(system_key: str) -> str | None:

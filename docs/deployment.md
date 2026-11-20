@@ -77,6 +77,11 @@ on the same host reaches it.
   `LOG_LEVEL`, `LOG_FORMAT` and `PORT`). To set anything else, such as an admission
   limit, add it under the service's `environment:`, for example in a
   `docker-compose.override.yml`.
+- **Version and commit.** Admin Settings → Status and every backup name the
+  app version and the commit the image was built from. The commit is a build
+  argument; without it Status says "Unknown". Pass it when you build:
+  `ASTERISM_COMMIT=$(git rev-parse HEAD) docker compose up -d --build`, or
+  `--build-arg ASTERISM_COMMIT=$(git rev-parse HEAD)` without Compose.
 - **Without Compose:**
 
   ```bash
@@ -221,9 +226,10 @@ upgrade and roll-back procedure are in
 
 1. Read the [release notes](release-notes.md) for configuration changes.
 2. Back up and verify.
-3. `git pull && docker compose up -d --build`. Migrations run on start and only go
-   forward.
-4. Check `docker compose ps` is healthy and Status shows the new version.
+3. `git pull && ASTERISM_COMMIT=$(git rev-parse HEAD) docker compose up -d --build`.
+   Migrations run on start and only go forward.
+4. Check `docker compose ps` is healthy and Admin Settings → Status shows the new
+   version (from the [release notes](release-notes.md)) and commit.
 
 To go back, restore the pre-upgrade backup with the previous image. The upgraded
 data cannot be opened by the older image.
