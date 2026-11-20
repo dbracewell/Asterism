@@ -91,7 +91,9 @@ Migrations only go forward, so the way back from a failed upgrade is a restore.
 
 1. **Back up**: `docker compose exec asterism /app/docker/entrypoint.sh backup`,
    and note the file name it prints. Check it with `verify` and copy it off the host.
-2. **New image**: change the image tag (or `git pull && docker compose build`).
+2. **New image**: set `ASTERISM_VERSION` in `.env` to the new release and
+   `docker compose pull` (or, building from source, check out the release and
+   build with `docker-compose.build.yml`).
 3. **Start**: `docker compose up -d`. Startup applies pending migrations; watch
    `docker compose logs -f asterism` until the container is healthy.
 4. **Verify**: sign in as an admin and as a student, open an existing chat and a
@@ -100,7 +102,7 @@ Migrations only go forward, so the way back from a failed upgrade is a restore.
 
    ```bash
    docker compose down
-   # Put the previous image tag back in docker-compose.yml (or check out the previous release and build).
+   # Set ASTERISM_VERSION back to the previous release in .env (or check out the previous release and build).
    docker volume rm asterism_storage            # the upgraded data; the old image refuses it
    docker compose run --rm asterism restore /backups/<file from step 1>
    docker compose up -d

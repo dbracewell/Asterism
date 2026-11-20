@@ -199,3 +199,19 @@ configuration, and the patch version for fixes only.
    ```
 
    To change your mind before pushing: `git tag -d v0.2.0 && git reset --hard HEAD~1`.
+
+4. Pushing the tag runs the **Release** workflow (`.github/workflows/release.yml`,
+   US-91.5). It checks the tag is the app version, builds the CPU image for amd64
+   and arm64 on native runners, pushes each by digest only, pulls it back and
+   runs the image checks above against it. Only when both pass does it tag
+   `ghcr.io/dbracewell/asterism:<version>` and `latest`. Watch it under
+   Actions; if it fails, nothing is tagged. Fix the cause and release a new
+   patch version, since the tag stays.
+
+   To rehearse before a release, run the workflow by hand (Actions → Release →
+   Run workflow): it builds, pushes by digest and checks both architectures,
+   and tags nothing.
+
+   The first publish creates the package as private. Make it public once, in
+   the package's settings on GitHub, so administrators can pull it without
+   signing in.

@@ -14,7 +14,8 @@ storage volume.
   [capacity check](architecture/capacity.md). See
   [Sizing and limits](#7-sizing-and-limits) for other sizes.
 - **Disk:** the image is about 4.4 GB on disk (under 1 GB to download), or
-  about 8 GB with the [GPU build](#gpu-build). Storage holds uploaded files, the
+  about 8 GB with the [GPU build](#gpu-build). The published image runs on amd64
+  and arm64 hosts. Storage holds uploaded files, the
   databases and vectors. Backups need about the size of storage per kept archive.
   Keep at least `MIN_FREE_STORAGE_BYTES` (1 GiB) free, or readiness fails.
 - **A DNS name and a TLS proxy** in front of the container (examples below).
@@ -30,8 +31,12 @@ storage volume.
 
 ## 2. Configure
 
+Releases are published as `ghcr.io/dbracewell/asterism:<version>`; the
+[release notes](release-notes.md) list them. Check out the release you will run,
+for its `docker-compose.yml` and `.env.example`:
+
 ```bash
-git clone <your fork or release> asterism && cd asterism
+git clone --branch v0.2.0 https://github.com/dbracewell/Asterism.git asterism && cd asterism
 cp .env.example .env
 openssl rand -base64 32   # run three times: one value for each secret below
 ```
@@ -40,6 +45,7 @@ Set in `.env`:
 
 | Setting              | Value                                                                                                                                                                        |
 | -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ASTERISM_VERSION`   | The release to run, e.g. `0.2.0`. Compose runs `ghcr.io/dbracewell/asterism:<version>` and refuses to start without it.                                                      |
 | `PUBLIC_URL`         | The browser-facing origin, e.g. `https://asterism.example.edu`, no trailing slash. It is also the JWT issuer and the cookie origin.                                          |
 | `BETTER_AUTH_SECRET` | Random. Encrypts the auth signing keys. **Never change it**: every session and the signing keys depend on it.                                                                |
 | `SYSTEM_KEY`         | Random. Signs internal requests and encrypts stored provider keys. **Never change it**: backups refuse to restore with a different one.                                      |
@@ -60,7 +66,8 @@ and a restore needs the same values.
 ## 3. Start
 
 ```bash
-docker compose up -d --build
+docker compose pull
+docker compose up -d
 docker compose ps        # wait for "healthy"
 docker compose logs -f
 ```
@@ -70,39 +77,53 @@ reports healthy. Compose publishes port 3000 on `127.0.0.1` only, so only the pr
 on the same host reaches it.
 
 - **Another port.** Set `PORT=8080` and `PUBLIC_URL` to match. Changing the public
-  origin needs only a new container (`docker compose up -d`), not a rebuild; image
-  builds never read `.env` or need secrets.
+  origin needs only a new container (`docker compose up -d`); the image never
+  reads `.env` or needs secrets.
 - **Other settings.** Compose passes only the settings named in
   `docker-compose.yml` (`PUBLIC_URL`, the three secrets, `TRUSTED_PROXIES`,
   `LOG_LEVEL`, `LOG_FORMAT` and `PORT`). To set anything else, such as an admission
   limit, add it under the service's `environment:`, for example in a
   `docker-compose.override.yml`.
 - **Version and commit.** Admin Settings → Status and every backup name the
-  app version and the commit the image was built from. The commit is a build
-  argument; without it Status says "Unknown". Pass it when you build:
-  `ASTERISM_COMMIT=$(git rev-parse HEAD) docker compose up -d --build`, or
-  `--build-arg ASTERISM_COMMIT=$(git rev-parse HEAD)` without Compose.
+  app version and the commit the image was built from.
 - **Without Compose:**
 
   ```bash
-  docker build -t asterism:local .
   docker run -d --name asterism --restart unless-stopped --stop-timeout 30 \
     -p 127.0.0.1:3000:3000 --env-file .env -e STORAGE_ROOT=/storage \
-    -v asterism-storage:/storage asterism:local
+    -v asterism-storage:/storage ghcr.io/dbracewell/asterism:0.2.0
   ```
 
   With `--env-file`, every setting in `.env` reaches the container.
+
+### Building from source
+
+To build the image from your checkout instead, for example for a fork or the
+GPU build, add `docker-compose.build.yml`. Set `ASTERISM_VERSION` to the
+checkout's version (in `package.json`); the build refuses any other. Pass the
+commit so Status can show it:
+
+```bash
+ASTERISM_COMMIT=$(git rev-parse HEAD) docker compose \
+  -f docker-compose.yml -f docker-compose.build.yml up -d --build
+```
+
+Put `COMPOSE_FILE=docker-compose.yml:docker-compose.build.yml` in `.env` and
+every `docker compose` command (backups included) uses both files. Without
+Compose: `docker build --build-arg ASTERISM_COMMIT=$(git rev-parse HEAD) -t asterism:local .`
+A build downloads several GB of dependencies.
 
 ### GPU build
 
 The image installs CPU-only PyTorch. Embeddings, captioning and local image
 generation all run on it, and a GPU isn't needed for them. To use an NVIDIA GPU
-for local image generation, build with CUDA PyTorch instead. It adds about
-4 GB to the image (estimated from the CUDA libraries it installs):
+for local image generation, build with CUDA PyTorch instead. No GPU image is
+published; build it from source (above). It adds about 4 GB to the image
+(estimated from the CUDA libraries it installs):
 
 ```bash
-docker compose build --build-arg TORCH_VARIANT=gpu
-docker compose up -d
+docker compose -f docker-compose.yml -f docker-compose.build.yml build --build-arg TORCH_VARIANT=gpu
+docker compose -f docker-compose.yml -f docker-compose.build.yml up -d
 ```
 
 Without Compose: `docker build --build-arg TORCH_VARIANT=gpu -t asterism:local .`
@@ -226,10 +247,13 @@ upgrade and roll-back procedure are in
 
 1. Read the [release notes](release-notes.md) for configuration changes.
 2. Back up and verify.
-3. `git pull && ASTERISM_COMMIT=$(git rev-parse HEAD) docker compose up -d --build`.
-   Migrations run on start and only go forward.
+3. Check out the new release's tag (`git fetch --tags && git checkout v<version>`)
+   for its `docker-compose.yml`, set `ASTERISM_VERSION` in `.env` to the new
+   version, then `docker compose pull && docker compose up -d`. Migrations run on
+   start and only go forward. Building from source instead:
+   `ASTERISM_COMMIT=$(git rev-parse HEAD) docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build`.
 4. Check `docker compose ps` is healthy and Admin Settings → Status shows the new
-   version (from the [release notes](release-notes.md)) and commit.
+   version and commit.
 
 To go back, restore the pre-upgrade backup with the previous image. The upgraded
 data cannot be opened by the older image.
