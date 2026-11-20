@@ -113,11 +113,18 @@ jobs:
     # US-91.2: a change that breaks the image fails here, not in an upgrade.
     name: Build and check the image
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      # To pull the previous release while its package is private.
+      packages: read
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # The upgrade check finds the previous release among the tags.
+          fetch-depth: 0
 
       - name: Make room for the image
         # The runner's preinstalled SDKs leave too little disk for the image,
@@ -175,6 +182,17 @@ jobs:
         run: pnpm check:theme-storage-container
         env:
           THEME_TEST_RUNTIME_IMAGE: asterism:ci
+
+      - name: Sign in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upgrade from the previous release
+        # US-91.6: skipped, with a message, until a release precedes this commit.
+        run: pnpm check:upgrade --to asterism:ci
 
   frontend-e2e:
     name: Frontend E2E (Playwright)
