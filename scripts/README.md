@@ -294,6 +294,19 @@ pnpm check:image                                   # asterism:local, 5 GB budget
 pnpm check:image --image asterism:ci --max-size-gb 5
 ```
 
+### `check-release-notes.mjs`
+
+Fails when the work since the branch left its base adds an Alembic revision
+under `apps/backend/asterism/db/migrations/versions/` or changes
+`scripts/config-contract.mjs`, but doesn't change `docs/release-notes.md`
+(US-91.3). It counts committed, uncommitted and new files. Other changes that
+need a note, such as the image or documented behavior, are left to review.
+
+```bash
+pnpm check:release-notes                    # against origin/main
+pnpm check:release-notes --base <ref>       # CI: the pull request's base, or the pushed-over commit
+```
+
 ### `check-theme-storage-container.mjs`
 
 Verifies the actual theme repository in a disposable test layer on the locally
