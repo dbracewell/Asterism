@@ -167,3 +167,35 @@ The [scripts README](../scripts/README.md) describes every root script and its o
   rules every change follows.
 - **Documentation.** Update the matching architecture guide in the same change
   ([writing guides](architecture/CONTRIBUTING.md)).
+
+## Releasing
+
+Releases use [semantic versions](https://semver.org/). While the version is 0.x,
+raise the minor version for new features or changes to stored data or
+configuration, and the patch version for fixes only.
+
+1. Make sure everything to release is merged into `main`, CI passed on it, and
+   "Unreleased" in the [release notes](release-notes.md) says what an
+   administrator needs to know.
+2. On an up-to-date, clean `main`, check, then release:
+
+   ```bash
+   pnpm release 0.2.0 --dry-run
+   pnpm release 0.2.0
+   ```
+
+   The command refuses unless `main` matches `origin/main`, has no local
+   changes, and all three expected CI checks passed on that commit (it asks
+   GitHub with `gh`). It refuses a version that isn't newer than the last
+   `v*` tag or is older than the current version, and an empty "Unreleased".
+   Then it sets the version in every package (`scripts/app-version.mjs`), turns
+   "Unreleased" into `## 0.2.0 (<date>)` under a new empty "Unreleased", and
+   commits `release: v0.2.0` with the annotated tag `v0.2.0`.
+
+3. Check the commit with `git show`, then publish it:
+
+   ```bash
+   git push origin main v0.2.0
+   ```
+
+   To change your mind before pushing: `git tag -d v0.2.0 && git reset --hard HEAD~1`.
