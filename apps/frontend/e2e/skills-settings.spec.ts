@@ -286,7 +286,9 @@ test("assignments retain off-page selections and URL parameters without saving o
   await dialog.getByRole("checkbox", { name: /skill-11/ }).check();
   await dialog.getByRole("button", { name: "Save assignments" }).click();
   await expect(dialog).toHaveCount(0);
-  expect(state.ids).toEqual([makeSkill(1).id, makeSkill(11).id]);
+  await expect
+    .poll(() => state.ids)
+    .toEqual([makeSkill(1).id, makeSkill(11).id]);
   await page.getByRole("button", { name: "Manage main-agent skills" }).click();
   await expect(
     dialog.getByRole("checkbox", { name: /skill-01/ }),
@@ -343,7 +345,9 @@ for (const width of [1280, 390, 320]) {
     await second.click();
     await expect(second).toBeChecked();
     await expect(page.getByText("2 of 100 assigned")).toBeVisible();
-    expect(state.ids).toEqual([makeSkill(1).id, makeSkill(2).id]);
+    await expect
+      .poll(() => state.ids)
+      .toEqual([makeSkill(1).id, makeSkill(2).id]);
 
     // A conflicting change reloads the live assignments.
     state.assignmentConflict = true;
@@ -354,7 +358,7 @@ for (const width of [1280, 390, 320]) {
     await expect(first).toBeChecked();
     await first.click();
     await expect(first).not.toBeChecked();
-    expect(state.ids).toEqual([makeSkill(2).id]);
+    await expect.poll(() => state.ids).toEqual([makeSkill(2).id]);
 
     await page
       .getByRole("button", { name: "Next skills", exact: true })

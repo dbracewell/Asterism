@@ -67,7 +67,7 @@ Source: user request (2026-11-19), following EPIC-90. [EPIC-91](docs/epics/EPIC-
   - [x] Status and the backup manifest report that version, plus the git commit the image was built from (a build argument; "unknown" outside Docker).
   - [x] The image carries OCI labels for version, commit and source.
   - [x] Tests; update the deployment guide's upgrade steps ("Status shows the new version").
-- [~] US-91.2: CI builds and starts the real image
+- [x] US-91.2: CI builds and starts the real image
   - [x] A CI job builds the full CPU image with a layer cache.
   - [x] It starts the container with throwaway secrets, waits for healthy, and checks the `auth` migration ran, the sign-in page and `/api/py/health` answer, and the container runs as UID 10001.
   - [x] It runs `pnpm check:fetch-browser-container` and the theme storage check against that image.

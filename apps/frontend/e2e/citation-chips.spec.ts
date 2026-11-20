@@ -170,8 +170,17 @@ for (const viewport of [
     const survey = sources.getByRole("link", {
       name: `Source 2: ${longName}`,
     });
-    await expect(gaia).toHaveAttribute("href", `/c/${C}/files/${F1}`);
-    await expect(survey).toHaveAttribute("href", `/c/${C}/files/${F2}`);
+    // Source chips open the cited passage (US-90.4).
+    const passage = (file: string) =>
+      `?passage=${encodeURIComponent(`${file}:0`)}`;
+    await expect(gaia).toHaveAttribute(
+      "href",
+      `/c/${C}/files/${F1}${passage(F1)}`,
+    );
+    await expect(survey).toHaveAttribute(
+      "href",
+      `/c/${C}/files/${F2}${passage(F2)}`,
+    );
     await expect(sources.getByRole("alert")).toHaveText(
       "Source unavailable in this chat",
     );

@@ -364,7 +364,10 @@ test("preserves retrieval provenance while revoked citations and source views fa
   await page.goto(`/e2e/files?scope=project&chat=${A}`);
   const citations = page.getByRole("region", { name: "Retrieved sources" });
   const chip = citations.getByRole("link", { name: "Source 1: library.txt" });
-  await expect(chip).toHaveAttribute("href", `/c/${A}/files/${LIBRARY}`);
+  await expect(chip).toHaveAttribute(
+    "href",
+    `/c/${A}/files/${LIBRARY}?passage=chunk`,
+  );
   await chip.focus();
   await expect(page.getByRole("tooltip")).toContainText(
     "This chat · generation 2 · text",
