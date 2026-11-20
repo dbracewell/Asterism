@@ -115,23 +115,27 @@ test("every expected check must have passed, judged by its newest run", () => {
   );
 });
 
+// Notes with something to release. The repository's own notes can't be used:
+// straight after a release, its Unreleased is empty by design.
+const NOTES = [
+  "# Release notes",
+  "",
+  "Intro.",
+  "",
+  "## Unreleased",
+  "",
+  "### Data",
+  "",
+  "- A migration.",
+  "",
+  "## 0.1.0 (2026-01-01)",
+  "",
+  "- Older.",
+  "",
+].join("\n");
+
 test("Unreleased becomes the version under a new empty Unreleased", () => {
-  const notes = [
-    "# Release notes",
-    "",
-    "Intro.",
-    "",
-    "## Unreleased",
-    "",
-    "### Data",
-    "",
-    "- A migration.",
-    "",
-    "## 0.1.0 (2026-01-01)",
-    "",
-    "- Older.",
-    "",
-  ].join("\n");
+  const notes = NOTES;
   assert.equal(
     cutReleaseNotes(notes, "0.2.0", "2026-11-20"),
     notes.replace(
@@ -139,9 +143,7 @@ test("Unreleased becomes the version under a new empty Unreleased", () => {
       "## Unreleased\n\n## 0.2.0 (2026-11-20)\n",
     ),
   );
-  const real = readFileSync("docs/release-notes.md", "utf8");
-  const cut = cutReleaseNotes(real, "9.9.9", "2026-11-20");
-  assert.match(cut, /^## Unreleased\n\n## 9\.9\.9 \(2026-11-20\)\n\n### /m);
+  const cut = cutReleaseNotes(notes, "0.2.0", "2026-11-20");
   // Releasing twice in a row finds nothing to release.
   assert.throws(
     () => cutReleaseNotes(cut, "9.9.10", "2026-11-21"),
@@ -180,7 +182,7 @@ test("pnpm release commits and tags, and refuses what it should", () => {
       encoding: "utf8",
       stdio: "pipe",
     }).trim();
-  const files = ["package.json", ...COPIES, "docs/release-notes.md"];
+  const files = ["package.json", ...COPIES];
   // A stand-in for `gh api` that reports every expected check as passed.
   const runs = REQUIRED_CHECKS.map((name, id) => ({
     id,
@@ -210,6 +212,8 @@ test("pnpm release commits and tags, and refuses what it should", () => {
       mkdirSync(dirname(join(work, path)), { recursive: true });
       cpSync(path, join(work, path));
     }
+    mkdirSync(join(work, "docs"));
+    writeFileSync(join(work, "docs/release-notes.md"), NOTES);
     const current = appVersion(work);
     git("add", ".");
     git("commit", "-q", "-m", "base");
