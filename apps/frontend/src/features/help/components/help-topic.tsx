@@ -80,6 +80,9 @@ export function HelpTopic({
   return (
     <Popover
       open={open}
+      // Opened from a menu, the popover mounts while the menu is still closing;
+      // as a modal it keeps focus and isn't dismissed by focus the menu moves.
+      modal={!!anchor}
       onOpenChange={(next) => {
         setOpen(next);
         if (!next) {
@@ -117,7 +120,9 @@ export function HelpTopic({
           if (anchor && !leaving.current) anchor.returnFocus();
           leaving.current = false;
         }}
-        className="w-80 max-w-[calc(100vw-1rem)] gap-3"
+        // Long entries scroll inside the popover, so Related stays reachable on
+        // short screens.
+        className="max-h-(--radix-popover-content-available-height) w-80 max-w-[calc(100vw-1rem)] gap-3 overflow-y-auto"
       >
         <PopoverHeader>
           <div className="flex items-center gap-1">

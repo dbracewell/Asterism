@@ -238,7 +238,7 @@ test("claim citations preview by keyboard, link to the scoped file view and fetc
   const marker = markers.first();
   await expect(marker).toHaveAttribute(
     "href",
-    `/c/${INLINE_CHAT}/files/${DOCX_ID}`,
+    `/c/${INLINE_CHAT}/files/${DOCX_ID}?passage=chunk-1`,
   );
   await marker.focus();
   const preview = page.getByRole("tooltip");
