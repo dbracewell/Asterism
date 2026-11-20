@@ -297,6 +297,11 @@ A user story is done only when:
 - All story tasks are completed
 - Relevant tests pass
 - Changes are documented as needed
+- Release notes are updated: a story that changes configuration, stored data,
+  the image or a documented behavior adds a line under "Unreleased" in
+  [docs/release-notes.md](docs/release-notes.md), under Configuration, Data,
+  Image or Behavior. `pnpm check:release-notes` fails a new migration or a
+  configuration contract change without one.
 
 After implementation appears complete:
 

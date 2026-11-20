@@ -155,6 +155,13 @@ The [scripts README](../scripts/README.md) describes every root script and its o
   and backend `package.json`, the backend's `pyproject.toml` and its `uv.lock`
   entry repeat it, and `pnpm check:workspace-tasks` fails when one differs
   (US-91.1). Status and backups read it from the backend package.
+- **Release notes.** A change that administrators need to know about
+  (configuration, stored data, the image or documented behavior) adds a line
+  under "Unreleased" in [`release-notes.md`](release-notes.md).
+  `pnpm check:release-notes` compares your branch, including uncommitted work,
+  with `origin/main` and fails when it adds a migration or changes
+  `scripts/config-contract.mjs` without touching the release notes. CI runs it
+  against the pull request's base.
 - **Process.** Work is planned as epics and stories in `docs/epics/` and tracked in
   [`todo.md`](../todo.md); [`AGENTS.md`](../AGENTS.md) describes the workflow and the
   rules every change follows.

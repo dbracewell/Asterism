@@ -22,6 +22,9 @@ jobs:
 
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # The release notes check compares against the base branch.
+          fetch-depth: 0
 
       - name: Verify checkout has no runtime dotenv files
         run: node scripts/check-no-dotenv.mjs
@@ -69,6 +72,18 @@ jobs:
 
       - name: Verify documentation links
         run: pnpm docs:check
+
+      - name: Verify release notes cover migrations and configuration changes
+        # A pull request is compared with its base branch, a push with the
+        # commit it replaced (nothing to compare for a new branch).
+        env:
+          BASE: ${{ github.event_name == 'pull_request' && format('origin/{0}', github.base_ref) || github.event.before }}
+        run: |
+          if [ -z "$BASE" ] || [ "$BASE" = 0000000000000000000000000000000000000000 ]; then
+            echo "No base to compare with"
+          else
+            pnpm check:release-notes --base "$BASE"
+          fi
 
       - name: Run quality gates
         run: pnpm format:check && pnpm lint && pnpm typecheck && pnpm test

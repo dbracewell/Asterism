@@ -5,7 +5,27 @@ the image and anything that needs action. Read the section for every release
 since the one you run. Upgrade steps are in
 [Deploying and running Asterism](deployment.md#6-storage-backups-and-upgrades).
 
+Each release lists its changes under these headings, in this order, and leaves
+out the empty ones:
+
+- **Configuration:** settings that are new, renamed or removed, or whose default
+  changed, and what to set before upgrading.
+- **Data:** migrations and changes to stored data or files. Upgrading migrates
+  them; going back means restoring the backup taken before the upgrade.
+- **Image:** what is in the container image and how to build or run it: its
+  size, packages, build arguments and platforms.
+- **Behavior:** documented behavior that now works differently, for people or
+  for administrators.
+
+Changes are added under **Unreleased** as they are made. A release turns
+Unreleased into its version and date.
+
 ## Unreleased
+
+### Data
+
+- Compaction summaries written by **Compact now** named the model by its id.
+  Upgrading renames them to the model's name (migration `c3a1f0d2b9e4`).
 
 ### Image
 
@@ -27,11 +47,6 @@ since the one you run. Upgrade steps are in
   JavaScript-heavy pages in the container. Fetching them used to fail with an
   error. The browser has no network of its own; every request goes through the
   tool's checked connection.
-
-### Data
-
-- Compaction summaries written by **Compact now** named the model by its id.
-  Upgrading renames them to the model's name (migration `c3a1f0d2b9e4`).
 
 ### Behavior
 

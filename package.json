@@ -23,7 +23,7 @@
     "backup": "node scripts/run-with-env.mjs --env required --scope all --profile backend-init -- node scripts/backup.mjs create",
     "backup:verify": "node scripts/run-with-env.mjs --env required --scope all --profile backend-init -- node scripts/backup.mjs verify",
     "restore": "node scripts/run-with-env.mjs --env required --scope all --profile backend-init -- node scripts/backup.mjs restore",
-    "ci:local:quality": "pnpm install --frozen-lockfile --config.strictDepBuilds=false --config.ignore-scripts=false && pnpm --filter @asterism/frontend install --frozen-lockfile --config.strictDepBuilds=false --config.ignore-scripts=false && pnpm --filter @asterism/frontend rebuild better-sqlite3 --config.ignore-scripts=false && pnpm check:workspace-tasks && pnpm docs:check && pnpm lint && pnpm typecheck && pnpm test",
+    "ci:local:quality": "pnpm install --frozen-lockfile --config.strictDepBuilds=false --config.ignore-scripts=false && pnpm --filter @asterism/frontend install --frozen-lockfile --config.strictDepBuilds=false --config.ignore-scripts=false && pnpm --filter @asterism/frontend rebuild better-sqlite3 --config.ignore-scripts=false && pnpm check:workspace-tasks && pnpm docs:check && pnpm check:release-notes && pnpm lint && pnpm typecheck && pnpm test",
     "ci:local:e2e": "pnpm install --frozen-lockfile --config.strictDepBuilds=false --config.ignore-scripts=false && pnpm --filter @asterism/frontend install --frozen-lockfile --config.strictDepBuilds=false --config.ignore-scripts=false && pnpm --filter @asterism/frontend rebuild better-sqlite3 --config.ignore-scripts=false && pnpm --filter @asterism/frontend exec playwright install chromium && node scripts/run-isolated-e2e.mjs",
     "ci:local": "pnpm ci:local:quality && pnpm ci:local:e2e",
     "format": "pnpm --filter @asterism/backend format && pnpm --filter @asterism/frontend format",
@@ -32,6 +32,7 @@
     "test:container-launch": "uv run --project apps/backend python docker/test-backend-launch.py",
     "check:fetch-browser-container": "node scripts/check-fetch-browser-container.mjs",
     "check:image": "node scripts/check-image.mjs",
+    "check:release-notes": "node scripts/check-release-notes.mjs",
     "check:theme-storage-container": "node scripts/check-theme-storage-container.mjs"
   },
   "keywords": [],

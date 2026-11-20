@@ -73,10 +73,10 @@ Source: user request (2026-11-19), following EPIC-90. [EPIC-91](docs/epics/EPIC-
   - [x] It runs `pnpm check:fetch-browser-container` and the theme storage check against that image.
   - [x] It fails when the image grows past a size budget (start at 5 GB), printing the largest parts, so growth is a decision.
   - [x] Document the job in `docs/development.md`; add it to the expected status checks in `AGENTS.md`.
-- [ ] US-91.3: Release notes are part of the work
-  - [ ] Add release notes to the Definition of Done in `AGENTS.md`: a story that changes configuration, stored data, the image or a documented behavior adds a line under "Unreleased".
-  - [ ] A check fails when a new Alembic revision or a change to the configuration contract (`scripts/config-contract.mjs`) lands without a change to `docs/release-notes.md`.
-  - [ ] Describe the sections (Configuration, Data, Image, Behavior) at the top of the file.
+- [x] US-91.3: Release notes are part of the work
+  - [x] Add release notes to the Definition of Done in `AGENTS.md`: a story that changes configuration, stored data, the image or a documented behavior adds a line under "Unreleased".
+  - [x] A check fails when a new Alembic revision or a change to the configuration contract (`scripts/config-contract.mjs`) lands without a change to `docs/release-notes.md`.
+  - [x] Describe the sections (Configuration, Data, Image, Behavior) at the top of the file.
 - [ ] US-91.4: Cut a release
   - [ ] `pnpm release <version>`: checks a clean, up-to-date `main` and passing checks; sets the version (US-91.1); turns "Unreleased" into the version and date and opens a new empty "Unreleased"; commits and tags `v<version>`.
   - [ ] It refuses a version that isn't newer, or empty release notes.
