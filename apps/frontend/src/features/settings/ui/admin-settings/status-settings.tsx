@@ -135,6 +135,13 @@ function StatusSections({
       >
         <dl className="grid gap-3 text-sm sm:grid-cols-2">
           <Fact label="Version">{status.version}</Fact>
+          <Fact label="Commit">
+            {status.commit === "unknown" ? (
+              "Unknown"
+            ) : (
+              <code title={status.commit}>{status.commit.slice(0, 12)}</code>
+            )}
+          </Fact>
           <Fact label="Schema revision">
             <code>{status.schema_revision}</code>
           </Fact>

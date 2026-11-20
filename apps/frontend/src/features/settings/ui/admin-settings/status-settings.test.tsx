@@ -15,7 +15,8 @@ const NOW = 1_795_000_000;
 
 function status(over: Partial<InstanceStatus> = {}): InstanceStatus {
   return {
-    version: "0.1.0",
+    version: "0.2.0",
+    commit: "0123456789abcdef0123456789abcdef01234567",
     schema_revision: "ba46812696ea",
     started_at: NOW - 90_000,
     uptime_seconds: 90_000,
@@ -61,6 +62,11 @@ beforeEach(() => {
 it("shows readiness, uptime, work against limits, storage and the last backup", async () => {
   setup();
   expect(await screen.findByText("Ready")).toBeInTheDocument();
+  expect(screen.getByText("0.2.0")).toBeInTheDocument();
+  expect(screen.getByText("0123456789ab")).toHaveAttribute(
+    "title",
+    "0123456789abcdef0123456789abcdef01234567",
+  );
   expect(screen.getByText("1 d 1 h")).toBeInTheDocument();
   expect(screen.getByText("INFO, json")).toBeInTheDocument();
   expect(
@@ -116,4 +122,10 @@ it("says when no backup was recorded", async () => {
   expect(
     await screen.findByText("No backup has been recorded."),
   ).toBeInTheDocument();
+});
+
+it("says the commit is unknown outside an image built with one", async () => {
+  mocks.status.mockResolvedValue(status({ commit: "unknown" }));
+  setup();
+  expect(await screen.findByText("Unknown")).toBeInTheDocument();
 });

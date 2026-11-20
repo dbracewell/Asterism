@@ -8,14 +8,14 @@ it into an empty storage root. The design is recorded in
 
 One archive, `asterism-backup-<UTC time>.tar.gz`, written with mode `0600`:
 
-| Archive path            | Source                                                                                            |
-| ----------------------- | ------------------------------------------------------------------------------------------------- |
-| `databases/users.db`    | Better Auth database (`BETTER_AUTH_DB_PATH`, default `users.db` in the storage root)              |
-| `databases/database.db` | Backend database (`DB_URL`, default `database.db` in the storage root)                            |
-| `knowledge/lancedb/`    | Knowledge vectors, exported from one table version                                                |
-| `files/`                | Uploaded and produced files                                                                       |
-| `themes/`               | Custom themes                                                                                     |
-| `manifest.json`         | Format version, schema revision, `SYSTEM_KEY` fingerprint, size and SHA-256 of every other member |
+| Archive path            | Source                                                                                                                    |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `databases/users.db`    | Better Auth database (`BETTER_AUTH_DB_PATH`, default `users.db` in the storage root)                                      |
+| `databases/database.db` | Backend database (`DB_URL`, default `database.db` in the storage root)                                                    |
+| `knowledge/lancedb/`    | Knowledge vectors, exported from one table version                                                                        |
+| `files/`                | Uploaded and produced files                                                                                               |
+| `themes/`               | Custom themes                                                                                                             |
+| `manifest.json`         | Format version, app version and commit, schema revision, `SYSTEM_KEY` fingerprint, size and SHA-256 of every other member |
 
 Not included: downloaded model bundles under `models/` and old LanceDB table
 versions. After a restore, the embedding model downloads again on first start; a

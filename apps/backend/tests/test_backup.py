@@ -20,6 +20,7 @@ from asterism.backup.archive import AUTH_DB, MANIFEST, BackupError, StorageLayou
 from asterism.backup.create import create_backup, prune
 from asterism.backup.restore import restore_backup
 from asterism.core import config
+from asterism.core.build_info import app_version
 from asterism.db.database import db_session_manager, get_async_db_session
 from asterism.db.init_db import initialize_database
 from asterism.db.migrate import head_revision, script_directory, verify_database_revision
@@ -146,6 +147,7 @@ async def test_backup_during_an_active_chat_restores_to_a_working_instance(insta
     writer = asyncio.create_task(_chat_turns(stop, store, vectors))
     await asyncio.sleep(0.2)
 
+    monkeypatch.setenv("ASTERISM_COMMIT", "0123456789abcdef")
     archive = await asyncio.to_thread(create_backup, layout, tmp_path / "backups", system_key=KEY)
     stop.set()
     assert await writer >= 3
@@ -157,6 +159,7 @@ async def test_backup_during_an_active_chat_restores_to_a_working_instance(insta
     await db_session_manager.close()
     manifest = restore_backup(archive, target, system_key=KEY)
     assert manifest["schema_revision"] == head_revision()
+    assert (manifest["app_version"], manifest["app_commit"]) == (app_version(), "0123456789abcdef")
     await initialize_database()
     await verify_database_revision()
 

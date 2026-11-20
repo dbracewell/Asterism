@@ -36,6 +36,7 @@ class InstanceStatus(BaseModel):
     """What the instance is doing now, for Admin Settings → Status."""
 
     version: str
+    commit: str
     schema_revision: str
     started_at: int
     uptime_seconds: int

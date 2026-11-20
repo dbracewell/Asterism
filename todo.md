@@ -62,11 +62,11 @@ Source: user request (2026-11-19), following EPIC-90. [EPIC-91](docs/epics/EPIC-
 
 ### EPIC-91: Release readiness
 
-- [ ] US-91.1: One version for the app
-  - [ ] Set the version to 0.2.0 in one source and make the root, frontend and backend packages agree with it; a check in `pnpm check:workspace-tasks` (or its own script) fails when they differ.
-  - [ ] Status and the backup manifest report that version, plus the git commit the image was built from (a build argument; "unknown" outside Docker).
-  - [ ] The image carries OCI labels for version, commit and source.
-  - [ ] Tests; update the deployment guide's upgrade steps ("Status shows the new version").
+- [x] US-91.1: One version for the app
+  - [x] Set the version to 0.2.0 in one source and make the root, frontend and backend packages agree with it; a check in `pnpm check:workspace-tasks` (or its own script) fails when they differ.
+  - [x] Status and the backup manifest report that version, plus the git commit the image was built from (a build argument; "unknown" outside Docker).
+  - [x] The image carries OCI labels for version, commit and source.
+  - [x] Tests; update the deployment guide's upgrade steps ("Status shows the new version").
 - [ ] US-91.2: CI builds and starts the real image
   - [ ] A CI job builds the full CPU image with a layer cache.
   - [ ] It starts the container with throwaway secrets, waits for healthy, and checks the `auth` migration ran, the sign-in page and `/api/py/health` answer, and the container runs as UID 10001.

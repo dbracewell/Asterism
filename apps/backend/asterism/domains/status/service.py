@@ -18,6 +18,7 @@ from pathlib import Path
 
 from asterism.common.log import log_settings
 from asterism.core import config
+from asterism.core.build_info import app_commit, app_version
 from asterism.db.init_db import sqlite_database_path
 from asterism.db.migrate import head_revision
 
@@ -132,7 +133,6 @@ def _last_backup() -> LastBackup | None:
 
 
 async def instance_status() -> InstanceStatus:
-    from asterism.backup.archive import app_version
     from asterism.domains.chat.jobs import chat_jobs
     from asterism.domains.knowledge.runtime import job_manager
 
@@ -141,6 +141,7 @@ async def instance_status() -> InstanceStatus:
     now = int(time.time())
     return InstanceStatus(
         version=app_version(),
+        commit=app_commit(),
         schema_revision=head_revision(),
         started_at=STARTED_AT,
         uptime_seconds=max(now - STARTED_AT, 0),

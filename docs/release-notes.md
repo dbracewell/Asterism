@@ -9,6 +9,12 @@ since the one you run. Upgrade steps are in
 
 ### Image
 
+- **One version:** Asterism is now version 0.2.0 everywhere. Admin Settings →
+  Status and backup manifests used to say 0.1.0. Status and backups also name
+  the commit the image was built from, when it is built with
+  `ASTERISM_COMMIT=$(git rev-parse HEAD)`; see
+  [Start](deployment.md#3-start). The image carries the standard OCI labels for
+  its version, commit and source.
 - **The image is smaller:** about 4.4 GB on disk instead of 10.8 GB, and under
   1 GB to download instead of 3.6 GB. PyTorch is now the CPU-only build, and
   only the frontend's runtime packages are installed. Embeddings, captioning
