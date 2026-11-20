@@ -14,13 +14,14 @@ const applicationNames = [
   "SYSTEM_KEY",
   "ADMIN_PASSPHRASE",
 ];
-const names = [...applicationNames, "PORT"];
+const names = [...applicationNames, "PORT", "ASTERISM_VERSION"];
 const expected = {
   PUBLIC_URL: "http://localhost:34567",
   BETTER_AUTH_SECRET: "parity-Aa09+/=_-..auth",
   SYSTEM_KEY: "parity-Bb18+/=_-..system",
   ADMIN_PASSPHRASE: "parity-Cc27+/=_-..admin",
   PORT: "34567",
+  ASTERISM_VERSION: "0.2.0",
 };
 const directory = mkdtempSync(join(tmpdir(), "asterism-parity-"));
 const path = join(directory, "portable.env");
@@ -67,6 +68,11 @@ try {
   assert.equal(
     String(compose.services.asterism.ports[0].published),
     expected.PORT,
+  );
+  // US-91.5: Compose runs the published release that ASTERISM_VERSION names.
+  assert.equal(
+    compose.services.asterism.image,
+    `ghcr.io/dbracewell/asterism:${expected.ASTERISM_VERSION}`,
   );
 
   const direct = JSON.parse(

@@ -50,15 +50,19 @@ cp .env.example .env
 
 Edit `.env`: replace the three `replace-with-…` values with secrets made by
 `openssl rand -base64 32` (one each). Leave `PUBLIC_URL` as
-`http://localhost:3000` to try it on your own machine. Then start it:
+`http://localhost:3000` to try it on your own machine, and `ASTERISM_VERSION` as
+the release to run. Then start it:
 
 ```bash
-docker compose up -d --build
+docker compose pull
+docker compose up -d
 docker compose ps    # wait until it says "healthy"
 ```
 
-The first build takes a while and the image is large. On first start Asterism also
-downloads the model it uses to search files.
+This runs the published image, `ghcr.io/dbracewell/asterism`, for amd64 and arm64
+(under 1 GB to download). On first start Asterism also downloads the model it
+uses to search files. To build from source instead, see
+[Building from source](docs/deployment.md#building-from-source).
 
 Open <http://localhost:3000>, create the administrator account with your
 `ADMIN_PASSPHRASE`, and follow the setup card to connect a model provider.

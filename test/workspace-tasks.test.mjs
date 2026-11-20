@@ -31,6 +31,7 @@ test("workspace check accepts source-storage prose and rejects shell sourcing", 
     "apps/frontend/README.md",
     "apps/backend/pyproject.toml",
     "apps/backend/uv.lock",
+    ".env.example",
   ];
   try {
     for (const file of files) {

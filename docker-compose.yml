@@ -1,14 +1,9 @@
 services:
   asterism:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      # What the image was built from, shown in Admin Settings → Status (US-91.1):
-      # ASTERISM_COMMIT=$(git rev-parse HEAD) docker compose up -d --build
-      args:
-        ASTERISM_VERSION: ${ASTERISM_VERSION:-unknown}
-        ASTERISM_COMMIT: ${ASTERISM_COMMIT:-unknown}
-    image: asterism:local
+    # The published image (US-91.5), for amd64 and arm64. ASTERISM_VERSION in
+    # .env is the release you run; upgrading means changing it after reading the
+    # release notes. To build from source instead, see docker-compose.build.yml.
+    image: ghcr.io/dbracewell/asterism:${ASTERISM_VERSION:?Set ASTERISM_VERSION in .env to the release to run, for example 0.2.0}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     environment:

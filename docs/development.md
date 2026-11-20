@@ -152,9 +152,10 @@ The [scripts README](../scripts/README.md) describes every root script and its o
   with an upgrade test ([backend README](../apps/backend/README.md#database-initialization-and-migrations),
   [ADR-0069](adr/0069-versioned-schema-migrations.md)).
 - **The version.** The root `package.json` holds the app version. The frontend
-  and backend `package.json`, the backend's `pyproject.toml` and its `uv.lock`
-  entry repeat it, and `pnpm check:workspace-tasks` fails when one differs
-  (US-91.1). Status and backups read it from the backend package.
+  and backend `package.json`, the backend's `pyproject.toml`, its `uv.lock`
+  entry and `ASTERISM_VERSION` in `.env.example` (the image a fresh install
+  runs) repeat it, and `pnpm check:workspace-tasks` fails when one differs
+  (US-91.1, US-91.5). Status and backups read it from the backend package.
 - **Release notes.** A change that administrators need to know about
   (configuration, stored data, the image or documented behavior) adds a line
   under "Unreleased" in [`release-notes.md`](release-notes.md).
@@ -199,3 +200,22 @@ configuration, and the patch version for fixes only.
    ```
 
    To change your mind before pushing: `git tag -d v0.2.0 && git reset --hard HEAD~1`.
+
+4. Pushing the tag runs the **Release** workflow (`.github/workflows/release.yml`,
+   US-91.5). It checks the tag is the app version, builds the CPU image for amd64
+   and arm64 on native runners, pushes each by digest only, pulls it back and
+   runs the image checks above against it. Only when both pass does it tag
+   `ghcr.io/dbracewell/asterism:<version>`, and `latest` too when the version is
+   the newest `v*` tag, so a late or re-run older release never moves `latest`
+   back. Watch it under Actions; if it fails, nothing is tagged. Re-run it once
+   the cause is fixed outside the image, or release a new patch version, since
+   the tag stays.
+
+   To rehearse before a release, run the workflow by hand (Actions → Release →
+   Run workflow): it builds, pushes by digest and checks both architectures,
+   and tags nothing. Only a pushed tag publishes; a run started by hand never
+   does, even on a release tag.
+
+   The first publish creates the package as private. Make it public once, in
+   the package's settings on GitHub, so administrators can pull it without
+   signing in.

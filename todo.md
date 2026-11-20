@@ -81,10 +81,10 @@ Source: user request (2026-11-19), following EPIC-90. [EPIC-91](docs/epics/EPIC-
   - [x] `pnpm release <version>`: checks a clean, up-to-date `main` and passing checks; sets the version (US-91.1); turns "Unreleased" into the version and date and opens a new empty "Unreleased"; commits and tags `v<version>`.
   - [x] It refuses a version that isn't newer, or empty release notes.
   - [x] Document the steps, including pushing the tag, in `docs/development.md`.
-- [ ] US-91.5: Publish the image
-  - [ ] On a `v*` tag, CI builds the CPU image for amd64 and arm64, runs the US-91.2 checks, and pushes it to `ghcr.io/dbracewell/asterism` as the version and `latest`.
-  - [ ] `docker-compose.yml` can use the published image, with building from source still documented; the deployment guide's install and upgrade steps use it.
-  - [ ] The release notes link the image, and say the GPU build is built from source (`TORCH_VARIANT=gpu`).
+- [x] US-91.5: Publish the image
+  - [x] On a `v*` tag, CI builds the CPU image for amd64 and arm64, runs the US-91.2 checks, and pushes it to `ghcr.io/dbracewell/asterism` as the version and `latest`.
+  - [x] `docker-compose.yml` can use the published image, with building from source still documented; the deployment guide's install and upgrade steps use it.
+  - [x] The release notes link the image, and say the GPU build is built from source (`TORCH_VARIANT=gpu`).
 - [ ] US-91.6: Test upgrading from the previous release
   - [ ] A CI job starts the previous release's image on a fresh volume, seeds data through the API (an account, a chat, a file with vectors, a theme), then starts the new image on the same volume.
   - [ ] It checks the container becomes healthy, both databases migrated, and the seeded data is there; and that the previous image refuses the upgraded volume with its version message.

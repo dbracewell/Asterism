@@ -29,6 +29,15 @@ Unreleased into its version and date.
 
 ### Image
 
+- **Install by pulling:** each release is published as
+  [`ghcr.io/dbracewell/asterism`](https://github.com/dbracewell/Asterism/pkgs/container/asterism)
+  for amd64 and arm64, tagged with its version and `latest`.
+  `docker-compose.yml` now runs that image: set `ASTERISM_VERSION` in `.env`
+  to the release (Compose refuses to start without it), then
+  `docker compose pull && docker compose up -d`. If you built from source
+  before, keep doing so with `docker-compose.build.yml`; see
+  [Building from source](deployment.md#building-from-source). The GPU build is
+  not published: build it from source with `TORCH_VARIANT=gpu`.
 - **One version:** Asterism is now version 0.2.0 everywhere. Admin Settings →
   Status and backup manifests used to say 0.1.0. Status and backups also name
   the commit the image was built from, when it is built with

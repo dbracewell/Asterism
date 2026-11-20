@@ -115,3 +115,25 @@ test("setting the version writes every copy and keeps the files' formatting", ()
     rmSync(root, { recursive: true, force: true });
   }
 });
+
+test(".env.example's ASTERISM_VERSION is a copy, so a fresh install runs the release", () => {
+  assert.ok(COPIES.includes(".env.example"));
+  const root = copyRepo();
+  try {
+    const version = appVersion(root);
+    edit(root, ".env.example", (text) =>
+      text.replace(`ASTERISM_VERSION=${version}\n`, "ASTERISM_VERSION=0.0.1\n"),
+    );
+    assert.deepEqual(versionProblems(root), [
+      `.env.example says 0.0.1, package.json says ${version}`,
+    ]);
+    setVersion("9.10.11", root);
+    assert.match(
+      readFileSync(join(root, ".env.example"), "utf8"),
+      /^ASTERISM_VERSION=9\.10\.11$/m,
+    );
+    assert.deepEqual(versionProblems(root), []);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});

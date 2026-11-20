@@ -1,0 +1,20 @@
+# Build the image from this checkout instead of pulling the published one
+# (US-91.5). Use both files, or put
+#   COMPOSE_FILE=docker-compose.yml:docker-compose.build.yml
+# in .env so every `docker compose` command does:
+#
+#   ASTERISM_COMMIT=$(git rev-parse HEAD) docker compose \
+#     -f docker-compose.yml -f docker-compose.build.yml up -d --build
+#
+# ASTERISM_VERSION must be this checkout's version (package.json); the build
+# refuses any other. For the GPU build, add `--build-arg TORCH_VARIANT=gpu` to
+# `docker compose ... build`.
+services:
+  asterism:
+    image: asterism:local
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        ASTERISM_VERSION: ${ASTERISM_VERSION:?Set ASTERISM_VERSION in .env to this checkout's version}
+        ASTERISM_COMMIT: ${ASTERISM_COMMIT:-unknown}
