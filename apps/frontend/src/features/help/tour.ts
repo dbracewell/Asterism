@@ -8,11 +8,7 @@
  */
 
 export type TourStepId =
-  | "composer"
-  | "skills"
-  | "learning-mode"
-  | "model"
-  | "options";
+  "composer" | "skills" | "learning-mode" | "model" | "options";
 
 export interface TourStep {
   id: TourStepId;
