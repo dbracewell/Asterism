@@ -2,7 +2,7 @@
 
 Completed Projects/Chat Context and provider-settings work remains in the existing archives. This checklist tracks the findings from the [2026-10-17 review](docs/reviews/2026-10-17-codebase-review.md). See the [sequenced roadmap](docs/plans/post-refactor-quality-roadmap.md).
 
-Archives: [2026-11-19](docs/archive/todo-completed-2026-11-19.md), [2026-11-18](docs/archive/todo-completed-2026-11-18.md), [2026-11-17](docs/archive/todo-completed-2026-11-17.md), [2026-11-06](docs/archive/todo-completed-2026-11-06.md), [2026-11-03](docs/archive/todo-completed-2026-11-03.md), [2026-11-02](docs/archive/todo-completed-2026-11-02.md), [2026-11-01](docs/archive/todo-completed-2026-11-01.md), [2026-10-31](docs/archive/todo-completed-2026-10-31.md), [2026-10-14](docs/archive/todo-completed-2026-10-14.md), [2026-10-15](docs/archive/todo-completed-2026-10-15.md), [2026-10-16](docs/archive/todo-completed-2026-10-16.md), [2026-10-17](docs/archive/todo-completed-2026-10-17.md), [2026-10-18](docs/archive/todo-completed-2026-10-18.md), [2026-10-19](docs/archive/todo-completed-2026-10-19.md), [2026-10-23](docs/archive/todo-completed-2026-10-23.md), [2026-10-24](docs/archive/todo-completed-2026-10-24.md), [2026-10-25](docs/archive/todo-completed-2026-10-25.md), [2026-10-27](docs/archive/todo-completed-2026-10-27.md), [2026-10-28](docs/archive/todo-completed-2026-10-28.md), [2026-10-29](docs/archive/todo-completed-2026-10-29.md), [2026-10-30](docs/archive/todo-completed-2026-10-30.md), and [US-28.3 verification](docs/archive/us-28.3-verification-2026-10-17.md).
+Archives: [2026-11-20](docs/archive/todo-completed-2026-11-20.md), [2026-11-19](docs/archive/todo-completed-2026-11-19.md), [2026-11-18](docs/archive/todo-completed-2026-11-18.md), [2026-11-17](docs/archive/todo-completed-2026-11-17.md), [2026-11-06](docs/archive/todo-completed-2026-11-06.md), [2026-11-03](docs/archive/todo-completed-2026-11-03.md), [2026-11-02](docs/archive/todo-completed-2026-11-02.md), [2026-11-01](docs/archive/todo-completed-2026-11-01.md), [2026-10-31](docs/archive/todo-completed-2026-10-31.md), [2026-10-14](docs/archive/todo-completed-2026-10-14.md), [2026-10-15](docs/archive/todo-completed-2026-10-15.md), [2026-10-16](docs/archive/todo-completed-2026-10-16.md), [2026-10-17](docs/archive/todo-completed-2026-10-17.md), [2026-10-18](docs/archive/todo-completed-2026-10-18.md), [2026-10-19](docs/archive/todo-completed-2026-10-19.md), [2026-10-23](docs/archive/todo-completed-2026-10-23.md), [2026-10-24](docs/archive/todo-completed-2026-10-24.md), [2026-10-25](docs/archive/todo-completed-2026-10-25.md), [2026-10-27](docs/archive/todo-completed-2026-10-27.md), [2026-10-28](docs/archive/todo-completed-2026-10-28.md), [2026-10-29](docs/archive/todo-completed-2026-10-29.md), [2026-10-30](docs/archive/todo-completed-2026-10-30.md), and [US-28.3 verification](docs/archive/us-28.3-verification-2026-10-17.md).
 
 EPIC-31 and EPIC-32 are confirmed complete and archived above. US-38.1 through US-38.6 are confirmed complete and archived above. EPIC-33 (US-33.1 through US-33.3) is confirmed complete and archived above. EPIC-36 (US-36.1) and EPIC-37 (US-37.1) are complete; their already-merged implementation and completed checklists are reconciled and archived above. See the [2026-10-24 reassessment](docs/reviews/2026-10-24-open-epics-reassessment.md). EPIC-34 (US-34.1 through US-34.4) is confirmed complete and archived above, including finite chat admission and the current browser baseline; the old agent-selector repairs are already present. EPIC-35 (US-35.1 and US-35.2) is confirmed complete and archived above. Execute one story at a time; obtain completion confirmation before merge.
 
@@ -48,44 +48,79 @@ Source: [codebase review](codebase_review.md), verified against the code on 2026
 
 Source: user request and the [feature overlap review](docs/reviews/2026-11-17-feature-overlap-review.md). Suggested order: [EPIC-83](docs/epics/EPIC-83-YOUR-ASTERISM-AND-PERSONA-REMOVAL.md) → [EPIC-84](docs/epics/EPIC-84-ONE-PROGRESS-PANEL.md) → [EPIC-85](docs/epics/EPIC-85-ONE-MODE-POLICY.md). Work one story at a time. EPIC-83, EPIC-84 and EPIC-85 are complete and archived in the [2026-11-17 checklist](docs/archive/todo-completed-2026-11-17.md).
 
-## Multi-user deployment readiness (proposed 2026-11-17)
-
-[EPIC-86](docs/epics/EPIC-86-MULTI-USER-DEPLOYMENT-READINESS.md) (US-86.1 through US-86.8) is complete and archived in the [2026-11-18 checklist](docs/archive/todo-completed-2026-11-18.md). Still open for the user: the one-time reset of pre-baseline development databases (US-86.1).
-
 ## Documentation (proposed 2026-11-18)
 
 Source: user request (2026-11-18). Suggested order: [EPIC-87](docs/epics/EPIC-87-ARCHITECTURE-DOCS-REFRESH.md) (complete and archived in the [2026-11-18 checklist](docs/archive/todo-completed-2026-11-18.md)) → [EPIC-88](docs/epics/EPIC-88-PROJECT-README.md) (complete and archived) → [EPIC-89](docs/epics/EPIC-89-USER-GUIDE.md) (complete and archived in the [2026-11-19 checklist](docs/archive/todo-completed-2026-11-19.md)). All three documentation epics are complete, and so is their follow-up, [EPIC-90](docs/epics/EPIC-90-DOCUMENTATION-FOLLOW-UPS.md) (archived in the [2026-11-19 checklist](docs/archive/todo-completed-2026-11-19.md)). US-87.1 adds `pnpm docs:check`, which the later epics use; US-89.1 adds the screenshot pipeline. Work one story at a time.
 
-## Release readiness (proposed 2026-11-19)
+## Supply-chain hardening (proposed 2026-11-20)
 
-Source: user request (2026-11-19), following EPIC-90. [EPIC-91](docs/epics/EPIC-91-RELEASE-READINESS.md): semantic versions from 0.2.0, images on GitHub Container Registry for amd64 and arm64, GPU build from source only (decided 2026-11-19). Suggested order: US-91.1 → 91.6. Work one story at a time.
+Source: user request (2026-11-20), following EPIC-91. [EPIC-92](docs/epics/EPIC-92-SUPPLY-CHAIN-HARDENING.md): pin bases and actions by digest with Dependabot updates, Trivy scans, provenance and SBOM attestations, a cosign keyless signature. Suggested order: US-92.1 → 92.5. Work one story at a time.
 
-### EPIC-91: Release readiness
+### EPIC-92: Supply-chain hardening
 
-- [x] US-91.1: One version for the app
-  - [x] Set the version to 0.2.0 in one source and make the root, frontend and backend packages agree with it; a check in `pnpm check:workspace-tasks` (or its own script) fails when they differ.
-  - [x] Status and the backup manifest report that version, plus the git commit the image was built from (a build argument; "unknown" outside Docker).
-  - [x] The image carries OCI labels for version, commit and source.
-  - [x] Tests; update the deployment guide's upgrade steps ("Status shows the new version").
-- [x] US-91.2: CI builds and starts the real image
-  - [x] A CI job builds the full CPU image with a layer cache.
-  - [x] It starts the container with throwaway secrets, waits for healthy, and checks the `auth` migration ran, the sign-in page and `/api/py/health` answer, and the container runs as UID 10001.
-  - [x] It runs `pnpm check:fetch-browser-container` and the theme storage check against that image.
-  - [x] It fails when the image grows past a size budget (start at 5 GB), printing the largest parts, so growth is a decision.
-  - [x] Document the job in `docs/development.md`; add it to the expected status checks in `AGENTS.md`.
-- [x] US-91.3: Release notes are part of the work
-  - [x] Add release notes to the Definition of Done in `AGENTS.md`: a story that changes configuration, stored data, the image or a documented behavior adds a line under "Unreleased".
-  - [x] A check fails when a new Alembic revision or a change to the configuration contract (`scripts/config-contract.mjs`) lands without a change to `docs/release-notes.md`.
-  - [x] Describe the sections (Configuration, Data, Image, Behavior) at the top of the file.
-- [x] US-91.4: Cut a release
-  - [x] `pnpm release <version>`: checks a clean, up-to-date `main` and passing checks; sets the version (US-91.1); turns "Unreleased" into the version and date and opens a new empty "Unreleased"; commits and tags `v<version>`.
-  - [x] It refuses a version that isn't newer, or empty release notes.
-  - [x] Document the steps, including pushing the tag, in `docs/development.md`.
-- [x] US-91.5: Publish the image
-  - [x] On a `v*` tag, CI builds the CPU image for amd64 and arm64, runs the US-91.2 checks, and pushes it to `ghcr.io/dbracewell/asterism` as the version and `latest`.
-  - [x] `docker-compose.yml` can use the published image, with building from source still documented; the deployment guide's install and upgrade steps use it.
-  - [x] The release notes link the image, and say the GPU build is built from source (`TORCH_VARIANT=gpu`).
-- [x] US-91.6: Test upgrading from the previous release
-  - [x] A CI job starts the previous release's image on a fresh volume, seeds data through the API (an account, a chat, a file with vectors, a theme), then starts the new image on the same volume.
-  - [x] It checks the container becomes healthy, both databases migrated, and the seeded data is there; and that the previous image refuses the upgraded volume with its version message.
-  - [x] Skip with a clear message until a previous release exists (after US-91.5).
+- [ ] US-92.1: Pin what the build pulls
+  - [ ] Pin each `FROM` in `Dockerfile` to `image:tag@sha256:…` (the GPU build uses the same stages, so it is pinned too), and the `uv` the build installs with pip is already pinned.
+  - [ ] Pin every `uses:` in `.github/workflows/` to a full commit SHA with `# vX.Y.Z` after it.
+  - [ ] A check (`pnpm check:pins`, run in the quality job) fails on an unpinned `FROM` or `uses:`, naming the file and line.
+  - [ ] Add `.github/dependabot.yml` for `github-actions`, `docker`, `npm` (pnpm) and `uv`: weekly, grouped by ecosystem, minor and patch together, majors on their own. Document how to review one in `docs/development.md`.
+- [ ] US-92.2: Scan for known vulnerabilities
+  - [ ] The image-checks job runs Trivy on the built image and on the lockfiles. It fails on fixable criticals and prints a table of highs.
+  - [ ] `.trivyignore.yaml` holds accepted findings, each with a reason and an expiry date. A check fails on an expired entry, or one without both.
+  - [ ] A weekly scheduled workflow scans `ghcr.io/dbracewell/asterism:latest`, and opens or updates one issue when it finds a new fixable critical.
+  - [ ] The release workflow scans each architecture's pulled-back image before tagging (with the US-91.2 checks).
+- [ ] US-92.3: Provenance and an SBOM for every release
+  - [ ] Build each architecture with an SPDX SBOM and `provenance: mode=max`. Keep the push-by-digest, pull-back and check flow working with the attestation manifests in the index, and keep `pnpm check:image`'s size reading correct.
+  - [ ] Attest the published index with `actions/attest-build-provenance` and `actions/attest-sbom`. Grant `id-token: write` and `attestations: write` to the publish job only.
+  - [ ] After publishing, the workflow runs `gh attestation verify` against the repository and fails the run if it doesn't verify.
+- [ ] US-92.4: Sign the published image
+  - [ ] Sign the index digest with cosign, keyless, in the publish job. The cosign installer is pinned like every action.
+  - [ ] After signing, the workflow runs `cosign verify` with the expected identity (`https://github.com/dbracewell/Asterism/.github/workflows/release.yml@refs/tags/v*`) and OIDC issuer.
+  - [ ] A rehearsal run (Run workflow) signs nothing, as it tags nothing (US-91.5).
+- [ ] US-92.5: Verifying a release, and the security policy
+  - [ ] A "Verify the image" section in `docs/deployment.md` gives the `gh attestation verify` and `cosign verify` commands, and says how to read the SBOM.
+  - [ ] `SECURITY.md`: which versions get fixes (the latest minor in 0.x), how to report privately (GitHub private vulnerability reporting), and what happens next.
+  - [ ] `docs/development.md` lists the repository settings this epic relies on, for the owner to turn on: a ruleset on `main` requiring the three CI checks and an up-to-date branch; a ruleset that lets only maintainers create or move `v*` tags; private vulnerability reporting; Dependabot alerts.
+  - [ ] Release notes: an Image entry for signed and attested images.
+
+## Long-term memory (proposed 2026-11-20)
+
+Source: user request (2026-11-20). [EPIC-93](docs/epics/EPIC-93-LONG-TERM-MEMORY.md): user memory (about the person, across every chat and project, never project content) and project memory; the agent proposes and the person confirms; relevant memories added each turn; private, with admin, personal and course switches (decided 2026-11-20). Suggested order: US-93.1 → 93.6. Work one story at a time.
+
+### EPIC-93: Long-term memory
+
+- [ ] US-93.1: Memory store and boundary
+  - [ ] ADR: the two kinds, the user-memory content rule, private by default, sensitive memories, pinning, and the revised boundary. Update [context isolation](docs/architecture/context-isolation.md) and `MemoryNamespace` (add the `user` kind, used only for user memory).
+  - [ ] A `memories` table with a versioned migration and upgrade test (ADR-0069): owner, kind (`user` / `project`) and `project_id` (required for project memory); text (bounded, with the About you character rules) and a category (user memory: learning, accessibility, background, other); `sensitive`; source chat, message and execution; revision and timestamps. A per-person cap applies for each kind.
+  - [ ] Memory vectors in their own LanceDB table behind `VectorStore`, keyed by owner and memory id, rewritten on edit.
+  - [ ] An owner-scoped service and API: list, create, edit (expected revision, 409 on conflict), delete, delete all. Each lists in a deterministic order, filtered in the database before pagination.
+  - [ ] Deleting the account deletes its memories and vectors. Deleting a project deletes its project memories. Deleting a chat keeps saved memories, whose source then reads "chat deleted".
+  - [ ] Tests for ownership, caps, revisions and deletion. Release notes: Data.
+- [ ] US-93.2: Policies
+  - [ ] An admin `memory_enabled` policy (default off) with `group_ids`, in Admin Settings, checked live (ADR-0058).
+  - [ ] A per-person "Use memory" setting (default on when the policy allows).
+  - [ ] A course setting that turns memory off for chats in the course, included in the effective policy (ADR-0068) with its source shown to the student.
+  - [ ] One `memory_available(user, chat)` check, used for reading and proposing on every send, resume and regeneration. Tests for each source.
+- [ ] US-93.3: Your memories in Your Asterism
+  - [ ] User Settings → Your Asterism → Memory: user memories by category, with sensitive ones labelled; add, edit, delete, delete all (with confirmation). Built with shadcn/ui, TanStack Query and the generated client.
+  - [ ] Each project's settings: its project memories, with the same controls.
+  - [ ] The "Use memory" setting, with a plain explanation of what is remembered, who can see it (only you) and how it is used.
+  - [ ] When the policy or a course turns memory off, the page says so and why.
+  - [ ] Help text and a help topic; E2E and accessibility tests.
+- [ ] US-93.4: The agent proposes, the person decides
+  - [ ] An internal `propose_memory` tool for the main agent in ordinary chats, offered when memory is available and the model supports tools: it takes the kind, text, category and whether the memory is sensitive; it is limited to one proposal per turn; it is never offered to sub-agents or in drafting chats.
+  - [ ] Its description and the main prompt set the rules: user memory is only about the person, never project content; accessibility and health memories are only from what the person said about themselves.
+  - [ ] A proposal card in the chat shows the text and where it will be saved ("You, in every chat" or "This project"), with Save, Edit and Dismiss. Saving rechecks availability and ownership live.
+  - [ ] Proposals are branch-aware chat records, and a dismissed one isn't proposed again in that chat.
+  - [ ] An audit record (ids and times only) for every proposal and decision.
+  - [ ] Tests, including text injected from a file, which can only lead to a proposal that is never saved without the click.
+- [ ] US-93.5: Relevant memories in every turn
+  - [ ] Before a turn, select memories: user memories, plus the chat's project memories in project chats; ranked by similarity with the prompt; bounded by count and tokens; all available ones when there are few.
+  - [ ] Add them as one information layer, framed as information about the person, not instructions, after About you.
+  - [ ] Record the selected ids and revisions on the accepted message, like `accepted_about`. Resume uses the record (ownership checked); regeneration selects again; children inherit the layer.
+  - [ ] Show which memories a reply used, in the progress panel or message details, with a link to them in Your Asterism.
+  - [ ] Tests for selection, the budget, pinning, course and policy refusals, and that a General chat never receives project memory.
+- [ ] US-93.6: Memory in exports, backups and upgrades
+  - [ ] Download my data (ADR-0076) includes `memories.json`, with sensitive memories marked.
+  - [ ] Backup and restore (ADR-0072) include the memory vectors. A restore re-embeds any memory without a vector.
+  - [ ] The upgrade check (US-91.6) seeds a user memory and a project memory and checks they survive.
+  - [ ] User guide: a "What Asterism remembers" page. Architecture: memory in the agent runtime and context-isolation guides. `AGENTS.md`: replace "no long-term memory engine exists" with the memory rules. Release notes: Behavior.
