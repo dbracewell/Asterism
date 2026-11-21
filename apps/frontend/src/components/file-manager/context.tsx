@@ -33,8 +33,7 @@ type QueryParameters = {
 };
 
 export type FileSource =
-  | { kind: "library" }
-  | { kind: "project"; projectId: string };
+  { kind: "library" } | { kind: "project"; projectId: string };
 export type FileActions = {
   upload: boolean;
   delete: boolean;

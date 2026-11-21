@@ -4515,28 +4515,7 @@ export const zTemplateDocument = z.object({
   description: z.string().min(1).max(500),
   fields: z
     .array(
-      z.union([
-        z
-          .object({
-            kind: z.literal("short_text"),
-          })
-          .and(zShortTextField),
-        z
-          .object({
-            kind: z.literal("long_text"),
-          })
-          .and(zLongTextField),
-        z
-          .object({
-            kind: z.literal("select"),
-          })
-          .and(zSelectField),
-        z
-          .object({
-            kind: z.literal("examples"),
-          })
-          .and(zExamplesField),
-      ]),
+      z.union([zShortTextField, zLongTextField, zSelectField, zExamplesField]),
     )
     .min(1)
     .max(32),
@@ -4781,11 +4760,7 @@ export const zFileKnowledgeArtifact = z.object({
   extractions: z
     .record(
       z.string(),
-      z.discriminatedUnion("kind", [
-        zTextExtraction.extend({ kind: z.literal("text_extraction") }),
-        zEmbedding.extend({ kind: z.literal("embedding") }),
-        zCaptioning.extend({ kind: z.literal("captioning") }),
-      ]),
+      z.discriminatedUnion("kind", [zTextExtraction, zEmbedding, zCaptioning]),
     )
     .optional(),
 });

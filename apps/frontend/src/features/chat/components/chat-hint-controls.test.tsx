@@ -89,12 +89,11 @@ function Harness({
   locked?: boolean;
 }) {
   const [reset, setReset] = useState(false);
+  const [client] = useState(
+    () => new QueryClient({ defaultOptions: { queries: { retry: false } } }),
+  );
   return (
-    <QueryClientProvider
-      client={
-        new QueryClient({ defaultOptions: { queries: { retry: false } } })
-      }
-    >
+    <QueryClientProvider client={client}>
       <ChatHintControls
         info={info(mode, level, locked)}
         disabled={disabled}

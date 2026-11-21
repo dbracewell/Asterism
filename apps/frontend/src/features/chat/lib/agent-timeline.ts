@@ -2,11 +2,7 @@ import type { Message, ToolResult } from "@/lib/client";
 import { imageToolLabel } from "./image-generation";
 
 export type ToolStepStatus =
-  | "running"
-  | "succeeded"
-  | "failed"
-  | "denied"
-  | "empty";
+  "running" | "succeeded" | "failed" | "denied" | "empty";
 
 export type AgentTimelineStep =
   | { kind: "thinking"; id: string; text: string }
