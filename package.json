@@ -44,6 +44,7 @@
   "type": "module",
   "devDependencies": {
     "prettier": "^3.8.3",
-    "prettier-plugin-tailwindcss": "^0.8.0"
+    "prettier-plugin-tailwindcss": "^0.8.0",
+    "yaml": "2.9.1"
   }
 }

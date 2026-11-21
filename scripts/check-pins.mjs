@@ -2,39 +2,45 @@
 /**
  * Checks that the build pulls only immutable inputs (US-92.1).
  *
- * - A Dockerfile's `# syntax=` frontend, and every `FROM` in it, names an image
- *   by digest (`image:tag@sha256:…`); a `FROM` may instead name a stage declared
- *   earlier in the same file, or `scratch`.
- * - Every `uses:` in `.github/workflows/` names an action by full commit SHA
- *   (`owner/repo@<40 hex> # vX.Y.Z`), a local action (`./…`), or a
- *   `docker://` image by digest.
- * - Every workflow `container:` or service `image:` names an image by digest.
- *   A value computed by an expression (`${{ … }}`) is not checked.
+ * - A Dockerfile's `syntax` parser directive, and every `FROM` in it, names an
+ *   image by digest (`image:tag@sha256:…`); a `FROM` may instead name a stage
+ *   declared earlier in the same file, or `scratch`.
+ * - Workflows are parsed as YAML, so flow-style steps and comments are read the
+ *   way GitHub reads them. Each job's and step's `uses:` names an action or
+ *   reusable workflow by full commit SHA (`owner/repo@<40 hex> # vX.Y.Z`), a
+ *   local one (`./…`), or a `docker://` image by digest. Each job's `container:`
+ *   (or its `image:`) and each service's `image:` names an image by digest; a
+ *   value computed by an expression (`${{ … }}`) is not checked.
+ * - A layout the check can't read (an alias where a step, job or value belongs,
+ *   or invalid YAML) is a problem rather than silently passing.
  *
  * Problems name the file and line. Usage: node scripts/check-pins.mjs [root]
  */
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
+import { LineCounter, isMap, isScalar, isSeq, parseDocument } from "yaml";
 
 const DIGEST = /@sha256:[0-9a-f]{64}$/;
 const COMMIT = /@[0-9a-f]{40}$/;
 const ignoredDirectories = new Set([".git", "node_modules", ".next", ".venv"]);
+const DIRECTIVE = /^\s*#\s*([a-z][a-z0-9_-]*)\s*=\s*(.*?)\s*$/i;
 
-/** Removes a trailing YAML comment and surrounding quotes from a value. */
-function yamlValue(raw) {
-  const value = raw.replace(/\s+#.*$/, "").trim();
-  return value.replace(/^(["'])(.*)\1$/, "$2");
-}
-
-/** Problems in one Dockerfile's `FROM` lines. */
+/** Problems in one Dockerfile's `syntax` directive and `FROM` lines. */
 export function dockerfileProblems(text, file) {
   const problems = [];
-  const stages = new Set();
-  const syntax = text.match(/^#\s*syntax\s*=\s*(\S+)/i);
-  if (syntax && !DIGEST.test(syntax[1])) {
-    problems.push(`${file}:1: syntax ${syntax[1]} is not pinned by digest (image:tag@sha256:…)`);
+  const lines = text.replace(/^\uFEFF/, "").split("\n");
+  // BuildKit reads parser directives only until the first comment, blank line
+  // or instruction, so this scans exactly that leading block.
+  for (const [index, line] of lines.entries()) {
+    const directive = line.match(DIRECTIVE);
+    if (!directive) break;
+    const [, key, value] = directive;
+    if (key.toLowerCase() === "syntax" && !DIGEST.test(value)) {
+      problems.push(`${file}:${index + 1}: syntax ${value} is not pinned by digest (image:tag@sha256:…)`);
+    }
   }
-  text.split("\n").forEach((line, index) => {
+  const stages = new Set();
+  lines.forEach((line, index) => {
     const from = line.match(/^\s*FROM\s+(.*)$/i);
     if (!from) return;
     const words = from[1]
@@ -55,35 +61,76 @@ export function dockerfileProblems(text, file) {
   return problems;
 }
 
-/** Problems in one workflow's `uses:`, `container:` and `image:` lines. */
+/** Problems in one workflow's `uses:`, `container:` and service `image:` values. */
 export function workflowProblems(text, file) {
+  const lineCounter = new LineCounter();
+  const document = parseDocument(text, { lineCounter });
+  if (document.errors.length > 0) {
+    return document.errors.map(
+      (error) => `${file}:${error.linePos?.[0]?.line ?? 1}: not valid YAML (${error.code})`,
+    );
+  }
   const problems = [];
-  text.split("\n").forEach((line, index) => {
-    const where = `${file}:${index + 1}`;
-    const uses = line.match(/^\s*(?:-\s+)?uses:\s*(.+)$/);
-    if (uses) {
-      const action = yamlValue(uses[1]);
-      if (action.startsWith("./")) return;
-      if (action.startsWith("docker://")) {
-        if (!DIGEST.test(action)) {
-          problems.push(`${where}: uses ${action} is not pinned by digest (docker://image:tag@sha256:…)`);
-        }
-        return;
+  const where = (node) => `${file}:${lineCounter.linePos(node.range[0]).line}`;
+  /** The node as a map, or null when absent; anything else is a problem. */
+  const mapping = (node, what) => {
+    if (node == null || isMap(node)) return node ?? null;
+    if (isScalar(node) && node.value == null) return null;
+    problems.push(`${where(node)}: ${what} is not a mapping the pin check can read (aliases are not followed)`);
+    return null;
+  };
+  /** The node's string value, or null when absent; anything else is a problem. */
+  const string = (node, what) => {
+    if (node == null || (isScalar(node) && node.value == null)) return null;
+    if (isScalar(node) && typeof node.value === "string") return node.value.trim();
+    problems.push(`${where(node)}: ${what} is not a plain string the pin check can read (aliases are not followed)`);
+    return null;
+  };
+  const checkUses = (node) => {
+    const action = string(node, "uses");
+    if (action === null || action.startsWith("./")) return;
+    if (action.startsWith("docker://")) {
+      if (!DIGEST.test(action)) {
+        problems.push(`${where(node)}: uses ${action} is not pinned by digest (docker://image:tag@sha256:…)`);
       }
-      if (!COMMIT.test(action)) {
-        problems.push(`${where}: uses ${action} is not pinned to a full commit SHA (owner/repo@<sha> # vX.Y.Z)`);
-      }
-      return;
+    } else if (!COMMIT.test(action)) {
+      problems.push(`${where(node)}: uses ${action} is not pinned to a full commit SHA (owner/repo@<sha> # vX.Y.Z)`);
     }
-    const image = line.match(/^\s*(?:-\s+)?(?:image|container):\s*(.+)$/);
-    if (!image) return;
-    const value = yamlValue(image[1]);
-    if (value === "" || value.includes("${{")) return;
-    if (!DIGEST.test(value)) {
-      problems.push(`${where}: image ${value} is not pinned by digest (image:tag@sha256:…)`);
+  };
+  const checkImage = (node) => {
+    const image = string(node, "image");
+    if (image === null || image.includes("${{")) return;
+    if (!DIGEST.test(image)) {
+      problems.push(`${where(node)}: image ${image} is not pinned by digest (image:tag@sha256:…)`);
     }
-  });
-  return problems;
+  };
+
+  const jobs = mapping(document.get("jobs", true), "jobs");
+  for (const { key, value } of jobs?.items ?? []) {
+    const job = mapping(value, `job ${key}`);
+    if (!job) continue;
+    checkUses(job.get("uses", true));
+    const container = job.get("container", true);
+    if (isMap(container)) checkImage(container.get("image", true));
+    else checkImage(container);
+    const services = mapping(job.get("services", true), "services");
+    for (const service of services?.items ?? []) {
+      const definition = mapping(service.value, `service ${service.key}`);
+      if (definition) checkImage(definition.get("image", true));
+    }
+    const steps = job.get("steps", true);
+    if (steps == null) continue;
+    if (!isSeq(steps)) {
+      problems.push(`${where(steps)}: steps is not a list the pin check can read (aliases are not followed)`);
+      continue;
+    }
+    for (const step of steps.items) {
+      const definition = mapping(step, "step");
+      if (definition) checkUses(definition.get("uses", true));
+    }
+  }
+  const line = (problem) => Number(problem.slice(file.length + 1).split(":")[0]);
+  return problems.sort((a, b) => line(a) - line(b));
 }
 
 function dockerfiles(root, directory = root) {

@@ -103,12 +103,15 @@ docs:check`): the root README and other entry documents, and everything under
 ### `check-pins.mjs`
 
 Checks that the build pulls only immutable inputs (`pnpm check:pins`, US-92.1):
-a Dockerfile's `# syntax=` frontend names an image by digest, and every `FROM`
-names one by digest, an earlier stage or `scratch`;
-every workflow `uses:` names an action by full commit SHA, a local action
-(`./…`) or a `docker://` image by digest; and every workflow `container:` or
-`image:` names an image by digest (expressions are skipped). Problems name the
-file and line. CI runs it in the quality job.
+a Dockerfile's `syntax` parser directive (anywhere in the leading directive
+block) names an image by digest, and every `FROM` names one by digest, an
+earlier stage or `scratch`. Workflows are parsed as YAML, so flow-style steps
+and comments read as GitHub reads them: every job's and step's `uses:` names an
+action or reusable workflow by full commit SHA, a local one (`./…`) or a
+`docker://` image by digest, and every job `container:` and service `image:`
+names an image by digest (expressions are skipped). Aliases where a step or
+value belongs, and invalid YAML, fail rather than pass unchecked. Problems name
+the file and line. CI runs it in the quality job.
 
 ### `check-client-secret-leaks.mjs`
 
