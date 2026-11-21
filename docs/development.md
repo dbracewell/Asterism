@@ -169,7 +169,9 @@ Dependabot ([`.github/dependabot.yml`](../.github/dependabot.yml)) opens pull
 requests weekly for GitHub Actions, the Dockerfile's base images, npm (the pnpm
 lockfile) and uv (the backend lockfile). Each ecosystem's minor and patch updates
 come grouped in one pull request; each major update comes on its own. Releases
-younger than a week are held back, except for security updates. The E2E job's
+younger than a week are held back, except for security updates. For the base images,
+Dependabot only refreshes digests: moving to a new Python or Node version is a
+planned change, made by hand with its own pull request. The E2E job's
 `container:` image isn't covered by Dependabot: update its digest by hand.
 
 To review one:
