@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // US-91.2: the built image starts and serves, as CI checks it before a release.
 //
-//   pnpm check:image [--image asterism:local] [--max-size-gb 5]
+//   pnpm check:image [--image asterism:local] [--max-size-gb 5.25]
 //
 // Starts the image on a fresh volume with generated, throwaway secrets, waits
 // for its health check, and checks that both databases were migrated, the
@@ -63,7 +63,7 @@ export function sizeProblem(bytes, maxBytes, layers) {
   );
   return [
     `The image is ${(bytes / 1e9).toFixed(2)} GB, over the ${(maxBytes / 1e9).toFixed(2)} GB budget.`,
-    "Make it smaller, or raise the budget in CI (--max-size-gb) as a decision. Largest layers:",
+    "Make it smaller, or raise DEFAULT_MAX_SIZE_GB in scripts/check-image.mjs as a decision. Largest layers:",
     ...parts,
   ].join("\n");
 }
@@ -224,11 +224,19 @@ function checkSize(image, maxBytes) {
   );
 }
 
+/**
+ * The image size budget (unpacked), the one place it is set: CI and the release
+ * workflow use this default, so a local run checks the same budget. Raised from
+ * 5 on 2026-11-21 until EPIC-94 takes torch out of the image; change it only as
+ * a decision, noted in the release notes.
+ */
+export const DEFAULT_MAX_SIZE_GB = "5.25";
+
 async function main() {
   const { values } = parseArgs({
     options: {
       image: { type: "string", default: "asterism:local" },
-      "max-size-gb": { type: "string", default: "5" },
+      "max-size-gb": { type: "string", default: DEFAULT_MAX_SIZE_GB },
     },
   });
   if (!/^[a-zA-Z0-9][a-zA-Z0-9._/:@-]*$/.test(values.image))
