@@ -104,12 +104,7 @@ export function kindLabel(kind: CanvasKindName, language: string): string {
 }
 
 export type CanvasExportFormat =
-  | "md"
-  | "txt"
-  | "source"
-  | "html"
-  | "docx"
-  | "pdf";
+  "md" | "txt" | "source" | "html" | "docx" | "pdf";
 
 /** What each kind downloads as, natural type first (mirrors the server). */
 export const EXPORT_FORMATS: Record<CanvasKindName, CanvasExportFormat[]> = {

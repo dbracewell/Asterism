@@ -13,8 +13,7 @@ export const REPOSITORY_URL = "https://github.com/dbracewell/Asterism";
 const REPOSITORY_ONLY = new Set(["CONTRIBUTING.md"]);
 
 export type GuideLink =
-  | { kind: "internal"; href: string }
-  | { kind: "external"; href: string };
+  { kind: "internal"; href: string } | { kind: "external"; href: string };
 
 /** The route for a guide page path such as `02-chatting/canvas.md`. */
 export function guidePageRoute(file: string): string {

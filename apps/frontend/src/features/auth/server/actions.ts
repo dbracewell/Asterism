@@ -82,8 +82,7 @@ export const installApp = async (data: InstallUserSchemaType) => {
 };
 
 export type InviteSignupResult =
-  | { ok: true; className: string }
-  | { ok: false; error: string };
+  { ok: true; className: string } | { ok: false; error: string };
 
 /**
  * Create an ordinary account through a single-use class invite.

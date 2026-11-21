@@ -97,12 +97,7 @@ for (const theme of themes) {
       id: string,
       state = "rest",
       kind:
-        | "text"
-        | "placeholder"
-        | "border"
-        | "ring"
-        | "fill"
-        | "glyph" = "text",
+        "text" | "placeholder" | "border" | "ring" | "fill" | "glyph" = "text",
     ) {
       const result = await measure(page, id, kind);
       const threshold =
