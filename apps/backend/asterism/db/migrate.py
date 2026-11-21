@@ -174,7 +174,10 @@ def _check_known(connection: Connection) -> str | None:
         if tables:
             raise SchemaRevisionError(
                 "The backend database predates versioned migrations (no schema revision; "
-                f"this code is at {head}). Reset this development database once with `pnpm reset:db`."
+                f"this code is at {head}). It comes from a development build before 0.2.0 and "
+                "can't be upgraded, so start with empty storage, which deletes its data. "
+                "In a checkout, run `pnpm reset:db`. With Docker, stop the app and remove the "
+                "storage volume (`docker compose down`, then `docker volume rm <project>_storage`)."
             )
         return None
     known = {script.revision for script in script_directory().walk_revisions()}

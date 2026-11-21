@@ -22,6 +22,12 @@ Unreleased into its version and date.
 
 ## Unreleased
 
+### Behavior
+
+- A database from a development build before 0.2.0 is still refused at start,
+  and the message now says how to start fresh with Docker (remove the storage
+  volume) as well as in a checkout.
+
 ## 0.2.0 (2026-11-20)
 
 ### Data

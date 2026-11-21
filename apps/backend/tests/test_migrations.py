@@ -111,8 +111,10 @@ async def test_pre_baseline_database_is_refused_without_changes(migration_db):
     before = schema_objects(migration_db)
 
     for action in (upgrade_database, verify_database_revision):
-        with pytest.raises(SchemaRevisionError, match="predates versioned migrations"):
+        with pytest.raises(SchemaRevisionError, match="predates versioned migrations") as refused:
             await action()
+        assert "pnpm reset:db" in str(refused.value)
+        assert "docker volume rm" in str(refused.value)
     assert schema_objects(migration_db) == before
 
 
