@@ -58,10 +58,10 @@ Source: user request (2026-11-20), following EPIC-91. [EPIC-92](docs/epics/EPIC-
 
 ### EPIC-92: Supply-chain hardening
 
-- [ ] US-92.0: Fix the critical vulnerabilities and release 0.2.1
-  - [ ] Upgrade next (≥16.4.1), Pillow (≥13.0.0), better-auth (≥1.7.7), PyJWT (≥2.14.0), proxy-addr (≥2.0.8) and certifi (≥2026.10.18) through the lockfiles, within pnpm's `minimumReleaseAge` or with a dated exclusion.
-  - [ ] Check the jumps for breaking changes: Pillow 12 → 13 (decoding, captioning, image generation output), better-auth 1.6 → 1.7 (its table migrations, the JWT plugin, admin actions), Next 16.2 → 16.4 (its docs in `node_modules/next/dist/docs/`).
-  - [ ] Record, for each critical, whether Asterism's use reaches it, in the pull request. Every one is fixed either way.
+- [ ] US-92.0: Fix the critical vulnerabilities and release 0.2.1 (in progress)
+  - [x] Upgrade next (≥16.4.1), Pillow (≥13.0.0), better-auth (≥1.7.7), PyJWT (≥2.14.0), proxy-addr (≥2.0.8) and certifi (≥2026.10.18) through the lockfiles, within pnpm's `minimumReleaseAge` or with a dated exclusion.
+  - [x] Check the jumps for breaking changes: Pillow 12 → 13 (decoding, captioning, image generation output), better-auth 1.6 → 1.7 (its table migrations, the JWT plugin, admin actions), Next 16.2 → 16.4 (its docs in `node_modules/next/dist/docs/`).
+  - [x] Record, for each critical, whether Asterism's use reaches it, in the pull request. Every one is fixed either way.
   - [ ] All checks pass, including the image checks and the upgrade check from 0.2.0. Dependabot shows no open critical alerts.
   - [ ] Release notes: an Image entry naming the fixes and telling administrators to upgrade. Cut and publish 0.2.1.
 - [ ] US-92.1: Pin what the build pulls

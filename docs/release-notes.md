@@ -22,6 +22,18 @@ Unreleased into its version and date.
 
 ## Unreleased
 
+### Image
+
+- **Upgrade from 0.2.0:** this release fixes critical vulnerabilities in the
+  0.2.0 image, including unauthenticated remote code execution in Next.js and
+  heap overflows when Pillow decodes uploaded images. Pull the new image and
+  restart; both databases migrate on start.
+  - Next.js 16.2.7 → 16.4.6
+  - Pillow 12.3.0 → 13.0.0
+  - better-auth 1.6.11 → 1.7.26 (its tables migrate on start)
+  - PyJWT 2.13.0 → 2.15.1
+  - certifi 2026.6.17 → 2026.10.23 (drops the compromised emSign roots)
+
 ### Behavior
 
 - A database from a development build before 0.2.0 is still refused at start,
