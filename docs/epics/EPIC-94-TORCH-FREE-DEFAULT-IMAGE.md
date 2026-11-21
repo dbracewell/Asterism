@@ -19,14 +19,14 @@ either way); publishing a GPU image; changes to the ComfyUI generator.
 
 ## Where things stand (verified 2026-11-21)
 
-| Area             | What happens today                                                                                                                                                                                                                                                                                                 |
-| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Image size       | The 0.2.1-era image's Python packages are 1.8 GB: torch 635 MB, transformers 120 MB, sympy (only torch needs it) 74 MB, diffusers 59 MB, onnxruntime 37 MB. The image was 4.90 GB against a 5.00 GB budget; Dependabot's uv group (torch 2.13 → 2.15, onnxruntime 1.20 → 1.32 and others) made it 5.21 GB.         |
-| Torch users      | Exactly two: the local Diffusers image generator (`domains/image_generation/local/`, ADR-0064, US-76.2) and local captioning (`LocalSmolVlm2CaptionProvider` in `domains/knowledge/captioning.py`), which loads `HuggingFaceTB/SmolVLM2-256M-Video-Instruct` at revision `067788b1…` with `transformers` on torch. |
-| Search embedding | Already torch-free: `OnnxClipEmbeddingProvider` runs a pinned ONNX CLIP on ONNX Runtime, with only the tokenizer and PIL image processor from `transformers`.                                                                                                                                                      |
-| ONNX captioning  | The same SmolVLM2 repository publishes ONNX exports at the revision we pin (Apache-2.0): `vision_encoder`, `embed_tokens` and `decoder_model_merged`, each as fp32, fp16, int8/uint8/quantized, q4, q4f16 and bnb4. The int8 set is about 260 MB.                                                                  |
-| Image generation | Two generators: ComfyUI (an external server, US-76.3) and local Diffusers. Captioning has three modes: disabled, provider (a vision model through a configured provider) and local.                                                                                                                                |
-| Builds           | The lockfile installs CPU-only torch on Linux. `TORCH_VARIANT=gpu` reinstalls the same torch versions with CUDA (about 4 GB more); no GPU image is published. Until this epic lands, torch is held at its current minor version so Dependabot's uv group fits the size budget.                                     |
+| Area             | What happens today                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Image size       | The 0.2.1-era image's Python packages are 1.8 GB: torch 635 MB, transformers 120 MB, sympy 74 MB, diffusers 59 MB, onnxruntime 37 MB, networkx 18 MB, torchvision 8 MB, accelerate 4 MB. torch is required by `accelerate` (a base dependency that nothing imports directly; diffusers uses it for offload) as well as directly; sympy by torch and by onnxruntime before 1.32, which makes it optional. The image was 4.90 GB against a 5.00 GB budget; Dependabot's uv group (torch 2.13 → 2.15, onnxruntime 1.20 → 1.32 and others) made it 5.21 GB. |
+| Torch users      | Exactly two: the local Diffusers image generator (`domains/image_generation/local/`, ADR-0064, US-76.2) and local captioning (`LocalSmolVlm2CaptionProvider` in `domains/knowledge/captioning.py`), which loads `HuggingFaceTB/SmolVLM2-256M-Video-Instruct` at revision `067788b1…` with `transformers` on torch.                                                                                                                                                                                                                                      |
+| Search embedding | Already torch-free: `OnnxClipEmbeddingProvider` runs a pinned ONNX CLIP on ONNX Runtime, with only the tokenizer and PIL image processor from `transformers`.                                                                                                                                                                                                                                                                                                                                                                                           |
+| ONNX captioning  | The same SmolVLM2 repository publishes ONNX exports at the revision we pin (Apache-2.0): `vision_encoder`, `embed_tokens` and `decoder_model_merged`, each as fp32, fp16, int8/uint8/quantized, q4, q4f16 and bnb4. The int8 set is about 260 MB.                                                                                                                                                                                                                                                                                                       |
+| Image generation | Two generators: ComfyUI (an external server, US-76.3) and local Diffusers. Captioning has three modes: disabled, provider (a vision model through a configured provider) and local.                                                                                                                                                                                                                                                                                                                                                                     |
+| Builds           | The lockfile installs CPU-only torch on Linux. `TORCH_VARIANT=gpu` reinstalls the same torch versions with CUDA (about 4 GB more); no GPU image is published. Until this epic lands, torch is held at its current minor version so Dependabot's uv group fits the size budget.                                                                                                                                                                                                                                                                          |
 
 ## Decisions
 
@@ -39,8 +39,10 @@ either way); publishing a GPU image; changes to the ComfyUI generator.
   `transformers`, which needs no torch for them. Captions are bounded as today.
 - **Which precision is chosen by measurement,** not assumed: int8 first, fp16 or
   fp32 if int8 captions are noticeably worse on the comparison set (US-94.1).
-- **Local image generation is an optional install.** Diffusers, torch and
-  torchvision move to a `local-image` extra in `pyproject.toml`. The GPU build
+- **Local image generation is an optional install.** Diffusers, accelerate,
+  torch and torchvision move to a `local-image` extra in `pyproject.toml`, and
+  the default install has no direct or transitive torch dependency (sympy goes
+  too, with onnxruntime 1.32 or later). The GPU build
   installs it (with CUDA torch, as today); the published CPU image doesn't. A
   checkout installs it with `uv sync --extra local-image`.
 - **Nothing switches silently.** Where the extra isn't installed, a saved local
@@ -83,9 +85,13 @@ As an administrator, local captioning works without PyTorch and downloads less.
 As an administrator, the published image leaves out what only a GPU build can
 use well, and a saved local generator never fails silently.
 
-- [ ] Move `diffusers`, `torch` and `torchvision` (and the PyTorch CPU index
-      source) to a `local-image` extra. Keep `uv.lock` resolving both with and
+- [ ] Move `diffusers`, `accelerate`, `torch` and `torchvision` (and the PyTorch
+      CPU index source) to a `local-image` extra, and require onnxruntime 1.32 or
+      later so sympy is no longer needed. Keep `uv.lock` resolving both with and
       without it.
+- [ ] A check (in the quality job) that the default install's dependency graph
+      has no torch, torchvision or diffusers, direct or transitive, naming the
+      package that pulls one in.
 - [ ] Dockerfile: the CPU build installs no extra; `TORCH_VARIANT=gpu` installs
       `local-image` with CUDA torch. `pnpm check:image` fails if torch is
       importable in the CPU image.
