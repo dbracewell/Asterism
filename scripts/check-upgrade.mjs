@@ -275,10 +275,19 @@ with sqlite3.connect(f"file:{sys.argv[1]}?mode=ro", uri=True) as connection:
             [c[1], c[2].upper(), c[3], c[4], c[5]]
             for c in connection.execute(f'PRAGMA table_info("{table}")')
         )
+        # Implicit indexes enforce UNIQUE and PRIMARY KEY constraints, so they
+        # count too; only their generated names (numbered by the order SQLite
+        # made them) are left out. Each index: name, unique, origin (c, u or
+        # pk), partial, and its columns in order.
         indexes = sorted(
-            [i[1], i[2], [c[2] for c in connection.execute(f'PRAGMA index_info("{i[1]}")')]]
+            [
+                "" if i[1].startswith("sqlite_autoindex_") else i[1],
+                i[2],
+                i[3],
+                i[4],
+                [c[2] for c in connection.execute(f'PRAGMA index_info("{i[1]}")')],
+            ]
             for i in connection.execute(f'PRAGMA index_list("{table}")')
-            if not i[1].startswith("sqlite_autoindex")
         )
         schema[table] = {"columns": columns, "indexes": indexes}
 print(json.dumps(schema))
