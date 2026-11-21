@@ -58,12 +58,12 @@ Source: user request (2026-11-20), following EPIC-91. [EPIC-92](docs/epics/EPIC-
 
 ### EPIC-92: Supply-chain hardening
 
-- [ ] US-92.0: Fix the critical vulnerabilities and release 0.2.1 (in progress)
+- [x] US-92.0: Fix the critical vulnerabilities and release 0.2.1 (released and published 2026-11-21)
   - [x] Upgrade next (≥16.4.1), Pillow (≥13.0.0), better-auth (≥1.7.7), PyJWT (≥2.14.0), proxy-addr (≥2.0.8) and certifi (≥2026.10.18) through the lockfiles, within pnpm's `minimumReleaseAge` or with a dated exclusion.
   - [x] Check the jumps for breaking changes: Pillow 12 → 13 (decoding, captioning, image generation output), better-auth 1.6 → 1.7 (its table migrations, the JWT plugin, admin actions), Next 16.2 → 16.4 (its docs in `node_modules/next/dist/docs/`).
   - [x] Record, for each critical, whether Asterism's use reaches it, in the pull request. Every one is fixed either way.
-  - [ ] All checks pass, including the image checks and the upgrade check from 0.2.0. Dependabot shows no open critical alerts.
-  - [ ] Release notes: an Image entry naming the fixes and telling administrators to upgrade. Cut and publish 0.2.1.
+  - [x] All checks pass, including the image checks and the upgrade check from 0.2.0. Dependabot shows no open critical alerts.
+  - [x] Release notes: an Image entry naming the fixes and telling administrators to upgrade. Cut and publish 0.2.1.
 - [ ] US-92.1: Pin what the build pulls
   - [ ] Pin each `FROM` that pulls an external image in `Dockerfile` to `image:tag@sha256:…`. A `FROM` naming a stage declared earlier in the file (`FROM frontend-base AS …`) is left as it is. The GPU build uses the same stages, so it is pinned too. The `uv` the build installs with pip is already pinned.
   - [ ] Pin every `uses:` in `.github/workflows/` to a full commit SHA with `# vX.Y.Z` after it.
