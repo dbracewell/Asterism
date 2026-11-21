@@ -22,6 +22,12 @@ Unreleased into its version and date.
 
 ## Unreleased
 
+### Image
+
+- The image is built from base images pinned by digest, with GitHub Actions
+  pinned by commit, so rebuilding a release pulls the same bases. Dependabot
+  proposes updates weekly.
+
 ## 0.2.1 (2026-11-21)
 
 ### Image

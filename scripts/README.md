@@ -100,6 +100,16 @@ Checks every link, heading anchor and image in the documentation (`pnpm
 docs:check`): the root README and other entry documents, and everything under
 `docs/` except the archive. CI runs it in the quality job.
 
+### `check-pins.mjs`
+
+Checks that the build pulls only immutable inputs (`pnpm check:pins`, US-92.1):
+a Dockerfile's `# syntax=` frontend names an image by digest, and every `FROM`
+names one by digest, an earlier stage or `scratch`;
+every workflow `uses:` names an action by full commit SHA, a local action
+(`./…`) or a `docker://` image by digest; and every workflow `container:` or
+`image:` names an image by digest (expressions are skipped). Problems name the
+file and line. CI runs it in the quality job.
+
 ### `check-client-secret-leaks.mjs`
 
 Scans one or more files or directories for the current process values of

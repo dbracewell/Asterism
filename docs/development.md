@@ -99,6 +99,7 @@ pnpm lint
 pnpm typecheck
 pnpm test            # backend, frontend and root script tests
 pnpm docs:check      # links, anchors and images in the documentation
+pnpm check:pins      # base images by digest, actions by commit SHA
 node scripts/run-isolated-e2e.mjs   # browser tests against a disposable stack
 ```
 
@@ -146,6 +147,45 @@ pnpm capacity:check                   # a class of 30 against the image (a 10-mi
 ```
 
 The [scripts README](../scripts/README.md) describes every root script and its options.
+
+### Pinned build inputs
+
+The Dockerfile names each base image by tag and digest
+(`python:3.13-slim-trixie@sha256:…`), and every workflow names each action by
+commit SHA with its version after it (`actions/checkout@<sha> # v4.4.0`), so a
+rebuild of a commit pulls the same bases and runs the same workflow code
+(US-92.1). `pnpm check:pins` fails on an image without a digest or an action
+without a SHA, naming the file and line. A `FROM` naming an earlier stage and a
+local action (`uses: ./…`) need neither. To pin a new one:
+
+```bash
+docker buildx imagetools inspect node:22-bookworm-slim | grep -m1 Digest
+gh api repos/actions/checkout/git/ref/tags/v4.4.0 -q .object.sha   # an annotated tag: resolve it with git/tags/<sha>
+```
+
+### Dependency updates
+
+Dependabot ([`.github/dependabot.yml`](../.github/dependabot.yml)) opens pull
+requests weekly for GitHub Actions, the Dockerfile's base images, npm (the pnpm
+lockfile) and uv (the backend lockfile). Each ecosystem's minor and patch updates
+come grouped in one pull request; each major update comes on its own. Releases
+younger than a week are held back, except for security updates. The E2E job's
+`container:` image isn't covered by Dependabot: update its digest by hand.
+
+To review one:
+
+1. Read what changed: Dependabot links each package's release notes. For a major
+   update, read its migration guide (for Next.js, `node_modules/next/dist/docs/`),
+   and check whether it changes stored data, such as better-auth's tables.
+2. Let CI finish. **Build and check the image** includes the upgrade check from the
+   previous release, so a base image or auth change that breaks stored data fails
+   there.
+3. A change to what ships in the image (a base image, a backend or frontend runtime
+   package) gets a release-notes line under Image when it fixes a vulnerability or
+   changes behavior. Development-only updates need none.
+4. Merge like any other pull request. A pull request that fails stays open: fix it on
+   its branch, or close it and tell Dependabot to ignore that version
+   (`@dependabot ignore this minor version`) with a reason in the comment.
 
 ## Working on the code
 

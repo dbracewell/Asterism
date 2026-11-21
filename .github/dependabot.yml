@@ -1,0 +1,47 @@
+# Version updates (US-92.1). Each ecosystem gets one weekly pull request with
+# its minor and patch updates grouped; a major update gets a pull request of its
+# own. The cooldown holds back releases younger than a week, like pnpm's
+# minimumReleaseAge; security updates are not held back. Every pull request runs
+# the full CI, the upgrade check from the previous release included. Reviewing
+# one: docs/development.md, "Dependency updates".
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    groups:
+      actions:
+        update-types: [minor, patch]
+
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    groups:
+      docker:
+        update-types: [minor, patch]
+
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    groups:
+      npm:
+        update-types: [minor, patch]
+
+  - package-ecosystem: uv
+    directory: /apps/backend
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    groups:
+      uv:
+        update-types: [minor, patch]
