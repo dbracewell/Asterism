@@ -123,7 +123,7 @@ jobs:
           docker tag "$IMAGE@$DIGEST" asterism:release
 
       - name: Start the image and check its size
-        run: pnpm check:image --image asterism:release --max-size-gb 5.25
+        run: pnpm check:image --image asterism:release
 
       - name: Check the web fetch tool's browser in the image
         run: pnpm check:fetch-browser-container --image asterism:release

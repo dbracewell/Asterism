@@ -129,8 +129,9 @@ refuse the upgraded volume. Before the first release it is skipped with a
 message. The image must stay within a **5.25 GB**
 budget (unpacked; raised from 5 GB on 2026-11-21 until EPIC-94 removes torch
 from the image); when it grows past it, the job lists the largest layers.
-Change `--max-size-gb` in `.github/workflows/ci.yml` and `release.yml` together,
-only as a decision, noted in the release notes.
+The budget is set once, as `DEFAULT_MAX_SIZE_GB` in `scripts/check-image.mjs`,
+so CI, the release workflow and a local `pnpm check:image` all check the same
+one. Change it only as a decision, noted in the release notes.
 
 With Docker, these check the image and its configuration using generated,
 throwaway secrets, containers and volumes:

@@ -49,8 +49,7 @@ data. The reply is parsed leniently:
 - only labels that were sent become links to that deck or quiz; anything else is
   plain text.
 
-No usable day, an unreadable reply or a model error is a 502; a timeout is a
-504. Days the model leaves out are rest days. The response is the structured
+No usable day, an unreadable reply or a model error is a 502; a timeout is a 504. Days the model leaves out are rest days. The response is the structured
 plan plus a Markdown `body` whose links point at the project's deck and quiz
 pages, with link text escaped. Nothing is persisted.
 

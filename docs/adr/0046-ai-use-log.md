@@ -16,8 +16,7 @@ detect AI use. The story asks for Markdown or PDF.
 
 `POST /chat/ai-use-log` (`chatAiUseLogCreate`) takes `{chat_ids}` (1–50,
 unique) and returns `AiUseLog`. It is owner scoped: it reads each chat through
-the normal chat read, so one foreign or missing chat rejects the request with
-404. For each chat it returns the title, project name and creation time, and
+the normal chat read, so one foreign or missing chat rejects the request with 404. For each chat it returns the title, project name and creation time, and
 one entry per user turn on the active branch:
 
 - the prompt text, time, learning mode, persona, template (name, level,

@@ -84,11 +84,11 @@ connection from a listed proxy may set the client address through
 `X-Forwarded-For`. nginx then passes the services only the resolved address, so
 Better Auth's limiter sees the same client. Per address and minute:
 
-| What | Rate | Burst |
-| --- | --- | --- |
-| Better Auth writes (`POST /api/auth/…`; reads are not limited) | 60 | 60 |
-| Uploads (`/api/py/files/`, chat draft uploads) | 60 | 60 |
-| Chat WebSocket handshakes | 120 | 60 |
+| What                                                           | Rate | Burst |
+| -------------------------------------------------------------- | ---- | ----- |
+| Better Auth writes (`POST /api/auth/…`; reads are not limited) | 60   | 60    |
+| Uploads (`/api/py/files/`, chat draft uploads)                 | 60   | 60    |
+| Chat WebSocket handshakes                                      | 120  | 60    |
 
 The burst lets a whole class behind one address sign in or open chats at once.
 Refusals are a JSON 429 with `Retry-After: 60`.

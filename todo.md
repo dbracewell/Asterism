@@ -153,6 +153,6 @@ Source: user request (2026-11-21), after Dependabot's uv group took the image ov
   - [ ] Tests for both installs: registry, Admin Settings payload, tool availability, and a saved local generator surviving an upgrade (upgrade check) and reading as unavailable.
   - [ ] Docs: the deployment guide's GPU build section, the development guide (`uv sync --extra local-image`), and the image generation user guide.
 - [ ] US-94.3: Hold the smaller image
-  - [ ] Lower the image budget in CI and the release workflow from 5.25 GB (raised from 5 GB on 2026-11-21 for Dependabot's uv group) to the measured size plus a margin (expected about 4.5 GB), recorded in the release notes.
+  - [ ] Lower the image budget (`DEFAULT_MAX_SIZE_GB` in `scripts/check-image.mjs`, which CI and the release workflow use) from 5.25 GB (raised from 5 GB on 2026-11-21 for Dependabot's uv group) to the measured size plus a margin (expected about 4.5 GB), recorded in the release notes.
   - [ ] Remove the temporary torch cap, so Dependabot updates torch for the GPU build again.
   - [ ] Release notes: Image (smaller image, no local generation in the published image, how to build the GPU image). Cut the release that ships the epic.
