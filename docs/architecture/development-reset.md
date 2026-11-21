@@ -72,16 +72,16 @@ manually to bypass target review.
 
 ## Removed and retained paths
 
-| Target                                                      | Reset behavior                                                                               |
-| ----------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
-| Backend `DB_URL`, default `STORAGE_ROOT/database.db`        | Delete SQLite file and `-wal`, `-shm`, `-journal` sidecars; migrate a fresh database to head |
-| Auth `BETTER_AUTH_DB_PATH`, default `STORAGE_ROOT/users.db` | Delete selected database and sidecars; initialize using pinned Better Auth CLI               |
-| `STORAGE_ROOT/files`                                        | Remove original uploaded bytes, including sharded source keys                                |
-| `STORAGE_ROOT/knowledge`                                    | Remove derived knowledge/vector storage                                                      |
-| `STORAGE_ROOT/themes`                                       | Preserve administrator-created themes and bundled-palette overrides                          |
-| `STORAGE_ROOT/models/knowledge-clip`                        | Preserve reusable embedding model bundle                                                     |
-| `STORAGE_ROOT/models/captioning-smolvlm2`                   | Preserve reusable local caption model bundle                                                 |
-| `STORAGE_ROOT/models/image-generation`                      | Preserve downloaded local image generation models (tens of GB each)                          |
+| Target                                                      | Reset behavior                                                                                           |
+| ----------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| Backend `DB_URL`, default `STORAGE_ROOT/database.db`        | Delete SQLite file and `-wal`, `-shm`, `-journal` sidecars; migrate a fresh database to head           |
+| Auth `BETTER_AUTH_DB_PATH`, default `STORAGE_ROOT/users.db` | Delete selected database and sidecars; initialize using pinned Better Auth CLI                           |
+| `STORAGE_ROOT/files`                                        | Remove original uploaded bytes, including sharded source keys                                            |
+| `STORAGE_ROOT/knowledge`                                    | Remove derived knowledge/vector storage                                                                  |
+| `STORAGE_ROOT/themes`                                       | Preserve administrator-created themes and bundled-palette overrides                                      |
+| `STORAGE_ROOT/models/knowledge-clip`                        | Preserve reusable embedding model bundle                                                                 |
+| `STORAGE_ROOT/models/captioning-smolvlm2`                   | Preserve reusable local caption model bundle                                                             |
+| `STORAGE_ROOT/models/image-generation`                      | Preserve downloaded local image generation models (tens of GB each)                                      |
 
 Bundle integrity is still verified when providers load them. Preserving bytes does
 not enable captioning, restore provider credentials, or waive model verification.

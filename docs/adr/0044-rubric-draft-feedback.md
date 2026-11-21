@@ -29,11 +29,7 @@ A rubric document is canonical JSON:
   "description": "…",
   "levels": ["Exemplary", "Proficient", "Developing", "Beginning"],
   "criteria": [
-    {
-      "label": "Thesis",
-      "description": "…",
-      "descriptors": ["…", "…", "…", "…"]
-    }
+    { "label": "Thesis", "description": "…", "descriptors": ["…", "…", "…", "…"] }
   ]
 }
 ```
@@ -78,7 +74,7 @@ for exactly that.
 ### 3. The rubric is pinned on the user turn
 
 A send in a mode with `rubric_feedback` may carry `rubric: {source, id}`
-(`bundled` or `owned`). The server snapshots the rubric's _current_ document and
+(`bundled` or `owned`). The server snapshots the rubric's *current* document and
 revision into `messages.accepted_rubric` in the acceptance transaction; the
 client claims no revision. Unknown, foreign or malformed IDs are 404; a rubric
 in any other mode is 400. The column is immutable (SQLite trigger) and copied

@@ -13,14 +13,14 @@ Out of scope: new features, hosting, and automatic updates.
 
 ## Where things stand (verified 2026-11-19)
 
-| Area          | What happens today                                                                                                                                                                                                                                    |
-| ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Version       | Three numbers disagree: the root `package.json` says 1.0.0, `apps/frontend` and `apps/backend` say 0.1.0. Status and backup manifests report the backend package version (`asterism-core`), so every install says 0.1.0. There are no git tags.       |
-| CI and Docker | CI builds only the `frontend-build` stage and runs `docker/test-backend-launch.py`, which checks the worker guard in a minimal image and "does not substitute for the full application smoke test". Nothing in CI builds the full image or starts it. |
-| Image checks  | `pnpm check:fetch-browser-container` (US-90.8) and `scripts/check-theme-storage-container.mjs` exist but run only by hand. The image's size (4.4 GB after US-90.8) is not watched.                                                                    |
-| Release notes | `docs/release-notes.md` started in US-90.8 with an "Unreleased" section. Nothing asks a story to add to it, and nothing turns "Unreleased" into a version.                                                                                            |
-| Upgrades      | Migrations ship with a test that upgrades a database seeded at the previous revision (ADR-0069). No test upgrades a real install from one image to the next, with both databases, files and vectors.                                                  |
-| Installing    | Administrators clone the repository and run `docker compose up -d --build`. A build downloads several GB of dependencies; there is no image to pull.                                                                                                  |
+| Area           | What happens today                                                                                                                                                                                                                                             |
+| -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Version        | Three numbers disagree: the root `package.json` says 1.0.0, `apps/frontend` and `apps/backend` say 0.1.0. Status and backup manifests report the backend package version (`asterism-core`), so every install says 0.1.0. There are no git tags.                |
+| CI and Docker  | CI builds only the `frontend-build` stage and runs `docker/test-backend-launch.py`, which checks the worker guard in a minimal image and "does not substitute for the full application smoke test". Nothing in CI builds the full image or starts it.            |
+| Image checks   | `pnpm check:fetch-browser-container` (US-90.8) and `scripts/check-theme-storage-container.mjs` exist but run only by hand. The image's size (4.4 GB after US-90.8) is not watched.                                                                               |
+| Release notes  | `docs/release-notes.md` started in US-90.8 with an "Unreleased" section. Nothing asks a story to add to it, and nothing turns "Unreleased" into a version.                                                                                                     |
+| Upgrades       | Migrations ship with a test that upgrades a database seeded at the previous revision (ADR-0069). No test upgrades a real install from one image to the next, with both databases, files and vectors.                                                            |
+| Installing     | Administrators clone the repository and run `docker compose up -d --build`. A build downloads several GB of dependencies; there is no image to pull.                                                                                                             |
 
 ## Decisions
 

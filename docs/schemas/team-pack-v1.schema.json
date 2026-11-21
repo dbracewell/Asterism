@@ -65,7 +65,11 @@
           "title": "Default"
         }
       },
-      "required": ["key", "label", "kind"],
+      "required": [
+        "key",
+        "label",
+        "kind"
+      ],
       "title": "ExamplesField",
       "type": "object"
     },
@@ -215,7 +219,11 @@
           "title": "Default"
         }
       },
-      "required": ["key", "label", "kind"],
+      "required": [
+        "key",
+        "label",
+        "kind"
+      ],
       "title": "LongTextField",
       "type": "object"
     },
@@ -285,7 +293,11 @@
           "type": "string"
         }
       },
-      "required": ["id", "version", "name"],
+      "required": [
+        "id",
+        "version",
+        "name"
+      ],
       "title": "PackIdentity",
       "type": "object"
     },
@@ -359,7 +371,9 @@
           "type": "array"
         }
       },
-      "required": ["name"],
+      "required": [
+        "name"
+      ],
       "title": "PackProject",
       "type": "object"
     },
@@ -375,7 +389,10 @@
           "$ref": "#/$defs/RubricDocument"
         }
       },
-      "required": ["key", "document"],
+      "required": [
+        "key",
+        "document"
+      ],
       "title": "PackRubric",
       "type": "object"
     },
@@ -400,7 +417,10 @@
           "type": "boolean"
         }
       },
-      "required": ["key", "content"],
+      "required": [
+        "key",
+        "content"
+      ],
       "title": "PackSkill",
       "type": "object"
     },
@@ -465,7 +485,10 @@
           "$ref": "#/$defs/ModelRequirements"
         }
       },
-      "required": ["key", "name"],
+      "required": [
+        "key",
+        "name"
+      ],
       "title": "PackSubAgent",
       "type": "object"
     },
@@ -481,7 +504,10 @@
           "$ref": "#/$defs/TemplateDocument"
         }
       },
-      "required": ["key", "document"],
+      "required": [
+        "key",
+        "document"
+      ],
       "title": "PackTemplate",
       "type": "object"
     },
@@ -506,7 +532,12 @@
           "type": "boolean"
         }
       },
-      "required": ["study", "reflections", "goal", "sub_agents"],
+      "required": [
+        "study",
+        "reflections",
+        "goal",
+        "sub_agents"
+      ],
       "title": "ProjectAreas",
       "type": "object"
     },
@@ -538,7 +569,10 @@
           "type": "array"
         }
       },
-      "required": ["label", "descriptors"],
+      "required": [
+        "label",
+        "descriptors"
+      ],
       "title": "RubricCriterion",
       "type": "object"
     },
@@ -579,7 +613,12 @@
           "type": "array"
         }
       },
-      "required": ["name", "description", "levels", "criteria"],
+      "required": [
+        "name",
+        "description",
+        "levels",
+        "criteria"
+      ],
       "title": "RubricDocument",
       "type": "object"
     },
@@ -652,7 +691,12 @@
           "title": "Default"
         }
       },
-      "required": ["key", "label", "kind", "options"],
+      "required": [
+        "key",
+        "label",
+        "kind",
+        "options"
+      ],
       "title": "SelectField",
       "type": "object"
     },
@@ -714,7 +758,11 @@
           "title": "Default"
         }
       },
-      "required": ["key", "label", "kind"],
+      "required": [
+        "key",
+        "label",
+        "kind"
+      ],
       "title": "ShortTextField",
       "type": "object"
     },
@@ -783,7 +831,12 @@
           "type": "array"
         }
       },
-      "required": ["name", "description", "fields", "body"],
+      "required": [
+        "name",
+        "description",
+        "fields",
+        "body"
+      ],
       "title": "TemplateDocument",
       "type": "object"
     }
@@ -852,7 +905,11 @@
       "default": null
     }
   },
-  "required": ["format", "format_version", "pack"],
+  "required": [
+    "format",
+    "format_version",
+    "pack"
+  ],
   "title": "PackManifest",
   "type": "object"
 }

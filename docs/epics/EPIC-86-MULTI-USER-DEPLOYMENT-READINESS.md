@@ -17,17 +17,17 @@ This epic makes that one instance operable; it does not distribute it.
 
 ## Where things stand (verified 2026-11-17)
 
-| Area           | Today                                                                                                               | Gap                                                                                                                                                         |
-| -------------- | ------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Packaging      | One non-root container (Next.js, FastAPI, nginx), Compose and `docker run`, file secrets, health checks, smoke test | No upgrade or rollback procedure                                                                                                                            |
-| Process model  | `asterism.serve` enforces one worker; finite chat admission ([ADR-0020](../adr/0020-chat-capacity-admission.md))    | No measured capacity for a class-sized load                                                                                                                 |
-| Accounts       | Better Auth email/password; signup by admin key, signed-in admin or invite link                                     | No password reset, no suspend/reactivate, no "sign out everywhere"                                                                                          |
-| Deleting users | `DELETE /users/{id}` (admin) removes backend rows, files and vectors and writes a tombstone                         | No UI; the Better Auth account stays, so the person can still sign in and is refused by the tombstone (corrected 2026-11-17)                                |
-| Spend          | Token counts on each message; per-model pricing in settings                                                         | No per-user or per-group limits, no usage view                                                                                                              |
-| Data safety    | `/storage` holds `users.db`, `database.db`, files, vectors and themes; README says "back up before upgrades"        | No backup or restore command; no migrations or schema version, so upgrades mean a reset and a mismatched database starts half-working                       |
-| Edge           | nginx proxy, `client_max_body_size 100m`; Better Auth's default rate limit                                          | No security headers (CSP, HSTS, frame-ancestors, nosniff); upload limit differs from Next's 500 MB; no request limits on uploads or auth beyond Better Auth |
-| Observability  | Uvicorn-style text logs, the `asterism` namespace at DEBUG                                                          | No production log level or format, no request IDs, no admin status view                                                                                     |
-| Personal data  | AI-use log export per chat                                                                                          | A user can't download or delete their own data                                                                                                              |
+| Area | Today | Gap |
+| --- | --- | --- |
+| Packaging | One non-root container (Next.js, FastAPI, nginx), Compose and `docker run`, file secrets, health checks, smoke test | No upgrade or rollback procedure |
+| Process model | `asterism.serve` enforces one worker; finite chat admission ([ADR-0020](../adr/0020-chat-capacity-admission.md)) | No measured capacity for a class-sized load |
+| Accounts | Better Auth email/password; signup by admin key, signed-in admin or invite link | No password reset, no suspend/reactivate, no "sign out everywhere" |
+| Deleting users | `DELETE /users/{id}` (admin) removes backend rows, files and vectors and writes a tombstone | No UI; the Better Auth account stays, so the person can still sign in and is refused by the tombstone (corrected 2026-11-17) |
+| Spend | Token counts on each message; per-model pricing in settings | No per-user or per-group limits, no usage view |
+| Data safety | `/storage` holds `users.db`, `database.db`, files, vectors and themes; README says "back up before upgrades" | No backup or restore command; no migrations or schema version, so upgrades mean a reset and a mismatched database starts half-working |
+| Edge | nginx proxy, `client_max_body_size 100m`; Better Auth's default rate limit | No security headers (CSP, HSTS, frame-ancestors, nosniff); upload limit differs from Next's 500 MB; no request limits on uploads or auth beyond Better Auth |
+| Observability | Uvicorn-style text logs, the `asterism` namespace at DEBUG | No production log level or format, no request IDs, no admin status view |
+| Personal data | AI-use log export per chat | A user can't download or delete their own data |
 
 ## Decisions
 

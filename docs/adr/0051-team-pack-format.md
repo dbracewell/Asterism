@@ -24,11 +24,7 @@ in `asterism/domains/packs/documents.py`. The schema is generated from the model
 {
   "format": "asterism.team-pack",
   "format_version": 1,
-  "pack": {
-    "id": "research-team",
-    "version": "1.2.0",
-    "name": "Research team"
-  },
+  "pack": { "id": "research-team", "version": "1.2.0", "name": "Research team" },
   "sub_agents": [
     {
       "key": "researcher",
@@ -37,20 +33,10 @@ in `asterism/domains/packs/documents.py`. The schema is generated from the model
       "max_steps": 8,
       "generation": { "temperature": 0.2 },
       "requested_tools": ["web_search"],
-      "model_requirements": {
-        "tools": true,
-        "vision": false,
-        "min_context_window": 32000
-      }
+      "model_requirements": { "tools": true, "vision": false, "min_context_window": 32000 }
     }
   ],
-  "skills": [
-    {
-      "key": "cite",
-      "content": "---\nname: …",
-      "request_main_agent_assignment": true
-    }
-  ],
+  "skills": [{ "key": "cite", "content": "---\nname: …", "request_main_agent_assignment": true }],
   "templates": [{ "key": "summary", "document": {} }],
   "rubrics": [{ "key": "essay", "document": {} }],
   "project": { "name": "Research", "sub_agents": ["researcher"] }
@@ -87,15 +73,15 @@ in `asterism/domains/packs/documents.py`. The schema is generated from the model
 
 ### Bounds
 
-| Item                                      | Limit                                  |
-| ----------------------------------------- | -------------------------------------- |
-| Whole pack                                | 1,048,576 bytes, checked before decode |
-| Nesting                                   | 12 levels                              |
+| Item                                     | Limit                                  |
+| ---------------------------------------- | -------------------------------------- |
+| Whole pack                               | 1,048,576 bytes, checked before decode |
+| Nesting                                  | 12 levels                              |
 | Sub-agents / skills / templates / rubrics | 16 / 32 / 32 / 16                      |
-| Requested tools per sub-agent             | 32, unique                             |
-| Sub-agent name / description              | 200 single-line / 10,000 characters    |
-| Instructions                              | 100,000 characters                     |
-| Pack name / description / author          | 120 single-line / 2,000 / 200          |
+| Requested tools per sub-agent            | 32, unique                             |
+| Sub-agent name / description             | 200 single-line / 10,000 characters    |
+| Instructions                             | 100,000 characters                     |
+| Pack name / description / author         | 120 single-line / 2,000 / 200          |
 
 Project fields match the project API limits. Names are unique per section after
 case and whitespace folding.

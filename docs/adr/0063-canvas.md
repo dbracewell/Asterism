@@ -66,7 +66,7 @@ admin tools. Every call rechecks both switches and the chat's ownership live.
 Sub-agents do not get canvas tools in this version.
 
 - `canvas_create(kind, title, content, language?)` → `{item_id, version,
-kind, language, title}`.
+  kind, language, title}`.
 - `canvas_update(item_id, title?, content?, edits?)`: exactly one of
   `content` (full replace) or `edits` (each `{find, replace}`, where `find`
   must occur exactly once in the current visible version). The base is the

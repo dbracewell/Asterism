@@ -147,13 +147,13 @@ CUDA has not been run: no NVIDIA machine was available.
 Small models (2026-11-10, same machine, real downloads, `a red fox sitting in
 a snowy forest`, seed 42, one image after a warm-up):
 
-| Model                    | Device, precision | Size  | Time                                |
-| ------------------------ | ----------------- | ----- | ----------------------------------- |
-| DreamShaper 8 LCM        | MPS, bf16 / fp16  | 512²  | 2.7 s / 2.5 s                       |
-| DreamShaper 8 LCM        | CPU, float32      | 512²  | 12.8 s                              |
-| DreamShaper 8 LCM        | CPU, bf16         | 512²  | stopped after 10 min (2 cores busy) |
-| DreamShaper XL Lightning | MPS, bf16 / fp16  | 1024² | 2.8 s / 3.5 s                       |
-| DreamShaper XL Lightning | CPU, float32      | 1024² | 49.4 s                              |
+| Model | Device, precision | Size | Time |
+| --- | --- | --- | --- |
+| DreamShaper 8 LCM | MPS, bf16 / fp16 | 512² | 2.7 s / 2.5 s |
+| DreamShaper 8 LCM | CPU, float32 | 512² | 12.8 s |
+| DreamShaper 8 LCM | CPU, bf16 | 512² | stopped after 10 min (2 cores busy) |
+| DreamShaper XL Lightning | MPS, bf16 / fp16 | 1024² | 2.8 s / 3.5 s |
+| DreamShaper XL Lightning | CPU, float32 | 1024² | 49.4 s |
 
 The bf16 CPU result led to per-OS, per-processor precision (ADR-0064). fp16
 images were checked for the SDXL black-image problem: none.
