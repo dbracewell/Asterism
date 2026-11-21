@@ -156,3 +156,10 @@ Source: user request (2026-11-21), after Dependabot's uv group took the image ov
   - [ ] Lower the image budget (`DEFAULT_MAX_SIZE_GB` in `scripts/check-image.mjs`, which CI and the release workflow use) from 5.25 GB (raised from 5 GB on 2026-11-21 for Dependabot's uv group) to the measured size plus a margin (expected about 4.5 GB), recorded in the release notes.
   - [ ] Remove the temporary torch cap, so Dependabot updates torch for the GPU build again.
   - [ ] Release notes: Image (smaller image, no local generation in the published image, how to build the GPU image). Cut the release that ships the epic.
+
+## Maintenance follow-ups (2026-11-21)
+
+Found while taking the Dependabot updates for EPIC-92. Neither is a story of its own; take each as a small pull request.
+
+- [ ] Fix the flaky class E2E test: `apps/frontend/e2e/classes.spec.ts:84` sometimes fails with "Run by …" not visible, and passes on a rerun (seen on 2026-11-21). Find what the assertion races and wait on that instead.
+- [ ] Move provider discovery off openai's legacy httpx client. openai 3 uses httpx2 by default, and `apps/backend/asterism/domains/settings/discovery.py` still passes an `httpx.AsyncClient`, which openai accepts only through a temporary legacy path. Port the response-size limit (`_SizeLimitedStream`, the `response` event hook) and the no-redirects setting to httpx2, with tests, before openai removes that path.
