@@ -46,6 +46,10 @@ updates:
 
   - package-ecosystem: uv
     directory: /apps/backend
+    # Update uv.lock within pyproject.toml's ranges. Upper caps such as
+    # lancedb <0.30 (stored vectors) are deliberate; the default strategy
+    # rewrote that one to <0.42. Raising a cap is a change made by hand.
+    versioning-strategy: lockfile-only
     schedule:
       interval: weekly
     cooldown:
