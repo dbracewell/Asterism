@@ -345,6 +345,11 @@ Watch Admin Settings → Status during a first busy class.
    - _"Too many requests" for a whole class:_ check that `TRUSTED_PROXIES` names
      your proxy, so each person has their own address.
    - _Models fail:_ Admin Settings → Providers. Check the key and endpoint.
+   - _"The backend database predates versioned migrations":_ the storage volume
+     holds data from a development build before 0.2.0, which can't be upgraded.
+     Remove it to start fresh, which deletes that data: `docker compose down`,
+     find the volume with `docker volume ls` (`<project>_storage`), then
+     `docker volume rm` it and start again.
 5. **A compromised account:** suspend it in Admin Settings → Users. That ends its
    sessions and running work. Reset its password with a one-time link before
    reactivating it.
