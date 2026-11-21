@@ -131,3 +131,28 @@ Source: user request (2026-11-20). [EPIC-93](docs/epics/EPIC-93-LONG-TERM-MEMORY
   - [ ] Backup and restore (ADR-0072) include the memory vectors. A restore re-embeds any memory without a vector.
   - [ ] The upgrade check (US-91.6) seeds a user memory and a project memory and checks they survive.
   - [ ] User guide: a "What Asterism remembers" page. Architecture: memory in the agent runtime and context-isolation guides. `AGENTS.md`: replace "no long-term memory engine exists" with the memory rules. Release notes: Behavior.
+
+## Torch-free default image (proposed 2026-11-21)
+
+Source: user request (2026-11-21), after Dependabot's uv group took the image over its 5 GB budget. [EPIC-94](docs/epics/EPIC-94-TORCH-FREE-DEFAULT-IMAGE.md): captioning on ONNX Runtime in every build, local image generation as an optional install for the GPU build, and a lower image budget to keep the gain. Suggested order: US-94.1 → 94.3. Work one story at a time.
+
+### EPIC-94: A torch-free default image
+
+- [ ] US-94.1: Captioning on ONNX
+  - [ ] ADR: ONNX captioning, the files and precision chosen, and how they are pinned and verified.
+  - [ ] A pinned ONNX bundle for SmolVLM2 (revision, file list, SHA-256 each), through `ModelDownloadService` like the CLIP bundle. An installed safetensors bundle is no longer used and is removed on the next download; stored captions are untouched.
+  - [ ] An ONNX caption provider: image processing and prompt from `transformers` (no torch), vision encoder and embeddings, greedy decoding with the key/value cache, the current length and time bounds. It replaces `LocalSmolVlm2CaptionProvider`.
+  - [ ] A comparison on a fixed set of test images: the torch provider's captions next to each ONNX precision's, with time and memory per image. The chosen precision and the results go in the ADR.
+  - [ ] Tests: decoding stops at the end token and at the length bound; a corrupt or partial bundle is refused and re-downloaded; captioning stays off until the bundle verifies. The upgrade check seeds a volume with local captioning on and checks it still captions after the upgrade.
+  - [ ] Release notes: Behavior (captioning model files change; one new download) and Data (the old bundle is removed).
+- [ ] US-94.2: Local image generation as an optional install
+  - [ ] Move `diffusers`, `accelerate`, `torch` and `torchvision` (and the PyTorch CPU index source) to a `local-image` extra, and require onnxruntime 1.32 or later so sympy is no longer needed. Keep `uv.lock` resolving both with and without it.
+  - [ ] A check (in the quality job) that the default install's dependency graph has no torch, torchvision or diffusers, direct or transitive, naming the package that pulls one in.
+  - [ ] Dockerfile: the CPU build installs no extra; `TORCH_VARIANT=gpu` installs `local-image` with CUDA torch. `pnpm check:image` fails if torch is importable in the CPU image.
+  - [ ] The generator registry offers Diffusers only when the extra imports. A saved local generator otherwise reads "not available in this image" in Admin Settings, its catalog and downloads are hidden, and `generate_image` isn't offered for it. The ComfyUI generator is unchanged.
+  - [ ] Tests for both installs: registry, Admin Settings payload, tool availability, and a saved local generator surviving an upgrade (upgrade check) and reading as unavailable.
+  - [ ] Docs: the deployment guide's GPU build section, the development guide (`uv sync --extra local-image`), and the image generation user guide.
+- [ ] US-94.3: Hold the smaller image
+  - [ ] Lower the image budget in CI from 5 GB to the measured size plus a margin (expected about 4.5 GB), recorded in the release notes.
+  - [ ] Remove the temporary torch cap, so Dependabot updates torch for the GPU build again.
+  - [ ] Release notes: Image (smaller image, no local generation in the published image, how to build the GPU image). Cut the release that ships the epic.
