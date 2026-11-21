@@ -36,8 +36,10 @@ dependencies = [
   "requests>=2.34.2",
   "sqlalchemy[asyncio]>=2.0.50",
   "tiktoken>=0.14.0",
-  "torch>=2.13.0",
-  "torchvision>=0.24",
+  # Held at 2.13 until EPIC-94 drops torch from the default image: 2.15 takes
+  # the image past its 5 GB budget. US-94.3 removes this cap.
+  "torch>=2.13.0,<2.14",
+  "torchvision>=0.24,<0.29",
   "transformers>=5.14.1",
   "truststore>=0.10.4",
   "uvicorn[standard]>=0.48.0",
