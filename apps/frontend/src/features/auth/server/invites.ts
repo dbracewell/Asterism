@@ -9,8 +9,7 @@ export const INVALID_INVITE =
 export type InvitePreview = { class_name: string; educator_name: string };
 
 type InviteResult =
-  | { ok: true; preview: InvitePreview }
-  | { ok: false; error: string };
+  { ok: true; preview: InvitePreview } | { ok: false; error: string };
 
 /** Server-to-server; the backend accepts these only with the system key. */
 async function postInvite(

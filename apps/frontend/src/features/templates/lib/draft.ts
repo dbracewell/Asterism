@@ -208,7 +208,7 @@ export function keyFromLabel(label: string) {
  */
 export function renamePlaceholder(body: string, from: string, to: string) {
   let result = "";
-  for (let i = 0; i < body.length; ) {
+  for (let i = 0; i < body.length;) {
     const sigil = body[i + 2] === "#" || body[i + 2] === "/" ? body[i + 2] : "";
     const token = `{{${sigil}${from}}}`;
     if (body.startsWith("\\{{", i)) {
@@ -304,7 +304,7 @@ function bodyKeys(
   body: string,
 ): { placeholders: Set<string>; sections: Set<string> } | string {
   let open: { key: string; at: number } | null = null;
-  for (let i = 0; i < body.length; ) {
+  for (let i = 0; i < body.length;) {
     if (body.startsWith("\\{{", i)) i += 3;
     else if (body.startsWith("{{", i)) {
       const match = /^\{\{([#/]?)([a-z][a-z0-9_]{0,31})\}\}/.exec(

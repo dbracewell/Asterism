@@ -27,8 +27,7 @@ import { getFrontendServerConfig } from "@/lib/server-config";
 export type LifecycleResult = { ok: true } | { ok: false; error: string };
 
 export type ResetLinkResult =
-  | { ok: true; url: string; expiresAt: string }
-  | { ok: false; error: string };
+  { ok: true; url: string; expiresAt: string } | { ok: false; error: string };
 
 type Session = { user: { id: string; role?: string | null } };
 

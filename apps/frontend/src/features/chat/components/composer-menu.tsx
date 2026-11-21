@@ -28,11 +28,7 @@ import { useRef } from "react";
 import { canCaptureScreen } from "../lib/capture";
 
 export type AttachAction =
-  | "upload"
-  | "library"
-  | "paste"
-  | "screenshot"
-  | "context";
+  "upload" | "library" | "paste" | "screenshot" | "context";
 
 export type ComposerAction =
   | AttachAction

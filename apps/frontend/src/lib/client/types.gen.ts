@@ -2618,11 +2618,7 @@ export type DownloadRequest = {
 };
 
 export type DownloadStatus =
-  | "idle"
-  | "downloading"
-  | "verifying"
-  | "ready"
-  | "failed";
+  "idle" | "downloading" | "verifying" | "ready" | "failed";
 
 /**
  * DraftAnchor
@@ -4093,11 +4089,7 @@ export type KnowledgeCaptionConfigurationUpdate = {
  * derived output while its own work is in flight.
  */
 export type KnowledgeExtractionStatus =
-  | "pending"
-  | "running"
-  | "ready"
-  | "failed"
-  | "canceled";
+  "pending" | "running" | "ready" | "failed" | "canceled";
 
 /**
  * KnowledgeProcessingProfile
@@ -5090,10 +5082,7 @@ export type ModeReveal = "allowed" | "override_required" | "forbidden";
  * Provenance of a model capability value (context window, vision, tools).
  */
 export type ModelCapabilitySource =
-  | "catalog"
-  | "provider"
-  | "manual"
-  | "unknown";
+  "catalog" | "provider" | "manual" | "unknown";
 
 /**
  * ModelPricing
@@ -7076,10 +7065,7 @@ export type ScopedChatFile = {
  * SearchMatchSource
  */
 export type SearchMatchSource =
-  | "title"
-  | "content"
-  | "project_name"
-  | "project_description";
+  "title" | "content" | "project_name" | "project_description";
 
 /**
  * SearchResult
@@ -9576,20 +9562,7 @@ export type TemplateDocument = {
   /**
    * Fields
    */
-  fields: Array<
-    | ({
-        kind: "short_text";
-      } & ShortTextField)
-    | ({
-        kind: "long_text";
-      } & LongTextField)
-    | ({
-        kind: "select";
-      } & SelectField)
-    | ({
-        kind: "examples";
-      } & ExamplesField)
-  >;
+  fields: Array<ShortTextField | LongTextField | SelectField | ExamplesField>;
   /**
    * Body
    */
