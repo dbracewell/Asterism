@@ -294,6 +294,43 @@ pnpm check:image                                   # asterism:local, 5 GB budget
 pnpm check:image --image asterism:ci --max-size-gb 5
 ```
 
+### `check-upgrade.mjs`
+
+Upgrades a volume from the previous release to a built image, as CI does on
+every push and pull request (US-91.6). It starts the previous release's image on
+a fresh volume and seeds it through the API: an admin account, a model provider
+pointing at a local model double, a chat with a reply, and two related text
+files indexed into vectors. It writes a custom theme to `/storage/themes` the way
+the app's theme repository does, since themes are saved through a Next.js server
+action a script can't call. Then it starts the new image on the same volume with
+the same secrets and checks:
+
+- the container becomes healthy;
+- the auth tables are there and the backend database is at the image's head
+  revision;
+- the account signs in, the chat's messages are unchanged, both files are
+  listed and ready;
+- similar-file search still finds the second file from the first, so the
+  vectors survived;
+- the app lists the theme.
+
+Last, it starts the previous image on the upgraded volume and checks it exits
+with its "schema revision … which this code does not know" message. When both
+images have the same head revision there is nothing newer to refuse, and it
+says so.
+
+The previous release is the newest `v*` tag reachable from `HEAD`, other than
+`HEAD`'s own tags, pulled as `ghcr.io/dbracewell/asterism:<version>`. It needs
+the tags fetched. With no earlier release, it prints a skip line and passes.
+`--from` names the previous image directly. It uses port 3910 (`--port`), and
+removes its containers, volume and model double afterwards.
+
+```bash
+pnpm check:upgrade                                 # previous release → asterism:local
+pnpm check:upgrade --to asterism:ci
+pnpm check:upgrade --from ghcr.io/dbracewell/asterism:0.2.0 --to asterism:local
+```
+
 ### `check-release-notes.mjs`
 
 Fails when the work since the branch left its base adds an Alembic revision
