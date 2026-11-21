@@ -22,6 +22,8 @@ Unreleased into its version and date.
 
 ## Unreleased
 
+## 0.2.1 (2026-11-21)
+
 ### Image
 
 - **Upgrade from 0.2.0:** this release fixes critical vulnerabilities in the
