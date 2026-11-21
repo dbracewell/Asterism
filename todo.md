@@ -64,7 +64,7 @@ Source: user request (2026-11-20), following EPIC-91. [EPIC-92](docs/epics/EPIC-
   - [x] Record, for each critical, whether Asterism's use reaches it, in the pull request. Every one is fixed either way.
   - [x] All checks pass, including the image checks and the upgrade check from 0.2.0. Dependabot shows no open critical alerts.
   - [x] Release notes: an Image entry naming the fixes and telling administrators to upgrade. Cut and publish 0.2.1.
-- [ ] US-92.1: Pin what the build pulls (in progress)
+- [x] US-92.1: Pin what the build pulls (merged 2026-11-21, PR #23)
   - [x] Pin each `FROM` that pulls an external image in `Dockerfile` to `image:tag@sha256:…`. A `FROM` naming a stage declared earlier in the file (`FROM frontend-base AS …`) is left as it is. The GPU build uses the same stages, so it is pinned too. The `uv` the build installs with pip is already pinned.
   - [x] Pin every `uses:` in `.github/workflows/` to a full commit SHA with `# vX.Y.Z` after it.
   - [x] A check (`pnpm check:pins`, run in the quality job) fails on an external image in a `FROM` without a digest, or a `uses:` without a commit SHA, naming the file and line. It allows `FROM` lines naming a stage declared earlier in the same Dockerfile, and local actions (`uses: ./…`). Tests cover both.
