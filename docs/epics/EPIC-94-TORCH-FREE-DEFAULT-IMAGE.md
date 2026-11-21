@@ -110,8 +110,9 @@ use well, and a saved local generator never fails silently.
 
 As a maintainer, the size gained stays gained.
 
-- [ ] Lower the image budget in CI from 5 GB to the measured size plus a
-      margin (expected about 4.5 GB), recorded in the release notes.
+- [ ] Lower the image budget in CI and the release workflow from 5.25 GB
+      (raised from 5 GB on 2026-11-21 so Dependabot's uv group, #46, fits) to the
+      measured size plus a margin (expected about 4.5 GB), recorded in the release notes.
 - [ ] Remove the temporary torch cap, so Dependabot updates torch for the GPU
       build again.
 - [ ] Release notes: Image (smaller image, no local generation in the published

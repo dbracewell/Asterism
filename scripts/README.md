@@ -304,7 +304,7 @@ afterwards.
 
 ```bash
 pnpm check:image                                   # asterism:local, 5 GB budget
-pnpm check:image --image asterism:ci --max-size-gb 5
+pnpm check:image --image asterism:ci --max-size-gb 5.25
 ```
 
 ### `check-upgrade.mjs`
