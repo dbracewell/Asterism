@@ -172,7 +172,7 @@ jobs:
           cache-to: type=gha,scope=asterism-image,mode=max
 
       - name: Start the image and check its size
-        run: pnpm check:image --image asterism:ci --max-size-gb 5
+        run: pnpm check:image --image asterism:ci
 
       - name: Check the web fetch tool's browser in the image
         run: pnpm check:fetch-browser-container --image asterism:ci

@@ -126,10 +126,12 @@ the image fails there, not in an upgrade. The fourth (US-91.6) seeds a volume
 with the previous release's image and upgrades it to the new one: an account,
 a chat, indexed files and a theme must all survive, and the previous image must
 refuse the upgraded volume. Before the first release it is skipped with a
-message. The image must stay within a **5 GB**
-budget (unpacked); when it grows past it, the job lists the largest layers.
-Raise `--max-size-gb` in `.github/workflows/ci.yml` only as a decision, noted in
-the release notes.
+message. The image must stay within a **5.25 GB**
+budget (unpacked; raised from 5 GB on 2026-11-21 until EPIC-94 removes torch
+from the image); when it grows past it, the job lists the largest layers.
+The budget is set once, as `DEFAULT_MAX_SIZE_GB` in `scripts/check-image.mjs`,
+so CI, the release workflow and a local `pnpm check:image` all check the same
+one. Change it only as a decision, noted in the release notes.
 
 With Docker, these check the image and its configuration using generated,
 throwaway secrets, containers and volumes:
