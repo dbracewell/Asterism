@@ -300,19 +300,21 @@ Upgrades a volume from the previous release to a built image, as CI does on
 every push and pull request (US-91.6). It starts the previous release's image on
 a fresh volume and seeds it through the API: an admin account, a model provider
 pointing at a local model double, a chat with a reply, and two related text
-files indexed into vectors. It writes a custom theme to `/storage/themes` the way
-the app's theme repository does, since themes are saved through a Next.js server
-action a script can't call. Then it starts the new image on the same volume with
+files indexed into vectors. For a custom theme, it reads a bundled theme from the
+previous image's `/api/theme` and writes it, renamed, to `/storage/themes` the way
+the app's theme repository does, so the theme is in that release's format. Themes
+are saved through a Next.js server action, which a script can't call. Then it starts the new image on the same volume with
 the same secrets and checks:
 
 - the container becomes healthy;
-- the auth tables are there and the backend database is at the image's head
-  revision;
+- the auth database has the schema the image's own Better Auth migration gives a
+  fresh database (tables, columns and indexes), and the backend database is at
+  the image's head revision;
 - the account signs in, the chat's messages are unchanged, both files are
-  listed and ready;
+  listed and ready, and downloading them gives back the uploaded bytes;
 - similar-file search still finds the second file from the first, so the
   vectors survived;
-- the app lists the theme.
+- the app serves the theme with every value unchanged.
 
 Last, it starts the previous image on the upgraded volume and checks it exits
 with its "schema revision … which this code does not know" message. When both
@@ -320,8 +322,12 @@ images have the same head revision there is nothing newer to refuse, and it
 says so.
 
 The previous release is the newest `v*` tag reachable from `HEAD`, other than
-`HEAD`'s own tags, pulled as `ghcr.io/dbracewell/asterism:<version>`. It needs
-the tags fetched. With no earlier release, it prints a skip line and passes.
+`HEAD`'s own tags, whose image `ghcr.io/dbracewell/asterism:<version>` was
+published. It asks the registry anonymously, since the package is public. A
+release whose workflow failed keeps its tag but has no image (404), so the
+release before it is used. Any other registry answer is an error. It needs the
+tags fetched. With no published earlier release, it prints a skip line and
+passes.
 `--from` names the previous image directly. It uses port 3910 (`--port`), and
 removes its containers, volume and model double afterwards.
 
