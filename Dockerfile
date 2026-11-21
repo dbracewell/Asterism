@@ -1,5 +1,5 @@
-# syntax=docker/dockerfile:1
-FROM node:22-bookworm-slim AS frontend-base
+# syntax=docker/dockerfile:1.29.0@sha256:572cebbc2b15e6f84c077742952674889cb63cd5e9b80abdffcbe587b6f19183
+FROM node:22-bookworm-slim@sha256:e9f565d32859f0cbfb52125eafe8be39390f24dac302dc3cdf566e8ba3ab21ee AS frontend-base
 
 # Build tools for better-sqlite3's native module.
 RUN apt-get update && apt-get install -y --no-install-recommends python3 make g++ \
@@ -28,7 +28,7 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN pnpm --filter @asterism/frontend build \
   && test ! -e /storage/users.db
 
-FROM python:3.13-slim-bookworm AS backend-build
+FROM python:3.13-slim-bookworm@sha256:a5a7017efc5969e00ae2b91c8eb0631049a569652aa4ffc4501769049ae45c72 AS backend-build
 # Avoid compiling llama.cpp for build-host-only CPU features (notably ARM VMs).
 ENV UV_LINK_MODE=copy UV_COMPILE_BYTECODE=1 CMAKE_ARGS="-DGGML_NATIVE=OFF"
 RUN pip install --no-cache-dir uv==0.12.13 \
@@ -65,7 +65,7 @@ RUN PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS=1 .venv/bin/playwright install --
 
 # Runtime needs SQLite >=3.45 for the backend's JSONB SQL functions.
 # Bookworm-built native dependencies remain compatible with newer glibc.
-FROM python:3.13-slim-trixie AS runtime
+FROM python:3.13-slim-trixie@sha256:e48f59cdba69a3cbd9ed2cf0f348d90d45a8d350d98134cf1070bc106ee9ed90 AS runtime
 
 # Headless Chromium's libraries, without Playwright's install-deps (a virtual
 # display, extra fonts, and LLVM and Mesa through libgbm1). libgbm.so.1 itself

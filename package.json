@@ -13,6 +13,7 @@
     "check:workspace-tasks": "node scripts/check-workspace-tasks.mjs",
     "check:no-dotenv": "node scripts/check-no-dotenv.mjs",
     "docs:check": "node scripts/check-docs.mjs",
+    "check:pins": "node scripts/check-pins.mjs",
     "docs:screenshots": "node scripts/docs-screenshots.mjs",
     "config:check": "node scripts/config-check.mjs --profile development --scope all --env required",
     "test:config": "node --test test/*.test.mjs",
@@ -43,6 +44,7 @@
   "type": "module",
   "devDependencies": {
     "prettier": "^3.8.3",
-    "prettier-plugin-tailwindcss": "^0.8.0"
+    "prettier-plugin-tailwindcss": "^0.8.0",
+    "yaml": "2.9.1"
   }
 }
