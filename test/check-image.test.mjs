@@ -33,7 +33,7 @@ test("an image within budget passes, and one over it names the largest layers", 
   assert.equal(sizeProblem(5e9, 5e9, layers), null);
   const problem = sizeProblem(5.2e9, 5e9, layers);
   assert.match(problem, /^The image is 5\.20 GB, over the 5\.00 GB budget\./);
-  assert.match(problem, /--max-size-gb/);
+  assert.match(problem, /DEFAULT_MAX_SIZE_GB in scripts\/check-image\.mjs/);
   assert.match(problem, /1\.9GB {2}COPY \/app\/apps\/backend/);
   assert.equal(sizeProblem(null, 5e9, layers), "Could not read the image size");
 });
