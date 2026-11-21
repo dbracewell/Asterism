@@ -7,23 +7,29 @@
 // the API: an admin account, a model provider (a local double), a chat with a
 // reply, two related files indexed into vectors, and a custom theme. Then it
 // stops it and starts the new image on the same volume with the same secrets,
-// and checks the container is healthy, both databases were migrated, and the
-// account, chat, files (their vectors too, through similar-file search) and
-// theme are all still there. Last, it starts the previous image again on the
+// and checks the container is healthy, both databases were migrated (the auth
+// schema matches a fresh one from the new image), and the account, chat, files
+// (their bytes, and their vectors through similar-file search) and theme (every
+// value) are all still there. Last, it starts the previous image again on the
 // upgraded volume and checks it refuses the newer database with its version
 // message, rather than running on it.
 //
-// The previous release is the newest v<version> tag behind this commit; its
-// image is ghcr.io/dbracewell/asterism:<version>. With none yet, the check
-// says so and passes. Containers, the volume and the double are removed
+// The previous release is the newest v<version> tag behind this commit whose
+// image, ghcr.io/dbracewell/asterism:<version>, was published: a release whose
+// workflow failed keeps its tag but has no image, so the one before it is
+// used. With none yet, the check says so and passes. Containers, the volume and the double are removed
 // afterwards.
 import { spawnSync } from "node:child_process";
 import { randomBytes, randomUUID } from "node:crypto";
-import { readFileSync } from "node:fs";
 import { pathToFileURL } from "node:url";
 import { parseArgs } from "node:util";
 import { AUTH_TABLES } from "./check-image.mjs";
-import { ChatSocket, HttpError, Metrics, Session } from "./capacity/session.mjs";
+import {
+  ChatSocket,
+  HttpError,
+  Metrics,
+  Session,
+} from "./capacity/session.mjs";
 import { startStubProvider } from "./capacity/stub-provider.mjs";
 import { latestRelease } from "./release.mjs";
 
@@ -31,18 +37,71 @@ export const REGISTRY_IMAGE = "ghcr.io/dbracewell/asterism";
 const PASSWORD = "Upgrade-check-91!";
 const PYTHON = "/app/apps/backend/.venv/bin/python";
 const THEME_ID = "upgrade-check";
-const BUNDLED_THEME = "apps/frontend/src/features/theme/bundled/atlas.json";
+// A bundled theme the previous image serves, saved again as a custom one.
+const BASE_THEME = "atlas";
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const log = (message) => console.log(message);
 
 /**
- * The release to upgrade from: the newest `v*` tag reachable from this commit,
- * leaving out the commit's own tags (a release commit upgrades from the one
- * before it). Null when there is none.
+ * The releases that could be upgraded from, newest first: the `v*` tags
+ * reachable from this commit, leaving out the commit's own tags (a release
+ * commit upgrades from the one before it).
  */
-export function previousRelease({ reachable, atHead }) {
+export function previousReleases({ reachable, atHead }) {
   const own = new Set(atHead);
-  return latestRelease(reachable.filter((tag) => !own.has(tag)));
+  const versions = [];
+  let remaining = reachable.filter((tag) => !own.has(tag));
+  for (let next; (next = latestRelease(remaining)); ) {
+    versions.push(next);
+    remaining = remaining.filter((tag) => tag.replace(/^v/, "") !== next);
+  }
+  return versions;
+}
+
+/**
+ * The newest of `versions` with a published image, or null. `lookup` answers
+ * the registry's status for a version's manifest: only 404 (never published)
+ * moves on to an older release; anything else but 200 is an error.
+ */
+export async function publishedRelease(versions, lookup, note = () => {}) {
+  for (const version of versions) {
+    const status = await lookup(version);
+    if (status === 200) return version;
+    if (status !== 404) {
+      throw new Error(
+        `The registry answered ${status} for ${REGISTRY_IMAGE}:${version}`,
+      );
+    }
+    note(
+      `${REGISTRY_IMAGE}:${version} was never published (its release failed); trying the release before it`,
+    );
+  }
+  return null;
+}
+
+/** The registry's status for a version's manifest, asked anonymously. */
+async function manifestStatus(version) {
+  const repository = REGISTRY_IMAGE.replace(/^ghcr\.io\//, "");
+  const auth = await fetch(
+    `https://ghcr.io/token?scope=repository:${repository}:pull`,
+  );
+  if (!auth.ok)
+    throw new Error(`ghcr.io refused a pull token (${auth.status})`);
+  const { token } = await auth.json();
+  const response = await fetch(
+    `https://ghcr.io/v2/${repository}/manifests/${version}`,
+    {
+      method: "HEAD",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: [
+          "application/vnd.oci.image.index.v1+json",
+          "application/vnd.docker.distribution.manifest.list.v2+json",
+        ].join(", "),
+      },
+    },
+  );
+  return response.status;
 }
 
 /** What must survive of a chat: each message's id, role, status and text. */
@@ -64,20 +123,45 @@ export function seedProblems(seeded, found) {
       `The chat changed: seeded ${JSON.stringify(seeded.chat)}, found ${JSON.stringify(found.chat)}`,
     );
   }
-  for (const filename of seeded.files) {
+  for (const filename of Object.keys(seeded.files)) {
     if (!found.files.includes(filename))
       problems.push(`The file ${filename} is missing`);
+    else if (found.contents[filename] !== seeded.files[filename])
+      problems.push(`The file ${filename} no longer has the uploaded content`);
   }
   if (found.knowledge !== "ready")
     problems.push(`The file's knowledge is ${found.knowledge}, not ready`);
-  if (!found.similar.includes(seeded.files[1])) {
+  const [first, second] = Object.keys(seeded.files);
+  if (!found.similar.includes(second)) {
     problems.push(
-      `Similar-file search for ${seeded.files[0]} no longer finds ${seeded.files[1]}, so its vectors were lost (found ${JSON.stringify(found.similar)})`,
+      `Similar-file search for ${first} no longer finds ${second}, so its vectors were lost (found ${JSON.stringify(found.similar)})`,
     );
   }
-  if (!found.themes.includes(seeded.theme))
-    problems.push(`The theme ${seeded.theme} is missing`);
+  // A release that deliberately changes the theme format changes this too.
+  if (!found.theme)
+    problems.push(`The theme ${seeded.theme.filename} is missing`);
+  else if (JSON.stringify(found.theme) !== JSON.stringify(seeded.theme)) {
+    problems.push(
+      `The theme changed: seeded ${JSON.stringify(seeded.theme)}, found ${JSON.stringify(found.theme)}`,
+    );
+  }
   return problems;
+}
+
+/** How an upgraded schema differs from a fresh one, or null. */
+export function schemaProblem(expected, upgraded) {
+  const differences = [];
+  for (const [table, shape] of Object.entries(expected)) {
+    if (!upgraded[table]) differences.push(`missing table ${table}`);
+    else if (JSON.stringify(upgraded[table]) !== JSON.stringify(shape)) {
+      differences.push(
+        `${table} is ${JSON.stringify(upgraded[table])}, not ${JSON.stringify(shape)}`,
+      );
+    }
+  }
+  return differences.length
+    ? `The auth database is not at the image's schema:\n  ${differences.join("\n  ")}`
+    : null;
 }
 
 function docker(args, options = {}) {
@@ -180,6 +264,62 @@ with sqlite3.connect("file:/storage/database.db?mode=ro", uri=True) as connectio
 print(json.dumps({"auth": tables("/storage/users.db"), "revision": revision and revision[0], "head": head_revision()}))
 `;
 
+// Every table's columns and every index of a SQLite database, in a stable order.
+const schemaDump = String.raw`
+import json, sqlite3, sys
+with sqlite3.connect(f"file:{sys.argv[1]}?mode=ro", uri=True) as connection:
+    schema = {}
+    for (table,) in connection.execute("SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' ORDER BY name"):
+        # By name: a column added by ALTER TABLE comes last, not where CREATE puts it.
+        columns = sorted(
+            [c[1], c[2].upper(), c[3], c[4], c[5]]
+            for c in connection.execute(f'PRAGMA table_info("{table}")')
+        )
+        indexes = sorted(
+            [i[1], i[2], [c[2] for c in connection.execute(f'PRAGMA index_info("{i[1]}")')]]
+            for i in connection.execute(f'PRAGMA index_list("{table}")')
+            if not i[1].startswith("sqlite_autoindex")
+        )
+        schema[table] = {"columns": columns, "indexes": indexes}
+print(json.dumps(schema))
+`;
+
+/**
+ * Whether the upgraded auth database has the schema the image's own Better
+ * Auth migration gives a fresh database: run it on a scratch file in the
+ * container, as the entrypoint runs it on /storage/users.db, and compare.
+ */
+function authSchemaProblem(name) {
+  const fresh = "/tmp/upgrade-check-auth.db";
+  docker([
+    "exec",
+    "-w",
+    "/app/apps/frontend",
+    name,
+    "env",
+    "-u",
+    "SYSTEM_KEY",
+    "-u",
+    "ADMIN_PASSPHRASE",
+    "-u",
+    "DB_URL",
+    `BETTER_AUTH_DB_PATH=${fresh}`,
+    "ASTERISM_CONFIG_PROFILE=auth-migrate",
+    "node",
+    "node_modules/auth/dist/index.mjs",
+    "migrate",
+    "--config",
+    "./src/lib/auth-cli.ts",
+    "--yes",
+  ]);
+  const dump = (path) =>
+    JSON.parse(docker(["exec", name, PYTHON, "-c", schemaDump, path]));
+  const expected = dump(fresh);
+  const upgraded = dump("/storage/users.db");
+  docker(["exec", name, "rm", "-f", fresh]);
+  return schemaProblem(expected, upgraded);
+}
+
 function databases(name) {
   return JSON.parse(
     docker([
@@ -197,11 +337,11 @@ function databases(name) {
 // Written the way the app's theme repository saves one: validated fields as
 // JSON at /storage/themes/<id>.json, owned by the app's user. Themes are saved
 // through a Next.js server action, whose id changes with every build, so a
-// script can't call it; the app reading the file back is what is checked.
+// script can't call it. The data is a bundled theme the previous image itself
+// serves, renamed, so it is in that release's format.
 const themeSeed = String.raw`
 import json, os, sys
 theme = json.load(sys.stdin)
-theme["name"] = "Upgrade check"
 os.makedirs("/storage/themes", exist_ok=True)
 path = "/storage/themes/${THEME_ID}.json"
 with open(path, "w") as target:
@@ -209,11 +349,13 @@ with open(path, "w") as target:
 os.chmod(path, 0o600)
 `;
 
-async function themeIds(base) {
-  const response = await fetch(`${base}/api/theme/list`);
+/** A theme as the app serves it, or null when it doesn't know it. */
+async function readTheme(base, id) {
+  const response = await fetch(`${base}/api/theme?name=${id}`);
+  if (response.status === 404) return null;
   if (!response.ok)
-    throw new Error(`GET /api/theme/list answered ${response.status}`);
-  return (await response.json()).map((theme) => theme.filename);
+    throw new Error(`GET /api/theme?name=${id} answered ${response.status}`);
+  return response.json();
 }
 
 function notes(topic) {
@@ -316,26 +458,34 @@ async function seed(run, stub) {
     await session.api("chat", "GET", `/chat/${created.info.id}`),
   );
   if (chat.length < 2 || chat.at(-1).role !== "assistant") {
-    throw new Error(
-      `The seeded chat has no reply: ${JSON.stringify(chat)}`,
-    );
+    throw new Error(`The seeded chat has no reply: ${JSON.stringify(chat)}`);
   }
 
-  const files = ["light-reactions.txt", "calvin-cycle.txt"];
-  for (const filename of files) {
-    await session.upload("upload", filename, notes(filename));
+  const files = Object.fromEntries(
+    ["light-reactions.txt", "calvin-cycle.txt"].map((filename) => [
+      filename,
+      notes(filename),
+    ]),
+  );
+  for (const [filename, text] of Object.entries(files)) {
+    await session.upload("upload", filename, text);
     const status = await waitIndexed(session, filename);
     if (status !== "ready")
       throw new Error(`${filename} was not indexed: ${status}`);
   }
 
+  const base = await readTheme(run.base, BASE_THEME);
+  if (!base) throw new Error(`The previous image has no ${BASE_THEME} theme`);
+  const { filename: _filename, ...data } = base;
+  void _filename;
   docker(["exec", "-i", run.containers.at(-1), PYTHON, "-c", themeSeed], {
-    input: readFileSync(BUNDLED_THEME, "utf8"),
+    input: JSON.stringify({ ...data, name: "Upgrade check" }),
   });
-  if (!(await themeIds(run.base)).includes(THEME_ID))
-    throw new Error("The app does not list the seeded theme");
+  const theme = await readTheme(run.base, THEME_ID);
+  if (!theme)
+    throw new Error("The previous image does not read the seeded theme");
 
-  return { email, chatId: created.info.id, chat, files, theme: THEME_ID };
+  return { email, chatId: created.info.id, chat, files, theme };
 }
 
 async function inspectSeed(run, seeded) {
@@ -345,33 +495,45 @@ async function inspectSeed(run, seeded) {
     metrics: new Metrics(),
   });
   const signedIn = (await session.signIn(seeded.email, PASSWORD)).ok;
-  if (!signedIn) return { signedIn, files: [], similar: [], themes: [] };
+  if (!signedIn)
+    return { signedIn, files: [], contents: {}, similar: [], theme: null };
   const chat = chatSnapshot(
     await session.api("chat", "GET", `/chat/${seeded.chatId}`),
   );
   const listed = await session.api("files", "GET", "/files/");
-  const files = (listed.files ?? listed).map((file) => file.filename);
+  const files = listed.files.map((file) => file.filename);
+  const contents = {};
+  for (const filename of Object.keys(seeded.files)) {
+    const download = await session.fetch(
+      "download",
+      `/api/py/files/${encodeURIComponent(filename)}`,
+      { headers: { Authorization: `Bearer ${await session.token()}` } },
+    );
+    if (download.status === 200) contents[filename] = download.text;
+  }
+  const [first] = Object.keys(seeded.files);
   const knowledge = (
     await session.api(
       "knowledge",
       "GET",
-      `/files/${encodeURIComponent(seeded.files[0])}/knowledge`,
+      `/files/${encodeURIComponent(first)}/knowledge`,
     )
   ).status;
   const similar = (
     await session.api(
       "similar",
       "GET",
-      `/files/${encodeURIComponent(seeded.files[0])}/similar`,
+      `/files/${encodeURIComponent(first)}/similar`,
     )
   ).files.map((match) => match.file.filename);
   return {
     signedIn,
     chat,
     files,
+    contents,
     knowledge,
     similar,
-    themes: await themeIds(run.base),
+    theme: await readTheme(run.base, THEME_ID),
   };
 }
 
@@ -405,7 +567,7 @@ async function check({ from, to, port }) {
     const before = databases(old);
     const seeded = await seed(run, stub);
     log(
-      `ok: seeded an admin, a chat with ${seeded.chat.length} messages, ${seeded.files.length} indexed files and a theme (schema ${before.revision})`,
+      `ok: seeded an admin, a chat with ${seeded.chat.length} messages, ${Object.keys(seeded.files).length} indexed files and a theme (schema ${before.revision})`,
     );
     stop(old);
 
@@ -417,18 +579,20 @@ async function check({ from, to, port }) {
     const missing = AUTH_TABLES.filter((table) => !after.auth.includes(table));
     if (missing.length)
       throw new Error(`The auth database lost tables: ${missing.join(", ")}`);
+    const auth = authSchemaProblem(next);
+    if (auth) throw new Error(auth);
     if (after.revision !== after.head) {
       throw new Error(
         `The backend database is at ${after.revision}, not the image's ${after.head}`,
       );
     }
     log(
-      `ok: both databases migrated (schema ${before.revision} → ${after.revision})`,
+      `ok: both databases migrated: the auth schema matches a fresh one, and the backend went ${before.revision} → ${after.revision}`,
     );
     const problems = seedProblems(seeded, await inspectSeed(run, seeded));
     if (problems.length) throw new Error(problems.join("\n"));
     log(
-      "ok: the account signs in, and the chat, files, their vectors and the theme are all there",
+      "ok: the account signs in; the chat, the files' bytes and vectors, and every theme value are unchanged",
     );
     stop(next);
 
@@ -463,7 +627,8 @@ async function check({ from, to, port }) {
         `--- ${last} logs ---\n${output.split("\n").slice(-60).join("\n")}`,
       );
       for (const secret of Object.values(run.secrets)) {
-        if (output.includes(secret)) console.error("A secret appeared in the logs");
+        if (output.includes(secret))
+          console.error("A secret appeared in the logs");
       }
     }
     throw error;
@@ -487,13 +652,16 @@ async function main() {
   });
   let from = values.from;
   if (!from) {
-    const version = previousRelease({
+    const candidates = previousReleases({
       reachable: git("tag", "--list", "v*", "--merged", "HEAD"),
       atHead: git("tag", "--points-at", "HEAD"),
     });
+    const version = await publishedRelease(candidates, manifestStatus, log);
     if (!version) {
       log(
-        "skip: no release precedes this commit yet, so there is nothing to upgrade from",
+        candidates.length
+          ? "skip: no release before this commit has a published image, so there is nothing to upgrade from"
+          : "skip: no release precedes this commit yet, so there is nothing to upgrade from",
       );
       return;
     }
