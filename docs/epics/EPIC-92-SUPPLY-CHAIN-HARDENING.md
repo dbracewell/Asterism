@@ -14,13 +14,13 @@ builds, and hosting a private registry or mirror.
 
 ## Where things stand (verified 2026-11-20)
 
-| Area             | What happens today                                                                                                                                                                                                                                                                                     |
-| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Base images      | The Dockerfile pulls `node:22-bookworm-slim`, `python:3.13-slim-bookworm` and `python:3.13-slim-trixie` by tag. A rebuild of the same commit can get different bases.                                                                                                                                  |
-| Actions          | Workflows use actions by major tag (`actions/checkout@v4`, `docker/build-push-action@v6`, `pnpm/action-setup@v4`, `astral-sh/setup-uv@v6`, …). A moved tag changes what runs with `packages: write` in the release workflow.                                                                              |
-| Dependencies     | `pnpm-lock.yaml` and `uv.lock` pin every package, and pnpm holds new releases back with `minimumReleaseAge` and allows install scripts only for four packages. No tool proposes updates; nothing scans for known vulnerabilities. Model bundles are already pinned by revision and SHA-256.                |
-| Release image    | `release.yml` builds with `provenance: false` and no SBOM, and publishes the index with `imagetools create`. Nothing signs or attests it, so nothing ties `ghcr.io/dbracewell/asterism:0.2.0` to this repository's workflow.                                                                           |
-| Repository rules | Pull requests can be merged before their checks finish (PR #15 merged while GitHub was still computing mergeability). Nothing protects `v*` tags. There is no `SECURITY.md`.                                                                                                                             |
+| Area             | What happens today                                                                                                                                                                                                                                                                          |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Base images      | The Dockerfile pulls `node:22-bookworm-slim`, `python:3.13-slim-bookworm` and `python:3.13-slim-trixie` by tag. A rebuild of the same commit can get different bases.                                                                                                                       |
+| Actions          | Workflows use actions by major tag (`actions/checkout@v4`, `docker/build-push-action@v6`, `pnpm/action-setup@v4`, `astral-sh/setup-uv@v6`, …). A moved tag changes what runs with `packages: write` in the release workflow.                                                                |
+| Dependencies     | `pnpm-lock.yaml` and `uv.lock` pin every package, and pnpm holds new releases back with `minimumReleaseAge` and allows install scripts only for four packages. No tool proposes updates; nothing scans for known vulnerabilities. Model bundles are already pinned by revision and SHA-256. |
+| Release image    | `release.yml` builds with `provenance: false` and no SBOM, and publishes the index with `imagetools create`. Nothing signs or attests it, so nothing ties `ghcr.io/dbracewell/asterism:0.2.0` to this repository's workflow.                                                                |
+| Repository rules | Pull requests can be merged before their checks finish (PR #15 merged while GitHub was still computing mergeability). Nothing protects `v*` tags. There is no `SECURITY.md`.                                                                                                                |
 
 ## Decisions
 
@@ -50,13 +50,17 @@ Suggested order: US-92.1 → 92.2 → 92.3 → 92.4 → 92.5.
 As an administrator, a rebuild of a release uses the same bases and the same
 workflow code.
 
-- [ ] Pin each `FROM` in `Dockerfile` to `image:tag@sha256:…` (the GPU build
-      uses the same stages, so it is pinned too), and the `uv` the build installs
-      with pip is already pinned.
+- [ ] Pin each `FROM` that pulls an external image in `Dockerfile` to
+      `image:tag@sha256:…`. A `FROM` naming a stage declared earlier in the file
+      (`FROM frontend-base AS …`) is left as it is. The GPU build uses the same
+      stages, so it is pinned too. The `uv` the build installs with pip is already
+      pinned.
 - [ ] Pin every `uses:` in `.github/workflows/` to a full commit SHA with
       `# vX.Y.Z` after it.
-- [ ] A check (`pnpm check:pins`, run in the quality job) fails on an unpinned
-      `FROM` or `uses:`, naming the file and line.
+- [ ] A check (`pnpm check:pins`, run in the quality job) fails on an external
+      image in a `FROM` without a digest, or a `uses:` without a commit SHA, naming
+      the file and line. It allows `FROM` lines naming a stage declared earlier in
+      the same Dockerfile, and local actions (`uses: ./…`). Tests cover both.
 - [ ] Add `.github/dependabot.yml` for `github-actions`, `docker`, `npm` (pnpm) and
       `uv`: weekly, grouped by ecosystem, minor and patch together, majors on their
       own. Document how to review one in `docs/development.md`.
@@ -110,11 +114,7 @@ report a vulnerability.
 - [ ] `SECURITY.md`: which versions get fixes (the latest minor in 0.x), how to
       report privately (GitHub private vulnerability reporting), and what happens next.
 - [ ] `docs/development.md` lists the repository settings this epic relies on, for
-      the owner to turn on:
-      - a ruleset on `main` requiring the three CI checks and an up-to-date branch;
-      - a ruleset that lets only maintainers create or move `v*` tags;
-      - private vulnerability reporting;
-      - Dependabot alerts.
+      the owner to turn on: - a ruleset on `main` requiring the three CI checks and an up-to-date branch; - a ruleset that lets only maintainers create or move `v*` tags; - private vulnerability reporting; - Dependabot alerts.
 - [ ] Release notes: an Image entry for signed and attested images.
 
 ## Open questions

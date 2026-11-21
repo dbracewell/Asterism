@@ -59,9 +59,9 @@ Source: user request (2026-11-20), following EPIC-91. [EPIC-92](docs/epics/EPIC-
 ### EPIC-92: Supply-chain hardening
 
 - [ ] US-92.1: Pin what the build pulls
-  - [ ] Pin each `FROM` in `Dockerfile` to `image:tag@sha256:…` (the GPU build uses the same stages, so it is pinned too), and the `uv` the build installs with pip is already pinned.
+  - [ ] Pin each `FROM` that pulls an external image in `Dockerfile` to `image:tag@sha256:…`. A `FROM` naming a stage declared earlier in the file (`FROM frontend-base AS …`) is left as it is. The GPU build uses the same stages, so it is pinned too. The `uv` the build installs with pip is already pinned.
   - [ ] Pin every `uses:` in `.github/workflows/` to a full commit SHA with `# vX.Y.Z` after it.
-  - [ ] A check (`pnpm check:pins`, run in the quality job) fails on an unpinned `FROM` or `uses:`, naming the file and line.
+  - [ ] A check (`pnpm check:pins`, run in the quality job) fails on an external image in a `FROM` without a digest, or a `uses:` without a commit SHA, naming the file and line. It allows `FROM` lines naming a stage declared earlier in the same Dockerfile, and local actions (`uses: ./…`). Tests cover both.
   - [ ] Add `.github/dependabot.yml` for `github-actions`, `docker`, `npm` (pnpm) and `uv`: weekly, grouped by ecosystem, minor and patch together, majors on their own. Document how to review one in `docs/development.md`.
 - [ ] US-92.2: Scan for known vulnerabilities
   - [ ] The image-checks job runs Trivy on the built image and on the lockfiles. It fails on fixable criticals and prints a table of highs.
@@ -116,7 +116,8 @@ Source: user request (2026-11-20). [EPIC-93](docs/epics/EPIC-93-LONG-TERM-MEMORY
 - [ ] US-93.5: Relevant memories in every turn
   - [ ] Before a turn, select memories: user memories, plus the chat's project memories in project chats; ranked by similarity with the prompt; bounded by count and tokens; all available ones when there are few.
   - [ ] Add them as one information layer, framed as information about the person, not instructions, after About you.
-  - [ ] Record the selected ids and revisions on the accepted message, like `accepted_about`. Resume uses the record (ownership checked); regeneration selects again; children inherit the layer.
+  - [ ] Snapshot the selected memories (id, revision and text) privately on the accepted message, like `accepted_about`. Resume uses the snapshot, with ownership checked; regeneration selects again; children inherit the layer. Deleting a memory, or deleting all, removes its text from every snapshot.
+  - [ ] Tests: an edit between acceptance and resume, where resume sends the accepted text; a deletion between them, where resume sends nothing for that memory.
   - [ ] Show which memories a reply used, in the progress panel or message details, with a link to them in Your Asterism.
   - [ ] Tests for selection, the budget, pinning, course and policy refusals, and that a General chat never receives project memory.
 - [ ] US-93.6: Memory in exports, backups and upgrades

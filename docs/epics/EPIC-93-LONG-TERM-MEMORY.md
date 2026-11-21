@@ -22,13 +22,13 @@ Out of scope:
 
 ## Where things stand (verified 2026-11-20)
 
-| Area                  | What happens today                                                                                                                                                                                                                                                                                                                           |
-| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| About you             | One text per user (`users.about_md`, ADR-0066), written by the person in Your Asterism, framed as information about them, not instructions. Each accepted message pins it (`accepted_about`); regeneration uses the current text; children inherit the recorded layer. ADR-0066 says Your Asterism is where future memory settings will live. |
+| Area                  | What happens today                                                                                                                                                                                                                                                                                                                                  |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| About you             | One text per user (`users.about_md`, ADR-0066), written by the person in Your Asterism, framed as information about them, not instructions. Each accepted message pins it (`accepted_about`); regeneration uses the current text; children inherit the recorded layer. ADR-0066 says Your Asterism is where future memory settings will live.       |
 | Memory boundary       | `MemoryNamespace` (`domains/agent/context_provenance.py`) keys future memory by user plus project, or by user plus chat in General. It deliberately offers **no user-only partition** ([context isolation](../architecture/context-isolation.md)). `DerivedContextKey` adds the source chat and scope revision for caches. Neither stores anything. |
-| Storage and retrieval | Files are embedded with the bundled knowledge embedding model into LanceDB behind `VectorStore`, searched with an authorized filter before the vector query (`search_knowledge`).                                                                                                                                                              |
-| Policies              | Admin policies gate internal tools (canvas, image generation with a group allowlist, ADR-0058/0064). Course projects restrict chats through one effective `ModePolicy` (ADR-0068).                                                                                                                                                             |
-| Personal data         | Download my data (ADR-0076) exports a person's data, account deletion removes it (ADR-0070), and backups cover the databases, files and vectors (ADR-0072).                                                                                                                                                                                     |
+| Storage and retrieval | Files are embedded with the bundled knowledge embedding model into LanceDB behind `VectorStore`, searched with an authorized filter before the vector query (`search_knowledge`).                                                                                                                                                                   |
+| Policies              | Admin policies gate internal tools (canvas, image generation with a group allowlist, ADR-0058/0064). Course projects restrict chats through one effective `ModePolicy` (ADR-0068).                                                                                                                                                                  |
+| Personal data         | Download my data (ADR-0076) exports a person's data, account deletion removes it (ADR-0070), and backups cover the databases, files and vectors (ADR-0072).                                                                                                                                                                                         |
 
 ## Decisions
 
@@ -45,6 +45,7 @@ Out of scope:
 
   This replaces the "no user-only partition" rule with a new ADR. The user
   namespace is allowed only for user memory, whose content rule is above.
+
 - **The agent proposes, the person confirms** (decided 2026-11-20). The main
   agent suggests a memory with an internal tool, and the chat shows a card to
   save, edit or dismiss it. Nothing is saved without that click. People can also
@@ -59,10 +60,17 @@ Out of scope:
   the prompt, within a token budget) are added as an information layer, framed
   like About you: information about the person, not instructions. This works with
   models that can't call tools; only proposing needs tool support.
-- **Pinned like About you.** Each accepted message records the memories it was
-  sent with (ids and revisions). Resume uses the record; regeneration picks up
-  current memories. Sub-agents inherit the recorded layer, and they never
+- **Pinned like About you.** Each accepted message keeps a private snapshot of
+  the memories it was sent with: each one's id, revision and text, as
+  `accepted_about` keeps the About you text. Resume uses the snapshot, so editing
+  a memory afterwards doesn't change a recorded turn. Regeneration picks up
+  current memories.
+
+  Deleting a memory removes its text from every snapshot too: once someone
+  deletes something, Asterism stops sending it, resumes included. Sub-agents
+  inherit the recorded layer, and they never
   propose memories.
+
 - **Private, and a course can turn it off** (decided 2026-11-20). Only the owner
   ever sees their memories: not educators, and not admins in the app.
   - The admin `memory_enabled` policy, off by default, has a group allowlist like
@@ -90,16 +98,12 @@ belongs only to me.
       sensitive memories, pinning, and the revised boundary. Update
       [context isolation](../architecture/context-isolation.md) and
       `MemoryNamespace` (add the `user` kind, used only for user memory).
-- [ ] A `memories` table with a versioned migration and upgrade test (ADR-0069):
-      - owner, kind (`user` / `project`) and `project_id` (required for project
-        memory);
-      - text (bounded, with the About you character rules) and a category (user
-        memory: learning, accessibility, background, other);
-      - `sensitive`;
-      - source chat, message and execution;
-      - revision and timestamps.
+- [ ] A `memories` table with a versioned migration and upgrade test (ADR-0069): - owner, kind (`user` / `project`) and `project_id` (required for project
+      memory); - text (bounded, with the About you character rules) and a category (user
+      memory: learning, accessibility, background, other); - `sensitive`; - source chat, message and execution; - revision and timestamps.
 
       A per-person cap applies for each kind.
+
 - [ ] Memory vectors in their own LanceDB table behind `VectorStore`, keyed by
       owner and memory id, rewritten on edit.
 - [ ] An owner-scoped service and API: list, create, edit (expected revision, 409
@@ -143,14 +147,9 @@ As a person using Asterism, when I tell it something worth remembering, it offer
 to remember it, and I decide.
 
 - [ ] An internal `propose_memory` tool for the main agent in ordinary chats,
-      offered when memory is available and the model supports tools:
-      - it takes the kind, text, category and whether the memory is sensitive;
-      - it is limited to one proposal per turn;
-      - it is never offered to sub-agents or in drafting chats.
-- [ ] Its description and the main prompt set the rules:
-      - user memory is only about the person, never project content;
-      - accessibility and health memories are only from what the person said
-        about themselves.
+      offered when memory is available and the model supports tools: - it takes the kind, text, category and whether the memory is sensitive; - it is limited to one proposal per turn; - it is never offered to sub-agents or in drafting chats.
+- [ ] Its description and the main prompt set the rules: - user memory is only about the person, never project content; - accessibility and health memories are only from what the person said
+      about themselves.
 - [ ] A proposal card in the chat shows the text and where it will be saved ("You,
       in every chat" or "This project"), with Save, Edit and Dismiss. Saving
       rechecks availability and ownership live.
@@ -165,16 +164,15 @@ to remember it, and I decide.
 As a person using Asterism, answers take what it knows about me into account,
 without my repeating it.
 
-- [ ] Before a turn, select memories:
-      - user memories, plus the chat's project memories in project chats;
-      - ranked by similarity with the prompt;
-      - bounded by count and tokens;
-      - all available ones when there are few.
+- [ ] Before a turn, select memories: - user memories, plus the chat's project memories in project chats; - ranked by similarity with the prompt; - bounded by count and tokens; - all available ones when there are few.
 - [ ] Add them as one information layer, framed as information about the person,
       not instructions, after About you.
-- [ ] Record the selected ids and revisions on the accepted message, like
-      `accepted_about`. Resume uses the record (ownership checked); regeneration
-      selects again; children inherit the layer.
+- [ ] Snapshot the selected memories (id, revision and text) privately on the
+      accepted message, like `accepted_about`. Resume uses the snapshot, with
+      ownership checked; regeneration selects again; children inherit the layer.
+      Deleting a memory, or deleting all, removes its text from every snapshot.
+- [ ] Tests: - an edit between acceptance and resume, where resume sends the accepted
+      text; - a deletion between them, where resume sends nothing for that memory.
 - [ ] Show which memories a reply used, in the progress panel or message details,
       with a link to them in Your Asterism.
 - [ ] Tests for selection, the budget, pinning, course and policy refusals, and
