@@ -14,13 +14,13 @@ builds, and hosting a private registry or mirror.
 
 ## Where things stand (verified 2026-11-20)
 
-| Area             | What happens today                                                                                                                                                                                                                                                                          |
-| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Base images      | The Dockerfile pulls `node:22-bookworm-slim`, `python:3.13-slim-bookworm` and `python:3.13-slim-trixie` by tag. A rebuild of the same commit can get different bases.                                                                                                                       |
-| Actions          | Workflows use actions by major tag (`actions/checkout@v4`, `docker/build-push-action@v6`, `pnpm/action-setup@v4`, `astral-sh/setup-uv@v6`, …). A moved tag changes what runs with `packages: write` in the release workflow.                                                                |
-| Dependencies     | `pnpm-lock.yaml` and `uv.lock` pin every package, and pnpm holds new releases back with `minimumReleaseAge` and allows install scripts only for four packages. No tool proposes updates; nothing scans for known vulnerabilities. Model bundles are already pinned by revision and SHA-256. |
-| Release image    | `release.yml` builds with `provenance: false` and no SBOM, and publishes the index with `imagetools create`. Nothing signs or attests it, so nothing ties `ghcr.io/dbracewell/asterism:0.2.0` to this repository's workflow.                                                                |
-| Repository rules | Pull requests can be merged before their checks finish (PR #15 merged while GitHub was still computing mergeability). Nothing protects `v*` tags. There is no `SECURITY.md`.                                                                                                                |
+| Area             | What happens today                                                                                                                                                                                                                                                                                                                                                                        |
+| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Base images      | The Dockerfile pulls `node:22-bookworm-slim`, `python:3.13-slim-bookworm` and `python:3.13-slim-trixie` by tag. A rebuild of the same commit can get different bases.                                                                                                                                                                                                                     |
+| Actions          | Workflows use actions by major tag (`actions/checkout@v4`, `docker/build-push-action@v6`, `pnpm/action-setup@v4`, `astral-sh/setup-uv@v6`, …). A moved tag changes what runs with `packages: write` in the release workflow.                                                                                                                                                              |
+| Dependencies     | `pnpm-lock.yaml` and `uv.lock` pin every package, and pnpm holds new releases back with `minimumReleaseAge` and allows install scripts only for four packages. No tool proposes updates; nothing scans for known vulnerabilities. Dependabot alerts, turned on 2026-11-20, list 296 open alerts, 22 of them critical (US-92.0). Model bundles are already pinned by revision and SHA-256. |
+| Release image    | `release.yml` builds with `provenance: false` and no SBOM, and publishes the index with `imagetools create`. Nothing signs or attests it, so nothing ties `ghcr.io/dbracewell/asterism:0.2.0` to this repository's workflow.                                                                                                                                                              |
+| Repository rules | Pull requests can be merged before their checks finish (PR #15 merged while GitHub was still computing mergeability). Nothing protects `v*` tags. There is no `SECURITY.md`.                                                                                                                                                                                                              |
 
 ## Decisions
 
@@ -43,7 +43,38 @@ builds, and hosting a private registry or mirror.
 
 ## User stories
 
-Suggested order: US-92.1 → 92.2 → 92.3 → 92.4 → 92.5.
+Suggested order: US-92.0 → 92.1 → 92.2 → 92.3 → 92.4 → 92.5. US-92.0 comes
+first because it fixes vulnerabilities in the published image.
+
+### US-92.0: Fix the critical vulnerabilities and release 0.2.1
+
+As an administrator running 0.2.0, I can upgrade to a release without the known
+critical vulnerabilities.
+
+Found 2026-11-20 when Dependabot alerts were turned on: 296 open alerts, 22
+critical in six packages, all in the published 0.2.0 image:
+
+- next 16.2.7, fixed in 16.4.1: unauthenticated remote code execution, including
+  in the image optimization API and `use cache`;
+- Pillow 12.3.0, fixed in 13.0.0: heap overflows when decoding images;
+- better-auth 1.6.11, fixed in 1.7.7: OAuth state usable as a magic link;
+- PyJWT 2.13.0, fixed in 2.14.0: the key-confusion guard bypassed;
+- proxy-addr 2.0.7, fixed in 2.0.8: client IP spoofing;
+- certifi 2026.6.17, fixed in 2026.10.18: compromised CA roots.
+
+Tasks:
+
+- [ ] Upgrade the six packages to their fixed versions or later, through the
+      lockfiles (`pnpm-lock.yaml`, `uv.lock`), within pnpm's `minimumReleaseAge`
+      or with a dated exclusion.
+- [ ] Check the jumps for breaking changes: - Pillow 12 → 13: image decoding, captioning and image generation output; - better-auth 1.6 → 1.7: its own table migrations, the JWT plugin and admin
+      actions; - Next 16.2 → 16.4: read `node_modules/next/dist/docs/` for deprecations.
+- [ ] Record, for each critical, whether Asterism's use reaches it, in the pull
+      request. Every one is fixed either way.
+- [ ] All checks pass, including the image checks and the upgrade check from
+      0.2.0 (US-91.6). Dependabot shows no open critical alerts.
+- [ ] Release notes: an Image entry naming the fixes and telling administrators
+      to upgrade. Cut and publish 0.2.1 (`pnpm release 0.2.1`).
 
 ### US-92.1: Pin what the build pulls
 
