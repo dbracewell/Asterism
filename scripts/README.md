@@ -298,13 +298,14 @@ environment, never the command line), waits for its health check, and checks
 that the Better Auth migration ran and the backend database has a schema
 revision, that `/sign-in`, `/api/py/health/ready` and `/api/health` answer 200,
 and that every process runs as UID 10001. It also fails when the unpacked image
-is over a size budget (5 GB by default), listing the largest layers. On failure
+is over the size budget (`DEFAULT_MAX_SIZE_GB` in the script, 5.25 GB, which CI and
+the release workflow use too), listing the largest layers. On failure
 it prints the container's last log lines. The container and volume are removed
 afterwards.
 
 ```bash
-pnpm check:image                                   # asterism:local, 5 GB budget
-pnpm check:image --image asterism:ci --max-size-gb 5
+pnpm check:image                                   # asterism:local, the 5.25 GB budget
+pnpm check:image --image asterism:ci --max-size-gb 6   # another budget, for a one-off check
 ```
 
 ### `check-upgrade.mjs`

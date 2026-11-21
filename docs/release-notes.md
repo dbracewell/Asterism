@@ -24,6 +24,9 @@ Unreleased into its version and date.
 
 ### Image
 
+- The image size budget checked in CI and the release workflow is raised from
+  5 GB to 5.25 GB, for this release's dependency updates (onnxruntime 1.32 alone
+  adds about 45 MB). EPIC-94 takes PyTorch out of the image and lowers it again.
 - The image is built from base images pinned by digest, with GitHub Actions
   pinned by commit, so rebuilding a release pulls the same bases. Dependabot
   proposes updates weekly.
