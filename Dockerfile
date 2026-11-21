@@ -28,7 +28,7 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN pnpm --filter @asterism/frontend build \
   && test ! -e /storage/users.db
 
-FROM python:3.13-slim-bookworm@sha256:a5a7017efc5969e00ae2b91c8eb0631049a569652aa4ffc4501769049ae45c72 AS backend-build
+FROM python:3.15-slim-bookworm@sha256:96599df822d0e1c6bb700014a05c7f3c8cabc6e0f7ff3c4f9f69cee033b4b5d9 AS backend-build
 # Avoid compiling llama.cpp for build-host-only CPU features (notably ARM VMs).
 ENV UV_LINK_MODE=copy UV_COMPILE_BYTECODE=1 CMAKE_ARGS="-DGGML_NATIVE=OFF"
 RUN pip install --no-cache-dir uv==0.12.13 \
@@ -65,7 +65,7 @@ RUN PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS=1 .venv/bin/playwright install --
 
 # Runtime needs SQLite >=3.45 for the backend's JSONB SQL functions.
 # Bookworm-built native dependencies remain compatible with newer glibc.
-FROM python:3.13-slim-trixie@sha256:e48f59cdba69a3cbd9ed2cf0f348d90d45a8d350d98134cf1070bc106ee9ed90 AS runtime
+FROM python:3.15-slim-trixie@sha256:65a65fc7b30b06cb6df4930fd4650697cb23f4c2698ab81fc87e4b031bc36928 AS runtime
 
 # Headless Chromium's libraries, without Playwright's install-deps (a virtual
 # display, extra fonts, and LLVM and Mesa through libgbm1). libgbm.so.1 itself
