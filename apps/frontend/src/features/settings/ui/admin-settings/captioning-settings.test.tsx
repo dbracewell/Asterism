@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { ReactNode } from "react";
+import { ReactNode, useState } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { CaptioningSettings } from "./captioning-settings";
@@ -57,20 +57,16 @@ vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
 }));
 
 function Wrapper({ children }: { children: ReactNode }) {
-  return (
-    <QueryClientProvider
-      client={
-        new QueryClient({
-          defaultOptions: {
-            queries: { retry: false },
-            mutations: { retry: false },
-          },
-        })
-      }
-    >
-      {children}
-    </QueryClientProvider>
+  const [client] = useState(
+    () =>
+      new QueryClient({
+        defaultOptions: {
+          queries: { retry: false },
+          mutations: { retry: false },
+        },
+      }),
   );
+  return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
 }
 
 function renderSettings() {

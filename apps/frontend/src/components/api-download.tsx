@@ -15,8 +15,7 @@ export const APIDownload = ({
   className?: string;
   linkText?: string;
 } & (
-  | { chatId?: never; fileId?: never }
-  | { chatId: string; fileId: string }
+  { chatId?: never; fileId?: never } | { chatId: string; fileId: string }
 )) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);

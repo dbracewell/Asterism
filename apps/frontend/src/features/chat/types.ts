@@ -10,11 +10,7 @@ import z from "zod";
 import { ReadyState } from "react-use-websocket";
 
 export type ConnectionStatus =
-  | "Connecting"
-  | "Connected"
-  | "Closing"
-  | "Closed"
-  | "Uninstantiated";
+  "Connecting" | "Connected" | "Closing" | "Closed" | "Uninstantiated";
 
 export const connectionStatusMap = {
   [ReadyState.CONNECTING]: "Connecting",

@@ -1,7 +1,7 @@
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
-import { ReactNode } from "react";
+import { ReactNode, useState } from "react";
 import { expect, it, vi } from "vitest";
 import { AgentsSettings } from "./agents-settings";
 vi.mock("@/features/auth/components/user-context", () => ({
@@ -52,8 +52,9 @@ vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
 }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
 function Wrapper({ children }: { children: ReactNode }) {
+  const [client] = useState(() => new QueryClient());
   return (
-    <QueryClientProvider client={new QueryClient()}>
+    <QueryClientProvider client={client}>
       <TooltipProvider>{children}</TooltipProvider>
     </QueryClientProvider>
   );

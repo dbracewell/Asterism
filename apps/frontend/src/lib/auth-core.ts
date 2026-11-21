@@ -128,8 +128,7 @@ function createAuth() {
               query: (ctx?.query ?? {}) as Record<string, unknown>,
               sessionRole: (
                 ctx?.context as
-                  | { session?: { user?: { role?: string } } }
-                  | undefined
+                  { session?: { user?: { role?: string } } } | undefined
               )?.session?.user?.role,
               requestedRole: user.role,
               adminPassphrase: config.adminPassphrase,

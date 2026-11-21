@@ -979,8 +979,8 @@ export const fileGetManyInfiniteQueryKey = (
  */
 export const fileGetManyInfiniteOptions = (
   options?: Options<FileGetManyData>,
-) =>
-  infiniteQueryOptions<
+) => {
+  const opts = infiniteQueryOptions<
     FileGetManyResponse,
     FileGetManyError,
     InfiniteData<FileGetManyResponse>,
@@ -1018,6 +1018,8 @@ export const fileGetManyInfiniteOptions = (
       queryKey: fileGetManyInfiniteQueryKey(options),
     },
   );
+  return opts as Omit<typeof opts, "initialData">;
+};
 
 /**
  * Upload Files
@@ -1494,8 +1496,8 @@ export const chatSessionGetManyInfiniteQueryKey = (
  */
 export const chatSessionGetManyInfiniteOptions = (
   options?: Options<ChatSessionGetManyData>,
-) =>
-  infiniteQueryOptions<
+) => {
+  const opts = infiniteQueryOptions<
     ChatSessionGetManyResponse,
     ChatSessionGetManyError,
     InfiniteData<ChatSessionGetManyResponse>,
@@ -1533,6 +1535,8 @@ export const chatSessionGetManyInfiniteOptions = (
       queryKey: chatSessionGetManyInfiniteQueryKey(options),
     },
   );
+  return opts as Omit<typeof opts, "initialData">;
+};
 
 /**
  * New Session
@@ -1732,8 +1736,8 @@ export const chatSearchInfiniteQueryKey = (
 /**
  * Search Chats And Projects
  */
-export const chatSearchInfiniteOptions = (options: Options<ChatSearchData>) =>
-  infiniteQueryOptions<
+export const chatSearchInfiniteOptions = (options: Options<ChatSearchData>) => {
+  const opts = infiniteQueryOptions<
     ChatSearchResponse,
     ChatSearchError,
     InfiniteData<ChatSearchResponse>,
@@ -1771,6 +1775,8 @@ export const chatSearchInfiniteOptions = (options: Options<ChatSearchData>) =>
       queryKey: chatSearchInfiniteQueryKey(options),
     },
   );
+  return opts as Omit<typeof opts, "initialData">;
+};
 
 /**
  * Update Message
@@ -2636,8 +2642,8 @@ export const projectGetManyInfiniteQueryKey = (
  */
 export const projectGetManyInfiniteOptions = (
   options?: Options<ProjectGetManyData>,
-) =>
-  infiniteQueryOptions<
+) => {
+  const opts = infiniteQueryOptions<
     ProjectGetManyResponse,
     ProjectGetManyError,
     InfiniteData<ProjectGetManyResponse>,
@@ -2675,6 +2681,8 @@ export const projectGetManyInfiniteOptions = (
       queryKey: projectGetManyInfiniteQueryKey(options),
     },
   );
+  return opts as Omit<typeof opts, "initialData">;
+};
 
 /**
  * Create Project
@@ -2861,8 +2869,8 @@ export const projectFileGetManyInfiniteQueryKey = (
  */
 export const projectFileGetManyInfiniteOptions = (
   options: Options<ProjectFileGetManyData>,
-) =>
-  infiniteQueryOptions<
+) => {
+  const opts = infiniteQueryOptions<
     ProjectFileGetManyResponse,
     ProjectFileGetManyError,
     InfiniteData<ProjectFileGetManyResponse>,
@@ -2900,6 +2908,8 @@ export const projectFileGetManyInfiniteOptions = (
       queryKey: projectFileGetManyInfiniteQueryKey(options),
     },
   );
+  return opts as Omit<typeof opts, "initialData">;
+};
 
 /**
  * Add Project Files
@@ -3003,8 +3013,8 @@ export const projectSubAgentGetManyInfiniteQueryKey = (
  */
 export const projectSubAgentGetManyInfiniteOptions = (
   options: Options<ProjectSubAgentGetManyData>,
-) =>
-  infiniteQueryOptions<
+) => {
+  const opts = infiniteQueryOptions<
     ProjectSubAgentGetManyResponse,
     ProjectSubAgentGetManyError,
     InfiniteData<ProjectSubAgentGetManyResponse>,
@@ -3044,6 +3054,8 @@ export const projectSubAgentGetManyInfiniteOptions = (
       queryKey: projectSubAgentGetManyInfiniteQueryKey(options),
     },
   );
+  return opts as Omit<typeof opts, "initialData">;
+};
 
 /**
  * Select Project Sub Agents
@@ -3120,8 +3132,8 @@ export const projectSubAgentCandidatesInfiniteQueryKey = (
  */
 export const projectSubAgentCandidatesInfiniteOptions = (
   options: Options<ProjectSubAgentCandidatesData>,
-) =>
-  infiniteQueryOptions<
+) => {
+  const opts = infiniteQueryOptions<
     ProjectSubAgentCandidatesResponse,
     ProjectSubAgentCandidatesError,
     InfiniteData<ProjectSubAgentCandidatesResponse>,
@@ -3161,6 +3173,8 @@ export const projectSubAgentCandidatesInfiniteOptions = (
       queryKey: projectSubAgentCandidatesInfiniteQueryKey(options),
     },
   );
+  return opts as Omit<typeof opts, "initialData">;
+};
 
 /**
  * Create Pack Export
@@ -3463,8 +3477,8 @@ export const educatorRequestGetManyInfiniteQueryKey = (
  */
 export const educatorRequestGetManyInfiniteOptions = (
   options?: Options<EducatorRequestGetManyData>,
-) =>
-  infiniteQueryOptions<
+) => {
+  const opts = infiniteQueryOptions<
     EducatorRequestGetManyResponse,
     EducatorRequestGetManyError,
     InfiniteData<EducatorRequestGetManyResponse>,
@@ -3504,6 +3518,8 @@ export const educatorRequestGetManyInfiniteOptions = (
       queryKey: educatorRequestGetManyInfiniteQueryKey(options),
     },
   );
+  return opts as Omit<typeof opts, "initialData">;
+};
 
 /**
  * Approve Request
@@ -3628,8 +3644,8 @@ export const classJoinedGetManyInfiniteQueryKey = (
  */
 export const classJoinedGetManyInfiniteOptions = (
   options?: Options<ClassJoinedGetManyData>,
-) =>
-  infiniteQueryOptions<
+) => {
+  const opts = infiniteQueryOptions<
     ClassJoinedGetManyResponse,
     ClassJoinedGetManyError,
     InfiniteData<ClassJoinedGetManyResponse>,
@@ -3667,6 +3683,8 @@ export const classJoinedGetManyInfiniteOptions = (
       queryKey: classJoinedGetManyInfiniteQueryKey(options),
     },
   );
+  return opts as Omit<typeof opts, "initialData">;
+};
 
 /**
  * Set Insights Consent
@@ -3761,8 +3779,8 @@ export const classGetManyInfiniteQueryKey = (
  */
 export const classGetManyInfiniteOptions = (
   options?: Options<ClassGetManyData>,
-) =>
-  infiniteQueryOptions<
+) => {
+  const opts = infiniteQueryOptions<
     ClassGetManyResponse,
     ClassGetManyError,
     InfiniteData<ClassGetManyResponse>,
@@ -3800,6 +3818,8 @@ export const classGetManyInfiniteOptions = (
       queryKey: classGetManyInfiniteQueryKey(options),
     },
   );
+  return opts as Omit<typeof opts, "initialData">;
+};
 
 /**
  * Create Class
@@ -4003,8 +4023,8 @@ export const classMemberGetManyInfiniteQueryKey = (
  */
 export const classMemberGetManyInfiniteOptions = (
   options: Options<ClassMemberGetManyData>,
-) =>
-  infiniteQueryOptions<
+) => {
+  const opts = infiniteQueryOptions<
     ClassMemberGetManyResponse,
     ClassMemberGetManyError,
     InfiniteData<ClassMemberGetManyResponse>,
@@ -4042,6 +4062,8 @@ export const classMemberGetManyInfiniteOptions = (
       queryKey: classMemberGetManyInfiniteQueryKey(options),
     },
   );
+  return opts as Omit<typeof opts, "initialData">;
+};
 
 /**
  * Remove Member
@@ -4137,8 +4159,8 @@ export const classInviteGetManyInfiniteQueryKey = (
  */
 export const classInviteGetManyInfiniteOptions = (
   options: Options<ClassInviteGetManyData>,
-) =>
-  infiniteQueryOptions<
+) => {
+  const opts = infiniteQueryOptions<
     ClassInviteGetManyResponse,
     ClassInviteGetManyError,
     InfiniteData<ClassInviteGetManyResponse>,
@@ -4176,6 +4198,8 @@ export const classInviteGetManyInfiniteOptions = (
       queryKey: classInviteGetManyInfiniteQueryKey(options),
     },
   );
+  return opts as Omit<typeof opts, "initialData">;
+};
 
 /**
  * Create Invites
@@ -4412,8 +4436,8 @@ export const classCourseVersionGetManyInfiniteQueryKey = (
  */
 export const classCourseVersionGetManyInfiniteOptions = (
   options: Options<ClassCourseVersionGetManyData>,
-) =>
-  infiniteQueryOptions<
+) => {
+  const opts = infiniteQueryOptions<
     ClassCourseVersionGetManyResponse,
     ClassCourseVersionGetManyError,
     InfiniteData<ClassCourseVersionGetManyResponse>,
@@ -4453,6 +4477,8 @@ export const classCourseVersionGetManyInfiniteOptions = (
       queryKey: classCourseVersionGetManyInfiniteQueryKey(options),
     },
   );
+  return opts as Omit<typeof opts, "initialData">;
+};
 
 export const classInsightsGetQueryKey = (
   options: Options<ClassInsightsGetData>,
@@ -4522,8 +4548,8 @@ export const studyDeckGetManyInfiniteQueryKey = (
  */
 export const studyDeckGetManyInfiniteOptions = (
   options: Options<StudyDeckGetManyData>,
-) =>
-  infiniteQueryOptions<
+) => {
+  const opts = infiniteQueryOptions<
     StudyDeckGetManyResponse,
     StudyDeckGetManyError,
     InfiniteData<StudyDeckGetManyResponse>,
@@ -4561,6 +4587,8 @@ export const studyDeckGetManyInfiniteOptions = (
       queryKey: studyDeckGetManyInfiniteQueryKey(options),
     },
   );
+  return opts as Omit<typeof opts, "initialData">;
+};
 
 /**
  * Create Deck
@@ -4707,8 +4735,8 @@ export const studyCardGetManyInfiniteQueryKey = (
  */
 export const studyCardGetManyInfiniteOptions = (
   options: Options<StudyCardGetManyData>,
-) =>
-  infiniteQueryOptions<
+) => {
+  const opts = infiniteQueryOptions<
     StudyCardGetManyResponse,
     StudyCardGetManyError,
     InfiniteData<StudyCardGetManyResponse>,
@@ -4746,6 +4774,8 @@ export const studyCardGetManyInfiniteOptions = (
       queryKey: studyCardGetManyInfiniteQueryKey(options),
     },
   );
+  return opts as Omit<typeof opts, "initialData">;
+};
 
 /**
  * Create Card
@@ -5008,8 +5038,8 @@ export const studyQuizGetManyInfiniteQueryKey = (
  */
 export const studyQuizGetManyInfiniteOptions = (
   options: Options<StudyQuizGetManyData>,
-) =>
-  infiniteQueryOptions<
+) => {
+  const opts = infiniteQueryOptions<
     StudyQuizGetManyResponse,
     StudyQuizGetManyError,
     InfiniteData<StudyQuizGetManyResponse>,
@@ -5047,6 +5077,8 @@ export const studyQuizGetManyInfiniteOptions = (
       queryKey: studyQuizGetManyInfiniteQueryKey(options),
     },
   );
+  return opts as Omit<typeof opts, "initialData">;
+};
 
 /**
  * Generate Quiz
@@ -5203,8 +5235,8 @@ export const studyQuizAttemptGetManyInfiniteQueryKey = (
  */
 export const studyQuizAttemptGetManyInfiniteOptions = (
   options: Options<StudyQuizAttemptGetManyData>,
-) =>
-  infiniteQueryOptions<
+) => {
+  const opts = infiniteQueryOptions<
     StudyQuizAttemptGetManyResponse,
     StudyQuizAttemptGetManyError,
     InfiniteData<StudyQuizAttemptGetManyResponse>,
@@ -5244,6 +5276,8 @@ export const studyQuizAttemptGetManyInfiniteOptions = (
       queryKey: studyQuizAttemptGetManyInfiniteQueryKey(options),
     },
   );
+  return opts as Omit<typeof opts, "initialData">;
+};
 
 /**
  * Submit Attempt
@@ -5432,8 +5466,8 @@ export const studyNoteGetManyInfiniteQueryKey = (
  */
 export const studyNoteGetManyInfiniteOptions = (
   options: Options<StudyNoteGetManyData>,
-) =>
-  infiniteQueryOptions<
+) => {
+  const opts = infiniteQueryOptions<
     StudyNoteGetManyResponse,
     StudyNoteGetManyError,
     InfiniteData<StudyNoteGetManyResponse>,
@@ -5471,6 +5505,8 @@ export const studyNoteGetManyInfiniteOptions = (
       queryKey: studyNoteGetManyInfiniteQueryKey(options),
     },
   );
+  return opts as Omit<typeof opts, "initialData">;
+};
 
 /**
  * Create Note
@@ -6058,8 +6094,8 @@ export const skillEligibleGetManyInfiniteQueryKey = (
  */
 export const skillEligibleGetManyInfiniteOptions = (
   options?: Options<SkillEligibleGetManyData>,
-) =>
-  infiniteQueryOptions<
+) => {
+  const opts = infiniteQueryOptions<
     SkillEligibleGetManyResponse,
     SkillEligibleGetManyError,
     InfiniteData<SkillEligibleGetManyResponse>,
@@ -6097,6 +6133,8 @@ export const skillEligibleGetManyInfiniteOptions = (
       queryKey: skillEligibleGetManyInfiniteQueryKey(options),
     },
   );
+  return opts as Omit<typeof opts, "initialData">;
+};
 
 /**
  * Start Draft
@@ -6192,8 +6230,8 @@ export const skillGetManyInfiniteQueryKey = (
  */
 export const skillGetManyInfiniteOptions = (
   options?: Options<SkillGetManyData>,
-) =>
-  infiniteQueryOptions<
+) => {
+  const opts = infiniteQueryOptions<
     SkillGetManyResponse,
     SkillGetManyError,
     InfiniteData<SkillGetManyResponse>,
@@ -6231,6 +6269,8 @@ export const skillGetManyInfiniteOptions = (
       queryKey: skillGetManyInfiniteQueryKey(options),
     },
   );
+  return opts as Omit<typeof opts, "initialData">;
+};
 
 /**
  * Create
@@ -7131,8 +7171,8 @@ export const promptTemplateGetManyInfiniteQueryKey = (
  */
 export const promptTemplateGetManyInfiniteOptions = (
   options?: Options<PromptTemplateGetManyData>,
-) =>
-  infiniteQueryOptions<
+) => {
+  const opts = infiniteQueryOptions<
     PromptTemplateGetManyResponse,
     PromptTemplateGetManyError,
     InfiniteData<PromptTemplateGetManyResponse>,
@@ -7172,6 +7212,8 @@ export const promptTemplateGetManyInfiniteOptions = (
       queryKey: promptTemplateGetManyInfiniteQueryKey(options),
     },
   );
+  return opts as Omit<typeof opts, "initialData">;
+};
 
 /**
  * Create
@@ -7373,8 +7415,8 @@ export const rubricGetManyInfiniteQueryKey = (
  */
 export const rubricGetManyInfiniteOptions = (
   options?: Options<RubricGetManyData>,
-) =>
-  infiniteQueryOptions<
+) => {
+  const opts = infiniteQueryOptions<
     RubricGetManyResponse,
     RubricGetManyError,
     InfiniteData<RubricGetManyResponse>,
@@ -7412,6 +7454,8 @@ export const rubricGetManyInfiniteOptions = (
       queryKey: rubricGetManyInfiniteQueryKey(options),
     },
   );
+  return opts as Omit<typeof opts, "initialData">;
+};
 
 /**
  * Create
@@ -7590,8 +7634,8 @@ export const reflectionGetManyInfiniteQueryKey = (
  */
 export const reflectionGetManyInfiniteOptions = (
   options?: Options<ReflectionGetManyData>,
-) =>
-  infiniteQueryOptions<
+) => {
+  const opts = infiniteQueryOptions<
     ReflectionGetManyResponse,
     ReflectionGetManyError,
     InfiniteData<ReflectionGetManyResponse>,
@@ -7629,6 +7673,8 @@ export const reflectionGetManyInfiniteOptions = (
       queryKey: reflectionGetManyInfiniteQueryKey(options),
     },
   );
+  return opts as Omit<typeof opts, "initialData">;
+};
 
 /**
  * Create
@@ -8311,8 +8357,8 @@ export const appProviderModelsListInfiniteQueryKey = (
  */
 export const appProviderModelsListInfiniteOptions = (
   options: Options<AppProviderModelsListData>,
-) =>
-  infiniteQueryOptions<
+) => {
+  const opts = infiniteQueryOptions<
     AppProviderModelsListResponse,
     AppProviderModelsListError,
     InfiniteData<AppProviderModelsListResponse>,
@@ -8353,6 +8399,8 @@ export const appProviderModelsListInfiniteOptions = (
       queryKey: appProviderModelsListInfiniteQueryKey(options),
     },
   );
+  return opts as Omit<typeof opts, "initialData">;
+};
 
 /**
  * Update one provider model
@@ -8717,8 +8765,8 @@ export const userGetManyInfiniteQueryKey = (
  */
 export const userGetManyInfiniteOptions = (
   options?: Options<UserGetManyData>,
-) =>
-  infiniteQueryOptions<
+) => {
+  const opts = infiniteQueryOptions<
     UserGetManyResponse,
     UserGetManyError,
     InfiniteData<UserGetManyResponse>,
@@ -8756,6 +8804,8 @@ export const userGetManyInfiniteOptions = (
       queryKey: userGetManyInfiniteQueryKey(options),
     },
   );
+  return opts as Omit<typeof opts, "initialData">;
+};
 
 /**
  * Create a new user with a given user ID
@@ -9385,8 +9435,8 @@ export const usageGetReportInfiniteQueryKey = (
  */
 export const usageGetReportInfiniteOptions = (
   options?: Options<UsageGetReportData>,
-) =>
-  infiniteQueryOptions<
+) => {
+  const opts = infiniteQueryOptions<
     UsageGetReportResponse,
     UsageGetReportError,
     InfiniteData<UsageGetReportResponse>,
@@ -9425,6 +9475,8 @@ export const usageGetReportInfiniteOptions = (
       queryKey: usageGetReportInfiniteQueryKey(options),
     },
   );
+  return opts as Omit<typeof opts, "initialData">;
+};
 
 export const usageSettingsGetQueryKey = (
   options?: Options<UsageSettingsGetData>,
@@ -9766,8 +9818,8 @@ export const subAgentsListInfiniteQueryKey = (
  */
 export const subAgentsListInfiniteOptions = (
   options?: Options<SubAgentsListData>,
-) =>
-  infiniteQueryOptions<
+) => {
+  const opts = infiniteQueryOptions<
     SubAgentsListResponse,
     SubAgentsListError,
     InfiniteData<SubAgentsListResponse>,
@@ -9805,6 +9857,8 @@ export const subAgentsListInfiniteOptions = (
       queryKey: subAgentsListInfiniteQueryKey(options),
     },
   );
+  return opts as Omit<typeof opts, "initialData">;
+};
 
 /**
  * Create Sub Agent

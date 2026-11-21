@@ -208,7 +208,7 @@ importers:
   .:
     devDependencies:
       prettier:
-        specifier: ^3.8.3
+        specifier: ^3.10.1
         version: 3.10.1
       prettier-plugin-tailwindcss:
         specifier: ^0.8.0
@@ -384,6 +384,9 @@ importers:
       jsdom:
         specifier: ^29.1.1
         version: 29.1.1(@noble/hashes@2.2.0)
+      prettier:
+        specifier: ^3.10.1
+        version: 3.10.1
       prettier-plugin-tailwindcss:
         specifier: ^0.8.0
         version: 0.8.1(prettier@3.10.1)
@@ -4995,11 +4998,6 @@ packages:
     engines: {node: '>=14'}
     hasBin: true
 
-  prettier@3.8.3:
-    resolution: {integrity: sha512-7igPTM53cGHMW8xWuVTydi2KO233VFiTNyF5hLJqpilHfmn8C8gPf+PS7dUT64YcXFbiMGZxS9pCSxL/Dxm/Jw==}
-    engines: {node: '>=14'}
-    hasBin: true
-
   pretty-format@27.5.1:
     resolution: {integrity: sha512-Qb1gy5OrP5+zDf2Bvnzdl3jsTf1qXVMazbvCoKhtKqVs4/YK4ozX4gKQJJVyNe+cajNPn0KoC0MC3FUmaHWEmQ==}
     engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
@@ -8869,7 +8867,7 @@ snapshots:
       get-tsconfig: 4.14.0
       jiti: 2.7.0
       open: 11.0.0
-      prettier: 3.8.3
+      prettier: 3.10.1
       prompts: 2.4.2
       semver: 7.8.6
       yocto-spinner: 1.2.0
@@ -11211,8 +11209,6 @@ snapshots:
       prettier: 3.10.1
 
   prettier@3.10.1: {}
-
-  prettier@3.8.3: {}
 
   pretty-format@27.5.1:
     dependencies:
