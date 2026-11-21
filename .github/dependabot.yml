@@ -22,6 +22,14 @@ updates:
       interval: weekly
     cooldown:
       default-days: 7
+    # A new Python or Node version is an upgrade to plan, not a weekly bump:
+    # Python 3.13 -> 3.15 counts as "minor" here and broke the build (no
+    # onnxruntime wheel). Digest refreshes of the same version still come.
+    ignore:
+      - dependency-name: python
+        update-types: [version-update:semver-major, version-update:semver-minor]
+      - dependency-name: node
+        update-types: [version-update:semver-major, version-update:semver-minor]
     groups:
       docker:
         update-types: [minor, patch]
