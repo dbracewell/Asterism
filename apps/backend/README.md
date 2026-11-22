@@ -188,7 +188,12 @@ and limits.
 ## Local image generation
 
 The local generator (US-76.2) runs Hugging Face `diffusers` pipelines in a
-separate worker process started by the backend. It picks a device at startup:
+separate worker process started by the backend. It is the optional
+`local-image` extra (`uv sync --extra local-image`), which only the GPU image
+build installs (US-94.2, [ADR-0077](../../docs/adr/0077-torch-free-default-image.md)).
+Without it the Diffusers generator isn't registered, a saved one reads "not
+available in this image", and the local endpoints report `installed: false`
+with no catalog. It picks a device at startup:
 CUDA if available, then Apple MPS, then CPU. An administrator can override it.
 
 - **Catalog and recommendation.** `GET /settings/app/image-generation/local`
@@ -205,15 +210,16 @@ CUDA if available, then Apple MPS, then CPU. An administrator can override it.
 - **Downloads** go to `STORAGE_ROOT/models/image-generation/<model>` at a
   pinned revision and are verified by manifest (4–33 GB per model).
   Non-commercial licenses (Qwen-Image-2.1) must be accepted before download.
-- **Apple Silicon (local development):** MPS works with the default torch
-  build. About 70% of unified memory is assumed usable by the GPU.
-- **NVIDIA in Docker:** the image installs CPU-only torch. For CUDA, build it
+- **Apple Silicon (local development):** with the extra installed, MPS works
+  with the default torch build. About 70% of unified memory is assumed usable by the GPU.
+- **NVIDIA in Docker:** the published image has no torch. For CUDA, build it
   with `--build-arg TORCH_VARIANT=gpu` (see the
   [GPU build](../../docs/deployment.md#gpu-build)), run the container with the
   NVIDIA container runtime (`--gpus all`), and check the admin page's hardware
   report shows `cuda`.
-- **Linux development:** `uv sync` installs CPU-only torch from PyTorch's CPU
-  index (`[tool.uv.sources]` in `pyproject.toml`); macOS uses PyPI's wheels.
+- **Linux development:** `uv sync --extra local-image` installs CPU-only torch
+  from PyTorch's CPU index (`[tool.uv.sources]` in `pyproject.toml`); macOS uses
+  PyPI's wheels.
 - **CPU** works for every model that fits in memory. The recommendation is
   the smallest: DreamShaper 8 LCM takes about 13 s per 512² image on an M5 Max
   CPU; large models take minutes.

@@ -1,6 +1,7 @@
 "use client";
 
 import { QueryError } from "@/components/query-error";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -99,6 +100,18 @@ export function LocalImageModels() {
     );
 
   const { hardware, models, recommended_id, settings } = overview.data;
+  if (!overview.data.installed || !hardware)
+    return (
+      <SettingsSection title="Local models">
+        <Alert>
+          <AlertDescription data-testid="local-image-unavailable">
+            Local image generation is not available in this image. It is
+            included only in the GPU build of Asterism. Use a ComfyUI server
+            instead, or build the GPU image.
+          </AlertDescription>
+        </Alert>
+      </SettingsSection>
+    );
   const failure =
     select.error ?? download.error ?? cancel.error ?? remove.error;
   const pending =

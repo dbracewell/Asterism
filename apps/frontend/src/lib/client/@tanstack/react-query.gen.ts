@@ -6858,6 +6858,8 @@ export const localImageOverviewQueryKey = (
  * Overview
  *
  * Detected hardware, the catalog with fit and download state, and the recommendation.
+ *
+ * Without the local-image extra, only the saved settings, with ``installed`` false.
  */
 export const localImageOverviewOptions = (
   options?: Options<LocalImageOverviewData>,

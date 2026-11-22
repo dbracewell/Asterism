@@ -35,7 +35,7 @@ def system_ram_gb() -> float:
 
 
 def cpu_capabilities() -> dict:
-    import torch
+    import torch  # pyright: ignore[reportMissingImports] - the optional local-image extra
 
     try:
         return dict(torch.cpu.get_capabilities())
@@ -67,7 +67,7 @@ def mps_bf16(chip: str, macos_14: bool) -> bool:
 
 def detect(preferred: Device | Literal["auto"] = "auto") -> HardwareReport:
     """The best device (CUDA, then MPS, then CPU), or ``preferred`` when it is present."""
-    import torch
+    import torch  # pyright: ignore[reportMissingImports] - the optional local-image extra
 
     ram = round(system_ram_gb(), 1)
     cpus = os.cpu_count() or 1

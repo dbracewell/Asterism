@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
   largestLayers,
+  localImageProblems,
   sizeProblem,
   uidProblems,
 } from "../scripts/check-image.mjs";
@@ -45,5 +46,28 @@ test("every process must run as UID 10001", () => {
   ]);
   assert.deepEqual(uidProblems([]), [
     "No processes were found in the container",
+  ]);
+});
+
+test("the CPU image has no local-image packages and the GPU image has all of them", () => {
+  const none = {
+    torch: false,
+    torchvision: false,
+    diffusers: false,
+    accelerate: false,
+  };
+  const all = {
+    torch: true,
+    torchvision: true,
+    diffusers: true,
+    accelerate: true,
+  };
+  assert.deepEqual(localImageProblems(none, "cpu"), []);
+  assert.deepEqual(localImageProblems(all, "gpu"), []);
+  assert.deepEqual(localImageProblems({ ...none, torch: true }, "cpu"), [
+    "The CPU image can import torch; it must not include the local-image extra",
+  ]);
+  assert.deepEqual(localImageProblems({ ...all, diffusers: false }, "gpu"), [
+    "The GPU image cannot import diffusers; it must include the local-image extra",
   ]);
 });

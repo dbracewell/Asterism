@@ -96,7 +96,15 @@ checkpoints.
 ### The local Diffusers generator
 
 Asterism can run an image model itself, in a separate worker process
-([`image_generation/local/`](../../apps/backend/asterism/domains/image_generation/local/)):
+([`image_generation/local/`](../../apps/backend/asterism/domains/image_generation/local/)).
+It needs the `local-image` extra (diffusers, accelerate, torch, torchvision), which
+only the GPU image build installs ([ADR-0077](../adr/0077-torch-free-default-image.md)).
+`local/availability.py` finds those packages without importing them. Without them the
+Diffusers component isn't registered; a saved Diffusers choice stays stored, the
+provider status reads "Diffusers is not available in this image" (so
+`generate_image` isn't offered), and `GET /settings/app/image-generation/local`
+returns `installed: false` with no hardware or catalog while every change is
+refused. Nothing switches to another generator.
 
 - **Hardware.** It detects an NVIDIA GPU, an Apple GPU or the CPU, with its memory,
   and chooses a precision per device and model.

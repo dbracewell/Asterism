@@ -6,11 +6,9 @@ readme = "README.md"
 license = "Apache-2.0"
 requires-python = ">=3.13"
 dependencies = [
-  "accelerate>=1.15.0",
   "aiosqlite>=0.22.1",
   "beautifulsoup4>=4.15.0",
   "cachetools>=7.1.4",
-  "diffusers>=0.41",
   "fastapi>=0.136.3",
   "filetype>=1.2.0",
   "fpdf2>=2.9.0",
@@ -22,7 +20,8 @@ dependencies = [
   "markdown-it-py>=4.2.0",
   "markitdown[docx,pdf,pptx,xls,xlsx]>=0.1.7,<0.2",
   "num2words>=0.5.14",
-  "onnxruntime>=1.20,<2",
+  # 1.32 dropped its sympy dependency, which the torch-free install relies on (US-94.2).
+  "onnxruntime>=1.32,<2",
   "openai>=2.38.0",
   "pillow>=13,<14",
   "playwright>=1.62.0",
@@ -36,14 +35,21 @@ dependencies = [
   "requests>=2.34.2",
   "sqlalchemy[asyncio]>=2.0.50",
   "tiktoken>=0.14.0",
-  # Held at 2.13 until EPIC-94 drops torch from the default image: 2.15 takes
-  # the image past its 5 GB budget. US-94.3 removes this cap.
-  "torch>=2.13.0,<2.14",
-  "torchvision>=0.24,<0.29",
   "transformers>=5.14.1",
   "truststore>=0.10.4",
   "uvicorn[standard]>=0.48.0",
   "alembic>=1.16",
+]
+
+[project.optional-dependencies]
+# Local image generation (ADR-0064, ADR-0077): installed by the GPU image build
+# and by `uv sync --extra local-image`. The default install has no torch.
+local-image = [
+  "accelerate>=1.15.0",
+  "diffusers>=0.41",
+  # Held at 2.13 until US-94.3: 2.15 took the image past its size budget.
+  "torch>=2.13.0,<2.14",
+  "torchvision>=0.24,<0.29",
 ]
 
 [dependency-groups]
@@ -95,10 +101,10 @@ reportOptionalSubscript = "none"
 # Migration scripts hold frozen, generated DDL and SQL; long lines are expected.
 "asterism/db/migrations/versions/*.py" = ["E501"]
 
-# Linux installs CPU-only torch from PyTorch's CPU index: Docker, CI and Linux
-# development need no CUDA libraries (US-90.8). The Docker GPU build reinstalls
-# the same versions from PyPI (see TORCH_VARIANT in the Dockerfile). macOS
-# keeps PyPI's wheels, which have no CUDA.
+# With the local-image extra, Linux installs CPU-only torch from PyTorch's CPU
+# index: CI and Linux development need no CUDA libraries (US-90.8). The Docker
+# GPU build reinstalls the same versions from PyPI (see TORCH_VARIANT in the
+# Dockerfile). macOS keeps PyPI's wheels, which have no CUDA.
 [tool.uv.sources]
 torch = [{ index = "pytorch-cpu", marker = "sys_platform == 'linux'" }]
 torchvision = [{ index = "pytorch-cpu", marker = "sys_platform == 'linux'" }]

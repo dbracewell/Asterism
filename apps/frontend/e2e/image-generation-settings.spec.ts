@@ -64,6 +64,7 @@ async function mockBackend(page: Page) {
           ? { status: "ready", bytes_downloaded: 32e9, total_bytes: 32e9 }
           : { status: "idle", bytes_downloaded: 0, total_bytes: 32e9 };
     return {
+      installed: true,
       hardware: {
         device: "cuda",
         name: "RTX 4090",

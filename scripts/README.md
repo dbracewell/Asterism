@@ -328,7 +328,9 @@ image on a fresh volume with generated, throwaway secrets (passed through the
 environment, never the command line), waits for its health check, and checks
 that the Better Auth migration ran and the backend database has a schema
 revision, that `/sign-in`, `/api/py/health/ready` and `/api/health` answer 200,
-and that every process runs as UID 10001. It also fails when the unpacked image
+that every process runs as UID 10001, and that the backend can import none of
+torch, torchvision, diffusers and accelerate (US-94.2; `--variant gpu` checks a
+`TORCH_VARIANT=gpu` build can import all four). It also fails when the unpacked image
 is over the size budget (`DEFAULT_MAX_SIZE_GB` in the script, 5.25 GB, which CI and
 the release workflow use too), listing the largest layers. On failure
 it prints the container's last log lines. The container and volume are removed
@@ -337,6 +339,7 @@ afterwards.
 ```bash
 pnpm check:image                                   # asterism:local, the 5.25 GB budget
 pnpm check:image --image asterism:ci --max-size-gb 6   # another budget, for a one-off check
+pnpm check:image --image asterism:gpu --variant gpu --max-size-gb 9   # a GPU build
 ```
 
 ### `check-upgrade.mjs`
@@ -350,7 +353,7 @@ previous image's `/api/theme` and writes it, renamed, to `/storage/themes` the w
 the app's theme repository does, so the theme is in that release's format. Themes
 are saved through a Next.js server action, which a script can't call. Last, it
 switches image captioning to local, downloads that release's caption model and
-captions a small PNG. Then it starts the new image on the same volume with
+captions a small PNG, and saves the local Diffusers image generator. Then it starts the new image on the same volume with
 the same secrets and checks:
 
 - the container becomes healthy;
@@ -364,7 +367,9 @@ the same secrets and checks:
 - the app serves the theme with every value unchanged.
 - the stored caption is unchanged, and after the new image has downloaded its
   own caption model (it does so on start when local captioning is on, US-94.1),
-  a newly uploaded PNG is captioned.
+  a newly uploaded PNG is captioned;
+- the saved Diffusers generator is still saved and reads "not available in this
+  image", since the CPU image has no local image generation (US-94.2).
 
 Last, it starts the previous image on the upgraded volume and checks it exits
 with its "schema revision … which this code does not know" message. When both

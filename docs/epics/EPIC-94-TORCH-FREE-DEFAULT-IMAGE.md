@@ -1,6 +1,6 @@
 # EPIC-94: A torch-free default image
 
-Status: in progress (US-94.1 started 2026-11-22; proposed 2026-11-21). Source: user request (2026-11-21), after the
+Status: in progress (US-94.1 done and US-94.2 started 2026-11-22; proposed 2026-11-21). Source: user request (2026-11-21), after the
 first Dependabot uv group (#33) took the image to 5.21 GB, over its 5 GB budget.
 Decided 2026-11-21: image captioning moves to ONNX, local image generation
 becomes an optional install for the GPU build, and this is its own epic rather
@@ -85,24 +85,24 @@ As an administrator, local captioning works without PyTorch and downloads less.
 As an administrator, the published image leaves out what only a GPU build can
 use well, and a saved local generator never fails silently.
 
-- [ ] Move `diffusers`, `accelerate`, `torch` and `torchvision` (and the PyTorch
+- [x] Move `diffusers`, `accelerate`, `torch` and `torchvision` (and the PyTorch
       CPU index source) to a `local-image` extra, and require onnxruntime 1.32 or
       later so sympy is no longer needed. Keep `uv.lock` resolving both with and
       without it.
-- [ ] A check (in the quality job) that the default install's dependency graph
+- [x] A check (in the quality job) that the default install's dependency graph
       has no torch, torchvision or diffusers, direct or transitive, naming the
       package that pulls one in.
-- [ ] Dockerfile: the CPU build installs no extra; `TORCH_VARIANT=gpu` installs
+- [x] Dockerfile: the CPU build installs no extra; `TORCH_VARIANT=gpu` installs
       `local-image` with CUDA torch. `pnpm check:image` fails if torch is
       importable in the CPU image.
-- [ ] The generator registry offers Diffusers only when the extra imports. A
+- [x] The generator registry offers Diffusers only when the extra imports. A
       saved local generator otherwise reads "not available in this image" in Admin
       Settings, its catalog and downloads are hidden, and `generate_image` isn't
       offered for it. The ComfyUI generator is unchanged.
-- [ ] Tests for both installs: registry, Admin Settings payload, tool
+- [x] Tests for both installs: registry, Admin Settings payload, tool
       availability, and a saved local generator surviving an upgrade (upgrade
       check) and reading as unavailable.
-- [ ] Docs: the deployment guide's GPU build section (local generation is
+- [x] Docs: the deployment guide's GPU build section (local generation is
       GPU-build only; ComfyUI or a hosted provider otherwise), the development
       guide (`uv sync --extra local-image`), and the image generation user guide.
 
@@ -125,8 +125,8 @@ As a maintainer, the size gained stays gained.
    accurate as the torch model's on the comparison set, and it is the fastest
    variant; the fp16 exports do not run on CPU ONNX Runtime 1.32
    ([ADR-0077](../adr/0077-torch-free-default-image.md#comparison)).
-2. **Checkouts on a Mac.** Should `pnpm dev` install `local-image` by default, so
-   local generation on Apple GPUs keeps working without a step, or stay lean
-   like the image?
+2. **Checkouts on a Mac.** US-94.2 keeps them lean like the image: `sync`
+   installs no extra, and `sync:local-image` (`uv sync --extra local-image`) adds
+   local generation. Revisit if Mac development of local generation is common.
 3. **A published GPU image.** Out of scope here; worth revisiting once the CPU
    image no longer carries torch.

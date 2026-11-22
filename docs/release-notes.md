@@ -36,6 +36,12 @@ Unreleased into its version and date.
 
 ### Image
 
+- The published image no longer includes PyTorch, diffusers or sympy, so it is
+  smaller, and it no longer runs local image generation (the **Diffusers**
+  generator). Embeddings and captioning run on ONNX Runtime and need no GPU.
+  Local image generation is in the [GPU build](deployment.md#gpu-build) only,
+  built with `--build-arg TORCH_VARIANT=gpu` as before, which now also installs
+  it. ComfyUI is unchanged.
 - [Verify the image](deployment.md#verify-the-image) gives the commands to check
   an image's signature, provenance and SBOM before running it, for every image
   from 0.2.2, and how to read the SBOM. Add the check to your upgrade: the
@@ -45,6 +51,13 @@ Unreleased into its version and date.
 
 ### Behavior
 
+- If you use the Diffusers generator with the published image, it stops
+  generating after the upgrade: Admin Settings → Image generation keeps it
+  saved but shows "Diffusers is not available in this image", and people aren't
+  offered image creation. Choose a ComfyUI server, or build and run the GPU
+  image. Nothing switches generator by itself. Downloaded local models stay in
+  `models/image-generation` until you remove them (from the GPU build's Local
+  models page, or by deleting the folder).
 - Local image captioning runs SmolVLM2 on ONNX Runtime instead of PyTorch
   ([ADR-0077](adr/0077-torch-free-default-image.md)). Its model files change, so
   an instance with local captioning on downloads them once (about 265 MB) on its

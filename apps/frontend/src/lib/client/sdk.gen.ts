@@ -4907,6 +4907,8 @@ export class ApiClient extends HeyApiClient {
    * Overview
    *
    * Detected hardware, the catalog with fit and download state, and the recommendation.
+   *
+   * Without the local-image extra, only the saved settings, with ``installed`` false.
    */
   public localImageOverview<ThrowOnError extends boolean = false>(
     options?: Options<LocalImageOverviewData, ThrowOnError>,

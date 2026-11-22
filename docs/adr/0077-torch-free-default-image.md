@@ -1,8 +1,9 @@
 # ADR-0077 — A torch-free default image
 
-Status: accepted and implemented for US-94.1 on 2026-11-22
-([EPIC-94](../epics/EPIC-94-TORCH-FREE-DEFAULT-IMAGE.md)). This record covers captioning; US-94.2
-adds where local image generation runs, amending ADR-0064.
+Status: accepted. Captioning implemented for US-94.1 and local image
+generation as an optional install for US-94.2, both on 2026-11-22
+([EPIC-94](../epics/EPIC-94-TORCH-FREE-DEFAULT-IMAGE.md)). Amends
+[ADR-0064](0064-image-generation.md) on where local image generation runs.
 
 ## Context
 
@@ -63,6 +64,40 @@ captioning is on and the bundle is missing or stale, startup starts the download
 (as it does for the embedding bundle), so an upgrade needs no admin step. When the
 bundle verifies, pending captions resume. Stored captions are not touched.
 
+## Decision: local image generation is an optional install
+
+**The default install has no PyTorch.** `diffusers`, `accelerate`, `torch` and
+`torchvision` are the `local-image` extra in `pyproject.toml`, with the PyTorch
+CPU index source for Linux. `onnxruntime` is required at 1.32 or later, which
+dropped its `sympy` dependency, so sympy (74 MB) goes too. One `uv.lock`
+resolves both installs. `scripts/check_default_install.py` reads it, follows the
+default dependencies and the extras they request on every platform, and fails
+naming the chain when one of the four is reached; CI runs it
+(`pnpm check:default-install`).
+
+**Only the GPU build installs it.** The Dockerfile's default CPU build, which is
+the published image, syncs without extras. `TORCH_VARIANT=gpu` syncs with
+`--extra local-image`, then swaps in CUDA torch as before. `pnpm check:image`
+fails when the CPU image's backend can import any of the four packages
+(`--variant gpu` checks the reverse). Local generation on a CPU is too slow for a
+class, and a Mac checkout can still install the extra.
+
+**Nothing switches silently.** `local/availability.py` finds the four packages
+without importing them (importing torch takes seconds). Without them:
+
+- the Diffusers component isn't registered, so the generator picker offers only
+  ComfyUI, and saving Diffusers is refused as an unknown provider;
+- a saved Diffusers choice stays stored and readable; the provider status, and so
+  the chat's availability, reads "Diffusers is not available in this image", so
+  `generate_image` and Create image aren't offered, as for any unready generator;
+- `GET /settings/app/image-generation/local` reports `installed: false` with the
+  saved settings and no hardware or catalog, and every change or download is
+  refused. Downloaded model files stay on disk until the GPU build removes them.
+
+Backend tests run on both installs: the default one in the quality job, and the
+image-generation tests again with the extra (`test:local-image`). Tests that need
+torch skip without it; the rest register the Diffusers component themselves.
+
 ## Comparison
 
 Twelve images: six photos from Wikimedia Commons, fetched at 800 px wide (a fly
@@ -111,9 +146,15 @@ uv run python scripts/benchmark_local_captioning.py \
 
 ## Consequences
 
-- Local captioning needs no PyTorch, which lets US-94.2 take torch out of the
-  default install. It downloads 265 MB instead of about 1 GB and needs about
-  2 GiB of memory headroom instead of 4 GiB.
+- The published image has no PyTorch, sympy or diffusers, and new torch releases
+  no longer grow it. US-94.3 lowers its size budget to keep the gain.
+- Local captioning downloads 265 MB instead of about 1 GB and needs about 2 GiB of
+  memory headroom instead of 4 GiB.
+- Local image generation needs the GPU build. An instance upgraded from an image
+  with it keeps its saved Diffusers choice and downloaded models, but generates no
+  images until an admin chooses another generator or moves to the GPU build.
+- A Mac checkout doesn't install local image generation by default; a developer
+  working on it runs `uv sync --extra local-image`.
 - Deployments with local captioning on download the new bundle once, on the first
   start after the upgrade. Images uploaded while it downloads are captioned once it
   verifies.

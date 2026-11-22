@@ -1,12 +1,22 @@
-"""US-76.2: local diffusers generator: hardware, catalog, recommendation, worker (ADR-0064)."""
+"""US-76.2: local diffusers generator: hardware, catalog, recommendation, worker (ADR-0064).
+
+US-94.2: the generator is an optional install. These tests run on both installs:
+the ones that need torch skip without the ``local-image`` extra, the rest register
+the Diffusers component themselves, and the "not installed" tests remove it.
+"""
 
 import asyncio
 import io
+import subprocess
+import sys
+import uuid
 from dataclasses import replace
 from unittest.mock import AsyncMock
 
 import pytest
-from asterism.domains.image_generation.local import catalog, downloads, provider
+from asterism.domains.components.registry import component_registry
+from asterism.domains.components.schemas import ComponentType
+from asterism.domains.image_generation.local import availability, catalog, downloads, provider
 from asterism.domains.image_generation.local.catalog import BY_ID, CATALOG
 from asterism.domains.image_generation.local.hardware import HardwareReport, cpu_bf16, detect, mps_bf16
 from asterism.domains.image_generation.local.planning import dtype_for, plan, recommend
@@ -24,6 +34,9 @@ from test_projects_api import auth
 from test_projects_api import project_api as _project_api
 
 pytestmark = pytest.mark.asyncio
+needs_local_image = pytest.mark.skipif(
+    not availability.local_image_installed(), reason="needs the local-image extra (uv sync --extra local-image)"
+)
 project_api = _project_api
 canvas_api = _canvas_api
 STUB = WorkerKey(model_dir="unused", pipeline="stub", device="cpu", mode="device", dtype="bfloat16")
@@ -133,6 +146,7 @@ async def test_requests_are_scaled_to_the_model_native_size():
     assert provider.native_size(256, 256, 512) == (256, 256)
 
 
+@needs_local_image
 async def test_detection_reports_this_machine():
     report = detect()
     assert report.device in report.available and report.available[-1] == "cpu"
@@ -219,6 +233,11 @@ def local(images_api, monkeypatch, tmp_path):
     from asterism.core import config
 
     monkeypatch.setattr(config, "storage_root", tmp_path)
+    # As an install with the extra, so the stub-pipeline tests also run without it.
+    from asterism.domains.image_generation.local import router
+
+    component_registry.register()(provider.Diffusers)
+    monkeypatch.setattr(router, "local_image_installed", lambda: True)
     downloads._SERVICES.clear()
     stub = replace(BY_ID["flux2-klein-4b"], id="stub", pipeline="stub", steps=3)
     monkeypatch.setitem(catalog.BY_ID, "stub", stub)
@@ -316,3 +335,109 @@ async def test_admin_endpoints_show_hardware_and_gate_licenses(local, monkeypatc
     removed = await client.delete(f"{url}/models/flux2-klein-4b", headers=auth("admin"))
     assert removed.status_code == 200
     assert (await client.delete(f"{url}/models/nope", headers=auth("admin"))).status_code == 404
+
+
+# ---------------------------------------------------------------------------
+# US-94.2: an install without the local-image extra
+# ---------------------------------------------------------------------------
+
+
+async def test_the_extra_is_installed_only_when_every_package_is_found(monkeypatch):
+    found = {name: object() for name in availability.LOCAL_IMAGE_PACKAGES}
+    monkeypatch.setattr(availability.importlib.util, "find_spec", lambda name: found.get(name))
+    availability.local_image_installed.cache_clear()
+    try:
+        assert availability.local_image_installed() is True
+        del found["torch"]
+        availability.local_image_installed.cache_clear()
+        assert availability.local_image_installed() is False
+    finally:
+        availability.local_image_installed.cache_clear()
+
+
+async def test_the_registry_offers_diffusers_exactly_when_the_extra_is_installed():
+    # A fresh process, so no test's own registration counts.
+    probe = (
+        "from asterism.domains.components.catalog import ensure_loaded; ensure_loaded();"
+        "from asterism.domains.components.registry import component_registry;"
+        "from asterism.domains.components.schemas import ComponentType;"
+        "names = [c.name for c in component_registry.get_providers(ComponentType.ImageGenerator)];"
+        "print(','.join(sorted(names)))"
+    )
+    names = subprocess.run([sys.executable, "-c", probe], check=True, capture_output=True, text=True).stdout
+    expected = ["ComfyUI", "Diffusers"] if availability.local_image_installed() else ["ComfyUI"]
+    assert names.strip().split(",") == expected
+
+
+@pytest.fixture
+def without_extra(local, monkeypatch):
+    """The ``local`` fixture as an image without the extra would see it."""
+    from asterism.domains.image_generation.local import router
+
+    key = component_registry._make_key(ComponentType.ImageGenerator, "Diffusers")
+    monkeypatch.delitem(component_registry.providers_by_unique_id, key)
+    monkeypatch.setitem(
+        component_registry.providers_by_type,
+        ComponentType.ImageGenerator,
+        [c for c in component_registry.get_providers(ComponentType.ImageGenerator) if c.name != "Diffusers"],
+    )
+    monkeypatch.setattr(router, "local_image_installed", lambda: False)
+    monkeypatch.setattr(router, "detect", lambda device="auto": pytest.fail("detected hardware without torch"))
+    return local
+
+
+async def test_a_saved_local_generator_reads_as_not_available_and_is_never_replaced(without_extra):
+    (client, sessions), _, _ = without_extra
+    await set_policy(sessions, provider="Diffusers")
+    await select(sessions, "stub")
+
+    status = (await client.get("/settings/app/image-generation/status", headers=auth("admin"))).json()
+    assert status == {"provider": "Diffusers", "ready": False, "detail": "Diffusers is not available in this image"}
+    available = (await client.get("/image-generation/availability", headers=auth())).json()
+    assert available == {"available": False, "reason": "Diffusers is not available in this image"}
+
+    # The saved choice stays stored and readable; it is not swapped for ComfyUI.
+    settings = (await client.get("/settings/app", headers=auth("admin"))).json()
+    assert settings["image_generator_provider"]["name"] == "Diffusers"
+    listed = (await client.get("/components/by_type/ImageGenerator", headers=auth("admin"))).json()
+    names = [item["name"] for item in listed["items"]]
+    assert "ComfyUI" in names and "Diffusers" not in names
+    tried = await client.post("/settings/app/image-generation/test", headers=auth("admin"), json={"prompt": "A heron"})
+    assert tried.status_code == 400 and "Diffusers is not available in this image" in tried.text
+
+
+async def test_the_local_catalog_and_downloads_are_hidden_without_the_extra(without_extra):
+    (client, sessions), _, started = without_extra
+    await select(sessions, "stub")
+    url = "/settings/app/image-generation/local"
+
+    overview = (await client.get(url, headers=auth("admin"))).json()
+    assert overview["installed"] is False
+    assert overview["models"] == [] and overview["hardware"] is None and overview["recommended_id"] is None
+    assert overview["settings"]["model_id"] == "stub"
+
+    for method, path, body in [
+        ("PUT", url, {"model_id": "flux2-klein-4b"}),
+        ("POST", f"{url}/models/flux2-klein-4b/download", {"accept_license": True}),
+        ("DELETE", f"{url}/models/flux2-klein-4b/download", None),
+        ("DELETE", f"{url}/models/flux2-klein-4b", None),
+    ]:
+        response = await client.request(method, path, headers=auth("admin"), json=body)
+        assert response.status_code == 400 and "not available in this image" in response.text, (method, path)
+    started.assert_not_called()
+
+
+async def test_generate_image_is_not_offered_for_a_local_generator_without_the_extra(without_extra):
+    from asterism.domains.agent.service import get_main_agent_profile
+    from asterism.domains.chat.tool_policy import resolve_effective_tools
+    from test_chat_models import A
+
+    (client, sessions), ready, _ = without_extra
+    await set_policy(sessions, provider="Diffusers")
+    await select(sessions, "stub")
+    ready["value"] = True
+    chat_id, _, _ = await started_chat(client, sessions)
+    main = await get_main_agent_profile("a")
+
+    tools = (await resolve_effective_tools(user_id="a", chat_id=chat_id, profile=main, model_id=uuid.UUID(A)))[0]
+    assert "generate_image" not in tools

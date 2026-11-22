@@ -2,7 +2,9 @@
 
 Status: accepted; domain, tool and Create image in US-76.1, local diffusers
 generator in US-76.2 on 2026-11-09, ComfyUI generator in US-76.3 on
-2026-11-10 ([EPIC-76](../epics/EPIC-76-IMAGE-GENERATION.md)).
+2026-11-10 ([EPIC-76](../epics/EPIC-76-IMAGE-GENERATION.md)). Amended by
+[ADR-0077](0077-torch-free-default-image.md) on 2026-11-22: the local
+generator is an optional install that only the GPU image build includes.
 
 ## Context
 
@@ -148,6 +150,9 @@ The direct path does not write tool-call messages, so a model without tool
 support never sees tool messages in its history.
 
 ### Local diffusers generator (US-76.2)
+
+Since US-94.2 this generator is the optional `local-image` extra, installed only
+by the GPU image build; see [ADR-0077](0077-torch-free-default-image.md#decision-local-image-generation-is-an-optional-install).
 
 - **Hardware.** `local/hardware.py` detects CUDA (name, total and free
   memory), Apple MPS (unified memory) or CPU (RAM), and whether the chosen

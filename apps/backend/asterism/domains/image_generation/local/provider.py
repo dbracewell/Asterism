@@ -9,6 +9,7 @@ from asterism.domains.components.registry import component_registry
 from ..providers import ImageGenerationError, ImageGeneratorComponent, ProgressCallback
 from ..schemas import ImageProviderStatus, ImageRequest, ProviderImage, ProviderResult
 from . import downloads
+from .availability import local_image_installed
 from .catalog import CatalogEntry, entry
 from .hardware import cached_detect
 from .planning import dtype_for, plan
@@ -41,7 +42,6 @@ async def _local_settings() -> LocalSettings:
         return await read_settings(session)
 
 
-@component_registry.register()
 class Diffusers(ImageGeneratorComponent[DiffusersParameters]):
     """A local diffusers model run in a worker process by this backend."""
 
@@ -104,3 +104,9 @@ class Diffusers(ImageGeneratorComponent[DiffusersParameters]):
             revision=model.revision,
             steps=steps,
         )
+
+
+# Registered only where the local-image extra is installed (US-94.2). Elsewhere a
+# saved Diffusers generator stays stored and reads as not available.
+if local_image_installed():
+    component_registry.register()(Diffusers)

@@ -37,6 +37,7 @@
     "check:image": "node scripts/check-image.mjs",
     "check:upgrade": "node scripts/check-upgrade.mjs",
     "check:release-notes": "node scripts/check-release-notes.mjs",
+    "check:default-install": "pnpm --filter @asterism/backend check:default-install",
     "release": "node scripts/release.mjs",
     "check:theme-storage-container": "node scripts/check-theme-storage-container.mjs"
   },

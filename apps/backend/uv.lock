@@ -87,12 +87,10 @@ name = "asterism-core"
 version = "0.2.2"
 source = { editable = "." }
 dependencies = [
-    { name = "accelerate" },
     { name = "aiosqlite" },
     { name = "alembic" },
     { name = "beautifulsoup4" },
     { name = "cachetools" },
-    { name = "diffusers" },
     { name = "fastapi" },
     { name = "filetype" },
     { name = "fpdf2" },
@@ -117,14 +115,20 @@ dependencies = [
     { name = "requests" },
     { name = "sqlalchemy", extra = ["asyncio"] },
     { name = "tiktoken" },
-    { name = "torch", version = "2.13.0", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform != 'linux'" },
-    { name = "torch", version = "2.13.0+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "sys_platform == 'linux'" },
-    { name = "torchvision", version = "0.28.0", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform != 'linux'" },
-    { name = "torchvision", version = "0.28.0+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "sys_platform == 'linux'" },
     { name = "transformers" },
     { name = "truststore" },
     { name = "uvicorn", extra = ["standard"] },
     { name = "websockets" },
+]
+
+[package.optional-dependencies]
+local-image = [
+    { name = "accelerate" },
+    { name = "diffusers" },
+    { name = "torch", version = "2.13.0", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform != 'linux'" },
+    { name = "torch", version = "2.13.0+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "sys_platform == 'linux'" },
+    { name = "torchvision", version = "0.28.0", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform != 'linux'" },
+    { name = "torchvision", version = "0.28.0+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "sys_platform == 'linux'" },
 ]
 
 [package.dev-dependencies]
@@ -137,12 +141,12 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "accelerate", specifier = ">=1.15.0" },
+    { name = "accelerate", marker = "extra == 'local-image'", specifier = ">=1.15.0" },
     { name = "aiosqlite", specifier = ">=0.22.1" },
     { name = "alembic", specifier = ">=1.16" },
     { name = "beautifulsoup4", specifier = ">=4.15.0" },
     { name = "cachetools", specifier = ">=7.1.4" },
-    { name = "diffusers", specifier = ">=0.41" },
+    { name = "diffusers", marker = "extra == 'local-image'", specifier = ">=0.41" },
     { name = "fastapi", specifier = ">=0.136.3" },
     { name = "filetype", specifier = ">=1.2.0" },
     { name = "fpdf2", specifier = ">=2.9.0" },
@@ -153,7 +157,7 @@ requires-dist = [
     { name = "markdown-it-py", specifier = ">=4.2.0" },
     { name = "markitdown", extras = ["docx", "pdf", "pptx", "xls", "xlsx"], specifier = ">=0.1.7,<0.2" },
     { name = "num2words", specifier = ">=0.5.14" },
-    { name = "onnxruntime", specifier = ">=1.20,<2" },
+    { name = "onnxruntime", specifier = ">=1.32,<2" },
     { name = "openai", specifier = ">=2.38.0" },
     { name = "pillow", specifier = ">=13,<14" },
     { name = "playwright", specifier = ">=1.62.0" },
@@ -167,15 +171,16 @@ requires-dist = [
     { name = "requests", specifier = ">=2.34.2" },
     { name = "sqlalchemy", extras = ["asyncio"], specifier = ">=2.0.50" },
     { name = "tiktoken", specifier = ">=0.14.0" },
-    { name = "torch", marker = "sys_platform != 'linux'", specifier = ">=2.13.0,<2.14" },
-    { name = "torch", marker = "sys_platform == 'linux'", specifier = ">=2.13.0,<2.14", index = "https://download.pytorch.org/whl/cpu" },
-    { name = "torchvision", marker = "sys_platform != 'linux'", specifier = ">=0.24,<0.29" },
-    { name = "torchvision", marker = "sys_platform == 'linux'", specifier = ">=0.24,<0.29", index = "https://download.pytorch.org/whl/cpu" },
+    { name = "torch", marker = "sys_platform == 'linux' and extra == 'local-image'", specifier = ">=2.13.0,<2.14", index = "https://download.pytorch.org/whl/cpu" },
+    { name = "torch", marker = "sys_platform != 'linux' and extra == 'local-image'", specifier = ">=2.13.0,<2.14" },
+    { name = "torchvision", marker = "sys_platform == 'linux' and extra == 'local-image'", specifier = ">=0.24,<0.29", index = "https://download.pytorch.org/whl/cpu" },
+    { name = "torchvision", marker = "sys_platform != 'linux' and extra == 'local-image'", specifier = ">=0.24,<0.29" },
     { name = "transformers", specifier = ">=5.14.1" },
     { name = "truststore", specifier = ">=0.10.4" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.48.0" },
     { name = "websockets", specifier = ">=15.0" },
 ]
+provides-extras = ["local-image"]
 
 [package.metadata.requires-dev]
 dev = [

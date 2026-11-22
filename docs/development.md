@@ -22,6 +22,13 @@ for how the system is built, see the [architecture guides](architecture/README.m
    pnpm --filter @asterism/backend sync
    ```
 
+   This installs what the published image has, without PyTorch. To work on local
+   image generation (the Diffusers generator), install the `local-image` extra
+   instead: `pnpm --filter @asterism/backend sync:local-image`, which runs
+   `uv sync --extra local-image`. A plain `sync` removes it again. Its tests skip
+   the parts that need torch without it; CI runs them with the extra
+   (`pnpm --filter @asterism/backend test:local-image`).
+
 2. Create the root `.env` from the example and fill it in:
 
    ```bash
@@ -177,7 +184,11 @@ planned change, made by hand with its own pull request. For uv, Dependabot updat
 within `pyproject.toml`'s ranges and never raises an upper cap (such as
 `lancedb<0.30`, which guards the stored vectors): raising one is a change made by
 hand. The E2E job's
-`container:` image isn't covered by Dependabot: update its digest by hand.
+`container:` image isn't covered by Dependabot: update its digest by hand. The
+default backend install must not include torch, torchvision, diffusers or
+accelerate: `pnpm check:default-install` (run in CI) fails on an update that
+pulls one in and names the package that does; move it to the `local-image`
+extra or leave the update out.
 
 To review one:
 

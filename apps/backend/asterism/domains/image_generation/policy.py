@@ -5,10 +5,12 @@ import uuid
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from asterism.core.exceptions import BadDataException
+from asterism.domains.components.registry import component_registry
+from asterism.domains.components.schemas import ComponentType
 from asterism.domains.settings.models import ApplicationSettingsModel
 from asterism.domains.settings.service import upsert_app_setting
 
-from .providers import load_generator, selected_name
+from .providers import NO_PROVIDER, load_generator, selected_name
 from .schemas import ImageGenerationAvailability, ImageGenerationPolicy, ImageProviderStatus
 
 POLICY_KEY = "image_generation"
@@ -40,9 +42,11 @@ async def write_policy(payload: ImageGenerationPolicy, session: AsyncSession) ->
 async def provider_status(session: AsyncSession) -> ImageProviderStatus:
     generator = await load_generator(session)
     if generator is None:
-        return ImageProviderStatus(
-            provider=await selected_name(session), ready=False, detail="No image provider is set up"
-        )
+        name = await selected_name(session)
+        if name != NO_PROVIDER and component_registry.find(ComponentType.ImageGenerator, name) is None:
+            # Saved, but not installed in this image (US-94.2): never another generator instead.
+            return ImageProviderStatus(provider=name, ready=False, detail=f"{name} is not available in this image")
+        return ImageProviderStatus(provider=name, ready=False, detail="No image provider is set up")
     return await generator.status()
 
 
