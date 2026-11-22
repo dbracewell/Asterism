@@ -82,11 +82,11 @@ Source: user request (2026-11-20), following EPIC-91. [EPIC-92](docs/epics/EPIC-
   - [x] Sign the index digest with cosign, keyless, in the publish job. The cosign installer is pinned like every action.
   - [x] After signing, the workflow runs `cosign verify` with the expected identity (`https://github.com/dbracewell/Asterism/.github/workflows/release.yml@refs/tags/v*`) and OIDC issuer.
   - [x] A rehearsal run (Run workflow) signs nothing, as it tags nothing (US-91.5). (Rehearsal 45013906928: publish skipped.)
-- [ ] US-92.5: Verifying a release, and the security policy
-  - [ ] A "Verify the image" section in `docs/deployment.md` gives the `gh attestation verify` and `cosign verify` commands, and says how to read the SBOM.
-  - [ ] `SECURITY.md`: which versions get fixes (the latest minor in 0.x), how to report privately (GitHub private vulnerability reporting), and what happens next.
-  - [ ] `docs/development.md` lists the repository settings this epic relies on, for the owner to turn on: a ruleset on `main` requiring the three CI checks and an up-to-date branch; a ruleset that lets only maintainers create or move `v*` tags; private vulnerability reporting; Dependabot alerts.
-  - [ ] Release notes: an Image entry for signed and attested images.
+- [ ] US-92.5: Verifying a release, and the security policy (in progress, branch `feat/us-92.5-verify-and-security-policy`)
+  - [x] A "Verify the image" section in `docs/deployment.md` gives the `gh attestation verify` and `cosign verify` commands, and says how to read the SBOM.
+  - [x] `SECURITY.md`: which versions get fixes (the latest minor in 0.x), how to report privately (GitHub private vulnerability reporting), and what happens next.
+  - [x] `docs/development.md` lists the repository settings this epic relies on, for the owner to turn on: a ruleset on `main` requiring the three CI checks and an up-to-date branch; a ruleset that lets only maintainers create or move `v*` tags; private vulnerability reporting; Dependabot alerts.
+  - [x] Release notes: an Image entry for signed and attested images.
 
 ## Long-term memory (proposed 2026-11-20)
 
