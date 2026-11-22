@@ -26,6 +26,11 @@ macOS Intel were not measured.
 
 ## Local captioning model: SmolVLM2 256M
 
+Superseded on 2026-11-22: captioning now runs the int8 ONNX export of the same
+revision, measured in [ADR-0077](../adr/0077-torch-free-default-image.md). The
+figures below are for the torch model it replaced, and the benchmark command has
+changed.
+
 `HuggingFaceTB/SmolVLM2-256M-Video-Instruct` at revision
 `067788b187b95ebe7b2e040b3e4299e342e5b8fd`, with Python 3.13, Torch 2.13,
 Transformers 5.14.1, torchvision 0.28 and num2words 0.5.14. The fixture is a
@@ -41,12 +46,4 @@ Two concurrent captions did not improve throughput and raised memory use
 substantially, so local captioning defaults to one at a time
 (`MAX_CONCURRENT_LOCAL_CAPTIONS=1`) and needs at least 4 GiB of headroom.
 
-To measure a new target:
-
-```bash
-cd apps/backend
-uv run python scripts/benchmark_local_captioning.py \
-  --model-root /storage/models/captioning-smolvlm2 \
-  --bundle-sha256 <manifest-sha256> --concurrency 1 \
-  --output caption-benchmark-$(uname -s)-$(uname -m).json
-```
+To measure a target with the current model, see [ADR-0077](../adr/0077-torch-free-default-image.md#comparison).

@@ -1,5 +1,6 @@
 import asyncio
 import json
+import shutil
 import threading
 from collections.abc import Callable, Coroutine
 from dataclasses import dataclass, field
@@ -26,6 +27,10 @@ class PinnedModel:
     filename: str | None = None
     sha256: str | None = None
     size_bytes: int | None = None
+    files: dict[str, str] = field(default_factory=dict)
+    """Pinned SHA-256 per bundle path. When set, the bundle is exactly these files:
+    only they are downloaded, each must match its digest, and anything else under
+    the model root (such as an older bundle) is removed when the download lands."""
 
 
 @dataclass
@@ -62,6 +67,14 @@ def build_manifest(model_root: Path, model: PinnedModel) -> dict[str, object]:
         raise ValueError("Model ID and reviewed revision are required")
 
     files: dict[str, str] = {}
+    if model.files:
+        for relative_path in sorted(model.files):
+            path = root / relative_path
+            if not path.is_file() or path.is_symlink():
+                raise ValueError(f"Model root is missing pinned file {relative_path}")
+            files[relative_path] = sha256_file(path)
+        return {"model_id": model.id.strip(), "revision": model.revision.strip(), "files": files}
+
     for path in sorted(root.rglob("*")):
         if path.name == MANIFEST_FILENAME:
             continue
@@ -130,6 +143,10 @@ def _verify_manifest_uncached(root: Path, model: PinnedModel) -> bool:
 
         files = manifest.get("files")
         if not isinstance(files, dict) or not files:
+            return False
+
+        if model.files and files != {path: digest.lower() for path, digest in model.files.items()}:
+            # A pinned bundle is exactly its pinned files, each at its pinned digest.
             return False
 
         if model.filename and model.sha256:
@@ -221,6 +238,11 @@ class ModelDownloadService:
             and verify_manifest(previous_root, self.pinned_model)
         ):
             previous_root.replace(self.model_root)
+        staging = self._staging_root
+        root_is_empty = not self.model_root.exists() or not any(self.model_root.iterdir())
+        if root_is_empty and staging.exists() and verify_manifest(staging, self.pinned_model):
+            # A swap that stopped between moving the old bundle out and the new one in.
+            staging.replace(self.model_root)
 
     def _ensure_checked(self) -> None:
         if self.state.status == "idle":
@@ -257,7 +279,7 @@ class ModelDownloadService:
         if self.state.status == "ready" or self.state.status in {"downloading", "verifying"}:
             return DownloadProgress(
                 status=self.state.status,
-                bytes_downloaded=calculate_directory_size(self.model_root.resolve()),
+                bytes_downloaded=self._downloaded_bytes(),
                 total_bytes=self.pinned_model.size_bytes if self.pinned_model.size_bytes is not None else 0,
                 error=self.state.error,
             )
@@ -272,16 +294,69 @@ class ModelDownloadService:
         self.state.task.add_done_callback(self._clear_task)
         return DownloadProgress(
             status=self.state.status,
-            bytes_downloaded=calculate_directory_size(self.model_root.resolve()),
+            bytes_downloaded=self._downloaded_bytes(),
             total_bytes=self.pinned_model.size_bytes if self.pinned_model.size_bytes is not None else 0,
             error=self.state.error,
         )
+
+    def _downloaded_bytes(self) -> int:
+        staging = self._staging_root
+        if self.pinned_model.files and self.state.status in {"downloading", "verifying"} and staging.is_dir():
+            return calculate_directory_size(staging)
+        return calculate_directory_size(self.model_root.resolve())
+
+    @property
+    def _staging_root(self) -> Path:
+        return self.model_root.with_name(f"{self.model_root.name}.staging")
+
+    def _download_pinned_sync(self, cancel_requested: threading.Event) -> str:
+        """Download a pinned file list into staging, check every digest, then swap it in.
+
+        Staging persists across attempts so an interrupted download resumes. A
+        file whose digest is wrong is deleted, so the next attempt fetches it again.
+        The swap replaces the whole model root, which removes any older bundle.
+        """
+        from huggingface_hub import snapshot_download
+
+        staging = self._staging_root
+        staging.mkdir(parents=True, exist_ok=True)
+        snapshot_download(
+            self.pinned_model.id,
+            revision=self.pinned_model.revision,
+            local_dir=str(staging),
+            allow_patterns=list(self.pinned_model.files),
+            local_files_only=False,
+        )
+        if cancel_requested.is_set():
+            raise DownloadNotReadyError("Download was cancelled")
+
+        mismatched: list[str] = []
+        for relative_path, expected in self.pinned_model.files.items():
+            path = staging / relative_path
+            if not path.is_file() or sha256_file(path) != expected.lower():
+                path.unlink(missing_ok=True)
+                mismatched.append(relative_path)
+        if mismatched:
+            # Only the bad files are gone, so a retry fetches just those again.
+            raise ValueError(f"Downloaded files do not match their pinned SHA-256: {', '.join(mismatched)}")
+
+        shutil.rmtree(staging / ".cache", ignore_errors=True)
+        write_manifest(staging, self.pinned_model)
+        replaced = self.model_root.with_name(f"{self.model_root.name}.replaced")
+        shutil.rmtree(replaced, ignore_errors=True)
+        if self.model_root.exists():
+            self.model_root.replace(replaced)
+        staging.replace(self.model_root)
+        shutil.rmtree(replaced, ignore_errors=True)
+        return sha256_file(self.model_root / MANIFEST_FILENAME)
 
     def _download_sync(self, cancel_requested: threading.Event) -> str:
         from huggingface_hub import snapshot_download
 
         parent = self.model_root.parent
         parent.mkdir(parents=True, exist_ok=True)
+        if self.pinned_model.files:
+            return self._download_pinned_sync(cancel_requested)
 
         allow_patterns = [*self.pinned_model.allow_patterns]
         if self.pinned_model.source_filename:
@@ -356,7 +431,7 @@ class ModelDownloadService:
         manifest = self.model_root / MANIFEST_FILENAME
         return DownloadProgress(
             status=self.state.status,
-            bytes_downloaded=calculate_directory_size(self.model_root.resolve()) if self.model_root else 0,
+            bytes_downloaded=self._downloaded_bytes(),
             total_bytes=self.pinned_model.size_bytes if downloading and self.pinned_model.size_bytes is not None else 0,
             error=self.state.error,
             bundle_sha256=sha256_file(manifest) if self.state.status == "ready" and manifest.is_file() else None,

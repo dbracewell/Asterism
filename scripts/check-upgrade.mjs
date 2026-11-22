@@ -5,12 +5,16 @@
 //
 // Starts the previous release's image on a fresh volume and seeds it through
 // the API: an admin account, a model provider (a local double), a chat with a
-// reply, two related files indexed into vectors, and a custom theme. Then it
+// reply, two related files indexed into vectors, a custom theme, and local
+// captioning switched on with an image captioned by it. Then it
 // stops it and starts the new image on the same volume with the same secrets,
 // and checks the container is healthy, both databases were migrated (the auth
 // schema matches a fresh one from the new image), and the account, chat, files
-// (their bytes, and their vectors through similar-file search) and theme (every
-// value) are all still there. Last, it starts the previous image again on the
+// (their bytes, and their vectors through similar-file search), theme (every
+// value) and stored caption are all still there, and that local captioning
+// still captions a new image (US-94.1: an upgrade may replace the caption
+// model bundle, which the new image then downloads itself). Last, it starts
+// the previous image again on the
 // upgraded volume and checks it refuses the newer database with its version
 // message, rather than running on it.
 //
@@ -135,6 +139,16 @@ export function seedProblems(seeded, found) {
   if (!found.similar.includes(second)) {
     problems.push(
       `Similar-file search for ${first} no longer finds ${second}, so its vectors were lost (found ${JSON.stringify(found.similar)})`,
+    );
+  }
+  if (found.caption !== seeded.caption.text) {
+    problems.push(
+      `The caption of ${seeded.caption.filename} changed: seeded ${JSON.stringify(seeded.caption.text)}, found ${JSON.stringify(found.caption)}`,
+    );
+  }
+  if (found.newCaption?.status !== "ready" || !found.newCaption.payload?.text) {
+    problems.push(
+      `Local captioning no longer captions: ${JSON.stringify(found.newCaption)}`,
     );
   }
   // A release that deliberately changes the theme format changes this too.
@@ -372,6 +386,59 @@ function notes(topic) {
   return line.repeat(40);
 }
 
+// Two 128 px PNGs for local captioning: a red square and a blue circle.
+const CAPTION_IMAGES = {
+  "red-square.png":
+    "iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAIAAABMXPacAAAA3klEQVR42u3UsQ3AIBAEQWPRB4H7L4mASo4mXkIWswUQ3OhpSR6d6zUBAAACAEAAAAgAAAEAIAAABACAAAAQAAACAEAAAKi+XvXQHOO27b61XIAvSAAACAAAAQAgAAAEAIAAABAAAAIAQAAACAAAAQAgAAAEAIAAABAAAAIAAIAAABAAAAIAQAAACAAAAQAgAAAEAIAAABAAAAIAQAAACAAAAQAgAAAEAIAAABAAAAIAQAAACAAAAQAgAH+oJbGCCwAgAAAEAIAAABAAAAIAQAAACAAAAQAgAAAEAICK23z2CfuTg9ObAAAAAElFTkSuQmCC",
+  "blue-circle.png":
+    "iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAIAAABMXPacAAAB4ElEQVR42u3dwW0DMQxEUZlIHzmkjlTvOnJIJU4LBrIrUuSbc4Bw+DUUvLCXj9frtShPoQUAAEAAAEAAAEAAAEAAAEAAAEAAAEAAAEAAAEAAAEAAAEDX6+Oscj+/f975s9/n1ymOHvW/mPVm0w+FURfAP/t+ColyAC7ve3EShQBsaH1BDCUAbG59KQwxufvp/z05AenmK0QhdD+3ntD93Kp2j6CarU8cR6H7uXWG7udWG7qfW7PH0av/B7ETj/+2ykP3c+sP3c914Q7oewf0OP53ewndz3VkBHUcQf2O/32+JKBdAroe/5vcSYCvJgJg/iR6lAAjCADzJ9GpBBhBAFAHAHMugGv9SoARBAABAAABAAABAAABAAABAMBq9lKSVfWHfBJgBAFATQDMuQYudCoBRhAAplCiRwkwggAwhRLdSUDHEdQ1BHf4koCml3C/ENzkKIa8IbisFyOo9eeAHiG41UWMelV5wfpjznvKa1buDpjxLOjEEOypOaYtTKhWbQxcWlGqzpz9AWV/0bf/iMTMxSF1qoqxy1uK1JO/xCd9HOUehRh79IoE0R6xBYBNessuSQBsU132CQOwPA0lAAAgAAAgAAAgAAAgAAAgAAAgAAAgAAAgAAAgAAAgAHroD6ZxvcPlK76MAAAAAElFTkSuQmCC",
+};
+
+/** Wait for the local caption model bundle to be ready; returns its last status. */
+async function waitCaptionModel(session) {
+  const deadline = Date.now() + 20 * 60 * 1000;
+  let status = "timeout";
+  while (Date.now() < deadline) {
+    ({ status } = await session.api(
+      "caption model",
+      "GET",
+      "/settings/app/caption-model/status",
+    ));
+    if (status === "ready" || status === "failed") return status;
+    await sleep(5000);
+  }
+  return status;
+}
+
+/** Upload one of CAPTION_IMAGES and wait for its caption; returns the captioning entry. */
+async function captionImage(session, filename) {
+  await session.upload(
+    "upload image",
+    filename,
+    Buffer.from(CAPTION_IMAGES[filename], "base64"),
+    "image/png",
+  );
+  const deadline = Date.now() + 10 * 60 * 1000;
+  let captioning = { status: "timeout" };
+  while (Date.now() < deadline) {
+    try {
+      const knowledge = await session.api(
+        "knowledge",
+        "GET",
+        `/files/${encodeURIComponent(filename)}/knowledge`,
+      );
+      captioning = knowledge.extractions?.captioning ?? captioning;
+      if (captioning.status === "ready" || captioning.status === "failed")
+        return captioning;
+    } catch (error) {
+      if (!(error instanceof HttpError && [404, 429].includes(error.status)))
+        throw error;
+    }
+    await sleep(3000);
+  }
+  return captioning;
+}
+
 async function waitIndexed(session, filename) {
   const deadline = Date.now() + 10 * 60 * 1000;
   while (Date.now() < deadline) {
@@ -483,6 +550,27 @@ async function seed(run, stub) {
       throw new Error(`${filename} was not indexed: ${status}`);
   }
 
+  await session.api("captioning", "PUT", "/settings/app/captioning", {
+    mode: "local",
+  });
+  await session.api(
+    "caption model",
+    "POST",
+    "/settings/app/caption-model/download",
+  );
+  const captionModel = await waitCaptionModel(session);
+  if (captionModel !== "ready")
+    throw new Error(`The previous image's caption model is ${captionModel}`);
+  const captioned = await captionImage(session, "red-square.png");
+  if (captioned.status !== "ready" || !captioned.payload?.text)
+    throw new Error(
+      `The previous image did not caption: ${JSON.stringify(captioned)}`,
+    );
+  const caption = {
+    filename: "red-square.png",
+    text: captioned.payload.text,
+  };
+
   const base = await readTheme(run.base, BASE_THEME);
   if (!base) throw new Error(`The previous image has no ${BASE_THEME} theme`);
   const { filename: _filename, ...data } = base;
@@ -494,7 +582,7 @@ async function seed(run, stub) {
   if (!theme)
     throw new Error("The previous image does not read the seeded theme");
 
-  return { email, chatId: created.info.id, chat, files, theme };
+  return { email, chatId: created.info.id, chat, files, theme, caption };
 }
 
 async function inspectSeed(run, seeded) {
@@ -535,6 +623,18 @@ async function inspectSeed(run, seeded) {
       `/files/${encodeURIComponent(first)}/similar`,
     )
   ).files.map((match) => match.file.filename);
+  const stored = (
+    await session.api(
+      "knowledge",
+      "GET",
+      `/files/${encodeURIComponent(seeded.caption.filename)}/knowledge`,
+    )
+  ).extractions?.captioning?.payload?.text;
+  const model = await waitCaptionModel(session);
+  const fresh =
+    model === "ready"
+      ? await captionImage(session, "blue-circle.png")
+      : { status: `not tried: the caption model is ${model}` };
   return {
     signedIn,
     chat,
@@ -543,6 +643,8 @@ async function inspectSeed(run, seeded) {
     knowledge,
     similar,
     theme: await readTheme(run.base, THEME_ID),
+    caption: stored ?? null,
+    newCaption: fresh,
   };
 }
 
@@ -576,7 +678,7 @@ async function check({ from, to, port }) {
     const before = databases(old);
     const seeded = await seed(run, stub);
     log(
-      `ok: seeded an admin, a chat with ${seeded.chat.length} messages, ${Object.keys(seeded.files).length} indexed files and a theme (schema ${before.revision})`,
+      `ok: seeded an admin, a chat with ${seeded.chat.length} messages, ${Object.keys(seeded.files).length} indexed files, a theme and a local caption (schema ${before.revision})`,
     );
     stop(old);
 
@@ -601,7 +703,7 @@ async function check({ from, to, port }) {
     const problems = seedProblems(seeded, await inspectSeed(run, seeded));
     if (problems.length) throw new Error(problems.join("\n"));
     log(
-      "ok: the account signs in; the chat, the files' bytes and vectors, and every theme value are unchanged",
+      "ok: the account signs in; the chat, the files' bytes and vectors, every theme value and the caption are unchanged, and local captioning captions a new image",
     );
     stop(next);
 

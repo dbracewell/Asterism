@@ -97,6 +97,7 @@ test("every kind of lost data is reported", () => {
     chat: [{ id: "m1", role: "user", status: "complete", content: "Hi" }],
     files: { "a.txt": "alpha", "b.txt": "beta" },
     theme,
+    caption: { filename: "red-square.png", text: "A red square." },
   };
   const kept = {
     signedIn: true,
@@ -106,6 +107,8 @@ test("every kind of lost data is reported", () => {
     knowledge: "ready",
     similar: ["b.txt"],
     theme: { ...theme },
+    caption: "A red square.",
+    newCaption: { status: "ready", payload: { text: "A blue circle." } },
   };
   assert.deepEqual(seedProblems(seeded, kept), []);
   const problems = seedProblems(seeded, {
@@ -116,14 +119,18 @@ test("every kind of lost data is reported", () => {
     knowledge: "pending",
     similar: [],
     theme: { ...theme, radius: 0 },
+    caption: null,
+    newCaption: { status: "pending" },
   });
-  assert.equal(problems.length, 6);
+  assert.equal(problems.length, 8);
   assert.match(problems[0], /The chat changed/);
   assert.match(problems[1], /a\.txt no longer has the uploaded content/);
   assert.match(problems[2], /b\.txt is missing/);
   assert.match(problems[3], /pending, not ready/);
   assert.match(problems[4], /vectors were lost/);
-  assert.match(problems[5], /The theme changed/);
+  assert.match(problems[5], /caption of red-square\.png changed/);
+  assert.match(problems[6], /no longer captions/);
+  assert.match(problems[7], /The theme changed/);
   assert.match(
     seedProblems(seeded, { ...kept, theme: null }).join(),
     /upgrade-check is missing/,

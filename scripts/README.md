@@ -348,7 +348,9 @@ pointing at a local model double, a chat with a reply, and two related text
 files indexed into vectors. For a custom theme, it reads a bundled theme from the
 previous image's `/api/theme` and writes it, renamed, to `/storage/themes` the way
 the app's theme repository does, so the theme is in that release's format. Themes
-are saved through a Next.js server action, which a script can't call. Then it starts the new image on the same volume with
+are saved through a Next.js server action, which a script can't call. Last, it
+switches image captioning to local, downloads that release's caption model and
+captions a small PNG. Then it starts the new image on the same volume with
 the same secrets and checks:
 
 - the container becomes healthy;
@@ -360,6 +362,9 @@ the same secrets and checks:
 - similar-file search still finds the second file from the first, so the
   vectors survived;
 - the app serves the theme with every value unchanged.
+- the stored caption is unchanged, and after the new image has downloaded its
+  own caption model (it does so on start when local captioning is on, US-94.1),
+  a newly uploaded PNG is captioned.
 
 Last, it starts the previous image on the upgraded volume and checks it exits
 with its "schema revision … which this code does not know" message. When both

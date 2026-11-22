@@ -10,7 +10,12 @@ from asterism.domains.knowledge.caption_schemas import (
     CaptionMode,
     CaptionRequest,
 )
-from asterism.domains.knowledge.captioning import LocalSmolVlm2CaptionProvider, bounded_caption, caption_model
+from asterism.domains.knowledge.captioning import (
+    OnnxSmolVlm2CaptionProvider,
+    bounded_caption,
+    caption_model,
+    caption_model_files,
+)
 from asterism.domains.settings.provider_types import ModelCapabilitySource
 
 
@@ -60,7 +65,7 @@ def test_captioning_configuration_rejects_invalid_mode_selection(configuration):
 
 @pytest.mark.asyncio
 async def test_local_captioning_never_initializes_without_a_provisioned_manifest(tmp_path: Path):
-    provider = LocalSmolVlm2CaptionProvider(tmp_path, pinned_model=caption_model)
+    provider = OnnxSmolVlm2CaptionProvider(tmp_path, pinned_model=caption_model, files=caption_model_files)
     with pytest.raises(CaptioningError, match="not provisioned") as error:
         await provider.initialize()
     assert error.value.code is CaptionErrorCode.NOT_READY
@@ -68,16 +73,17 @@ async def test_local_captioning_never_initializes_without_a_provisioned_manifest
 
 @pytest.mark.asyncio
 async def test_local_captioning_verifies_manifest_and_all_declared_files_before_loading(tmp_path: Path):
-    model_file = tmp_path / "weights.safetensors"
-    model_file.write_bytes(b"expected weights")
+    model_file = tmp_path / caption_model_files.decoder
+    model_file.parent.mkdir(parents=True)
+    model_file.write_bytes(b"not the pinned decoder")
     manifest = {
         "model_id": caption_model.id,
         "revision": caption_model.revision,
-        "files": {"weights.safetensors": "0" * 64},
+        "files": caption_model.files,
     }
     manifest_bytes = json.dumps(manifest).encode()
     (tmp_path / "manifest.json").write_bytes(manifest_bytes)
-    provider = LocalSmolVlm2CaptionProvider(tmp_path, pinned_model=caption_model)
+    provider = OnnxSmolVlm2CaptionProvider(tmp_path, pinned_model=caption_model, files=caption_model_files)
 
     with pytest.raises(CaptioningError, match="manifest is invalid") as error:
         await provider.initialize()
@@ -104,27 +110,19 @@ def test_caption_request_never_shows_image_bytes_in_its_repr():
     assert "SECRET-IMAGE-BYTES" not in repr(request)
 
 
-@pytest.mark.asyncio
-async def test_caption_job_transitions_directly_to_ready_and_enables_text_retrieval(
-    tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+async def _seed_pending_caption(tmp_path: Path):
+    """A current, unsearchable image artifact whose captioning is pending."""
     from contextlib import asynccontextmanager
 
     from asterism.db.model_registry import Base
     from asterism.domains.files.models import FileKind, UserFileModel
-    from asterism.domains.knowledge.caption_schemas import CaptionResult
-    from asterism.domains.knowledge.captioning import caption
     from asterism.domains.knowledge.models import (
         FileKnowledgeArtifactModel,
         FileKnowledgeExtractionModel,
         KnowledgeExtractionKind,
         KnowledgeExtractionStatus,
     )
-    from asterism.domains.retrieval.service import RetrievalArtifact
     from asterism.domains.user.models import UserModel
-    from knowledge_doubles import FakeSourceReader
-    from sqlalchemy import select
     from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
     engine = create_async_engine(f"sqlite+aiosqlite:///{tmp_path / 'caption-ready.db'}")
@@ -174,6 +172,28 @@ async def test_caption_job_transitions_directly_to_ready_and_enables_text_retrie
     async def session_factory():
         async with sessions() as db_session:
             yield db_session
+
+    return engine, sessions, session_factory, file_id, artifact_id
+
+
+@pytest.mark.asyncio
+async def test_caption_job_transitions_directly_to_ready_and_enables_text_retrieval(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from asterism.domains.knowledge.caption_schemas import CaptionResult
+    from asterism.domains.knowledge.captioning import caption
+    from asterism.domains.knowledge.models import (
+        FileKnowledgeArtifactModel,
+        FileKnowledgeExtractionModel,
+        KnowledgeExtractionKind,
+        KnowledgeExtractionStatus,
+    )
+    from asterism.domains.retrieval.service import RetrievalArtifact
+    from knowledge_doubles import FakeSourceReader
+    from sqlalchemy import select
+
+    engine, sessions, session_factory, file_id, artifact_id = await _seed_pending_caption(tmp_path)
 
     added_chunks = []
 
@@ -230,4 +250,46 @@ async def test_caption_job_transitions_directly_to_ready_and_enables_text_retrie
         assert retrieval_artifact.ready is True
 
     assert len(added_chunks) == 1
+    await engine.dispose()
+
+
+@pytest.mark.asyncio
+async def test_local_captioning_waits_pending_until_the_bundle_verifies(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from asterism.domains.knowledge.captioning import caption, captioning_download_service
+    from asterism.domains.knowledge.models import (
+        FileKnowledgeExtractionModel,
+        KnowledgeExtractionKind,
+        KnowledgeExtractionStatus,
+    )
+    from asterism.domains.knowledge.processing_schemas import KnowledgeCaptionConfiguration
+    from sqlalchemy import select
+
+    engine, sessions, session_factory, file_id, artifact_id = await _seed_pending_caption(tmp_path)
+
+    async def local_configuration(**_kwargs: object) -> KnowledgeCaptionConfiguration:
+        return KnowledgeCaptionConfiguration(mode=CaptionMode.LOCAL, provider_model_id=None, updated_at=0)
+
+    async def must_not_caption(*_args: object, **_kwargs: object):
+        raise AssertionError("captioned before the bundle verified")
+
+    monkeypatch.setattr("asterism.domains.knowledge.captioning.get_async_db_session", session_factory)
+    monkeypatch.setattr("asterism.domains.knowledge.captioning.get_captioning_configuration", local_configuration)
+    monkeypatch.setattr("asterism.domains.knowledge.captioning._caption", must_not_caption)
+    monkeypatch.setattr(captioning_download_service, "is_ready", lambda: False)
+
+    await caption("user-1", file_id, artifact_id)
+
+    async with sessions() as session:
+        captioning = await session.scalar(
+            select(FileKnowledgeExtractionModel).where(
+                FileKnowledgeExtractionModel.artifact_id == artifact_id,
+                FileKnowledgeExtractionModel.kind == KnowledgeExtractionKind.CAPTIONING,
+            )
+        )
+        assert captioning is not None
+        assert captioning.status == KnowledgeExtractionStatus.PENDING
+        assert captioning.error_code is None
     await engine.dispose()

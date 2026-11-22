@@ -1,16 +1,14 @@
-"""Bounded, offline-safe image-captioning contracts and local SmolVLM2 adapter."""
+"""Bounded, offline-safe image captioning: provider models and local SmolVLM2 on ONNX Runtime."""
 
 from __future__ import annotations
 
 import asyncio
 import base64
 import hashlib
-import io
+import time
 import uuid
 from pathlib import Path
-from typing import Any
 
-from PIL import Image
 from sqlalchemy import select
 
 from asterism.common.log import get_logger
@@ -42,6 +40,7 @@ from .caption_schemas import (
     CaptionResult,
 )
 from .model_download import ModelDownloadService, PinnedModel, verify_manifest
+from .onnx_captioning import SmolVlm2OnnxCaptioner, SmolVlm2OnnxFiles
 from .sources import SourceContent, SourceUnavailableError, get_source_reader
 
 logger = get_logger("CAPTION_PROCESSING")
@@ -56,28 +55,32 @@ def bounded_caption(text: str, limit: int) -> str:
     return normalized
 
 
-class LocalSmolVlm2CaptionProvider:
-    """CPU-only SmolVLM2 adapter that will only load an already-provisioned bundle."""
+class OnnxSmolVlm2CaptionProvider:
+    """CPU SmolVLM2 on ONNX Runtime that only loads a verified, already-provisioned bundle."""
 
     def __init__(
         self,
         model_root: Path,
         *,
         pinned_model: PinnedModel,
+        files: SmolVlm2OnnxFiles,
         max_concurrency: int = 1,
         max_new_tokens: int = 128,
+        timeout_s: float = 120,
     ) -> None:
         if max_concurrency < 1:
             raise ValueError("max_concurrency must be positive")
         if not 1 <= max_new_tokens <= 512:
             raise ValueError("max_new_tokens must be from 1 to 512")
+        if timeout_s <= 0:
+            raise ValueError("timeout_s must be positive")
         self._pinned_model = pinned_model
-        self._bundle_sha256: str | None = None
+        self._files = files
         self._model_root = model_root.resolve()
         self._semaphore = asyncio.Semaphore(max_concurrency)
         self._max_new_tokens = max_new_tokens
-        self._model: Any | None = None
-        self._processor: Any | None = None
+        self._timeout_s = timeout_s
+        self._captioner: SmolVlm2OnnxCaptioner | None = None
 
     def _initialize_sync(self) -> None:
         if not verify_manifest(self._model_root, self._pinned_model):
@@ -86,61 +89,31 @@ class LocalSmolVlm2CaptionProvider:
                 "Local caption model is not provisioned or manifest is invalid",
             )
         try:
-            import torch
-            from transformers import AutoModelForImageTextToText, AutoProcessor
-
-            self._processor = AutoProcessor.from_pretrained(
-                self._model_root,
-                local_files_only=True,
-                trust_remote_code=False,
-            )
-            model = AutoModelForImageTextToText.from_pretrained(
-                self._model_root,
-                local_files_only=True,
-                trust_remote_code=False,
-                torch_dtype=torch.float32,
-            )
-            self._model = getattr(model, "to")("cpu").eval()
-        except CaptioningError:
-            raise
+            self._captioner = SmolVlm2OnnxCaptioner(self._model_root, self._files)
         except Exception as error:
-            self._model = None
-            self._processor = None
+            self._captioner = None
             raise CaptioningError(CaptionErrorCode.NOT_READY, "Local caption model could not be initialized") from error
 
     async def initialize(self) -> None:
-        if self._model is None or self._processor is None:
+        if self._captioner is None:
             async with self._semaphore:
-                if self._model is None or self._processor is None:
+                if self._captioner is None:
                     await asyncio.to_thread(self._initialize_sync)
 
     def _caption_sync(self, request: CaptionRequest) -> str:
-        if self._model is None or self._processor is None:
+        if self._captioner is None:
             raise CaptioningError(CaptionErrorCode.NOT_READY, "Local caption model is not initialized")
+        if len(request.image) > request.max_image_bytes:
+            raise CaptioningError(
+                CaptionErrorCode.IMAGE_INVALID,
+                "Image is unavailable or exceeds the captioning limit",
+            )
         try:
-            if len(request.image) > request.max_image_bytes:
-                raise CaptioningError(
-                    CaptionErrorCode.IMAGE_INVALID,
-                    "Image is unavailable or exceeds the captioning limit",
-                )
-            with Image.open(io.BytesIO(request.image)) as image:
-                image.verify()
-            with Image.open(io.BytesIO(request.image)) as image:
-                rgb_image = image.convert("RGB")
-                messages = [
-                    {
-                        "role": "user",
-                        "content": [
-                            {"type": "image"},
-                            {"type": "text", "text": "Describe this image concisely."},
-                        ],
-                    },
-                ]
-                prompt = self._processor.apply_chat_template(messages, add_generation_prompt=True)
-                inputs = self._processor(text=prompt, images=[rgb_image], return_tensors="pt")
-                generated = self._model.generate(**inputs, max_new_tokens=self._max_new_tokens, do_sample=False)
-                prompt_tokens = inputs["input_ids"].shape[1]
-                return self._processor.decode(generated[0][prompt_tokens:], skip_special_tokens=True)
+            return self._captioner.caption(
+                request.image,
+                max_new_tokens=self._max_new_tokens,
+                deadline=time.monotonic() + self._timeout_s,
+            )
         except CaptioningError:
             raise
         except Exception as error:
@@ -157,44 +130,51 @@ class LocalSmolVlm2CaptionProvider:
         )
 
     async def close(self) -> None:
-        self._model = None
-        self._processor = None
+        self._captioner = None
 
 
+# ADR-0077: the int8 export of the same revision captions accurately, at a
+# quarter of the download. Every file is pinned by SHA-256.
+CAPTION_MODEL_PRECISION = "int8"
+caption_model_files = SmolVlm2OnnxFiles(
+    vision_encoder=f"onnx/vision_encoder_{CAPTION_MODEL_PRECISION}.onnx",
+    embed_tokens=f"onnx/embed_tokens_{CAPTION_MODEL_PRECISION}.onnx",
+    decoder=f"onnx/decoder_model_merged_{CAPTION_MODEL_PRECISION}.onnx",
+)
 caption_model = PinnedModel(
     id="HuggingFaceTB/SmolVLM2-256M-Video-Instruct",
     revision="067788b187b95ebe7b2e040b3e4299e342e5b8fd",
-    size_bytes=515_000_000,
-    allow_patterns=[
-        "*.json",
-        "*.safetensors",
-        "merges.txt",
-        "vocab.json",
-    ],
-    ignore_patterns=[
-        "onnx/*",
-        "README.md",
-        ".gitattributes",
-    ],
+    size_bytes=265_041_118,
+    allow_patterns=[],
+    files={
+        "added_tokens.json": "74135b8664b56088c0006f1c8e848d79a8eba003411f72ebf1dc2ee96227be3a",
+        "config.json": "756cb7d37d7659c9d5a71c563f9d2530f9dd674ab7e909d8d0dd5b1a2d3e8317",
+        "generation_config.json": "34835060c9f0f74d1acb456cc72ca32746d3843d9eb5f578f9cbffac1d2eb840",
+        "merges.txt": "0b54e8aa4e53d5383e2e4bc635a56b43f9647f7b13832d5d9ecd8f82dac4f510",
+        "preprocessor_config.json": "149e315d9410368e5491455bb06e0f763426e9e56cca731c13b24404a29b6374",
+        "processor_config.json": "f3ad45028447b3562b4752be0d5916d6806c1ef589091a469608dcf0faa1737c",
+        "special_tokens_map.json": "2dfea2a426162316ff1567c82bc6d36d9690cd9f90455f075c77daca78b45c60",
+        "tokenizer.json": "5ece781dc8d2b2f3e2f289ca0ae50b17cfc27dd27bfe7971bb8241e0b964331a",
+        "tokenizer_config.json": "dd9ce2ab89a3dd881bd9378f1a79b943a064b9275a7e1706d5b7b47b68977913",
+        "vocab.json": "82b84012e3add4d01d12ba14442026e49b8cbbaead1f79ecf3d919784f82dc79",
+        caption_model_files.vision_encoder: "39f0efae9614b1679404961efb970bf307adb76b4d9fb4e25f1e3c564611963d",
+        caption_model_files.embed_tokens: "e2cdc3690af5719c7463254f96c3b665a9e24add2a1fa6f594347d67a422710a",
+        caption_model_files.decoder: "03304ea9501d2d72c3858d668a56f54fc42fc54132759c389e54ff706f3d37c1",
+    },
 )
 
-local_caption_provider = LocalSmolVlm2CaptionProvider(
+local_caption_provider = OnnxSmolVlm2CaptionProvider(
     model_root=config.local_caption_models_root,
     pinned_model=caption_model,
+    files=caption_model_files,
     max_concurrency=1,
     max_new_tokens=128,
+    timeout_s=config.file_conversion_timeout_s,
 )
-
-
-async def _on_caption_bundle_ready(bundle_sha256: str) -> None:
-    """Update the caption provider's bundle SHA-256 after a successful download."""
-    local_caption_provider._bundle_sha256 = bundle_sha256.lower()
-
 
 captioning_download_service = ModelDownloadService(
     model_root=config.local_caption_models_root,
     pinned_model=caption_model,
-    on_bundle_ready=_on_caption_bundle_ready,
 )
 
 
@@ -268,6 +248,13 @@ async def caption(
             if captioning is None:
                 return
             if captioning.status not in {KnowledgeExtractionStatus.PENDING, KnowledgeExtractionStatus.FAILED}:
+                return
+            configuration = await get_captioning_configuration(session=session)
+            if configuration.mode == CaptionMode.LOCAL and not await asyncio.to_thread(
+                captioning_download_service.is_ready,
+            ):
+                # Stays pending: the startup resume and the bundle-ready callback requeue it.
+                logger.info(f"Local caption model is not ready; captioning of {artifact.id} waits for it")
                 return
             captioning.status = KnowledgeExtractionStatus.RUNNING
             captioning.started_at = get_unix_timestamp()

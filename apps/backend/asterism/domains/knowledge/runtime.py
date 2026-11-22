@@ -136,6 +136,9 @@ async def initialize_knowledge_runtime(source: SourceReader) -> None:
     await vector_store.initialize()
     await recover_interrupted()
 
+    # Captions left pending while the local bundle was missing resume once it verifies.
+    captioning_download_service.on_bundle_ready = lambda _: resume_ingestion_jobs()
+
     if config.skip_knowledge_model_provisioning:
         logger.info("Knowledge model provisioning disabled by runtime configuration")
         return
@@ -146,6 +149,23 @@ async def initialize_knowledge_runtime(source: SourceReader) -> None:
         await resume_ingestion_jobs()
     else:
         await embedding_download_service.start_download()
+    await _provision_local_caption_model()
+
+
+async def _provision_local_caption_model() -> None:
+    """Download the local caption bundle when local captioning is on and it is missing or stale.
+
+    An upgrade that changes the pinned bundle (ADR-0077) needs one new download;
+    starting it here keeps local captioning working without an admin step.
+    """
+    async with get_async_db_session() as session:
+        mode = (await get_captioning_configuration(session=session)).mode
+    if mode != KnowledgeCaptionMode.LOCAL.value:
+        return
+    await asyncio.to_thread(captioning_download_service._ensure_checked)
+    if not captioning_download_service.is_ready():
+        logger.info("Local captioning is on and its model bundle is not ready; downloading it")
+        await captioning_download_service.start_download()
 
 
 async def shutdown_knowledge_runtime() -> None:

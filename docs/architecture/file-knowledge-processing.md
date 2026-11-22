@@ -136,14 +136,19 @@ Settings → Image captioning:
   provider or catalog reports as supporting vision; a manually asserted capability
   isn't enough. This is the one place an external provider receives users' images,
   and there is no fallback to another provider.
-- **Local.** A pinned SmolVLM2 model runs on the server's CPU. The admin downloads
-  it from the same page (`POST /settings/app/caption-model/download`), which fetches
-  the pinned revision, writes a manifest of every file's hash and activates it once
-  verified. An operator can pin the expected manifest hash with
-  `LOCAL_CAPTION_MODEL_BUNDLE_SHA256`. Captioning never downloads anything itself,
-  and a missing or altered bundle leaves local captioning unavailable. Allow at least
-  4 GiB of memory headroom; captions run one at a time by default
-  (`MAX_CONCURRENT_LOCAL_CAPTIONS`).
+- **Local.** A pinned SmolVLM2 export (int8) runs on the server's CPU with ONNX
+  Runtime, without PyTorch ([ADR-0077](../adr/0077-torch-free-default-image.md)).
+  The admin downloads it from the same page
+  (`POST /settings/app/caption-model/download`); when local captioning is on and
+  the bundle is missing or out of date, startup downloads it too. The download
+  fetches the pinned file list (about 265 MB), checks every file against the
+  SHA-256 pinned in the code, then replaces the model folder, removing any older
+  bundle. An operator can pin the expected manifest hash with
+  `LOCAL_CAPTION_MODEL_BUNDLE_SHA256`. Caption jobs never download anything:
+  while the bundle is missing or doesn't verify, local captions wait as pending
+  and resume once it verifies. Allow about 2 GiB of memory headroom; captions run
+  one at a time by default (`MAX_CONCURRENT_LOCAL_CAPTIONS`) and stop at 128
+  tokens or `FILE_CONVERSION_TIMEOUT_S`.
 
 A caption is queued once an image's artifact is ready. `captioning.caption`
 ([`knowledge/captioning.py`](../../apps/backend/asterism/domains/knowledge/captioning.py))

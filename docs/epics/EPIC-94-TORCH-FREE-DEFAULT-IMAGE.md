@@ -1,6 +1,6 @@
 # EPIC-94: A torch-free default image
 
-Status: proposed (2026-11-21). Source: user request (2026-11-21), after the
+Status: in progress (US-94.1 started 2026-11-22; proposed 2026-11-21). Source: user request (2026-11-21), after the
 first Dependabot uv group (#33) took the image to 5.21 GB, over its 5 GB budget.
 Decided 2026-11-21: image captioning moves to ONNX, local image generation
 becomes an optional install for the GPU build, and this is its own epic rather
@@ -60,24 +60,24 @@ Suggested order: US-94.1 → 94.2 → 94.3.
 
 As an administrator, local captioning works without PyTorch and downloads less.
 
-- [ ] ADR: ONNX captioning, the files and precision chosen, and how they are
+- [x] ADR: ONNX captioning, the files and precision chosen, and how they are
       pinned and verified.
-- [ ] A pinned ONNX bundle for SmolVLM2 (revision, file list, SHA-256 each),
+- [x] A pinned ONNX bundle for SmolVLM2 (revision, file list, SHA-256 each),
       through `ModelDownloadService` like the CLIP bundle. An installed safetensors
       bundle is no longer used and is removed on the next download; stored
       captions are untouched.
-- [ ] An ONNX caption provider: image processing and prompt from `transformers`
+- [x] An ONNX caption provider: image processing and prompt from `transformers`
       (no torch), vision encoder and embeddings, greedy decoding with the key/value
       cache, the current length and time bounds. It replaces
       `LocalSmolVlm2CaptionProvider`.
-- [ ] A comparison on a fixed set of test images (photos, diagrams, screenshots,
+- [x] A comparison on a fixed set of test images (photos, diagrams, screenshots,
       text): the torch provider's captions next to each ONNX precision's, with time
       and memory per image. The chosen precision and the results go in the ADR.
-- [ ] Tests: decoding stops at the end token and at the length bound; a corrupt or
+- [x] Tests: decoding stops at the end token and at the length bound; a corrupt or
       partial bundle is refused and re-downloaded; captioning stays off until the
       bundle verifies. The upgrade check (US-91.6) seeds a volume with local
       captioning on and checks it still captions after the upgrade.
-- [ ] Release notes: Behavior (captioning model files change; one new download)
+- [x] Release notes: Behavior (captioning model files change; one new download)
       and Data (the old bundle is removed).
 
 ### US-94.2: Local image generation as an optional install
@@ -121,8 +121,10 @@ As a maintainer, the size gained stays gained.
 
 ## Open questions
 
-1. **Precision.** Is int8 good enough for captions, or is fp16 worth about
-   twice the download? US-94.1 measures.
+1. **Precision.** Answered by US-94.1 (2026-11-22): int8. Its captions were as
+   accurate as the torch model's on the comparison set, and it is the fastest
+   variant; the fp16 exports do not run on CPU ONNX Runtime 1.32
+   ([ADR-0077](../adr/0077-torch-free-default-image.md#comparison)).
 2. **Checkouts on a Mac.** Should `pnpm dev` install `local-image` by default, so
    local generation on Apple GPUs keeps working without a step, or stay lean
    like the image?

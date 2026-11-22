@@ -19,10 +19,14 @@ from asterism.domains.knowledge.model_download import (
 
 PINNED_MODEL_ID = caption_model.id
 PINNED_REVISION = caption_model.revision
+# The lifecycle tests below exercise the generic service with arbitrary fixture
+# files, so they use the caption model's identity without its pinned file list.
+# TestPinnedBundle covers the pinned list.
+unpinned_model = replace(caption_model, files={})
 
 
 def caption_download_service(root, **kwargs):
-    return ModelDownloadService(root, caption_model, **kwargs)
+    return ModelDownloadService(root, unpinned_model, **kwargs)
 
 
 # ---------------------------------------------------------------------------
@@ -34,7 +38,7 @@ class TestBuildManifest:
     def test_builds_manifest_from_regular_files(self, tmp_path: Path):
         (tmp_path / "weights.safetensors").write_bytes(b"model weights")
         (tmp_path / "config.json").write_text('{"key": "value"}')
-        manifest = build_manifest(tmp_path, model=replace(caption_model, id="test/model", revision="abc123"))
+        manifest = build_manifest(tmp_path, model=replace(unpinned_model, id="test/model", revision="abc123"))
         assert manifest["model_id"] == "test/model"
         assert manifest["revision"] == "abc123"
         assert "weights.safetensors" in manifest["files"]
@@ -44,7 +48,7 @@ class TestBuildManifest:
     def test_excludes_manifest_file_itself(self, tmp_path: Path):
         (tmp_path / "weights.safetensors").write_bytes(b"model weights")
         (tmp_path / MANIFEST_FILENAME).write_text("{}")
-        manifest = build_manifest(tmp_path, model=replace(caption_model, id="test/model", revision="abc123"))
+        manifest = build_manifest(tmp_path, model=replace(unpinned_model, id="test/model", revision="abc123"))
         assert MANIFEST_FILENAME not in manifest["files"]
 
     def test_excludes_symlinks(self, tmp_path: Path):
@@ -52,33 +56,33 @@ class TestBuildManifest:
         real.write_bytes(b"data")
         link = tmp_path / "link.bin"
         link.symlink_to(real)
-        manifest = build_manifest(tmp_path, model=replace(caption_model, id="test/model", revision="abc123"))
+        manifest = build_manifest(tmp_path, model=replace(unpinned_model, id="test/model", revision="abc123"))
         assert "real.bin" in manifest["files"]
         assert "link.bin" not in manifest["files"]
 
     def test_raises_on_missing_root(self, tmp_path: Path):
         with pytest.raises(ValueError, match="does not exist"):
-            build_manifest(tmp_path / "missing", model=replace(caption_model, id="test/model", revision="abc123"))
+            build_manifest(tmp_path / "missing", model=replace(unpinned_model, id="test/model", revision="abc123"))
 
     def test_raises_on_empty_root(self, tmp_path: Path):
         with pytest.raises(ValueError, match="no regular files"):
-            build_manifest(tmp_path, model=replace(caption_model, id="test/model", revision="abc123"))
+            build_manifest(tmp_path, model=replace(unpinned_model, id="test/model", revision="abc123"))
 
     def test_raises_on_blank_model_id(self, tmp_path: Path):
         (tmp_path / "file.bin").write_bytes(b"data")
         with pytest.raises(ValueError, match="required"):
-            build_manifest(tmp_path, model=replace(caption_model, id="", revision="abc123"))
+            build_manifest(tmp_path, model=replace(unpinned_model, id="", revision="abc123"))
 
     def test_raises_on_blank_revision(self, tmp_path: Path):
         (tmp_path / "file.bin").write_bytes(b"data")
         with pytest.raises(ValueError, match="required"):
-            build_manifest(tmp_path, model=replace(caption_model, id="test/model", revision="  "))
+            build_manifest(tmp_path, model=replace(unpinned_model, id="test/model", revision="  "))
 
 
 class TestWriteManifest:
     def test_writes_manifest_and_returns_sha256(self, tmp_path: Path):
         (tmp_path / "weights.safetensors").write_bytes(b"model weights")
-        sha256 = write_manifest(tmp_path, model=replace(caption_model, id="test/model", revision="abc123"))
+        sha256 = write_manifest(tmp_path, model=replace(unpinned_model, id="test/model", revision="abc123"))
         assert len(sha256) == 64
         manifest_path = tmp_path / MANIFEST_FILENAME
         assert manifest_path.is_file()
@@ -89,8 +93,8 @@ class TestWriteManifest:
     def test_manifest_is_deterministic(self, tmp_path: Path):
         (tmp_path / "a.bin").write_bytes(b"aaa")
         (tmp_path / "b.bin").write_bytes(b"bbb")
-        sha1 = write_manifest(tmp_path, model=replace(caption_model, id="test/model", revision="abc123"))
-        sha2 = write_manifest(tmp_path, model=replace(caption_model, id="test/model", revision="abc123"))
+        sha1 = write_manifest(tmp_path, model=replace(unpinned_model, id="test/model", revision="abc123"))
+        sha2 = write_manifest(tmp_path, model=replace(unpinned_model, id="test/model", revision="abc123"))
         assert sha1 == sha2
 
 
@@ -109,7 +113,7 @@ class TestDownloadServiceStatus:
     def test_ready_when_existing_bundle_present(self, tmp_path: Path):
         # Create a valid pinned bundle.
         (tmp_path / "weights.safetensors").write_bytes(b"model weights")
-        write_manifest(tmp_path, model=caption_model)
+        write_manifest(tmp_path, model=unpinned_model)
 
         service = caption_download_service(tmp_path)
         status = service.progress()
@@ -120,7 +124,7 @@ class TestDownloadServiceStatus:
     def test_idle_when_existing_bundle_file_hash_is_invalid(self, tmp_path: Path):
         model = tmp_path / "weights.safetensors"
         model.write_bytes(b"expected model weights")
-        write_manifest(tmp_path, model=caption_model)
+        write_manifest(tmp_path, model=unpinned_model)
         model.write_bytes(b"modified model weights")
 
         service = caption_download_service(tmp_path)
@@ -176,7 +180,7 @@ class TestDownloadLifecycle:
             def do_download():
                 (tmp_path / "config.json").write_text('{"model_type": "smolvlm"}')
                 (tmp_path / "model.safetensors").write_bytes(b"fake weights")
-                return write_manifest(tmp_path, model=caption_model)
+                return write_manifest(tmp_path, model=unpinned_model)
 
             mock.side_effect = lambda *_: do_download()
 
@@ -234,7 +238,7 @@ class TestDownloadLifecycle:
 
             def do_download():
                 (tmp_path / "model.safetensors").write_bytes(b"weights")
-                return write_manifest(tmp_path, model=caption_model)
+                return write_manifest(tmp_path, model=unpinned_model)
 
             mock.side_effect = lambda *_: do_download()
 
@@ -258,14 +262,14 @@ class TestDownloadLifecycle:
             async def slow_download():
                 await hold.wait()
                 (tmp_path / "model.safetensors").write_bytes(b"weights")
-                return write_manifest(tmp_path, model=caption_model)
+                return write_manifest(tmp_path, model=unpinned_model)
 
             # Override _run_download to use async blocking
 
             async def blocking_run():
                 await hold.wait()
                 (tmp_path / "model.safetensors").write_bytes(b"weights")
-                sha = write_manifest(tmp_path, model=caption_model)
+                sha = write_manifest(tmp_path, model=unpinned_model)
                 service.state.status = "ready"
                 service.state.bundle_sha256 = sha
                 return sha
@@ -285,7 +289,7 @@ class TestDownloadLifecycle:
     async def test_skip_download_when_already_ready(self, tmp_path: Path):
         # Pre-provision a pinned bundle.
         (tmp_path / "model.safetensors").write_bytes(b"weights")
-        write_manifest(tmp_path, model=caption_model)
+        write_manifest(tmp_path, model=unpinned_model)
 
         service = caption_download_service(tmp_path)
         assert service.progress().status == "ready"
@@ -344,7 +348,7 @@ class TestBundleReadyCallback:
 
             def do_download():
                 (tmp_path / "model.safetensors").write_bytes(b"weights")
-                return write_manifest(tmp_path, model=caption_model)
+                return write_manifest(tmp_path, model=unpinned_model)
 
             mock.side_effect = lambda *_: do_download()
 
@@ -451,3 +455,148 @@ class TestCaptionModelEndpoints:
             mock_service.cancel_download = AsyncMock(return_value=DownloadProgress(status="idle"))
             result = await cancel_caption_model_download(user=admin_user)
             assert result.status == "idle"
+
+
+# ---------------------------------------------------------------------------
+# Pinned bundles (ADR-0077): exactly the pinned files, each at its SHA-256
+# ---------------------------------------------------------------------------
+
+PINNED_CONTENT = {
+    "config.json": b'{"model_type": "smolvlm"}',
+    "onnx/decoder_model_merged_int8.onnx": b"decoder graph",
+}
+pinned_fixture = replace(
+    caption_model,
+    files={path: hashlib.sha256(content).hexdigest() for path, content in PINNED_CONTENT.items()},
+)
+
+
+def _pinned_snapshot(content: dict[str, bytes]):
+    """A snapshot_download double that writes *content* (only the allowed paths) under local_dir."""
+    calls: list[list[str]] = []
+
+    def fake(model_id, *, revision, local_dir, allow_patterns, **kwargs):
+        calls.append(list(allow_patterns))
+        root = Path(local_dir)
+        for path in allow_patterns:
+            if path in content:
+                (root / path).parent.mkdir(parents=True, exist_ok=True)
+                (root / path).write_bytes(content[path])
+        (root / ".cache").mkdir(exist_ok=True)
+        return str(root)
+
+    return fake, calls
+
+
+async def _run_pinned_download(service: ModelDownloadService, content: dict[str, bytes]) -> list[list[str]]:
+    fake, calls = _pinned_snapshot(content)
+    with patch("huggingface_hub.snapshot_download", side_effect=fake):
+        await service.start_download()
+        if service.state.task:
+            try:
+                await service.state.task
+            except Exception:
+                pass
+    return calls
+
+
+class TestPinnedBundle:
+    def test_the_caption_model_pins_every_file_it_loads(self):
+        from asterism.domains.knowledge.captioning import caption_model_files
+
+        for path in (caption_model_files.vision_encoder, caption_model_files.embed_tokens, caption_model_files.decoder):
+            assert path in caption_model.files
+        for path in ("tokenizer.json", "preprocessor_config.json", "processor_config.json"):
+            assert path in caption_model.files
+        assert not any(path.endswith(".safetensors") for path in caption_model.files)
+        assert all(len(digest) == 64 for digest in caption_model.files.values())
+
+    @pytest.mark.asyncio
+    async def test_downloads_only_the_pinned_files_and_verifies_them(self, tmp_path: Path):
+        root = tmp_path / "captioning"
+        service = ModelDownloadService(root, pinned_fixture)
+
+        calls = await _run_pinned_download(service, PINNED_CONTENT)
+
+        assert calls == [list(pinned_fixture.files)]
+        assert service.progress().status == "ready"
+        manifest = json.loads((root / MANIFEST_FILENAME).read_text())
+        assert manifest["files"] == pinned_fixture.files
+        assert not (root / ".cache").exists()
+
+    @pytest.mark.asyncio
+    async def test_a_corrupt_file_is_refused_deleted_and_fetched_again(self, tmp_path: Path):
+        root = tmp_path / "captioning"
+        service = ModelDownloadService(root, pinned_fixture)
+        corrupt = {**PINNED_CONTENT, "onnx/decoder_model_merged_int8.onnx": b"truncated"}
+
+        await _run_pinned_download(service, corrupt)
+
+        assert service.progress().status == "failed"
+        assert not (root / MANIFEST_FILENAME).exists()
+        staging = tmp_path / "captioning.staging"
+        assert not (staging / "onnx/decoder_model_merged_int8.onnx").exists()
+        assert (staging / "config.json").exists()
+
+        await _run_pinned_download(service, PINNED_CONTENT)
+        assert service.progress().status == "ready"
+        assert not staging.exists()
+
+    @pytest.mark.asyncio
+    async def test_a_partial_download_is_refused(self, tmp_path: Path):
+        root = tmp_path / "captioning"
+        service = ModelDownloadService(root, pinned_fixture)
+
+        await _run_pinned_download(service, {"config.json": PINNED_CONTENT["config.json"]})
+
+        assert service.progress().status == "failed"
+        assert not (root / MANIFEST_FILENAME).exists()
+
+    def test_a_bundle_missing_a_pinned_file_is_not_ready(self, tmp_path: Path):
+        for path, content in PINNED_CONTENT.items():
+            (tmp_path / path).parent.mkdir(parents=True, exist_ok=True)
+            (tmp_path / path).write_bytes(content)
+        write_manifest(tmp_path, pinned_fixture)
+        (tmp_path / "onnx/decoder_model_merged_int8.onnx").unlink()
+
+        assert ModelDownloadService(tmp_path, pinned_fixture).progress().status == "idle"
+
+    def test_a_manifest_that_lists_other_files_is_not_ready(self, tmp_path: Path):
+        (tmp_path / "config.json").write_bytes(PINNED_CONTENT["config.json"])
+        manifest = {
+            "model_id": pinned_fixture.id,
+            "revision": pinned_fixture.revision,
+            "files": {"config.json": pinned_fixture.files["config.json"]},
+        }
+        (tmp_path / MANIFEST_FILENAME).write_text(json.dumps(manifest))
+
+        assert ModelDownloadService(tmp_path, pinned_fixture).progress().status == "idle"
+
+    @pytest.mark.asyncio
+    async def test_an_installed_safetensors_bundle_is_not_used_and_is_removed_by_the_download(self, tmp_path: Path):
+        root = tmp_path / "captioning"
+        root.mkdir()
+        (root / "config.json").write_bytes(PINNED_CONTENT["config.json"])
+        (root / "model.safetensors").write_bytes(b"torch weights")
+        write_manifest(root, unpinned_model)
+        service = ModelDownloadService(root, pinned_fixture)
+        assert service.progress().status == "idle"
+
+        await _run_pinned_download(service, PINNED_CONTENT)
+
+        assert service.progress().status == "ready"
+        assert not (root / "model.safetensors").exists()
+        assert not (tmp_path / "captioning.replaced").exists()
+
+    def test_a_swap_interrupted_after_moving_the_old_bundle_out_recovers_the_new_one(self, tmp_path: Path):
+        staging = tmp_path / "captioning.staging"
+        for path, content in PINNED_CONTENT.items():
+            (staging / path).parent.mkdir(parents=True, exist_ok=True)
+            (staging / path).write_bytes(content)
+        write_manifest(staging, pinned_fixture)
+
+        (tmp_path / "captioning").mkdir()
+        service = ModelDownloadService(tmp_path / "captioning", pinned_fixture)
+
+        assert service.progress().status == "ready"
+        assert not staging.exists()
