@@ -22,6 +22,8 @@ Unreleased into its version and date.
 
 ## Unreleased
 
+## 0.2.2 (2026-11-22)
+
 ### Image
 
 - The image size budget checked in CI and the release workflow is raised from
