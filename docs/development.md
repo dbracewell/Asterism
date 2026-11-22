@@ -301,6 +301,16 @@ configuration, and the patch version for fixes only.
    the cause is fixed outside the image, or release a new patch version, since
    the tag stays.
 
+   Each architecture is built with an SPDX SBOM and full provenance
+   (`provenance: mode=max`), stored as an attestation manifest beside the image
+   in the index (US-92.3). The checks pull back the architecture's image
+   manifest itself, so `pnpm check:image` measures the image without them, and
+   `scripts/release-image.mjs` reads the SBOM there so a rehearsal fails on one
+   that can't be attested. After tagging, the publish job attests the published
+   index with `actions/attest` (build provenance, and one SBOM per architecture)
+   and runs `gh attestation verify` for both; the run fails if they don't
+   verify. Only the publish job has `id-token: write` and `attestations: write`.
+
    To rehearse before a release, run the workflow by hand (Actions → Release →
    Run workflow): it builds, pushes by digest and checks both architectures,
    and tags nothing. Only a pushed tag publishes; a run started by hand never
