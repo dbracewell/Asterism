@@ -7,6 +7,11 @@ name: Release
 # and `latest` tags point at them. The GPU build is built from source and not
 # published.
 #
+# US-92.3: each architecture carries an SPDX SBOM and full BuildKit provenance
+# in the index. The publish job then attests the published index (provenance,
+# and each architecture's SBOM) as GitHub artifact attestations, and fails the
+# run unless `gh attestation verify` accepts them.
+#
 # Run it by hand (Actions → Release → Run workflow) to rehearse a release: it
 # builds, pushes by digest and checks both architectures, but tags nothing.
 
@@ -112,16 +117,24 @@ jobs:
             ASTERISM_VERSION=${{ needs.version.outputs.version }}
             ASTERISM_COMMIT=${{ github.sha }}
           outputs: type=image,name=${{ env.IMAGE }},push-by-digest=true,name-canonical=true,push=true
-          provenance: false
+          # US-92.3: the pushed digest names an index holding the image and an
+          # attestation manifest with its SPDX SBOM and full provenance.
+          sbom: true
+          provenance: mode=max
           cache-from: type=gha,scope=${{ matrix.cache }}
           cache-to: type=gha,scope=${{ matrix.cache }},mode=max
 
       - name: Pull exactly what was pushed
+        # The architecture's image manifest from the pushed index, so the
+        # checks (and check:image's size) see the image without its attestation.
         env:
           DIGEST: ${{ steps.build.outputs.digest }}
+          ARCH: ${{ matrix.arch }}
         run: |
-          docker pull "$IMAGE@$DIGEST"
-          docker tag "$IMAGE@$DIGEST" asterism:release
+          platform="$(node scripts/release-image.mjs platform --image "$IMAGE@$DIGEST" --arch "$ARCH")"
+          echo "linux/$ARCH image in $DIGEST: $platform"
+          docker pull "$IMAGE@$platform"
+          docker tag "$IMAGE@$platform" asterism:release
 
       - name: Start the image and check its size
         run: pnpm check:image --image asterism:release
@@ -156,6 +169,23 @@ jobs:
           retention-days: 1
           if-no-files-found: error
 
+      - name: Read the SBOM for attesting
+        # Checked here so a rehearsal catches an SBOM actions/attest would refuse.
+        env:
+          DIGEST: ${{ steps.build.outputs.digest }}
+          ARCH: ${{ matrix.arch }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/sbom"
+          node scripts/release-image.mjs sbom --image "$IMAGE@$DIGEST" --out "$RUNNER_TEMP/sbom/sbom-$ARCH.spdx.json"
+
+      - name: Keep the SBOM for publishing
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: sbom-${{ matrix.arch }}
+          path: ${{ runner.temp }}/sbom/sbom-${{ matrix.arch }}.spdx.json
+          retention-days: 1
+          if-no-files-found: error
+
   publish:
     name: Publish ${{ needs.version.outputs.version }}
     needs: [version, image]
@@ -166,6 +196,10 @@ jobs:
     permissions:
       contents: read
       packages: write
+      # US-92.3: only this job attests (Sigstore through the workflow's OIDC
+      # identity, stored as GitHub artifact attestations).
+      id-token: write
+      attestations: write
 
     steps:
       - name: Checkout, with every release tag
@@ -194,6 +228,13 @@ jobs:
         with:
           path: ${{ runner.temp }}/digests
           pattern: digest-*
+          merge-multiple: true
+
+      - name: Collect the SBOMs
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          path: ${{ runner.temp }}/sbom
+          pattern: sbom-*
           merge-multiple: true
 
       - name: Set up Docker Buildx
@@ -225,6 +266,44 @@ jobs:
             $(printf "$IMAGE@sha256:%s " *)
 
       - name: Show the published image
+        id: index
         env:
           VERSION: ${{ needs.version.outputs.version }}
-        run: docker buildx imagetools inspect "$IMAGE:$VERSION"
+        run: |
+          docker buildx imagetools inspect "$IMAGE:$VERSION"
+          echo "digest=$(docker buildx imagetools inspect "$IMAGE:$VERSION" --format '{{.Manifest.Digest}}')" >> "$GITHUB_OUTPUT"
+
+      - name: Attest the build provenance
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-name: ${{ env.IMAGE }}
+          subject-digest: ${{ steps.index.outputs.digest }}
+
+      - name: Attest the amd64 SBOM
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-name: ${{ env.IMAGE }}
+          subject-digest: ${{ steps.index.outputs.digest }}
+          sbom-path: ${{ runner.temp }}/sbom/sbom-amd64.spdx.json
+
+      - name: Attest the arm64 SBOM
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-name: ${{ env.IMAGE }}
+          subject-digest: ${{ steps.index.outputs.digest }}
+          sbom-path: ${{ runner.temp }}/sbom/sbom-arm64.spdx.json
+
+      - name: Verify the attestations
+        # A release nobody can verify fails here, after tagging, so it is seen.
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DIGEST: ${{ steps.index.outputs.digest }}
+        run: |
+          for predicate in https://slsa.dev/provenance/v1 https://spdx.dev/Document/v2.3; do
+            gh attestation verify "oci://$IMAGE@$DIGEST" \
+              --repo "$GITHUB_REPOSITORY" \
+              --signer-workflow "$GITHUB_REPOSITORY/.github/workflows/release.yml" \
+              --source-ref "$GITHUB_REF" \
+              --deny-self-hosted-runners \
+              --predicate-type "$predicate"
+          done

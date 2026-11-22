@@ -33,6 +33,11 @@ Unreleased into its version and date.
 - Every image is scanned with Trivy before it is released: a critical
   vulnerability with a fix stops the release. A weekly scan of the published
   image opens an issue when a new one is found.
+- Published images carry an SPDX SBOM and build provenance for each
+  architecture. They are attached to the image index (each architecture's entry
+  has an attestation manifest beside it, listed as `unknown/unknown`) and
+  published as GitHub artifact attestations for this repository's release
+  workflow, which `gh attestation verify` checks.
 
 ## 0.2.1 (2026-11-21)
 
