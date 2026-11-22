@@ -143,8 +143,7 @@ Settings → Image captioning:
   the bundle is missing or out of date, startup downloads it too. The download
   fetches the pinned file list (about 265 MB), checks every file against the
   SHA-256 pinned in the code, then replaces the model folder, removing any older
-  bundle. An operator can pin the expected manifest hash with
-  `LOCAL_CAPTION_MODEL_BUNDLE_SHA256`. Caption jobs never download anything:
+  bundle. Caption jobs never download anything:
   while the bundle is missing or doesn't verify, local captions wait as pending
   and resume once it verifies. Allow about 2 GiB of memory headroom; captions run
   one at a time by default (`MAX_CONCURRENT_LOCAL_CAPTIONS`) and stop at 128

@@ -22,6 +22,12 @@ Unreleased into its version and date.
 
 ## Unreleased
 
+### Configuration
+
+- `LOCAL_CAPTION_MODEL_BUNDLE_SHA256` is removed. It was validated but never
+  checked against the bundle; the code now pins the SHA-256 of every caption
+  model file. A value still set is ignored, so you can unset it at any time.
+
 ### Data
 
 - The local captioning model folder, `models/captioning-smolvlm2`, is replaced by

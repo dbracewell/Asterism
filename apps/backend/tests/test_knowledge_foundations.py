@@ -2,7 +2,7 @@ import uuid
 from pathlib import Path
 
 import pytest
-from asterism.core.config import Config, ConfigValidationError
+from asterism.core.config import Config
 from asterism.db.model_registry import Base
 from asterism.domains.files.models import FileKind, UserFileModel
 from asterism.domains.knowledge.embedding import EmbeddingProviderError, OnnxClipEmbeddingProvider, embedding_model
@@ -158,7 +158,7 @@ def test_embedding_artifact_requires_expected_checksum_and_size(tmp_path: Path):
         provider._initialize_sync()
 
 
-def test_caption_configuration_accepts_unprovisioned_local_mode_and_rejects_invalid_bundle_digest(tmp_path: Path):
+def test_caption_configuration_accepts_unprovisioned_local_mode(tmp_path: Path):
     settings = Config(
         _env_file=None,
         storage_root=tmp_path,
@@ -168,12 +168,15 @@ def test_caption_configuration_accepts_unprovisioned_local_mode_and_rejects_inva
     settings.validate_runtime()
     assert settings.local_caption_models_root == tmp_path / "models" / "captioning-smolvlm2"
 
-    invalid = Config(
+
+def test_the_removed_caption_bundle_digest_setting_is_ignored(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    # Removed in US-94.1: the code pins every bundle file. A deployment that still sets it keeps starting.
+    monkeypatch.setenv("LOCAL_CAPTION_MODEL_BUNDLE_SHA256", "not-a-digest")
+    settings = Config(
         _env_file=None,
         storage_root=tmp_path,
         config_profile="development",
         system_key="not-a-placeholder-secret",
-        local_caption_model_bundle_sha256="not-a-digest",
     )
-    with pytest.raises(ConfigValidationError, match="LOCAL_CAPTION_MODEL_BUNDLE_SHA256"):
-        invalid.validate_runtime()
+    settings.validate_runtime()
+    assert not hasattr(settings, "local_caption_model_bundle_sha256")
