@@ -165,25 +165,36 @@ Export** as **Planned**. Their panes explain future scope and offer no configura
 actions. Providers, Theme editor, Tools and Image captioning remain available;
 user settings expose General, Your Asterism, Skills, and Agents.
 
-| Capability           | Available now                                                                                                                                            | Planned                                                 |
-| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
-| Providers and models | Admin provider/model configuration; per-chat model selection                                                                                             | —                                                       |
-| Agents and tools     | User main/sub-agent settings; admin tool policy and provider settings                                                                                    | —                                                       |
-| Skills               | Private skills editor/assignments, admin policy, slash discovery, branch-local activation and provenance ([contract](../../docs/architecture/skills.md)) | Automatic skill selection                               |
-| Appearance           | User theme/font preferences; admin Theme editor                                                                                                          | —                                                       |
-| Image captioning     | Admin captioning policy and file-processing integration                                                                                                  | —                                                       |
-| Users and access     | Admin/user access checks, owner scoping and backend user lifecycle                                                                                       | Users management screens and permission-policy controls |
-| Groups               | —                                                                                                                                                        | Group management and group policy settings              |
-| Image generation     | Policy, `generate_image`, Create image, the local diffusers and ComfyUI generators ([ADR-0064](../../docs/adr/0064-image-generation.md))                 | Admin page and chat UI (EPIC-76)                        |
-| Code execution       | —                                                                                                                                                        | Sandboxed execution and runtime settings                |
-| Export               | Individual file downloads                                                                                                                                | Data/conversation export tools                          |
-| About you and memory | About you text in Your Asterism, pinned on each accepted turn                                                                                            | Long-term memory engine                                 |
+| Capability           | Available now                                                                                                                                                                                         | Planned                                                 |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
+| Providers and models | Admin provider/model configuration; per-chat model selection                                                                                                                                          | —                                                       |
+| Agents and tools     | User main/sub-agent settings; admin tool policy and provider settings                                                                                                                                 | —                                                       |
+| Skills               | Private skills editor/assignments, admin policy, slash discovery, branch-local activation and provenance ([contract](../../docs/architecture/skills.md))                                              | Automatic skill selection                               |
+| Appearance           | User theme/font preferences; admin Theme editor                                                                                                                                                       | —                                                       |
+| Image captioning     | Admin captioning policy and file-processing integration                                                                                                                                               | —                                                       |
+| Users and access     | Admin/user access checks, owner scoping and backend user lifecycle                                                                                                                                    | Users management screens and permission-policy controls |
+| Groups               | —                                                                                                                                                                                                     | Group management and group policy settings              |
+| Image generation     | Policy, `generate_image`, Create image, the ComfyUI, ONNX and Diffusers generators ([ADR-0064](../../docs/adr/0064-image-generation.md), [ADR-0077](../../docs/adr/0077-torch-free-default-image.md)) | Admin page and chat UI (EPIC-76)                        |
+| Code execution       | —                                                                                                                                                                                                     | Sandboxed execution and runtime settings                |
+| Export               | Individual file downloads                                                                                                                                                                             | Data/conversation export tools                          |
+| About you and memory | About you text in Your Asterism, pinned on each accepted turn                                                                                                                                         | Long-term memory engine                                 |
 
 The Users badge describes unfinished administration screens, not missing access
 control. Backend list/provision/delete routes already have authorization and
 lifecycle checks. Navigation visibility does not grant access. Your Asterism holds one About you
 text per user; each accepted turn pins the text and revision it was sent with. Long-term memory remains future work. See the [product-surface inventory](../../docs/architecture/frontend.md#settings) for ownership
 and limits.
+
+## ONNX image generation
+
+The ONNX generator (US-94.4) runs small Stable Diffusion models on the CPU in every
+build, with ONNX Runtime and NumPy and no torch (`asterism/domains/image_generation/onnx/`).
+Its models are int8 conversions published under `huggingface.co/davidb727`, pinned by
+revision and file digests in `onnx/catalog.py`. To add a model or a new upstream
+revision, add a recipe to `scripts/convert_onnx_image_model.py`, run it as its
+docstring shows (it needs tens of GB of memory for SDXL-sized models), check the
+images, publish the output folder, and pin the published revision and the digests
+from its `conversion.json` in the catalog.
 
 ## Local image generation
 

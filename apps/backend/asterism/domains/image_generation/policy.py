@@ -45,7 +45,11 @@ async def provider_status(session: AsyncSession) -> ImageProviderStatus:
         name = await selected_name(session)
         if name != NO_PROVIDER and component_registry.find(ComponentType.ImageGenerator, name) is None:
             # Saved, but not installed in this image (US-94.2): never another generator instead.
-            return ImageProviderStatus(provider=name, ready=False, detail=f"{name} is not available in this image")
+            detail = f"{name} is not available in this image"
+            if name == "Diffusers":
+                # US-94.4: every image has the ONNX generator, which runs on the CPU.
+                detail += ". Choose ONNX to generate images on this server's CPU"
+            return ImageProviderStatus(provider=name, ready=False, detail=detail)
         return ImageProviderStatus(provider=name, ready=False, detail="No image provider is set up")
     return await generator.status()
 

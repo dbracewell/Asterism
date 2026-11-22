@@ -9,7 +9,8 @@ and answers jobs over a pipe:
   ``("result", [(png_bytes, seed), …])`` or ``("error", kind, message)``
 
 ``kind`` is ``"oom"`` or ``"error"``. A stub pipeline (``pipeline="stub"``)
-lets tests exercise the real process without a model.
+lets tests exercise the real process without a model. Pipelines named
+``onnx-<family>`` are the ONNX generator's (``onnx/pipeline.py``) and need no torch.
 """
 
 import inspect
@@ -49,9 +50,29 @@ class _StubPipeline:
         return type("Output", (), {"images": [image]})()
 
 
+ONNX_PREFIX = "onnx-"
+
+
+class _Seed:
+    """What a pipeline without torch needs from a generator: the seed."""
+
+    def __init__(self, seed: int) -> None:
+        self._seed = seed
+
+    def initial_seed(self) -> int:
+        return self._seed
+
+
 def _load(model_dir: str, pipeline: str, device: str, mode: str, dtype: str, scheduler: str | None = None):
     if pipeline == "stub":
         return _StubPipeline()
+    if pipeline.startswith(ONNX_PREFIX):
+        # The CPU generator on ONNX Runtime and NumPy (ADR-0077, US-94.4); no torch.
+        from pathlib import Path
+
+        from asterism.domains.image_generation.onnx.pipeline import OnnxDiffusionPipeline
+
+        return OnnxDiffusionPipeline.load(Path(model_dir), pipeline.removeprefix(ONNX_PREFIX))
     from pathlib import Path
 
     import diffusers  # pyright: ignore[reportMissingImports] - the optional local-image extra
@@ -83,8 +104,8 @@ def _is_oom(error: BaseException) -> bool:
 
 
 def _generator(seed: int, pipeline: str):
-    if pipeline == "stub":
-        return type("Generator", (), {"initial_seed": lambda self: seed})()
+    if pipeline == "stub" or pipeline.startswith(ONNX_PREFIX):
+        return _Seed(seed)
     import torch  # pyright: ignore[reportMissingImports] - the optional local-image extra
 
     # A CPU generator gives the same image for a seed on every device.

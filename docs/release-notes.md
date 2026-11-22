@@ -37,11 +37,11 @@ Unreleased into its version and date.
 ### Image
 
 - The published image no longer includes PyTorch, diffusers or sympy, so it is
-  smaller, and it no longer runs local image generation (the **Diffusers**
-  generator). Embeddings and captioning run on ONNX Runtime and need no GPU.
-  Local image generation is in the [GPU build](deployment.md#gpu-build) only,
-  built with `--build-arg TORCH_VARIANT=gpu` as before, which now also installs
-  it. ComfyUI is unchanged.
+  smaller. Embeddings, captioning and the new **ONNX** image generator run on
+  ONNX Runtime and need no GPU. The **Diffusers** generator is in the
+  [GPU build](deployment.md#gpu-build) only, built with
+  `--build-arg TORCH_VARIANT=gpu` as before, which now also installs it. ComfyUI
+  is unchanged.
 - [Verify the image](deployment.md#verify-the-image) gives the commands to check
   an image's signature, provenance and SBOM before running it, for every image
   from 0.2.2, and how to read the SBOM. Add the check to your upgrade: the
@@ -51,13 +51,21 @@ Unreleased into its version and date.
 
 ### Behavior
 
+- A new image generator, **ONNX**, runs small Stable Diffusion models on the
+  server's CPU in every build: LCM DreamShaper v7 (1.6 GB download, about 5 GB of
+  memory, a few seconds per 512 px image on a fast CPU) and SDXL Turbo (6.2 GB,
+  about 8 GB, Stability AI Community License, accepted before download). Choose it
+  in Admin Settings → Image generation and download a model from **ONNX models**.
+  The models are int8 conversions published under `huggingface.co/davidb727`
+  ([ADR-0077](adr/0077-torch-free-default-image.md)).
 - If you use the Diffusers generator with the published image, it stops
-  generating after the upgrade: Admin Settings → Image generation keeps it
-  saved but shows "Diffusers is not available in this image", and people aren't
-  offered image creation. Choose a ComfyUI server, or build and run the GPU
-  image. Nothing switches generator by itself. Downloaded local models stay in
+  generating after the upgrade: Admin Settings → Image generation keeps it saved
+  but shows "Diffusers is not available in this image. Choose ONNX to generate
+  images on this server's CPU", and people aren't offered image creation. Choose
+  ONNX or a ComfyUI server, or build and run the GPU image. Nothing switches
+  generator by itself. Downloaded Diffusers models stay in
   `models/image-generation` until you remove them (from the GPU build's Local
-  models page, or by deleting the folder).
+  models page, or by deleting their folders).
 - Local image captioning runs SmolVLM2 on ONNX Runtime instead of PyTorch
   ([ADR-0077](adr/0077-torch-free-default-image.md)). Its model files change, so
   an instance with local captioning on downloads them once (about 265 MB) on its

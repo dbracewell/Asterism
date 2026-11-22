@@ -2255,6 +2255,78 @@ export const zContextOmission = z.object({
 });
 
 /**
+ * OnnxDownload
+ */
+export const zOnnxDownload = z.object({
+  status: z.enum(["idle", "downloading", "verifying", "ready", "failed"]),
+  bytes_downloaded: z.int(),
+  total_bytes: z.int(),
+  error: z.string().nullish(),
+});
+
+/**
+ * OnnxDownloadRequest
+ */
+export const zOnnxDownloadRequest = z.object({
+  accept_license: z.boolean().optional().default(false),
+});
+
+/**
+ * OnnxPlan
+ */
+export const zOnnxPlan = z.object({
+  fits: z.boolean(),
+  detail: z.string(),
+});
+
+/**
+ * OnnxModel
+ */
+export const zOnnxModel = z.object({
+  id: z.string(),
+  name: z.string(),
+  repo: z.string(),
+  revision: z.string(),
+  license: z.string(),
+  license_url: z.string(),
+  commercial_use: z.boolean(),
+  attribution: z.string().nullable(),
+  description: z.string(),
+  download_gb: z.number(),
+  memory_gb: z.number(),
+  steps: z.int(),
+  plan: zOnnxPlan,
+  download: zOnnxDownload,
+  license_accepted: z.boolean(),
+});
+
+/**
+ * OnnxSelection
+ */
+export const zOnnxSelection = z.object({
+  model_id: z.string().nullable(),
+});
+
+/**
+ * OnnxSettings
+ */
+export const zOnnxSettings = z.object({
+  model_id: z.string().nullish(),
+  accepted_licenses: z.array(z.string()).max(50).optional(),
+});
+
+/**
+ * OnnxOverview
+ */
+export const zOnnxOverview = z.object({
+  memory_gb: z.number(),
+  recommended_id: z.string().nullable(),
+  settings: zOnnxSettings,
+  models: z.array(zOnnxModel),
+  worker_running: z.boolean(),
+});
+
+/**
  * PackExportRequest
  *
  * What to include. Nothing is exported unless it is named here.
@@ -2921,6 +2993,7 @@ export const zApplicationSettings = z.object({
   canvas_enabled: z.boolean().optional().default(false),
   image_generation: z.record(z.string(), z.unknown()).nullish(),
   image_generation_local: z.record(z.string(), z.unknown()).nullish(),
+  image_generation_onnx: z.record(z.string(), z.unknown()).nullish(),
   image_generator_provider: zComponentProviderParameters.nullish(),
   compaction: zCompactionSettings.optional(),
   chatgpt_plan_enabled: z.boolean().optional().default(false),
@@ -5317,6 +5390,7 @@ export const zApplicationSettingsWritable = z.object({
   canvas_enabled: z.boolean().optional().default(false),
   image_generation: z.record(z.string(), z.unknown()).nullish(),
   image_generation_local: z.record(z.string(), z.unknown()).nullish(),
+  image_generation_onnx: z.record(z.string(), z.unknown()).nullish(),
   image_generator_provider: zComponentProviderParameters.nullish(),
   compaction: zCompactionSettings.optional(),
   chatgpt_plan_enabled: z.boolean().optional().default(false),
@@ -7106,6 +7180,47 @@ export const zLocalImageRemovePath = z.object({
  * Successful Response
  */
 export const zLocalImageRemoveResponse = zLocalOverview;
+
+/**
+ * Successful Response
+ */
+export const zOnnxImageOverviewResponse = zOnnxOverview;
+
+export const zOnnxImageSelectBody = zOnnxSelection;
+
+/**
+ * Successful Response
+ */
+export const zOnnxImageSelectResponse = zOnnxOverview;
+
+export const zOnnxImageCancelDownloadPath = z.object({
+  model_id: z.string(),
+});
+
+/**
+ * Successful Response
+ */
+export const zOnnxImageCancelDownloadResponse = zOnnxOverview;
+
+export const zOnnxImageDownloadBody = zOnnxDownloadRequest;
+
+export const zOnnxImageDownloadPath = z.object({
+  model_id: z.string(),
+});
+
+/**
+ * Successful Response
+ */
+export const zOnnxImageDownloadResponse = zOnnxOverview;
+
+export const zOnnxImageRemovePath = z.object({
+  model_id: z.string(),
+});
+
+/**
+ * Successful Response
+ */
+export const zOnnxImageRemoveResponse = zOnnxOverview;
 
 /**
  * Successful Response

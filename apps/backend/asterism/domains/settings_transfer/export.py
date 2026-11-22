@@ -26,6 +26,7 @@ from .documents import (
     ExportedImageGeneration,
     ExportedLocalImage,
     ExportedModel,
+    ExportedOnnxImage,
     ExportedProvider,
     ModelReference,
     SettingsBundle,
@@ -113,6 +114,7 @@ async def collect_settings(session: AsyncSession) -> SettingsBundle:
                 if key in ExportedLocalImage.model_fields
             }
         ),
+        image_generation_onnx=ExportedOnnxImage(model_id=(settings.image_generation_onnx or {}).get("model_id")),
         image_generator_provider=_component(settings.image_generator_provider),
         image_generation=ExportedImageGeneration.model_validate(
             {

@@ -369,7 +369,7 @@ the same secrets and checks:
   own caption model (it does so on start when local captioning is on, US-94.1),
   a newly uploaded PNG is captioned;
 - the saved Diffusers generator is still saved and reads "not available in this
-  image", since the CPU image has no local image generation (US-94.2).
+  image", since the CPU image has no Diffusers generator (US-94.2).
 
 Last, it starts the previous image on the upgraded volume and checks it exits
 with its "schema revision … which this code does not know" message. When both

@@ -243,6 +243,8 @@ class ApplicationSettings(BaseModel):
     image_generation: dict[str, Any] | None = None
     # The local diffusers generator's model and device (US-76.2).
     image_generation_local: dict[str, Any] | None = None
+    # The ONNX generator's model and accepted licenses (US-94.4).
+    image_generation_onnx: dict[str, Any] | None = None
     # The active image generator component and its parameters (ADR-0064).
     image_generator_provider: ComponentProviderParameters | None = None
     compaction: CompactionSettings = Field(default_factory=CompactionSettings)

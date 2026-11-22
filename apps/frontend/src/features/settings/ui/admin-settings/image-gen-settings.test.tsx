@@ -54,6 +54,7 @@ vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
   imageGenerationProviderStatusQueryKey: () => [{ _id: "status" }],
   imageGenerationTestMutation: () => ({ mutationFn: mocks.test }),
   localImageOverviewQueryKey: () => [{ _id: "local" }],
+  onnxImageOverviewQueryKey: () => [{ _id: "onnx" }],
 }));
 // The generic form and the local model list have their own tests.
 vi.mock("@/features/settings/ui/admin-settings/component-settings", () => ({

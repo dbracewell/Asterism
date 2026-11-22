@@ -98,7 +98,7 @@ Source: user request (2026-11-20). [EPIC-93](docs/epics/EPIC-93-LONG-TERM-MEMORY
 
 ## Torch-free default image (proposed 2026-11-21)
 
-Source: user request (2026-11-21), after Dependabot's uv group took the image over its 5 GB budget. [EPIC-94](docs/epics/EPIC-94-TORCH-FREE-DEFAULT-IMAGE.md): captioning on ONNX Runtime in every build, local image generation as an optional install for the GPU build, and a lower image budget to keep the gain. Suggested order: US-94.1 → 94.3. Work one story at a time.
+Source: user request (2026-11-21), after Dependabot's uv group took the image over its 5 GB budget. [EPIC-94](docs/epics/EPIC-94-TORCH-FREE-DEFAULT-IMAGE.md): captioning on ONNX Runtime in every build, local image generation as an optional install for the GPU build, an ONNX image generator so the published image keeps local generation on CPU (US-94.4, added 2026-11-22), and a lower image budget to keep the gain. Suggested order: US-94.1 → 94.2 → 94.4 → 94.3. Work one story at a time.
 
 ### EPIC-94: A torch-free default image
 
@@ -109,13 +109,21 @@ Source: user request (2026-11-21), after Dependabot's uv group took the image ov
   - [x] A comparison on a fixed set of test images: the torch provider's captions next to each ONNX precision's, with time and memory per image. The chosen precision and the results go in the ADR.
   - [x] Tests: decoding stops at the end token and at the length bound; a corrupt or partial bundle is refused and re-downloaded; captioning stays off until the bundle verifies. The upgrade check seeds a volume with local captioning on and checks it still captions after the upgrade.
   - [x] Release notes: Behavior (captioning model files change; one new download) and Data (the old bundle is removed).
-- [~] US-94.2: Local image generation as an optional install
+- [x] US-94.2: Local image generation as an optional install
   - [x] Move `diffusers`, `accelerate`, `torch` and `torchvision` (and the PyTorch CPU index source) to a `local-image` extra, and require onnxruntime 1.32 or later so sympy is no longer needed. Keep `uv.lock` resolving both with and without it.
   - [x] A check (in the quality job) that the default install's dependency graph has no torch, torchvision or diffusers, direct or transitive, naming the package that pulls one in.
   - [x] Dockerfile: the CPU build installs no extra; `TORCH_VARIANT=gpu` installs `local-image` with CUDA torch. `pnpm check:image` fails if torch is importable in the CPU image.
   - [x] The generator registry offers Diffusers only when the extra imports. A saved local generator otherwise reads "not available in this image" in Admin Settings, its catalog and downloads are hidden, and `generate_image` isn't offered for it. The ComfyUI generator is unchanged.
   - [x] Tests for both installs: registry, Admin Settings payload, tool availability, and a saved local generator surviving an upgrade (upgrade check) and reading as unavailable.
   - [x] Docs: the deployment guide's GPU build section, the development guide (`uv sync --extra local-image`), and the image generation user guide.
+- [~] US-94.4: Local image generation on ONNX
+  - [x] ADR-0077: an ONNX generator in every build, its pipelines, schedulers in NumPy, how models are pinned and verified, and the catalog chosen.
+  - [x] A pinned ONNX catalog (revision, file list, SHA-256 each) through `ModelDownloadService` with the license step: LCM DreamShaper v7 (license confirmed first) and SDXL Turbo (non-commercial, accepted before download); SDXL base 1.0 if usable. SD 3.5 Medium later.
+  - [x] An ONNX pipeline with no torch: CLIP tokenizers from `transformers`, text encoders, UNet with the scheduler in NumPy (LCM; Euler for SDXL), VAE decoder; seeded, bounded, in the worker process with progress and cancellation.
+  - [x] A comparison on a fixed prompt set: time and memory per image for each model and precision (fp32, and int8 if quality holds), with samples; results in the ADR.
+  - [x] An "ONNX" generator component in every build, with its local models on the Admin Settings page; a saved Diffusers choice without the extra reads "not available in this image" and points to it. Nothing switches by itself.
+  - [x] Tests: scheduler steps, the pipeline on fake sessions (seed determinism, bounds, cancellation), registry and availability, license step, a corrupt or partial model refused.
+  - [x] Docs and release notes: Image (local generation on CPU in the published image), Behavior (the ONNX generator; Diffusers is GPU-build only).
 - [ ] US-94.3: Hold the smaller image
   - [ ] Lower the image budget (`DEFAULT_MAX_SIZE_GB` in `scripts/check-image.mjs`, which CI and the release workflow use) from 5.25 GB (raised from 5 GB on 2026-11-21 for Dependabot's uv group) to the measured size plus a margin (expected about 4.5 GB), recorded in the release notes.
   - [ ] Remove the temporary torch cap, so Dependabot updates torch for the GPU build again.
