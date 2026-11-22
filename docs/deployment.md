@@ -181,11 +181,10 @@ A build downloads several GB of dependencies.
 
 ### GPU build
 
-The published image has no PyTorch and no local image generation: embeddings
-and captioning run on ONNX Runtime, and images come from a
-[ComfyUI server or another generator](guide/08-for-administrators/policies.md).
-Local image generation (the **Diffusers** generator) needs a GPU to be useful,
-so only the GPU build includes it, with CUDA PyTorch. No GPU image is
+The published image has no PyTorch: embeddings, captioning and the **ONNX** image
+generator run on ONNX Runtime, on the CPU, including on a Mac, where Docker can't
+use the GPU anyway. The **Diffusers** generator runs larger models and needs a
+GPU to be useful, so only the GPU build includes it, with CUDA PyTorch. No GPU image is
 published; build it from source (above). It adds about 4 GB to the image
 (estimated from the CUDA libraries it installs):
 
@@ -199,8 +198,8 @@ Pass the container the GPU as your Docker host requires (for example
 `--gpus all` with the NVIDIA Container Toolkit). Rebuild with the same argument
 on every upgrade, or the next `--build` returns to the CPU build. In an image
 without it, a saved Diffusers generator stays saved but reads "not available in
-this image", and the agent doesn't offer to create images until you choose
-another generator or switch to the GPU build.
+this image", and the agent doesn't offer to create images until you choose ONNX
+or ComfyUI, or switch to the GPU build.
 
 The image refuses to start with more than one backend worker
 (`WEB_CONCURRENCY` or `UVICORN_WORKERS` other than 1), and running more than one

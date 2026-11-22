@@ -1,7 +1,7 @@
 # ADR-0077 — A torch-free default image
 
-Status: accepted. Captioning implemented for US-94.1 and local image
-generation as an optional install for US-94.2, both on 2026-11-22
+Status: accepted. Captioning implemented for US-94.1, Diffusers as an optional
+install for US-94.2 and an ONNX image generator for US-94.4, all on 2026-11-22
 ([EPIC-94](../epics/EPIC-94-TORCH-FREE-DEFAULT-IMAGE.md)). Amends
 [ADR-0064](0064-image-generation.md) on where local image generation runs.
 
@@ -98,6 +98,80 @@ Backend tests run on both installs: the default one in the quality job, and the
 image-generation tests again with the extra (`test:local-image`). Tests that need
 torch skip without it; the rest register the Diffusers component themselves.
 
+## Decision: an ONNX image generator in every build
+
+Taking Diffusers out of the published image would leave it with no local image
+generation, and on a Mac, Docker can't reach Metal, so the CPU is all an in-image
+generator gets anyway. So every build has a second local generator, **ONNX**: few-step
+Stable Diffusion models on ONNX Runtime and NumPy, on the CPU, with no new runtime
+dependency (US-94.4). Diffusers stays the GPU build's generator, and ComfyUI the
+choice for larger models.
+
+**Pipelines** (`image_generation/onnx/pipeline.py`). Two families, each a text
+encoder step, a UNet loop and a VAE decode:
+
+- `lcm`: Stable Diffusion 1.5 with a Latent Consistency Model UNet. Guidance is
+  distilled into the UNet as a 256-wide sinusoidal embedding of `scale − 1`
+  (`timestep_cond`), so each step is one UNet run; LCM's scheduler takes evenly
+  spaced timesteps from its 50-step distillation schedule.
+- `sdxl`: SDXL Turbo. The two CLIP encoders' penultimate hidden states are joined
+  (768 + 1280), with the second's pooled embedding and the size conditioning
+  (`time_ids`); Euler ancestral sampling with trailing timesteps (one step is
+  t = 999), no classifier-free guidance.
+
+The schedulers are short NumPy ports of diffusers' (`onnx/schedulers.py`). Noise
+comes from NumPy, so a seed gives the same image on every machine, not the one
+diffusers would. Sessions run without ONNX Runtime's memory arena, memory pattern or
+weight prepacking, which cuts about 2 GB per image at the same speed. A pipeline is
+called like a diffusers pipeline, so the existing worker process runs it
+(`pipeline="onnx-<family>"`) with the same progress, cancellation, out-of-memory
+handling and idle stop.
+
+**int8 copies, made once and published.** The upstream ONNX exports are fp32: LCM
+DreamShaper v7 peaks at 7.7 GB and SDXL Turbo at 15 GB per image. Dynamic int8
+weights bring that to 5.2 and 7.9 GB, but ONNX Runtime's quantizer holds about three
+copies of a model (11.8 GB for LCM, 32.6 GB for SDXL Turbo), too much to do on the
+server that downloads it. So `scripts/convert_onnx_image_model.py` makes the copies
+once and they are published under `huggingface.co/davidb727`, each with its
+upstream license, a `NOTICE` saying what changed, a model card and
+`conversion.json` (source revision and file digests, tool versions, output digests).
+The conversion is deterministic (the same inputs and tools gave byte-identical files
+across runs and NumPy versions), so anyone can check a published repository by
+running it again. Third-party int8 uploads exist but can't be checked that way.
+
+**What is int8 was chosen by looking at the images.** For LCM, the UNet's MatMul
+and Conv weights. For SDXL Turbo, the defaults broke it: with the UNet's MatMuls in
+int8 the images ignored the prompt (every prompt gave the same river landscape), and
+with its Convs in int8 they had mosaic artifacts. Keeping the cross-attention keys
+and values (`attn2/to_k`, `attn2/to_v`, which read the prompt) and every Conv in
+float32, with the second text encoder's MatMuls in int8, matches the fp32 images.
+
+**The catalog** (`onnx/catalog.py`) pins each published repository's revision and
+the SHA-256 of every file Asterism uses, its LICENSE and NOTICE included, through
+the pinned-bundle download of US-94.1. A model fits when its measured peak plus a
+tenth (at least 1 GB) is within 80% of the server's memory.
+
+| Model                            | License                                                  | Download | Steps | Per image | Peak memory |
+| -------------------------------- | -------------------------------------------------------- | -------: | ----: | --------: | ----------: |
+| LCM DreamShaper v7 (the default) | CreativeML Open RAIL-M                                   |  1.56 GB |     4 |     4.3 s |      5.2 GB |
+| SDXL Turbo                       | Stability AI Community License, accepted before download |  6.19 GB |     1 |     2.8 s |      7.9 GB |
+
+Measured at 512 px on an Apple M5 Max CPU through the production pipeline, first
+image excluded (5.1 and 3.3 s). LCM DreamShaper v7's repository is tagged MIT, but
+its weights derive from DreamShaper 7 and Stable Diffusion 1.5 under CreativeML Open
+RAIL-M, whose use restrictions travel with it. SDXL Turbo's license allows free
+commercial use below US $1M revenue with registration, so it goes through the same
+acceptance step as non-commercial models, and "Powered by Stability AI" is shown
+beside it. Left out: SDXL base (25-50 steps at 1024 px is minutes per image on a
+CPU), and SD 3.5 Medium (only an unofficial 32.5 GB export, and a different
+pipeline).
+
+**Admin.** The ONNX generator has its own models page (`/settings/app/image-generation/onnx`:
+server memory, fit, licenses, downloads) and setting (`image_generation_onnx`),
+exported with the other settings. A saved Diffusers choice in an image without it
+reads "Diffusers is not available in this image. Choose ONNX to generate images on
+this server's CPU"; nothing switches by itself.
+
 ## Comparison
 
 Twelve images: six photos from Wikimedia Commons, fetched at 800 px wide (a fly
@@ -123,14 +197,14 @@ Download is the three graphs; every variant adds the same 5 MB of configuration.
 
 Some int8 captions next to the torch model's:
 
-| Image          | torch                                                                                         | int8                                                                                                                |
-| -------------- | --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| Fly agaric     | A red mushroom with white spots on its cap … surrounded by green grass and other plants.      | A red mushroom with white spots on its cap                                                                          |
-| Cat            | A tabby cat is sitting on a stone wall.                                                       | A tabby cat sitting on a stone wall. The cat has a striped coat … looking directly at the camera.                   |
-| Bar chart      | A bar chart titled "Monthly sales." … four vertical bars … labeled from January to May.       | A bar chart titled "Monthly sales." … five vertical bars … January, February, March, April, and May.                |
-| Sign-in form   | A screenshot of a webpage displaying a sign-in form …                                         | A screenshot of a webpage. The page is titled "Acme Portal" … a navigation menu with the heading "Sign in".         |
-| Library notice | … reads "LIBRARY NOTICE" … "The library will be closed on Monday for maintenance. Please …"   | … reads "LIBRARY NOTICE" on top … "The library will be closed on Monday for maintenance. Please return all …"       |
-| Sale sign      | A promotional graphic for a sale … "SALE" in capital letters … "50% off everything" …         | A sale advertisement with the word "SALE" in large red letters on a beige background.                               |
+| Image          | torch                                                                                       | int8                                                                                                          |
+| -------------- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| Fly agaric     | A red mushroom with white spots on its cap … surrounded by green grass and other plants.    | A red mushroom with white spots on its cap                                                                    |
+| Cat            | A tabby cat is sitting on a stone wall.                                                     | A tabby cat sitting on a stone wall. The cat has a striped coat … looking directly at the camera.             |
+| Bar chart      | A bar chart titled "Monthly sales." … four vertical bars … labeled from January to May.     | A bar chart titled "Monthly sales." … five vertical bars … January, February, March, April, and May.          |
+| Sign-in form   | A screenshot of a webpage displaying a sign-in form …                                       | A screenshot of a webpage. The page is titled "Acme Portal" … a navigation menu with the heading "Sign in".   |
+| Library notice | … reads "LIBRARY NOTICE" … "The library will be closed on Monday for maintenance. Please …" | … reads "LIBRARY NOTICE" on top … "The library will be closed on Monday for maintenance. Please return all …" |
+| Sale sign      | A promotional graphic for a sale … "SALE" in capital letters … "50% off everything" …       | A sale advertisement with the word "SALE" in large red letters on a beige background.                         |
 
 The int8 chart caption counts the bars correctly where torch doesn't; the sale-sign
 caption leaves out "50% off everything". Neither is a pattern across the set.
@@ -150,9 +224,13 @@ uv run python scripts/benchmark_local_captioning.py \
   no longer grow it. US-94.3 lowers its size budget to keep the gain.
 - Local captioning downloads 265 MB instead of about 1 GB and needs about 2 GiB of
   memory headroom instead of 4 GiB.
-- Local image generation needs the GPU build. An instance upgraded from an image
-  with it keeps its saved Diffusers choice and downloaded models, but generates no
-  images until an admin chooses another generator or moves to the GPU build.
+- Every build generates images locally on the CPU with the ONNX generator. Diffusers
+  needs the GPU build: an instance upgraded from an image with it keeps its saved
+  Diffusers choice and downloaded models, but generates no images until an admin
+  chooses ONNX or ComfyUI, or moves to the GPU build.
+- The ONNX models depend on repositories under `davidb727`. A new model or revision
+  means running the conversion script, checking the images, publishing, and pinning
+  the new revision and digests in the catalog.
 - A Mac checkout doesn't install local image generation by default; a developer
   working on it runs `uv sync --extra local-image`.
 - Deployments with local captioning on download the new bundle once, on the first

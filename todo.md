@@ -117,13 +117,13 @@ Source: user request (2026-11-21), after Dependabot's uv group took the image ov
   - [x] Tests for both installs: registry, Admin Settings payload, tool availability, and a saved local generator surviving an upgrade (upgrade check) and reading as unavailable.
   - [x] Docs: the deployment guide's GPU build section, the development guide (`uv sync --extra local-image`), and the image generation user guide.
 - [~] US-94.4: Local image generation on ONNX
-  - [ ] ADR-0077: an ONNX generator in every build, its pipelines, schedulers in NumPy, how models are pinned and verified, and the catalog chosen.
-  - [ ] A pinned ONNX catalog (revision, file list, SHA-256 each) through `ModelDownloadService` with the license step: LCM DreamShaper v7 (license confirmed first) and SDXL Turbo (non-commercial, accepted before download); SDXL base 1.0 if usable. SD 3.5 Medium later.
-  - [ ] An ONNX pipeline with no torch: CLIP tokenizers from `transformers`, text encoders, UNet with the scheduler in NumPy (LCM; Euler for SDXL), VAE decoder; seeded, bounded, in the worker process with progress and cancellation.
-  - [ ] A comparison on a fixed prompt set: time and memory per image for each model and precision (fp32, and int8 if quality holds), with samples; results in the ADR.
-  - [ ] An "ONNX" generator component in every build, with its local models on the Admin Settings page; a saved Diffusers choice without the extra reads "not available in this image" and points to it. Nothing switches by itself.
-  - [ ] Tests: scheduler steps, the pipeline on fake sessions (seed determinism, bounds, cancellation), registry and availability, license step, a corrupt or partial model refused.
-  - [ ] Docs and release notes: Image (local generation on CPU in the published image), Behavior (the ONNX generator; Diffusers is GPU-build only).
+  - [x] ADR-0077: an ONNX generator in every build, its pipelines, schedulers in NumPy, how models are pinned and verified, and the catalog chosen.
+  - [x] A pinned ONNX catalog (revision, file list, SHA-256 each) through `ModelDownloadService` with the license step: LCM DreamShaper v7 (license confirmed first) and SDXL Turbo (non-commercial, accepted before download); SDXL base 1.0 if usable. SD 3.5 Medium later.
+  - [x] An ONNX pipeline with no torch: CLIP tokenizers from `transformers`, text encoders, UNet with the scheduler in NumPy (LCM; Euler for SDXL), VAE decoder; seeded, bounded, in the worker process with progress and cancellation.
+  - [x] A comparison on a fixed prompt set: time and memory per image for each model and precision (fp32, and int8 if quality holds), with samples; results in the ADR.
+  - [x] An "ONNX" generator component in every build, with its local models on the Admin Settings page; a saved Diffusers choice without the extra reads "not available in this image" and points to it. Nothing switches by itself.
+  - [x] Tests: scheduler steps, the pipeline on fake sessions (seed determinism, bounds, cancellation), registry and availability, license step, a corrupt or partial model refused.
+  - [x] Docs and release notes: Image (local generation on CPU in the published image), Behavior (the ONNX generator; Diffusers is GPU-build only).
 - [ ] US-94.3: Hold the smaller image
   - [ ] Lower the image budget (`DEFAULT_MAX_SIZE_GB` in `scripts/check-image.mjs`, which CI and the release workflow use) from 5.25 GB (raised from 5 GB on 2026-11-21 for Dependabot's uv group) to the measured size plus a margin (expected about 4.5 GB), recorded in the release notes.
   - [ ] Remove the temporary torch cap, so Dependabot updates torch for the GPU build again.

@@ -7,9 +7,10 @@ changing the `image_generation` domain, a generator or the `generate_image` tool
 
 ## Concepts
 
-- **A generator** is the backend that makes images. Asterism ships two: **ComfyUI**,
-  a separate server the admin points at, and **Diffusers**, a local model run by
-  Asterism itself. Generators are components, the same pluggable layer as the
+- **A generator** is the backend that makes images. Asterism ships three:
+  **ComfyUI**, a separate server the admin points at; **ONNX**, small Stable
+  Diffusion models Asterism runs on the CPU in every build; and **Diffusers**,
+  larger local models for a GPU, in the GPU build only. Generators are components, the same pluggable layer as the
   search providers ([tool authorization](tool-authorization.md#components-behind-the-tools)).
 - **Availability** means image generation is switched on, the user's group is
   allowed, and the chosen generator reports itself ready. All three are read live.
@@ -93,6 +94,27 @@ job from ComfyUI's queue without touching other users' jobs on a shared server.
 **Test connection** reports the server's version and devices and suggests its
 checkpoints.
 
+### The ONNX generator
+
+Every build can make images on the server's CPU
+([`image_generation/onnx/`](../../apps/backend/asterism/domains/image_generation/onnx/),
+[ADR-0077](../adr/0077-torch-free-default-image.md)):
+
+- **Pipelines** in ONNX Runtime and NumPy, with no torch: LCM (Stable Diffusion 1.5
+  with guidance distilled into the UNet) and SDXL Turbo (two text encoders, one
+  Euler ancestral step). The schedulers are NumPy ports of diffusers'.
+- **A pinned catalog** of int8 conversions published under `huggingface.co/davidb727`
+  by `apps/backend/scripts/convert_onnx_image_model.py`, each pinned by revision and
+  the SHA-256 of every file. Making the copies needs tens of GB of memory, so servers
+  download them ready-made through the verified download service.
+- **Fit** is system memory: a model's measured peak plus headroom within 80% of RAM.
+  Licenses that limit use are accepted before download, as for Diffusers, and
+  "Powered by Stability AI" is shown beside SDXL Turbo.
+- **The worker** is the Diffusers one: the provider sends `pipeline="onnx-<family>"`
+  and the worker process loads the ONNX pipeline instead, with the same progress,
+  cancellation and idle stop. Its admin endpoints are under
+  `/settings/app/image-generation/onnx` and its setting is `image_generation_onnx`.
+
 ### The local Diffusers generator
 
 Asterism can run an image model itself, in a separate worker process
@@ -101,8 +123,8 @@ It needs the `local-image` extra (diffusers, accelerate, torch, torchvision), wh
 only the GPU image build installs ([ADR-0077](../adr/0077-torch-free-default-image.md)).
 `local/availability.py` finds those packages without importing them. Without them the
 Diffusers component isn't registered; a saved Diffusers choice stays stored, the
-provider status reads "Diffusers is not available in this image" (so
-`generate_image` isn't offered), and `GET /settings/app/image-generation/local`
+provider status reads "Diffusers is not available in this image. Choose ONNX to
+generate images on this server's CPU" (so `generate_image` isn't offered), and `GET /settings/app/image-generation/local`
 returns `installed: false` with no hardware or catalog while every change is
 refused. Nothing switches to another generator.
 
@@ -125,11 +147,12 @@ and the precision and memory rules.
 
 ## Settings
 
-Admin Settings → Image generation has four parts, in the order an admin works:
+Admin Settings → Image generation has these parts, in the order an admin works (only the chosen generator's models part shows):
 
 | Part         | Does                                                                                                 |
 | ------------ | ---------------------------------------------------------------------------------------------------- |
-| Generator    | Chooses ComfyUI or Diffusers and their settings, with the generator's status and a test              |
+| Generator    | Chooses ComfyUI, ONNX or Diffusers and their settings, with the generator's status and a test        |
+| ONNX models  | For ONNX: server memory, the catalog with fit and licenses, downloads                                |
 | Local models | For Diffusers: hardware, the catalog with fit and licenses, downloads                                |
 | Try it       | Generates one image for the admin, saved to their files (`POST /settings/app/image-generation/test`) |
 | Availability | The on/off switch and which groups may generate (`GET`/`PUT /settings/app/image-generation`)         |

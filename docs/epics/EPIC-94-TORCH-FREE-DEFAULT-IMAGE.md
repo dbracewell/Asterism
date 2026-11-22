@@ -114,30 +114,30 @@ As an administrator on the published image, I can generate images on the
 server's CPU without a GPU build or PyTorch. (Added 2026-11-22: on a Mac,
 Docker can't use Metal, so the CPU is all an in-image generator gets there.)
 
-- [ ] ADR-0077: an ONNX generator in every build, its pipelines, schedulers in
+- [x] ADR-0077: an ONNX generator in every build, its pipelines, schedulers in
       NumPy, how models are pinned and verified, and the catalog chosen.
-- [ ] A pinned ONNX catalog (revision, file list, SHA-256 each), downloaded
+- [x] A pinned ONNX catalog (revision, file list, SHA-256 each), downloaded
       through `ModelDownloadService` with the existing license step: LCM
       DreamShaper v7 (`SimianLuo/LCM_Dreamshaper_v7`, license confirmed first)
       and SDXL Turbo (`stabilityai/sdxl-turbo`, non-commercial, accepted before
       download); SDXL base 1.0 if its time and memory are usable. SD 3.5 Medium
       is left for later (an unofficial export, 32.5 GB, a different pipeline).
-- [ ] An ONNX pipeline with no torch: the CLIP tokenizers from `transformers`,
+- [x] An ONNX pipeline with no torch: the CLIP tokenizers from `transformers`,
       the text encoders, the UNet with the model's scheduler in NumPy (LCM, and
       Euler for SDXL), and the VAE decoder. Seeded, bounded steps, size and time,
       run in the existing worker process with progress and cancellation.
-- [ ] A comparison on a fixed prompt set: time and memory per image for each
+- [x] A comparison on a fixed prompt set: time and memory per image for each
       model and precision (fp32, and an int8 copy if quality holds), with sample
       images. The chosen precisions and the results go in the ADR.
-- [ ] An "ONNX" generator component, registered in every build, with its local
+- [x] An "ONNX" generator component, registered in every build, with its local
       models on the Admin Settings page (hardware, fit, downloads, licenses).
       Diffusers stays the optional GPU-build generator; where it isn't installed,
       a saved Diffusers choice keeps reading "not available in this image" and
       the message points to the ONNX generator. Nothing switches by itself.
-- [ ] Tests: scheduler steps, the pipeline on tiny fake sessions (seed
+- [x] Tests: scheduler steps, the pipeline on tiny fake sessions (seed
       determinism, bounds, cancellation), registry and availability, the license
       step, a corrupt or partial model refused.
-- [ ] Docs and release notes: Image (local generation on CPU in the published
+- [x] Docs and release notes: Image (local generation on CPU in the published
       image), Behavior (the ONNX generator; Diffusers is GPU-build only).
 
 ### US-94.3: Hold the smaller image
