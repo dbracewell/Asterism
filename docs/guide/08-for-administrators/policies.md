@@ -79,9 +79,11 @@ Lets people [create images](../02-chatting/creating-images.md) in chat.
    - **ComfyUI**: an existing ComfyUI server. Fill in its **Server address** and
      **Checkpoint** (the model file it uses). Test the connection to list the
      server's checkpoints.
-   - **Diffusers**: runs a model on the Asterism server itself. The page shows the
-     server's hardware and which models fit it. Read a model's license before you
-     download it: some can't be used commercially.
+   - **Diffusers**: runs a model on the Asterism server itself. It is only in the
+     [GPU build](../../deployment.md#gpu-build) of Asterism; the published image
+     doesn't include it, and there **Local models** says it isn't available. The
+     page shows the server's hardware and which models fit it. Read a model's
+     license before you download it: some can't be used commercially.
 2. Select **Save generator**.
 3. Under the generator, type a **Prompt** and select **Generate a test image** to
    check it works. The picture goes into your Files.

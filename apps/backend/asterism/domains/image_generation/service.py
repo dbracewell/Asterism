@@ -18,7 +18,7 @@ from asterism.domains.usage.schemas import UsageMeter, UsageSource
 from asterism.domains.usage.service import record_usage, require_within_budget
 
 from .models import ImageGenerationModel
-from .policy import require_available
+from .policy import provider_status, require_available
 from .providers import ImageGenerationError, ImageGeneratorComponent, load_generator, selected_name
 from .safety import refusal_reason
 from .schemas import (
@@ -170,8 +170,9 @@ async def run_test_generation(*, admin_id: str, request: ImageRequest) -> list[G
     await _refuse_unsafe(admin_id, None, request, started)
     async with get_async_db_session() as session:
         provider = await load_generator(session)
-    if provider is None:
-        raise BadDataException("No image provider is set up")
+        if provider is None:
+            # Says why: none chosen, or a saved one this image doesn't have (US-94.2).
+            raise BadDataException((await provider_status(session)).detail or "No image provider is set up")
     status = await provider.status()
     if not status.ready:
         raise BadDataException(status.detail or "The image provider isn't ready")

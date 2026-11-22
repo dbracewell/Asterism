@@ -1,12 +1,13 @@
 #!/usr/bin/env node
 // US-91.2: the built image starts and serves, as CI checks it before a release.
 //
-//   pnpm check:image [--image asterism:local] [--max-size-gb 5.25]
+//   pnpm check:image [--image asterism:local] [--max-size-gb 5.25] [--variant cpu|gpu]
 //
 // Starts the image on a fresh volume with generated, throwaway secrets, waits
 // for its health check, and checks that both databases were migrated, the
-// sign-in page and both health endpoints answer, and every process runs as
-// UID 10001. Then it checks the image against a size budget, printing the
+// sign-in page and both health endpoints answer, every process runs as
+// UID 10001, and the local-image packages match the build (US-94.2: none in
+// the CPU image, the default; all of them in a TORCH_VARIANT=gpu build). Then it checks the image against a size budget, printing the
 // largest layers when it is over, so that growth is a decision. The container
 // and volume are removed afterwards.
 import { spawnSync } from "node:child_process";
@@ -77,6 +78,34 @@ export function uidProblems(uids) {
     : [];
 }
 
+// The packages of the backend's local-image extra (US-94.2).
+export const LOCAL_IMAGE_PACKAGES = [
+  "torch",
+  "torchvision",
+  "diffusers",
+  "accelerate",
+];
+
+/** Problems with which local-image packages the image's backend can import. */
+export function localImageProblems(importable, variant) {
+  const present = LOCAL_IMAGE_PACKAGES.filter((name) => importable[name]);
+  const absent = LOCAL_IMAGE_PACKAGES.filter((name) => !importable[name]);
+  if (variant === "cpu" && present.length)
+    return [
+      `The CPU image can import ${present.join(", ")}; it must not include the local-image extra`,
+    ];
+  if (variant === "gpu" && absent.length)
+    return [
+      `The GPU image cannot import ${absent.join(", ")}; it must include the local-image extra`,
+    ];
+  return [];
+}
+
+const importCheck = `
+import importlib.util, json, sys
+print(json.dumps({name: importlib.util.find_spec(name) is not None for name in sys.argv[1:]}))
+`;
+
 async function waitHealthy(container) {
   const deadline = Date.now() + HEALTHY_TIMEOUT_MS;
   while (Date.now() < deadline) {
@@ -112,7 +141,7 @@ with sqlite3.connect("file:/storage/database.db?mode=ro", uri=True) as connectio
 print(json.dumps({"auth": tables("/storage/users.db"), "revision": revision and revision[0]}))
 `;
 
-async function checkContainer(image) {
+async function checkContainer(image, variant) {
   const name = `asterism-image-check-${randomBytes(4).toString("hex")}`;
   const secrets = Object.fromEntries(
     ["BETTER_AUTH_SECRET", "SYSTEM_KEY", "ADMIN_PASSPHRASE"].map((key) => [
@@ -188,6 +217,24 @@ async function checkContainer(image) {
     const problems = uidProblems(uids);
     if (problems.length) throw new Error(problems.join("\n"));
     console.log(`ok: all ${uids.length} processes run as UID ${RUNTIME_UID}`);
+
+    const importable = JSON.parse(
+      docker([
+        "exec",
+        name,
+        "/app/apps/backend/.venv/bin/python",
+        "-c",
+        importCheck,
+        ...LOCAL_IMAGE_PACKAGES,
+      ]),
+    );
+    const local = localImageProblems(importable, variant);
+    if (local.length) throw new Error(local.join("\n"));
+    console.log(
+      variant === "cpu"
+        ? `ok: the backend cannot import ${LOCAL_IMAGE_PACKAGES.join(", ")}`
+        : `ok: the backend can import ${LOCAL_IMAGE_PACKAGES.join(", ")}`,
+    );
   } catch (error) {
     const logs = spawnSync("docker", ["logs", "--tail", "80", name], {
       encoding: "utf8",
@@ -237,8 +284,11 @@ async function main() {
     options: {
       image: { type: "string", default: "asterism:local" },
       "max-size-gb": { type: "string", default: DEFAULT_MAX_SIZE_GB },
+      variant: { type: "string", default: "cpu" },
     },
   });
+  if (!["cpu", "gpu"].includes(values.variant))
+    throw new Error(`--variant must be cpu or gpu, not ${values.variant}`);
   if (!/^[a-zA-Z0-9][a-zA-Z0-9._/:@-]*$/.test(values.image))
     throw new Error(`Not an image name: ${values.image}`);
   const maxGb = Number(values["max-size-gb"]);
@@ -246,7 +296,7 @@ async function main() {
     throw new Error(`Not a size in GB: ${values["max-size-gb"]}`);
   docker(["image", "inspect", values.image]);
   checkSize(values.image, maxGb * 1e9);
-  await checkContainer(values.image);
+  await checkContainer(values.image, values.variant);
 }
 
 if (

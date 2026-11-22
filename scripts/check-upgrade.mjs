@@ -5,15 +5,18 @@
 //
 // Starts the previous release's image on a fresh volume and seeds it through
 // the API: an admin account, a model provider (a local double), a chat with a
-// reply, two related files indexed into vectors, a custom theme, and local
-// captioning switched on with an image captioned by it. Then it
+// reply, two related files indexed into vectors, a custom theme, local
+// captioning switched on with an image captioned by it, and the local Diffusers
+// image generator saved as the generator. Then it
 // stops it and starts the new image on the same volume with the same secrets,
 // and checks the container is healthy, both databases were migrated (the auth
 // schema matches a fresh one from the new image), and the account, chat, files
 // (their bytes, and their vectors through similar-file search), theme (every
 // value) and stored caption are all still there, and that local captioning
 // still captions a new image (US-94.1: an upgrade may replace the caption
-// model bundle, which the new image then downloads itself). Last, it starts
+// model bundle, which the new image then downloads itself), and that the saved
+// local generator is still saved but reads as not available, since the CPU
+// image has no local image generation (US-94.2). Last, it starts
 // the previous image again on the
 // upgraded volume and checks it refuses the newer database with its version
 // message, rather than running on it.
@@ -41,6 +44,8 @@ export const REGISTRY_IMAGE = "ghcr.io/dbracewell/asterism";
 const PASSWORD = "Upgrade-check-91!";
 const PYTHON = "/app/apps/backend/.venv/bin/python";
 const THEME_ID = "upgrade-check";
+// The local generator, which the CPU image leaves out (US-94.2).
+const LOCAL_GENERATOR = "Diffusers";
 // A bundled theme the previous image serves, saved again as a custom one.
 const BASE_THEME = "atlas";
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -149,6 +154,18 @@ export function seedProblems(seeded, found) {
   if (found.newCaption?.status !== "ready" || !found.newCaption.payload?.text) {
     problems.push(
       `Local captioning no longer captions: ${JSON.stringify(found.newCaption)}`,
+    );
+  }
+  if (found.generator !== seeded.generator) {
+    problems.push(
+      `The saved image generator changed: seeded ${seeded.generator}, found ${found.generator}`,
+    );
+  } else if (
+    found.generatorStatus?.ready !== false ||
+    !/not available in this image/.test(found.generatorStatus?.detail ?? "")
+  ) {
+    problems.push(
+      `The saved ${seeded.generator} generator should read as not available in this image: ${JSON.stringify(found.generatorStatus)}`,
     );
   }
   // A release that deliberately changes the theme format changes this too.
@@ -571,6 +588,14 @@ async function seed(run, stub) {
     text: captioned.payload.text,
   };
 
+  // The previous image includes local image generation; saving it is enough.
+  await session.api(
+    "image generator",
+    "PUT",
+    "/settings/app/image_generator_provider",
+    { value: { name: LOCAL_GENERATOR, parameters: {} } },
+  );
+
   const base = await readTheme(run.base, BASE_THEME);
   if (!base) throw new Error(`The previous image has no ${BASE_THEME} theme`);
   const { filename: _filename, ...data } = base;
@@ -582,7 +607,15 @@ async function seed(run, stub) {
   if (!theme)
     throw new Error("The previous image does not read the seeded theme");
 
-  return { email, chatId: created.info.id, chat, files, theme, caption };
+  return {
+    email,
+    chatId: created.info.id,
+    chat,
+    files,
+    theme,
+    caption,
+    generator: LOCAL_GENERATOR,
+  };
 }
 
 async function inspectSeed(run, seeded) {
@@ -635,6 +668,14 @@ async function inspectSeed(run, seeded) {
     model === "ready"
       ? await captionImage(session, "blue-circle.png")
       : { status: `not tried: the caption model is ${model}` };
+  const generator =
+    (await session.api("settings", "GET", "/settings/app"))
+      .image_generator_provider?.name ?? null;
+  const generatorStatus = await session.api(
+    "image generator status",
+    "GET",
+    "/settings/app/image-generation/status",
+  );
   return {
     signedIn,
     chat,
@@ -645,6 +686,8 @@ async function inspectSeed(run, seeded) {
     theme: await readTheme(run.base, THEME_ID),
     caption: stored ?? null,
     newCaption: fresh,
+    generator,
+    generatorStatus,
   };
 }
 
@@ -678,7 +721,7 @@ async function check({ from, to, port }) {
     const before = databases(old);
     const seeded = await seed(run, stub);
     log(
-      `ok: seeded an admin, a chat with ${seeded.chat.length} messages, ${Object.keys(seeded.files).length} indexed files, a theme and a local caption (schema ${before.revision})`,
+      `ok: seeded an admin, a chat with ${seeded.chat.length} messages, ${Object.keys(seeded.files).length} indexed files, a theme, a local caption and the local image generator (schema ${before.revision})`,
     );
     stop(old);
 
@@ -703,7 +746,7 @@ async function check({ from, to, port }) {
     const problems = seedProblems(seeded, await inspectSeed(run, seeded));
     if (problems.length) throw new Error(problems.join("\n"));
     log(
-      "ok: the account signs in; the chat, the files' bytes and vectors, every theme value and the caption are unchanged, and local captioning captions a new image",
+      "ok: the account signs in; the chat, the files' bytes and vectors, every theme value and the caption are unchanged, local captioning captions a new image, and the saved local generator reads as not available",
     );
     stop(next);
 

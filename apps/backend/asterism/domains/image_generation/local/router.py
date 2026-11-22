@@ -12,6 +12,7 @@ from asterism.db.dependencies import DBSessionDep
 from asterism.domains.user.dependencies import AdminUserDep
 
 from . import downloads
+from .availability import NOT_AVAILABLE, local_image_installed
 from .catalog import CATALOG, CatalogEntry, entry
 from .hardware import HardwareReport, clear_cache, detect
 from .planning import Plan, plan, recommend
@@ -49,7 +50,10 @@ class LocalModel(BaseModel):
 
 
 class LocalOverview(BaseModel):
-    hardware: HardwareReport
+    # False in an image without the local-image extra (US-94.2): then there is
+    # no hardware report and no catalog, and every change is refused.
+    installed: bool
+    hardware: HardwareReport | None
     recommended_id: str | None
     settings: LocalSettings
     models: list[LocalModel]
@@ -67,7 +71,13 @@ class DownloadRequest(BaseModel):
     accept_license: bool = False
 
 
+def _require_installed() -> None:
+    if not local_image_installed():
+        raise BadDataException(NOT_AVAILABLE)
+
+
 def _known(model_id: str) -> CatalogEntry:
+    _require_installed()
     found = entry(model_id)
     if found is None:
         raise NotFoundException("Unknown local model")
@@ -86,10 +96,15 @@ def _download(model: CatalogEntry) -> LocalDownload:
 
 async def _overview(session) -> LocalOverview:
     settings = await read_settings(session)
+    if not local_image_installed():
+        return LocalOverview(
+            installed=False, hardware=None, recommended_id=None, settings=settings, models=[], worker_running=False
+        )
     clear_cache()
     hardware = detect(settings.device)
     best = recommend(hardware)
     return LocalOverview(
+        installed=True,
         hardware=hardware,
         recommended_id=best.id if best else None,
         settings=settings,
@@ -116,12 +131,16 @@ async def _overview(session) -> LocalOverview:
 
 @local_image_router.get("", operation_id="localImageOverview")
 async def overview(user: AdminUserDep, session: DBSessionDep) -> LocalOverview:
-    """Detected hardware, the catalog with fit and download state, and the recommendation."""
+    """Detected hardware, the catalog with fit and download state, and the recommendation.
+
+    Without the local-image extra, only the saved settings, with ``installed`` false.
+    """
     return await _overview(session)
 
 
 @local_image_router.put("", operation_id="localImageSelect")
 async def select(payload: LocalSelection, user: AdminUserDep, session: DBSessionDep) -> LocalOverview:
+    _require_installed()
     settings = await read_settings(session)
     if payload.model_id is not None:
         _known(payload.model_id)

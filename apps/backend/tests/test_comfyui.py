@@ -187,6 +187,11 @@ async def test_status_explains_what_is_missing_and_caches_the_probe(server):
 
 
 async def test_settings_and_test_connection_use_the_component_layer(images_api, server):
+    from asterism.domains.components.registry import component_registry
+    from asterism.domains.image_generation.local.provider import Diffusers
+
+    # Diffusers is the untestable example; registered here so this runs without the local-image extra.
+    component_registry.register()(Diffusers)
     client, sessions = images_api
     listed = (await client.get("/components/by_type/ImageGenerator", headers=auth())).json()["items"]
     testable = {item["name"]: item["testable"] for item in listed}

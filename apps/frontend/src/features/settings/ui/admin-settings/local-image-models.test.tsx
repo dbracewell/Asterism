@@ -41,6 +41,7 @@ const model = (id: string, values: Record<string, unknown> = {}) => ({
 });
 
 const overview = (values: Record<string, unknown> = {}) => ({
+  installed: true,
   hardware: {
     device: "cuda",
     name: "Test GPU",
@@ -207,4 +208,23 @@ it("uses, switches device for and removes a downloaded model", async () => {
     within(await row("flux")).getByRole("button", { name: "Remove files" }),
   );
   expect(await screen.findByText("The files are in use")).toBeVisible();
+});
+
+it("explains that local generation is not in this image and hides the catalog", async () => {
+  mocks.overview.mockResolvedValue(
+    overview({
+      installed: false,
+      hardware: null,
+      recommended_id: null,
+      models: [],
+      settings: { model_id: "flux", device: "auto", accepted_licenses: [] },
+    }),
+  );
+  setup();
+  expect(
+    await screen.findByTestId("local-image-unavailable"),
+  ).toHaveTextContent("Local image generation is not available in this image");
+  expect(screen.queryByRole("list", { name: "Local models" })).toBeNull();
+  expect(screen.queryByRole("button", { name: /Download/ })).toBeNull();
+  expect(screen.queryByTestId("hardware")).toBeNull();
 });

@@ -2491,7 +2491,8 @@ export const zLocalModel = z.object({
  * LocalOverview
  */
 export const zLocalOverview = z.object({
-  hardware: zHardwareReport,
+  installed: z.boolean(),
+  hardware: zHardwareReport.nullable(),
   recommended_id: z.string().nullable(),
   settings: zLocalSettings,
   models: z.array(zLocalModel),

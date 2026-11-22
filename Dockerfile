@@ -35,28 +35,28 @@ RUN pip install --no-cache-dir uv==0.12.13 \
   && apt-get update && apt-get install -y --no-install-recommends build-essential \
   && rm -rf /var/lib/apt/lists/*
 WORKDIR /app/apps/backend
+# The CPU image (the default, and the published one) has no PyTorch: embeddings
+# and captioning run on ONNX Runtime. TORCH_VARIANT=gpu adds the local-image
+# extra (diffusers, accelerate, torch, torchvision) for local image generation,
+# then swaps the lockfile's CPU-only torch for the same versions from PyPI,
+# whose Linux wheels bundle CUDA (ADR-0077, US-94.2).
+ARG TORCH_VARIANT=cpu
+RUN case "$TORCH_VARIANT" in cpu|gpu) ;; \
+    *) echo "TORCH_VARIANT must be cpu or gpu, not $TORCH_VARIANT" >&2; exit 1 ;; esac
 COPY apps/backend/pyproject.toml apps/backend/uv.lock ./
 RUN --mount=type=cache,target=/root/.cache/uv \
-  uv sync --locked --no-dev --no-install-project
+  uv sync --locked --no-dev --no-install-project $([ "$TORCH_VARIANT" = gpu ] && echo --extra local-image)
 COPY apps/backend/asterism ./asterism
 COPY apps/backend/README.md ./README.md
-RUN --mount=type=cache,target=/root/.cache/uv uv sync --locked --no-dev
-
-# torch: the lockfile installs the CPU-only build on Linux. TORCH_VARIANT=gpu
-# swaps in the same versions from PyPI, whose Linux wheels bundle CUDA
-# (about 4 GB more). Only local image generation uses torch; embeddings and
-# captioning run on ONNX Runtime (ADR-0077).
-ARG TORCH_VARIANT=cpu
 RUN --mount=type=cache,target=/root/.cache/uv \
-  case "$TORCH_VARIANT" in \
-    cpu) ;; \
-    gpu) \
-      version() { .venv/bin/python -c "import importlib.metadata as m; print(m.version('$1').split('+')[0])"; }; \
-      uv pip install --python .venv/bin/python --index-url https://pypi.org/simple \
-        --reinstall-package torch --reinstall-package torchvision \
-        "torch==$(version torch)" "torchvision==$(version torchvision)" ;; \
-    *) echo "TORCH_VARIANT must be cpu or gpu, not $TORCH_VARIANT" >&2; exit 1 ;; \
-  esac
+  uv sync --locked --no-dev $([ "$TORCH_VARIANT" = gpu ] && echo --extra local-image)
+RUN --mount=type=cache,target=/root/.cache/uv \
+  if [ "$TORCH_VARIANT" = gpu ]; then \
+    version() { .venv/bin/python -c "import importlib.metadata as m; print(m.version('$1').split('+')[0])"; }; \
+    uv pip install --python .venv/bin/python --index-url https://pypi.org/simple \
+      --reinstall-package torch --reinstall-package torchvision \
+      "torch==$(version torch)" "torchvision==$(version torchvision)"; \
+  fi
 
 # Headless Chromium for the web fetch tool's JavaScript pages. Only the shell is
 # downloaded here; the runtime stage installs the few libraries it needs.

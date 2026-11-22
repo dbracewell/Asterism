@@ -54,8 +54,8 @@ def _load(model_dir: str, pipeline: str, device: str, mode: str, dtype: str, sch
         return _StubPipeline()
     from pathlib import Path
 
-    import diffusers
-    import torch
+    import diffusers  # pyright: ignore[reportMissingImports] - the optional local-image extra
+    import torch  # pyright: ignore[reportMissingImports] - the optional local-image extra
 
     cls = getattr(diffusers, pipeline)
     options: dict[str, Any] = {"torch_dtype": getattr(torch, dtype), "local_files_only": True}
@@ -85,7 +85,7 @@ def _is_oom(error: BaseException) -> bool:
 def _generator(seed: int, pipeline: str):
     if pipeline == "stub":
         return type("Generator", (), {"initial_seed": lambda self: seed})()
-    import torch
+    import torch  # pyright: ignore[reportMissingImports] - the optional local-image extra
 
     # A CPU generator gives the same image for a seed on every device.
     return torch.Generator("cpu").manual_seed(seed)
@@ -150,6 +150,6 @@ def worker_main(
             traceback.print_exc()
             conn.send(("error", "oom" if _is_oom(error) else "error", str(error)[:500]))
             if _is_oom(error) and device == "cuda":
-                import torch
+                import torch  # pyright: ignore[reportMissingImports] - the optional local-image extra
 
                 torch.cuda.empty_cache()

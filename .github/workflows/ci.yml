@@ -94,6 +94,15 @@ jobs:
       - name: Run quality gates
         run: pnpm format:check && pnpm lint && pnpm typecheck && pnpm test
 
+      - name: Verify the default backend install has no PyTorch
+        # US-94.2: torch, torchvision, diffusers and accelerate belong to the
+        # local-image extra; this names the package that pulls one in.
+        run: pnpm check:default-install
+
+      - name: Test local image generation with the local-image extra
+        # After the quality gates, which ran on the default install without it.
+        run: pnpm --filter @asterism/backend test:local-image
+
       - name: Verify synthetic secrets do not enter browser artifacts or build logs
         run: |
           export BETTER_AUTH_SECRET="ci-$(openssl rand -hex 24)"

@@ -4434,7 +4434,11 @@ export type LocalModel = {
  * LocalOverview
  */
 export type LocalOverview = {
-  hardware: HardwareReport;
+  /**
+   * Installed
+   */
+  installed: boolean;
+  hardware: HardwareReport | null;
   /**
    * Recommended Id
    */
