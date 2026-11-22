@@ -47,8 +47,7 @@ dependencies = [
 local-image = [
   "accelerate>=1.15.0",
   "diffusers>=0.41",
-  # Held at 2.13 until US-94.3: 2.15 took the image past its size budget.
-  "torch>=2.13.0,<2.14",
+  "torch>=2.13.0",
   "torchvision>=0.24,<0.29",
 ]
 

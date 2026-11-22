@@ -144,11 +144,12 @@ Docker can't use Metal, so the CPU is all an in-image generator gets there.)
 
 As a maintainer, the size gained stays gained.
 
-- [ ] Lower the image budget (`DEFAULT_MAX_SIZE_GB` in
+- [x] Lower the image budget (`DEFAULT_MAX_SIZE_GB` in
       `scripts/check-image.mjs`, which CI and the release workflow use) from 5.25 GB
       (raised from 5 GB on 2026-11-21 so Dependabot's uv group, #46, fits) to the
       measured size plus a margin (expected about 4.5 GB), recorded in the release notes.
-- [ ] Remove the temporary torch cap, so Dependabot updates torch for the GPU
+      Done 2026-11-22: 4.25 GB, for 3.82 GB measured on amd64 and 3.72 GB on arm64.
+- [x] Remove the temporary torch cap, so Dependabot updates torch for the GPU
       build again.
 - [ ] Release notes: Image (smaller image, no local generation in the published
       image, how to build the GPU image). Cut the release that ships the epic.

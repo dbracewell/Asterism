@@ -331,13 +331,13 @@ revision, that `/sign-in`, `/api/py/health/ready` and `/api/health` answer 200,
 that every process runs as UID 10001, and that the backend can import none of
 torch, torchvision, diffusers and accelerate (US-94.2; `--variant gpu` checks a
 `TORCH_VARIANT=gpu` build can import all four). It also fails when the unpacked image
-is over the size budget (`DEFAULT_MAX_SIZE_GB` in the script, 5.25 GB, which CI and
+is over the size budget (`DEFAULT_MAX_SIZE_GB` in the script, 4.25 GB, which CI and
 the release workflow use too), listing the largest layers. On failure
 it prints the container's last log lines. The container and volume are removed
 afterwards.
 
 ```bash
-pnpm check:image                                   # asterism:local, the 5.25 GB budget
+pnpm check:image                                   # asterism:local, the 4.25 GB budget
 pnpm check:image --image asterism:ci --max-size-gb 6   # another budget, for a one-off check
 pnpm check:image --image asterism:gpu --variant gpu --max-size-gb 9   # a GPU build
 ```
