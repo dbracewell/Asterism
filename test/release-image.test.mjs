@@ -69,7 +69,10 @@ test("the SPDX document is read from one platform or picked from several", () =>
   assert.equal(spdxDocument({ SPDX }), SPDX);
   const both = { "linux/amd64": { SPDX }, "linux/arm64": { SPDX: { x: 1 } } };
   assert.equal(spdxDocument(both, "amd64"), SPDX);
-  assert.throws(() => spdxDocument(both), /linux\/amd64, linux\/arm64; pass --arch/);
+  assert.throws(
+    () => spdxDocument(both),
+    /linux\/amd64, linux\/arm64; pass --arch/,
+  );
   assert.throws(() => spdxDocument({}), /no SPDX SBOM/);
   assert.throws(() => spdxDocument(null), /no SPDX SBOM/);
 });
@@ -109,4 +112,49 @@ test("the release workflow attests, and verifies, what the helpers produce", () 
   const publish = jobs.find((job) => job.startsWith("publish:"));
   assert.match(publish, /id-token: write/);
   assert.match(publish, /attestations: write/);
+});
+
+test("only the publish job signs, and it verifies the documented identity", () => {
+  // US-92.4: a rehearsal never reaches the publish job, so it signs nothing.
+  const workflow = readFileSync(".github/workflows/release.yml", "utf8");
+  const jobs = workflow.split(/^  (?=[a-z]+:$)/m).slice(1);
+  const signers = jobs
+    .filter((job) => /cosign/.test(job))
+    .map((job) => job.split(":")[0]);
+  assert.deepEqual(signers, ["publish"]);
+  const publish = jobs.find((job) => job.startsWith("publish:"));
+  assert.match(
+    publish,
+    /if: github\.event_name == 'push' && github\.ref_type == 'tag'/,
+  );
+  // The installer is pinned like every action, and so is the cosign it installs.
+  assert.match(
+    publish,
+    /uses: sigstore\/cosign-installer@[0-9a-f]{40} # v\d+\.\d+\.\d+\n\s+with:\n\s+cosign-release: v\d+\.\d+\.\d+\n/,
+  );
+  assert.match(publish, /cosign sign --yes "\$IMAGE@\$DIGEST"/);
+  // https://github.com/dbracewell/Asterism/.github/workflows/release.yml@refs/tags/v*
+  const identity = publish.match(
+    /--certificate-identity-regexp '([^']+)'/,
+  )?.[1];
+  assert.ok(identity, "cosign verify checks the signer's identity");
+  const signer = new RegExp(identity);
+  const base =
+    "https://github.com/dbracewell/Asterism/.github/workflows/release.yml@";
+  assert.ok(signer.test(`${base}refs/tags/v0.2.2`));
+  assert.ok(!signer.test(`${base}refs/heads/main`));
+  assert.ok(
+    !signer.test(
+      "https://github.com/someone/Asterism/.github/workflows/release.yml@refs/tags/v0.2.2",
+    ),
+  );
+  assert.ok(
+    !signer.test(
+      "https://github.com/dbracewell/Asterism/.github/workflows/ci.yml@refs/tags/v0.2.2",
+    ),
+  );
+  assert.match(
+    publish,
+    /--certificate-oidc-issuer https:\/\/token\.actions\.githubusercontent\.com/,
+  );
 });

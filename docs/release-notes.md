@@ -38,6 +38,9 @@ Unreleased into its version and date.
   has an attestation manifest beside it, listed as `unknown/unknown`) and
   published as GitHub artifact attestations for this repository's release
   workflow, which `gh attestation verify` checks.
+- Published images are signed with cosign, keyless, by this repository's
+  release workflow; `cosign verify` checks the signature against that workflow's
+  identity.
 
 ## 0.2.1 (2026-11-21)
 
