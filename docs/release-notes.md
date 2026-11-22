@@ -22,6 +22,15 @@ Unreleased into its version and date.
 
 ## Unreleased
 
+### Image
+
+- [Verify the image](deployment.md#verify-the-image) gives the commands to check
+  an image's signature, provenance and SBOM before running it, for every image
+  from 0.2.2, and how to read the SBOM. Add the check to your upgrade: the
+  upgrade steps now include it. [`SECURITY.md`](../SECURITY.md) says which
+  versions get security fixes (the latest minor, 0.2) and how to report a
+  vulnerability privately.
+
 ## 0.2.2 (2026-11-22)
 
 ### Image

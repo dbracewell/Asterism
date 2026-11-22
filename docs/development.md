@@ -323,3 +323,37 @@ configuration, and the patch version for fixes only.
    The first publish creates the package as private. Make it public once, in
    the package's settings on GitHub, so administrators can pull it without
    signing in.
+
+5. Check the published image as an administrator would, with the commands in
+   [Verify the image](deployment.md#verify-the-image).
+
+## Repository settings
+
+The supply-chain checks (EPIC-92) rely on these settings on GitHub, which only
+the repository owner can change. Each was on as of 2026-11-22; check them after
+any change to the repository's settings or ownership.
+
+- **A ruleset on `main`** (Settings → Rules → Rulesets, "Base", targeting the
+  default branch): changes arrive by pull request; the three CI checks
+  (`Lint, Typecheck, Test`, `Build and check the image` and
+  `Frontend E2E (Playwright)`) must pass, on a branch up to date with `main`
+  ("Require branches to be up to date before merging"); and `main` can't be
+  deleted or force-pushed. Without it, a pull request can merge before its
+  checks finish.
+- **A ruleset on `v*` tags** ("Tag Ruleset", targeting `refs/tags/v*`): restricts
+  creating, updating and deleting the tags, with only the repository admin role
+  allowed to bypass. Pushing a `v*` tag publishes a release, so only maintainers
+  may create one, and a published tag can't be moved to another commit.
+- **Private vulnerability reporting** (Settings → Advanced Security), which
+  [`SECURITY.md`](../SECURITY.md) tells reporters to use.
+- **Dependabot alerts** (Settings → Advanced Security), alongside the
+  [dependency updates](#dependency-updates) and
+  [vulnerability scans](#vulnerability-scans) above.
+
+To check them from a terminal:
+
+```bash
+gh api repos/dbracewell/Asterism/rulesets --jq '.[] | "\(.name) \(.target) \(.enforcement)"'
+gh api repos/dbracewell/Asterism/private-vulnerability-reporting --jq .enabled
+gh api repos/dbracewell/Asterism/vulnerability-alerts --silent && echo "Dependabot alerts on"
+```

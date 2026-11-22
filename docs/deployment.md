@@ -96,6 +96,72 @@ on the same host reaches it.
 
   With `--env-file`, every setting in `.env` reaches the container.
 
+### Verify the image
+
+Each published image (from 0.2.2) is signed, carries build provenance and lists
+what it contains in an SBOM, all made by this repository's release workflow for
+the release's tag. Check them before running a new version: a check that fails
+means the image did not come from that workflow. Set the version first:
+
+```bash
+VERSION=0.2.2
+```
+
+**The signature**, with [cosign](https://docs.sigstore.dev/cosign/system_config/installation/)
+2.6 or newer (or `docker run --rm ghcr.io/sigstore/cosign/cosign:v3.1.4` in its
+place):
+
+```bash
+cosign verify "ghcr.io/dbracewell/asterism:$VERSION" \
+  --certificate-identity-regexp '^https://github\.com/dbracewell/Asterism/\.github/workflows/release\.yml@refs/tags/v' \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+  --certificate-github-workflow-ref "refs/tags/v$VERSION" > /dev/null
+```
+
+It prints the checks it made and exits 0. The identity accepts only
+`release.yml` running for a `v*` tag; the last line pins it to this version's
+tag.
+
+**The provenance and the SBOM**, with the [GitHub CLI](https://cli.github.com/)
+signed in (`gh auth login`):
+
+```bash
+for predicate in https://slsa.dev/provenance/v1 https://spdx.dev/Document/v2.3; do
+  gh attestation verify "oci://ghcr.io/dbracewell/asterism:$VERSION" \
+    --repo dbracewell/Asterism \
+    --signer-workflow dbracewell/Asterism/.github/workflows/release.yml \
+    --source-ref "refs/tags/v$VERSION" \
+    --predicate-type "$predicate"
+done
+```
+
+In a terminal it prints "Verification succeeded!" for each; in a script it prints
+nothing and exits 0, or add `--format json` for the verified statements. The
+provenance names the commit, the workflow run and the build that made the image.
+
+**Reading the SBOM.** There is one SPDX 2.3 document for each architecture. To
+save the verified amd64 one (use `arm64` for the other) and list its packages:
+
+```bash
+gh attestation verify "oci://ghcr.io/dbracewell/asterism:$VERSION" \
+  --repo dbracewell/Asterism --source-ref "refs/tags/v$VERSION" \
+  --predicate-type https://spdx.dev/Document/v2.3 --format json |
+  jq --arg arch amd64 '[.[].verificationResult.statement.predicate
+    | select(any(.packages[].externalRefs[]?; .referenceLocator | contains("arch=" + $arch)))] | first' \
+  > asterism-sbom.spdx.json
+jq -r '.packages[] | "\(.name) \(.versionInfo)"' asterism-sbom.spdx.json | sort
+```
+
+Each package's `externalRefs` holds its package URL (`pkg:deb/…`, `pkg:pypi/…`,
+`pkg:npm/…`), which vulnerability scanners read without pulling the image:
+`grype sbom:asterism-sbom.spdx.json --only-fixed`, for example. (`trivy sbom`
+refuses it, as the image holds one rpm package beside its Debian ones; scan the
+image itself with Trivy instead.) The same documents are in the image index,
+unverified:
+`docker buildx imagetools inspect "ghcr.io/dbracewell/asterism:$VERSION" --format '{{ json (index .SBOM "linux/amd64").SPDX }}'`.
+
+To report a vulnerability, see the [security policy](../SECURITY.md).
+
 ### Building from source
 
 To build the image from your checkout instead, for example for a fork or the
@@ -249,7 +315,8 @@ upgrade and roll-back procedure are in
 2. Back up and verify.
 3. Check out the new release's tag (`git fetch --tags && git checkout v<version>`)
    for its `docker-compose.yml`, set `ASTERISM_VERSION` in `.env` to the new
-   version, then `docker compose pull && docker compose up -d`. Migrations run on
+   version, then `docker compose pull`, [verify the image](#verify-the-image),
+   and `docker compose up -d`. Migrations run on
    start and only go forward. Building from source instead:
    `ASTERISM_COMMIT=$(git rev-parse HEAD) docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build`.
 4. Check `docker compose ps` is healthy and Admin Settings → Status shows the new

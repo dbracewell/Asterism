@@ -22,6 +22,7 @@ const ENTRY_DOCUMENTS = [
   "README.md",
   "AGENTS.md",
   "todo.md",
+  "SECURITY.md",
   "apps/backend/README.md",
   "apps/frontend/README.md",
   "apps/frontend/AGENTS.md",
