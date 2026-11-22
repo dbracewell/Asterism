@@ -22,6 +22,8 @@ Unreleased into its version and date.
 
 ## Unreleased
 
+## 0.3.0 (2026-11-22)
+
 ### Configuration
 
 - `LOCAL_CAPTION_MODEL_BUNDLE_SHA256` is removed. It was validated but never
