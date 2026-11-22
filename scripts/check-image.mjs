@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // US-91.2: the built image starts and serves, as CI checks it before a release.
 //
-//   pnpm check:image [--image asterism:local] [--max-size-gb 5.25] [--variant cpu|gpu]
+//   pnpm check:image [--image asterism:local] [--max-size-gb 4.25] [--variant cpu|gpu]
 //
 // Starts the image on a fresh volume with generated, throwaway secrets, waits
 // for its health check, and checks that both databases were migrated, the
@@ -273,11 +273,12 @@ function checkSize(image, maxBytes) {
 
 /**
  * The image size budget (unpacked), the one place it is set: CI and the release
- * workflow use this default, so a local run checks the same budget. Raised from
- * 5 on 2026-11-21 until EPIC-94 takes torch out of the image; change it only as
- * a decision, noted in the release notes.
+ * workflow use this default, so a local run checks the same budget. Lowered from
+ * 5.25 on 2026-11-22 (US-94.3), once EPIC-94 took torch out of the image: it
+ * measured 3.82 GB on amd64 and 3.72 GB on arm64. Change it only as a decision,
+ * noted in the release notes.
  */
-export const DEFAULT_MAX_SIZE_GB = "5.25";
+export const DEFAULT_MAX_SIZE_GB = "4.25";
 
 async function main() {
   const { values } = parseArgs({

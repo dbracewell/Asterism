@@ -37,11 +37,13 @@ Unreleased into its version and date.
 ### Image
 
 - The published image no longer includes PyTorch, diffusers or sympy, so it is
-  smaller. Embeddings, captioning and the new **ONNX** image generator run on
+  about 1 GB smaller: about 3.8 GB unpacked, down from about 4.8 GB in 0.2.2. Embeddings, captioning and the new **ONNX** image generator run on
   ONNX Runtime and need no GPU. The **Diffusers** generator is in the
   [GPU build](deployment.md#gpu-build) only, built with
   `--build-arg TORCH_VARIANT=gpu` as before, which now also installs it. ComfyUI
   is unchanged.
+- The image size budget checked in CI and the release workflow is lowered from
+  5.25 GB to 4.25 GB, so the size gained stays gained.
 - [Verify the image](deployment.md#verify-the-image) gives the commands to check
   an image's signature, provenance and SBOM before running it, for every image
   from 0.2.2, and how to read the SBOM. Add the check to your upgrade: the

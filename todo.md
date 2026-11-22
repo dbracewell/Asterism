@@ -124,9 +124,9 @@ Source: user request (2026-11-21), after Dependabot's uv group took the image ov
   - [x] An "ONNX" generator component in every build, with its local models on the Admin Settings page; a saved Diffusers choice without the extra reads "not available in this image" and points to it. Nothing switches by itself.
   - [x] Tests: scheduler steps, the pipeline on fake sessions (seed determinism, bounds, cancellation), registry and availability, license step, a corrupt or partial model refused.
   - [x] Docs and release notes: Image (local generation on CPU in the published image), Behavior (the ONNX generator; Diffusers is GPU-build only).
-- [ ] US-94.3: Hold the smaller image
-  - [ ] Lower the image budget (`DEFAULT_MAX_SIZE_GB` in `scripts/check-image.mjs`, which CI and the release workflow use) from 5.25 GB (raised from 5 GB on 2026-11-21 for Dependabot's uv group) to the measured size plus a margin (expected about 4.5 GB), recorded in the release notes.
-  - [ ] Remove the temporary torch cap, so Dependabot updates torch for the GPU build again.
+- [ ] US-94.3: Hold the smaller image (in progress)
+  - [x] Lower the image budget (`DEFAULT_MAX_SIZE_GB` in `scripts/check-image.mjs`, which CI and the release workflow use) from 5.25 GB (raised from 5 GB on 2026-11-21 for Dependabot's uv group) to the measured size plus a margin (expected about 4.5 GB), recorded in the release notes.
+  - [x] Remove the temporary torch cap, so Dependabot updates torch for the GPU build again.
   - [ ] Release notes: Image (smaller image, no local generation in the published image, how to build the GPU image). Cut the release that ships the epic.
 
 ## Fixable high vulnerabilities (proposed 2026-11-22)
