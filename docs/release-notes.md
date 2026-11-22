@@ -30,6 +30,9 @@ Unreleased into its version and date.
 - The image is built from base images pinned by digest, with GitHub Actions
   pinned by commit, so rebuilding a release pulls the same bases. Dependabot
   proposes updates weekly.
+- Every image is scanned with Trivy before it is released: a critical
+  vulnerability with a fix stops the release. A weekly scan of the published
+  image opens an issue when a new one is found.
 
 ## 0.2.1 (2026-11-21)
 
