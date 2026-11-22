@@ -144,9 +144,6 @@ class Config(BaseSettings):
     max_concurrent_knowledge_vector_operations: int = 2
     """Maximum simultaneous blocking LanceDB operations."""
 
-    local_caption_model_bundle_sha256: str = ""
-    """SHA-256 of the explicitly provisioned local SmolVLM2 manifest; empty means unavailable."""
-
     max_concurrent_local_captions: int = 1
     """Maximum simultaneous CPU-only local image caption inferences."""
 
@@ -306,11 +303,6 @@ class Config(BaseSettings):
             raise ConfigValidationError("MAX_CONCURRENT_KNOWLEDGE_VECTOR_OPERATIONS must be from 1 to 16")
         if not 1 <= self.max_concurrent_knowledge_jobs <= 16:
             raise ConfigValidationError("MAX_CONCURRENT_KNOWLEDGE_JOBS must be from 1 to 16")
-        if self.local_caption_model_bundle_sha256 and (
-            len(self.local_caption_model_bundle_sha256) != 64
-            or any(char not in "0123456789abcdef" for char in self.local_caption_model_bundle_sha256.lower())
-        ):
-            raise ConfigValidationError("LOCAL_CAPTION_MODEL_BUNDLE_SHA256 must be empty or a SHA-256 hex digest")
         if not 1 <= self.max_concurrent_local_captions <= 4:
             raise ConfigValidationError("MAX_CONCURRENT_LOCAL_CAPTIONS must be from 1 to 4")
         if not 1 <= self.max_caption_chars <= 10_000:

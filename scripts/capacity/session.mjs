@@ -123,10 +123,10 @@ export class Session {
     });
   }
 
-  async upload(label, filename, text) {
+  async upload(label, filename, content, type = "text/plain") {
     const token = await this.token();
     const form = new FormData();
-    form.append("files", new Blob([text], { type: "text/plain" }), filename);
+    form.append("files", new Blob([content], { type }), filename);
     return this.json(label, "/api/py/files/", {
       method: "POST",
       body: form,

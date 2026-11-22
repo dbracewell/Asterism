@@ -22,6 +22,18 @@ Unreleased into its version and date.
 
 ## Unreleased
 
+### Configuration
+
+- `LOCAL_CAPTION_MODEL_BUNDLE_SHA256` is removed. It was validated but never
+  checked against the bundle; the code now pins the SHA-256 of every caption
+  model file. A value still set is ignored, so you can unset it at any time.
+
+### Data
+
+- The local captioning model folder, `models/captioning-smolvlm2`, is replaced by
+  the new model's files on its first download; the old PyTorch weights (about
+  1 GB) are deleted then. Stored captions are not changed.
+
 ### Image
 
 - [Verify the image](deployment.md#verify-the-image) gives the commands to check
@@ -30,6 +42,16 @@ Unreleased into its version and date.
   upgrade steps now include it. [`SECURITY.md`](../SECURITY.md) says which
   versions get security fixes (the latest minor, 0.2) and how to report a
   vulnerability privately.
+
+### Behavior
+
+- Local image captioning runs SmolVLM2 on ONNX Runtime instead of PyTorch
+  ([ADR-0077](adr/0077-torch-free-default-image.md)). Its model files change, so
+  an instance with local captioning on downloads them once (about 265 MB) on its
+  first start after the upgrade; images uploaded meanwhile are captioned once the
+  download is verified. It needs about 2 GiB of memory headroom, down from 4 GiB,
+  and is about a quarter faster. New captions are worded a little differently and
+  are often shorter; regenerating a file captions it again with the new model.
 
 ## 0.2.2 (2026-11-22)
 

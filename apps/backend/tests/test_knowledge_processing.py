@@ -624,3 +624,60 @@ async def test_resume_leaves_captioning_alone_when_disabled(processing_session, 
     await resume_ingestion_jobs()
     await asyncio.sleep(0.05)
     assert resume_runtime.captioned == []
+
+
+class FakeCaptionDownload:
+    def __init__(self, *, ready: bool) -> None:
+        self.ready = ready
+        self.started = 0
+        self.on_bundle_ready = None
+
+    def _ensure_checked(self) -> None:
+        return None
+
+    def is_ready(self) -> bool:
+        return self.ready
+
+    async def start_download(self) -> None:
+        self.started += 1
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("mode", "ready", "expected"), [("local", False, 1), ("local", True, 0), ("disabled", False, 0)]
+)
+async def test_startup_downloads_the_caption_bundle_only_for_local_captioning_without_one(
+    resume_runtime, monkeypatch, mode, ready, expected
+):
+    from asterism.domains.knowledge import runtime
+
+    download = FakeCaptionDownload(ready=ready)
+    monkeypatch.setattr(runtime, "captioning_download_service", download)
+    resume_runtime.mode = mode
+
+    await runtime._provision_local_caption_model()
+
+    assert download.started == expected
+
+
+@pytest.mark.asyncio
+async def test_a_verified_caption_bundle_resumes_captions_left_pending(processing_session, resume_runtime, monkeypatch):
+    import asyncio
+
+    from asterism.domains.knowledge import runtime
+
+    download = FakeCaptionDownload(ready=False)
+    monkeypatch.setattr(runtime, "captioning_download_service", download)
+    monkeypatch.setattr(runtime.vector_store, "initialize", lambda: asyncio.sleep(0), raising=False)
+    monkeypatch.setattr(runtime.config, "skip_knowledge_model_provisioning", True)
+    pending = await _captioning_case(
+        processing_session, name="pending", captioning_status=KnowledgeExtractionStatus.PENDING
+    )
+
+    await runtime.initialize_knowledge_runtime(FakeSourceReader(is_image=True))
+    assert resume_runtime.captioned == []
+
+    assert download.on_bundle_ready is not None
+    await download.on_bundle_ready("bundle-sha256")
+    await asyncio.sleep(0.05)
+    assert resume_runtime.captioned == [pending.id]

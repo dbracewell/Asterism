@@ -44,7 +44,8 @@ RUN --mount=type=cache,target=/root/.cache/uv uv sync --locked --no-dev
 
 # torch: the lockfile installs the CPU-only build on Linux. TORCH_VARIANT=gpu
 # swaps in the same versions from PyPI, whose Linux wheels bundle CUDA
-# (about 4 GB more). Image generation, embeddings and captioning use either.
+# (about 4 GB more). Only local image generation uses torch; embeddings and
+# captioning run on ONNX Runtime (ADR-0077).
 ARG TORCH_VARIANT=cpu
 RUN --mount=type=cache,target=/root/.cache/uv \
   case "$TORCH_VARIANT" in \

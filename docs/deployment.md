@@ -181,8 +181,8 @@ A build downloads several GB of dependencies.
 
 ### GPU build
 
-The image installs CPU-only PyTorch. Embeddings, captioning and local image
-generation all run on it, and a GPU isn't needed for them. To use an NVIDIA GPU
+The image installs CPU-only PyTorch, which only local image generation uses;
+embeddings and captioning run on ONNX Runtime. None of them needs a GPU. To use an NVIDIA GPU
 for local image generation, build with CUDA PyTorch instead. No GPU image is
 published; build it from source (above). It adds about 4 GB to the image
 (estimated from the CUDA libraries it installs):

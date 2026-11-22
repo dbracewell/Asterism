@@ -18,9 +18,9 @@ One archive, `asterism-backup-<UTC time>.tar.gz`, written with mode `0600`:
 | `manifest.json`         | Format version, app version and commit, schema revision, `SYSTEM_KEY` fingerprint, size and SHA-256 of every other member |
 
 Not included: downloaded model bundles under `models/` and old LanceDB table
-versions. After a restore, the embedding model downloads again on first start; a
-local captioning model must be downloaded again from Admin Settings → Image
-Captioning before local captions work. **Secrets are not in the backup.** Keep
+versions. After a restore, the embedding model downloads again on first start,
+and so does the local captioning model when local captioning is on; images wait
+for it to be captioned. **Secrets are not in the backup.** Keep
 `SYSTEM_KEY` and `BETTER_AUTH_SECRET` separately; a restore needs the same values.
 Restore refuses a different `SYSTEM_KEY`, because stored provider keys could not
 be decrypted with it. A different `BETTER_AUTH_SECRET` cannot be checked and
