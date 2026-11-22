@@ -112,9 +112,9 @@ Source: user request (2026-11-21), after Dependabot's uv group took the image ov
 - [~] US-94.2: Local image generation as an optional install
   - [x] Move `diffusers`, `accelerate`, `torch` and `torchvision` (and the PyTorch CPU index source) to a `local-image` extra, and require onnxruntime 1.32 or later so sympy is no longer needed. Keep `uv.lock` resolving both with and without it.
   - [x] A check (in the quality job) that the default install's dependency graph has no torch, torchvision or diffusers, direct or transitive, naming the package that pulls one in.
-  - [~] Dockerfile: the CPU build installs no extra; `TORCH_VARIANT=gpu` installs `local-image` with CUDA torch. `pnpm check:image` fails if torch is importable in the CPU image.
+  - [x] Dockerfile: the CPU build installs no extra; `TORCH_VARIANT=gpu` installs `local-image` with CUDA torch. `pnpm check:image` fails if torch is importable in the CPU image.
   - [x] The generator registry offers Diffusers only when the extra imports. A saved local generator otherwise reads "not available in this image" in Admin Settings, its catalog and downloads are hidden, and `generate_image` isn't offered for it. The ComfyUI generator is unchanged.
-  - [~] Tests for both installs: registry, Admin Settings payload, tool availability, and a saved local generator surviving an upgrade (upgrade check) and reading as unavailable.
+  - [x] Tests for both installs: registry, Admin Settings payload, tool availability, and a saved local generator surviving an upgrade (upgrade check) and reading as unavailable.
   - [x] Docs: the deployment guide's GPU build section, the development guide (`uv sync --extra local-image`), and the image generation user guide.
 - [ ] US-94.3: Hold the smaller image
   - [ ] Lower the image budget (`DEFAULT_MAX_SIZE_GB` in `scripts/check-image.mjs`, which CI and the release workflow use) from 5.25 GB (raised from 5 GB on 2026-11-21 for Dependabot's uv group) to the measured size plus a margin (expected about 4.5 GB), recorded in the release notes.

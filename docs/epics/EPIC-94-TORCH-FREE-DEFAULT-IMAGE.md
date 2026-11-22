@@ -92,14 +92,14 @@ use well, and a saved local generator never fails silently.
 - [x] A check (in the quality job) that the default install's dependency graph
       has no torch, torchvision or diffusers, direct or transitive, naming the
       package that pulls one in.
-- [~] Dockerfile: the CPU build installs no extra; `TORCH_VARIANT=gpu` installs
+- [x] Dockerfile: the CPU build installs no extra; `TORCH_VARIANT=gpu` installs
       `local-image` with CUDA torch. `pnpm check:image` fails if torch is
       importable in the CPU image.
 - [x] The generator registry offers Diffusers only when the extra imports. A
       saved local generator otherwise reads "not available in this image" in Admin
       Settings, its catalog and downloads are hidden, and `generate_image` isn't
       offered for it. The ComfyUI generator is unchanged.
-- [~] Tests for both installs: registry, Admin Settings payload, tool
+- [x] Tests for both installs: registry, Admin Settings payload, tool
       availability, and a saved local generator surviving an upgrade (upgrade
       check) and reading as unavailable.
 - [x] Docs: the deployment guide's GPU build section (local generation is
