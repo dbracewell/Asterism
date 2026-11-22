@@ -22,6 +22,11 @@ from test_projects_api import project_api as _project_api
 project_api = _project_api
 
 
+# How long to wait for a child to start or finish. Generous: a shared CI runner
+# can take several times longer than a laptop, and the wait ends as soon as it happens.
+SETTLE_SECONDS = 10
+
+
 async def worker(client, name="Worker", user="a"):
     response = await client.post(
         "/agents/sub-agents",
@@ -257,7 +262,7 @@ async def test_revocation_cancels_silent_child_and_rejects_output(project_api, m
         user_files=["authorized.txt"],
     )
     task = asyncio.create_task(sub_agent(ctx))
-    await asyncio.wait_for(started.wait(), 2)
+    await asyncio.wait_for(started.wait(), SETTLE_SECONDS)
     if revocation == "deselect":
         await change(client, p, [a["id"]], revision=2, method="DELETE")
     elif revocation == "deleted":
@@ -275,7 +280,7 @@ async def test_revocation_cancels_silent_child_and_rejects_output(project_api, m
             else:
                 await db.execute(update(ChatModel).where(ChatModel.id == chat_id).values(project_id=uuid.UUID(q["id"])))
             await db.commit()
-    result = await asyncio.wait_for(task, 2)
+    result = await asyncio.wait_for(task, SETTLE_SECONDS)
     assert "failed" in result.lower()
     assert closed.is_set()
 
@@ -414,10 +419,10 @@ async def test_revocation_cancels_pending_child_tool_work(project_api, monkeypat
         return [e async for e in _authorized_events(child.run([LLMMessage.user("Work")]), check)]
 
     task = asyncio.create_task(collect())
-    await asyncio.wait_for(started.wait(), 2)
+    await asyncio.wait_for(started.wait(), SETTLE_SECONDS)
     await change(client, p, [a["id"]], revision=2, method="DELETE")
     with pytest.raises(BadDataException):
-        await asyncio.wait_for(task, 2)
+        await asyncio.wait_for(task, SETTLE_SECONDS)
     assert closed.is_set()
 
 
