@@ -2,7 +2,7 @@
 
 Completed Projects/Chat Context and provider-settings work remains in the existing archives. This checklist tracks the findings from the [2026-10-17 review](docs/reviews/2026-10-17-codebase-review.md). See the [sequenced roadmap](docs/plans/post-refactor-quality-roadmap.md).
 
-Archives: [2026-11-20](docs/archive/todo-completed-2026-11-20.md), [2026-11-19](docs/archive/todo-completed-2026-11-19.md), [2026-11-18](docs/archive/todo-completed-2026-11-18.md), [2026-11-17](docs/archive/todo-completed-2026-11-17.md), [2026-11-06](docs/archive/todo-completed-2026-11-06.md), [2026-11-03](docs/archive/todo-completed-2026-11-03.md), [2026-11-02](docs/archive/todo-completed-2026-11-02.md), [2026-11-01](docs/archive/todo-completed-2026-11-01.md), [2026-10-31](docs/archive/todo-completed-2026-10-31.md), [2026-10-14](docs/archive/todo-completed-2026-10-14.md), [2026-10-15](docs/archive/todo-completed-2026-10-15.md), [2026-10-16](docs/archive/todo-completed-2026-10-16.md), [2026-10-17](docs/archive/todo-completed-2026-10-17.md), [2026-10-18](docs/archive/todo-completed-2026-10-18.md), [2026-10-19](docs/archive/todo-completed-2026-10-19.md), [2026-10-23](docs/archive/todo-completed-2026-10-23.md), [2026-10-24](docs/archive/todo-completed-2026-10-24.md), [2026-10-25](docs/archive/todo-completed-2026-10-25.md), [2026-10-27](docs/archive/todo-completed-2026-10-27.md), [2026-10-28](docs/archive/todo-completed-2026-10-28.md), [2026-10-29](docs/archive/todo-completed-2026-10-29.md), [2026-10-30](docs/archive/todo-completed-2026-10-30.md), and [US-28.3 verification](docs/archive/us-28.3-verification-2026-10-17.md).
+Archives: [2026-11-22](docs/archive/todo-completed-2026-11-22.md), [2026-11-20](docs/archive/todo-completed-2026-11-20.md), [2026-11-19](docs/archive/todo-completed-2026-11-19.md), [2026-11-18](docs/archive/todo-completed-2026-11-18.md), [2026-11-17](docs/archive/todo-completed-2026-11-17.md), [2026-11-06](docs/archive/todo-completed-2026-11-06.md), [2026-11-03](docs/archive/todo-completed-2026-11-03.md), [2026-11-02](docs/archive/todo-completed-2026-11-02.md), [2026-11-01](docs/archive/todo-completed-2026-11-01.md), [2026-10-31](docs/archive/todo-completed-2026-10-31.md), [2026-10-14](docs/archive/todo-completed-2026-10-14.md), [2026-10-15](docs/archive/todo-completed-2026-10-15.md), [2026-10-16](docs/archive/todo-completed-2026-10-16.md), [2026-10-17](docs/archive/todo-completed-2026-10-17.md), [2026-10-18](docs/archive/todo-completed-2026-10-18.md), [2026-10-19](docs/archive/todo-completed-2026-10-19.md), [2026-10-23](docs/archive/todo-completed-2026-10-23.md), [2026-10-24](docs/archive/todo-completed-2026-10-24.md), [2026-10-25](docs/archive/todo-completed-2026-10-25.md), [2026-10-27](docs/archive/todo-completed-2026-10-27.md), [2026-10-28](docs/archive/todo-completed-2026-10-28.md), [2026-10-29](docs/archive/todo-completed-2026-10-29.md), [2026-10-30](docs/archive/todo-completed-2026-10-30.md), and [US-28.3 verification](docs/archive/us-28.3-verification-2026-10-17.md).
 
 EPIC-31 and EPIC-32 are confirmed complete and archived above. US-38.1 through US-38.6 are confirmed complete and archived above. EPIC-33 (US-33.1 through US-33.3) is confirmed complete and archived above. EPIC-36 (US-36.1) and EPIC-37 (US-37.1) are complete; their already-merged implementation and completed checklists are reconciled and archived above. See the [2026-10-24 reassessment](docs/reviews/2026-10-24-open-epics-reassessment.md). EPIC-34 (US-34.1 through US-34.4) is confirmed complete and archived above, including finite chat admission and the current browser baseline; the old agent-selector repairs are already present. EPIC-35 (US-35.1 and US-35.2) is confirmed complete and archived above. Execute one story at a time; obtain completion confirmation before merge.
 
@@ -51,42 +51,6 @@ Source: user request and the [feature overlap review](docs/reviews/2026-11-17-fe
 ## Documentation (proposed 2026-11-18)
 
 Source: user request (2026-11-18). Suggested order: [EPIC-87](docs/epics/EPIC-87-ARCHITECTURE-DOCS-REFRESH.md) (complete and archived in the [2026-11-18 checklist](docs/archive/todo-completed-2026-11-18.md)) → [EPIC-88](docs/epics/EPIC-88-PROJECT-README.md) (complete and archived) → [EPIC-89](docs/epics/EPIC-89-USER-GUIDE.md) (complete and archived in the [2026-11-19 checklist](docs/archive/todo-completed-2026-11-19.md)). All three documentation epics are complete, and so is their follow-up, [EPIC-90](docs/epics/EPIC-90-DOCUMENTATION-FOLLOW-UPS.md) (archived in the [2026-11-19 checklist](docs/archive/todo-completed-2026-11-19.md)). US-87.1 adds `pnpm docs:check`, which the later epics use; US-89.1 adds the screenshot pipeline. Work one story at a time.
-
-## Supply-chain hardening (proposed 2026-11-20)
-
-Source: user request (2026-11-20), following EPIC-91. [EPIC-92](docs/epics/EPIC-92-SUPPLY-CHAIN-HARDENING.md): pin bases and actions by digest with Dependabot updates, Trivy scans, provenance and SBOM attestations, a cosign keyless signature. Suggested order: US-92.0 (critical vulnerabilities and 0.2.1, first) → 92.1 → 92.5. Work one story at a time.
-
-### EPIC-92: Supply-chain hardening
-
-- [x] US-92.0: Fix the critical vulnerabilities and release 0.2.1 (released and published 2026-11-21)
-  - [x] Upgrade next (≥16.4.1), Pillow (≥13.0.0), better-auth (≥1.7.7), PyJWT (≥2.14.0), proxy-addr (≥2.0.8) and certifi (≥2026.10.18) through the lockfiles, within pnpm's `minimumReleaseAge` or with a dated exclusion.
-  - [x] Check the jumps for breaking changes: Pillow 12 → 13 (decoding, captioning, image generation output), better-auth 1.6 → 1.7 (its table migrations, the JWT plugin, admin actions), Next 16.2 → 16.4 (its docs in `node_modules/next/dist/docs/`).
-  - [x] Record, for each critical, whether Asterism's use reaches it, in the pull request. Every one is fixed either way.
-  - [x] All checks pass, including the image checks and the upgrade check from 0.2.0. Dependabot shows no open critical alerts.
-  - [x] Release notes: an Image entry naming the fixes and telling administrators to upgrade. Cut and publish 0.2.1.
-- [x] US-92.1: Pin what the build pulls (merged 2026-11-21, PR #23)
-  - [x] Pin each `FROM` that pulls an external image in `Dockerfile` to `image:tag@sha256:…`. A `FROM` naming a stage declared earlier in the file (`FROM frontend-base AS …`) is left as it is. The GPU build uses the same stages, so it is pinned too. The `uv` the build installs with pip is already pinned.
-  - [x] Pin every `uses:` in `.github/workflows/` to a full commit SHA with `# vX.Y.Z` after it.
-  - [x] A check (`pnpm check:pins`, run in the quality job) fails on an external image in a `FROM` without a digest, or a `uses:` without a commit SHA, naming the file and line. It allows `FROM` lines naming a stage declared earlier in the same Dockerfile, and local actions (`uses: ./…`). Tests cover both.
-  - [x] Add `.github/dependabot.yml` for `github-actions`, `docker`, `npm` (pnpm) and `uv`: weekly, grouped by ecosystem, minor and patch together, majors on their own. Document how to review one in `docs/development.md`.
-- [x] US-92.2: Scan for known vulnerabilities (merged 2026-11-22, PR #50)
-  - [x] The image-checks job runs Trivy on the built image and on the lockfiles. It fails on fixable criticals and prints a table of highs.
-  - [x] `.trivyignore.yaml` holds accepted findings, each with a reason and an expiry date. A check fails on an expired entry, or one without both.
-  - [x] A weekly scheduled workflow scans `ghcr.io/dbracewell/asterism:latest`, and opens or updates one issue when it finds a new fixable critical.
-  - [x] The release workflow scans each architecture's pulled-back image before tagging (with the US-91.2 checks).
-- [x] US-92.3: Provenance and an SBOM for every release (merged 2026-11-22, PR #52; verified in the 0.2.2 release)
-  - [x] Build each architecture with an SPDX SBOM and `provenance: mode=max`. Keep the push-by-digest, pull-back and check flow working with the attestation manifests in the index, and keep `pnpm check:image`'s size reading correct. (Rehearsal 44973491208: both architectures pass; SBOMs 5.9 MB, 1108 packages.)
-  - [x] Attest the published index with `actions/attest-build-provenance` and `actions/attest-sbom`. Grant `id-token: write` and `attestations: write` to the publish job only. (Both are now deprecated wrappers of `actions/attest` v4, which the workflow uses directly.)
-  - [x] After publishing, the workflow runs `gh attestation verify` against the repository and fails the run if it doesn't verify. (Release run 45021061473: provenance and both SBOMs verified for the 0.2.2 index.)
-- [x] US-92.4: Sign the published image (merged 2026-11-22, PR #53; verified in the 0.2.2 release)
-  - [x] Sign the index digest with cosign, keyless, in the publish job. The cosign installer is pinned like every action.
-  - [x] After signing, the workflow runs `cosign verify` with the expected identity (`https://github.com/dbracewell/Asterism/.github/workflows/release.yml@refs/tags/v*`) and OIDC issuer.
-  - [x] A rehearsal run (Run workflow) signs nothing, as it tags nothing (US-91.5). (Rehearsal 45013906928: publish skipped.)
-- [ ] US-92.5: Verifying a release, and the security policy (in progress, branch `feat/us-92.5-verify-and-security-policy`)
-  - [x] A "Verify the image" section in `docs/deployment.md` gives the `gh attestation verify` and `cosign verify` commands, and says how to read the SBOM.
-  - [x] `SECURITY.md`: which versions get fixes (the latest minor in 0.x), how to report privately (GitHub private vulnerability reporting), and what happens next.
-  - [x] `docs/development.md` lists the repository settings this epic relies on, for the owner to turn on: a ruleset on `main` requiring the three CI checks and an up-to-date branch; a ruleset that lets only maintainers create or move `v*` tags; private vulnerability reporting; Dependabot alerts.
-  - [x] Release notes: an Image entry for signed and attested images.
 
 ## Long-term memory (proposed 2026-11-20)
 

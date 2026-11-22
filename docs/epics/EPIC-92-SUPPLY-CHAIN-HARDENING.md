@@ -1,7 +1,8 @@
 # EPIC-92: Supply-chain hardening
 
-Status: proposed (2026-11-20). Source: user request (2026-11-20), following
-EPIC-91.
+Status: complete (2026-11-22; US-92.0 through US-92.5 merged, checklist archived
+in the [2026-11-22 checklist](../archive/todo-completed-2026-11-22.md)). Proposed
+2026-11-20. Source: user request (2026-11-20), following EPIC-91.
 
 ## Objective
 
@@ -151,6 +152,7 @@ report a vulnerability.
 ## Open questions
 
 1. Should a fixable **high** also fail CI once the backlog is clear, or stay a
-   report? This epic starts with criticals only.
+   report? This epic starts with criticals only. Taken up by
+   [EPIC-95](EPIC-95-FIXABLE-HIGH-VULNERABILITIES.md) (US-95.5).
 2. Is a weekly Dependabot cadence right, or would monthly suit a small team
    better? pnpm's `minimumReleaseAge` already holds new npm releases back.
