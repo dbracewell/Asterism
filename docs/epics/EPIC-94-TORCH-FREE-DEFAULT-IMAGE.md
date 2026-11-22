@@ -1,6 +1,6 @@
 # EPIC-94: A torch-free default image
 
-Status: in progress (US-94.1 done and US-94.2 started 2026-11-22; proposed 2026-11-21). Source: user request (2026-11-21), after the
+Status: complete (2026-11-22, shipped in 0.3.0; proposed 2026-11-21). Source: user request (2026-11-21), after the
 first Dependabot uv group (#33) took the image to 5.21 GB, over its 5 GB budget.
 Decided 2026-11-21: image captioning moves to ONNX, local image generation
 becomes an optional install for the GPU build, and this is its own epic rather
@@ -151,7 +151,7 @@ As a maintainer, the size gained stays gained.
       Done 2026-11-22: 4.25 GB, for 3.82 GB measured on amd64 and 3.72 GB on arm64.
 - [x] Remove the temporary torch cap, so Dependabot updates torch for the GPU
       build again.
-- [ ] Release notes: Image (smaller image, no local generation in the published
+- [x] Release notes: Image (smaller image, no local generation in the published
       image, how to build the GPU image). Cut the release that ships the epic.
 
 ## Open questions

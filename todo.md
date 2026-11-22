@@ -96,7 +96,7 @@ Source: user request (2026-11-20). [EPIC-93](docs/epics/EPIC-93-LONG-TERM-MEMORY
   - [ ] The upgrade check (US-91.6) seeds a user memory and a project memory and checks they survive.
   - [ ] User guide: a "What Asterism remembers" page. Architecture: memory in the agent runtime and context-isolation guides. `AGENTS.md`: replace "no long-term memory engine exists" with the memory rules. Release notes: Behavior.
 
-## Torch-free default image (proposed 2026-11-21)
+## Torch-free default image (complete 2026-11-22)
 
 Source: user request (2026-11-21), after Dependabot's uv group took the image over its 5 GB budget. [EPIC-94](docs/epics/EPIC-94-TORCH-FREE-DEFAULT-IMAGE.md): captioning on ONNX Runtime in every build, local image generation as an optional install for the GPU build, an ONNX image generator so the published image keeps local generation on CPU (US-94.4, added 2026-11-22), and a lower image budget to keep the gain. Suggested order: US-94.1 → 94.2 → 94.4 → 94.3. Work one story at a time.
 
@@ -124,10 +124,10 @@ Source: user request (2026-11-21), after Dependabot's uv group took the image ov
   - [x] An "ONNX" generator component in every build, with its local models on the Admin Settings page; a saved Diffusers choice without the extra reads "not available in this image" and points to it. Nothing switches by itself.
   - [x] Tests: scheduler steps, the pipeline on fake sessions (seed determinism, bounds, cancellation), registry and availability, license step, a corrupt or partial model refused.
   - [x] Docs and release notes: Image (local generation on CPU in the published image), Behavior (the ONNX generator; Diffusers is GPU-build only).
-- [ ] US-94.3: Hold the smaller image (in progress)
+- [x] US-94.3: Hold the smaller image
   - [x] Lower the image budget (`DEFAULT_MAX_SIZE_GB` in `scripts/check-image.mjs`, which CI and the release workflow use) from 5.25 GB (raised from 5 GB on 2026-11-21 for Dependabot's uv group) to the measured size plus a margin (expected about 4.5 GB), recorded in the release notes.
   - [x] Remove the temporary torch cap, so Dependabot updates torch for the GPU build again.
-  - [ ] Release notes: Image (smaller image, no local generation in the published image, how to build the GPU image). Cut the release that ships the epic.
+  - [x] Release notes: Image (smaller image, no local generation in the published image, how to build the GPU image). Cut the release that ships the epic.
 
 ## Fixable high vulnerabilities (proposed 2026-11-22)
 
