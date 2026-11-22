@@ -81,7 +81,7 @@ Source: user request (2026-11-20), following EPIC-91. [EPIC-92](docs/epics/EPIC-
 - [ ] US-92.4: Sign the published image (in progress, branch `feat/us-92.4-cosign-signature`)
   - [ ] Sign the index digest with cosign, keyless, in the publish job. The cosign installer is pinned like every action.
   - [ ] After signing, the workflow runs `cosign verify` with the expected identity (`https://github.com/dbracewell/Asterism/.github/workflows/release.yml@refs/tags/v*`) and OIDC issuer.
-  - [ ] A rehearsal run (Run workflow) signs nothing, as it tags nothing (US-91.5).
+  - [x] A rehearsal run (Run workflow) signs nothing, as it tags nothing (US-91.5). (Rehearsal 45013906928: publish skipped.)
 - [ ] US-92.5: Verifying a release, and the security policy
   - [ ] A "Verify the image" section in `docs/deployment.md` gives the `gh attestation verify` and `cosign verify` commands, and says how to read the SBOM.
   - [ ] `SECURITY.md`: which versions get fixes (the latest minor in 0.x), how to report privately (GitHub private vulnerability reporting), and what happens next.
