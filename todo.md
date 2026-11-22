@@ -74,13 +74,13 @@ Source: user request (2026-11-20), following EPIC-91. [EPIC-92](docs/epics/EPIC-
   - [x] `.trivyignore.yaml` holds accepted findings, each with a reason and an expiry date. A check fails on an expired entry, or one without both.
   - [x] A weekly scheduled workflow scans `ghcr.io/dbracewell/asterism:latest`, and opens or updates one issue when it finds a new fixable critical.
   - [x] The release workflow scans each architecture's pulled-back image before tagging (with the US-91.2 checks).
-- [ ] US-92.3: Provenance and an SBOM for every release (in progress, branch `feat/us-92.3-provenance-sbom`)
+- [x] US-92.3: Provenance and an SBOM for every release (merged 2026-11-22, PR #52; verified in the 0.2.2 release)
   - [x] Build each architecture with an SPDX SBOM and `provenance: mode=max`. Keep the push-by-digest, pull-back and check flow working with the attestation manifests in the index, and keep `pnpm check:image`'s size reading correct. (Rehearsal 44973491208: both architectures pass; SBOMs 5.9 MB, 1108 packages.)
-  - [ ] Attest the published index with `actions/attest-build-provenance` and `actions/attest-sbom`. Grant `id-token: write` and `attestations: write` to the publish job only. (Both are now deprecated wrappers of `actions/attest` v4, which the workflow uses directly.)
-  - [ ] After publishing, the workflow runs `gh attestation verify` against the repository and fails the run if it doesn't verify.
-- [ ] US-92.4: Sign the published image (in progress, branch `feat/us-92.4-cosign-signature`)
-  - [ ] Sign the index digest with cosign, keyless, in the publish job. The cosign installer is pinned like every action.
-  - [ ] After signing, the workflow runs `cosign verify` with the expected identity (`https://github.com/dbracewell/Asterism/.github/workflows/release.yml@refs/tags/v*`) and OIDC issuer.
+  - [x] Attest the published index with `actions/attest-build-provenance` and `actions/attest-sbom`. Grant `id-token: write` and `attestations: write` to the publish job only. (Both are now deprecated wrappers of `actions/attest` v4, which the workflow uses directly.)
+  - [x] After publishing, the workflow runs `gh attestation verify` against the repository and fails the run if it doesn't verify. (Release run 45021061473: provenance and both SBOMs verified for the 0.2.2 index.)
+- [x] US-92.4: Sign the published image (merged 2026-11-22, PR #53; verified in the 0.2.2 release)
+  - [x] Sign the index digest with cosign, keyless, in the publish job. The cosign installer is pinned like every action.
+  - [x] After signing, the workflow runs `cosign verify` with the expected identity (`https://github.com/dbracewell/Asterism/.github/workflows/release.yml@refs/tags/v*`) and OIDC issuer.
   - [x] A rehearsal run (Run workflow) signs nothing, as it tags nothing (US-91.5). (Rehearsal 45013906928: publish skipped.)
 - [ ] US-92.5: Verifying a release, and the security policy
   - [ ] A "Verify the image" section in `docs/deployment.md` gives the `gh attestation verify` and `cosign verify` commands, and says how to read the SBOM.
