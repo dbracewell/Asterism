@@ -480,6 +480,21 @@ import type {
   MessageUpdateData,
   MessageUpdateError,
   MessageUpdateResponse,
+  OnnxImageCancelDownloadData,
+  OnnxImageCancelDownloadError,
+  OnnxImageCancelDownloadResponse,
+  OnnxImageDownloadData,
+  OnnxImageDownloadError,
+  OnnxImageDownloadResponse,
+  OnnxImageOverviewData,
+  OnnxImageOverviewError,
+  OnnxImageOverviewResponse,
+  OnnxImageRemoveData,
+  OnnxImageRemoveError,
+  OnnxImageRemoveResponse,
+  OnnxImageSelectData,
+  OnnxImageSelectError,
+  OnnxImageSelectResponse,
   ProjectCreateData,
   ProjectCreateError,
   ProjectCreateResponse,
@@ -6986,6 +7001,150 @@ export const localImageRemoveMutation = (
   > = {
     mutationFn: async (fnOptions) => {
       const { data } = await ApiClient.__registry.get().localImageRemove({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const onnxImageOverviewQueryKey = (
+  options?: Options<OnnxImageOverviewData>,
+) => createQueryKey("onnxImageOverview", options);
+
+/**
+ * Overview
+ *
+ * Server memory, the catalog with fit, licenses and download state, and the recommendation.
+ */
+export const onnxImageOverviewOptions = (
+  options?: Options<OnnxImageOverviewData>,
+) =>
+  queryOptions<
+    OnnxImageOverviewResponse,
+    OnnxImageOverviewError,
+    OnnxImageOverviewResponse,
+    ReturnType<typeof onnxImageOverviewQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry.get().onnxImageOverview({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: onnxImageOverviewQueryKey(options),
+  });
+
+/**
+ * Select
+ */
+export const onnxImageSelectMutation = (
+  options?: Partial<Options<OnnxImageSelectData>>,
+): UseMutationOptions<
+  OnnxImageSelectResponse,
+  OnnxImageSelectError,
+  Options<OnnxImageSelectData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    OnnxImageSelectResponse,
+    OnnxImageSelectError,
+    Options<OnnxImageSelectData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().onnxImageSelect({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Cancel
+ */
+export const onnxImageCancelDownloadMutation = (
+  options?: Partial<Options<OnnxImageCancelDownloadData>>,
+): UseMutationOptions<
+  OnnxImageCancelDownloadResponse,
+  OnnxImageCancelDownloadError,
+  Options<OnnxImageCancelDownloadData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    OnnxImageCancelDownloadResponse,
+    OnnxImageCancelDownloadError,
+    Options<OnnxImageCancelDownloadData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry
+        .get()
+        .onnxImageCancelDownload({
+          ...options,
+          ...fnOptions,
+          throwOnError: true,
+        });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Download
+ *
+ * Start downloading a model. A license that limits use must be accepted first.
+ */
+export const onnxImageDownloadMutation = (
+  options?: Partial<Options<OnnxImageDownloadData>>,
+): UseMutationOptions<
+  OnnxImageDownloadResponse,
+  OnnxImageDownloadError,
+  Options<OnnxImageDownloadData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    OnnxImageDownloadResponse,
+    OnnxImageDownloadError,
+    Options<OnnxImageDownloadData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().onnxImageDownload({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Remove
+ *
+ * Delete a downloaded model's files to free disk space.
+ */
+export const onnxImageRemoveMutation = (
+  options?: Partial<Options<OnnxImageRemoveData>>,
+): UseMutationOptions<
+  OnnxImageRemoveResponse,
+  OnnxImageRemoveError,
+  Options<OnnxImageRemoveData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    OnnxImageRemoveResponse,
+    OnnxImageRemoveError,
+    Options<OnnxImageRemoveData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().onnxImageRemove({
         ...options,
         ...fnOptions,
         throwOnError: true,

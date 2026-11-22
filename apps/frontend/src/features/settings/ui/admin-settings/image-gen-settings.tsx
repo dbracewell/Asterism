@@ -18,6 +18,7 @@ import { Switch } from "@/components/ui/switch";
 import { useUser } from "@/features/auth/components/user-context";
 import { ComponentSettings } from "@/features/settings/ui/admin-settings/component-settings";
 import { LocalImageModels } from "@/features/settings/ui/admin-settings/local-image-models";
+import { OnnxImageModels } from "@/features/settings/ui/admin-settings/onnx-image-models";
 import {
   SettingsPane,
   SettingsSection,
@@ -42,6 +43,7 @@ import {
   imageGenerationProviderStatusQueryKey,
   imageGenerationTestMutation,
   localImageOverviewQueryKey,
+  onnxImageOverviewQueryKey,
 } from "@/lib/client/@tanstack/react-query.gen";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
@@ -49,6 +51,7 @@ import { errorMessage } from "@/lib/utils";
 
 const SETTING_KEY = "image_generator_provider";
 const LOCAL_GENERATOR = "Diffusers";
+const ONNX_GENERATOR = "ONNX";
 
 export function ImageGenSettings() {
   const user = useUser();
@@ -88,6 +91,7 @@ function GeneratorSection() {
         appSettingsGetQueryKey({ client }),
         imageGenerationProviderStatusQueryKey({ client }),
         localImageOverviewQueryKey({ client }),
+        onnxImageOverviewQueryKey({ client }),
         imageGenerationAvailabilityQueryKey({ client }),
       ],
     },
@@ -125,7 +129,7 @@ function GeneratorSection() {
     <>
       <SettingsSection
         title="Generator"
-        description="Use an existing ComfyUI server, or run a model on this server with Diffusers."
+        description="Use an existing ComfyUI server, or run a model on this server: ONNX on the CPU in every build, or Diffusers on a GPU in the GPU build."
         actions={
           <Button
             disabled={!draft || save.isPending}
@@ -179,6 +183,7 @@ function GeneratorSection() {
         </p>
       </SettingsSection>
       {selected === LOCAL_GENERATOR && <LocalImageModels />}
+      {selected === ONNX_GENERATOR && <OnnxImageModels />}
     </>
   );
 }

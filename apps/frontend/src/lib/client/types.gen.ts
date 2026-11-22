@@ -144,6 +144,12 @@ export type ApplicationSettings = {
   image_generation_local?: {
     [key: string]: unknown;
   } | null;
+  /**
+   * Image Generation Onnx
+   */
+  image_generation_onnx?: {
+    [key: string]: unknown;
+  } | null;
   image_generator_provider?: ComponentProviderParameters | null;
   compaction?: CompactionSettings;
   /**
@@ -5223,6 +5229,159 @@ export type OmissionKind =
   | "retrieval"
   | "retrieved_excerpt"
   | "forwarded_context";
+
+/**
+ * OnnxDownload
+ */
+export type OnnxDownload = {
+  /**
+   * Status
+   */
+  status: "idle" | "downloading" | "verifying" | "ready" | "failed";
+  /**
+   * Bytes Downloaded
+   */
+  bytes_downloaded: number;
+  /**
+   * Total Bytes
+   */
+  total_bytes: number;
+  /**
+   * Error
+   */
+  error?: string | null;
+};
+
+/**
+ * OnnxDownloadRequest
+ */
+export type OnnxDownloadRequest = {
+  /**
+   * Accept License
+   */
+  accept_license?: boolean;
+};
+
+/**
+ * OnnxModel
+ */
+export type OnnxModel = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * Repo
+   */
+  repo: string;
+  /**
+   * Revision
+   */
+  revision: string;
+  /**
+   * License
+   */
+  license: string;
+  /**
+   * License Url
+   */
+  license_url: string;
+  /**
+   * Commercial Use
+   */
+  commercial_use: boolean;
+  /**
+   * Attribution
+   */
+  attribution: string | null;
+  /**
+   * Description
+   */
+  description: string;
+  /**
+   * Download Gb
+   */
+  download_gb: number;
+  /**
+   * Memory Gb
+   */
+  memory_gb: number;
+  /**
+   * Steps
+   */
+  steps: number;
+  plan: OnnxPlan;
+  download: OnnxDownload;
+  /**
+   * License Accepted
+   */
+  license_accepted: boolean;
+};
+
+/**
+ * OnnxOverview
+ */
+export type OnnxOverview = {
+  /**
+   * Memory Gb
+   */
+  memory_gb: number;
+  /**
+   * Recommended Id
+   */
+  recommended_id: string | null;
+  settings: OnnxSettings;
+  /**
+   * Models
+   */
+  models: Array<OnnxModel>;
+  /**
+   * Worker Running
+   */
+  worker_running: boolean;
+};
+
+/**
+ * OnnxPlan
+ */
+export type OnnxPlan = {
+  /**
+   * Fits
+   */
+  fits: boolean;
+  /**
+   * Detail
+   */
+  detail: string;
+};
+
+/**
+ * OnnxSelection
+ */
+export type OnnxSelection = {
+  /**
+   * Model Id
+   */
+  model_id: string | null;
+};
+
+/**
+ * OnnxSettings
+ */
+export type OnnxSettings = {
+  /**
+   * Model Id
+   */
+  model_id?: string | null;
+  /**
+   * Accepted Licenses
+   */
+  accepted_licenses?: Array<string>;
+};
 
 /**
  * PackExportRequest
@@ -10415,6 +10574,12 @@ export type ApplicationSettingsWritable = {
    * Image Generation Local
    */
   image_generation_local?: {
+    [key: string]: unknown;
+  } | null;
+  /**
+   * Image Generation Onnx
+   */
+  image_generation_onnx?: {
     [key: string]: unknown;
   } | null;
   image_generator_provider?: ComponentProviderParameters | null;
@@ -18538,6 +18703,212 @@ export type LocalImageRemoveResponses = {
 
 export type LocalImageRemoveResponse =
   LocalImageRemoveResponses[keyof LocalImageRemoveResponses];
+
+export type OnnxImageOverviewData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/settings/app/image-generation/onnx";
+};
+
+export type OnnxImageOverviewErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+};
+
+export type OnnxImageOverviewError =
+  OnnxImageOverviewErrors[keyof OnnxImageOverviewErrors];
+
+export type OnnxImageOverviewResponses = {
+  /**
+   * Successful Response
+   */
+  200: OnnxOverview;
+};
+
+export type OnnxImageOverviewResponse =
+  OnnxImageOverviewResponses[keyof OnnxImageOverviewResponses];
+
+export type OnnxImageSelectData = {
+  body: OnnxSelection;
+  path?: never;
+  query?: never;
+  url: "/settings/app/image-generation/onnx";
+};
+
+export type OnnxImageSelectErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type OnnxImageSelectError =
+  OnnxImageSelectErrors[keyof OnnxImageSelectErrors];
+
+export type OnnxImageSelectResponses = {
+  /**
+   * Successful Response
+   */
+  200: OnnxOverview;
+};
+
+export type OnnxImageSelectResponse =
+  OnnxImageSelectResponses[keyof OnnxImageSelectResponses];
+
+export type OnnxImageCancelDownloadData = {
+  body?: never;
+  path: {
+    /**
+     * Model Id
+     */
+    model_id: string;
+  };
+  query?: never;
+  url: "/settings/app/image-generation/onnx/models/{model_id}/download";
+};
+
+export type OnnxImageCancelDownloadErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type OnnxImageCancelDownloadError =
+  OnnxImageCancelDownloadErrors[keyof OnnxImageCancelDownloadErrors];
+
+export type OnnxImageCancelDownloadResponses = {
+  /**
+   * Successful Response
+   */
+  200: OnnxOverview;
+};
+
+export type OnnxImageCancelDownloadResponse =
+  OnnxImageCancelDownloadResponses[keyof OnnxImageCancelDownloadResponses];
+
+export type OnnxImageDownloadData = {
+  body: OnnxDownloadRequest;
+  path: {
+    /**
+     * Model Id
+     */
+    model_id: string;
+  };
+  query?: never;
+  url: "/settings/app/image-generation/onnx/models/{model_id}/download";
+};
+
+export type OnnxImageDownloadErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type OnnxImageDownloadError =
+  OnnxImageDownloadErrors[keyof OnnxImageDownloadErrors];
+
+export type OnnxImageDownloadResponses = {
+  /**
+   * Successful Response
+   */
+  200: OnnxOverview;
+};
+
+export type OnnxImageDownloadResponse =
+  OnnxImageDownloadResponses[keyof OnnxImageDownloadResponses];
+
+export type OnnxImageRemoveData = {
+  body?: never;
+  path: {
+    /**
+     * Model Id
+     */
+    model_id: string;
+  };
+  query?: never;
+  url: "/settings/app/image-generation/onnx/models/{model_id}";
+};
+
+export type OnnxImageRemoveErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type OnnxImageRemoveError =
+  OnnxImageRemoveErrors[keyof OnnxImageRemoveErrors];
+
+export type OnnxImageRemoveResponses = {
+  /**
+   * Successful Response
+   */
+  200: OnnxOverview;
+};
+
+export type OnnxImageRemoveResponse =
+  OnnxImageRemoveResponses[keyof OnnxImageRemoveResponses];
 
 export type LearningModeGetManyData = {
   body?: never;

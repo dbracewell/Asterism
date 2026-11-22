@@ -2,3 +2,4 @@
 
 from .comfyui import provider as _comfyui  # noqa: F401
 from .local import provider as _local  # noqa: F401
+from .onnx import provider as _onnx  # noqa: F401

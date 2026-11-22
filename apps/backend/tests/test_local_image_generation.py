@@ -365,7 +365,7 @@ async def test_the_registry_offers_diffusers_exactly_when_the_extra_is_installed
         "print(','.join(sorted(names)))"
     )
     names = subprocess.run([sys.executable, "-c", probe], check=True, capture_output=True, text=True).stdout
-    expected = ["ComfyUI", "Diffusers"] if availability.local_image_installed() else ["ComfyUI"]
+    expected = ["ComfyUI", "Diffusers", "ONNX"] if availability.local_image_installed() else ["ComfyUI", "ONNX"]
     assert names.strip().split(",") == expected
 
 
@@ -392,9 +392,16 @@ async def test_a_saved_local_generator_reads_as_not_available_and_is_never_repla
     await select(sessions, "stub")
 
     status = (await client.get("/settings/app/image-generation/status", headers=auth("admin"))).json()
-    assert status == {"provider": "Diffusers", "ready": False, "detail": "Diffusers is not available in this image"}
+    assert status == {
+        "provider": "Diffusers",
+        "ready": False,
+        "detail": "Diffusers is not available in this image. Choose ONNX to generate images on this server's CPU",
+    }
     available = (await client.get("/image-generation/availability", headers=auth())).json()
-    assert available == {"available": False, "reason": "Diffusers is not available in this image"}
+    assert available == {
+        "available": False,
+        "reason": "Diffusers is not available in this image. Choose ONNX to generate images on this server's CPU",
+    }
 
     # The saved choice stays stored and readable; it is not swapped for ComfyUI.
     settings = (await client.get("/settings/app", headers=auth("admin"))).json()

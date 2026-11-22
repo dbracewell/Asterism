@@ -115,6 +115,7 @@ def _changed_settings(bundle: SettingsBundle, current: SettingsBundle) -> list[s
         "Canvas policy": bundle.canvas_enabled != current.canvas_enabled,
         "Image generation policy": bundle.image_generation != current.image_generation,
         "Local image model": bundle.image_generation_local != current.image_generation_local,
+        "ONNX image model": bundle.image_generation_onnx != current.image_generation_onnx,
         "Image generator": bundle.image_generator_provider is not None
         and bundle.image_generator_provider != current.image_generator_provider,
         "ChatGPT plan policy": bundle.chatgpt_plan_enabled != current.chatgpt_plan_enabled,
@@ -268,6 +269,17 @@ async def _apply_image_generation(bundle: SettingsBundle, session: AsyncSession)
         "model_id": chosen if chosen is None or entry(chosen) is not None else local.model_id,
     }
     await _put_setting("image_generation_local", local.model_copy(update=update).model_dump(mode="json"), session)
+
+    from asterism.domains.image_generation.onnx.catalog import entry as onnx_entry
+    from asterism.domains.image_generation.onnx.settings import read_settings as read_onnx_settings
+
+    onnx = await read_onnx_settings(session)
+    wanted = bundle.image_generation_onnx.model_id
+    # As above: a model this version doesn't know keeps the current choice.
+    onnx_model = wanted if wanted is None or onnx_entry(wanted) is not None else onnx.model_id
+    await _put_setting(
+        "image_generation_onnx", onnx.model_copy(update={"model_id": onnx_model}).model_dump(mode="json"), session
+    )
     await _put_component("image_generator_provider", bundle.image_generator_provider, session)
 
 

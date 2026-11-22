@@ -855,6 +855,14 @@ def _validate_non_provider_app_setting(
         except ValidationError as exc:
             raise BadDataException("Invalid local image generation settings") from exc
 
+    if key == "image_generation_onnx":
+        from asterism.domains.image_generation.onnx.schemas import OnnxSettings
+
+        try:
+            return OnnxSettings.model_validate(value).model_dump(mode="json"), None
+        except ValidationError as exc:
+            raise BadDataException("Invalid ONNX image generation settings") from exc
+
     if key == "compaction":
         try:
             return CompactionSettings.model_validate(value).model_dump(mode="json"), None

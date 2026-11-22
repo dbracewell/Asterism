@@ -93,6 +93,13 @@ class ExportedLocalImage(_Document):
     device: Literal["auto", "cuda", "mps", "cpu"] = "auto"
 
 
+class ExportedOnnxImage(_Document):
+    """The ONNX generator's model (US-94.4). Downloads and license acceptance stay
+    with the installation."""
+
+    model_id: str | None = None
+
+
 class ExportedCompaction(_Document):
     """Context compaction policy (ADR-0060); the summarizer model travels by name."""
 
@@ -126,6 +133,8 @@ class SettingsBundle(_Document):
     canvas_enabled: bool = False
     image_generation: ExportedImageGeneration = Field(default_factory=ExportedImageGeneration)
     image_generation_local: ExportedLocalImage = Field(default_factory=ExportedLocalImage)
+    # Added in US-94.4; files exported before it read as no ONNX model chosen.
+    image_generation_onnx: ExportedOnnxImage = Field(default_factory=ExportedOnnxImage)
     image_generator_provider: ExportedComponent | None = None
     chatgpt_plan_enabled: bool = False
     web_search_provider: ExportedComponent | None = None

@@ -481,6 +481,21 @@ import type {
   MessageUpdateData,
   MessageUpdateErrors,
   MessageUpdateResponses,
+  OnnxImageCancelDownloadData,
+  OnnxImageCancelDownloadErrors,
+  OnnxImageCancelDownloadResponses,
+  OnnxImageDownloadData,
+  OnnxImageDownloadErrors,
+  OnnxImageDownloadResponses,
+  OnnxImageOverviewData,
+  OnnxImageOverviewErrors,
+  OnnxImageOverviewResponses,
+  OnnxImageRemoveData,
+  OnnxImageRemoveErrors,
+  OnnxImageRemoveResponses,
+  OnnxImageSelectData,
+  OnnxImageSelectErrors,
+  OnnxImageSelectResponses,
   ProjectCreateData,
   ProjectCreateErrors,
   ProjectCreateResponses,
@@ -5020,6 +5035,125 @@ export class ApiClient extends HeyApiClient {
     >({
       security: [{ scheme: "bearer", type: "http" }],
       url: "/settings/app/image-generation/local/models/{model_id}",
+      ...options,
+    });
+  }
+
+  /**
+   * Overview
+   *
+   * Server memory, the catalog with fit, licenses and download state, and the recommendation.
+   */
+  public onnxImageOverview<ThrowOnError extends boolean = false>(
+    options?: Options<OnnxImageOverviewData, ThrowOnError>,
+  ): RequestResult<
+    OnnxImageOverviewResponses,
+    OnnxImageOverviewErrors,
+    ThrowOnError
+  > {
+    return (options?.client ?? this.client).get<
+      OnnxImageOverviewResponses,
+      OnnxImageOverviewErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/settings/app/image-generation/onnx",
+      ...options,
+    });
+  }
+
+  /**
+   * Select
+   */
+  public onnxImageSelect<ThrowOnError extends boolean = false>(
+    options: Options<OnnxImageSelectData, ThrowOnError>,
+  ): RequestResult<
+    OnnxImageSelectResponses,
+    OnnxImageSelectErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).put<
+      OnnxImageSelectResponses,
+      OnnxImageSelectErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/settings/app/image-generation/onnx",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+  }
+
+  /**
+   * Cancel
+   */
+  public onnxImageCancelDownload<ThrowOnError extends boolean = false>(
+    options: Options<OnnxImageCancelDownloadData, ThrowOnError>,
+  ): RequestResult<
+    OnnxImageCancelDownloadResponses,
+    OnnxImageCancelDownloadErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).delete<
+      OnnxImageCancelDownloadResponses,
+      OnnxImageCancelDownloadErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/settings/app/image-generation/onnx/models/{model_id}/download",
+      ...options,
+    });
+  }
+
+  /**
+   * Download
+   *
+   * Start downloading a model. A license that limits use must be accepted first.
+   */
+  public onnxImageDownload<ThrowOnError extends boolean = false>(
+    options: Options<OnnxImageDownloadData, ThrowOnError>,
+  ): RequestResult<
+    OnnxImageDownloadResponses,
+    OnnxImageDownloadErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).post<
+      OnnxImageDownloadResponses,
+      OnnxImageDownloadErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/settings/app/image-generation/onnx/models/{model_id}/download",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+  }
+
+  /**
+   * Remove
+   *
+   * Delete a downloaded model's files to free disk space.
+   */
+  public onnxImageRemove<ThrowOnError extends boolean = false>(
+    options: Options<OnnxImageRemoveData, ThrowOnError>,
+  ): RequestResult<
+    OnnxImageRemoveResponses,
+    OnnxImageRemoveErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).delete<
+      OnnxImageRemoveResponses,
+      OnnxImageRemoveErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/settings/app/image-generation/onnx/models/{model_id}",
       ...options,
     });
   }
