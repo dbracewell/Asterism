@@ -342,7 +342,7 @@ async def test_admin_endpoints_show_hardware_and_gate_licenses(local, monkeypatc
 # ---------------------------------------------------------------------------
 
 
-def test_the_extra_is_installed_only_when_every_package_is_found(monkeypatch):
+async def test_the_extra_is_installed_only_when_every_package_is_found(monkeypatch):
     found = {name: object() for name in availability.LOCAL_IMAGE_PACKAGES}
     monkeypatch.setattr(availability.importlib.util, "find_spec", lambda name: found.get(name))
     availability.local_image_installed.cache_clear()
@@ -355,7 +355,7 @@ def test_the_extra_is_installed_only_when_every_package_is_found(monkeypatch):
         availability.local_image_installed.cache_clear()
 
 
-def test_the_registry_offers_diffusers_exactly_when_the_extra_is_installed():
+async def test_the_registry_offers_diffusers_exactly_when_the_extra_is_installed():
     # A fresh process, so no test's own registration counts.
     probe = (
         "from asterism.domains.components.catalog import ensure_loaded; ensure_loaded();"
