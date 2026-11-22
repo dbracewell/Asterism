@@ -116,7 +116,7 @@ Source: user request (2026-11-21), after Dependabot's uv group took the image ov
   - [x] The generator registry offers Diffusers only when the extra imports. A saved local generator otherwise reads "not available in this image" in Admin Settings, its catalog and downloads are hidden, and `generate_image` isn't offered for it. The ComfyUI generator is unchanged.
   - [x] Tests for both installs: registry, Admin Settings payload, tool availability, and a saved local generator surviving an upgrade (upgrade check) and reading as unavailable.
   - [x] Docs: the deployment guide's GPU build section, the development guide (`uv sync --extra local-image`), and the image generation user guide.
-- [~] US-94.4: Local image generation on ONNX
+- [x] US-94.4: Local image generation on ONNX
   - [x] ADR-0077: an ONNX generator in every build, its pipelines, schedulers in NumPy, how models are pinned and verified, and the catalog chosen.
   - [x] A pinned ONNX catalog (revision, file list, SHA-256 each) through `ModelDownloadService` with the license step: LCM DreamShaper v7 (license confirmed first) and SDXL Turbo (non-commercial, accepted before download); SDXL base 1.0 if usable. SD 3.5 Medium later.
   - [x] An ONNX pipeline with no torch: CLIP tokenizers from `transformers`, text encoders, UNet with the scheduler in NumPy (LCM; Euler for SDXL), VAE decoder; seeded, bounded, in the worker process with progress and cancellation.
