@@ -76,6 +76,9 @@ jobs:
       - name: Verify base images and actions are pinned
         run: pnpm check:pins
 
+      - name: Verify accepted vulnerability findings have a reason and expiry
+        run: pnpm check:trivyignore
+
       - name: Verify release notes cover migrations and configuration changes
         # A pull request is compared with its base branch, a push with the
         # commit it replaced (nothing to compare for a new branch).
@@ -181,6 +184,18 @@ jobs:
         run: pnpm check:theme-storage-container
         env:
           THEME_TEST_RUNTIME_IMAGE: asterism:ci
+
+      - name: Install the pinned Trivy
+        # US-92.2: a release tarball checked against the SHA-256 in the script,
+        # not aquasecurity/trivy-action (see scripts/install-trivy.mjs).
+        run: node scripts/install-trivy.mjs
+
+      - name: Scan the image for known vulnerabilities
+        # Fails on a critical with a fix; prints the highs.
+        run: pnpm check:vulns --image asterism:ci
+
+      - name: Scan the lockfiles for known vulnerabilities
+        run: pnpm check:vulns --lockfiles
 
       - name: Upgrade from the previous release
         # US-91.6: skipped, with a message, until a release precedes this commit.

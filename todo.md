@@ -69,11 +69,11 @@ Source: user request (2026-11-20), following EPIC-91. [EPIC-92](docs/epics/EPIC-
   - [x] Pin every `uses:` in `.github/workflows/` to a full commit SHA with `# vX.Y.Z` after it.
   - [x] A check (`pnpm check:pins`, run in the quality job) fails on an external image in a `FROM` without a digest, or a `uses:` without a commit SHA, naming the file and line. It allows `FROM` lines naming a stage declared earlier in the same Dockerfile, and local actions (`uses: ./…`). Tests cover both.
   - [x] Add `.github/dependabot.yml` for `github-actions`, `docker`, `npm` (pnpm) and `uv`: weekly, grouped by ecosystem, minor and patch together, majors on their own. Document how to review one in `docs/development.md`.
-- [ ] US-92.2: Scan for known vulnerabilities
-  - [ ] The image-checks job runs Trivy on the built image and on the lockfiles. It fails on fixable criticals and prints a table of highs.
-  - [ ] `.trivyignore.yaml` holds accepted findings, each with a reason and an expiry date. A check fails on an expired entry, or one without both.
+- [ ] US-92.2: Scan for known vulnerabilities (in progress, branch `feat/us-92.2-vulnerability-scans`)
+  - [x] The image-checks job runs Trivy on the built image and on the lockfiles. It fails on fixable criticals and prints a table of highs.
+  - [x] `.trivyignore.yaml` holds accepted findings, each with a reason and an expiry date. A check fails on an expired entry, or one without both.
   - [ ] A weekly scheduled workflow scans `ghcr.io/dbracewell/asterism:latest`, and opens or updates one issue when it finds a new fixable critical.
-  - [ ] The release workflow scans each architecture's pulled-back image before tagging (with the US-91.2 checks).
+  - [x] The release workflow scans each architecture's pulled-back image before tagging (with the US-91.2 checks).
 - [ ] US-92.3: Provenance and an SBOM for every release
   - [ ] Build each architecture with an SPDX SBOM and `provenance: mode=max`. Keep the push-by-digest, pull-back and check flow working with the attestation manifests in the index, and keep `pnpm check:image`'s size reading correct.
   - [ ] Attest the published index with `actions/attest-build-provenance` and `actions/attest-sbom`. Grant `id-token: write` and `attestations: write` to the publish job only.

@@ -194,6 +194,44 @@ To review one:
    its branch, or close it and tell Dependabot to ignore that version
    (`@dependabot ignore this minor version`) with a reason in the comment.
 
+### Vulnerability scans
+
+Trivy scans for known vulnerabilities (US-92.2):
+
+- **Build and check the image** scans the built image and both lockfiles
+  (`pnpm-lock.yaml`, `apps/backend/uv.lock`). It fails on a critical with a fix,
+  and prints a table of highs and of criticals with no fix yet.
+- The release workflow scans each architecture's pulled-back image the same way,
+  so a release with a fixable critical is never tagged.
+- The weekly **Vulnerability scan** workflow scans
+  `ghcr.io/dbracewell/asterism:latest` for vulnerabilities found since it was
+  released. A critical with a fix opens the one issue labelled
+  `vulnerability-scan`, or updates it when the critical is new. Close the issue
+  once the patch release that fixes it is published.
+
+To scan locally, install the pinned Trivy and point the check at it:
+
+```bash
+TRIVY=$(node scripts/install-trivy.mjs) pnpm check:vulns --lockfiles
+TRIVY=$(node scripts/install-trivy.mjs) pnpm check:vulns --image asterism:local
+```
+
+To fix a finding, update the dependency or the base image digest. To accept one
+instead (it can't be reached, or no fixed release exists), add it to
+[`.trivyignore.yaml`](../.trivyignore.yaml) with a `statement` saying why and an
+`expired_at` date a few weeks out. On that date Trivy reports the finding again,
+and `pnpm check:trivyignore` (in the quality job) fails until it is fixed or
+renewed with a new reason. The check also fails on an entry missing either field.
+
+The workflows don't use `aquasecurity/trivy-action` or `setup-trivy`: in March
+2026 both had their tags repointed to a credential stealer
+([GHSA-69fq-xp46-6x23](https://github.com/aquasecurity/trivy/security/advisories/GHSA-69fq-xp46-6x23)).
+Instead, `scripts/install-trivy.mjs` downloads a pinned release and refuses it
+unless its SHA-256 matches the one in the script. Dependabot can't update that
+pin. To move it, pick a release at least two weeks old, copy the Linux 64-bit,
+Linux ARM64 and macOS ARM64 tarball hashes from its `trivy_<version>_checksums.txt`
+into `TRIVY_TARBALLS`, update `TRIVY_VERSION`, and let CI run the scans.
+
 ## Working on the code
 
 - **Changing the API.** After a backend route or schema change, regenerate the

@@ -113,6 +113,37 @@ names an image by digest (expressions are skipped). Aliases where a step or
 value belongs, and invalid YAML, fail rather than pass unchecked. Problems name
 the file and line. CI runs it in the quality job.
 
+### `install-trivy.mjs`
+
+Downloads the pinned Trivy release for this platform (Linux x64 and ARM64, macOS
+ARM64) and refuses it unless its SHA-256 matches the one in the script (US-92.2).
+Prints the binary's path; in GitHub Actions it also adds the directory to `PATH`.
+`--dir <directory>` picks where it goes (default: a `trivy-<version>` directory in
+`RUNNER_TEMP` or the system temp directory).
+
+### `check-vulns.mjs`
+
+Scans for known vulnerabilities with Trivy (`pnpm check:vulns`, US-92.2).
+`--image <image>` scans an image, `--lockfiles` scans `pnpm-lock.yaml` and
+`apps/backend/uv.lock`. It fails on a critical with a fix, prints a table of highs
+and lists criticals with no fix yet. A scan that read no packages fails too.
+`--report <file>` writes the findings as JSON, `--no-fail` reports without
+failing, and `--trivy <path>` (or `TRIVY`) names the binary (default: `trivy` on
+`PATH`). Before scanning, and on its own with `--ignore-file-only`
+(`pnpm check:trivyignore`, run in the quality job), it fails on a
+`.trivyignore.yaml` entry without an `id`, a `statement` or an `expired_at` date
+still to come. CI runs the scans in the image job; the release workflow scans
+each architecture's image.
+
+### `vuln-issue.mjs`
+
+Opens or updates the one `vulnerability-scan` issue from a `check-vulns.mjs
+--report` file, for the weekly **Vulnerability scan** workflow (US-92.2). It
+changes the issue only when the scan found a critical with a fix that the issue
+doesn't list yet: it opens the issue, or rewrites its list and comments on what is
+new. `--run-url <url>` links the scan run; `--dry-run` prints the plan without
+calling `gh`.
+
 ### `check-client-secret-leaks.mjs`
 
 Scans one or more files or directories for the current process values of

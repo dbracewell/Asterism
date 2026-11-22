@@ -1,0 +1,10 @@
+# Accepted vulnerability findings (US-92.2), read by Trivy and checked by
+# `pnpm check:trivyignore`. Every entry needs a statement saying why the finding
+# is accepted and an expired_at date (YYYY-MM-DD); on that date Trivy reports it
+# again and the check fails until it is fixed or renewed. Keep expiries short.
+#
+# vulnerabilities:
+#   - id: CVE-2026-00000
+#     statement: Asterism never calls the affected function; no fixed release yet.
+#     expired_at: 2027-01-31
+vulnerabilities: []
