@@ -309,7 +309,11 @@ configuration, and the patch version for fixes only.
    that can't be attested. After tagging, the publish job attests the published
    index with `actions/attest` (build provenance, and one SBOM per architecture)
    and runs `gh attestation verify` for both; the run fails if they don't
-   verify. Only the publish job has `id-token: write` and `attestations: write`.
+   verify. It then signs the index with cosign, keyless (US-92.4), and runs
+   `cosign verify` for the release workflow's identity on this tag and the
+   GitHub Actions OIDC issuer; the run fails if it doesn't verify. Only the
+   publish job has `id-token: write` and `attestations: write`, and a rehearsal
+   never reaches it, so it attests and signs nothing.
 
    To rehearse before a release, run the workflow by hand (Actions → Release →
    Run workflow): it builds, pushes by digest and checks both architectures,

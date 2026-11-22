@@ -78,10 +78,10 @@ Source: user request (2026-11-20), following EPIC-91. [EPIC-92](docs/epics/EPIC-
   - [x] Build each architecture with an SPDX SBOM and `provenance: mode=max`. Keep the push-by-digest, pull-back and check flow working with the attestation manifests in the index, and keep `pnpm check:image`'s size reading correct. (Rehearsal 44973491208: both architectures pass; SBOMs 5.9 MB, 1108 packages.)
   - [ ] Attest the published index with `actions/attest-build-provenance` and `actions/attest-sbom`. Grant `id-token: write` and `attestations: write` to the publish job only. (Both are now deprecated wrappers of `actions/attest` v4, which the workflow uses directly.)
   - [ ] After publishing, the workflow runs `gh attestation verify` against the repository and fails the run if it doesn't verify.
-- [ ] US-92.4: Sign the published image
+- [ ] US-92.4: Sign the published image (in progress, branch `feat/us-92.4-cosign-signature`)
   - [ ] Sign the index digest with cosign, keyless, in the publish job. The cosign installer is pinned like every action.
   - [ ] After signing, the workflow runs `cosign verify` with the expected identity (`https://github.com/dbracewell/Asterism/.github/workflows/release.yml@refs/tags/v*`) and OIDC issuer.
-  - [ ] A rehearsal run (Run workflow) signs nothing, as it tags nothing (US-91.5).
+  - [x] A rehearsal run (Run workflow) signs nothing, as it tags nothing (US-91.5). (Rehearsal 45013906928: publish skipped.)
 - [ ] US-92.5: Verifying a release, and the security policy
   - [ ] A "Verify the image" section in `docs/deployment.md` gives the `gh attestation verify` and `cosign verify` commands, and says how to read the SBOM.
   - [ ] `SECURITY.md`: which versions get fixes (the latest minor in 0.x), how to report privately (GitHub private vulnerability reporting), and what happens next.
