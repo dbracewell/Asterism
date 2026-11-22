@@ -157,6 +157,37 @@ Source: user request (2026-11-21), after Dependabot's uv group took the image ov
   - [ ] Remove the temporary torch cap, so Dependabot updates torch for the GPU build again.
   - [ ] Release notes: Image (smaller image, no local generation in the published image, how to build the GPU image). Cut the release that ships the epic.
 
+## Fixable high vulnerabilities (proposed 2026-11-22)
+
+Source: user request (2026-11-22), after EPIC-92. [EPIC-95](docs/epics/EPIC-95-FIXABLE-HIGH-VULNERABILITIES.md): take test tooling and pip out of the image, upgrade the remaining Node, Python and OS packages with a fixable high, then make a fixable high fail CI. Starts after EPIC-94. Suggested order: US-95.1 → 95.5. Work one story at a time.
+
+### EPIC-95: No fixable high vulnerabilities
+
+- [ ] US-95.1: Keep development packages out of the image
+  - [ ] Scan the image built after EPIC-94 and record its fixable highs in the epic, updating "Where things stand" when they differ.
+  - [ ] Stop `vitest` (better-auth's optional peer) and what it brings (`vite`, `jsdom`, `undici`, `source-map-js`) from reaching the production install, without changing the frontend's own test setup.
+  - [ ] Remove pip, and the packages it vendors, from the runtime stage. The build stages keep it to install uv.
+  - [ ] `pnpm check:image` fails if `vitest`, `vite` or `jsdom` is in the image's `node_modules`, or `pip` is importable by the image's system Python. Tests cover both.
+  - [ ] Release notes: Image (what was removed, and the new size).
+- [ ] US-95.2: Node packages
+  - [ ] Upgrade what is still flagged after US-95.1 (expected: `fast-uri` through `ajv`, and `browserslist`) and the lockfile-only `brace-expansion` and `js-yaml`, with overrides only where a parent pins an old version.
+  - [ ] Tests: form validation through `@hookform/resolvers` and `ajv`; the frontend build and E2E.
+  - [ ] Dependabot shows no open high alert for `pnpm-lock.yaml`.
+- [ ] US-95.3: Python packages
+  - [ ] Upgrade `cryptography` (49 → 50), `filelock` (3 → 4), `soupsieve` (2 → 3 or 4) and `urllib3` (2.8) through `uv.lock`, with a constraint only where a parent caps one.
+  - [ ] Check each major in its changelog and with tests: JWT verification and PDF text extraction (cryptography); model downloads and the Hugging Face cache, including two at once (filelock); HTML to Markdown and the web fetch tool's extraction (soupsieve).
+  - [ ] Record in the pull request, for each, whether Asterism's use reaches the advisory.
+  - [ ] The upgrade check passes. Dependabot shows no open high alert for `uv.lock`.
+- [ ] US-95.4: OS packages
+  - [ ] Take the base image update that carries `zlib1g` 1.3.1-1+deb13u1 (and any other fixed OS package by then), as a pinned digest.
+  - [ ] If the base lags a fix by more than a week, the runtime stage upgrades that named package with a comment and the date, and a check fails once the base has caught up.
+  - [ ] The image checks and the theme storage and fetch browser checks pass.
+- [ ] US-95.5: Fail on fixable highs
+  - [ ] `pnpm check:vulns` fails on a fixable high as well as a fixable critical, in CI, the release workflow and the weekly scan, and still prints the table. Tests cover the new threshold and `.trivyignore.yaml` entries for highs.
+  - [ ] The weekly scan's issue lists new fixable highs as well as criticals.
+  - [ ] Update the vulnerability scan section of `docs/development.md` and close EPIC-92's open question 1.
+  - [ ] Release notes: Image (the fixed packages, and that a fixable high now stops a release). Cut the release that ships the epic.
+
 ## Maintenance follow-ups (2026-11-21)
 
 Found while taking the Dependabot updates for EPIC-92. Neither is a story of its own; take each as a small pull request.
