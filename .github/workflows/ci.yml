@@ -271,7 +271,9 @@ jobs:
             ASTERISM_VERSION=${{ steps.version.outputs.version }}
             ASTERISM_COMMIT=${{ github.sha }}
           cache-from: type=gha,scope=asterism-image
-          cache-to: type=gha,scope=asterism-image,mode=max
+          # Only main writes the cache (exporting it takes about 3 minutes);
+          # pull requests build from main's.
+          cache-to: ${{ github.event_name == 'push' && 'type=gha,scope=asterism-image,mode=max' || '' }}
 
       - name: Start the image and check its size
         run: pnpm check:image --image asterism:ci
