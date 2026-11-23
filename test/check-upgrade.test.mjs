@@ -98,7 +98,7 @@ test("every kind of lost data is reported", () => {
     files: { "a.txt": "alpha", "b.txt": "beta" },
     theme,
     caption: { filename: "red-square.png", text: "A red square." },
-    generator: "Diffusers",
+    generator: "ONNX",
   };
   const kept = {
     signedIn: true,
@@ -110,11 +110,11 @@ test("every kind of lost data is reported", () => {
     theme: { ...theme },
     caption: "A red square.",
     newCaption: { status: "ready", payload: { text: "A blue circle." } },
-    generator: "Diffusers",
+    generator: "ONNX",
     generatorStatus: {
-      provider: "Diffusers",
+      provider: "ONNX",
       ready: false,
-      detail: "Diffusers is not available in this image",
+      detail: "Choose an ONNX model",
     },
   };
   assert.deepEqual(seedProblems(seeded, kept), []);
@@ -144,12 +144,12 @@ test("every kind of lost data is reported", () => {
     seedProblems(seeded, {
       ...kept,
       generatorStatus: {
-        provider: "Diffusers",
+        provider: "ONNX",
         ready: false,
-        detail: "No image provider is set up",
+        detail: "ONNX is not available in this image",
       },
     }).join(),
-    /should read as not available in this image/,
+    /is no longer in this image/,
   );
   assert.match(
     seedProblems(seeded, { ...kept, theme: null }).join(),
