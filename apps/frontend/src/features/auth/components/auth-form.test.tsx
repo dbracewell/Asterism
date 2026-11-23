@@ -1,4 +1,10 @@
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, expect, it, vi } from "vitest";
 import { AuthForm, sanitizeRedirectPath } from "./auth-form";
@@ -58,7 +64,10 @@ it("focuses a long setup failure and retains editable credentials", async () => 
     target: { value: "wrong-passkey" },
   });
   fireEvent.click(screen.getByRole("button", { name: "Sign up" }));
-  expect(await screen.findByRole("alert")).toHaveFocus();
+  // The alert takes focus in an effect after it renders, so wait for the
+  // focus rather than assert it the moment the alert appears.
+  const alert = await screen.findByRole("alert");
+  await waitFor(() => expect(alert).toHaveFocus());
   expect(screen.getByRole("alert")).toHaveTextContent("Setup failed:");
   expect(screen.getByLabelText("Admin passkey")).toHaveValue("wrong-passkey");
   expect(screen.getByRole("button", { name: "Sign up" })).toBeEnabled();
@@ -73,7 +82,10 @@ it("focuses a rejected login without changing authentication behavior", async ()
   render(<AuthForm view="login" />);
   fillCredentials();
   fireEvent.click(screen.getByRole("button", { name: "Sign in" }));
-  expect(await screen.findByRole("alert")).toHaveFocus();
+  // The alert takes focus in an effect after it renders, so wait for the
+  // focus rather than assert it the moment the alert appears.
+  const alert = await screen.findByRole("alert");
+  await waitFor(() => expect(alert).toHaveFocus());
   expect(screen.getByRole("alert")).toHaveTextContent(
     "Invalid email or password",
   );
