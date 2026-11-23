@@ -1,6 +1,6 @@
 # EPIC-95: No fixable high vulnerabilities
 
-Status: in progress (US-95.1 started 2026-11-22; proposed 2026-11-22). Source:
+Status: in progress (US-95.1 merged 2026-11-22, PR #64; proposed 2026-11-22). Source:
 user request (2026-11-22), after EPIC-92 left fixable highs reported but not
 failing. Starts after EPIC-94, which changes the Python dependency tree.
 

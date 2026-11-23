@@ -102,7 +102,7 @@ Source: user request (2026-11-22), after EPIC-92. [EPIC-95](docs/epics/EPIC-95-F
 
 ### EPIC-95: No fixable high vulnerabilities
 
-- [ ] US-95.1: Keep development packages out of the image (in progress, branch `feat/us-95.1-dev-packages-out-of-image`)
+- [x] US-95.1: Keep development packages out of the image (merged 2026-11-22, PR #64)
   - [x] Scan the image built after EPIC-94 and record its fixable highs in the epic, updating "Where things stand" when they differ.
   - [x] Stop `vitest` (better-auth's optional peer) and what it brings (`vite`, `jsdom`, `undici`) from reaching the production install, without changing the frontend's own test setup.
   - [x] Remove pip, and the packages it vendors, from the runtime stage. The build stages keep it to install uv.
