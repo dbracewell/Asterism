@@ -6,8 +6,8 @@
 // Starts the previous release's image on a fresh volume and seeds it through
 // the API: an admin account, a model provider (a local double), a chat with a
 // reply, two related files indexed into vectors, a custom theme, local
-// captioning switched on with an image captioned by it, and the local Diffusers
-// image generator saved as the generator. Then it
+// captioning switched on with an image captioned by it, and the ONNX image
+// generator saved as the generator. Then it
 // stops it and starts the new image on the same volume with the same secrets,
 // and checks the container is healthy, both databases were migrated (the auth
 // schema matches a fresh one from the new image), and the account, chat, files
@@ -15,8 +15,8 @@
 // value) and stored caption are all still there, and that local captioning
 // still captions a new image (US-94.1: an upgrade may replace the caption
 // model bundle, which the new image then downloads itself), and that the saved
-// local generator is still saved but reads as not available, since the CPU
-// image has no local image generation (US-94.2). Last, it starts
+// ONNX generator is still saved and still offered by the new image (US-94.4;
+// every build has it). Last, it starts
 // the previous image again on the
 // upgraded volume and checks it refuses the newer database with its version
 // message, rather than running on it.
@@ -44,8 +44,9 @@ export const REGISTRY_IMAGE = "ghcr.io/dbracewell/asterism";
 const PASSWORD = "Upgrade-check-91!";
 const PYTHON = "/app/apps/backend/.venv/bin/python";
 const THEME_ID = "upgrade-check";
-// The local generator, which the CPU image leaves out (US-94.2).
-const LOCAL_GENERATOR = "Diffusers";
+// The image generator every build has since 0.3.0 (US-94.4). The 0.2.x upgrade
+// seeded Diffusers, which the CPU image left out (US-94.2); 0.3.0 can't save it.
+const LOCAL_GENERATOR = "ONNX";
 // A bundled theme the previous image serves, saved again as a custom one.
 const BASE_THEME = "atlas";
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -60,7 +61,7 @@ export function previousReleases({ reachable, atHead }) {
   const own = new Set(atHead);
   const versions = [];
   let remaining = reachable.filter((tag) => !own.has(tag));
-  for (let next; (next = latestRelease(remaining)); ) {
+  for (let next; (next = latestRelease(remaining));) {
     versions.push(next);
     remaining = remaining.filter((tag) => tag.replace(/^v/, "") !== next);
   }
@@ -161,11 +162,10 @@ export function seedProblems(seeded, found) {
       `The saved image generator changed: seeded ${seeded.generator}, found ${found.generator}`,
     );
   } else if (
-    found.generatorStatus?.ready !== false ||
-    !/not available in this image/.test(found.generatorStatus?.detail ?? "")
+    /not available in this image/.test(found.generatorStatus?.detail ?? "")
   ) {
     problems.push(
-      `The saved ${seeded.generator} generator should read as not available in this image: ${JSON.stringify(found.generatorStatus)}`,
+      `The saved ${seeded.generator} generator is no longer in this image: ${JSON.stringify(found.generatorStatus)}`,
     );
   }
   // A release that deliberately changes the theme format changes this too.
@@ -721,7 +721,7 @@ async function check({ from, to, port }) {
     const before = databases(old);
     const seeded = await seed(run, stub);
     log(
-      `ok: seeded an admin, a chat with ${seeded.chat.length} messages, ${Object.keys(seeded.files).length} indexed files, a theme, a local caption and the local image generator (schema ${before.revision})`,
+      `ok: seeded an admin, a chat with ${seeded.chat.length} messages, ${Object.keys(seeded.files).length} indexed files, a theme, a local caption and the ONNX image generator (schema ${before.revision})`,
     );
     stop(old);
 
@@ -746,7 +746,7 @@ async function check({ from, to, port }) {
     const problems = seedProblems(seeded, await inspectSeed(run, seeded));
     if (problems.length) throw new Error(problems.join("\n"));
     log(
-      "ok: the account signs in; the chat, the files' bytes and vectors, every theme value and the caption are unchanged, local captioning captions a new image, and the saved local generator reads as not available",
+      "ok: the account signs in; the chat, the files' bytes and vectors, every theme value and the caption are unchanged, local captioning captions a new image, and the saved ONNX generator is still offered",
     );
     stop(next);
 
