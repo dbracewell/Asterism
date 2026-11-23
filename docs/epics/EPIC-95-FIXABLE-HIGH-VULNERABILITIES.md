@@ -1,7 +1,7 @@
 # EPIC-95: No fixable high vulnerabilities
 
 Status: in progress (US-95.1 merged 2026-11-22, PR #64; US-95.2 merged
-2026-11-23, PR #66; proposed 2026-11-22). Source:
+2026-11-23, PR #66; US-95.3 merged 2026-11-23, PR #67; proposed 2026-11-22). Source:
 user request (2026-11-22), after EPIC-92 left fixable highs reported but not
 failing. Starts after EPIC-94, which changes the Python dependency tree.
 
@@ -117,10 +117,10 @@ As an administrator, the backend's packages have no fixable high.
       extraction (pdfminer.six); - filelock 4: model downloads and the Hugging Face cache, including two
       downloads at once; - soupsieve: HTML to Markdown conversion (markdownify, markitdown) and the
       web fetch tool's extraction.
-- [ ] Record in the pull request, for each, whether Asterism's use reaches the
+- [x] Record in the pull request, for each, whether Asterism's use reaches the
       advisory. Every one is fixed either way.
-- [ ] The upgrade check (US-91.6) passes. Dependabot shows no open high alert for
-      `uv.lock`.
+- [x] The upgrade check (US-91.6) passes. Dependabot shows no open high alert for
+      `uv.lock` (2026-11-23: none open in the repository).
 
 ### US-95.4: OS packages
 
