@@ -104,7 +104,7 @@ async def seed(client, sessions, user: str, canary: str) -> dict:
         parent.active_child_id = answers[1].id
         session.add(UsageRecordModel(user_id=user, source="chat", model_name="Chat A", input_tokens=7, output_tokens=3))
         await session.commit()
-    return {"chat_id": chat_id}
+    return {"chat_id": chat_id, "project_id": project["id"]}
 
 
 def archive_text(path) -> dict[str, bytes]:
@@ -278,3 +278,44 @@ async def test_the_migration_adds_the_table_and_keeps_users(migration_db):
         db.execute("INSERT INTO data_exports (id, user_id, status, requested_at) VALUES (x'00', 'u', 'pending', 1)")
         with pytest.raises(sqlite3.IntegrityError):
             db.execute("INSERT INTO data_exports (id, user_id, status, requested_at) VALUES (x'01', 'u', 'lost', 1)")
+
+
+@pytest.mark.asyncio
+async def test_memories_are_in_the_archive_with_sensitive_ones_marked(exports):
+    """US-93.6: ``memories.json`` holds the person's memories, user and project, and only theirs."""
+    from asterism.domains.memory.models import MemoryCategory, MemoryKind, MemoryModel
+
+    client, sessions, _ = exports
+    project = (await seed(client, sessions, "a", CANARY_A))["project_id"]
+    await seed(client, sessions, "b", CANARY_B)
+    async with sessions() as session:
+        session.add_all(
+            [
+                MemoryModel(
+                    user_id="a",
+                    kind=MemoryKind.USER,
+                    text=f"Uses a screen reader {CANARY_A}",
+                    category=MemoryCategory.ACCESSIBILITY,
+                    sensitive=True,
+                ),
+                MemoryModel(
+                    user_id="a", kind=MemoryKind.PROJECT, project_id=uuid.UUID(project), text="The lab is on Fridays"
+                ),
+                MemoryModel(user_id="b", kind=MemoryKind.USER, text=f"Other {CANARY_B}", category=MemoryCategory.OTHER),
+            ]
+        )
+        await session.commit()
+
+    await client.post("/data-export", headers=auth())
+    await finished("a")
+    state = (await client.get("/data-export", headers=auth())).json()["export"]
+    entries = archive_text(service.archive_path("a", uuid.UUID(state["id"])))
+    text = {name.split("/", 1)[1]: content.decode("utf-8", "replace") for name, content in entries.items()}
+    memories = json.loads(text["memories.json"])
+    by_kind = {memory["kind"]: memory for memory in memories}
+    assert len(memories) == 2
+    assert by_kind["user"]["sensitive"] is True and by_kind["user"]["category"] == "accessibility"
+    assert by_kind["project"] == {**by_kind["project"], "project_id": project, "sensitive": False}
+    assert "memories.json" in text["README.md"]
+    assert {"records/memory_proposals.json", "records/message_memories.json"} <= set(text)
+    assert CANARY_B not in "\n".join(text.values())

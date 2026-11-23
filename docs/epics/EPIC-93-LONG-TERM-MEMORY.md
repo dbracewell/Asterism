@@ -1,6 +1,6 @@
 # EPIC-93: Long-term memory
 
-Status: in progress (US-93.1 PR #73, US-93.2 PR #74, US-93.5 PR #75 and US-93.3 PR #76 merged 2026-11-23; proposed 2026-11-20). Source: user request (2026-11-20). Decided
+Status: in progress (US-93.1 PR #73, US-93.2 PR #74, US-93.5 PR #75, US-93.3 PR #76 and US-93.4 PR #77 merged 2026-11-23; US-93.6 in progress; proposed 2026-11-20). Source: user request (2026-11-20). Decided
 2026-11-20: two kinds of memory (user and project), the agent proposes and the
 person confirms, relevant memories are added each turn, memories are private,
 and a course can turn memory off.
@@ -197,13 +197,13 @@ without my repeating it.
 
 As a person using Asterism, my memories leave with my data and survive upgrades.
 
-- [ ] Download my data (ADR-0076) includes `memories.json`, with sensitive
+- [x] Download my data (ADR-0076) includes `memories.json`, with sensitive
       memories marked.
-- [ ] Backup and restore (ADR-0072) include the memory vectors. A restore
+- [x] Backup and restore (ADR-0072) include the memory vectors. A restore
       re-embeds any memory without a vector.
-- [ ] The upgrade check (US-91.6) seeds a user memory and a project memory and
+- [x] The upgrade check (US-91.6) seeds a user memory and a project memory and
       checks they survive.
-- [ ] User guide: a "What Asterism remembers" page. Architecture: memory in the
+- [x] User guide: a "What Asterism remembers" page. Architecture: memory in the
       agent runtime and context-isolation guides. `AGENTS.md`: replace "no
       long-term memory engine exists" with the memory rules. Release notes:
       Behavior.

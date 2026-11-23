@@ -377,25 +377,25 @@ async def test_lancedb_memory_vectors_are_one_row_per_memory_and_owner_scoped(tm
     await store.write(vector(second))
     await store.write(vector(project_memory, project_id=str(project)))
     await store.write(vector(foreign, user_id="b"))
-    assert await store.list_ids(user_id="a") == {str(first), str(second), str(project_memory)}
+    assert set(await store.list_revisions(user_id="a")) == {str(first), str(second), str(project_memory)}
     rows = store._table.search().where(f"memory_id = '{first}'").to_list()
     assert [row["revision"] for row in rows] == [2]
     assert "text" not in rows[0]  # ids and scope only
 
     # Another owner's id is never deleted through this owner.
     await store.delete_memories(user_id="a", memory_ids=[foreign, second])
-    assert await store.list_ids(user_id="b") == {str(foreign)}
+    assert set(await store.list_revisions(user_id="b")) == {str(foreign)}
     await store.delete_project(user_id="a", project_id=project)
-    assert await store.list_ids(user_id="a") == {str(first)}
+    assert set(await store.list_revisions(user_id="a")) == {str(first)}
     await store.delete_user(user_id="a")
-    assert await store.list_ids(user_id="a") == set()
-    assert await store.list_ids(user_id="b") == {str(foreign)}
+    assert set(await store.list_revisions(user_id="a")) == set()
+    assert set(await store.list_revisions(user_id="b")) == {str(foreign)}
 
     with pytest.raises(ValueError):
         await store.write(MemoryVector(**{**vector(first).__dict__, "vector": [1.0]}))
     # Quotes in ids can't break the filter.
     await store.write(vector("it's", user_id="o'brien"))
-    assert await store.list_ids(user_id="o'brien") == {"it's"}
+    assert set(await store.list_revisions(user_id="o'brien")) == {"it's"}
 
 
 @pytest.mark.asyncio

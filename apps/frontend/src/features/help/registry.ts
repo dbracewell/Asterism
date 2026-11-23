@@ -645,7 +645,7 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
       "To have your account deleted, ask in Settings → General under Sign-in and account. An administrator decides.",
     details: [
       "Until an administrator acts, nothing changes and you can withdraw the request.",
-      "Deleting an account removes its chats, projects, files, study records, skills and settings for good. Download your data first if you want to keep it.",
+      "Deleting an account removes its chats, projects, files, study records, skills, memories and settings for good. Download your data first if you want to keep it.",
       "Administrators can't request deletion of their own account; another administrator deletes it.",
     ],
     related: ["concept.data-download", "concept.suspension"],
@@ -656,7 +656,7 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
     summary:
       "One zip archive of everything your account holds. Start it in Settings → General under Your data.",
     details: [
-      "The archive has your chats (readable Markdown and full JSON, with every reply version), library files, projects, study decks, reviews, quizzes and notes, reflections, skills, About you, settings and usage.",
+      "The archive has your chats (readable Markdown and full JSON, with every reply version), library files, projects, study decks, reviews, quizzes and notes, reflections, skills, About you, memories, settings and usage.",
       "It is prepared in the background, which can take a few minutes. You can leave the page and come back.",
       "The archive is kept for 7 days. Preparing a new one replaces it. A download link works for a few minutes, so start the download from the settings page.",
     ],

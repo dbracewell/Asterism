@@ -47,8 +47,6 @@ Unreleased into its version and date.
   vector table, `memory_vectors`, next to the knowledge vectors (ADR-0078).
   Upgrading adds both empty; nothing existing changes. Only the owner can read
   their memories. Deleting an account or a project deletes its memories.
-  Nothing saves or uses memories yet: later releases add the settings, the
-  agent's proposals and memories in replies.
 
 ### Behavior
 
@@ -61,6 +59,13 @@ Unreleased into its version and date.
   memories it used. The assistant can offer to remember something the person
   said (the internal `propose_memory` tool); a card under the reply offers
   Save, Edit or Dismiss, and nothing is saved without the person's click.
+- Memories leave with a person's data and survive backups and upgrades: Download
+  my data adds `memories.json` (sensitive memories marked) and the memory
+  offers, their audit records and each turn's memories under `records/`.
+  Backups already include the memory vectors. Each start rebuilds, in the
+  background, any memory vector that is missing or out of date, such as after
+  a restore or a save while the embedding model was down, and removes vectors
+  whose memory is gone.
 
 ## 0.3.1 (2026-11-23)
 

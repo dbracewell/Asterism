@@ -59,8 +59,10 @@ tools.
 
 - Persona, skill, learning-mode and template text never grants tools, files,
   MCP access or delegation. Help must not suggest otherwise.
-- There is no long-term memory engine. Help must not say a persona or chat
-  "remembers" anything beyond the current conversation.
+- Help may say Asterism remembers only what the person saved or confirmed as a
+  memory ([ADR-0078](0078-long-term-memory.md)), and only where memory is on. It
+  must not say a chat remembers anything else beyond the current conversation.
+  (Changed 2026-11-23, US-93.6; previously there was no long-term memory.)
 - Features with a "Planned" badge or no UI (for example MCP servers) get no
   help entry until they ship.
 - Learning-mode prompts are best effort. Help says the model is asked to

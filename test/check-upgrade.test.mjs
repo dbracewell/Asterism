@@ -86,7 +86,8 @@ test("a chat snapshot keeps what must survive, not what may change", () => {
   ]);
 });
 
-test("every kind of lost data is reported", () => {
+/** A seed and a found state that match. */
+function matching() {
   const theme = {
     name: "Upgrade check",
     filename: "upgrade-check",
@@ -117,6 +118,11 @@ test("every kind of lost data is reported", () => {
       detail: "Choose an ONNX model",
     },
   };
+  return { theme, seeded, kept };
+}
+
+test("every kind of lost data is reported", () => {
+  const { theme, seeded, kept } = matching();
   assert.deepEqual(seedProblems(seeded, kept), []);
   const problems = seedProblems(seeded, {
     signedIn: true,
@@ -158,5 +164,44 @@ test("every kind of lost data is reported", () => {
   assert.match(
     seedProblems(seeded, { ...kept, signedIn: false }).join(),
     /could not sign in/,
+  );
+});
+
+test("seeded memories must come back unchanged, and none seeded checks none", () => {
+  const memory = {
+    id: "u1",
+    kind: "user",
+    project_id: null,
+    text: "Uses a screen reader",
+    category: "accessibility",
+    sensitive: true,
+    revision: 1,
+  };
+  const project = {
+    ...memory,
+    id: "p1",
+    kind: "project",
+    project_id: "proj",
+    category: null,
+    sensitive: false,
+  };
+  const { seeded, kept } = matching();
+  assert.deepEqual(
+    seedProblems(
+      { ...seeded, memories: [memory] },
+      { ...kept, memories: [memory] },
+    ),
+    [],
+  );
+  const problems = seedProblems(
+    { ...seeded, memories: [memory, project] },
+    { ...kept, memories: [{ ...memory, sensitive: false }] },
+  );
+  assert.equal(problems.length, 2);
+  assert.match(problems[0], /The user memory changed/);
+  assert.match(problems[1], /The project memory p1 is missing/);
+  assert.deepEqual(
+    seedProblems({ ...seeded, memories: null }, { ...kept, memories: null }),
+    [],
   );
 });

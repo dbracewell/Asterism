@@ -16,7 +16,9 @@
 // still captions a new image (US-94.1: an upgrade may replace the caption
 // model bundle, which the new image then downloads itself), and that the saved
 // ONNX generator is still saved and still offered by the new image (US-94.4;
-// every build has it). Last, it starts
+// every build has it), and that a user memory and a project memory are
+// unchanged (US-93.6; seeded only when the previous image has memory, which
+// 0.3.1 and earlier don't). Last, it starts
 // the previous image again on the
 // upgraded volume and checks it refuses the newer database with its version
 // message, rather than running on it.
@@ -167,6 +169,16 @@ export function seedProblems(seeded, found) {
     problems.push(
       `The saved ${seeded.generator} generator is no longer in this image: ${JSON.stringify(found.generatorStatus)}`,
     );
+  }
+  for (const memory of seeded.memories ?? []) {
+    const kept = found.memories?.find(({ id }) => id === memory.id);
+    if (!kept)
+      problems.push(`The ${memory.kind} memory ${memory.id} is missing`);
+    else if (JSON.stringify(kept) !== JSON.stringify(memory)) {
+      problems.push(
+        `The ${memory.kind} memory changed: seeded ${JSON.stringify(memory)}, found ${JSON.stringify(kept)}`,
+      );
+    }
   }
   // A release that deliberately changes the theme format changes this too.
   if (!found.theme)
@@ -476,6 +488,62 @@ async function waitIndexed(session, filename) {
   return "timeout";
 }
 
+// The memory fields an upgrade must keep (US-93.6).
+const MEMORY_FIELDS = [
+  "id",
+  "kind",
+  "project_id",
+  "text",
+  "category",
+  "sensitive",
+  "revision",
+];
+const memoryFields = (memory) =>
+  Object.fromEntries(MEMORY_FIELDS.map((field) => [field, memory[field]]));
+
+/** A user memory and a project memory, or null when the image has no memory API. */
+async function seedMemories(session) {
+  try {
+    await session.api("memories", "GET", "/users/me/memories/");
+  } catch (error) {
+    if (error instanceof HttpError && error.status === 404) return null;
+    throw error;
+  }
+  const project = await session.api("project", "POST", "/projects/", {
+    name: "Upgrade check project",
+  });
+  const memories = [
+    {
+      kind: "user",
+      text: "Uses a screen reader; describe images in words",
+      category: "accessibility",
+      sensitive: true,
+    },
+    {
+      kind: "project",
+      project_id: project.id,
+      text: "The lab report is due every Friday",
+    },
+  ];
+  const saved = [];
+  for (const memory of memories)
+    saved.push(
+      memoryFields(
+        await session.api("memory", "POST", "/users/me/memories/", memory),
+      ),
+    );
+  return saved;
+}
+
+async function readMemories(session) {
+  const page = await session.api(
+    "memories",
+    "GET",
+    "/users/me/memories/?page_size=100",
+  );
+  return page.items.map(memoryFields);
+}
+
 async function seed(run, stub) {
   const session = new Session({
     base: run.base,
@@ -606,6 +674,7 @@ async function seed(run, stub) {
   const theme = await readTheme(run.base, THEME_ID);
   if (!theme)
     throw new Error("The previous image does not read the seeded theme");
+  const memories = await seedMemories(session);
 
   return {
     email,
@@ -615,6 +684,7 @@ async function seed(run, stub) {
     theme,
     caption,
     generator: LOCAL_GENERATOR,
+    memories,
   };
 }
 
@@ -688,6 +758,7 @@ async function inspectSeed(run, seeded) {
     newCaption: fresh,
     generator,
     generatorStatus,
+    memories: seeded.memories ? await readMemories(session) : null,
   };
 }
 
@@ -723,6 +794,11 @@ async function check({ from, to, port }) {
     log(
       `ok: seeded an admin, a chat with ${seeded.chat.length} messages, ${Object.keys(seeded.files).length} indexed files, a theme, a local caption and the ONNX image generator (schema ${before.revision})`,
     );
+    log(
+      seeded.memories
+        ? `ok: seeded ${seeded.memories.length} memories, one about the person and one for a project`
+        : `skip: ${from} has no memory, so memories are seeded from the first release that has it`,
+    );
     stop(old);
 
     log(`Starting ${to} on the same volume`);
@@ -746,7 +822,7 @@ async function check({ from, to, port }) {
     const problems = seedProblems(seeded, await inspectSeed(run, seeded));
     if (problems.length) throw new Error(problems.join("\n"));
     log(
-      "ok: the account signs in; the chat, the files' bytes and vectors, every theme value and the caption are unchanged, local captioning captions a new image, and the saved ONNX generator is still offered",
+      `ok: the account signs in; the chat, the files' bytes and vectors, every theme value${seeded.memories ? ", the memories" : ""} and the caption are unchanged, local captioning captions a new image, and the saved ONNX generator is still offered`,
     );
     stop(next);
 

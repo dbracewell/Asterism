@@ -388,3 +388,56 @@ async def test_backups_stay_outside_storage_and_retention_keeps_the_newest(insta
     with pytest.raises(BackupError, match="already exists"):
         create_backup(layout, output, now=times[2])
     assert not list(output.glob(".*.partial")) and not list(output.glob(".asterism-backup-*/"))
+
+
+@pytest.mark.asyncio
+async def test_memory_vectors_are_backed_up_and_a_restore_rebuilds_the_missing_ones(instance, tmp_path, monkeypatch):
+    """US-93.6: the memory table travels with the backup; a memory without a vector gets one."""
+    from asterism.domains.memory import service as memory_service
+    from asterism.domains.memory.models import MemoryCategory, MemoryKind, MemoryModel
+    from asterism.domains.memory.rebuild import rebuild_memory_vectors
+    from asterism.domains.memory.vectors import LanceDbMemoryVectorStore, MemoryVector
+
+    layout, _ = instance
+    embedded, missing = uuid.uuid4(), uuid.uuid4()
+    async with get_async_db_session() as session:
+        for memory_id, text in ((embedded, "Learns from diagrams"), (missing, "Reads with a screen reader")):
+            session.add(
+                MemoryModel(
+                    id=memory_id, user_id="a", kind=MemoryKind.USER, text=text, category=MemoryCategory.LEARNING
+                )
+            )
+        await session.commit()
+    memories = LanceDbMemoryVectorStore(layout.storage_root / "knowledge" / "lancedb", dimension=DIMENSION)
+    await memories.write(
+        MemoryVector(
+            memory_id=str(embedded), user_id="a", kind="user", project_id="", revision=1, vector=[1.0, 0, 0, 0]
+        )
+    )
+    archive = create_backup(layout, tmp_path / "backups", system_key=KEY)
+
+    target = _point(monkeypatch, tmp_path / "restored")
+    await db_session_manager.close()
+    manifest = restore_backup(archive, target, system_key=KEY)
+    assert manifest["vector_tables"][LanceDbMemoryVectorStore.TABLE_NAME] == 1
+    await initialize_database()
+    await db_session_manager.init()
+
+    class Embedding:
+        def __init__(self):
+            self.texts: list[str] = []
+
+        async def embed_text(self, texts):
+            self.texts.extend(texts)
+            return [[0.0, 1.0, 0.0, 0.0] for _ in texts]
+
+    embedding = Embedding()
+    restored = LanceDbMemoryVectorStore(target.storage_root / "knowledge" / "lancedb", dimension=DIMENSION)
+    monkeypatch.setattr(memory_service, "embedding_provider", embedding)
+    monkeypatch.setattr(memory_service, "memory_vector_store", restored)
+    assert await restored.list_revisions(user_id="a") == {str(embedded): 1}
+    async with get_async_db_session() as session:
+        result = await rebuild_memory_vectors(session)
+    assert (result.rebuilt, result.failed, result.removed) == (1, 0, 0)
+    assert embedding.texts == ["Reads with a screen reader"]
+    assert await restored.list_revisions(user_id="a") == {str(embedded): 1, str(missing): 1}

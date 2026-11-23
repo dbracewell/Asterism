@@ -116,9 +116,9 @@ function DeletionRequest() {
               <AlertDialogTitle>Ask to delete your account?</AlertDialogTitle>
               <AlertDialogDescription>
                 An administrator sees your request and decides. If they delete
-                the account, your chats, projects, files, study records, skills
-                and settings are deleted for good. Nothing changes until then,
-                and you can withdraw the request.
+                the account, your chats, projects, files, study records, skills,
+                memories and settings are deleted for good. Nothing changes
+                until then, and you can withdraw the request.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
