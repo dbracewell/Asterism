@@ -54,6 +54,8 @@ Source: user request (2026-11-18). Suggested order: [EPIC-87](docs/epics/EPIC-87
 
 ## Long-term memory (proposed 2026-11-20)
 
+EPIC-95 is complete and archived in the [2026-11-23 checklist](docs/archive/todo-completed-2026-11-23.md), so EPIC-93 is next.
+
 Source: user request (2026-11-20). [EPIC-93](docs/epics/EPIC-93-LONG-TERM-MEMORY.md): user memory (about the person, across every chat and project, never project content) and project memory; the agent proposes and the person confirms; relevant memories added each turn; private, with admin, personal and course switches (decided 2026-11-20). Suggested order: US-93.1 → 93.6. Work one story at a time.
 
 ### EPIC-93: Long-term memory
@@ -95,37 +97,6 @@ Source: user request (2026-11-20). [EPIC-93](docs/epics/EPIC-93-LONG-TERM-MEMORY
   - [ ] Backup and restore (ADR-0072) include the memory vectors. A restore re-embeds any memory without a vector.
   - [ ] The upgrade check (US-91.6) seeds a user memory and a project memory and checks they survive.
   - [ ] User guide: a "What Asterism remembers" page. Architecture: memory in the agent runtime and context-isolation guides. `AGENTS.md`: replace "no long-term memory engine exists" with the memory rules. Release notes: Behavior.
-
-## Fixable high vulnerabilities (proposed 2026-11-22)
-
-Source: user request (2026-11-22), after EPIC-92. [EPIC-95](docs/epics/EPIC-95-FIXABLE-HIGH-VULNERABILITIES.md): take test tooling and pip out of the image, upgrade the remaining Node, Python and OS packages with a fixable high, then make a fixable high fail CI. EPIC-94 is complete and archived in the [2026-11-22 checklist](docs/archive/todo-completed-2026-11-22.md), so this epic is next. Suggested order: US-95.1 → 95.5. Work one story at a time.
-
-### EPIC-95: No fixable high vulnerabilities
-
-- [x] US-95.1: Keep development packages out of the image (merged 2026-11-22, PR #64)
-  - [x] Scan the image built after EPIC-94 and record its fixable highs in the epic, updating "Where things stand" when they differ.
-  - [x] Stop `vitest` (better-auth's optional peer) and what it brings (`vite`, `jsdom`, `undici`) from reaching the production install, without changing the frontend's own test setup.
-  - [x] Remove pip, and the packages it vendors, from the runtime stage. The build stages keep it to install uv.
-  - [x] `pnpm check:image` fails if `vitest`, `vite` or `jsdom` is in the image's `node_modules`, or `pip` is importable by the image's system Python. Tests cover both.
-  - [x] Release notes: Image (what was removed, and the new size).
-- [x] US-95.2: Node packages (merged 2026-11-23, PR #66)
-  - [x] Upgrade what is still flagged after US-95.1 (`fast-uri` through `ajv`, `browserslist`, and `source-map-js` through `next` → `postcss`) and the lockfile-only `brace-expansion` and `js-yaml`, with overrides only where a parent pins an old version.
-  - [x] Tests: form validation through `@hookform/resolvers` and `ajv`; the frontend build and E2E.
-  - [x] Dependabot shows no open high alert for `pnpm-lock.yaml`.
-- [x] US-95.3: Python packages (merged 2026-11-23, PR #67)
-  - [x] Upgrade `cryptography` (49 → 50), `filelock` (3 → 4), `soupsieve` (2 → 3 or 4) and `urllib3` (2.8) through `uv.lock`, with a constraint only where a parent caps one.
-  - [x] Check each major in its changelog and with tests: JWT verification and PDF text extraction (cryptography); model downloads and the Hugging Face cache, including two at once (filelock); HTML to Markdown and the web fetch tool's extraction (soupsieve).
-  - [x] Record in the pull request, for each, whether Asterism's use reaches the advisory.
-  - [x] The upgrade check passes. Dependabot shows no open high alert for `uv.lock`.
-- [x] US-95.4: OS packages (merged 2026-11-23, PR #69)
-  - [ ] Take the base image update that carries `zlib1g` 1.3.1-1+deb13u1 (and any other fixed OS package by then), as a pinned digest. No newer base yet: the latest `python:3.13-slim-trixie` (2026-11-05) is the pinned digest and still has 1-1+b1, so the fallback below applies.
-  - [x] If the base lags a fix by more than a week, the runtime stage upgrades that named package with a comment and the date, and a check fails once the base has caught up.
-  - [x] The image checks and the theme storage and fetch browser checks pass.
-- [x] US-95.5: Fail on fixable highs (merged 2026-11-23, PR #70; released in 0.3.1)
-  - [x] `pnpm check:vulns` fails on a fixable high as well as a fixable critical, in CI, the release workflow and the weekly scan, and still prints the table. Tests cover the new threshold and `.trivyignore.yaml` entries for highs.
-  - [x] The weekly scan's issue lists new fixable highs as well as criticals.
-  - [x] Update the vulnerability scan section of `docs/development.md` and close EPIC-92's open question 1.
-  - [x] Release notes: Image (the fixed packages, and that a fixable high now stops a release). Cut the release that ships the epic.
 
 ## Maintenance follow-ups (2026-11-21)
 
