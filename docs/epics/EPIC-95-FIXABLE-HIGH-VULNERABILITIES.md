@@ -89,10 +89,14 @@ As an administrator, the image holds only what Asterism runs.
 
 As an administrator, the frontend's packages have no fixable high.
 
-- [ ] Upgrade what is still flagged after US-95.1 (`fast-uri` through `ajv`,
+- [x] Upgrade what is still flagged after US-95.1 (`fast-uri` through `ajv`,
       `browserslist`, and `source-map-js` through `next` → `postcss`) and the lockfile-only `brace-expansion` and
       `js-yaml`, through `pnpm-lock.yaml`, with overrides only where a parent pins
-      an old version.
+      an old version. Done: Dependabot also flagged `vite` and `undici` (dev-only
+      after US-95.1, through `vitest` and `jsdom`), so they were upgraded too.
+      Only `js-yaml` needed an override (`@hey-api/json-schema-ref-parser` 1.4.4,
+      the latest, pins 4.2.0). The stale package-manager document in
+      `pnpm-lock.yaml`, which pinned pnpm 11.5.0, was removed.
 - [ ] Tests: form validation through `@hookform/resolvers` and `ajv`; the
       frontend build and E2E.
 - [ ] Dependabot shows no open high alert for `pnpm-lock.yaml`.

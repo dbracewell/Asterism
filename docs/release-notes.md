@@ -33,6 +33,14 @@ Unreleased into its version and date.
   `vite`, `undici`, `msgpack` and `setuptools`. The image is 3.59 GB on arm64
   (was 3.72 GB). `pnpm check:image` now fails if `vitest`, `vite` or `jsdom` is
   in the image's `node_modules`, or the system Python can import pip.
+- The frontend's Node packages have no fixable high-severity finding. In the
+  image, `fast-uri` is 3.1.9 (was 3.1.2), `browserslist` 4.29.6 (was 4.28.2)
+  and `source-map-js` 1.2.4 (was 1.2.1). Development tooling outside the image
+  is upgraded too (`brace-expansion`, `js-yaml`, `vite`, `vitest`, `undici`);
+  `js-yaml` needs a pnpm override because `@hey-api/json-schema-ref-parser`
+  pins an old version. The lockfile no longer pins a pnpm binary (11.5.0, left
+  from the first commit); the image and CI install pnpm 11.17.0 from
+  `packageManager`.
 
 ## 0.3.0 (2026-11-22)
 
