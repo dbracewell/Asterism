@@ -78,7 +78,17 @@ FROM python:3.13-slim-trixie@sha256:e48f59cdba69a3cbd9ed2cf0f348d90d45a8d350d981
 # display, extra fonts, and LLVM and Mesa through libgbm1). libgbm.so.1 itself
 # is unpacked from its package alone: it needs only libdrm, expat and
 # wayland-server, while installing libgbm1 would pull in Mesa's drivers and LLVM.
+#
+# Debian packages with a fix the base image lags by more than a week (EPIC-95):
+# the runtime stage upgrades each one until the base carries it, and
+# `pnpm check:image` fails once it does, so the entry comes out.
+# - zlib1g: 1:1.3.dfsg+really1.3.1-1+deb13u1 fixes CVE-2026-85091 (high). It
+#   reached trixie-security on 2026-11-01; the base, built 2026-11-05, still had
+#   1-1+b1 on 2026-11-23.
+ARG BASE_LAG_UPGRADES="zlib1g"
 RUN apt-get update \
+  && if [ -n "$BASE_LAG_UPGRADES" ]; then \
+    apt-get install -y --no-install-recommends --only-upgrade $BASE_LAG_UPGRADES; fi \
   && apt-get install -y --no-install-recommends nginx tini libstdc++6 libgomp1 fonts-dejavu-core \
     libnss3 libnspr4 libatk1.0-0t64 libatk-bridge2.0-0t64 libatspi2.0-0t64 libdbus-1-3 libexpat1 libglib2.0-0t64 \
     libx11-6 libxcb1 libxcomposite1 libxdamage1 libxext6 libxfixes3 libxrandr2 libxkbcommon0 \

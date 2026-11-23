@@ -127,11 +127,14 @@ As an administrator, the backend's packages have no fixable high.
 As an administrator, the image's Debian packages have no fixable high.
 
 - [ ] Take the base image update that carries `zlib1g` 1.3.1-1+deb13u1 (and any
-      other fixed OS package by then), as a pinned digest.
-- [ ] If the base lags a fix by more than a week, the runtime stage upgrades
+      other fixed OS package by then), as a pinned digest. Not yet possible
+      (2026-11-23): the newest `python:3.13-slim-trixie` is the pinned digest,
+      built 2026-11-05, and still has 1.3.1-1+b1; Debian's fix reached
+      trixie-security on 2026-11-01. The next task covers it until then.
+- [x] If the base lags a fix by more than a week, the runtime stage upgrades
       that named package with a comment and the date, and a check fails once the
       base has caught up so the line comes out.
-- [ ] The image checks and the theme storage and fetch browser checks pass.
+- [x] The image checks and the theme storage and fetch browser checks pass.
 
 ### US-95.5: Fail on fixable highs
 
