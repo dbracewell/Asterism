@@ -100,6 +100,22 @@ recorded turn. Regeneration picks up current memories. Deleting a memory removes
 its text from every snapshot, so once someone deletes something Asterism stops
 sending it, resumes included. Sub-agents inherit the recorded layer.
 
+### Policies (US-93.2)
+
+Memory is used in a chat only when every switch allows it, each read live:
+
+1. the admin `memory` policy: off by default, optionally limited to groups
+   (`group_ids`, ADR-0058);
+2. the person's "Use memory" setting (`memory_enabled`), on unless they turn it
+   off;
+3. for a course project, the class's `memory_enabled` (ADR-0068), which the
+   effective mode policy reports with the class and educator as its source.
+
+`memory_available` checks them in that order and names the first that is off.
+Reading and proposing (US-93.4, US-93.5) call it on every send, resume and
+regeneration. The switches never hide or delete saved memories: people can
+always see and delete their own.
+
 ### Memory grants nothing
 
 Like About you, memory is information about the person, framed that way in the

@@ -146,6 +146,9 @@ async def get_user_settings(
         user_settings.group = (await read_group_refs([user_id], session)).get(user_id)
         canvas_policy = await session.get(ApplicationSettingsModel, "canvas_enabled")
         user_settings.canvas_allowed = canvas_policy is not None and canvas_policy.value is True
+        from asterism.domains.memory.access import memory_allowed
+
+        user_settings.memory_allowed = (await memory_allowed(user_id, session)).available
 
     # settings_cache.set_user_settings(user_id, user_settings)
     return user_settings
@@ -275,6 +278,7 @@ async def _validate_user_setting(user_id: str, key: str, value: Any, session: As
         "show_thinking",
         "prompt_coach_enabled",
         "canvas_enabled",
+        "memory_enabled",
         FIRST_CHAT_TOUR_SETTING,
     }:
         raise BadDataException("Unsupported user setting")
@@ -289,7 +293,7 @@ async def _validate_user_setting(user_id: str, key: str, value: Any, session: As
             raise BadDataException("Default model must be available and active")
     if (
         value is not None
-        and key in {"show_thinking", "prompt_coach_enabled", "canvas_enabled"}
+        and key in {"show_thinking", "prompt_coach_enabled", "canvas_enabled", "memory_enabled"}
         and not isinstance(value, bool)
     ):
         raise BadDataException(f"{key} must be boolean")
@@ -846,6 +850,14 @@ def _validate_non_provider_app_setting(
             return ImageGenerationPolicy.model_validate(value).model_dump(mode="json"), None
         except ValidationError as exc:
             raise BadDataException("Invalid image generation policy") from exc
+
+    if key == "memory":
+        from asterism.domains.memory.schemas import MemoryPolicy
+
+        try:
+            return MemoryPolicy.model_validate(value).model_dump(mode="json"), None
+        except ValidationError as exc:
+            raise BadDataException("Invalid memory policy") from exc
 
     if key == "image_generation_local":
         from asterism.domains.image_generation.local.schemas import LocalSettings

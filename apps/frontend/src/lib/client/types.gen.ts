@@ -139,6 +139,12 @@ export type ApplicationSettings = {
     [key: string]: unknown;
   } | null;
   /**
+   * Memory
+   */
+  memory?: {
+    [key: string]: unknown;
+  } | null;
+  /**
    * Image Generation Local
    */
   image_generation_local?: {
@@ -1469,6 +1475,12 @@ export type ClassModePolicy = {
    * Whether students may reveal answers and solutions
    */
   answer_reveal: boolean;
+  /**
+   * Memory Enabled
+   *
+   * Whether Asterism reads and proposes memories in students' course chats
+   */
+  memory_enabled?: boolean;
 };
 
 /**
@@ -4790,6 +4802,23 @@ export type Memory = {
 };
 
 /**
+ * MemoryAvailability
+ *
+ * Whether memory is used here now, and if not, which switch says so.
+ */
+export type MemoryAvailability = {
+  /**
+   * Available
+   */
+  available: boolean;
+  off_by?: MemorySwitch | null;
+  /**
+   * Reason
+   */
+  reason?: string;
+};
+
+/**
  * MemoryCategory
  *
  * What a user memory is about. Project memory has no category.
@@ -4855,6 +4884,22 @@ export type MemoryPage = {
 };
 
 /**
+ * MemoryPolicy
+ *
+ * The admin policy (ADR-0078): off by default, optionally for some groups only.
+ */
+export type MemoryPolicy = {
+  /**
+   * Enabled
+   */
+  enabled?: boolean;
+  /**
+   * Group Ids
+   */
+  group_ids?: Array<string> | null;
+};
+
+/**
  * MemorySavedBy
  *
  * Who saved it: the person themselves, or a proposal of the agent they confirmed.
@@ -4884,6 +4929,14 @@ export type MemorySource = {
    */
   chat_deleted: boolean;
 };
+
+/**
+ * MemorySwitch
+ *
+ * Which switch turned memory off: the admin policy, the person's group, their own
+ * setting, or the course.
+ */
+export type MemorySwitch = "policy" | "group" | "personal" | "course";
 
 /**
  * MemoryUpdate
@@ -5194,6 +5247,12 @@ export type ModePolicy = {
   allowed_modes: Array<LearningModeId>;
   reveal: ModeReveal;
   /**
+   * Memory Enabled
+   *
+   * False when any source turns memory off
+   */
+  memory_enabled?: boolean;
+  /**
    * Sources
    */
   sources?: Array<ModePolicySource>;
@@ -5227,6 +5286,12 @@ export type ModePolicySource = {
    * Learner Can Lift
    */
   learner_can_lift: boolean;
+  /**
+   * Memory Enabled
+   *
+   * False when this source turns memory off (ADR-0078)
+   */
+  memory_enabled?: boolean;
 };
 
 /**
@@ -9832,6 +9897,10 @@ export type TaughtClass = {
    */
   answer_reveal: boolean;
   /**
+   * Memory Enabled
+   */
+  memory_enabled?: boolean;
+  /**
    * Member Count
    */
   member_count?: number;
@@ -10529,6 +10598,14 @@ export type UserSettings = {
    */
   canvas_allowed?: boolean;
   /**
+   * Memory Enabled
+   */
+  memory_enabled?: boolean;
+  /**
+   * Memory Allowed
+   */
+  memory_allowed?: boolean;
+  /**
    * First Chat Tour
    */
   first_chat_tour?: "completed" | "dismissed" | null;
@@ -10723,6 +10800,12 @@ export type ApplicationSettingsWritable = {
    * Image Generation
    */
   image_generation?: {
+    [key: string]: unknown;
+  } | null;
+  /**
+   * Memory
+   */
+  memory?: {
     [key: string]: unknown;
   } | null;
   /**
@@ -20390,6 +20473,431 @@ export type ChatgptConnectionDisconnectResponses = {
 export type ChatgptConnectionDisconnectResponse =
   ChatgptConnectionDisconnectResponses[keyof ChatgptConnectionDisconnectResponses];
 
+export type MemoryDeleteAllData = {
+  body?: never;
+  path?: never;
+  query?: {
+    /**
+     * Kind
+     */
+    kind?: MemoryKind | null;
+    /**
+     * Project Id
+     */
+    project_id?: string | null;
+  };
+  url: "/users/me/memories/";
+};
+
+export type MemoryDeleteAllErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type MemoryDeleteAllError =
+  MemoryDeleteAllErrors[keyof MemoryDeleteAllErrors];
+
+export type MemoryDeleteAllResponses = {
+  /**
+   * Successful Response
+   */
+  200: MemoryDeleteAll;
+};
+
+export type MemoryDeleteAllResponse =
+  MemoryDeleteAllResponses[keyof MemoryDeleteAllResponses];
+
+export type MemoryGetManyData = {
+  body?: never;
+  path?: never;
+  query?: {
+    /**
+     * Kind
+     */
+    kind?: MemoryKind | null;
+    /**
+     * Project Id
+     */
+    project_id?: string | null;
+    /**
+     * Page
+     */
+    page?: number;
+    /**
+     * Page Size
+     */
+    page_size?: number;
+  };
+  url: "/users/me/memories/";
+};
+
+export type MemoryGetManyErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type MemoryGetManyError = MemoryGetManyErrors[keyof MemoryGetManyErrors];
+
+export type MemoryGetManyResponses = {
+  /**
+   * Successful Response
+   */
+  200: MemoryPage;
+};
+
+export type MemoryGetManyResponse =
+  MemoryGetManyResponses[keyof MemoryGetManyResponses];
+
+export type MemoryCreateData = {
+  body: MemoryCreate;
+  path?: never;
+  query?: never;
+  url: "/users/me/memories/";
+};
+
+export type MemoryCreateErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type MemoryCreateError = MemoryCreateErrors[keyof MemoryCreateErrors];
+
+export type MemoryCreateResponses = {
+  /**
+   * Successful Response
+   */
+  201: Memory;
+};
+
+export type MemoryCreateResponse =
+  MemoryCreateResponses[keyof MemoryCreateResponses];
+
+export type MemoryAvailabilityData = {
+  body?: never;
+  path?: never;
+  query?: {
+    /**
+     * Chat Id
+     */
+    chat_id?: string | null;
+    /**
+     * Project Id
+     */
+    project_id?: string | null;
+  };
+  url: "/users/me/memories/availability";
+};
+
+export type MemoryAvailabilityErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type MemoryAvailabilityError =
+  MemoryAvailabilityErrors[keyof MemoryAvailabilityErrors];
+
+export type MemoryAvailabilityResponses = {
+  /**
+   * Successful Response
+   */
+  200: MemoryAvailability;
+};
+
+export type MemoryAvailabilityResponse =
+  MemoryAvailabilityResponses[keyof MemoryAvailabilityResponses];
+
+export type MemoryDeleteData = {
+  body?: never;
+  path: {
+    /**
+     * Memory Id
+     */
+    memory_id: string;
+  };
+  query: {
+    /**
+     * Expected Revision
+     */
+    expected_revision: number;
+  };
+  url: "/users/me/memories/{memory_id}";
+};
+
+export type MemoryDeleteErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type MemoryDeleteError = MemoryDeleteErrors[keyof MemoryDeleteErrors];
+
+export type MemoryDeleteResponses = {
+  /**
+   * Successful Response
+   */
+  204: void;
+};
+
+export type MemoryDeleteResponse =
+  MemoryDeleteResponses[keyof MemoryDeleteResponses];
+
+export type MemoryGetOneData = {
+  body?: never;
+  path: {
+    /**
+     * Memory Id
+     */
+    memory_id: string;
+  };
+  query?: never;
+  url: "/users/me/memories/{memory_id}";
+};
+
+export type MemoryGetOneErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type MemoryGetOneError = MemoryGetOneErrors[keyof MemoryGetOneErrors];
+
+export type MemoryGetOneResponses = {
+  /**
+   * Successful Response
+   */
+  200: Memory;
+};
+
+export type MemoryGetOneResponse =
+  MemoryGetOneResponses[keyof MemoryGetOneResponses];
+
+export type MemoryUpdateData = {
+  body: MemoryUpdate;
+  path: {
+    /**
+     * Memory Id
+     */
+    memory_id: string;
+  };
+  query?: never;
+  url: "/users/me/memories/{memory_id}";
+};
+
+export type MemoryUpdateErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type MemoryUpdateError = MemoryUpdateErrors[keyof MemoryUpdateErrors];
+
+export type MemoryUpdateResponses = {
+  /**
+   * Successful Response
+   */
+  200: Memory;
+};
+
+export type MemoryUpdateResponse =
+  MemoryUpdateResponses[keyof MemoryUpdateResponses];
+
+export type MemoryPolicyGetData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/settings/app/memory";
+};
+
+export type MemoryPolicyGetErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Forbidden
+   */
+  403: ErrorDetail;
+};
+
+export type MemoryPolicyGetError =
+  MemoryPolicyGetErrors[keyof MemoryPolicyGetErrors];
+
+export type MemoryPolicyGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: MemoryPolicy;
+};
+
+export type MemoryPolicyGetResponse =
+  MemoryPolicyGetResponses[keyof MemoryPolicyGetResponses];
+
+export type MemoryPolicyUpdateData = {
+  body: MemoryPolicy;
+  path?: never;
+  query?: never;
+  url: "/settings/app/memory";
+};
+
+export type MemoryPolicyUpdateErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Forbidden
+   */
+  403: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type MemoryPolicyUpdateError =
+  MemoryPolicyUpdateErrors[keyof MemoryPolicyUpdateErrors];
+
+export type MemoryPolicyUpdateResponses = {
+  /**
+   * Successful Response
+   */
+  200: MemoryPolicy;
+};
+
+export type MemoryPolicyUpdateResponse =
+  MemoryPolicyUpdateResponses[keyof MemoryPolicyUpdateResponses];
+
 export type MainAgentGetData = {
   body?: never;
   path?: never;
@@ -21150,305 +21658,6 @@ export type AppSettingUpdateResponses = {
 
 export type AppSettingUpdateResponse =
   AppSettingUpdateResponses[keyof AppSettingUpdateResponses];
-
-export type MemoryDeleteAllData = {
-  body?: never;
-  path?: never;
-  query?: {
-    /**
-     * Kind
-     */
-    kind?: MemoryKind | null;
-    /**
-     * Project Id
-     */
-    project_id?: string | null;
-  };
-  url: "/users/me/memories/";
-};
-
-export type MemoryDeleteAllErrors = {
-  /**
-   * Bad Request
-   */
-  400: ErrorDetail;
-  /**
-   * Unauthorized
-   */
-  401: ErrorDetail;
-  /**
-   * Not Found
-   */
-  404: ErrorDetail;
-  /**
-   * Conflict
-   */
-  409: ErrorDetail;
-  /**
-   * Validation Error
-   */
-  422: ErrorDetail;
-};
-
-export type MemoryDeleteAllError =
-  MemoryDeleteAllErrors[keyof MemoryDeleteAllErrors];
-
-export type MemoryDeleteAllResponses = {
-  /**
-   * Successful Response
-   */
-  200: MemoryDeleteAll;
-};
-
-export type MemoryDeleteAllResponse =
-  MemoryDeleteAllResponses[keyof MemoryDeleteAllResponses];
-
-export type MemoryGetManyData = {
-  body?: never;
-  path?: never;
-  query?: {
-    /**
-     * Kind
-     */
-    kind?: MemoryKind | null;
-    /**
-     * Project Id
-     */
-    project_id?: string | null;
-    /**
-     * Page
-     */
-    page?: number;
-    /**
-     * Page Size
-     */
-    page_size?: number;
-  };
-  url: "/users/me/memories/";
-};
-
-export type MemoryGetManyErrors = {
-  /**
-   * Bad Request
-   */
-  400: ErrorDetail;
-  /**
-   * Unauthorized
-   */
-  401: ErrorDetail;
-  /**
-   * Not Found
-   */
-  404: ErrorDetail;
-  /**
-   * Conflict
-   */
-  409: ErrorDetail;
-  /**
-   * Validation Error
-   */
-  422: ErrorDetail;
-};
-
-export type MemoryGetManyError = MemoryGetManyErrors[keyof MemoryGetManyErrors];
-
-export type MemoryGetManyResponses = {
-  /**
-   * Successful Response
-   */
-  200: MemoryPage;
-};
-
-export type MemoryGetManyResponse =
-  MemoryGetManyResponses[keyof MemoryGetManyResponses];
-
-export type MemoryCreateData = {
-  body: MemoryCreate;
-  path?: never;
-  query?: never;
-  url: "/users/me/memories/";
-};
-
-export type MemoryCreateErrors = {
-  /**
-   * Bad Request
-   */
-  400: ErrorDetail;
-  /**
-   * Unauthorized
-   */
-  401: ErrorDetail;
-  /**
-   * Not Found
-   */
-  404: ErrorDetail;
-  /**
-   * Conflict
-   */
-  409: ErrorDetail;
-  /**
-   * Validation Error
-   */
-  422: ErrorDetail;
-};
-
-export type MemoryCreateError = MemoryCreateErrors[keyof MemoryCreateErrors];
-
-export type MemoryCreateResponses = {
-  /**
-   * Successful Response
-   */
-  201: Memory;
-};
-
-export type MemoryCreateResponse =
-  MemoryCreateResponses[keyof MemoryCreateResponses];
-
-export type MemoryDeleteData = {
-  body?: never;
-  path: {
-    /**
-     * Memory Id
-     */
-    memory_id: string;
-  };
-  query: {
-    /**
-     * Expected Revision
-     */
-    expected_revision: number;
-  };
-  url: "/users/me/memories/{memory_id}";
-};
-
-export type MemoryDeleteErrors = {
-  /**
-   * Bad Request
-   */
-  400: ErrorDetail;
-  /**
-   * Unauthorized
-   */
-  401: ErrorDetail;
-  /**
-   * Not Found
-   */
-  404: ErrorDetail;
-  /**
-   * Conflict
-   */
-  409: ErrorDetail;
-  /**
-   * Validation Error
-   */
-  422: ErrorDetail;
-};
-
-export type MemoryDeleteError = MemoryDeleteErrors[keyof MemoryDeleteErrors];
-
-export type MemoryDeleteResponses = {
-  /**
-   * Successful Response
-   */
-  204: void;
-};
-
-export type MemoryDeleteResponse =
-  MemoryDeleteResponses[keyof MemoryDeleteResponses];
-
-export type MemoryGetOneData = {
-  body?: never;
-  path: {
-    /**
-     * Memory Id
-     */
-    memory_id: string;
-  };
-  query?: never;
-  url: "/users/me/memories/{memory_id}";
-};
-
-export type MemoryGetOneErrors = {
-  /**
-   * Bad Request
-   */
-  400: ErrorDetail;
-  /**
-   * Unauthorized
-   */
-  401: ErrorDetail;
-  /**
-   * Not Found
-   */
-  404: ErrorDetail;
-  /**
-   * Conflict
-   */
-  409: ErrorDetail;
-  /**
-   * Validation Error
-   */
-  422: ErrorDetail;
-};
-
-export type MemoryGetOneError = MemoryGetOneErrors[keyof MemoryGetOneErrors];
-
-export type MemoryGetOneResponses = {
-  /**
-   * Successful Response
-   */
-  200: Memory;
-};
-
-export type MemoryGetOneResponse =
-  MemoryGetOneResponses[keyof MemoryGetOneResponses];
-
-export type MemoryUpdateData = {
-  body: MemoryUpdate;
-  path: {
-    /**
-     * Memory Id
-     */
-    memory_id: string;
-  };
-  query?: never;
-  url: "/users/me/memories/{memory_id}";
-};
-
-export type MemoryUpdateErrors = {
-  /**
-   * Bad Request
-   */
-  400: ErrorDetail;
-  /**
-   * Unauthorized
-   */
-  401: ErrorDetail;
-  /**
-   * Not Found
-   */
-  404: ErrorDetail;
-  /**
-   * Conflict
-   */
-  409: ErrorDetail;
-  /**
-   * Validation Error
-   */
-  422: ErrorDetail;
-};
-
-export type MemoryUpdateError = MemoryUpdateErrors[keyof MemoryUpdateErrors];
-
-export type MemoryUpdateResponses = {
-  /**
-   * Successful Response
-   */
-  200: Memory;
-};
-
-export type MemoryUpdateResponse =
-  MemoryUpdateResponses[keyof MemoryUpdateResponses];
 
 export type UserGetManyData = {
   body?: never;

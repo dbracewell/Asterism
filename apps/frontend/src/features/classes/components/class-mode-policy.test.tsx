@@ -50,7 +50,11 @@ it("narrows the allowed modes and turns reveals off", async () => {
   await waitFor(() =>
     expect(mocks.save.mock.calls[0]?.[0]).toEqual({
       path: { class_id: "c1" },
-      body: { allowed_modes: ["tutor"], answer_reveal: false },
+      body: {
+        allowed_modes: ["tutor"],
+        answer_reveal: false,
+        memory_enabled: true,
+      },
     }),
   );
 });
@@ -69,4 +73,16 @@ it("needs at least one mode", async () => {
   await user.click(await screen.findByRole("checkbox", { name: "Tutor" }));
   expect(screen.getByText("Allow at least one mode.")).toBeInTheDocument();
   expect(screen.getByRole("button", { name: "Save policy" })).toBeDisabled();
+});
+
+it("keeps the course's stored memory setting when saving the mode rules", async () => {
+  const user = setup({ memory_enabled: false });
+  expect(screen.queryByRole("switch", { name: /memories/ })).toBeNull();
+  await user.click(await screen.findByRole("button", { name: "Save policy" }));
+  await waitFor(() =>
+    expect(mocks.save.mock.calls[0]?.[0]).toEqual({
+      path: { class_id: "c1" },
+      body: { allowed_modes: null, answer_reveal: true, memory_enabled: false },
+    }),
+  );
 });

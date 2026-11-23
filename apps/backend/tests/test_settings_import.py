@@ -15,6 +15,7 @@ from asterism.domains.settings_transfer.documents import (
     ExportedCaptioning,
     ExportedCompaction,
     ExportedComponent,
+    ExportedMemory,
     ExportedModel,
     ExportedProvider,
     ModelReference,
@@ -409,3 +410,25 @@ async def test_export_then_import_restores_a_wiped_instance(api, monkeypatch):
     response = await post(client, IMPORT, {"source": exported.text, "passphrase": PASSPHRASE})
     assert response.status_code == 200, response.text
     assert await state(sessions) == original
+
+
+async def test_memory_policy_imports_its_switch_and_keeps_local_group_limits(api):
+    """US-93.2: only on/off travels; group ids differ between installations."""
+    client, sessions = api
+    async with sessions() as session:
+        session.add(ApplicationSettingsModel(key="memory", value={"enabled": False, "group_ids": ["student"]}))
+        await session.commit()
+    assert (await post(client, IMPORT, request(bundle(memory=ExportedMemory(enabled=True))))).status_code == 200
+    async with sessions() as session:
+        stored = await session.get(ApplicationSettingsModel, "memory")
+    assert stored.value == {"enabled": True, "group_ids": ["student"]}
+
+
+async def test_memory_policy_exports_only_its_switch(api):
+    _, sessions = api
+    async with sessions() as session:
+        session.add(ApplicationSettingsModel(key="memory", value={"enabled": True, "group_ids": ["student"]}))
+        await session.commit()
+        exported = await collect_settings(session)
+    # The switch travels; the group limit stays with this installation.
+    assert exported.memory.model_dump() == {"enabled": True}

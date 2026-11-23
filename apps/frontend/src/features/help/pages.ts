@@ -1257,6 +1257,7 @@ const adminSettingsGuides: Record<string, PageGuideId | null> = {
   usage: "admin.usage",
   status: "admin.status",
   "image-generation": "admin.image-generation",
+  memory: null,
   "code-execution": null,
 };
 

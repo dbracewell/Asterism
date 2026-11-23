@@ -1,6 +1,6 @@
 # EPIC-93: Long-term memory
 
-Status: in progress (US-93.1 started 2026-11-23; proposed 2026-11-20). Source: user request (2026-11-20). Decided
+Status: in progress (US-93.1 merged 2026-11-23, PR #73; proposed 2026-11-20). Source: user request (2026-11-20). Decided
 2026-11-20: two kinds of memory (user and project), the agent proposes and the
 person confirms, relevant memories are added each turn, memories are private,
 and a course can turn memory off.
@@ -119,13 +119,18 @@ belongs only to me.
 As an admin, I decide whether memory is available and to whom. As an educator, I
 can keep it out of my course.
 
-- [ ] An admin `memory_enabled` policy (default off) with `group_ids`, in Admin
-      Settings, checked live (ADR-0058).
-- [ ] A per-person "Use memory" setting (default on when the policy allows).
-- [ ] A course setting that turns memory off for chats in the course, included
+- [x] An admin `memory_enabled` policy (default off) with `group_ids`, in Admin
+      Settings, checked live (ADR-0058). Stored as the `memory` app setting. The
+      pane is marked Planned until memory is used (decided 2026-11-23).
+- [x] A per-person "Use memory" setting (default on when the policy allows).
+      Backend only: its control in Your Asterism ships with US-93.5, so nothing
+      describes memory before it works (ADR-0032, decided 2026-11-23).
+- [x] A course setting that turns memory off for chats in the course, included
       in the effective policy (ADR-0068) with its source shown to the student.
-- [ ] One `memory_available(user, chat)` check, used for reading and proposing on
-      every send, resume and regeneration. Tests for each source.
+      Backend and the student's notice; the educator's switch ships with US-93.5.
+- [x] One `memory_available(user, chat)` check, used for reading and proposing on
+      every send, resume and regeneration. Tests for each source. US-93.4 and
+      US-93.5 call it there, as they add proposing and reading.
 
 ### US-93.3: Your memories in Your Asterism
 
@@ -177,6 +182,9 @@ without my repeating it.
       with a link to them in Your Asterism.
 - [ ] Tests for selection, the budget, pinning, course and policy refusals, and
       that a General chat never receives project memory.
+- [ ] Show the memory controls held back in US-93.2: "Use memory" in Your
+      Asterism and the educator's course switch, with their help and guide text;
+      drop the admin pane's Planned badge.
 
 ### US-93.6: Memory in exports, backups and upgrades
 

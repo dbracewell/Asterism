@@ -22,8 +22,19 @@ Unreleased into its version and date.
 
 ## Unreleased
 
+### Configuration
+
+- A new admin setting, `memory` (Admin Settings → Memory, marked Planned), is
+  off by default and can be limited to groups. It is saved now and takes effect
+  once memory is used in chats, in a later release. Settings export carries its
+  on/off switch; group limits stay with each installation, as for image
+  generation.
+
 ### Data
 
+- Classes have a `memory_enabled` switch, on for every existing class, for an
+  educator to turn memory off in a course. Each person also gets a "Use memory"
+  setting, on unless they turn it off.
 - A new `memories` table holds what Asterism remembers about each person (user
   memory) and about their work in each project (project memory), with a memory
   vector table, `memory_vectors`, next to the knowledge vectors (ADR-0078).

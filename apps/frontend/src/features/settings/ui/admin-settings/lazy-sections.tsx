@@ -7,6 +7,7 @@ import {
 } from "@/features/settings/ui/admin-settings/admin-pane-state";
 import {
   BookOpenIcon,
+  BrainIcon,
   PanelRightIcon,
   CodeIcon,
   PaletteIcon,
@@ -86,6 +87,13 @@ const CanvasPolicySettings = dynamic(
   () =>
     import("@/features/settings/ui/admin-settings/canvas-policy-settings").then(
       (module) => module.CanvasPolicySettings,
+    ),
+  { loading: AdminPaneLoading },
+);
+const MemoryPolicySettings = dynamic(
+  () =>
+    import("@/features/settings/ui/admin-settings/memory-policy-settings").then(
+      (module) => module.MemoryPolicySettings,
     ),
   { loading: AdminPaneLoading },
 );
@@ -212,6 +220,15 @@ export const getLazyAdminSettingsSections = (): Types => [
     value: "canvas",
     icon: <PanelRightIcon />,
     settingsPane: pane("Canvas", <CanvasPolicySettings />),
+  },
+  {
+    type: "section",
+    label: "Memory",
+    value: "memory",
+    icon: <BrainIcon />,
+    // Memory's switches can be set ahead; memory itself arrives in US-93.4/93.5.
+    badge: "Planned",
+    settingsPane: pane("Memory", <MemoryPolicySettings />),
   },
   {
     type: "section",

@@ -2,9 +2,10 @@
 
 import unicodedata
 import uuid
+from enum import StrEnum
 from typing import Self
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, StrictBool, field_validator, model_validator
 
 from .models import MEMORY_MAX_BYTES, MEMORY_MAX_CHARS, MemoryCategory, MemoryKind, MemorySavedBy
 
@@ -103,3 +104,30 @@ class MemoryPage(BaseModel):
 
 class MemoryDeleteAll(BaseModel):
     deleted: int
+
+
+class MemoryPolicy(BaseModel):
+    """The admin policy (ADR-0078): off by default, optionally for some groups only."""
+
+    model_config = ConfigDict(extra="forbid")
+    enabled: StrictBool = False
+    # None: every group. A list limits it to those groups (ADR-0058 groups).
+    group_ids: list[str] | None = Field(default=None, max_length=200)
+
+
+class MemorySwitch(StrEnum):
+    """Which switch turned memory off: the admin policy, the person's group, their own
+    setting, or the course."""
+
+    POLICY = "policy"
+    GROUP = "group"
+    PERSONAL = "personal"
+    COURSE = "course"
+
+
+class MemoryAvailability(BaseModel):
+    """Whether memory is used here now, and if not, which switch says so."""
+
+    available: bool
+    off_by: MemorySwitch | None = None
+    reason: str = ""

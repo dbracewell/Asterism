@@ -214,6 +214,10 @@ class UserSettings(BaseModel):
     # Canvas (ADR-0063): the user's opt-in, and whether an admin allows it (read-only).
     canvas_enabled: bool = Field(default=False)
     canvas_allowed: bool = Field(default=False)
+    # Memory (ADR-0078): the person's "Use memory" setting, on unless they turn it
+    # off, and whether the admin policy allows it for them (read-only).
+    memory_enabled: bool = Field(default=True)
+    memory_allowed: bool = Field(default=False)
     first_chat_tour: FirstChatTourState | None = Field(default=None)
     # The user's group (ADR-0058); read-only here, set by administrators.
     group: GroupRef | None = Field(default=None)
@@ -241,6 +245,8 @@ class ApplicationSettings(BaseModel):
     canvas_enabled: StrictBool = False
     # Image generation policy and provider (ADR-0064), stored as one JSON value.
     image_generation: dict[str, Any] | None = None
+    # Long-term memory policy (ADR-0078), stored as one JSON value; off when unset.
+    memory: dict[str, Any] | None = None
     # The local diffusers generator's model and device (US-76.2).
     image_generation_local: dict[str, Any] | None = None
     # The ONNX generator's model and accepted licenses (US-94.4).

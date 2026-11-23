@@ -94,6 +94,8 @@ function useCourseLine(course: ModePolicySource | null) {
   const limits = [
     limited && `${orList(names)} ${names.length === 1 ? "mode" : "modes"} only`,
     course.reveal === "forbidden" && "answers can't be revealed",
+    // ADR-0078: an educator can turn memory off in the course.
+    course.memory_enabled === false && "memory is off",
   ].filter(Boolean);
   return `${course.class_name}: ${limits.join(", ")}. Set by ${course.set_by}.`;
 }

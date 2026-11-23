@@ -25,6 +25,7 @@ from .documents import (
     ExportedGroup,
     ExportedImageGeneration,
     ExportedLocalImage,
+    ExportedMemory,
     ExportedModel,
     ExportedOnnxImage,
     ExportedProvider,
@@ -123,6 +124,7 @@ async def collect_settings(session: AsyncSession) -> SettingsBundle:
                 if key in ExportedImageGeneration.model_fields
             }
         ),
+        memory=ExportedMemory(enabled=(settings.memory or {}).get("enabled") is True),
         compaction=ExportedCompaction(
             **settings.compaction.model_dump(exclude={"model_id"}),
             model=_reference(settings.compaction.model_id, providers),
