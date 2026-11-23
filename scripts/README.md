@@ -446,7 +446,7 @@ Use `--retries=0` for deterministic final verification (also the Playwright defa
 The Playwright HTML report is under `apps/frontend/playwright-report`; JSON results,
 per-case geometry/contrast evidence and screenshots are under
 `apps/frontend/test-results`. Failures retain traces with zero retries. CI uploads
-these generated directories as `frontend-ui-review` even when tests fail, retaining
+these generated directories as `frontend-ui-review-<shard>` (one per E2E shard) even when tests fail, retaining
 them for seven days. Working data must not be used for these artifact-producing runs.
 
 ### Backend launch contract checks

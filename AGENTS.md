@@ -348,8 +348,10 @@ Minimum expectations per story:
 
 Expected CI status checks:
 
-- `CI / Lint, Typecheck, Test` (job: `quality-gates`)
-- `CI / Frontend E2E (Playwright)` (job: `frontend-e2e`)
+- `CI / Lint, Typecheck, Test` (job: `quality-gates`, which passes when
+  `repository-checks`, `backend` and `frontend` pass)
+- `CI / Frontend E2E (Playwright)` (job: `frontend-e2e`, which passes when the
+  four `frontend-e2e-shard` jobs pass)
 - `CI / Build and check the image` (job: `image-checks`)
 
 ---

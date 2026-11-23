@@ -51,7 +51,8 @@ CI=1 pnpm_config_verify_deps_before_run=false UV_CACHE_DIR=/private/tmp/asterism
 
 `pnpm test` includes the palette unit checks. Playwright defaults to zero retries;
 CI also passes the explicit flag. The browser job always uploads the HTML report,
-JSON reporter output and per-test evidence as `frontend-ui-review` for seven days,
+JSON reporter output and per-test evidence as `frontend-ui-review-<shard>` (one per
+shard) for seven days,
 including on failure. Locally, open `apps/frontend/playwright-report/index.html` or
 inspect `apps/frontend/test-results`. These generated directories are gitignored.
 The isolated runner uses synthetic accounts, API fixtures and disposable storage;
