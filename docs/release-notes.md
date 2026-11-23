@@ -34,6 +34,11 @@ Unreleased into its version and date.
 - Classes have a `memory_enabled` switch, on for every existing class, for an
   educator to turn memory off in a course. Each person also gets a "Use memory"
   setting, on unless they turn it off.
+- New `memory_proposals` and `memory_proposal_events` tables hold the memories
+  the assistant offers in a chat until the person saves or dismisses them, and
+  an audit record of each offer and decision (ids and times only). Proposals
+  are deleted with their chat; the audit record is kept until the account is
+  deleted. Upgrading adds both empty.
 - A new `message_memories` table pins the memories each accepted turn used, so
   a resumed reply uses the same ones. Its rows are deleted with the memory, the
   message or the account. Turns accepted before upgrading use no memories.
@@ -53,7 +58,9 @@ Unreleased into its version and date.
   most relevant ones to each message as information, never instructions. Only
   the person can see their memories. Each person can turn memory off for
   themselves, and an educator for a course. A reply's Context lists the
-  memories it used.
+  memories it used. The assistant can offer to remember something the person
+  said (the internal `propose_memory` tool); a card under the reply offers
+  Save, Edit or Dismiss, and nothing is saved without the person's click.
 
 ## 0.3.1 (2026-11-23)
 

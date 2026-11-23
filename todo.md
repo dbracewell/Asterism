@@ -79,7 +79,7 @@ Source: user request (2026-11-20). [EPIC-93](docs/epics/EPIC-93-LONG-TERM-MEMORY
   - [x] Tests: an edit between acceptance and resume, where resume sends the accepted text; a deletion between them, where resume sends nothing for that memory.
   - [x] Tests for selection, the budget, pinning, course and policy refusals, and that a General chat never receives project memory.
   - [x] Read through `memory_available` on every send, resume and regeneration (US-93.2). Reply provenance records which memories were used (ids only), for US-93.3 to show.
-- [ ] US-93.3: Your memories in Your Asterism (in progress, branch `feat/us-93.3-memory-page`)
+- [x] US-93.3: Your memories in Your Asterism (PR #76, merged 2026-11-23)
   - [x] User Settings → Your Asterism → Memory: user memories by category, with sensitive ones labelled; add, edit, delete, delete all (with confirmation). Built with shadcn/ui, TanStack Query and the generated client.
   - [x] Each project's settings: its project memories, with the same controls.
   - [x] The "Use memory" setting, with a plain explanation of what is remembered, who can see it (only you) and how it is used.
@@ -87,13 +87,13 @@ Source: user request (2026-11-20). [EPIC-93](docs/epics/EPIC-93-LONG-TERM-MEMORY
   - [x] Help text and a help topic; E2E and accessibility tests.
   - [x] Show which memories a reply used, in the progress panel or message details, with a link to them in Your Asterism.
   - [x] Show the memory controls held back in US-93.2 ("Use memory" in Your Asterism, the course switch) with their help and guide text, and replace the admin Memory placeholder with the working pane.
-- [ ] US-93.4: The agent proposes, the person decides
-  - [ ] An internal `propose_memory` tool for the main agent in ordinary chats, offered when memory is available and the model supports tools: it takes the kind, text, category and whether the memory is sensitive; it is limited to one proposal per turn; it is never offered to sub-agents or in drafting chats.
-  - [ ] Its description and the main prompt set the rules: user memory is only about the person, never project content; accessibility and health memories are only from what the person said about themselves.
-  - [ ] A proposal card in the chat shows the text and where it will be saved ("You, in every chat" or "This project"), with Save, Edit and Dismiss. Saving rechecks availability and ownership live.
-  - [ ] Proposals are branch-aware chat records, and a dismissed one isn't proposed again in that chat.
-  - [ ] An audit record (ids and times only) for every proposal and decision.
-  - [ ] Tests, including text injected from a file, which can only lead to a proposal that is never saved without the click.
+- [ ] US-93.4: The agent proposes, the person decides (in progress, branch `feat/us-93.4-memory-proposals`)
+  - [x] An internal `propose_memory` tool for the main agent in ordinary chats, offered when memory is available and the model supports tools: it takes the kind, text, category and whether the memory is sensitive; it is limited to one proposal per turn; it is never offered to sub-agents or in drafting chats.
+  - [x] Its description and the main prompt set the rules: user memory is only about the person, never project content; accessibility and health memories are only from what the person said about themselves.
+  - [x] A proposal card in the chat shows the text and where it will be saved ("You, in every chat" or "This project"), with Save, Edit and Dismiss. Saving rechecks availability and ownership live.
+  - [x] Proposals are branch-aware chat records, and a dismissed one isn't proposed again in that chat.
+  - [x] An audit record (ids and times only) for every proposal and decision.
+  - [x] Tests, including text injected from a file, which can only lead to a proposal that is never saved without the click.
 - [ ] US-93.6: Memory in exports, backups and upgrades
   - [ ] Download my data (ADR-0076) includes `memories.json`, with sensitive memories marked.
   - [ ] Backup and restore (ADR-0072) include the memory vectors. A restore re-embeds any memory without a vector.

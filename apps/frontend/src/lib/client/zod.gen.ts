@@ -2101,6 +2101,43 @@ export const zMemoryPolicy = z.object({
 });
 
 /**
+ * MemoryProposalSave
+ *
+ * What to save: the proposal as offered, or as the person edited it. Kind and project never change.
+ */
+export const zMemoryProposalSave = z.object({
+  text: z.string().max(4000),
+  category: zMemoryCategory.nullish(),
+  sensitive: z.boolean().optional().default(false),
+});
+
+/**
+ * MemoryProposalStatus
+ */
+export const zMemoryProposalStatus = z.enum(["pending", "saved", "dismissed"]);
+
+/**
+ * MemoryProposal
+ *
+ * A memory the agent offered in a chat, and what the person decided (US-93.4).
+ */
+export const zMemoryProposal = z.object({
+  id: z.uuid(),
+  chat_id: z.uuid(),
+  message_id: z.uuid(),
+  execution_id: z.uuid(),
+  kind: zMemoryKind,
+  project_id: z.uuid().nullable(),
+  text: z.string(),
+  category: zMemoryCategory.nullable(),
+  sensitive: z.boolean(),
+  status: zMemoryProposalStatus,
+  memory_id: z.uuid().nullable(),
+  created_at: z.int(),
+  decided_at: z.int().nullable(),
+});
+
+/**
  * MemorySavedBy
  *
  * Who saved it: the person themselves, or a proposal of the agent they confirmed.
@@ -7677,6 +7714,35 @@ export const zMemoryUpdatePath = z.object({
  * Successful Response
  */
 export const zMemoryUpdateResponse = zMemory;
+
+export const zMemoryProposalGetOnePath = z.object({
+  proposal_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zMemoryProposalGetOneResponse = zMemoryProposal;
+
+export const zMemoryProposalSaveBody = zMemoryProposalSave;
+
+export const zMemoryProposalSavePath = z.object({
+  proposal_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zMemoryProposalSaveResponse = zMemory;
+
+export const zMemoryProposalDismissPath = z.object({
+  proposal_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zMemoryProposalDismissResponse = zMemoryProposal;
 
 /**
  * Successful Response

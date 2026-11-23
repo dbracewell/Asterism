@@ -58,6 +58,19 @@ export function skillLoadLabel(
   return `Load skill ${skill}`;
 }
 
+/** "Offered to remember something" for propose_memory (US-93.4); undefined for other tools. */
+export function memoryToolLabel(
+  name: string,
+  status: ToolStepStatus,
+): string | undefined {
+  if (name !== "propose_memory") return undefined;
+  if (status === "succeeded") return "Offered to remember something";
+  if (status === "running") return "Offering to remember something";
+  if (status === "failed" || status === "denied")
+    return "Didn't offer a memory";
+  return "Offer to remember something";
+}
+
 const CANVAS_VERBS: Record<string, [string, string, string]> = {
   canvas_create: ["Created", "Creating", "create"],
   canvas_update: ["Updated", "Updating", "update"],
@@ -202,7 +215,8 @@ export function messageTimelineSteps(
           call.function.name,
           status,
           result?.raw_result ?? result?.content,
-        ),
+        ) ??
+        memoryToolLabel(call.function.name, status),
       result: result
         ? (errorOf(result.raw_result) ?? result.content)
         : undefined,

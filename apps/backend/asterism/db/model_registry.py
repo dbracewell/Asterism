@@ -44,7 +44,12 @@ from asterism.domains.knowledge.models import (  # noqa: F401
     FileKnowledgeArtifactModel,
     FileKnowledgeExtractionModel,
 )
-from asterism.domains.memory.models import MemoryModel, MessageMemoryModel  # noqa: F401
+from asterism.domains.memory.models import (  # noqa: F401
+    MemoryModel,
+    MemoryProposalEventModel,
+    MemoryProposalModel,
+    MessageMemoryModel,
+)
 from asterism.domains.packs.models import PackImportItemModel, PackImportModel  # noqa: F401
 from asterism.domains.projects.models import ProjectFileModel, ProjectModel, ProjectSubAgentModel  # noqa: F401
 from asterism.domains.prompt_templates.models import PromptTemplateModel  # noqa: F401

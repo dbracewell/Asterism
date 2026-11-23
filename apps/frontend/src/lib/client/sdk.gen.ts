@@ -502,6 +502,15 @@ import type {
   MemoryPolicyUpdateData,
   MemoryPolicyUpdateErrors,
   MemoryPolicyUpdateResponses,
+  MemoryProposalDismissData,
+  MemoryProposalDismissErrors,
+  MemoryProposalDismissResponses,
+  MemoryProposalGetOneData,
+  MemoryProposalGetOneErrors,
+  MemoryProposalGetOneResponses,
+  MemoryProposalSaveData,
+  MemoryProposalSaveErrors,
+  MemoryProposalSaveResponses,
   MemoryUpdateData,
   MemoryUpdateErrors,
   MemoryUpdateResponses,
@@ -5981,6 +5990,75 @@ export class ApiClient extends HeyApiClient {
         "Content-Type": "application/json",
         ...options.headers,
       },
+    });
+  }
+
+  /**
+   * Get Proposal
+   */
+  public memoryProposalGetOne<ThrowOnError extends boolean = false>(
+    options: Options<MemoryProposalGetOneData, ThrowOnError>,
+  ): RequestResult<
+    MemoryProposalGetOneResponses,
+    MemoryProposalGetOneErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).get<
+      MemoryProposalGetOneResponses,
+      MemoryProposalGetOneErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/users/me/memory-proposals/{proposal_id}",
+      ...options,
+    });
+  }
+
+  /**
+   * Save Proposal
+   *
+   * Save the proposal, as offered or edited. Ownership and memory availability are checked now.
+   */
+  public memoryProposalSave<ThrowOnError extends boolean = false>(
+    options: Options<MemoryProposalSaveData, ThrowOnError>,
+  ): RequestResult<
+    MemoryProposalSaveResponses,
+    MemoryProposalSaveErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).post<
+      MemoryProposalSaveResponses,
+      MemoryProposalSaveErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/users/me/memory-proposals/{proposal_id}/save",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+  }
+
+  /**
+   * Dismiss Proposal
+   */
+  public memoryProposalDismiss<ThrowOnError extends boolean = false>(
+    options: Options<MemoryProposalDismissData, ThrowOnError>,
+  ): RequestResult<
+    MemoryProposalDismissResponses,
+    MemoryProposalDismissErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).post<
+      MemoryProposalDismissResponses,
+      MemoryProposalDismissErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/users/me/memory-proposals/{proposal_id}/dismiss",
+      ...options,
     });
   }
 

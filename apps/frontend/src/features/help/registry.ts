@@ -149,6 +149,7 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
       "Each message adds the memories most relevant to it, as information about you, never as instructions. They don't give the assistant extra tools or access to files.",
       "Only you can see your memories: not educators and not administrators. Accessibility memories are always marked sensitive, and sensitive memories never appear in logs.",
       "A reply keeps the memories it was sent with, so editing one later doesn't change earlier replies. Deleting a memory stops it being used, even when you resume a reply. A reply's Context shows which memories it used.",
+      "When you tell the assistant something worth remembering, it may offer to remember it. You see what it would save and where, and choose Save, Edit or Dismiss. Nothing is saved unless you save it, and a dismissed offer isn't made again in that chat.",
       "Memory works only when your administrator turns it on. You can turn it off for yourself with Use memory, and an educator can turn it off in a course.",
     ],
     related: ["concept.about-you"],

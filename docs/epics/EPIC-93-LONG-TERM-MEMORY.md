@@ -1,6 +1,6 @@
 # EPIC-93: Long-term memory
 
-Status: in progress (US-93.1 PR #73, US-93.2 PR #74 and US-93.5 PR #75 merged 2026-11-23; proposed 2026-11-20). Source: user request (2026-11-20). Decided
+Status: in progress (US-93.1 PR #73, US-93.2 PR #74, US-93.5 PR #75 and US-93.3 PR #76 merged 2026-11-23; proposed 2026-11-20). Source: user request (2026-11-20). Decided
 2026-11-20: two kinds of memory (user and project), the agent proposes and the
 person confirms, relevant memories are added each turn, memories are private,
 and a course can turn memory off.
@@ -158,17 +158,17 @@ Asterism remembers about me.
 As a person using Asterism, when I tell it something worth remembering, it offers
 to remember it, and I decide.
 
-- [ ] An internal `propose_memory` tool for the main agent in ordinary chats,
+- [x] An internal `propose_memory` tool for the main agent in ordinary chats,
       offered when memory is available and the model supports tools: - it takes the kind, text, category and whether the memory is sensitive; - it is limited to one proposal per turn; - it is never offered to sub-agents or in drafting chats.
-- [ ] Its description and the main prompt set the rules: - user memory is only about the person, never project content; - accessibility and health memories are only from what the person said
+- [x] Its description and the main prompt set the rules: - user memory is only about the person, never project content; - accessibility and health memories are only from what the person said
       about themselves.
-- [ ] A proposal card in the chat shows the text and where it will be saved ("You,
+- [x] A proposal card in the chat shows the text and where it will be saved ("You,
       in every chat" or "This project"), with Save, Edit and Dismiss. Saving
       rechecks availability and ownership live.
-- [ ] Proposals are branch-aware chat records, and a dismissed one isn't proposed
+- [x] Proposals are branch-aware chat records, and a dismissed one isn't proposed
       again in that chat.
-- [ ] An audit record (ids and times only) for every proposal and decision.
-- [ ] Tests, including text injected from a file, which can only lead to a
+- [x] An audit record (ids and times only) for every proposal and decision.
+- [x] Tests, including text injected from a file, which can only lead to a
       proposal that is never saved without the click.
 
 ### US-93.5: Relevant memories in every turn

@@ -70,6 +70,18 @@ that project's chats use them.
 - **Turn memory off for yourself** by clearing **Use memory**. Asterism then uses
   none of your memories, and keeps them until you delete them.
 
+When you tell Asterism something worth remembering, such as how you like to
+learn, it may offer to remember it. A **Remember this?** card under the answer
+shows what it would save and where: **You, in every chat** or **This project**.
+
+- **Save** saves it as shown. **Edit** lets you change the text, category or
+  **Sensitive** first.
+- **Dismiss** saves nothing, and Asterism won't offer the same thing again in
+  that chat.
+
+Nothing is saved unless you choose to save it. Asterism offers at most one memory
+per answer, and never from what a file or web page says.
+
 Each message you send adds the memories most relevant to it, as information about
 you, never as instructions. A message keeps the memories it was sent with, so
 editing one later doesn't change earlier answers, but deleting one stops it being
