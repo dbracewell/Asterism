@@ -22,6 +22,18 @@ Unreleased into its version and date.
 
 ## Unreleased
 
+### Image
+
+- Test tooling and pip are no longer in the image. `vitest`, `vite`, `jsdom`
+  and `undici` reached the production install as better-auth's optional
+  `vitest` peer, though nothing at run time used them; a pnpm hook now drops
+  that peer. The base image's pip, and the `msgpack`, `setuptools` and
+  `urllib3` it vendors, are removed from the runtime stage (the app runs from
+  the backend's own environment). This fixes 14 high-severity findings, in
+  `vite`, `undici`, `msgpack` and `setuptools`. The image is 3.59 GB on arm64
+  (was 3.72 GB). `pnpm check:image` now fails if `vitest`, `vite` or `jsdom` is
+  in the image's `node_modules`, or the system Python can import pip.
+
 ## 0.3.0 (2026-11-22)
 
 ### Configuration

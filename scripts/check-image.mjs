@@ -7,7 +7,8 @@
 // for its health check, and checks that both databases were migrated, the
 // sign-in page and both health endpoints answer, every process runs as
 // UID 10001, and the local-image packages match the build (US-94.2: none in
-// the CPU image, the default; all of them in a TORCH_VARIANT=gpu build). Then it checks the image against a size budget, printing the
+// the CPU image, the default; all of them in a TORCH_VARIANT=gpu build), and
+// that no test tooling or pip is in the image (US-95.1). Then it checks the image against a size budget, printing the
 // largest layers when it is over, so that growth is a decision. The container
 // and volume are removed afterwards.
 import { spawnSync } from "node:child_process";
@@ -99,6 +100,41 @@ export function localImageProblems(importable, variant) {
       `The GPU image cannot import ${absent.join(", ")}; it must include the local-image extra`,
     ];
   return [];
+}
+
+// Test tooling that must not reach the image's node_modules (US-95.1).
+export const DEVELOPMENT_PACKAGES = ["vitest", "vite", "jsdom"];
+
+/**
+ * The package name of a directory in pnpm's virtual store, `node_modules/.pnpm`:
+ * `vite@8.0.16_@types+node@20.19.41` is `vite`, `@scope+name@1.0.0` is
+ * `@scope/name`. Directories that aren't packages (`node_modules`, `lock.yaml`)
+ * give null.
+ */
+export function pnpmStorePackage(entry) {
+  const at = entry.indexOf("@", entry.startsWith("@") ? 1 : 0);
+  if (at <= 0) return null;
+  return entry.slice(0, at).replace("+", "/");
+}
+
+/**
+ * Problems with development packages in the image: test tooling in pnpm's
+ * store, or pip importable by the system Python, which only the build stages
+ * need (US-95.1).
+ */
+export function developmentPackageProblems(storeEntries, pipImportable) {
+  const names = new Set(storeEntries.map(pnpmStorePackage));
+  const present = DEVELOPMENT_PACKAGES.filter((name) => names.has(name));
+  const problems = [];
+  if (present.length)
+    problems.push(
+      `The image's node_modules has ${present.join(", ")}; test tooling must not reach the production install`,
+    );
+  if (pipImportable)
+    problems.push(
+      "The image's system Python can import pip; the runtime stage must remove it",
+    );
+  return problems;
 }
 
 const importCheck = `
@@ -234,6 +270,18 @@ async function checkContainer(image, variant) {
       variant === "cpu"
         ? `ok: the backend cannot import ${LOCAL_IMAGE_PACKAGES.join(", ")}`
         : `ok: the backend can import ${LOCAL_IMAGE_PACKAGES.join(", ")}`,
+    );
+
+    const storeEntries = docker(["exec", name, "ls", "/app/node_modules/.pnpm"])
+      .split("\n")
+      .filter(Boolean);
+    const { pip } = JSON.parse(
+      docker(["exec", name, "/usr/local/bin/python", "-c", importCheck, "pip"]),
+    );
+    const development = developmentPackageProblems(storeEntries, pip);
+    if (development.length) throw new Error(development.join("\n"));
+    console.log(
+      `ok: node_modules has no ${DEVELOPMENT_PACKAGES.join(", ")}, and the system Python cannot import pip`,
     );
   } catch (error) {
     const logs = spawnSync("docker", ["logs", "--tail", "80", name], {
