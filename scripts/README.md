@@ -353,7 +353,7 @@ previous image's `/api/theme` and writes it, renamed, to `/storage/themes` the w
 the app's theme repository does, so the theme is in that release's format. Themes
 are saved through a Next.js server action, which a script can't call. Last, it
 switches image captioning to local, downloads that release's caption model and
-captions a small PNG, and saves the local Diffusers image generator. Then it starts the new image on the same volume with
+captions a small PNG, and saves the ONNX image generator. Then it starts the new image on the same volume with
 the same secrets and checks:
 
 - the container becomes healthy;
@@ -368,8 +368,10 @@ the same secrets and checks:
 - the stored caption is unchanged, and after the new image has downloaded its
   own caption model (it does so on start when local captioning is on, US-94.1),
   a newly uploaded PNG is captioned;
-- the saved Diffusers generator is still saved and reads "not available in this
-  image", since the CPU image has no Diffusers generator (US-94.2).
+- the saved ONNX generator is still saved, and the new image still offers it
+  (it doesn't read "not available in this image"; every build has ONNX since
+  0.3.0, US-94.4). The 0.2.x upgrade seeded Diffusers instead, which 0.3.0 can't
+  save.
 
 Last, it starts the previous image on the upgraded volume and checks it exits
 with its "schema revision … which this code does not know" message. When both
