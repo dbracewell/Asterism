@@ -41,6 +41,12 @@ Unreleased into its version and date.
   pins an old version. The lockfile no longer pins a pnpm binary (11.5.0, left
   from the first commit); the image and CI install pnpm 11.17.0 from
   `packageManager`.
+- The backend's Python packages have no fixable high-severity finding:
+  `cryptography` 50.0.2 (was 49.0.0), `filelock` 4.2.10 (was 3.32.0),
+  `soupsieve` 4.1.1 (was 2.9.1) and `urllib3` 2.8.0 (was 2.7.0). Nothing needs
+  changing before upgrading. `filelock` 4 changes only the on-disk format of
+  `SoftReadWriteLock`, which neither Asterism nor huggingface-hub uses, so
+  model downloads and the Hugging Face cache keep working across the upgrade.
 
 ## 0.3.0 (2026-11-22)
 
