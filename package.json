@@ -1,6 +1,6 @@
 {
   "name": "asterism",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "",
   "main": "index.js",
   "packageManager": "pnpm@11.17.0",

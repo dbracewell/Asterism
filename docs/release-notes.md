@@ -22,6 +22,8 @@ Unreleased into its version and date.
 
 ## Unreleased
 
+## 0.3.1 (2026-11-23)
+
 ### Image
 
 - Test tooling and pip are no longer in the image. `vitest`, `vite`, `jsdom`
