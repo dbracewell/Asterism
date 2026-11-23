@@ -32,6 +32,7 @@ from asterism.domains.image_generation.onnx.router import onnx_image_router
 from asterism.domains.image_generation.router import image_generation_router
 from asterism.domains.knowledge.router import knowledge_router
 from asterism.domains.learning.router import learning_router
+from asterism.domains.memory.router import memory_router
 from asterism.domains.packs.router import packs_router, team_packs_router
 from asterism.domains.projects.router import project_router
 from asterism.domains.prompt_templates.router import prompt_templates_router
@@ -178,6 +179,8 @@ app.include_router(rubrics_router)
 app.include_router(reflections_router)
 app.include_router(chatgpt_router)
 app.include_router(settings_router)
+# Before user_router, so /users/me/memories is never read as a user id.
+app.include_router(memory_router)
 app.include_router(user_router)
 app.include_router(groups_router)
 app.include_router(usage_router)

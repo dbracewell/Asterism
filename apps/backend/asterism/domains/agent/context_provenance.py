@@ -6,9 +6,9 @@ These values identify source context; they never authorize reads or writes.
 import hashlib
 import json
 import uuid
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Literal, Self
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, model_validator
 
 from .execution_scope import ConfigurationProvenance
 
@@ -42,19 +42,34 @@ class ContextProvenance(BaseModel):
 
 
 class MemoryNamespace(BaseModel):
-    """Future memory partitions by user and project, or user and chat in General.
+    """Memory partitions (ADR-0078): the user alone, user and project, or user and chat.
 
-    Project namespaces may share explicitly written memory within a project.
-    This does not implement automatic writes or project-wide chat history.
+    ``user`` keys user memory only: about the person in every chat and project,
+    never project content. ``project`` keys that project's memory. ``chat`` keys
+    derived caches of one General chat (``DerivedContextKey``) and no memory:
+    General chats read user memory. Keys are metadata, never capabilities;
+    every read and write is reauthorized.
     """
 
     model_config = ConfigDict(frozen=True)
     user_id: str
-    kind: Literal["project", "chat"]
-    source_id: uuid.UUID
+    kind: Literal["user", "project", "chat"]
+    source_id: uuid.UUID | None = None
+
+    @model_validator(mode="after")
+    def source_matches_kind(self) -> Self:
+        if (self.kind == "user") != (self.source_id is None):
+            raise ValueError("A user namespace has no source; project and chat namespaces need one")
+        return self
+
+    @classmethod
+    def for_user(cls, user_id: str) -> "MemoryNamespace":
+        """The namespace of a person's user memory."""
+        return cls(user_id=user_id, kind="user")
 
     @classmethod
     def from_scope(cls, scope: "ExecutionScope") -> "MemoryNamespace":
+        """The scope's own partition: its project, or its General chat."""
         return cls(
             user_id=scope.user_id,
             kind="project" if scope.project_id else "chat",

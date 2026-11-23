@@ -1,6 +1,6 @@
 # EPIC-93: Long-term memory
 
-Status: proposed (2026-11-20). Source: user request (2026-11-20). Decided
+Status: in progress (US-93.1 started 2026-11-23; proposed 2026-11-20). Source: user request (2026-11-20). Decided
 2026-11-20: two kinds of memory (user and project), the agent proposes and the
 person confirms, relevant memories are added each turn, memories are private,
 and a course can turn memory off.
@@ -94,25 +94,25 @@ Suggested order: US-93.1 → 93.2 → 93.3 → 93.4 → 93.5 → 93.6.
 As a person using Asterism, what Asterism remembers about me is stored safely and
 belongs only to me.
 
-- [ ] ADR: the two kinds, the user-memory content rule, private by default,
+- [x] ADR: the two kinds, the user-memory content rule, private by default,
       sensitive memories, pinning, and the revised boundary. Update
       [context isolation](../architecture/context-isolation.md) and
       `MemoryNamespace` (add the `user` kind, used only for user memory).
-- [ ] A `memories` table with a versioned migration and upgrade test (ADR-0069): - owner, kind (`user` / `project`) and `project_id` (required for project
+- [x] A `memories` table with a versioned migration and upgrade test (ADR-0069): - owner, kind (`user` / `project`) and `project_id` (required for project
       memory); - text (bounded, with the About you character rules) and a category (user
       memory: learning, accessibility, background, other); - `sensitive`; - source chat, message and execution; - revision and timestamps.
 
       A per-person cap applies for each kind.
 
-- [ ] Memory vectors in their own LanceDB table behind `VectorStore`, keyed by
+- [x] Memory vectors in their own LanceDB table behind `VectorStore`, keyed by
       owner and memory id, rewritten on edit.
-- [ ] An owner-scoped service and API: list, create, edit (expected revision, 409
+- [x] An owner-scoped service and API: list, create, edit (expected revision, 409
       on conflict), delete, delete all. Each lists in a deterministic order, filtered
       in the database before pagination.
-- [ ] Deleting the account deletes its memories and vectors. Deleting a project
+- [x] Deleting the account deletes its memories and vectors. Deleting a project
       deletes its project memories. Deleting a chat keeps saved memories, whose
       source then reads "chat deleted".
-- [ ] Tests for ownership, caps, revisions and deletion. Release notes: Data.
+- [x] Tests for ownership, caps, revisions and deletion. Release notes: Data.
 
 ### US-93.2: Policies
 

@@ -274,10 +274,14 @@ async def delete_project(
         )
         response = Project.model_validate(project)
         await session.commit()
-        return response
     except Exception:
         await session.rollback()
         raise
+    # The project's memories went with it (ADR-0078); their vectors are best effort.
+    from asterism.domains.memory.service import forget_project_vectors
+
+    await forget_project_vectors(user_id=user_id, project_id=project_id)
+    return response
 
 
 async def change_project_files(
