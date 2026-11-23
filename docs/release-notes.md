@@ -47,6 +47,11 @@ Unreleased into its version and date.
   changing before upgrading. `filelock` 4 changes only the on-disk format of
   `SoftReadWriteLock`, which neither Asterism nor huggingface-hub uses, so
   model downloads and the Hugging Face cache keep working across the upgrade.
+- `zlib1g` is 1.3.1-1+deb13u1, which fixes CVE-2026-85091 (high). The pinned
+  `python:3.13-slim-trixie` base still has 1.3.1-1+b1 three weeks after Debian's
+  fix, so the runtime stage upgrades it (`BASE_LAG_UPGRADES` in the Dockerfile).
+  `pnpm check:image` fails once the base carries the fix, so the upgrade comes
+  out with the base update.
 
 ## 0.3.0 (2026-11-22)
 

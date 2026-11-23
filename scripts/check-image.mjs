@@ -8,11 +8,14 @@
 // sign-in page and both health endpoints answer, every process runs as
 // UID 10001, and the local-image packages match the build (US-94.2: none in
 // the CPU image, the default; all of them in a TORCH_VARIANT=gpu build), and
-// that no test tooling or pip is in the image (US-95.1). Then it checks the image against a size budget, printing the
+// that no test tooling or pip is in the image (US-95.1), and that each Debian
+// package the runtime stage upgrades past its base (BASE_LAG_UPGRADES, US-95.4)
+// is newer in the image than in the base. Then it checks the image against a size budget, printing the
 // largest layers when it is over, so that growth is a decision. The container
 // and volume are removed afterwards.
 import { spawnSync } from "node:child_process";
 import { randomBytes } from "node:crypto";
+import { readFileSync } from "node:fs";
 import { pathToFileURL } from "node:url";
 import { parseArgs } from "node:util";
 import { parseDockerSize } from "./capacity/stats.mjs";
@@ -135,6 +138,96 @@ export function developmentPackageProblems(storeEntries, pipImportable) {
       "The image's system Python can import pip; the runtime stage must remove it",
     );
   return problems;
+}
+
+/**
+ * The runtime stage's base image and the Debian packages it upgrades past that
+ * base (the `BASE_LAG_UPGRADES` build argument), read from the Dockerfile.
+ */
+export function runtimeBaseLag(dockerfile) {
+  const lines = dockerfile.split("\n");
+  const from = lines.findIndex((line) =>
+    /^FROM\s+\S+\s+AS\s+runtime\s*$/i.test(line),
+  );
+  if (from < 0) throw new Error("The Dockerfile has no runtime stage");
+  const baseImage = lines[from].trim().split(/\s+/)[1];
+  const next = lines.findIndex(
+    (line, index) => index > from && /^FROM\s/i.test(line),
+  );
+  const stage = lines.slice(from, next < 0 ? undefined : next);
+  const arg = stage
+    .map((line) =>
+      line.match(/^ARG\s+BASE_LAG_UPGRADES(?:=(?:"([^"]*)"|(\S*)))?\s*$/),
+    )
+    .find(Boolean);
+  const value = arg ? (arg[1] ?? arg[2] ?? "") : "";
+  return { baseImage, packages: value.split(/\s+/).filter(Boolean) };
+}
+
+/**
+ * Problems with the packages upgraded past the base: each must be installed in
+ * the base and have another version in the image. The same version in both
+ * means the base has caught up (so the entry comes out) or the upgrade did not
+ * apply. `baseVersions` and `imageVersions` map a package to its version, or
+ * to null when it is not installed.
+ */
+export function baseLagProblems(packages, baseVersions, imageVersions) {
+  const problems = [];
+  for (const name of packages) {
+    const base = baseVersions[name] ?? null;
+    const image = imageVersions[name] ?? null;
+    if (base === null) {
+      problems.push(
+        `BASE_LAG_UPGRADES names ${name}, which the base image does not install`,
+      );
+    } else if (image === base) {
+      problems.push(
+        `${name} is ${base} in both the base and the image: if the base now has the fix, remove ${name} from BASE_LAG_UPGRADES in the Dockerfile; otherwise the upgrade did not apply`,
+      );
+    }
+  }
+  return problems;
+}
+
+function debianVersions(image, packages) {
+  const versions = {};
+  for (const name of packages) {
+    const result = spawnSync(
+      "docker",
+      [
+        "run",
+        "--rm",
+        "--entrypoint",
+        "dpkg-query",
+        image,
+        "-W",
+        "-f=${Version}",
+        name,
+      ],
+      { encoding: "utf8" },
+    );
+    versions[name] =
+      result.status === 0 && result.stdout.trim() ? result.stdout.trim() : null;
+  }
+  return versions;
+}
+
+function checkBaseLag(image) {
+  const { baseImage, packages } = runtimeBaseLag(
+    readFileSync("Dockerfile", "utf8"),
+  );
+  if (packages.length === 0) {
+    console.log("ok: the runtime stage upgrades no package past its base");
+    return;
+  }
+  const baseVersions = debianVersions(baseImage, packages);
+  const imageVersions = debianVersions(image, packages);
+  const problems = baseLagProblems(packages, baseVersions, imageVersions);
+  if (problems.length) throw new Error(problems.join("\n"));
+  const upgraded = packages.map(
+    (name) => `${name} ${baseVersions[name]} → ${imageVersions[name]}`,
+  );
+  console.log(`ok: upgraded past the base: ${upgraded.join(", ")}`);
 }
 
 const importCheck = `
@@ -346,6 +439,7 @@ async function main() {
   docker(["image", "inspect", values.image]);
   checkSize(values.image, maxGb * 1e9);
   await checkContainer(values.image, values.variant);
+  checkBaseLag(values.image);
 }
 
 if (
