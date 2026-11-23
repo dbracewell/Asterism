@@ -44,7 +44,7 @@ describe("getLazyAdminSettingsSections", () => {
     expect(mocks.rendered).toHaveBeenCalledWith(0);
   });
 
-  it("marks only the unfinished panes as Planned and keeps available panes discoverable", () => {
+  it("marks only the unfinished pane as Planned and keeps available panes discoverable", () => {
     const sections = getLazyAdminSettingsSections().filter(
       (section) => section.type === "section",
     );
@@ -52,7 +52,7 @@ describe("getLazyAdminSettingsSections", () => {
       sections
         .filter((section) => section.badge === "Planned")
         .map((section) => section.label),
-    ).toEqual(["Memory", "Code execution"]);
+    ).toEqual(["Code execution"]);
     expect(
       sections
         .filter((section) => !section.badge)
@@ -67,6 +67,7 @@ describe("getLazyAdminSettingsSections", () => {
       "Tools",
       "Skills",
       "Canvas",
+      "Memory",
       "ChatGPT Plans",
       "Context compaction",
       "Image generation",

@@ -37,7 +37,7 @@ export function MemoryPolicySettings() {
   return user.role === "admin" ? (
     <SettingsPane
       title="Memory"
-      description="Planned: these switches are saved now and apply once Asterism starts using memories. Off by default."
+      description="Let Asterism keep in mind what helps it work with each person, such as how they learn best, across their chats and projects. Off by default."
     >
       <MemoryPolicySection />
     </SettingsPane>

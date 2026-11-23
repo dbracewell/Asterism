@@ -48,7 +48,36 @@ they were sent with, so changing it doesn't change earlier answers.
 latest text.
 
 About you isn't a memory: Asterism doesn't add things to it by itself. It doesn't
-give Asterism any extra tools or access to files either.
+give Asterism any extra tools or access to files either. Memories are kept
+separately, under [Memory](#memory).
+
+## Memory
+
+When your administrator has turned memory on, Asterism keeps in mind what helps
+it work with you, such as how you like to learn or an accessibility need you've
+told it about, across your chats and projects. Only you can see your memories:
+not educators and not administrators.
+
+Your memories about you are under **Memory** in **Your Asterism**, grouped by
+category. A project's memories are in that project's **Settings** tab, and only
+that project's chats use them.
+
+- **Add a memory** with **Add a memory**. Choose a category; accessibility
+  memories are always marked **Sensitive**, and you can mark others too.
+  Sensitive memories never appear in logs.
+- **Change or delete one** with **Edit** or **Delete** beside it, or delete them
+  all with **Delete all**. Asterism asks you to confirm before deleting.
+- **Turn memory off for yourself** by clearing **Use memory**. Asterism then uses
+  none of your memories, and keeps them until you delete them.
+
+Each message you send adds the memories most relevant to it, as information about
+you, never as instructions. A message keeps the memories it was sent with, so
+editing one later doesn't change earlier answers, but deleting one stops it being
+used, even when you resume an answer. To see which memories an answer used, open
+**Context** under it.
+
+If memory is off, the page says why: your administrator hasn't turned it on for
+your group, you've turned it off, or, in a course project, your educator has.
 
 ## Usage
 

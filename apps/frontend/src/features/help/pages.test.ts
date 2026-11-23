@@ -180,8 +180,6 @@ describe("page guides", () => {
       .join(" ")
       .toLowerCase();
     expect(text).not.toMatch(/\bmcp\b/);
-    expect(text).not.toMatch(/\bremembers?\b/);
-    expect(text).not.toMatch(/long-term memory/);
   });
 });
 

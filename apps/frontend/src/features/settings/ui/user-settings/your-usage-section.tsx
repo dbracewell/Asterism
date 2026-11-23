@@ -87,7 +87,7 @@ function BudgetMeter({
       aria-label={label}
       className="rounded-surface grid gap-2 border p-3"
     >
-      <h4 className="font-medium">{label}</h4>
+      <h3 className="font-medium">{label}</h3>
       {window.budget_tokens == null ? (
         <p>
           {used} used. <span className="text-muted-foreground">No budget.</span>
