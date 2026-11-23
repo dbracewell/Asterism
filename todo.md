@@ -121,15 +121,16 @@ Source: user request (2026-11-22), after EPIC-92. [EPIC-95](docs/epics/EPIC-95-F
   - [ ] Take the base image update that carries `zlib1g` 1.3.1-1+deb13u1 (and any other fixed OS package by then), as a pinned digest. No newer base yet: the latest `python:3.13-slim-trixie` (2026-11-05) is the pinned digest and still has 1-1+b1, so the fallback below applies.
   - [x] If the base lags a fix by more than a week, the runtime stage upgrades that named package with a comment and the date, and a check fails once the base has caught up.
   - [x] The image checks and the theme storage and fetch browser checks pass.
-- [ ] US-95.5: Fail on fixable highs (merged 2026-11-23, PR #70; the release is still to cut)
+- [x] US-95.5: Fail on fixable highs (merged 2026-11-23, PR #70; released in 0.3.1)
   - [x] `pnpm check:vulns` fails on a fixable high as well as a fixable critical, in CI, the release workflow and the weekly scan, and still prints the table. Tests cover the new threshold and `.trivyignore.yaml` entries for highs.
   - [x] The weekly scan's issue lists new fixable highs as well as criticals.
   - [x] Update the vulnerability scan section of `docs/development.md` and close EPIC-92's open question 1.
-  - [ ] Release notes: Image (the fixed packages, and that a fixable high now stops a release). Cut the release that ships the epic.
+  - [x] Release notes: Image (the fixed packages, and that a fixable high now stops a release). Cut the release that ships the epic.
 
 ## Maintenance follow-ups (2026-11-21)
 
 Found while taking the Dependabot updates for EPIC-92. Neither is a story of its own; take each as a small pull request.
 
 - [ ] Fix the flaky class E2E test: `apps/frontend/e2e/classes.spec.ts:84` sometimes fails with "Run by …" not visible, and passes on a rerun (seen on 2026-11-21). Find what the assertion races and wait on that instead.
+- [ ] Take the `python:3.13-slim-trixie` base update that carries `zlib1g` 1.3.1-1+deb13u1 (carried over from US-95.4), and remove `zlib1g` from `BASE_LAG_UPGRADES` in the Dockerfile. `pnpm check:image` fails on the first base that has it, so Dependabot's docker update will prompt this.
 - [ ] Move provider discovery off openai's legacy httpx client. openai 3 uses httpx2 by default, and `apps/backend/asterism/domains/settings/discovery.py` still passes an `httpx.AsyncClient`, which openai accepts only through a temporary legacy path. Port the response-size limit (`_SizeLimitedStream`, the `response` event hook) and the no-redirects setting to httpx2, with tests, before openai removes that path.

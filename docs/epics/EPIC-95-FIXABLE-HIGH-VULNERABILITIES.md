@@ -1,8 +1,7 @@
 # EPIC-95: No fixable high vulnerabilities
 
-Status: in progress (US-95.1 merged 2026-11-22, PR #64; US-95.2 merged
-2026-11-23, PR #66; US-95.3 merged 2026-11-23, PR #67; US-95.4 merged 2026-11-23, PR #69; US-95.5
-merged 2026-11-23, PR #70, with the release still to cut; proposed 2026-11-22). Source:
+Status: complete (2026-11-23; released in 0.3.1). US-95.1 PR #64, US-95.2 PR #66,
+US-95.3 PR #67, US-95.4 PR #69, US-95.5 PR #70. Source:
 user request (2026-11-22), after EPIC-92 left fixable highs reported but not
 failing. Starts after EPIC-94, which changes the Python dependency tree.
 
@@ -127,11 +126,14 @@ As an administrator, the backend's packages have no fixable high.
 
 As an administrator, the image's Debian packages have no fixable high.
 
-- [ ] Take the base image update that carries `zlib1g` 1.3.1-1+deb13u1 (and any
-      other fixed OS package by then), as a pinned digest. Not yet possible
+- [x] ~~Take the base image update that carries `zlib1g` 1.3.1-1+deb13u1 (and any
+      other fixed OS package by then), as a pinned digest.~~ Not yet possible
       (2026-11-23): the newest `python:3.13-slim-trixie` is the pinned digest,
       built 2026-11-05, and still has 1.3.1-1+b1; Debian's fix reached
       trixie-security on 2026-11-01. The next task covers it until then.
+      Moved to the maintenance follow-ups in `todo.md`: `pnpm check:image`
+      fails when the base catches up, and the `zlib1g` entry comes out then.
+
 - [x] If the base lags a fix by more than a week, the runtime stage upgrades
       that named package with a comment and the date, and a check fails once the
       base has caught up so the line comes out.
@@ -149,7 +151,7 @@ fix.
 - [x] The weekly scan's issue lists new fixable highs as well as criticals.
 - [x] Update the vulnerability scan section of `docs/development.md`, and close
       EPIC-92's open question 1.
-- [ ] Release notes: Image (the fixed packages, and that a fixable high now stops
+- [x] Release notes: Image (the fixed packages, and that a fixable high now stops
       a release). Cut the release that ships the epic.
 
 ## Open questions
