@@ -2,10 +2,12 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
+  baseLagProblems,
   developmentPackageProblems,
   largestLayers,
   localImageProblems,
   pnpmStorePackage,
+  runtimeBaseLag,
   sizeProblem,
   uidProblems,
 } from "../scripts/check-image.mjs";
@@ -113,4 +115,62 @@ test("test tooling in node_modules, or pip in the system Python, fails the image
   assert.deepEqual(developmentPackageProblems(runtime, true), [
     "The image's system Python can import pip; the runtime stage must remove it",
   ]);
+});
+
+const dockerfile = (arg) =>
+  [
+    "FROM python:3.13-slim-bookworm@sha256:aaa AS backend-build",
+    'ARG BASE_LAG_UPGRADES="ignored"',
+    "FROM python:3.13-slim-trixie@sha256:bbb AS runtime",
+    "# comment",
+    ...(arg === undefined ? [] : [arg]),
+    "RUN apt-get update",
+  ].join("\n");
+
+test("the runtime stage's base and its upgraded packages are read from the Dockerfile", () => {
+  assert.deepEqual(
+    runtimeBaseLag(dockerfile('ARG BASE_LAG_UPGRADES="zlib1g libexpat1"')),
+    {
+      baseImage: "python:3.13-slim-trixie@sha256:bbb",
+      packages: ["zlib1g", "libexpat1"],
+    },
+  );
+  assert.deepEqual(
+    runtimeBaseLag(dockerfile('ARG BASE_LAG_UPGRADES=""')).packages,
+    [],
+  );
+  assert.deepEqual(runtimeBaseLag(dockerfile()).packages, []);
+  assert.throws(
+    () => runtimeBaseLag("FROM node:22 AS frontend"),
+    /no runtime stage/,
+  );
+});
+
+test("the repository Dockerfile's runtime stage is readable", async () => {
+  const { readFile } = await import("node:fs/promises");
+  const { baseImage, packages } = runtimeBaseLag(
+    await readFile("Dockerfile", "utf8"),
+  );
+  assert.match(baseImage, /^python:.*@sha256:[0-9a-f]{64}$/);
+  assert.ok(Array.isArray(packages));
+});
+
+test("a package upgraded past the base passes, and fails once the base catches up", () => {
+  const old = "1:1.3.dfsg+really1.3.1-1+b1";
+  const fixed = "1:1.3.dfsg+really1.3.1-1+deb13u1";
+  assert.deepEqual(
+    baseLagProblems(["zlib1g"], { zlib1g: old }, { zlib1g: fixed }),
+    [],
+  );
+  assert.deepEqual(
+    baseLagProblems(["zlib1g"], { zlib1g: fixed }, { zlib1g: fixed }),
+    [
+      `zlib1g is ${fixed} in both the base and the image: if the base now has the fix, remove zlib1g from BASE_LAG_UPGRADES in the Dockerfile; otherwise the upgrade did not apply`,
+    ],
+  );
+  assert.deepEqual(
+    baseLagProblems(["zlibl"], { zlibl: null }, { zlibl: null }),
+    ["BASE_LAG_UPGRADES names zlibl, which the base image does not install"],
+  );
+  assert.deepEqual(baseLagProblems([], {}, {}), []);
 });

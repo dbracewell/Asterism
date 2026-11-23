@@ -117,10 +117,10 @@ Source: user request (2026-11-22), after EPIC-92. [EPIC-95](docs/epics/EPIC-95-F
   - [x] Check each major in its changelog and with tests: JWT verification and PDF text extraction (cryptography); model downloads and the Hugging Face cache, including two at once (filelock); HTML to Markdown and the web fetch tool's extraction (soupsieve).
   - [x] Record in the pull request, for each, whether Asterism's use reaches the advisory.
   - [x] The upgrade check passes. Dependabot shows no open high alert for `uv.lock`.
-- [ ] US-95.4: OS packages
-  - [ ] Take the base image update that carries `zlib1g` 1.3.1-1+deb13u1 (and any other fixed OS package by then), as a pinned digest.
-  - [ ] If the base lags a fix by more than a week, the runtime stage upgrades that named package with a comment and the date, and a check fails once the base has caught up.
-  - [ ] The image checks and the theme storage and fetch browser checks pass.
+- [ ] US-95.4: OS packages (in progress, branch `feat/us-95.4-os-packages`)
+  - [ ] Take the base image update that carries `zlib1g` 1.3.1-1+deb13u1 (and any other fixed OS package by then), as a pinned digest. No newer base yet: the latest `python:3.13-slim-trixie` (2026-11-05) is the pinned digest and still has 1-1+b1, so the fallback below applies.
+  - [x] If the base lags a fix by more than a week, the runtime stage upgrades that named package with a comment and the date, and a check fails once the base has caught up.
+  - [x] The image checks and the theme storage and fetch browser checks pass.
 - [ ] US-95.5: Fail on fixable highs
   - [ ] `pnpm check:vulns` fails on a fixable high as well as a fixable critical, in CI, the release workflow and the weekly scan, and still prints the table. Tests cover the new threshold and `.trivyignore.yaml` entries for highs.
   - [ ] The weekly scan's issue lists new fixable highs as well as criticals.
