@@ -501,6 +501,15 @@ import type {
   MemoryPolicyUpdateData,
   MemoryPolicyUpdateError,
   MemoryPolicyUpdateResponse,
+  MemoryProposalDismissData,
+  MemoryProposalDismissError,
+  MemoryProposalDismissResponse,
+  MemoryProposalGetOneData,
+  MemoryProposalGetOneError,
+  MemoryProposalGetOneResponse,
+  MemoryProposalSaveData,
+  MemoryProposalSaveError,
+  MemoryProposalSaveResponse,
   MemoryUpdateData,
   MemoryUpdateError,
   MemoryUpdateResponse,
@@ -8407,6 +8416,90 @@ export const memoryUpdateMutation = (
   > = {
     mutationFn: async (fnOptions) => {
       const { data } = await ApiClient.__registry.get().memoryUpdate({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const memoryProposalGetOneQueryKey = (
+  options: Options<MemoryProposalGetOneData>,
+) => createQueryKey("memoryProposalGetOne", options);
+
+/**
+ * Get Proposal
+ */
+export const memoryProposalGetOneOptions = (
+  options: Options<MemoryProposalGetOneData>,
+) =>
+  queryOptions<
+    MemoryProposalGetOneResponse,
+    MemoryProposalGetOneError,
+    MemoryProposalGetOneResponse,
+    ReturnType<typeof memoryProposalGetOneQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry.get().memoryProposalGetOne({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: memoryProposalGetOneQueryKey(options),
+  });
+
+/**
+ * Save Proposal
+ *
+ * Save the proposal, as offered or edited. Ownership and memory availability are checked now.
+ */
+export const memoryProposalSaveMutation = (
+  options?: Partial<Options<MemoryProposalSaveData>>,
+): UseMutationOptions<
+  MemoryProposalSaveResponse,
+  MemoryProposalSaveError,
+  Options<MemoryProposalSaveData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    MemoryProposalSaveResponse,
+    MemoryProposalSaveError,
+    Options<MemoryProposalSaveData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().memoryProposalSave({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Dismiss Proposal
+ */
+export const memoryProposalDismissMutation = (
+  options?: Partial<Options<MemoryProposalDismissData>>,
+): UseMutationOptions<
+  MemoryProposalDismissResponse,
+  MemoryProposalDismissError,
+  Options<MemoryProposalDismissData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    MemoryProposalDismissResponse,
+    MemoryProposalDismissError,
+    Options<MemoryProposalDismissData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().memoryProposalDismiss({
         ...options,
         ...fnOptions,
         throwOnError: true,

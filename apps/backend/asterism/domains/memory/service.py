@@ -65,7 +65,7 @@ async def _require_project(user_id: str, project_id: uuid.UUID, session: AsyncSe
         raise NotFoundException("Project not found")
 
 
-async def _write_vector(row: MemoryModel) -> None:
+async def write_vector(row: MemoryModel) -> None:
     """Embed and store the memory's vector. Best effort: the row is the record."""
     try:
         [vector] = await embedding_provider.embed_text([row.text])
@@ -111,14 +111,20 @@ async def list_memories(
     )
 
 
+async def add_memory(row: MemoryModel, session: AsyncSession) -> None:
+    """Check the project and the cap, then add the row; the caller commits and writes the vector."""
+    if row.project_id is not None:
+        await _require_project(row.user_id, row.project_id, session)
+    count = await session.scalar(count_owned_memories(row.user_id, kind=row.kind, project_id=row.project_id))
+    if (count or 0) >= MAX_MEMORIES_PER_SCOPE:
+        where = "user memories" if row.kind == MemoryKind.USER else "memories in a project"
+        raise ConflictException(f"You can keep at most {MAX_MEMORIES_PER_SCOPE} {where}; delete one first")
+    session.add(row)
+    await session.flush()
+
+
 async def create_memory(user_id: str, payload: MemoryCreate, session: AsyncSession) -> Memory:
     """Save a memory the person wrote themselves."""
-    if payload.project_id is not None:
-        await _require_project(user_id, payload.project_id, session)
-    count = await session.scalar(count_owned_memories(user_id, kind=payload.kind, project_id=payload.project_id))
-    if (count or 0) >= MAX_MEMORIES_PER_SCOPE:
-        where = "user memories" if payload.kind == MemoryKind.USER else "memories in a project"
-        raise ConflictException(f"You can keep at most {MAX_MEMORIES_PER_SCOPE} {where}; delete one first")
     row = MemoryModel(
         user_id=user_id,
         kind=payload.kind,
@@ -128,11 +134,11 @@ async def create_memory(user_id: str, payload: MemoryCreate, session: AsyncSessi
         sensitive=payload.sensitive,
         saved_by=MemorySavedBy.PERSON,
     )
-    session.add(row)
+    await add_memory(row, session)
     await session.commit()
     await session.refresh(row)
     logger.info(f"Saved {row.kind.value} memory {row.id} for user {user_id}")
-    await _write_vector(row)
+    await write_vector(row)
     return to_memory(row)
 
 
@@ -165,7 +171,7 @@ async def update_memory(user_id: str, memory_id: uuid.UUID, payload: MemoryUpdat
     row = await require_memory(user_id, memory_id, session)
     await session.refresh(row)
     logger.info(f"Updated memory {memory_id} for user {user_id}")
-    await _write_vector(row)
+    await write_vector(row)
     return to_memory(row)
 
 

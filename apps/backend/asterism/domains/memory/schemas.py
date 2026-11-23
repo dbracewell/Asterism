@@ -7,7 +7,7 @@ from typing import Self
 
 from pydantic import BaseModel, ConfigDict, Field, StrictBool, field_validator, model_validator
 
-from .models import MEMORY_MAX_BYTES, MEMORY_MAX_CHARS, MemoryCategory, MemoryKind, MemorySavedBy
+from .models import MEMORY_MAX_BYTES, MEMORY_MAX_CHARS, MemoryCategory, MemoryKind, MemoryProposalStatus, MemorySavedBy
 
 # Revision inputs must fit a portable SQL integer, not an arbitrary JSON integer.
 MAX_REVISION = 2_147_483_647
@@ -131,3 +131,25 @@ class MemoryAvailability(BaseModel):
     available: bool
     off_by: MemorySwitch | None = None
     reason: str = ""
+
+
+class MemoryProposal(BaseModel):
+    """A memory the agent offered in a chat, and what the person decided (US-93.4)."""
+
+    id: uuid.UUID
+    chat_id: uuid.UUID
+    message_id: uuid.UUID
+    execution_id: uuid.UUID
+    kind: MemoryKind
+    project_id: uuid.UUID | None
+    text: str
+    category: MemoryCategory | None
+    sensitive: bool
+    status: MemoryProposalStatus
+    memory_id: uuid.UUID | None
+    created_at: int
+    decided_at: int | None
+
+
+class MemoryProposalSave(_MemoryText):
+    """What to save: the proposal as offered, or as the person edited it. Kind and project never change."""

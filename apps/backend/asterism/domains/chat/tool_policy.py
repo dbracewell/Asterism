@@ -15,6 +15,7 @@ from asterism.domains.tools.catalog import (
     CANVAS_TOOL_NAMES,
     IMAGE_TOOL_NAME,
     INTERNAL_TOOL_NAMES,
+    MEMORY_TOOL_NAME,
     POLICY_GATED_TOOL_NAMES,
     SKILL_TOOL_NAME,
     configurable_tools,
@@ -86,6 +87,8 @@ async def resolve_effective_tools(
             names |= CANVAS_TOOL_NAMES
         if not profile.sub_agent and await _offers_images(user_id, chat_id, db):
             names.add(IMAGE_TOOL_NAME)
+        if not profile.sub_agent and await _offers_memory(user_id, chat_id, db):
+            names.add(MEMORY_TOOL_NAME)
         if files.project_id != ceiling.project_id:
             return sorted(names), ceiling
         if profile.sub_agent:
@@ -122,6 +125,20 @@ async def _offers_images(user_id: str, chat_id: uuid.UUID, session: AsyncSession
     from asterism.domains.image_generation.policy import chat_offers_images
 
     return await chat_offers_images(user_id, chat_id, session)
+
+
+async def _offers_memory(user_id: str, chat_id: uuid.UUID, session: AsyncSession) -> bool:
+    """The main agent may propose memories in a conversation while memory is available (US-93.4)."""
+    from asterism.domains.chat.models import ChatModel
+    from asterism.domains.chat.queries import select_owned_chats
+    from asterism.domains.memory.policy import chat_memory_available
+
+    purpose = await session.scalar(
+        select_owned_chats(user_id=user_id).with_only_columns(ChatModel.purpose).where(ChatModel.id == chat_id)
+    )
+    if purpose != "conversation":
+        return False
+    return (await chat_memory_available(user_id, chat_id, session)).available
 
 
 async def _offers_skills(user_id: str, agent_id: uuid.UUID, session: AsyncSession) -> bool:
@@ -161,6 +178,10 @@ async def require_internal_tool(
             # Policy, group, provider readiness and the chat's purpose, read live.
             if profile.sub_agent or not await _offers_images(user_id, chat_id, db):
                 raise BadDataException("Image generation is unavailable in this execution context")
+        elif name == MEMORY_TOOL_NAME:
+            # The policy, group, personal and course switches and the chat's purpose, read live.
+            if profile.sub_agent or not await _offers_memory(user_id, chat_id, db):
+                raise BadDataException("Memory is unavailable in this execution context")
         elif name == SKILL_TOOL_NAME:
             # The tool rechecks the named skill's assignment; this checks the gate.
             from asterism.domains.skills.policy import read_policy

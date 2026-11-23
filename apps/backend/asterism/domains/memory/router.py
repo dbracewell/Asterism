@@ -9,7 +9,7 @@ from asterism.core.schemas import ErrorDetail
 from asterism.db.dependencies import DBSessionDep
 from asterism.domains.user.dependencies import AdminUserDep, AuthedUserDep
 
-from . import admin, policy, service
+from . import admin, policy, proposals, service
 from .models import MemoryKind
 from .schemas import (
     MAX_REVISION,
@@ -19,6 +19,8 @@ from .schemas import (
     MemoryDeleteAll,
     MemoryPage,
     MemoryPolicy,
+    MemoryProposal,
+    MemoryProposalSave,
     MemoryUpdate,
 )
 
@@ -99,6 +101,36 @@ async def delete(
 ) -> Response:
     await service.delete_memory(user.id, memory_id, expected_revision, session)
     return Response(status_code=204)
+
+
+memory_proposal_router = APIRouter(
+    prefix="/users/me/memory-proposals",
+    tags=["memories"],
+    responses={
+        400: {"model": ErrorDetail},
+        401: {"model": ErrorDetail},
+        404: {"model": ErrorDetail},
+        409: {"model": ErrorDetail},
+    },
+)
+
+
+@memory_proposal_router.get("/{proposal_id}", operation_id="memoryProposalGetOne")
+async def get_proposal(proposal_id: uuid.UUID, user: AuthedUserDep, session: DBSessionDep) -> MemoryProposal:
+    return await proposals.read_proposal(user.id, proposal_id, session)
+
+
+@memory_proposal_router.post("/{proposal_id}/save", operation_id="memoryProposalSave", status_code=201)
+async def save_proposal(
+    proposal_id: uuid.UUID, payload: MemoryProposalSave, user: AuthedUserDep, session: DBSessionDep
+) -> Memory:
+    """Save the proposal, as offered or edited. Ownership and memory availability are checked now."""
+    return await proposals.save_proposal(user.id, proposal_id, payload, session)
+
+
+@memory_proposal_router.post("/{proposal_id}/dismiss", operation_id="memoryProposalDismiss")
+async def dismiss_proposal(proposal_id: uuid.UUID, user: AuthedUserDep, session: DBSessionDep) -> MemoryProposal:
+    return await proposals.dismiss_proposal(user.id, proposal_id, session)
 
 
 memory_policy_router = APIRouter(

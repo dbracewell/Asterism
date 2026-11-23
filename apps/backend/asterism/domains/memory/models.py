@@ -25,7 +25,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from asterism.common.enums import enum_values
 from asterism.db.base_model import Base
-from asterism.db.mixins import TimestampMixin, UuidPrimaryKeyMixin
+from asterism.db.mixins import TimestampMixin, UuidPrimaryKeyMixin, get_unix_timestamp
 
 MEMORY_MAX_CHARS = 2_000
 MEMORY_MAX_BYTES = 8_000
@@ -134,3 +134,101 @@ class MessageMemoryModel(Base, UuidPrimaryKeyMixin):
         Index("idx_message_memories_message", "message_id", "position"),
         Index("idx_message_memories_memory", "memory_id"),
     )
+
+
+class MemoryProposalStatus(StrEnum):
+    PENDING = "pending"
+    SAVED = "saved"
+    DISMISSED = "dismissed"
+
+
+class MemoryProposalAction(StrEnum):
+    PROPOSED = "proposed"
+    SAVED = "saved"
+    DISMISSED = "dismissed"
+
+
+class MemoryProposalModel(Base, UuidPrimaryKeyMixin):
+    """A memory the agent offered in a chat; nothing is saved until the person confirms (US-93.4).
+
+    A branch-aware chat record: anchored to the run's request message and to the
+    run, at most one per run, and deleted with its chat. Saving copies it into
+    ``memories``; the proposal keeps the decision.
+    """
+
+    __tablename__ = "memory_proposals"
+
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    chat_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("chats.id", ondelete="CASCADE"), nullable=False)
+    message_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("messages.id", ondelete="CASCADE"), nullable=False)
+    execution_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("chat_executions.id", ondelete="CASCADE"), nullable=False
+    )
+    # The proposing agent configuration; kept as a record even if it changes.
+    agent_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("agent_profiles.id", ondelete="SET NULL"), nullable=True
+    )
+    kind: Mapped[MemoryKind] = mapped_column(_enum(MemoryKind), nullable=False)
+    project_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, nullable=True)
+    text: Mapped[str] = mapped_column(Text, nullable=False)
+    category: Mapped[MemoryCategory | None] = mapped_column(_enum(MemoryCategory), nullable=True)
+    sensitive: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default=false())
+    status: Mapped[MemoryProposalStatus] = mapped_column(
+        _enum(MemoryProposalStatus),
+        nullable=False,
+        default=MemoryProposalStatus.PENDING,
+        server_default=MemoryProposalStatus.PENDING.value,
+    )
+    memory_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("memories.id", ondelete="SET NULL"), nullable=True)
+    created_at: Mapped[int] = mapped_column(Integer, nullable=False, default=get_unix_timestamp)
+    decided_at: Mapped[int | None] = mapped_column(Integer, nullable=True)
+
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["project_id", "user_id"],
+            ["projects.id", "projects.user_id"],
+            ondelete="CASCADE",
+            name="fk_memory_proposals_project_owner",
+        ),
+        UniqueConstraint("execution_id", name="uq_memory_proposals_execution"),
+        CheckConstraint(
+            f"length(trim(text)) >= 1 AND length(text) <= {MEMORY_MAX_CHARS}"
+            f" AND length(CAST(text AS BLOB)) <= {MEMORY_MAX_BYTES}",
+            name="ck_memory_proposals_text_bounds",
+        ),
+        CheckConstraint("instr(text, char(0)) = 0", name="ck_memory_proposals_text_no_nul"),
+        CheckConstraint(
+            "(kind = 'user' AND project_id IS NULL AND category IS NOT NULL)"
+            " OR (kind = 'project' AND project_id IS NOT NULL AND category IS NULL)",
+            name="ck_memory_proposals_kind_scope",
+        ),
+        CheckConstraint(
+            "category IS NULL OR category != 'accessibility' OR sensitive", name="ck_memory_proposals_sensitive"
+        ),
+        CheckConstraint(
+            "(status = 'pending' AND decided_at IS NULL) OR (status != 'pending' AND decided_at IS NOT NULL)",
+            name="ck_memory_proposals_decided",
+        ),
+        Index("idx_memory_proposals_chat", "chat_id", "created_at", "id"),
+    )
+
+
+class MemoryProposalEventModel(Base, UuidPrimaryKeyMixin):
+    """The audit record of a proposal and its decision: ids and times only, never text.
+
+    Plain ids, not foreign keys, so the record outlives the chat, the proposal
+    and the memory; deleting the account deletes it.
+    """
+
+    __tablename__ = "memory_proposal_events"
+
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    proposal_id: Mapped[uuid.UUID] = mapped_column(Uuid, nullable=False)
+    chat_id: Mapped[uuid.UUID] = mapped_column(Uuid, nullable=False)
+    execution_id: Mapped[uuid.UUID] = mapped_column(Uuid, nullable=False)
+    agent_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, nullable=True)
+    memory_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, nullable=True)
+    action: Mapped[MemoryProposalAction] = mapped_column(_enum(MemoryProposalAction), nullable=False)
+    created_at: Mapped[int] = mapped_column(Integer, nullable=False, default=get_unix_timestamp)
+
+    __table_args__ = (Index("idx_memory_proposal_events_user_created", "user_id", "created_at"),)

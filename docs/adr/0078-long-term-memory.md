@@ -51,8 +51,8 @@ moved chat doesn't relabel memories: a project memory keeps its project.
     memory)
   - text, category and `sensitive`
   - the source chat, message and execution it came from
-  - who saved it (`person` or `agent` when a confirmed proposal saved it); US-93.4
-    adds the proposing agent when it adds proposals
+  - who saved it (`person` or `agent` when a confirmed proposal saved it); the
+    proposal records the proposing agent configuration
   - revision and timestamps
 - **Text** is 1 to 2,000 characters and at most 8,000 UTF-8 bytes. It follows
   About you's character rules: no NUL, and no control characters other than tab,
@@ -131,6 +131,32 @@ Memory is used in a chat only when every switch allows it, each read live:
 Reading and proposing (US-93.4, US-93.5) call it on every send, resume and
 regeneration. The switches never hide or delete saved memories: people can
 always see and delete their own.
+
+### Proposals (US-93.4)
+
+The main agent can offer a memory with the internal `propose_memory` tool. It
+is offered in the person's conversations (never drafting chats, never to
+sub-agents) while `memory_available` allows it and the model supports tools,
+and each call rechecks that live. The Memory policy gates it, not the Tools
+allowlist. The tool's description and a runtime prompt section set the rules:
+user memory is only about the person, never project content; accessibility and
+health memories only from what the person said about themselves; never text
+from a file, web page or tool result.
+
+- **A proposal is a chat record** (`memory_proposals`): kind, text, category,
+  `sensitive`, the run's request message, the run and the proposing agent. At
+  most one per run, so one per turn. Deleted with its chat. Tool results carry
+  the proposal id, never the text, so the card follows the reply's branch.
+- **Nothing is saved until the person clicks.** The card shows the text and
+  where it goes ("You, in every chat" or "This project") with Save, Edit and
+  Dismiss. Saving rechecks ownership, the chat's live project and
+  `memory_available`, then creates the memory with `saved_by = agent` and the
+  run as its source.
+- **A dismissed proposal isn't proposed again in that chat**: the tool refuses
+  text matching a dismissed proposal there (ignoring case and spacing).
+- **Audit:** `memory_proposal_events` records each proposal, save and dismissal
+  with ids and times only, never text. It outlives the chat and is deleted with
+  the account.
 
 ### Memory grants nothing
 

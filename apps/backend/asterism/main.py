@@ -32,7 +32,7 @@ from asterism.domains.image_generation.onnx.router import onnx_image_router
 from asterism.domains.image_generation.router import image_generation_router
 from asterism.domains.knowledge.router import knowledge_router
 from asterism.domains.learning.router import learning_router
-from asterism.domains.memory.router import memory_policy_router, memory_router
+from asterism.domains.memory.router import memory_policy_router, memory_proposal_router, memory_router
 from asterism.domains.packs.router import packs_router, team_packs_router
 from asterism.domains.projects.router import project_router
 from asterism.domains.prompt_templates.router import prompt_templates_router
@@ -181,6 +181,7 @@ app.include_router(chatgpt_router)
 # Before settings_router and user_router, so /settings/app/memory and
 # /users/me/memories are never read as a setting key or a user id.
 app.include_router(memory_router)
+app.include_router(memory_proposal_router)
 app.include_router(memory_policy_router)
 app.include_router(settings_router)
 app.include_router(user_router)

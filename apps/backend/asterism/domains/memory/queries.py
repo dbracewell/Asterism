@@ -4,7 +4,7 @@ import uuid
 
 from sqlalchemy import func, select
 
-from .models import MemoryKind, MemoryModel
+from .models import MemoryKind, MemoryModel, MemoryProposalModel
 
 
 def select_owned_memories(user_id: str):
@@ -29,3 +29,8 @@ def count_owned_memories(user_id: str, *, kind: MemoryKind, project_id: uuid.UUI
     if project_id is not None:
         statement = statement.where(MemoryModel.project_id == project_id)
     return statement
+
+
+def select_owned_proposals(user_id: str):
+    """The owner's memory proposals; callers add the chat, proposal or run."""
+    return select(MemoryProposalModel).where(MemoryProposalModel.user_id == user_id)

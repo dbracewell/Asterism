@@ -340,3 +340,61 @@ async def test_message_memories_upgrade_adds_an_empty_table_that_follows_its_mem
         assert connection.execute("SELECT count(*) FROM message_memories").fetchone() == (0,)
     finally:
         connection.close()
+
+
+@pytest.mark.asyncio
+async def test_memory_proposals_upgrade_adds_empty_tables_with_their_rules(migration_db):
+    """5d2e7a9c4b1f (US-93.4): proposals start empty, keep their rules and outlive a deleted memory."""
+    await upgrade_to(migration_db, "49c16efb8995")
+    memory_id = uuid.uuid4().hex
+    with sqlite3.connect(migration_db) as connection:
+        connection.execute("INSERT INTO users (id) VALUES ('user-1')")
+        connection.execute(
+            "INSERT INTO memories (id, user_id, kind, text, category, sensitive, created_at, updated_at) "
+            "VALUES (?, 'user-1', 'user', 'Learns from examples', 'learning', 0, 0, 0)",
+            (memory_id,),
+        )
+
+    await upgrade_to(migration_db, "head")
+
+    def insert(connection, **values):
+        row = {
+            "id": uuid.uuid4().hex,
+            "user_id": "user-1",
+            "chat_id": uuid.uuid4().hex,
+            "message_id": uuid.uuid4().hex,
+            "execution_id": uuid.uuid4().hex,
+            "kind": "user",
+            "text": "Learns from examples",
+            "category": "learning",
+            "sensitive": 0,
+            "status": "saved",
+            "memory_id": memory_id,
+            "created_at": 0,
+            "decided_at": 1,
+        } | values
+        connection.execute(
+            f"INSERT INTO memory_proposals ({', '.join(row)}) VALUES ({', '.join('?' * len(row))})",
+            tuple(row.values()),
+        )
+
+    with sqlite3.connect(migration_db) as connection:
+        assert connection.execute("SELECT count(*) FROM memory_proposals").fetchone() == (0,)
+        assert connection.execute("SELECT count(*) FROM memory_proposal_events").fetchone() == (0,)
+        # The proposal's chat isn't seeded: foreign keys are off for these inserts.
+        insert(connection)
+        for broken in (
+            {"status": "pending"},  # a pending proposal has no decision time
+            {"status": "dismissed", "decided_at": None},
+            {"category": "accessibility"},  # accessibility is sensitive
+            {"kind": "project"},  # project proposals need a project and no category
+        ):
+            with pytest.raises(sqlite3.IntegrityError):
+                insert(connection, **broken)
+    connection = sqlite3.connect(migration_db)
+    try:
+        connection.execute("PRAGMA foreign_keys = ON")
+        connection.execute("DELETE FROM memories WHERE id = ?", (memory_id,))
+        assert connection.execute("SELECT status, memory_id FROM memory_proposals").fetchall() == [("saved", None)]
+    finally:
+        connection.close()

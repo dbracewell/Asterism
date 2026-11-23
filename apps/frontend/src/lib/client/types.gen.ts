@@ -4902,6 +4902,79 @@ export type MemoryPolicy = {
 };
 
 /**
+ * MemoryProposal
+ *
+ * A memory the agent offered in a chat, and what the person decided (US-93.4).
+ */
+export type MemoryProposal = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Chat Id
+   */
+  chat_id: string;
+  /**
+   * Message Id
+   */
+  message_id: string;
+  /**
+   * Execution Id
+   */
+  execution_id: string;
+  kind: MemoryKind;
+  /**
+   * Project Id
+   */
+  project_id: string | null;
+  /**
+   * Text
+   */
+  text: string;
+  category: MemoryCategory | null;
+  /**
+   * Sensitive
+   */
+  sensitive: boolean;
+  status: MemoryProposalStatus;
+  /**
+   * Memory Id
+   */
+  memory_id: string | null;
+  /**
+   * Created At
+   */
+  created_at: number;
+  /**
+   * Decided At
+   */
+  decided_at: number | null;
+};
+
+/**
+ * MemoryProposalSave
+ *
+ * What to save: the proposal as offered, or as the person edited it. Kind and project never change.
+ */
+export type MemoryProposalSave = {
+  /**
+   * Text
+   */
+  text: string;
+  category?: MemoryCategory | null;
+  /**
+   * Sensitive
+   */
+  sensitive?: boolean;
+};
+
+/**
+ * MemoryProposalStatus
+ */
+export type MemoryProposalStatus = "pending" | "saved" | "dismissed";
+
+/**
  * MemorySavedBy
  *
  * Who saved it: the person themselves, or a proposal of the agent they confirmed.
@@ -20846,6 +20919,150 @@ export type MemoryUpdateResponses = {
 
 export type MemoryUpdateResponse =
   MemoryUpdateResponses[keyof MemoryUpdateResponses];
+
+export type MemoryProposalGetOneData = {
+  body?: never;
+  path: {
+    /**
+     * Proposal Id
+     */
+    proposal_id: string;
+  };
+  query?: never;
+  url: "/users/me/memory-proposals/{proposal_id}";
+};
+
+export type MemoryProposalGetOneErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type MemoryProposalGetOneError =
+  MemoryProposalGetOneErrors[keyof MemoryProposalGetOneErrors];
+
+export type MemoryProposalGetOneResponses = {
+  /**
+   * Successful Response
+   */
+  200: MemoryProposal;
+};
+
+export type MemoryProposalGetOneResponse =
+  MemoryProposalGetOneResponses[keyof MemoryProposalGetOneResponses];
+
+export type MemoryProposalSaveData = {
+  body: MemoryProposalSave;
+  path: {
+    /**
+     * Proposal Id
+     */
+    proposal_id: string;
+  };
+  query?: never;
+  url: "/users/me/memory-proposals/{proposal_id}/save";
+};
+
+export type MemoryProposalSaveErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type MemoryProposalSaveError =
+  MemoryProposalSaveErrors[keyof MemoryProposalSaveErrors];
+
+export type MemoryProposalSaveResponses = {
+  /**
+   * Successful Response
+   */
+  201: Memory;
+};
+
+export type MemoryProposalSaveResponse =
+  MemoryProposalSaveResponses[keyof MemoryProposalSaveResponses];
+
+export type MemoryProposalDismissData = {
+  body?: never;
+  path: {
+    /**
+     * Proposal Id
+     */
+    proposal_id: string;
+  };
+  query?: never;
+  url: "/users/me/memory-proposals/{proposal_id}/dismiss";
+};
+
+export type MemoryProposalDismissErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type MemoryProposalDismissError =
+  MemoryProposalDismissErrors[keyof MemoryProposalDismissErrors];
+
+export type MemoryProposalDismissResponses = {
+  /**
+   * Successful Response
+   */
+  200: MemoryProposal;
+};
+
+export type MemoryProposalDismissResponse =
+  MemoryProposalDismissResponses[keyof MemoryProposalDismissResponses];
 
 export type MemoryPolicyGetData = {
   body?: never;
