@@ -90,10 +90,11 @@ const CanvasPolicySettings = dynamic(
     ),
   { loading: AdminPaneLoading },
 );
-const MemoryPolicySettings = dynamic(
+// The working pane (memory-policy-settings) is shown in US-93.5, with memory itself.
+const MemoryPlannedSettings = dynamic(
   () =>
-    import("@/features/settings/ui/admin-settings/memory-policy-settings").then(
-      (module) => module.MemoryPolicySettings,
+    import("@/features/settings/ui/admin-settings/memory-planned-settings").then(
+      (module) => module.MemoryPlannedSettings,
     ),
   { loading: AdminPaneLoading },
 );
@@ -226,9 +227,9 @@ export const getLazyAdminSettingsSections = (): Types => [
     label: "Memory",
     value: "memory",
     icon: <BrainIcon />,
-    // Memory's switches can be set ahead; memory itself arrives in US-93.4/93.5.
+    // Memory itself arrives in US-93.4/93.5; until then the pane is a placeholder.
     badge: "Planned",
-    settingsPane: pane("Memory", <MemoryPolicySettings />),
+    settingsPane: pane("Memory", <MemoryPlannedSettings />),
   },
   {
     type: "section",

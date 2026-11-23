@@ -120,8 +120,9 @@ As an admin, I decide whether memory is available and to whom. As an educator, I
 can keep it out of my course.
 
 - [x] An admin `memory_enabled` policy (default off) with `group_ids`, in Admin
-      Settings, checked live (ADR-0058). Stored as the `memory` app setting. The
-      pane is marked Planned until memory is used (decided 2026-11-23).
+      Settings, checked live (ADR-0058). Stored as the `memory` app setting. Until memory is used, Admin Settings shows
+      a Planned placeholder (no controls); the policy is set through the API, and
+      the working pane is built and tested (decided 2026-11-23).
 - [x] A per-person "Use memory" setting (default on when the policy allows).
       Backend only: its control in Your Asterism ships with US-93.5, so nothing
       describes memory before it works (ADR-0032, decided 2026-11-23).
@@ -184,7 +185,7 @@ without my repeating it.
       that a General chat never receives project memory.
 - [ ] Show the memory controls held back in US-93.2: "Use memory" in Your
       Asterism and the educator's course switch, with their help and guide text;
-      drop the admin pane's Planned badge.
+      replace the admin Memory placeholder with the working pane.
 
 ### US-93.6: Memory in exports, backups and upgrades
 

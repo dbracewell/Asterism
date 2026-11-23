@@ -92,7 +92,7 @@ Source: user request (2026-11-20). [EPIC-93](docs/epics/EPIC-93-LONG-TERM-MEMORY
   - [ ] Tests: an edit between acceptance and resume, where resume sends the accepted text; a deletion between them, where resume sends nothing for that memory.
   - [ ] Show which memories a reply used, in the progress panel or message details, with a link to them in Your Asterism.
   - [ ] Tests for selection, the budget, pinning, course and policy refusals, and that a General chat never receives project memory.
-  - [ ] Show the memory controls held back in US-93.2 ("Use memory" in Your Asterism, the course switch) with their help and guide text, and drop the admin pane's Planned badge.
+  - [ ] Show the memory controls held back in US-93.2 ("Use memory" in Your Asterism, the course switch) with their help and guide text, and replace the admin Memory placeholder with the working pane.
 - [ ] US-93.6: Memory in exports, backups and upgrades
   - [ ] Download my data (ADR-0076) includes `memories.json`, with sensitive memories marked.
   - [ ] Backup and restore (ADR-0072) include the memory vectors. A restore re-embeds any memory without a vector.

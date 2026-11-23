@@ -24,9 +24,10 @@ Unreleased into its version and date.
 
 ### Configuration
 
-- A new admin setting, `memory` (Admin Settings → Memory, marked Planned), is
-  off by default and can be limited to groups. It is saved now and takes effect
-  once memory is used in chats, in a later release. Settings export carries its
+- A new admin setting, `memory`, is off by default and can be limited to groups.
+  Admin Settings → Memory is a Planned placeholder for now; the policy can be set
+  through the API (`PUT /settings/app/memory`) and takes effect once memory is
+  used in chats, in a later release. Settings export carries its
   on/off switch; group limits stay with each installation, as for image
   generation.
 
