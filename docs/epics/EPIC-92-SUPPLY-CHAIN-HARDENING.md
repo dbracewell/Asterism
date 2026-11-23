@@ -151,8 +151,9 @@ report a vulnerability.
 
 ## Open questions
 
-1. Should a fixable **high** also fail CI once the backlog is clear, or stay a
-   report? This epic starts with criticals only. Taken up by
-   [EPIC-95](EPIC-95-FIXABLE-HIGH-VULNERABILITIES.md) (US-95.5).
+1. ~~Should a fixable **high** also fail CI once the backlog is clear, or stay a
+   report?~~ Closed 2026-11-23: yes. [EPIC-95](EPIC-95-FIXABLE-HIGH-VULNERABILITIES.md)
+   cleared the backlog, and since US-95.5 a fixable high fails CI, the release
+   workflow and the weekly scan's issue, as a critical does.
 2. Is a weekly Dependabot cadence right, or would monthly suit a small team
    better? pnpm's `minimumReleaseAge` already holds new npm releases back.

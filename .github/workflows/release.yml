@@ -3,7 +3,7 @@ name: Release
 # US-91.5: a pushed v<version> tag (from `pnpm release`) publishes the CPU image
 # to ghcr.io/dbracewell/asterism for amd64 and arm64. Each architecture is
 # pushed by digest only, pulled back, checked as in CI (US-91.2) and scanned for
-# fixable critical vulnerabilities (US-92.2); only when both pass do the version
+# fixable critical and high vulnerabilities (US-92.2, US-95.5); only when both pass do the version
 # and `latest` tags point at them. The GPU build is built from source and not
 # published.
 #
@@ -155,7 +155,7 @@ jobs:
         run: node scripts/install-trivy.mjs
 
       - name: Scan the image for known vulnerabilities
-        # US-92.2: a release with a fixable critical is never tagged.
+        # US-92.2, US-95.5: a release with a fixable critical or high is never tagged.
         run: pnpm check:vulns --image asterism:release
 
       - name: Record the digest

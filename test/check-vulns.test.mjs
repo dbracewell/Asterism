@@ -1,4 +1,5 @@
-// The vulnerability scan policy, its ignore file and the weekly issue (US-92.2).
+// The vulnerability scan policy, its ignore file and the weekly issue (US-92.2;
+// fixable highs fail from US-95.5).
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
@@ -131,7 +132,7 @@ test("utcToday reads the UTC date", () => {
   assert.equal(utcToday(new Date("2026-11-21T23:30:00-05:00")), "2026-11-22");
 });
 
-test("findings are deduplicated, and only fixable criticals fail", () => {
+test("findings are deduplicated, and fixable criticals and highs fail", () => {
   const findings = findingsFrom([REPORT]);
   assert.deepEqual(
     findings.map((f) => f.id),
@@ -140,7 +141,7 @@ test("findings are deduplicated, and only fixable criticals fail", () => {
   const { blocking, unfixedCriticals, highs } = classify(findings);
   assert.deepEqual(
     blocking.map((f) => f.id),
-    ["CVE-1"],
+    ["CVE-1", "CVE-3"],
   );
   assert.deepEqual(
     unfixedCriticals.map((f) => f.id),
@@ -155,12 +156,12 @@ test("findings are deduplicated, and only fixable criticals fail", () => {
   assert.equal(packageCount([{}]), 0);
 });
 
-test("the summary fails on a fixable critical and prints the highs", () => {
+test("the summary fails on a fixable critical or high and prints the highs", () => {
   const failing = summary(findingsFrom([REPORT]), "asterism:ci");
   assert.equal(failing.failed, true);
   assert.match(
     failing.text,
-    /^asterism:ci: 1 critical vulnerability has a fix:\nID +Package +Installed +Fixed in +Where\nCVE-1 +openssl +1\.0\.0 +3\.0\.1 +asterism:ci \(debian 13\.2\)/,
+    /^asterism:ci: 2 critical or high vulnerabilities have a fix:\nID +Package +Installed +Fixed in +Where\nCVE-1 +openssl +1\.0\.0 +3\.0\.1 +asterism:ci \(debian 13\.2\)\nCVE-3 +zlib +1\.0\.0 +2\.0\.0/,
   );
   assert.match(
     failing.text,
@@ -169,17 +170,79 @@ test("the summary fails on a fixable critical and prints the highs", () => {
   assert.match(failing.text, /Highs \(1\):\n.*\nCVE-3 +zlib/);
   assert.doesNotMatch(failing.text, /CVE-4/);
 
-  const passing = summary(
+  const fixableHigh = summary(
     findingsFrom([
       { Results: [{ Vulnerabilities: [vulnerability("CVE-5", "HIGH", "1")] }] },
     ]),
     "x",
   );
+  assert.equal(fixableHigh.failed, true);
+  assert.match(
+    fixableHigh.text,
+    /^x: 1 critical or high vulnerability has a fix:\n.*\nCVE-5 +pkg +1\.0\.0 +1\n/,
+  );
+
+  // A high with no fix, a medium or a low with a fix, and a critical with no
+  // fix are reported without failing.
+  const passing = summary(
+    findingsFrom([
+      {
+        Results: [
+          {
+            Vulnerabilities: [
+              vulnerability("CVE-6", "HIGH"),
+              vulnerability("CVE-7", "MEDIUM", "2"),
+              vulnerability("CVE-8", "LOW", "2"),
+              vulnerability("CVE-9", "CRITICAL"),
+            ],
+          },
+        ],
+      },
+    ]),
+    "x",
+  );
   assert.equal(passing.failed, false);
-  assert.match(passing.text, /^x: no critical vulnerability with a fix\./);
+  assert.match(
+    passing.text,
+    /^x: no critical or high vulnerability with a fix\./,
+  );
+  assert.match(
+    passing.text,
+    /Highs \(1\):\n.*\nCVE-6 +pkg +1\.0\.0 +\(no fix\)/,
+  );
+  assert.match(
+    passing.text,
+    /Criticals with no fix yet \(not failing\):\n.*\nCVE-9/,
+  );
   assert.equal(
     summary([], "x").text,
-    "x: no critical vulnerability with a fix.\n\nNo highs.",
+    "x: no critical or high vulnerability with a fix.\n\nNo highs.",
+  );
+});
+
+test("an accepted high follows the same ignore rules as a critical", () => {
+  // Entries carry no severity: Trivy drops an accepted finding before the
+  // summary, so a high listed with a reason and a future expiry stops failing.
+  const accepted = [
+    "vulnerabilities:",
+    "  - id: CVE-2026-85091",
+    "    statement: zlib1g high; gzwrite is never called in non-blocking mode",
+    "    expired_at: 2026-12-01",
+  ].join("\n");
+  assert.deepEqual(ignoreFileProblems(accepted, "f", TODAY), []);
+  assert.deepEqual(
+    ignoreFileProblems(accepted.replace(/\n.*statement.*$/m, ""), "f", TODAY),
+    [
+      "f: vulnerabilities[0] (CVE-2026-85091) has no statement saying why it is accepted",
+    ],
+  );
+  assert.deepEqual(ignoreFileProblems(accepted, "f", "2026-12-01"), [
+    "f: vulnerabilities[0] (CVE-2026-85091) expired on 2026-12-01; fix it, or renew it with a new reason and date",
+  ]);
+  const remaining = findingsFrom([REPORT]).filter((f) => f.id !== "CVE-3");
+  assert.deepEqual(
+    classify(remaining).blocking.map((f) => f.id),
+    ["CVE-1"],
   );
 });
 
@@ -224,20 +287,32 @@ function scan(...vulnerabilities) {
   };
 }
 
-test("the weekly issue opens for a fixable critical and changes only for a new one", () => {
+test("the weekly issue opens for a fixable critical or high and changes only for a new one", () => {
   assert.deepEqual(
     planIssue(
-      scan(
-        vulnerability("CVE-2", "CRITICAL"),
-        vulnerability("CVE-3", "HIGH", "1"),
-      ),
+      scan(vulnerability("CVE-2", "CRITICAL"), vulnerability("CVE-3", "HIGH")),
       null,
     ),
     {
       action: "none",
-      reason: "no critical with a fix",
+      reason: "no critical or high with a fix",
     },
   );
+
+  const high = planIssue(
+    scan(vulnerability("CVE-3", "HIGH", "1", "zlib")),
+    null,
+  );
+  assert.equal(high.action, "create");
+  assert.equal(
+    high.title,
+    "Fixable critical or high vulnerabilities in the published image",
+  );
+  assert.match(
+    high.body,
+    /found 1 critical or high vulnerability with a fix\./,
+  );
+  assert.deepEqual([...recordedKeys(high.body)], ["CVE-3 zlib"]);
 
   const first = planIssue(
     scan(vulnerability("CVE-1", "CRITICAL", "2.0.0", "openssl")),
@@ -246,7 +321,7 @@ test("the weekly issue opens for a fixable critical and changes only for a new o
   assert.equal(first.action, "create");
   assert.match(
     first.body,
-    /^The weekly scan of `ghcr\.io\/dbracewell\/asterism:latest` on 2026-11-21 found 1 critical vulnerability with a fix\. \[Scan run\]\(https:\/\/example\.test\/run\/1\)\./,
+    /^The weekly scan of `ghcr\.io\/dbracewell\/asterism:latest` on 2026-11-21 found 1 critical or high vulnerability with a fix\. \[Scan run\]\(https:\/\/example\.test\/run\/1\)\./,
   );
   assert.deepEqual([...recordedKeys(first.body)], ["CVE-1 openssl"]);
 

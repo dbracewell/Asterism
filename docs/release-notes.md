@@ -52,6 +52,11 @@ Unreleased into its version and date.
   fix, so the runtime stage upgrades it (`BASE_LAG_UPGRADES` in the Dockerfile).
   `pnpm check:image` fails once the base carries the fix, so the upgrade comes
   out with the base update.
+- A high-severity vulnerability with a fix now fails CI and stops a release,
+  as a critical with a fix already did. The weekly scan of the published image
+  opens its issue for one too. With this release the image and both lockfiles
+  have none. To accept a finding instead, add it to `.trivyignore.yaml` with a
+  statement and an expiry date, as for criticals.
 
 ## 0.3.0 (2026-11-22)
 

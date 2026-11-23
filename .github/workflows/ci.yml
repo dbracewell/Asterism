@@ -292,7 +292,7 @@ jobs:
         run: node scripts/install-trivy.mjs
 
       - name: Scan the image for known vulnerabilities
-        # Fails on a critical with a fix; prints the highs.
+        # Fails on a critical or high with a fix (US-95.5); prints the highs.
         run: pnpm check:vulns --image asterism:ci
 
       - name: Scan the lockfiles for known vulnerabilities
