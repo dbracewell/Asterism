@@ -44,7 +44,7 @@ export function DownloadMyData() {
   return (
     <SettingsSection
       title="Your data"
-      description="One archive of your chats, files, projects, study records, skills, About you and settings. Chats come as readable Markdown and as JSON."
+      description="One archive of your chats, files, projects, study records, skills, About you, memories and settings. Chats come as readable Markdown and as JSON."
     >
       <div className="grid gap-2 text-sm">
         {busy && (

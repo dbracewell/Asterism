@@ -1,8 +1,7 @@
 # ADR-0078 — Long-term memory
 
-Status: accepted; the store and boundary are implemented in US-93.1
-([EPIC-93](../epics/EPIC-93-LONG-TERM-MEMORY.md)). Policies, proposals, the
-per-turn layer and exports follow in US-93.2 to US-93.6. Amends the memory
+Status: accepted; implemented in US-93.1 to US-93.6
+([EPIC-93](../epics/EPIC-93-LONG-TERM-MEMORY.md)). Amends the memory
 boundary in [context isolation](../architecture/context-isolation.md) and
 [ADR-0066](0066-about-you.md) ("no long-term memory engine exists").
 
@@ -158,6 +157,25 @@ from a file, web page or tool result.
   with ids and times only, never text. It outlives the chat and is deleted with
   the account.
 
+### Exports, backups and upgrades (US-93.6)
+
+- **Download my data** ([ADR-0076](0076-download-my-data.md)) has
+  `memories.json`: every memory of both kinds in the memory API's shape, so each
+  carries `sensitive`. Proposals, their audit events and the per-turn pins are in
+  `records/`.
+- **Backups** ([ADR-0072](0072-backup-and-restore.md)) already copy every LanceDB
+  table, `memory_vectors` included. Because vectors are copied after the database
+  snapshot, a backup can hold a vector without its memory, or a memory without
+  its vector.
+- **Rebuild on start:** each start, in the background, embeds every memory whose
+  vector is missing or from an older revision, and deletes vectors without a
+  memory, owner by owner. If the embedding model isn't ready it stops after the
+  first failure and the next start tries again; turns rank by recency meanwhile.
+  This covers a restore and a memory saved while the model was down.
+- **Upgrades:** the upgrade check seeds a user memory and a project memory and
+  checks they come back unchanged. It skips this, saying so, while the previous
+  release has no memory (0.3.1 and earlier).
+
 ### Memory grants nothing
 
 Like About you, memory is information about the person, framed that way in the
@@ -170,7 +188,7 @@ proposal the person confirms (US-93.4).
 - A person's preferences and needs follow them across projects, which the old
   boundary prevented by design. The content rule and per-project memory are what
   keep a project's material from leaking into another.
-- Memory is personal data: it joins Download my data, backups and upgrades in
-  US-93.6, and is refused to everyone but its owner.
+- Memory is personal data: it is in Download my data, backups and the upgrade
+  check (US-93.6), and is refused to everyone but its owner.
 - The vector table is rebuildable, so it needs no migration of its own when the
   embedding model changes.

@@ -98,7 +98,7 @@ instructions and choose its tools in Settings.
 **Memory.** Something Asterism keeps in mind about you, such as how you like to
 learn, or about your work in one project. Only you can see your memories. They're
 information, not instructions. See
-[Memory](06-making-it-yours/about-you-and-usage.md#memory).
+[What Asterism remembers](06-making-it-yours/what-asterism-remembers.md).
 
 **Mode restrictions.** Limits on which learning modes a chat can use and whether
 answers can be shown. They come from your own lock, your class's rules, or both.

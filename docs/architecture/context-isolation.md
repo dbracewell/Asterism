@@ -54,6 +54,7 @@ snapshot for replay; provenance does not duplicate its instruction text.
 | Web passage summarization/ranking         | Per-call inputs and local result lists; no persistent conversation cache or user namespace.                                                                                                                                                                                                                                                            |
 | User-existence/JWT caches                 | Authentication metadata only; no project/chat text.                                                                                                                                                                                                                                                                                                    |
 | Long-term memory                          | `memories` rows owned by one user, of kind `user` (about the person, never project content) or `project` (one owned project); vectors in their own `memory_vectors` table. Only the owner reads them. Turns pin the chosen memories (`message_memories`), deleted with the memory; recorded runs keep ids only. Nothing writes memories automatically. |
+| Memory proposals                          | `memory_proposals` rows owned by one user and anchored to one chat run, deleted with the chat; the content-free `memory_proposal_events` audit stays until the account is deleted. Saving one rechecks ownership, the chat's live project and availability.                                                                                            |
 | Conversation summaries                    | No cross-chat conversation summary integration exists, and About you is never edited by the agent.                                                                                                                                                                                                                                                     |
 
 ## Memory boundary
@@ -93,6 +94,11 @@ A project memory keeps its project when a chat moves: moves never relabel old
 project memory as another project's. Deleting a project deletes its memories;
 deleting a chat keeps memories saved from it, whose source then reads "chat
 deleted".
+
+Memories leave with the person's data (`memories.json` in Download my data,
+ADR-0076) and with backups: `memory_vectors` is in the backed-up LanceDB folder,
+and each start rebuilds vectors from the rows, never the reverse. A rebuild works
+owner by owner and never moves a vector to another owner or project.
 
 The About you revision is captured in execution provenance and the recorded layer
 is inherited by children. About you text cannot grant file, tool, delegation or

@@ -65,8 +65,8 @@ async def _require_project(user_id: str, project_id: uuid.UUID, session: AsyncSe
         raise NotFoundException("Project not found")
 
 
-async def write_vector(row: MemoryModel) -> None:
-    """Embed and store the memory's vector. Best effort: the row is the record."""
+async def write_vector(row: MemoryModel) -> bool:
+    """Embed and store the memory's vector; False when it failed. Best effort: the row is the record."""
     try:
         [vector] = await embedding_provider.embed_text([row.text])
         await memory_vector_store.write(
@@ -82,6 +82,8 @@ async def write_vector(row: MemoryModel) -> None:
     except Exception as error:
         # No text in the message: the memory may be sensitive.
         logger.warning(f"Memory {row.id} saved without a vector ({type(error).__name__}); it will be rebuilt")
+        return False
+    return True
 
 
 async def _delete_vectors(user_id: str, memory_ids: list[uuid.UUID]) -> None:

@@ -8,3 +8,4 @@ walking) so handler loading stays auditable and import-cycle-free.
 """
 
 import asterism.domains.llm.draft  # noqa: F401  DRAFT_MODEL_UPDATED
+import asterism.domains.memory.rebuild  # noqa: F401  SYSTEM_START

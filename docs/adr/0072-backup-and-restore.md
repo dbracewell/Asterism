@@ -31,7 +31,10 @@ vectors are copied after that, so every copied reference already existed. The fi
 store creates a file before its row is committed, so a file still being written can
 only be an orphan. A file deleted in between is recorded as skipped. Cross-database
 consistency is close to exact: the two snapshots are taken milliseconds apart, and
-Better Auth and the backend only share user IDs.
+Better Auth and the backend only share user IDs. Memory vectors are the exception to
+"every copied reference already existed": they are a cache, and each start rebuilds
+any missing one and drops any without a memory
+([ADR-0078](0078-long-term-memory.md), US-93.6).
 
 **Vectors are exported, not copied.** Each LanceDB table is pinned to its current
 version (`checkout`) and written to a fresh table in the archive. This drops old

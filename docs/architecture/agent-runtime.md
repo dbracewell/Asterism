@@ -416,5 +416,13 @@ owned chat history and authorized retrieval responses remain content-bearing.
 
 Long-term memories are read only through the turn's pins, never by search at
 run time, and no automatic cross-chat summary retrieval is implemented.
+The main agent in an ordinary conversation can call the internal `propose_memory`
+tool when memory is available for the chat and the model supports tools; sub-agents
+and drafting chats never get it. A call records a pending `memory_proposals` row
+anchored to the run (at most one per run) and returns only its id; nothing reaches
+`memories` until the person saves it, which rechecks ownership, the chat's project
+and availability. Memory vectors are a cache of the rows: each start rebuilds any
+missing or stale vector in the background and drops vectors without a memory, so a
+restored backup or a memory saved while the embedding model was down catches up.
 Namespace/key types define the isolation boundary; they do not authorize reads. See [memory limits](context-isolation.md) and
 [chat transport](chat-and-websocket.md).

@@ -3,8 +3,8 @@
 The list is an allowlist. Left out on purpose: credentials (ChatGPT plan
 connections and authorizations, providers), idempotency and draft bookkeeping
 (send receipts, composer drafts), derived knowledge (artifacts and vectors, which
-are rebuilt from the files) and agent traces. Chats, messages, canvases and
-settings are written by the archive builder in their own shapes.
+are rebuilt from the files) and agent traces. Chats, messages, canvases,
+memories and settings are written by the archive builder in their own shapes.
 """
 
 from collections.abc import AsyncIterator
@@ -20,6 +20,7 @@ from asterism.domains.classes.models import ClassMemberModel, EducatorRequestMod
 from asterism.domains.courses.models import CourseCopyModel
 from asterism.domains.files.models import UserFileModel
 from asterism.domains.image_generation.models import ImageGenerationModel
+from asterism.domains.memory.models import MemoryProposalEventModel, MemoryProposalModel, MessageMemoryModel
 from asterism.domains.projects.models import ProjectFileModel, ProjectModel, ProjectSubAgentModel
 from asterism.domains.prompt_templates.models import PromptTemplateModel
 from asterism.domains.reflections.models import ReflectionModel
@@ -66,6 +67,9 @@ RECORD_TABLES: tuple[RecordTable, ...] = (
     RecordTable("reflections", ReflectionModel),
     RecordTable("chat_compactions", ChatCompactionModel),
     RecordTable("image_generations", ImageGenerationModel),
+    RecordTable("memory_proposals", MemoryProposalModel),
+    RecordTable("memory_proposal_events", MemoryProposalEventModel),
+    RecordTable("message_memories", MessageMemoryModel),
     RecordTable("usage_records", UsageRecordModel),
     RecordTable("class_memberships", ClassMemberModel),
     RecordTable("educator_requests", EducatorRequestModel),

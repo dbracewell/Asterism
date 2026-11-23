@@ -77,7 +77,7 @@ Open a project from **Projects** in the sidebar. Its page has tabs:
 When memory is on, a project's **Settings** tab has **Project memory**: things
 Asterism keeps in mind about your work in this project, such as a decision or a
 convention you chose. Only this project's chats use them, together with your
-[memories about you](../06-making-it-yours/about-you-and-usage.md#memory), and
+[memories about you](../06-making-it-yours/what-asterism-remembers.md), and
 only you can see them. Add, edit or delete them there.
 
 ## Choose sub-agents for a project

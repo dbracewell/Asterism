@@ -14,7 +14,7 @@ You get one archive (a zip file) with:
   of every answer;
 - your files;
 - your projects, flashcards, reviews, quizzes, notes and reflections;
-- your skills, About you, settings and usage.
+- your skills, About you, memories, settings and usage.
 
 1. Select your name at the bottom of the sidebar, then **Settings**.
 2. Under **Your data**, select **Prepare my data**.

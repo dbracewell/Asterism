@@ -4,6 +4,7 @@ Layout, inside one top folder:
 
 - ``README.md``: what is where.
 - ``account.json``, ``settings.json``, ``about-you.md``.
+- ``memories.json``: every saved memory, user and project, with ``sensitive``.
 - ``chats/<date> <title> (<id>)/chat.md``: the branch shown in the app, readable.
   ``chat.json`` next to it has the chat and every message on every branch.
   ``canvas/`` holds the chat's canvas items at their current version.
@@ -36,6 +37,8 @@ from asterism.domains.chat.schemas import Message
 from asterism.domains.files.models import UserFileModel
 from asterism.domains.files.store import get_file_store
 from asterism.domains.groups.service import read_group_refs
+from asterism.domains.memory.queries import order_memories, select_owned_memories
+from asterism.domains.memory.service import to_memory
 from asterism.domains.skills.models import SkillModel
 from asterism.domains.user.models import UserModel
 
@@ -52,14 +55,17 @@ Exported {exported}. Times are UTC.
 - `account.json`: your name, email, group and account dates.
 - `settings.json`: your settings, main agent and sub-agent definitions.
 - `about-you.md`: your About you text.
+- `memories.json`: what Asterism remembers about you and your projects. A
+  memory with `"sensitive": true` is one you or Asterism marked sensitive.
 - `chats/`: one folder per chat. `chat.md` is the conversation as shown in the
   app; `chat.json` has every message on every branch, with its sources,
   citations and tool calls. `canvas/` holds the chat's canvas documents.
 - `skills/`: your skills as SKILL.md text.
 - `files/`: your library files, as uploaded or produced.
 - `records/`: projects, study decks, cards, reviews, quizzes and notes,
-  reflections, prompt templates, image requests, usage, class memberships and
-  other records, one JSON object per row.
+  reflections, prompt templates, image requests, memory offers and the
+  memories each reply used, usage, class memberships and other records, one
+  JSON object per row.
 
 Files in `files/` are named as in your library. Records refer to each other
 by id.
@@ -150,6 +156,11 @@ async def _settings(writer: ArchiveWriter, user_id: str, session: AsyncSession) 
     writer.json("", "settings.json", settings.model_dump(mode="json", exclude={"models"}))
 
 
+async def _memories(writer: ArchiveWriter, user_id: str, session: AsyncSession) -> None:
+    rows = (await session.scalars(order_memories(select_owned_memories(user_id)))).all()
+    writer.json("", "memories.json", [to_memory(row).model_dump(mode="json") for row in rows])
+
+
 async def _canvases(writer: ArchiveWriter, folder: str, user_id: str, chat: ChatModel, session: AsyncSession) -> list:
     versions = (await session.scalars(select_owned_versions(user_id=user_id, chat_id=chat.id))).all()
     if not versions:
@@ -228,6 +239,7 @@ async def build_archive(user_id: str, destination: Path, session: AsyncSession, 
         writer.text("", "README.md", README.format(exported=now.strftime("%Y-%m-%d %H:%M UTC")))
         await _account(writer, user_id, session)
         await _settings(writer, user_id, session)
+        await _memories(writer, user_id, session)
         await _skills(writer, user_id, session)
         await _chats(writer, user_id, session)
         await _files(writer, user_id, session)

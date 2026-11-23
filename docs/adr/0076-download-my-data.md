@@ -24,7 +24,8 @@ page polls it while the build runs.
 
 - `README.md`; `account.json` (name, email, group, dates); `settings.json` (the
   settings aggregate the app reads, without the instance's model list);
-  `about-you.md`.
+  `about-you.md`; `memories.json`, every memory with `sensitive` marked
+  ([ADR-0078](0078-long-term-memory.md), added in US-93.6).
 - Per chat: `chat.md`, the active branch as a readable conversation, and
   `chat.json`, the chat row plus every message on every branch. Canvas items are
   in their natural file type at their current version, and every version is in the
@@ -32,7 +33,8 @@ page polls it while the build runs.
 - `skills/*.md`, and `files/` with the library files as stored.
 - `records/*.json`: projects, study decks, cards, review logs, quizzes and
   attempts, notes, reflections, prompt templates, image requests, usage, class
-  memberships, educator and deletion requests.
+  memberships, educator and deletion requests, memory proposals and their audit
+  events, and the memories each turn used.
 
 The record tables are an **allowlist** (`records.RECORD_TABLES`), read with the
 owner filter on `user_id` and streamed into the zip a page at a time. A new table

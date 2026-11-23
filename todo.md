@@ -87,18 +87,18 @@ Source: user request (2026-11-20). [EPIC-93](docs/epics/EPIC-93-LONG-TERM-MEMORY
   - [x] Help text and a help topic; E2E and accessibility tests.
   - [x] Show which memories a reply used, in the progress panel or message details, with a link to them in Your Asterism.
   - [x] Show the memory controls held back in US-93.2 ("Use memory" in Your Asterism, the course switch) with their help and guide text, and replace the admin Memory placeholder with the working pane.
-- [ ] US-93.4: The agent proposes, the person decides (in progress, branch `feat/us-93.4-memory-proposals`)
+- [x] US-93.4: The agent proposes, the person decides (PR #77, merged 2026-11-23)
   - [x] An internal `propose_memory` tool for the main agent in ordinary chats, offered when memory is available and the model supports tools: it takes the kind, text, category and whether the memory is sensitive; it is limited to one proposal per turn; it is never offered to sub-agents or in drafting chats.
   - [x] Its description and the main prompt set the rules: user memory is only about the person, never project content; accessibility and health memories are only from what the person said about themselves.
   - [x] A proposal card in the chat shows the text and where it will be saved ("You, in every chat" or "This project"), with Save, Edit and Dismiss. Saving rechecks availability and ownership live.
   - [x] Proposals are branch-aware chat records, and a dismissed one isn't proposed again in that chat.
   - [x] An audit record (ids and times only) for every proposal and decision.
   - [x] Tests, including text injected from a file, which can only lead to a proposal that is never saved without the click.
-- [ ] US-93.6: Memory in exports, backups and upgrades
-  - [ ] Download my data (ADR-0076) includes `memories.json`, with sensitive memories marked.
-  - [ ] Backup and restore (ADR-0072) include the memory vectors. A restore re-embeds any memory without a vector.
-  - [ ] The upgrade check (US-91.6) seeds a user memory and a project memory and checks they survive.
-  - [ ] User guide: a "What Asterism remembers" page. Architecture: memory in the agent runtime and context-isolation guides. `AGENTS.md`: replace "no long-term memory engine exists" with the memory rules. Release notes: Behavior.
+- [ ] US-93.6: Memory in exports, backups and upgrades (in progress, branch `feat/us-93.6-memory-portability`)
+  - [x] Download my data (ADR-0076) includes `memories.json`, with sensitive memories marked.
+  - [x] Backup and restore (ADR-0072) include the memory vectors. A restore re-embeds any memory without a vector.
+  - [x] The upgrade check (US-91.6) seeds a user memory and a project memory and checks they survive.
+  - [x] User guide: a "What Asterism remembers" page. Architecture: memory in the agent runtime and context-isolation guides. `AGENTS.md`: replace "no long-term memory engine exists" with the memory rules. Release notes: Behavior.
 
 ## Maintenance follow-ups (2026-11-21)
 

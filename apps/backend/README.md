@@ -177,7 +177,7 @@ user settings expose General, Your Asterism, Skills, and Agents.
 | Image generation     | Policy, `generate_image`, Create image, the ComfyUI, ONNX and Diffusers generators ([ADR-0064](../../docs/adr/0064-image-generation.md), [ADR-0077](../../docs/adr/0077-torch-free-default-image.md)) | Admin page and chat UI (EPIC-76)                        |
 | Code execution       | —                                                                                                                                                                                                     | Sandboxed execution and runtime settings                |
 | Export               | Individual file downloads                                                                                                                                                                             | Data/conversation export tools                          |
-| About you and memory | About you text in Your Asterism, pinned on each accepted turn                                                                                                                                         | Long-term memory engine                                 |
+| About you and memory | About you text in Your Asterism, pinned on each accepted turn; user and project memories the person saves or confirms, pinned per turn                                                                | —                                                       |
 
 The Users badge describes unfinished administration screens, not missing access
 control. Backend list/provision/delete routes already have authorization and
@@ -341,8 +341,10 @@ limited to 16,000 characters, and saves with a revision check that keeps the dra
 after a conflict. Each accepted turn pins the text and revision; resume reuses
 them and regeneration uses the current text. A blank text adds nothing to the
 prompt. Delegates inherit the recorded text within their existing capability
-ceilings. About you grants no tools or files, and no long-term memory engine is
-active. See [ADR-0066](../../docs/adr/0066-about-you.md).
+ceilings. About you grants no tools or files. See
+[ADR-0066](../../docs/adr/0066-about-you.md). Long-term memory, which the person
+saves or confirms, is separate; see
+[ADR-0078](../../docs/adr/0078-long-term-memory.md).
 
 Schema changes ship as versioned migrations; `init:db` upgrades an existing
 database in place. Story tests use disposable storage and do not touch the working

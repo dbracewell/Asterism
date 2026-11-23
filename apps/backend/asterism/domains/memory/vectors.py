@@ -37,13 +37,15 @@ class MemoryVectorStore(Protocol):
 
     async def write(self, row: MemoryVector) -> None: ...
 
-    async def delete_memories(self, *, user_id: str, memory_ids: Sequence[uuid.UUID]) -> None: ...
+    async def delete_memories(self, *, user_id: str, memory_ids: Sequence[uuid.UUID | str]) -> None: ...
 
     async def delete_project(self, *, user_id: str, project_id: uuid.UUID) -> None: ...
 
     async def delete_user(self, *, user_id: str) -> None: ...
 
-    async def list_ids(self, *, user_id: str) -> set[str]: ...
+    async def list_owners(self) -> set[str]: ...
+
+    async def list_revisions(self, *, user_id: str) -> dict[str, int]: ...
 
     async def search(
         self, *, user_id: str, project_id: uuid.UUID | None, vector: Sequence[float], limit: int
@@ -117,7 +119,7 @@ class LanceDbMemoryVectorStore:
 
         await self._run(replace, "Memory vector could not be stored")
 
-    async def delete_memories(self, *, user_id: str, memory_ids: Sequence[uuid.UUID]) -> None:
+    async def delete_memories(self, *, user_id: str, memory_ids: Sequence[uuid.UUID | str]) -> None:
         if not memory_ids:
             return
         ids = ", ".join(self._quote(str(memory_id)) for memory_id in memory_ids)
@@ -132,12 +134,21 @@ class LanceDbMemoryVectorStore:
         predicate = f"user_id = {self._quote(user_id)}"
         await self._run(lambda table: table.delete(predicate), "Memory vectors could not be deleted")
 
-    async def list_ids(self, *, user_id: str) -> set[str]:
-        predicate = f"user_id = {self._quote(user_id)}"
+    async def list_owners(self) -> set[str]:
+        """Every owner with a stored vector."""
 
         def read(table) -> set[str]:
-            rows = table.search().where(predicate).select(["memory_id"]).limit(None).to_list()
-            return {row["memory_id"] for row in rows}
+            return {row["user_id"] for row in table.search().select(["user_id"]).limit(None).to_list()}
+
+        return await self._run(read, "Memory vectors could not be read")
+
+    async def list_revisions(self, *, user_id: str) -> dict[str, int]:
+        """The owner's stored vectors: memory id to the revision it was embedded at."""
+        predicate = f"user_id = {self._quote(user_id)}"
+
+        def read(table) -> dict[str, int]:
+            rows = table.search().where(predicate).select(["memory_id", "revision"]).limit(None).to_list()
+            return {row["memory_id"]: row["revision"] for row in rows}
 
         return await self._run(read, "Memory vectors could not be read")
 

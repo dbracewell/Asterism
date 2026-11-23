@@ -107,15 +107,17 @@ what your group can use.
    your default model, the prompt coach and the canvas.
 2. [About you and your usage](06-making-it-yours/about-you-and-usage.md): what to
    write about yourself, and your token use and budget.
-3. [Agents](06-making-it-yours/agents.md): your main agent's instructions and
+3. [What Asterism remembers](06-making-it-yours/what-asterism-remembers.md): your
+   memories, what Asterism offers to remember, and turning memory off.
+4. [Agents](06-making-it-yours/agents.md): your main agent's instructions and
    tools, sub-agents, and the General chat set.
-4. [Skills](06-making-it-yours/skills.md): writing one, having Asterism draft one,
+5. [Skills](06-making-it-yours/skills.md): writing one, having Asterism draft one,
    and assigning it.
-5. [Templates and rubrics](06-making-it-yours/templates-and-rubrics.md): making
+6. [Templates and rubrics](06-making-it-yours/templates-and-rubrics.md): making
    your own from the ones that come with Asterism.
-6. [Connecting a ChatGPT plan](06-making-it-yours/connecting-chatgpt.md): using
+7. [Connecting a ChatGPT plan](06-making-it-yours/connecting-chatgpt.md): using
    your own ChatGPT Plus or Pro plan.
-7. [Your data and your account](06-making-it-yours/your-data-and-account.md):
+8. [Your data and your account](06-making-it-yours/your-data-and-account.md):
    downloading your data and asking for your account to be deleted.
 
 ## For educators

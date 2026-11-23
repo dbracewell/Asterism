@@ -68,8 +68,7 @@ Each user has exactly one **About you** text (`users.about_md` with
 - Limits: 16,000 characters / 64,000 UTF-8 bytes, no NUL or control characters
   other than tab and newlines. Edits require the expected revision (409 on conflict).
 - There are no personas, profiles or per-chat overrides. Long-term memory is
-  separate from About you ([ADR-0078](docs/adr/0078-long-term-memory.md); EPIC-93
-  in progress).
+  separate from About you (section 2.5).
 
 ## 2.3 Agents
 
@@ -131,6 +130,33 @@ fixed models and receive the same or narrower execution file scope.
   ([ADR-0064](docs/adr/0064-image-generation.md)). A fixed prompt check refuses
   sexual content involving minors; every attempt is recorded; images are
   produced chat files.
+- `propose_memory` is an internal tool for the main agent in ordinary chats,
+  offered when memory is available for the chat and the model supports tools
+  ([ADR-0078](docs/adr/0078-long-term-memory.md)). It records a pending proposal
+  (one per run) and saves nothing; sub-agents and drafting chats never get it.
+
+## 2.5 Memory
+
+Long-term memory ([ADR-0078](docs/adr/0078-long-term-memory.md)) is a set of
+owner-only `memories` rows, separate from About you.
+
+- Two kinds: `user` memory is about the person (how they learn, accessibility
+  needs they shared, background), never project content, and has a category;
+  `project` memory belongs to one owned project and only its chats use it.
+  Accessibility memories are always sensitive.
+- Only the owner reads or changes a memory: not educators, not admins.
+- Availability is checked live: the admin `memory` policy (off by default,
+  optionally by group), the person's Use memory setting, and the course setting.
+- Only the person saves a memory: directly, or by saving a proposal the agent
+  made. Saving a proposal rechecks ownership, the chat's project and availability.
+  Nothing writes memories automatically, and file, web and tool text never
+  becomes a proposal.
+- Accepted turns pin the memories they used (`message_memories`); memory text is
+  information, never instructions, and grants nothing.
+- Logs and errors name memory ids, never memory text.
+- Vectors (`memory_vectors`) are a cache rebuilt from the rows on each start,
+  never the reverse. Memories are in Download my data (`memories.json`) and in
+  backups, and the upgrade check seeds them.
 
 ---
 
