@@ -2,8 +2,8 @@
 /**
  * Scans for known vulnerabilities with the pinned Trivy (US-92.2).
  *
- * Fails on a critical with a fix, prints a table of highs, and lists criticals
- * that have no fix yet without failing on them. Accepted findings live in
+ * Fails on a critical or high with a fix (a high from EPIC-95), prints a table
+ * of highs, and lists criticals that have no fix yet without failing on them. Accepted findings live in
  * .trivyignore.yaml, each with a reason (`statement`) and an expiry
  * (`expired_at`); the scan refuses to run while an entry lacks either or has
  * expired. A scan that read no packages fails too, so a Trivy that silently
@@ -152,10 +152,15 @@ export function isFixable(finding) {
   return finding.fixed.trim() !== "";
 }
 
+/** Severities that fail the check when a finding has a fix (US-95.5). */
+export const BLOCKING_SEVERITIES = new Set(["CRITICAL", "HIGH"]);
+
 /** Splits findings into what fails the check, what is printed, and what is noted. */
 export function classify(findings) {
   return {
-    blocking: findings.filter((f) => f.severity === "CRITICAL" && isFixable(f)),
+    blocking: findings.filter(
+      (f) => BLOCKING_SEVERITIES.has(f.severity) && isFixable(f),
+    ),
     unfixedCriticals: findings.filter(
       (f) => f.severity === "CRITICAL" && !isFixable(f),
     ),
@@ -194,12 +199,12 @@ export function summary(findings, scanned) {
   const lines = [];
   if (blocking.length > 0) {
     lines.push(
-      `${scanned}: ${blocking.length} critical ${blocking.length === 1 ? "vulnerability has" : "vulnerabilities have"} a fix:`,
+      `${scanned}: ${blocking.length} critical or high ${blocking.length === 1 ? "vulnerability has" : "vulnerabilities have"} a fix:`,
       table(blocking),
       "Update the dependency or base image digest. To accept one instead, add it to .trivyignore.yaml with a statement and an expired_at date.",
     );
   } else {
-    lines.push(`${scanned}: no critical vulnerability with a fix.`);
+    lines.push(`${scanned}: no critical or high vulnerability with a fix.`);
   }
   if (unfixedCriticals.length > 0) {
     lines.push(

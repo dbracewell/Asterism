@@ -219,14 +219,16 @@ To review one:
 Trivy scans for known vulnerabilities (US-92.2):
 
 - **Build and check the image** scans the built image and both lockfiles
-  (`pnpm-lock.yaml`, `apps/backend/uv.lock`). It fails on a critical with a fix,
-  and prints a table of highs and of criticals with no fix yet.
+  (`pnpm-lock.yaml`, `apps/backend/uv.lock`). It fails on a critical or a high
+  with a fix (highs since US-95.5), and prints a table of every high and of
+  criticals with no fix yet. Highs and criticals with no fix are reported
+  without failing.
 - The release workflow scans each architecture's pulled-back image the same way,
-  so a release with a fixable critical is never tagged.
+  so a release with a fixable critical or high is never tagged.
 - The weekly **Vulnerability scan** workflow scans
   `ghcr.io/dbracewell/asterism:latest` for vulnerabilities found since it was
-  released. A critical with a fix opens the one issue labelled
-  `vulnerability-scan`, or updates it when the critical is new. Close the issue
+  released. A critical or high with a fix opens the one issue labelled
+  `vulnerability-scan`, or updates it when the finding is new. Close the issue
   once the patch release that fixes it is published.
 
 To scan locally, install the pinned Trivy and point the check at it:

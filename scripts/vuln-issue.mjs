@@ -3,7 +3,7 @@
  * Opens or updates the one vulnerability issue from a weekly scan (US-92.2).
  *
  * Reads a report written by `check-vulns.mjs --report`. When the scan found a
- * critical with a fix that the open `vulnerability-scan` issue doesn't list yet,
+ * critical or high with a fix that the open `vulnerability-scan` issue doesn't list yet,
  * it opens that issue, or updates its list and comments on what is new. A scan
  * with nothing new changes nothing; a maintainer closes the issue once the fix
  * ships. Uses the gh CLI, with GH_TOKEN from the workflow.
@@ -19,7 +19,8 @@ import { pathToFileURL } from "node:url";
 import { classify, table } from "./check-vulns.mjs";
 
 export const LABEL = "vulnerability-scan";
-export const TITLE = "Fixable critical vulnerabilities in the published image";
+export const TITLE =
+  "Fixable critical or high vulnerabilities in the published image";
 const MARKER = /<!-- vulnerability-scan: (.*?) -->/;
 
 /** A finding's identity for "is this new": the vulnerability and the package. */
@@ -34,11 +35,11 @@ export function recordedKeys(body) {
   return new Set(JSON.parse(match[1]));
 }
 
-/** The issue body listing the current fixable criticals. */
+/** The issue body listing the current fixable criticals and highs. */
 export function issueBody({ scanned, date, runUrl }, blocking) {
   const keys = [...new Set(blocking.map(findingKey))].sort();
   return [
-    `The weekly scan of \`${scanned}\` on ${date} found ${blocking.length} critical ${blocking.length === 1 ? "vulnerability" : "vulnerabilities"} with a fix.${runUrl ? ` [Scan run](${runUrl}).` : ""}`,
+    `The weekly scan of \`${scanned}\` on ${date} found ${blocking.length} critical or high ${blocking.length === 1 ? "vulnerability" : "vulnerabilities"} with a fix.${runUrl ? ` [Scan run](${runUrl}).` : ""}`,
     "",
     "```",
     table(blocking),
@@ -57,7 +58,7 @@ export function issueBody({ scanned, date, runUrl }, blocking) {
 export function planIssue(report, issue) {
   const { blocking } = classify(report.findings);
   if (blocking.length === 0)
-    return { action: "none", reason: "no critical with a fix" };
+    return { action: "none", reason: "no critical or high with a fix" };
   const body = issueBody(report, blocking);
   if (!issue) return { action: "create", title: TITLE, body };
   const recorded = recordedKeys(issue.body);

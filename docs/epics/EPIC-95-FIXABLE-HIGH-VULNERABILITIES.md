@@ -141,12 +141,12 @@ As an administrator, the image's Debian packages have no fixable high.
 As an administrator, a release never ships a known high vulnerability that has a
 fix.
 
-- [ ] `pnpm check:vulns` fails on a fixable high as well as a fixable critical,
+- [x] `pnpm check:vulns` fails on a fixable high as well as a fixable critical,
       in CI, the release workflow and the weekly scan, and still prints the
       table. Tests cover the new threshold and `.trivyignore.yaml` entries for
       highs.
-- [ ] The weekly scan's issue lists new fixable highs as well as criticals.
-- [ ] Update the vulnerability scan section of `docs/development.md`, and close
+- [x] The weekly scan's issue lists new fixable highs as well as criticals.
+- [x] Update the vulnerability scan section of `docs/development.md`, and close
       EPIC-92's open question 1.
 - [ ] Release notes: Image (the fixed packages, and that a fixable high now stops
       a release). Cut the release that ships the epic.
