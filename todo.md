@@ -108,10 +108,10 @@ Source: user request (2026-11-22), after EPIC-92. [EPIC-95](docs/epics/EPIC-95-F
   - [x] Remove pip, and the packages it vendors, from the runtime stage. The build stages keep it to install uv.
   - [x] `pnpm check:image` fails if `vitest`, `vite` or `jsdom` is in the image's `node_modules`, or `pip` is importable by the image's system Python. Tests cover both.
   - [x] Release notes: Image (what was removed, and the new size).
-- [ ] US-95.2: Node packages (in progress, branch `feat/us-95.2-node-packages`)
+- [x] US-95.2: Node packages (merged 2026-11-23, PR #66)
   - [x] Upgrade what is still flagged after US-95.1 (`fast-uri` through `ajv`, `browserslist`, and `source-map-js` through `next` → `postcss`) and the lockfile-only `brace-expansion` and `js-yaml`, with overrides only where a parent pins an old version.
-  - [~] Tests: form validation through `@hookform/resolvers` and `ajv`; the frontend build and E2E.
-  - [ ] Dependabot shows no open high alert for `pnpm-lock.yaml`.
+  - [x] Tests: form validation through `@hookform/resolvers` and `ajv`; the frontend build and E2E.
+  - [x] Dependabot shows no open high alert for `pnpm-lock.yaml`.
 - [ ] US-95.3: Python packages
   - [ ] Upgrade `cryptography` (49 → 50), `filelock` (3 → 4), `soupsieve` (2 → 3 or 4) and `urllib3` (2.8) through `uv.lock`, with a constraint only where a parent caps one.
   - [ ] Check each major in its changelog and with tests: JWT verification and PDF text extraction (cryptography); model downloads and the Hugging Face cache, including two at once (filelock); HTML to Markdown and the web fetch tool's extraction (soupsieve).

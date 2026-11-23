@@ -1,6 +1,7 @@
 # EPIC-95: No fixable high vulnerabilities
 
-Status: in progress (US-95.1 merged 2026-11-22, PR #64; proposed 2026-11-22). Source:
+Status: in progress (US-95.1 merged 2026-11-22, PR #64; US-95.2 merged
+2026-11-23, PR #66; proposed 2026-11-22). Source:
 user request (2026-11-22), after EPIC-92 left fixable highs reported but not
 failing. Starts after EPIC-94, which changes the Python dependency tree.
 
@@ -97,9 +98,10 @@ As an administrator, the frontend's packages have no fixable high.
       Only `js-yaml` needed an override (`@hey-api/json-schema-ref-parser` 1.4.4,
       the latest, pins 4.2.0). The stale package-manager document in
       `pnpm-lock.yaml`, which pinned pnpm 11.5.0, was removed.
-- [ ] Tests: form validation through `@hookform/resolvers` and `ajv`; the
+- [x] Tests: form validation through `@hookform/resolvers` and `ajv`; the
       frontend build and E2E.
-- [ ] Dependabot shows no open high alert for `pnpm-lock.yaml`.
+- [x] Dependabot shows no open high alert for `pnpm-lock.yaml`. On
+      2026-11-23 it lists 1 low and 3 medium alerts there, and no high.
 
 ### US-95.3: Python packages
 
