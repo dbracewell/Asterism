@@ -113,6 +113,14 @@ node scripts/run-isolated-e2e.mjs   # browser tests against a disposable stack
 `pnpm ci:local:quality` and `pnpm ci:local:e2e` run the full CI jobs locally,
 including a clean install.
 
+CI runs its jobs in parallel: repository checks (formatting, links, pins,
+release notes, the config script tests and the Docker frontend build), the
+backend, the frontend, the image, and the browser tests split into four shards.
+Two summary jobs keep the required check names: **Lint, Typecheck, Test**
+passes when the repository, backend and frontend jobs pass, and **Frontend E2E
+(Playwright)** when every shard passes. A new push to a pull request cancels
+its previous run.
+
 - **Unit and integration tests** never load `.env` and use disposable storage. They
   never touch your working database.
 - **The isolated end-to-end runner** creates a temporary auth database, storage and
