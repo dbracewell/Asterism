@@ -36,6 +36,9 @@ Unreleased into its version and date.
 - Classes have a `memory_enabled` switch, on for every existing class, for an
   educator to turn memory off in a course. Each person also gets a "Use memory"
   setting, on unless they turn it off.
+- A new `message_memories` table pins the memories each accepted turn used, so
+  a resumed reply uses the same ones. Its rows are deleted with the memory, the
+  message or the account. Turns accepted before upgrading use no memories.
 - A new `memories` table holds what Asterism remembers about each person (user
   memory) and about their work in each project (project memory), with a memory
   vector table, `memory_vectors`, next to the knowledge vectors (ADR-0078).

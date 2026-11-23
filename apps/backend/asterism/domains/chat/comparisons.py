@@ -362,6 +362,15 @@ async def compare_existing(
                 ),
             )
             await session.flush()
+            from asterism.domains.memory.turns import copy_pinned_memories
+
+            # New columns of the same turn keep the source's pinned memories (ADR-0078).
+            await copy_pinned_memories(
+                user_id=user_id,
+                source_message_id=source.id,
+                message_ids=[column.id for column in columns],
+                session=session,
+            )
             records = await _records(user_id=user_id, chat_id=chat_id, session=session)
             result = await _comparison(chat=chat, comparison_id=comparison_id, records=records, session=session)
             await session.commit()

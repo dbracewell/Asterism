@@ -17,6 +17,7 @@ from sqlalchemy import (
     Index,
     Integer,
     Text,
+    UniqueConstraint,
     Uuid,
     false,
 )
@@ -99,4 +100,37 @@ class MemoryModel(Base, UuidPrimaryKeyMixin, TimestampMixin):
         ),
         CheckConstraint("category IS NULL OR category != 'accessibility' OR sensitive", name="ck_memories_sensitive"),
         Index("idx_memories_owner_kind_project_updated", "user_id", "kind", "project_id", "updated_at", "id"),
+    )
+
+
+class MessageMemoryModel(Base, UuidPrimaryKeyMixin):
+    """A memory pinned on an accepted user turn: its revision and text then (ADR-0078).
+
+    Execution history is immutable and records only memory ids and revisions;
+    the text lives here instead, so deleting the memory (or its message, or the
+    account) deletes every pinned copy, and a resume then sends nothing for it.
+    Editing the memory leaves pinned copies as they were.
+    """
+
+    __tablename__ = "message_memories"
+
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    message_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("messages.id", ondelete="CASCADE"), nullable=False)
+    memory_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("memories.id", ondelete="CASCADE"), nullable=False)
+    revision: Mapped[int] = mapped_column(Integer, nullable=False)
+    text: Mapped[str] = mapped_column(Text, nullable=False)
+    # Order within the turn's layer: most relevant first.
+    position: Mapped[int] = mapped_column(Integer, nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint("message_id", "memory_id", name="uq_message_memories_message_memory"),
+        CheckConstraint("revision >= 1", name="ck_message_memories_revision"),
+        CheckConstraint("position >= 0", name="ck_message_memories_position"),
+        CheckConstraint(
+            f"length(trim(text)) >= 1 AND length(text) <= {MEMORY_MAX_CHARS}"
+            f" AND length(CAST(text AS BLOB)) <= {MEMORY_MAX_BYTES}",
+            name="ck_message_memories_text_bounds",
+        ),
+        Index("idx_message_memories_message", "message_id", "position"),
+        Index("idx_message_memories_memory", "memory_id"),
     )

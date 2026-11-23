@@ -57,6 +57,7 @@ AGENT_CHAT_READERS = {
     "asterism.domains.chat.prompt_composition.build_prompt_snapshot",
     "asterism.domains.chat.prompt_composition.build_runtime_prompt",
     "asterism.domains.chat.prompt_composition.read_skill_catalog_layer",
+    "asterism.domains.chat.memories.read_execution_memory_layer",
 }
 
 

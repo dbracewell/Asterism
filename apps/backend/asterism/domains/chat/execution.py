@@ -19,6 +19,7 @@ from asterism.domains.user.about import read_about_snapshot
 from .execution_context import build_execution_provenance
 from .execution_models import ChatExecutionModel
 from .learning_modes import accepted_mode_snapshot, current_mode_snapshot, turn_hint_level
+from .memories import prepare_run_memories
 from .mode_policy import require_run_allowed
 from .model_selection import require_chat_model
 from .models import ChatModel, MessageModel
@@ -118,6 +119,10 @@ async def prepare_execution(
                 )
                 skills = message.accepted_skills.snapshots
                 await validate_snapshots(user_id, skills, session)
+                # Memories (ADR-0078): the turn's pins, or a new selection on regeneration.
+                memories = await prepare_run_memories(
+                    user_id=user_id, chat=chat, message=message, restart=restart, session=session
+                )
                 prompt = await build_prompt_snapshot(
                     skills=skills,
                     about_snapshot=about,
@@ -135,6 +140,7 @@ async def prepare_execution(
                 execution = MessageExecution(
                     skills=[item.identity for item in skills],
                     about=about.identity,
+                    memories=memories,
                     learning_mode=learning_mode.identity,
                     # The rubric is part of the turn's request, so regeneration keeps it.
                     rubric=message.accepted_rubric.provenance if message.accepted_rubric else None,
@@ -238,6 +244,9 @@ def validate_prompt_snapshot(
         raise CodedException(409, "Recorded prompt is unavailable or changed; regenerate")
     if snapshot.project_id != project_id:
         raise CodedException(409, "Recorded prompt project changed; regenerate")
+    # Memory text is never recorded: each run builds that layer from the turn's pins (ADR-0078).
+    if any(layer.kind == "memory" for layer in snapshot.layers):
+        raise CodedException(409, "Recorded prompt holds memory text; regenerate")
 
     # A blank About you adds no profile layer; a present one must match the record.
     profile_layers = [layer for layer in snapshot.layers if layer.kind == "profile"]

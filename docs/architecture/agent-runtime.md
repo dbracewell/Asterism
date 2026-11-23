@@ -83,7 +83,11 @@ text.
   ([execution context](execution-context.md#about-you-on-a-turn)). Regenerate keeps
   the pinned skills but reads the current About you text and mode. Live owner,
   assignment and admin-policy checks run before generation.
-- **Sub-agents** inherit the recorded About you layer but not the mode or the
+- **Memories** ([ADR-0078](../adr/0078-long-term-memory.md)) are chosen and pinned
+  on the user's message when memory is on. The recorded run keeps only their ids
+  and revisions; each run adds the memory layer from the pins, minus any deleted
+  since, after rechecking availability. Regenerate chooses again.
+- **Sub-agents** inherit the recorded About you and memory layers but not the mode or the
   parent's skills ([skills](skills.md), [learning modes](learning-modes.md)).
 
 ## Bounded loop and streaming
@@ -410,7 +414,7 @@ status, timing, token/step counts, and prompt/context provenance. They exclude r
 task text, parent notes, message bodies, tool results, and generated answers. Normal
 owned chat history and authorized retrieval responses remain content-bearing.
 
-No active long-term memory store or automatic cross-chat summary retrieval is
-implemented. Namespace/key types define a future isolation boundary; they do not
-authorize reads. See [memory limits](context-isolation.md) and
+Long-term memories are read only through the turn's pins, never by search at
+run time, and no automatic cross-chat summary retrieval is implemented.
+Namespace/key types define the isolation boundary; they do not authorize reads. See [memory limits](context-isolation.md) and
 [chat transport](chat-and-websocket.md).

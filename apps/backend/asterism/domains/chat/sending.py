@@ -33,6 +33,7 @@ from .learning_modes import (
     current_mode_snapshot,
     turn_hint_level,
 )
+from .memories import pin_accepted_memories
 from .mode_policy import accept_send_level
 from .model_selection import require_chat_model, selection_info
 from .models import ChatModel, MessageModel
@@ -152,6 +153,7 @@ async def persist_user_send(
     if payload.compare is None:
         message = MessageModel(**inputs, content=payload.user_prompt, role="user", status=MessageStatus.PENDING)
         session.add(message)
+        turn = [message]
     else:
         # US-54.4: sibling columns; column 0 is where the conversation continues.
         columns = column_models(
@@ -169,7 +171,16 @@ async def persist_user_send(
         )
         session.add_all(columns)
         message = columns[0]
+        turn = columns
     await session.flush()
+    # Memories (ADR-0078): pinned on every column of the turn, when memory is on here.
+    await pin_accepted_memories(
+        user_id=user_id,
+        chat=chat,
+        prompt=payload.user_prompt,
+        message_ids=[item.id for item in turn],
+        session=session,
+    )
     if payload.compare is not None and parent_id is None:
         await make_active(chat=chat, column=message, session=session)
     if parent_id is not None:

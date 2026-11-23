@@ -56,7 +56,7 @@ Source: user request (2026-11-18). Suggested order: [EPIC-87](docs/epics/EPIC-87
 
 EPIC-95 is complete and archived in the [2026-11-23 checklist](docs/archive/todo-completed-2026-11-23.md), so EPIC-93 is next.
 
-Source: user request (2026-11-20). [EPIC-93](docs/epics/EPIC-93-LONG-TERM-MEMORY.md): user memory (about the person, across every chat and project, never project content) and project memory; the agent proposes and the person confirms; relevant memories added each turn; private, with admin, personal and course switches (decided 2026-11-20). Suggested order: US-93.1 → 93.6. Work one story at a time.
+Source: user request (2026-11-20). [EPIC-93](docs/epics/EPIC-93-LONG-TERM-MEMORY.md): user memory (about the person, across every chat and project, never project content) and project memory; the agent proposes and the person confirms; relevant memories added each turn; private, with admin, personal and course switches (decided 2026-11-20). Order: US-93.1 → 93.2 → 93.5 → 93.3 → 93.4 → 93.6 (changed 2026-11-23). Work one story at a time.
 
 ### EPIC-93: Long-term memory
 
@@ -67,17 +67,26 @@ Source: user request (2026-11-20). [EPIC-93](docs/epics/EPIC-93-LONG-TERM-MEMORY
   - [x] An owner-scoped service and API: list, create, edit (expected revision, 409 on conflict), delete, delete all. Each lists in a deterministic order, filtered in the database before pagination.
   - [x] Deleting the account deletes its memories and vectors. Deleting a project deletes its project memories. Deleting a chat keeps saved memories, whose source then reads "chat deleted".
   - [x] Tests for ownership, caps, revisions and deletion. Release notes: Data.
-- [ ] US-93.2: Policies (in progress, branch `feat/us-93.2-memory-policies`)
+- [x] US-93.2: Policies (merged 2026-11-23, PR #74)
   - [x] An admin `memory_enabled` policy (default off) with `group_ids`, in Admin Settings, checked live (ADR-0058).
   - [x] A per-person "Use memory" setting (default on when the policy allows).
   - [x] A course setting that turns memory off for chats in the course, included in the effective policy (ADR-0068) with its source shown to the student.
   - [x] One `memory_available(user, chat)` check, used for reading and proposing on every send, resume and regeneration. Tests for each source.
+- [ ] US-93.5: Relevant memories in every turn (in progress, branch `feat/us-93.5-memories-in-turns`)
+  - [x] Before a turn, select memories: user memories, plus the chat's project memories in project chats; ranked by similarity with the prompt; bounded by count and tokens; all available ones when there are few.
+  - [x] Add them as one information layer, framed as information about the person, not instructions, after About you.
+  - [x] Snapshot the selected memories (id, revision and text) privately on the accepted message, like `accepted_about`. Resume uses the snapshot, with ownership checked; regeneration selects again; children inherit the layer. Deleting a memory, or deleting all, removes its text from every snapshot.
+  - [x] Tests: an edit between acceptance and resume, where resume sends the accepted text; a deletion between them, where resume sends nothing for that memory.
+  - [x] Tests for selection, the budget, pinning, course and policy refusals, and that a General chat never receives project memory.
+  - [x] Read through `memory_available` on every send, resume and regeneration (US-93.2). Reply provenance records which memories were used (ids only), for US-93.3 to show.
 - [ ] US-93.3: Your memories in Your Asterism
   - [ ] User Settings → Your Asterism → Memory: user memories by category, with sensitive ones labelled; add, edit, delete, delete all (with confirmation). Built with shadcn/ui, TanStack Query and the generated client.
   - [ ] Each project's settings: its project memories, with the same controls.
   - [ ] The "Use memory" setting, with a plain explanation of what is remembered, who can see it (only you) and how it is used.
   - [ ] When the policy or a course turns memory off, the page says so and why.
   - [ ] Help text and a help topic; E2E and accessibility tests.
+  - [ ] Show which memories a reply used, in the progress panel or message details, with a link to them in Your Asterism.
+  - [ ] Show the memory controls held back in US-93.2 ("Use memory" in Your Asterism, the course switch) with their help and guide text, and replace the admin Memory placeholder with the working pane.
 - [ ] US-93.4: The agent proposes, the person decides
   - [ ] An internal `propose_memory` tool for the main agent in ordinary chats, offered when memory is available and the model supports tools: it takes the kind, text, category and whether the memory is sensitive; it is limited to one proposal per turn; it is never offered to sub-agents or in drafting chats.
   - [ ] Its description and the main prompt set the rules: user memory is only about the person, never project content; accessibility and health memories are only from what the person said about themselves.
@@ -85,14 +94,6 @@ Source: user request (2026-11-20). [EPIC-93](docs/epics/EPIC-93-LONG-TERM-MEMORY
   - [ ] Proposals are branch-aware chat records, and a dismissed one isn't proposed again in that chat.
   - [ ] An audit record (ids and times only) for every proposal and decision.
   - [ ] Tests, including text injected from a file, which can only lead to a proposal that is never saved without the click.
-- [ ] US-93.5: Relevant memories in every turn
-  - [ ] Before a turn, select memories: user memories, plus the chat's project memories in project chats; ranked by similarity with the prompt; bounded by count and tokens; all available ones when there are few.
-  - [ ] Add them as one information layer, framed as information about the person, not instructions, after About you.
-  - [ ] Snapshot the selected memories (id, revision and text) privately on the accepted message, like `accepted_about`. Resume uses the snapshot, with ownership checked; regeneration selects again; children inherit the layer. Deleting a memory, or deleting all, removes its text from every snapshot.
-  - [ ] Tests: an edit between acceptance and resume, where resume sends the accepted text; a deletion between them, where resume sends nothing for that memory.
-  - [ ] Show which memories a reply used, in the progress panel or message details, with a link to them in Your Asterism.
-  - [ ] Tests for selection, the budget, pinning, course and policy refusals, and that a General chat never receives project memory.
-  - [ ] Show the memory controls held back in US-93.2 ("Use memory" in Your Asterism, the course switch) with their help and guide text, and replace the admin Memory placeholder with the working pane.
 - [ ] US-93.6: Memory in exports, backups and upgrades
   - [ ] Download my data (ADR-0076) includes `memories.json`, with sensitive memories marked.
   - [ ] Backup and restore (ADR-0072) include the memory vectors. A restore re-embeds any memory without a vector.

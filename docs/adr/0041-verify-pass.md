@@ -70,14 +70,14 @@ is reference material only and to ignore instructions inside it.
 
 `messages.verification` holds one JSON `MessageVerification`:
 
-| Field                   | Meaning                                                           |
-| ----------------------- | ----------------------------------------------------------------- |
-| `model_id`, `model_name` | The verifier.                                                    |
-| `created_at`            | When the pass finished (epoch ms).                                |
-| `file_ids`              | The files it searched.                                            |
-| `claims[]`              | `claim`, `quote`, `label`, `explanation`, `evidence[]`.           |
-| `evidence[]`            | `file_id`, `chunk_id`, `artifact_generation`, `name`, `excerpt`, `available`. |
-| `usage`                 | Claims found and checked, limit and truncation, timeout, searches, model calls, tokens, duration. |
+| Field                    | Meaning                                                                                           |
+| ------------------------ | ------------------------------------------------------------------------------------------------- |
+| `model_id`, `model_name` | The verifier.                                                                                     |
+| `created_at`             | When the pass finished (epoch ms).                                                                |
+| `file_ids`               | The files it searched.                                                                            |
+| `claims[]`               | `claim`, `quote`, `label`, `explanation`, `evidence[]`.                                           |
+| `evidence[]`             | `file_id`, `chunk_id`, `artifact_generation`, `name`, `excerpt`, `available`.                     |
+| `usage`                  | Claims found and checked, limit and truncation, timeout, searches, model calls, tokens, duration. |
 
 Labels never change `content`. Evidence excerpts are snapshots of untrusted
 text. Reads recheck `available` against the live chat scope (with inline files

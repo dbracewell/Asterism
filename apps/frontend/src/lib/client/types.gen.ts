@@ -1845,6 +1845,7 @@ export type ContextLayer = {
     | "platform"
     | "agent"
     | "profile"
+    | "memory"
     | "mode"
     | "task"
     | "project"
@@ -1882,6 +1883,7 @@ export type ContextLayerText = {
     | "platform"
     | "agent"
     | "profile"
+    | "memory"
     | "mode"
     | "task"
     | "project"
@@ -4960,6 +4962,22 @@ export type MemoryUpdate = {
 };
 
 /**
+ * MemoryUse
+ *
+ * A memory a run was prepared with: its id and revision, never its text (ADR-0078).
+ */
+export type MemoryUse = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Revision
+   */
+  revision: number;
+};
+
+/**
  * Message
  */
 export type Message = {
@@ -5125,6 +5143,10 @@ export type MessageExecution = {
    */
   skills?: Array<SkillIdentity>;
   about: AboutProvenance;
+  /**
+   * Memories
+   */
+  memories?: Array<MemoryUse>;
   learning_mode: LearningModeProvenance;
   rubric?: RubricProvenance | null;
   context?: ContextProvenance | null;
@@ -6652,6 +6674,7 @@ export type PromptSource = {
     | "platform"
     | "agent"
     | "profile"
+    | "memory"
     | "mode"
     | "task"
     | "project"

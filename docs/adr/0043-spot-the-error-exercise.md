@@ -72,6 +72,7 @@ source is rechecked against the live scope.
 
   Feedback never reveals the error. At most 20 attempts. No attempts after a
   reveal or on an invalid record (409).
+
 - `POST …/messages/{id}/exercise/reveal` (`chatExerciseReveal`) records the reveal
   and returns the full view. It is idempotent.
 

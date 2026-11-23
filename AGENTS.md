@@ -67,8 +67,9 @@ Each user has exactly one **About you** text (`users.about_md` with
   instructions or a learning mode.
 - Limits: 16,000 characters / 64,000 UTF-8 bytes, no NUL or control characters
   other than tab and newlines. Edits require the expected revision (409 on conflict).
-- There are no personas, profiles or per-chat overrides. Your Asterism is where
-  future memory settings will live; no long-term memory engine exists.
+- There are no personas, profiles or per-chat overrides. Long-term memory is
+  separate from About you ([ADR-0078](docs/adr/0078-long-term-memory.md); EPIC-93
+  in progress).
 
 ## 2.3 Agents
 
@@ -222,15 +223,18 @@ Current runtime behavior includes:
 - Agentic loop execution with bounded iterations and stop criteria
 - Tool/MCP invocation with structured logging
 - Short-term memory (conversation/session scope)
-- Typed future memory namespaces and derived-context keys; no active long-term
-  memory store, automatic memory reads/writes, or sibling-chat summaries
+- Long-term memory (ADR-0078): user and project memories the person saves, pinned
+  on accepted turns and added as an information layer when the admin policy, the
+  person's setting and the course allow it; no automatic memory writes and no
+  sibling-chat summaries
 
 About you is distinct from singleton agent settings. Each accepted message pins
 the About you text and revision it was sent with (`accepted_about`); a blank text
 adds no profile layer, and the profile layer is framed as information about the
 user. Resume uses the recorded text and checks only ownership; regeneration uses
 the current text. Children inherit the recorded layer. About you text grants no
-capabilities. Do not claim a memory engine is implemented.
+capabilities. Memory text likewise grants nothing; resume sends a turn's pinned
+memories minus any deleted since, and regeneration selects again.
 Future project-derived memory must partition by user/project; General-derived
 memory partitions by user/chat. Derived local summaries additionally key by
 source chat and scope revision. Keys never grant access; reauthorize reads/writes.

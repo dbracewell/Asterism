@@ -28,7 +28,7 @@ open question 1).
 | New sub-agent shows an error    | Create sub-agent shows "Choose an available model. The saved binding remains until you save a replacement." under Model before anything is chosen, though nothing is saved                                      | US-89.7          |
 | Labels disagree                 | The sign-in button says **Login** (the form, toast and guide say "sign in"); the sidebar says **New Chat** and the General page **New chat**; Settings says **Default Model**                                   | US-89.2          |
 | No Chromium in the image        | The web fetch tool falls back badly on short or JavaScript-heavy pages it would render with Playwright (`tools/builtin/fetch.py`), because the container image has no Chromium                                  | US-88.1          |
-| 401 for permission checks       | Nothing stops a new role, group or policy check from raising `UnauthorizedException`, which signs the person out in the browser. US-90.1 fixed the admin checks found so far                                                    | US-90.1          |
+| 401 for permission checks       | Nothing stops a new role, group or policy check from raising `UnauthorizedException`, which signs the person out in the browser. US-90.1 fixed the admin checks found so far                                    | US-90.1          |
 
 ## Decisions
 

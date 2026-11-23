@@ -45,6 +45,10 @@ class MemoryVectorStore(Protocol):
 
     async def list_ids(self, *, user_id: str) -> set[str]: ...
 
+    async def search(
+        self, *, user_id: str, project_id: uuid.UUID | None, vector: Sequence[float], limit: int
+    ) -> list[str]: ...
+
     async def close(self) -> None: ...
 
 
@@ -136,6 +140,25 @@ class LanceDbMemoryVectorStore:
             return {row["memory_id"] for row in rows}
 
         return await self._run(read, "Memory vectors could not be read")
+
+    async def search(
+        self, *, user_id: str, project_id: uuid.UUID | None, vector: Sequence[float], limit: int
+    ) -> list[str]:
+        """Memory ids nearest the vector: the owner's user memory, plus that project's memory."""
+        if len(vector) != self._dimension:
+            raise ValueError("Memory query vector has an unexpected dimension")
+        scope = "kind = 'user'"
+        if project_id is not None:
+            scope = f"(kind = 'user' OR project_id = {self._quote(str(project_id))})"
+        predicate = f"user_id = {self._quote(user_id)} AND {scope}"
+
+        def read(table) -> list[str]:
+            rows = (
+                table.search(list(vector)).where(predicate, prefilter=True).select(["memory_id"]).limit(limit).to_list()
+            )
+            return [row["memory_id"] for row in rows]
+
+        return await self._run(read, "Memory vectors could not be searched")
 
     async def close(self) -> None:
         self._table = None
