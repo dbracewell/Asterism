@@ -4,7 +4,7 @@ for (const viewport of [
   { width: 1280, height: 720 },
   { width: 320, height: 300 },
 ]) {
-  test(`the planned pane retains its badge, keyboard access and honest scope at ${viewport.width}px`, async ({
+  test(`the planned panes retain their badge, keyboard access and honest scope at ${viewport.width}px`, async ({
     page,
   }, info) => {
     await page.setViewportSize(viewport);
@@ -29,7 +29,7 @@ for (const viewport of [
       "aria-orientation",
       horizontal ? "horizontal" : "vertical",
     );
-    await expect(tabs.getByText("Planned", { exact: true })).toHaveCount(1);
+    await expect(tabs.getByText("Planned", { exact: true })).toHaveCount(2);
     for (const label of [
       "Providers",
       "Theme editor",
@@ -141,6 +141,13 @@ for (const viewport of [
     });
     await execution.focus();
     await verify("Code execution", "Code execution");
+    expect(requests).toEqual([]);
+    const memory = tabs.getByRole("tab", {
+      name: "Memory Planned",
+      exact: true,
+    });
+    await memory.focus();
+    await verify("Memory", "Memory");
     expect(requests).toEqual([]);
     await page.keyboard.press("End");
     await expect(

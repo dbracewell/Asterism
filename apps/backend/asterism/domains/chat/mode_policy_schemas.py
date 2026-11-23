@@ -33,6 +33,7 @@ class ModePolicySource(BaseModel):
     allowed_modes: list[LearningModeId]
     reveal: ModeReveal
     learner_can_lift: bool
+    memory_enabled: bool = Field(default=True, description="False when this source turns memory off (ADR-0078)")
 
 
 class ModePolicy(BaseModel):
@@ -40,6 +41,7 @@ class ModePolicy(BaseModel):
 
     allowed_modes: list[LearningModeId] = Field(description="Catalog modes every source allows; may be empty")
     reveal: ModeReveal
+    memory_enabled: bool = Field(default=True, description="False when any source turns memory off")
     sources: list[ModePolicySource] = Field(default_factory=list)
 
     def source(self, kind: ModePolicySourceKind) -> ModePolicySource | None:

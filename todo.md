@@ -60,18 +60,18 @@ Source: user request (2026-11-20). [EPIC-93](docs/epics/EPIC-93-LONG-TERM-MEMORY
 
 ### EPIC-93: Long-term memory
 
-- [ ] US-93.1: Memory store and boundary (in progress, branch `feat/us-93.1-memory-store`)
+- [x] US-93.1: Memory store and boundary (merged 2026-11-23, PR #73)
   - [x] ADR: the two kinds, the user-memory content rule, private by default, sensitive memories, pinning, and the revised boundary. Update [context isolation](docs/architecture/context-isolation.md) and `MemoryNamespace` (add the `user` kind, used only for user memory).
   - [x] A `memories` table with a versioned migration and upgrade test (ADR-0069): owner, kind (`user` / `project`) and `project_id` (required for project memory); text (bounded, with the About you character rules) and a category (user memory: learning, accessibility, background, other); `sensitive`; source chat, message and execution; revision and timestamps. A per-person cap applies for each kind.
   - [x] Memory vectors in their own LanceDB table behind `VectorStore`, keyed by owner and memory id, rewritten on edit.
   - [x] An owner-scoped service and API: list, create, edit (expected revision, 409 on conflict), delete, delete all. Each lists in a deterministic order, filtered in the database before pagination.
   - [x] Deleting the account deletes its memories and vectors. Deleting a project deletes its project memories. Deleting a chat keeps saved memories, whose source then reads "chat deleted".
   - [x] Tests for ownership, caps, revisions and deletion. Release notes: Data.
-- [ ] US-93.2: Policies
-  - [ ] An admin `memory_enabled` policy (default off) with `group_ids`, in Admin Settings, checked live (ADR-0058).
-  - [ ] A per-person "Use memory" setting (default on when the policy allows).
-  - [ ] A course setting that turns memory off for chats in the course, included in the effective policy (ADR-0068) with its source shown to the student.
-  - [ ] One `memory_available(user, chat)` check, used for reading and proposing on every send, resume and regeneration. Tests for each source.
+- [ ] US-93.2: Policies (in progress, branch `feat/us-93.2-memory-policies`)
+  - [x] An admin `memory_enabled` policy (default off) with `group_ids`, in Admin Settings, checked live (ADR-0058).
+  - [x] A per-person "Use memory" setting (default on when the policy allows).
+  - [x] A course setting that turns memory off for chats in the course, included in the effective policy (ADR-0068) with its source shown to the student.
+  - [x] One `memory_available(user, chat)` check, used for reading and proposing on every send, resume and regeneration. Tests for each source.
 - [ ] US-93.3: Your memories in Your Asterism
   - [ ] User Settings → Your Asterism → Memory: user memories by category, with sensitive ones labelled; add, edit, delete, delete all (with confirmation). Built with shadcn/ui, TanStack Query and the generated client.
   - [ ] Each project's settings: its project memories, with the same controls.
@@ -92,6 +92,7 @@ Source: user request (2026-11-20). [EPIC-93](docs/epics/EPIC-93-LONG-TERM-MEMORY
   - [ ] Tests: an edit between acceptance and resume, where resume sends the accepted text; a deletion between them, where resume sends nothing for that memory.
   - [ ] Show which memories a reply used, in the progress panel or message details, with a link to them in Your Asterism.
   - [ ] Tests for selection, the budget, pinning, course and policy refusals, and that a General chat never receives project memory.
+  - [ ] Show the memory controls held back in US-93.2 ("Use memory" in Your Asterism, the course switch) with their help and guide text, and replace the admin Memory placeholder with the working pane.
 - [ ] US-93.6: Memory in exports, backups and upgrades
   - [ ] Download my data (ADR-0076) includes `memories.json`, with sensitive memories marked.
   - [ ] Backup and restore (ADR-0072) include the memory vectors. A restore re-embeds any memory without a vector.

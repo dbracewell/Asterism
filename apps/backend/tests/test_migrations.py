@@ -286,3 +286,25 @@ async def test_memories_upgrade_keeps_users_and_enforces_memory_rules(migration_
             with pytest.raises(sqlite3.IntegrityError):
                 insert(connection, **broken)
         insert(connection, category="accessibility", sensitive=1)
+
+
+@pytest.mark.asyncio
+async def test_class_memory_switch_upgrade_keeps_classes_with_memory_on(migration_db):
+    """04f31c3d0a0e (US-93.2): existing classes keep their policy and get memory on."""
+    await upgrade_to(migration_db, "8cf8b3b71e49")
+    class_id = uuid.uuid4().hex
+    with sqlite3.connect(migration_db) as connection:
+        connection.execute("INSERT INTO users (id) VALUES ('teach')")
+        connection.execute(
+            "INSERT INTO classes (id, educator_id, name, join_code, allowed_modes, answer_reveal, created_at, "
+            "updated_at) VALUES (?, 'teach', 'Biology', 'JOIN1234', '[\"socratic\"]', 0, 0, 0)",
+            (class_id,),
+        )
+
+    await upgrade_to(migration_db, "head")
+
+    with sqlite3.connect(migration_db) as connection:
+        row = connection.execute(
+            "SELECT name, allowed_modes, answer_reveal, memory_enabled FROM classes WHERE id = ?", (class_id,)
+        ).fetchone()
+    assert row == ("Biology", '["socratic"]', 0, 1)

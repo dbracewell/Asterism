@@ -78,6 +78,9 @@ export function ClassModePolicy({ item }: { item: TaughtClass }) {
             body: {
               allowed_modes: allChosen ? null : chosen,
               answer_reveal: reveal,
+              // The course memory switch arrives with memory itself (US-93.5);
+              // until then, saving the mode rules keeps the stored value.
+              memory_enabled: item.memory_enabled ?? true,
             },
           })
         }

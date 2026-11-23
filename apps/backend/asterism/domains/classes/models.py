@@ -43,6 +43,8 @@ class ClassModel(Base, UuidPrimaryKeyMixin, TimestampMixin):
     # their course project. None allows every mode.
     allowed_modes: Mapped[list[str] | None] = mapped_column(JSON, nullable=True)
     answer_reveal: Mapped[bool] = mapped_column(nullable=False, default=True, server_default="1")
+    # Long-term memory in the course project (ADR-0078): an educator can turn it off.
+    memory_enabled: Mapped[bool] = mapped_column(nullable=False, default=True, server_default="1")
 
     __table_args__ = (
         UniqueConstraint("educator_id", "name", name="uq_classes_educator_name"),

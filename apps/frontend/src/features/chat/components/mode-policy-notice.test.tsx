@@ -204,3 +204,21 @@ it("keeps the course limit in view while offering Unlock", async () => {
   );
   expect(screen.getByRole("button", { name: /Unlock/ })).toBeDisabled();
 });
+
+it("tells the student when the course turns memory off", async () => {
+  const all: ModePolicySource["allowed_modes"] = [
+    "standard",
+    "tutor",
+    "explain_back",
+  ];
+  wrap(
+    <ModePolicyNotice
+      policy={policy([{ ...course(all), memory_enabled: false }], all)}
+    />,
+  );
+  await vi.waitFor(() =>
+    expect(screen.getByLabelText("Course policy")).toHaveTextContent(
+      /^Biology 101: memory is off\. Set by Dr Teach\.$/,
+    ),
+  );
+});

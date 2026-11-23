@@ -1889,6 +1889,7 @@ export const zChatLearningModeUpdate = z.object({
 export const zClassModePolicy = z.object({
   allowed_modes: z.array(zLearningModeId).nullable(),
   answer_reveal: z.boolean(),
+  memory_enabled: z.boolean().optional().default(true),
 });
 
 /**
@@ -2088,6 +2089,16 @@ export const zMemoryCreate = z.object({
 });
 
 /**
+ * MemoryPolicy
+ *
+ * The admin policy (ADR-0078): off by default, optionally for some groups only.
+ */
+export const zMemoryPolicy = z.object({
+  enabled: z.boolean().optional().default(false),
+  group_ids: z.array(z.string()).max(200).nullish(),
+});
+
+/**
  * MemorySavedBy
  *
  * Who saved it: the person themselves, or a proposal of the agent they confirmed.
@@ -2131,6 +2142,25 @@ export const zMemoryPage = z.object({
   total: z.int(),
   page: z.int(),
   page_size: z.int(),
+});
+
+/**
+ * MemorySwitch
+ *
+ * Which switch turned memory off: the admin policy, the person's group, their own
+ * setting, or the course.
+ */
+export const zMemorySwitch = z.enum(["policy", "group", "personal", "course"]);
+
+/**
+ * MemoryAvailability
+ *
+ * Whether memory is used here now, and if not, which switch says so.
+ */
+export const zMemoryAvailability = z.object({
+  available: z.boolean(),
+  off_by: zMemorySwitch.nullish(),
+  reason: z.string().optional().default(""),
 });
 
 /**
@@ -2222,6 +2252,7 @@ export const zModePolicySource = z.object({
   allowed_modes: z.array(zLearningModeId),
   reveal: zModeReveal,
   learner_can_lift: z.boolean(),
+  memory_enabled: z.boolean().optional().default(true),
 });
 
 /**
@@ -2232,6 +2263,7 @@ export const zModePolicySource = z.object({
 export const zModePolicy = z.object({
   allowed_modes: z.array(zLearningModeId),
   reveal: zModeReveal,
+  memory_enabled: z.boolean().optional().default(true),
   sources: z.array(zModePolicySource).optional(),
 });
 
@@ -3085,6 +3117,7 @@ export const zApplicationSettings = z.object({
   skills_enabled: z.boolean().optional().default(false),
   canvas_enabled: z.boolean().optional().default(false),
   image_generation: z.record(z.string(), z.unknown()).nullish(),
+  memory: z.record(z.string(), z.unknown()).nullish(),
   image_generation_local: z.record(z.string(), z.unknown()).nullish(),
   image_generation_onnx: z.record(z.string(), z.unknown()).nullish(),
   image_generator_provider: zComponentProviderParameters.nullish(),
@@ -4658,6 +4691,7 @@ export const zTaughtClass = z.object({
   join_enabled: z.boolean(),
   allowed_modes: z.array(zLearningModeId).nullable(),
   answer_reveal: z.boolean(),
+  memory_enabled: z.boolean().optional().default(true),
   member_count: z.int().optional().default(0),
   created_at: z.int(),
 });
@@ -5275,6 +5309,8 @@ export const zUserSettings = z.object({
   prompt_coach_enabled: z.boolean().optional().default(false),
   canvas_enabled: z.boolean().optional().default(false),
   canvas_allowed: z.boolean().optional().default(false),
+  memory_enabled: z.boolean().optional().default(true),
+  memory_allowed: z.boolean().optional().default(false),
   first_chat_tour: z.enum(["completed", "dismissed"]).nullish(),
   group: zGroupRef.nullish(),
 });
@@ -5482,6 +5518,7 @@ export const zApplicationSettingsWritable = z.object({
   skills_enabled: z.boolean().optional().default(false),
   canvas_enabled: z.boolean().optional().default(false),
   image_generation: z.record(z.string(), z.unknown()).nullish(),
+  memory: z.record(z.string(), z.unknown()).nullish(),
   image_generation_local: z.record(z.string(), z.unknown()).nullish(),
   image_generation_onnx: z.record(z.string(), z.unknown()).nullish(),
   image_generator_provider: zComponentProviderParameters.nullish(),
@@ -7555,6 +7592,90 @@ export const zChatgptConnectionDisconnectBody = zChatGptDisconnect;
  */
 export const zChatgptConnectionDisconnectResponse = zChatGptDisconnectResult;
 
+export const zMemoryDeleteAllQuery = z.object({
+  kind: zMemoryKind.nullish(),
+  project_id: z.uuid().nullish(),
+});
+
+/**
+ * Successful Response
+ */
+export const zMemoryDeleteAllResponse = zMemoryDeleteAll;
+
+export const zMemoryGetManyQuery = z.object({
+  kind: zMemoryKind.nullish(),
+  project_id: z.uuid().nullish(),
+  page: z.int().gte(1).optional().default(1),
+  page_size: z.int().gte(1).lte(100).optional().default(20),
+});
+
+/**
+ * Successful Response
+ */
+export const zMemoryGetManyResponse = zMemoryPage;
+
+export const zMemoryCreateBody = zMemoryCreate;
+
+/**
+ * Successful Response
+ */
+export const zMemoryCreateResponse = zMemory;
+
+export const zMemoryAvailabilityQuery = z.object({
+  chat_id: z.uuid().nullish(),
+  project_id: z.uuid().nullish(),
+});
+
+/**
+ * Successful Response
+ */
+export const zMemoryAvailabilityResponse = zMemoryAvailability;
+
+export const zMemoryDeletePath = z.object({
+  memory_id: z.uuid(),
+});
+
+export const zMemoryDeleteQuery = z.object({
+  expected_revision: z.int().gte(1).lte(2147483647),
+});
+
+/**
+ * Successful Response
+ */
+export const zMemoryDeleteResponse = z.void();
+
+export const zMemoryGetOnePath = z.object({
+  memory_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zMemoryGetOneResponse = zMemory;
+
+export const zMemoryUpdateBody = zMemoryUpdate;
+
+export const zMemoryUpdatePath = z.object({
+  memory_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zMemoryUpdateResponse = zMemory;
+
+/**
+ * Successful Response
+ */
+export const zMemoryPolicyGetResponse = zMemoryPolicy;
+
+export const zMemoryPolicyUpdateBody = zMemoryPolicy;
+
+/**
+ * Successful Response
+ */
+export const zMemoryPolicyUpdateResponse = zMemoryPolicy;
+
 /**
  * Successful Response
  */
@@ -7721,68 +7842,6 @@ export const zAppSettingUpdatePath = z.object({
  * Successful Response
  */
 export const zAppSettingUpdateResponse = zSetting;
-
-export const zMemoryDeleteAllQuery = z.object({
-  kind: zMemoryKind.nullish(),
-  project_id: z.uuid().nullish(),
-});
-
-/**
- * Successful Response
- */
-export const zMemoryDeleteAllResponse = zMemoryDeleteAll;
-
-export const zMemoryGetManyQuery = z.object({
-  kind: zMemoryKind.nullish(),
-  project_id: z.uuid().nullish(),
-  page: z.int().gte(1).optional().default(1),
-  page_size: z.int().gte(1).lte(100).optional().default(20),
-});
-
-/**
- * Successful Response
- */
-export const zMemoryGetManyResponse = zMemoryPage;
-
-export const zMemoryCreateBody = zMemoryCreate;
-
-/**
- * Successful Response
- */
-export const zMemoryCreateResponse = zMemory;
-
-export const zMemoryDeletePath = z.object({
-  memory_id: z.uuid(),
-});
-
-export const zMemoryDeleteQuery = z.object({
-  expected_revision: z.int().gte(1).lte(2147483647),
-});
-
-/**
- * Successful Response
- */
-export const zMemoryDeleteResponse = z.void();
-
-export const zMemoryGetOnePath = z.object({
-  memory_id: z.uuid(),
-});
-
-/**
- * Successful Response
- */
-export const zMemoryGetOneResponse = zMemory;
-
-export const zMemoryUpdateBody = zMemoryUpdate;
-
-export const zMemoryUpdatePath = z.object({
-  memory_id: z.uuid(),
-});
-
-/**
- * Successful Response
- */
-export const zMemoryUpdateResponse = zMemory;
 
 export const zUserGetManyQuery = z.object({
   search: z.string().max(320).nullish(),

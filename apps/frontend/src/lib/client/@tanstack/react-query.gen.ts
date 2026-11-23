@@ -477,6 +477,9 @@ import type {
   MainAgentUpdateData,
   MainAgentUpdateError,
   MainAgentUpdateResponse,
+  MemoryAvailabilityData,
+  MemoryAvailabilityError,
+  MemoryAvailabilityResponse,
   MemoryCreateData,
   MemoryCreateError,
   MemoryCreateResponse,
@@ -492,6 +495,12 @@ import type {
   MemoryGetOneData,
   MemoryGetOneError,
   MemoryGetOneResponse,
+  MemoryPolicyGetData,
+  MemoryPolicyGetError,
+  MemoryPolicyGetResponse,
+  MemoryPolicyUpdateData,
+  MemoryPolicyUpdateError,
+  MemoryPolicyUpdateResponse,
   MemoryUpdateData,
   MemoryUpdateError,
   MemoryUpdateResponse,
@@ -8166,6 +8175,303 @@ export const chatgptConnectionDisconnectMutation = (
   return mutationOptions;
 };
 
+/**
+ * Delete All
+ *
+ * Delete every memory, or every one of a kind or project.
+ */
+export const memoryDeleteAllMutation = (
+  options?: Partial<Options<MemoryDeleteAllData>>,
+): UseMutationOptions<
+  MemoryDeleteAllResponse,
+  MemoryDeleteAllError,
+  Options<MemoryDeleteAllData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    MemoryDeleteAllResponse,
+    MemoryDeleteAllError,
+    Options<MemoryDeleteAllData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().memoryDeleteAll({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const memoryGetManyQueryKey = (options?: Options<MemoryGetManyData>) =>
+  createQueryKey("memoryGetMany", options);
+
+/**
+ * List Memories
+ */
+export const memoryGetManyOptions = (options?: Options<MemoryGetManyData>) =>
+  queryOptions<
+    MemoryGetManyResponse,
+    MemoryGetManyError,
+    MemoryGetManyResponse,
+    ReturnType<typeof memoryGetManyQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry.get().memoryGetMany({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: memoryGetManyQueryKey(options),
+  });
+
+export const memoryGetManyInfiniteQueryKey = (
+  options?: Options<MemoryGetManyData>,
+): QueryKey<Options<MemoryGetManyData>> =>
+  createQueryKey("memoryGetMany", options, true);
+
+/**
+ * List Memories
+ */
+export const memoryGetManyInfiniteOptions = (
+  options?: Options<MemoryGetManyData>,
+) => {
+  const opts = infiniteQueryOptions<
+    MemoryGetManyResponse,
+    MemoryGetManyError,
+    InfiniteData<MemoryGetManyResponse>,
+    QueryKey<Options<MemoryGetManyData>>,
+    | number
+    | Pick<
+        QueryKey<Options<MemoryGetManyData>>[0],
+        "body" | "headers" | "path" | "query"
+      >
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<MemoryGetManyData>>[0],
+          "body" | "headers" | "path" | "query"
+        > =
+          typeof pageParam === "object"
+            ? pageParam
+            : {
+                query: {
+                  page: pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await ApiClient.__registry.get().memoryGetMany({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: memoryGetManyInfiniteQueryKey(options),
+    },
+  );
+  return opts as Omit<typeof opts, "initialData">;
+};
+
+/**
+ * Create
+ */
+export const memoryCreateMutation = (
+  options?: Partial<Options<MemoryCreateData>>,
+): UseMutationOptions<
+  MemoryCreateResponse,
+  MemoryCreateError,
+  Options<MemoryCreateData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    MemoryCreateResponse,
+    MemoryCreateError,
+    Options<MemoryCreateData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().memoryCreate({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const memoryAvailabilityQueryKey = (
+  options?: Options<MemoryAvailabilityData>,
+) => createQueryKey("memoryAvailability", options);
+
+/**
+ * Get Availability
+ *
+ * Whether memory is used in this chat (or a new chat in this project), and which switch is off.
+ */
+export const memoryAvailabilityOptions = (
+  options?: Options<MemoryAvailabilityData>,
+) =>
+  queryOptions<
+    MemoryAvailabilityResponse,
+    MemoryAvailabilityError,
+    MemoryAvailabilityResponse,
+    ReturnType<typeof memoryAvailabilityQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry.get().memoryAvailability({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: memoryAvailabilityQueryKey(options),
+  });
+
+/**
+ * Delete
+ */
+export const memoryDeleteMutation = (
+  options?: Partial<Options<MemoryDeleteData>>,
+): UseMutationOptions<
+  MemoryDeleteResponse,
+  MemoryDeleteError,
+  Options<MemoryDeleteData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    MemoryDeleteResponse,
+    MemoryDeleteError,
+    Options<MemoryDeleteData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().memoryDelete({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const memoryGetOneQueryKey = (options: Options<MemoryGetOneData>) =>
+  createQueryKey("memoryGetOne", options);
+
+/**
+ * Get One
+ */
+export const memoryGetOneOptions = (options: Options<MemoryGetOneData>) =>
+  queryOptions<
+    MemoryGetOneResponse,
+    MemoryGetOneError,
+    MemoryGetOneResponse,
+    ReturnType<typeof memoryGetOneQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry.get().memoryGetOne({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: memoryGetOneQueryKey(options),
+  });
+
+/**
+ * Update
+ */
+export const memoryUpdateMutation = (
+  options?: Partial<Options<MemoryUpdateData>>,
+): UseMutationOptions<
+  MemoryUpdateResponse,
+  MemoryUpdateError,
+  Options<MemoryUpdateData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    MemoryUpdateResponse,
+    MemoryUpdateError,
+    Options<MemoryUpdateData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().memoryUpdate({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const memoryPolicyGetQueryKey = (
+  options?: Options<MemoryPolicyGetData>,
+) => createQueryKey("memoryPolicyGet", options);
+
+/**
+ * Get Policy
+ */
+export const memoryPolicyGetOptions = (
+  options?: Options<MemoryPolicyGetData>,
+) =>
+  queryOptions<
+    MemoryPolicyGetResponse,
+    MemoryPolicyGetError,
+    MemoryPolicyGetResponse,
+    ReturnType<typeof memoryPolicyGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry.get().memoryPolicyGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: memoryPolicyGetQueryKey(options),
+  });
+
+/**
+ * Put Policy
+ */
+export const memoryPolicyUpdateMutation = (
+  options?: Partial<Options<MemoryPolicyUpdateData>>,
+): UseMutationOptions<
+  MemoryPolicyUpdateResponse,
+  MemoryPolicyUpdateError,
+  Options<MemoryPolicyUpdateData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    MemoryPolicyUpdateResponse,
+    MemoryPolicyUpdateError,
+    Options<MemoryPolicyUpdateData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().memoryPolicyUpdate({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
 export const mainAgentGetQueryKey = (options?: Options<MainAgentGetData>) =>
   createQueryKey("mainAgentGet", options);
 
@@ -8895,218 +9201,6 @@ export const appSettingUpdateMutation = (
   > = {
     mutationFn: async (fnOptions) => {
       const { data } = await ApiClient.__registry.get().appSettingUpdate({
-        ...options,
-        ...fnOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
-/**
- * Delete All
- *
- * Delete every memory, or every one of a kind or project.
- */
-export const memoryDeleteAllMutation = (
-  options?: Partial<Options<MemoryDeleteAllData>>,
-): UseMutationOptions<
-  MemoryDeleteAllResponse,
-  MemoryDeleteAllError,
-  Options<MemoryDeleteAllData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    MemoryDeleteAllResponse,
-    MemoryDeleteAllError,
-    Options<MemoryDeleteAllData>
-  > = {
-    mutationFn: async (fnOptions) => {
-      const { data } = await ApiClient.__registry.get().memoryDeleteAll({
-        ...options,
-        ...fnOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
-export const memoryGetManyQueryKey = (options?: Options<MemoryGetManyData>) =>
-  createQueryKey("memoryGetMany", options);
-
-/**
- * List Memories
- */
-export const memoryGetManyOptions = (options?: Options<MemoryGetManyData>) =>
-  queryOptions<
-    MemoryGetManyResponse,
-    MemoryGetManyError,
-    MemoryGetManyResponse,
-    ReturnType<typeof memoryGetManyQueryKey>
-  >({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await ApiClient.__registry.get().memoryGetMany({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: memoryGetManyQueryKey(options),
-  });
-
-export const memoryGetManyInfiniteQueryKey = (
-  options?: Options<MemoryGetManyData>,
-): QueryKey<Options<MemoryGetManyData>> =>
-  createQueryKey("memoryGetMany", options, true);
-
-/**
- * List Memories
- */
-export const memoryGetManyInfiniteOptions = (
-  options?: Options<MemoryGetManyData>,
-) => {
-  const opts = infiniteQueryOptions<
-    MemoryGetManyResponse,
-    MemoryGetManyError,
-    InfiniteData<MemoryGetManyResponse>,
-    QueryKey<Options<MemoryGetManyData>>,
-    | number
-    | Pick<
-        QueryKey<Options<MemoryGetManyData>>[0],
-        "body" | "headers" | "path" | "query"
-      >
-  >(
-    // @ts-ignore
-    {
-      queryFn: async ({ pageParam, queryKey, signal }) => {
-        // @ts-ignore
-        const page: Pick<
-          QueryKey<Options<MemoryGetManyData>>[0],
-          "body" | "headers" | "path" | "query"
-        > =
-          typeof pageParam === "object"
-            ? pageParam
-            : {
-                query: {
-                  page: pageParam,
-                },
-              };
-        const params = createInfiniteParams(queryKey, page);
-        const { data } = await ApiClient.__registry.get().memoryGetMany({
-          ...options,
-          ...params,
-          signal,
-          throwOnError: true,
-        });
-        return data;
-      },
-      queryKey: memoryGetManyInfiniteQueryKey(options),
-    },
-  );
-  return opts as Omit<typeof opts, "initialData">;
-};
-
-/**
- * Create
- */
-export const memoryCreateMutation = (
-  options?: Partial<Options<MemoryCreateData>>,
-): UseMutationOptions<
-  MemoryCreateResponse,
-  MemoryCreateError,
-  Options<MemoryCreateData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    MemoryCreateResponse,
-    MemoryCreateError,
-    Options<MemoryCreateData>
-  > = {
-    mutationFn: async (fnOptions) => {
-      const { data } = await ApiClient.__registry.get().memoryCreate({
-        ...options,
-        ...fnOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
-/**
- * Delete
- */
-export const memoryDeleteMutation = (
-  options?: Partial<Options<MemoryDeleteData>>,
-): UseMutationOptions<
-  MemoryDeleteResponse,
-  MemoryDeleteError,
-  Options<MemoryDeleteData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    MemoryDeleteResponse,
-    MemoryDeleteError,
-    Options<MemoryDeleteData>
-  > = {
-    mutationFn: async (fnOptions) => {
-      const { data } = await ApiClient.__registry.get().memoryDelete({
-        ...options,
-        ...fnOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
-export const memoryGetOneQueryKey = (options: Options<MemoryGetOneData>) =>
-  createQueryKey("memoryGetOne", options);
-
-/**
- * Get One
- */
-export const memoryGetOneOptions = (options: Options<MemoryGetOneData>) =>
-  queryOptions<
-    MemoryGetOneResponse,
-    MemoryGetOneError,
-    MemoryGetOneResponse,
-    ReturnType<typeof memoryGetOneQueryKey>
-  >({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await ApiClient.__registry.get().memoryGetOne({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: memoryGetOneQueryKey(options),
-  });
-
-/**
- * Update
- */
-export const memoryUpdateMutation = (
-  options?: Partial<Options<MemoryUpdateData>>,
-): UseMutationOptions<
-  MemoryUpdateResponse,
-  MemoryUpdateError,
-  Options<MemoryUpdateData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    MemoryUpdateResponse,
-    MemoryUpdateError,
-    Options<MemoryUpdateData>
-  > = {
-    mutationFn: async (fnOptions) => {
-      const { data } = await ApiClient.__registry.get().memoryUpdate({
         ...options,
         ...fnOptions,
         throwOnError: true,

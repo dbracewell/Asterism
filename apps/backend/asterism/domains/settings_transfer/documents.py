@@ -85,6 +85,13 @@ class ExportedImageGeneration(_Document):
     enabled: bool = False
 
 
+class ExportedMemory(_Document):
+    """The memory policy (ADR-0078). Group limits stay with the installation:
+    group ids differ between installations. Memories themselves are never in it."""
+
+    enabled: bool = False
+
+
 class ExportedLocalImage(_Document):
     """The local generator's model and device (US-76.2). Downloads and license
     acceptance stay with the installation."""
@@ -136,6 +143,8 @@ class SettingsBundle(_Document):
     # Added in US-94.4; files exported before it read as no ONNX model chosen.
     image_generation_onnx: ExportedOnnxImage = Field(default_factory=ExportedOnnxImage)
     image_generator_provider: ExportedComponent | None = None
+    # Added in US-93.2; files exported before it read as memory off.
+    memory: ExportedMemory = Field(default_factory=ExportedMemory)
     chatgpt_plan_enabled: bool = False
     web_search_provider: ExportedComponent | None = None
     image_search_provider: ExportedComponent | None = None

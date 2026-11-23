@@ -25,6 +25,7 @@ class ActivePolicy:
     educator_name: str
     allowed_modes: frozenset[LearningModeId] | None
     answer_reveal: bool
+    memory_enabled: bool = True
 
     def allows(self, mode: LearningModeId | str) -> bool:
         return self.allowed_modes is None or LearningModeId(mode) in self.allowed_modes
@@ -50,7 +51,7 @@ async def course_mode_policy(
         )
         .execution_options(populate_existing=True)
     )
-    if row is None or (row.allowed_modes is None and row.answer_reveal):
+    if row is None or (row.allowed_modes is None and row.answer_reveal and row.memory_enabled):
         return None
     allowed = None
     if row.allowed_modes is not None:
@@ -61,4 +62,5 @@ async def course_mode_policy(
         educator_name=await educator_name(row.educator_id, session),
         allowed_modes=allowed,
         answer_reveal=row.answer_reveal,
+        memory_enabled=row.memory_enabled,
     )

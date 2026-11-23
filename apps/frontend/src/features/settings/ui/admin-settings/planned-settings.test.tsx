@@ -1,10 +1,12 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { CodeExecutionSettings } from "./code-execution-settings";
+import { MemoryPlannedSettings } from "./memory-planned-settings";
 
 describe("planned administration panes", () => {
   it.each([
     ["Code execution", CodeExecutionSettings, "Sandboxed code execution"],
+    ["Memory", MemoryPlannedSettings, "Memory settings"],
   ])(
     "%s explains its future scope without offering configuration controls",
     (title, Pane, scope) => {

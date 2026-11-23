@@ -478,6 +478,9 @@ import type {
   MainAgentUpdateData,
   MainAgentUpdateErrors,
   MainAgentUpdateResponses,
+  MemoryAvailabilityData,
+  MemoryAvailabilityErrors,
+  MemoryAvailabilityResponses,
   MemoryCreateData,
   MemoryCreateErrors,
   MemoryCreateResponses,
@@ -493,6 +496,12 @@ import type {
   MemoryGetOneData,
   MemoryGetOneErrors,
   MemoryGetOneResponses,
+  MemoryPolicyGetData,
+  MemoryPolicyGetErrors,
+  MemoryPolicyGetResponses,
+  MemoryPolicyUpdateData,
+  MemoryPolicyUpdateErrors,
+  MemoryPolicyUpdateResponses,
   MemoryUpdateData,
   MemoryUpdateErrors,
   MemoryUpdateResponses,
@@ -5837,6 +5846,191 @@ export class ApiClient extends HeyApiClient {
   }
 
   /**
+   * Delete All
+   *
+   * Delete every memory, or every one of a kind or project.
+   */
+  public memoryDeleteAll<ThrowOnError extends boolean = false>(
+    options?: Options<MemoryDeleteAllData, ThrowOnError>,
+  ): RequestResult<
+    MemoryDeleteAllResponses,
+    MemoryDeleteAllErrors,
+    ThrowOnError
+  > {
+    return (options?.client ?? this.client).delete<
+      MemoryDeleteAllResponses,
+      MemoryDeleteAllErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/users/me/memories/",
+      ...options,
+    });
+  }
+
+  /**
+   * List Memories
+   */
+  public memoryGetMany<ThrowOnError extends boolean = false>(
+    options?: Options<MemoryGetManyData, ThrowOnError>,
+  ): RequestResult<MemoryGetManyResponses, MemoryGetManyErrors, ThrowOnError> {
+    return (options?.client ?? this.client).get<
+      MemoryGetManyResponses,
+      MemoryGetManyErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/users/me/memories/",
+      ...options,
+    });
+  }
+
+  /**
+   * Create
+   */
+  public memoryCreate<ThrowOnError extends boolean = false>(
+    options: Options<MemoryCreateData, ThrowOnError>,
+  ): RequestResult<MemoryCreateResponses, MemoryCreateErrors, ThrowOnError> {
+    return (options.client ?? this.client).post<
+      MemoryCreateResponses,
+      MemoryCreateErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/users/me/memories/",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+  }
+
+  /**
+   * Get Availability
+   *
+   * Whether memory is used in this chat (or a new chat in this project), and which switch is off.
+   */
+  public memoryAvailability<ThrowOnError extends boolean = false>(
+    options?: Options<MemoryAvailabilityData, ThrowOnError>,
+  ): RequestResult<
+    MemoryAvailabilityResponses,
+    MemoryAvailabilityErrors,
+    ThrowOnError
+  > {
+    return (options?.client ?? this.client).get<
+      MemoryAvailabilityResponses,
+      MemoryAvailabilityErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/users/me/memories/availability",
+      ...options,
+    });
+  }
+
+  /**
+   * Delete
+   */
+  public memoryDelete<ThrowOnError extends boolean = false>(
+    options: Options<MemoryDeleteData, ThrowOnError>,
+  ): RequestResult<MemoryDeleteResponses, MemoryDeleteErrors, ThrowOnError> {
+    return (options.client ?? this.client).delete<
+      MemoryDeleteResponses,
+      MemoryDeleteErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/users/me/memories/{memory_id}",
+      ...options,
+    });
+  }
+
+  /**
+   * Get One
+   */
+  public memoryGetOne<ThrowOnError extends boolean = false>(
+    options: Options<MemoryGetOneData, ThrowOnError>,
+  ): RequestResult<MemoryGetOneResponses, MemoryGetOneErrors, ThrowOnError> {
+    return (options.client ?? this.client).get<
+      MemoryGetOneResponses,
+      MemoryGetOneErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/users/me/memories/{memory_id}",
+      ...options,
+    });
+  }
+
+  /**
+   * Update
+   */
+  public memoryUpdate<ThrowOnError extends boolean = false>(
+    options: Options<MemoryUpdateData, ThrowOnError>,
+  ): RequestResult<MemoryUpdateResponses, MemoryUpdateErrors, ThrowOnError> {
+    return (options.client ?? this.client).put<
+      MemoryUpdateResponses,
+      MemoryUpdateErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/users/me/memories/{memory_id}",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+  }
+
+  /**
+   * Get Policy
+   */
+  public memoryPolicyGet<ThrowOnError extends boolean = false>(
+    options?: Options<MemoryPolicyGetData, ThrowOnError>,
+  ): RequestResult<
+    MemoryPolicyGetResponses,
+    MemoryPolicyGetErrors,
+    ThrowOnError
+  > {
+    return (options?.client ?? this.client).get<
+      MemoryPolicyGetResponses,
+      MemoryPolicyGetErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/settings/app/memory",
+      ...options,
+    });
+  }
+
+  /**
+   * Put Policy
+   */
+  public memoryPolicyUpdate<ThrowOnError extends boolean = false>(
+    options: Options<MemoryPolicyUpdateData, ThrowOnError>,
+  ): RequestResult<
+    MemoryPolicyUpdateResponses,
+    MemoryPolicyUpdateErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).put<
+      MemoryPolicyUpdateResponses,
+      MemoryPolicyUpdateErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/settings/app/memory",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+  }
+
+  /**
    * Read Main Agent
    *
    * Return the caller's main-agent configuration.
@@ -6397,122 +6591,6 @@ export class ApiClient extends HeyApiClient {
     >({
       security: [{ scheme: "bearer", type: "http" }],
       url: "/settings/app/{key}",
-      ...options,
-      headers: {
-        "Content-Type": "application/json",
-        ...options.headers,
-      },
-    });
-  }
-
-  /**
-   * Delete All
-   *
-   * Delete every memory, or every one of a kind or project.
-   */
-  public memoryDeleteAll<ThrowOnError extends boolean = false>(
-    options?: Options<MemoryDeleteAllData, ThrowOnError>,
-  ): RequestResult<
-    MemoryDeleteAllResponses,
-    MemoryDeleteAllErrors,
-    ThrowOnError
-  > {
-    return (options?.client ?? this.client).delete<
-      MemoryDeleteAllResponses,
-      MemoryDeleteAllErrors,
-      ThrowOnError
-    >({
-      security: [{ scheme: "bearer", type: "http" }],
-      url: "/users/me/memories/",
-      ...options,
-    });
-  }
-
-  /**
-   * List Memories
-   */
-  public memoryGetMany<ThrowOnError extends boolean = false>(
-    options?: Options<MemoryGetManyData, ThrowOnError>,
-  ): RequestResult<MemoryGetManyResponses, MemoryGetManyErrors, ThrowOnError> {
-    return (options?.client ?? this.client).get<
-      MemoryGetManyResponses,
-      MemoryGetManyErrors,
-      ThrowOnError
-    >({
-      security: [{ scheme: "bearer", type: "http" }],
-      url: "/users/me/memories/",
-      ...options,
-    });
-  }
-
-  /**
-   * Create
-   */
-  public memoryCreate<ThrowOnError extends boolean = false>(
-    options: Options<MemoryCreateData, ThrowOnError>,
-  ): RequestResult<MemoryCreateResponses, MemoryCreateErrors, ThrowOnError> {
-    return (options.client ?? this.client).post<
-      MemoryCreateResponses,
-      MemoryCreateErrors,
-      ThrowOnError
-    >({
-      security: [{ scheme: "bearer", type: "http" }],
-      url: "/users/me/memories/",
-      ...options,
-      headers: {
-        "Content-Type": "application/json",
-        ...options.headers,
-      },
-    });
-  }
-
-  /**
-   * Delete
-   */
-  public memoryDelete<ThrowOnError extends boolean = false>(
-    options: Options<MemoryDeleteData, ThrowOnError>,
-  ): RequestResult<MemoryDeleteResponses, MemoryDeleteErrors, ThrowOnError> {
-    return (options.client ?? this.client).delete<
-      MemoryDeleteResponses,
-      MemoryDeleteErrors,
-      ThrowOnError
-    >({
-      security: [{ scheme: "bearer", type: "http" }],
-      url: "/users/me/memories/{memory_id}",
-      ...options,
-    });
-  }
-
-  /**
-   * Get One
-   */
-  public memoryGetOne<ThrowOnError extends boolean = false>(
-    options: Options<MemoryGetOneData, ThrowOnError>,
-  ): RequestResult<MemoryGetOneResponses, MemoryGetOneErrors, ThrowOnError> {
-    return (options.client ?? this.client).get<
-      MemoryGetOneResponses,
-      MemoryGetOneErrors,
-      ThrowOnError
-    >({
-      security: [{ scheme: "bearer", type: "http" }],
-      url: "/users/me/memories/{memory_id}",
-      ...options,
-    });
-  }
-
-  /**
-   * Update
-   */
-  public memoryUpdate<ThrowOnError extends boolean = false>(
-    options: Options<MemoryUpdateData, ThrowOnError>,
-  ): RequestResult<MemoryUpdateResponses, MemoryUpdateErrors, ThrowOnError> {
-    return (options.client ?? this.client).put<
-      MemoryUpdateResponses,
-      MemoryUpdateErrors,
-      ThrowOnError
-    >({
-      security: [{ scheme: "bearer", type: "http" }],
-      url: "/users/me/memories/{memory_id}",
       ...options,
       headers: {
         "Content-Type": "application/json",

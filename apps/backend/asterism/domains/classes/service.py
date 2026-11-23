@@ -158,6 +158,7 @@ async def set_mode_policy(
     row = await owned_class(user_id, class_id, session)
     row.allowed_modes = [mode.value for mode in payload.allowed_modes] if payload.allowed_modes is not None else None
     row.answer_reveal = payload.answer_reveal
+    row.memory_enabled = payload.memory_enabled
     await session.commit()
     logger.info(f"Educator {user_id} changed the mode policy of class {class_id}")
     return await _taught(row, session)
