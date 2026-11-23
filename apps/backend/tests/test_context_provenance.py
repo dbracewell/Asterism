@@ -126,3 +126,17 @@ async def test_resume_ceiling_restart_move_and_removal(context_runtime):
     general = await prepare_execution(user_id="a", chat_id=cid, message_id=mid, restart=True)
     assert general.context.project_id is None
     assert (await get_one(user_id="a", chat_id=cid)).messages[0].content == "Private history remains"
+
+
+def test_user_namespace_is_keyed_by_the_user_alone():
+    import pytest
+    from pydantic import ValidationError
+
+    namespace = MemoryNamespace.for_user("u1")
+    assert namespace == MemoryNamespace.for_user("u1")
+    assert namespace != MemoryNamespace.for_user("u2")
+    assert namespace.kind == "user" and namespace.source_id is None
+    with pytest.raises(ValidationError):
+        MemoryNamespace(user_id="u1", kind="user", source_id=uuid.uuid4())
+    with pytest.raises(ValidationError):
+        MemoryNamespace(user_id="u1", kind="project")

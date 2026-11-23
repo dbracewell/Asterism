@@ -22,6 +22,16 @@ Unreleased into its version and date.
 
 ## Unreleased
 
+### Data
+
+- A new `memories` table holds what Asterism remembers about each person (user
+  memory) and about their work in each project (project memory), with a memory
+  vector table, `memory_vectors`, next to the knowledge vectors (ADR-0078).
+  Upgrading adds both empty; nothing existing changes. Only the owner can read
+  their memories. Deleting an account or a project deletes its memories.
+  Nothing saves or uses memories yet: later releases add the settings, the
+  agent's proposals and memories in replies.
+
 ## 0.3.1 (2026-11-23)
 
 ### Image

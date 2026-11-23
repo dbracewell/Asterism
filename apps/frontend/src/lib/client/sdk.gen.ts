@@ -478,6 +478,24 @@ import type {
   MainAgentUpdateData,
   MainAgentUpdateErrors,
   MainAgentUpdateResponses,
+  MemoryCreateData,
+  MemoryCreateErrors,
+  MemoryCreateResponses,
+  MemoryDeleteAllData,
+  MemoryDeleteAllErrors,
+  MemoryDeleteAllResponses,
+  MemoryDeleteData,
+  MemoryDeleteErrors,
+  MemoryDeleteResponses,
+  MemoryGetManyData,
+  MemoryGetManyErrors,
+  MemoryGetManyResponses,
+  MemoryGetOneData,
+  MemoryGetOneErrors,
+  MemoryGetOneResponses,
+  MemoryUpdateData,
+  MemoryUpdateErrors,
+  MemoryUpdateResponses,
   MessageUpdateData,
   MessageUpdateErrors,
   MessageUpdateResponses,
@@ -6379,6 +6397,122 @@ export class ApiClient extends HeyApiClient {
     >({
       security: [{ scheme: "bearer", type: "http" }],
       url: "/settings/app/{key}",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+  }
+
+  /**
+   * Delete All
+   *
+   * Delete every memory, or every one of a kind or project.
+   */
+  public memoryDeleteAll<ThrowOnError extends boolean = false>(
+    options?: Options<MemoryDeleteAllData, ThrowOnError>,
+  ): RequestResult<
+    MemoryDeleteAllResponses,
+    MemoryDeleteAllErrors,
+    ThrowOnError
+  > {
+    return (options?.client ?? this.client).delete<
+      MemoryDeleteAllResponses,
+      MemoryDeleteAllErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/users/me/memories/",
+      ...options,
+    });
+  }
+
+  /**
+   * List Memories
+   */
+  public memoryGetMany<ThrowOnError extends boolean = false>(
+    options?: Options<MemoryGetManyData, ThrowOnError>,
+  ): RequestResult<MemoryGetManyResponses, MemoryGetManyErrors, ThrowOnError> {
+    return (options?.client ?? this.client).get<
+      MemoryGetManyResponses,
+      MemoryGetManyErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/users/me/memories/",
+      ...options,
+    });
+  }
+
+  /**
+   * Create
+   */
+  public memoryCreate<ThrowOnError extends boolean = false>(
+    options: Options<MemoryCreateData, ThrowOnError>,
+  ): RequestResult<MemoryCreateResponses, MemoryCreateErrors, ThrowOnError> {
+    return (options.client ?? this.client).post<
+      MemoryCreateResponses,
+      MemoryCreateErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/users/me/memories/",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+  }
+
+  /**
+   * Delete
+   */
+  public memoryDelete<ThrowOnError extends boolean = false>(
+    options: Options<MemoryDeleteData, ThrowOnError>,
+  ): RequestResult<MemoryDeleteResponses, MemoryDeleteErrors, ThrowOnError> {
+    return (options.client ?? this.client).delete<
+      MemoryDeleteResponses,
+      MemoryDeleteErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/users/me/memories/{memory_id}",
+      ...options,
+    });
+  }
+
+  /**
+   * Get One
+   */
+  public memoryGetOne<ThrowOnError extends boolean = false>(
+    options: Options<MemoryGetOneData, ThrowOnError>,
+  ): RequestResult<MemoryGetOneResponses, MemoryGetOneErrors, ThrowOnError> {
+    return (options.client ?? this.client).get<
+      MemoryGetOneResponses,
+      MemoryGetOneErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/users/me/memories/{memory_id}",
+      ...options,
+    });
+  }
+
+  /**
+   * Update
+   */
+  public memoryUpdate<ThrowOnError extends boolean = false>(
+    options: Options<MemoryUpdateData, ThrowOnError>,
+  ): RequestResult<MemoryUpdateResponses, MemoryUpdateErrors, ThrowOnError> {
+    return (options.client ?? this.client).put<
+      MemoryUpdateResponses,
+      MemoryUpdateErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/users/me/memories/{memory_id}",
       ...options,
       headers: {
         "Content-Type": "application/json",

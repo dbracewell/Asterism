@@ -239,3 +239,50 @@ async def test_compaction_names_saved_as_an_id_get_the_model_name(migration_db):
         "id-gone": str(gone),
         "named": "Already named",
     }
+
+
+@pytest.mark.asyncio
+async def test_memories_upgrade_keeps_users_and_enforces_memory_rules(migration_db):
+    """8cf8b3b71e49 (US-93.1): an existing database gains an empty memories table with its rules."""
+    await upgrade_to(migration_db, "c3a1f0d2b9e4")
+    with sqlite3.connect(migration_db) as connection:
+        connection.execute("INSERT INTO users (id) VALUES ('user-1')")
+
+    await upgrade_to(migration_db, "head")
+
+    def insert(connection, **values):
+        row = {
+            "id": uuid.uuid4().hex,
+            "user_id": "user-1",
+            "kind": "user",
+            "project_id": None,
+            "text": "Learns best from worked examples",
+            "category": "learning",
+            "sensitive": 0,
+            "created_at": 0,
+            "updated_at": 0,
+        } | values
+        columns = ", ".join(row)
+        connection.execute(
+            f"INSERT INTO memories ({columns}) VALUES ({', '.join('?' * len(row))})", tuple(row.values())
+        )
+
+    with sqlite3.connect(migration_db) as connection:
+        assert connection.execute("SELECT id FROM users").fetchall() == [("user-1",)]
+        assert connection.execute("SELECT count(*) FROM memories").fetchone() == (0,)
+        connection.execute("PRAGMA foreign_keys = ON")
+        insert(connection)
+        saved = connection.execute("SELECT revision, saved_by FROM memories").fetchone()
+        assert saved == (1, "person")
+        for broken in (
+            {"kind": "project"},  # project memory needs a project and no category
+            {"category": None},  # user memory needs a category
+            {"category": "accessibility"},  # accessibility memories are sensitive
+            {"text": "   "},
+            {"text": "x" * 2001},
+            {"text": "a\x00b"},
+            {"user_id": "nobody"},
+        ):
+            with pytest.raises(sqlite3.IntegrityError):
+                insert(connection, **broken)
+        insert(connection, category="accessibility", sensitive=1)

@@ -428,3 +428,10 @@ async def delete_user(
         await vector_store.delete_user(user_id=user_id)
     except Exception:  # noqa: BLE001 - storage cleanup must not block deletion
         logger.exception("Failed to remove knowledge vectors for deleted user %s", user_id)
+    try:
+        # The memories themselves went with the user row (ADR-0078).
+        from asterism.domains.memory.vectors import memory_vector_store
+
+        await memory_vector_store.delete_user(user_id=user_id)
+    except Exception:  # noqa: BLE001 - storage cleanup must not block deletion
+        logger.exception("Failed to remove memory vectors for deleted user %s", user_id)

@@ -60,13 +60,13 @@ Source: user request (2026-11-20). [EPIC-93](docs/epics/EPIC-93-LONG-TERM-MEMORY
 
 ### EPIC-93: Long-term memory
 
-- [ ] US-93.1: Memory store and boundary
-  - [ ] ADR: the two kinds, the user-memory content rule, private by default, sensitive memories, pinning, and the revised boundary. Update [context isolation](docs/architecture/context-isolation.md) and `MemoryNamespace` (add the `user` kind, used only for user memory).
-  - [ ] A `memories` table with a versioned migration and upgrade test (ADR-0069): owner, kind (`user` / `project`) and `project_id` (required for project memory); text (bounded, with the About you character rules) and a category (user memory: learning, accessibility, background, other); `sensitive`; source chat, message and execution; revision and timestamps. A per-person cap applies for each kind.
-  - [ ] Memory vectors in their own LanceDB table behind `VectorStore`, keyed by owner and memory id, rewritten on edit.
-  - [ ] An owner-scoped service and API: list, create, edit (expected revision, 409 on conflict), delete, delete all. Each lists in a deterministic order, filtered in the database before pagination.
-  - [ ] Deleting the account deletes its memories and vectors. Deleting a project deletes its project memories. Deleting a chat keeps saved memories, whose source then reads "chat deleted".
-  - [ ] Tests for ownership, caps, revisions and deletion. Release notes: Data.
+- [ ] US-93.1: Memory store and boundary (in progress, branch `feat/us-93.1-memory-store`)
+  - [x] ADR: the two kinds, the user-memory content rule, private by default, sensitive memories, pinning, and the revised boundary. Update [context isolation](docs/architecture/context-isolation.md) and `MemoryNamespace` (add the `user` kind, used only for user memory).
+  - [x] A `memories` table with a versioned migration and upgrade test (ADR-0069): owner, kind (`user` / `project`) and `project_id` (required for project memory); text (bounded, with the About you character rules) and a category (user memory: learning, accessibility, background, other); `sensitive`; source chat, message and execution; revision and timestamps. A per-person cap applies for each kind.
+  - [x] Memory vectors in their own LanceDB table behind `VectorStore`, keyed by owner and memory id, rewritten on edit.
+  - [x] An owner-scoped service and API: list, create, edit (expected revision, 409 on conflict), delete, delete all. Each lists in a deterministic order, filtered in the database before pagination.
+  - [x] Deleting the account deletes its memories and vectors. Deleting a project deletes its project memories. Deleting a chat keeps saved memories, whose source then reads "chat deleted".
+  - [x] Tests for ownership, caps, revisions and deletion. Release notes: Data.
 - [ ] US-93.2: Policies
   - [ ] An admin `memory_enabled` policy (default off) with `group_ids`, in Admin Settings, checked live (ADR-0058).
   - [ ] A per-person "Use memory" setting (default on when the policy allows).

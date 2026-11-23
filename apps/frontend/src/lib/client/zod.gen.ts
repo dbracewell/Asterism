@@ -2053,6 +2053,99 @@ export const zMainAgentUpdate = z.object({
 });
 
 /**
+ * MemoryCategory
+ *
+ * What a user memory is about. Project memory has no category.
+ */
+export const zMemoryCategory = z.enum([
+  "learning",
+  "accessibility",
+  "background",
+  "other",
+]);
+
+/**
+ * MemoryDeleteAll
+ */
+export const zMemoryDeleteAll = z.object({
+  deleted: z.int(),
+});
+
+/**
+ * MemoryKind
+ */
+export const zMemoryKind = z.enum(["user", "project"]);
+
+/**
+ * MemoryCreate
+ */
+export const zMemoryCreate = z.object({
+  text: z.string().max(4000),
+  category: zMemoryCategory.nullish(),
+  sensitive: z.boolean().optional().default(false),
+  kind: zMemoryKind,
+  project_id: z.uuid().nullish(),
+});
+
+/**
+ * MemorySavedBy
+ *
+ * Who saved it: the person themselves, or a proposal of the agent they confirmed.
+ */
+export const zMemorySavedBy = z.enum(["person", "agent"]);
+
+/**
+ * MemorySource
+ *
+ * The chat a confirmed proposal came from. ``chat_deleted`` once that chat is gone.
+ */
+export const zMemorySource = z.object({
+  chat_id: z.uuid().nullable(),
+  message_id: z.uuid().nullable(),
+  execution_id: z.uuid().nullable(),
+  chat_deleted: z.boolean(),
+});
+
+/**
+ * Memory
+ */
+export const zMemory = z.object({
+  id: z.uuid(),
+  kind: zMemoryKind,
+  project_id: z.uuid().nullable(),
+  text: z.string(),
+  category: zMemoryCategory.nullable(),
+  sensitive: z.boolean(),
+  saved_by: zMemorySavedBy,
+  source: zMemorySource,
+  revision: z.int(),
+  created_at: z.int(),
+  updated_at: z.int(),
+});
+
+/**
+ * MemoryPage
+ */
+export const zMemoryPage = z.object({
+  items: z.array(zMemory),
+  total: z.int(),
+  page: z.int(),
+  page_size: z.int(),
+});
+
+/**
+ * MemoryUpdate
+ *
+ * A memory's kind and project never change; text, category and the label do.
+ */
+export const zMemoryUpdate = z.object({
+  text: z.string().max(4000),
+  category: zMemoryCategory.nullish(),
+  sensitive: z.boolean().optional().default(false),
+  expected_revision: z.int().gte(1).lte(2147483647),
+});
+
+/**
  * MessageCompareRequest
  *
  * Compare an answered turn with one or two more targets (US-54.4).
@@ -7628,6 +7721,68 @@ export const zAppSettingUpdatePath = z.object({
  * Successful Response
  */
 export const zAppSettingUpdateResponse = zSetting;
+
+export const zMemoryDeleteAllQuery = z.object({
+  kind: zMemoryKind.nullish(),
+  project_id: z.uuid().nullish(),
+});
+
+/**
+ * Successful Response
+ */
+export const zMemoryDeleteAllResponse = zMemoryDeleteAll;
+
+export const zMemoryGetManyQuery = z.object({
+  kind: zMemoryKind.nullish(),
+  project_id: z.uuid().nullish(),
+  page: z.int().gte(1).optional().default(1),
+  page_size: z.int().gte(1).lte(100).optional().default(20),
+});
+
+/**
+ * Successful Response
+ */
+export const zMemoryGetManyResponse = zMemoryPage;
+
+export const zMemoryCreateBody = zMemoryCreate;
+
+/**
+ * Successful Response
+ */
+export const zMemoryCreateResponse = zMemory;
+
+export const zMemoryDeletePath = z.object({
+  memory_id: z.uuid(),
+});
+
+export const zMemoryDeleteQuery = z.object({
+  expected_revision: z.int().gte(1).lte(2147483647),
+});
+
+/**
+ * Successful Response
+ */
+export const zMemoryDeleteResponse = z.void();
+
+export const zMemoryGetOnePath = z.object({
+  memory_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zMemoryGetOneResponse = zMemory;
+
+export const zMemoryUpdateBody = zMemoryUpdate;
+
+export const zMemoryUpdatePath = z.object({
+  memory_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zMemoryUpdateResponse = zMemory;
 
 export const zUserGetManyQuery = z.object({
   search: z.string().max(320).nullish(),
