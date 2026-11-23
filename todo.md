@@ -112,9 +112,9 @@ Source: user request (2026-11-22), after EPIC-92. [EPIC-95](docs/epics/EPIC-95-F
   - [x] Upgrade what is still flagged after US-95.1 (`fast-uri` through `ajv`, `browserslist`, and `source-map-js` through `next` → `postcss`) and the lockfile-only `brace-expansion` and `js-yaml`, with overrides only where a parent pins an old version.
   - [x] Tests: form validation through `@hookform/resolvers` and `ajv`; the frontend build and E2E.
   - [x] Dependabot shows no open high alert for `pnpm-lock.yaml`.
-- [ ] US-95.3: Python packages
-  - [ ] Upgrade `cryptography` (49 → 50), `filelock` (3 → 4), `soupsieve` (2 → 3 or 4) and `urllib3` (2.8) through `uv.lock`, with a constraint only where a parent caps one.
-  - [ ] Check each major in its changelog and with tests: JWT verification and PDF text extraction (cryptography); model downloads and the Hugging Face cache, including two at once (filelock); HTML to Markdown and the web fetch tool's extraction (soupsieve).
+- [ ] US-95.3: Python packages (in progress, branch `feat/us-95.3-python-packages`)
+  - [x] Upgrade `cryptography` (49 → 50), `filelock` (3 → 4), `soupsieve` (2 → 3 or 4) and `urllib3` (2.8) through `uv.lock`, with a constraint only where a parent caps one.
+  - [x] Check each major in its changelog and with tests: JWT verification and PDF text extraction (cryptography); model downloads and the Hugging Face cache, including two at once (filelock); HTML to Markdown and the web fetch tool's extraction (soupsieve).
   - [ ] Record in the pull request, for each, whether Asterism's use reaches the advisory.
   - [ ] The upgrade check passes. Dependabot shows no open high alert for `uv.lock`.
 - [ ] US-95.4: OS packages

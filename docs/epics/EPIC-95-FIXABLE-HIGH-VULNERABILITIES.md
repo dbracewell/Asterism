@@ -107,9 +107,13 @@ As an administrator, the frontend's packages have no fixable high.
 
 As an administrator, the backend's packages have no fixable high.
 
-- [ ] Upgrade `cryptography` (49 → 50), `filelock` (3 → 4), `soupsieve` (2 → 3 or 4) and `urllib3` (2.8) through `uv.lock`, with a constraint only where a
+- [x] Upgrade `cryptography` (49 → 50), `filelock` (3 → 4), `soupsieve` (2 → 3 or 4) and `urllib3` (2.8) through `uv.lock`, with a constraint only where a
       parent caps one.
-- [ ] Check each major in its changelog and with tests: - cryptography 50: JWT verification (PyJWT's crypto backend) and PDF text
+      Done without a constraint: cryptography 50.0.2, filelock 4.2.10, soupsieve
+      4.1.1 (4.0.0 is the first to fix GHSA-mmhr-3c5m-f64f, so 3.x was not
+      enough) and urllib3 2.8.0. filelock and soupsieve are the newest releases
+      at least a week old.
+- [x] Check each major in its changelog and with tests: - cryptography 50: JWT verification (PyJWT's crypto backend) and PDF text
       extraction (pdfminer.six); - filelock 4: model downloads and the Hugging Face cache, including two
       downloads at once; - soupsieve: HTML to Markdown conversion (markdownify, markitdown) and the
       web fetch tool's extraction.
