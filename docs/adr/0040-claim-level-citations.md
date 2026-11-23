@@ -75,14 +75,14 @@ occurrence. Later keys are stored as unavailable.
 `SpanCitation` is stored as JSON in `messages.citations` and
 `DelegationRecord.citations`:
 
-| Field                 | Meaning                                                    |
-| --------------------- | ---------------------------------------------------------- |
-| `key`                 | The cited key, as written.                                 |
-| `available`           | Whether it resolved at save time; rechecked live on read.  |
-| `file_id`, `chunk_id` | The cited chunk.                                           |
-| `artifact_generation` | The knowledge generation the chunk came from.              |
-| `match_kind`          | `text` or `caption`.                                       |
-| `name`                | The file's name at save time.                              |
+| Field                 | Meaning                                                     |
+| --------------------- | ----------------------------------------------------------- |
+| `key`                 | The cited key, as written.                                  |
+| `available`           | Whether it resolved at save time; rechecked live on read.   |
+| `file_id`, `chunk_id` | The cited chunk.                                            |
+| `artifact_generation` | The knowledge generation the chunk came from.               |
+| `match_kind`          | `text` or `caption`.                                        |
+| `name`                | The file's name at save time.                               |
 | `excerpt`             | The retrieved excerpt, whitespace-collapsed, ≤ 1,000 chars. |
 
 An unresolved key stores only `key` and `available = false`. A guessed or

@@ -308,3 +308,35 @@ async def test_class_memory_switch_upgrade_keeps_classes_with_memory_on(migratio
             "SELECT name, allowed_modes, answer_reveal, memory_enabled FROM classes WHERE id = ?", (class_id,)
         ).fetchone()
     assert row == ("Biology", '["socratic"]', 0, 1)
+
+
+@pytest.mark.asyncio
+async def test_message_memories_upgrade_adds_an_empty_table_that_follows_its_memory(migration_db):
+    """49c16efb8995 (US-93.5): pinned copies are deleted with their memory."""
+    await upgrade_to(migration_db, "04f31c3d0a0e")
+    memory_id, message_id = (uuid.uuid4().hex for _ in range(2))
+    with sqlite3.connect(migration_db) as connection:
+        connection.execute("INSERT INTO users (id) VALUES ('user-1')")
+        connection.execute(
+            "INSERT INTO memories (id, user_id, kind, text, category, sensitive, created_at, updated_at) "
+            "VALUES (?, 'user-1', 'user', 'Learns from examples', 'learning', 0, 0, 0)",
+            (memory_id,),
+        )
+
+    await upgrade_to(migration_db, "head")
+
+    with sqlite3.connect(migration_db) as connection:
+        assert connection.execute("SELECT count(*) FROM message_memories").fetchone() == (0,)
+        # The pin's message isn't seeded: foreign keys are off for this insert only.
+        connection.execute(
+            "INSERT INTO message_memories (id, user_id, message_id, memory_id, revision, text, position) "
+            "VALUES (?, 'user-1', ?, ?, 1, 'Learns from examples', 0)",
+            (uuid.uuid4().hex, message_id, memory_id),
+        )
+    connection = sqlite3.connect(migration_db)
+    try:
+        connection.execute("PRAGMA foreign_keys = ON")
+        connection.execute("DELETE FROM memories WHERE id = ?", (memory_id,))
+        assert connection.execute("SELECT count(*) FROM message_memories").fetchone() == (0,)
+    finally:
+        connection.close()

@@ -45,6 +45,8 @@ const layerNames: Record<ContextLayer["kind"], string> = {
   platform: "Platform rules",
   agent: "Agent instructions",
   profile: "About you",
+  // Never in a recorded prompt (ADR-0078); named in case a manifest lists it.
+  memory: "Memories",
   mode: "Learning mode",
   task: "Task instructions",
   project: "Project instructions",

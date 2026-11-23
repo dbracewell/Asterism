@@ -690,6 +690,7 @@ export const zContextLayer = z.object({
     "platform",
     "agent",
     "profile",
+    "memory",
     "mode",
     "task",
     "project",
@@ -713,6 +714,7 @@ export const zContextLayerText = z.object({
     "platform",
     "agent",
     "profile",
+    "memory",
     "mode",
     "task",
     "project",
@@ -2176,6 +2178,16 @@ export const zMemoryUpdate = z.object({
 });
 
 /**
+ * MemoryUse
+ *
+ * A memory a run was prepared with: its id and revision, never its text (ADR-0078).
+ */
+export const zMemoryUse = z.object({
+  id: z.uuid(),
+  revision: z.int().gte(1),
+});
+
+/**
  * MessageCompareRequest
  *
  * Compare an answered turn with one or two more targets (US-54.4).
@@ -2916,6 +2928,7 @@ export const zPromptSource = z.object({
     "platform",
     "agent",
     "profile",
+    "memory",
     "mode",
     "task",
     "project",
@@ -3647,6 +3660,7 @@ export const zSkillIdentity = z.object({
 export const zMessageExecution = z.object({
   skills: z.array(zSkillIdentity).optional(),
   about: zAboutProvenance,
+  memories: z.array(zMemoryUse).optional(),
   learning_mode: zLearningModeProvenance,
   rubric: zRubricProvenance.nullish(),
   context: zContextProvenance.nullish(),

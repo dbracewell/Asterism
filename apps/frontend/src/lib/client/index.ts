@@ -1046,6 +1046,7 @@ export type {
   MemoryUpdateErrors,
   MemoryUpdateResponse,
   MemoryUpdateResponses,
+  MemoryUse,
   Message,
   MessageCompareRequest,
   MessageExecution,

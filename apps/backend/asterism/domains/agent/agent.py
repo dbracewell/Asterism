@@ -287,13 +287,24 @@ class Agent:
                 if self.prompt_snapshot
                 else None
             )
-            scope = replace(scope, about_revision=self.execution.about.revision, about_layer=layer)
+            from asterism.domains.chat.memories import read_execution_memory_layer
+
+            scope = replace(
+                scope,
+                about_revision=self.execution.about.revision,
+                about_layer=layer,
+                # Built from the turn's pinned memories, minus any deleted since (ADR-0078).
+                memory_layer=await read_execution_memory_layer(
+                    user_id=self.user.id, chat_id=self.session.info.id, execution=self.execution
+                ),
+            )
         elif self.profile.sub_agent and self.execution_scope is not None:
-            # Child agents inherit the recorded About you layer.
+            # Child agents inherit the recorded About you and memory layers.
             scope = replace(
                 scope,
                 about_revision=self.execution_scope.about_revision,
                 about_layer=self.execution_scope.about_layer,
+                memory_layer=self.execution_scope.memory_layer,
             )
 
         if self.profile.sub_agent and self.execution_scope is not None:
@@ -538,7 +549,18 @@ class Agent:
                 chat_snapshot=self.chat_scope_snapshot,
                 project_snapshot=self.project_scope_snapshot,
             )
-        return snapshot.text
+        # The memory layer joins the prompt for this run only; it is never recorded.
+        if self.execution_scope is not None:
+            layer = self.execution_scope.memory_layer
+        elif self.execution is not None:
+            from asterism.domains.chat.memories import read_execution_memory_layer
+
+            layer = await read_execution_memory_layer(
+                user_id=self.user.id, chat_id=self.session.info.id, execution=self.execution
+            )
+        else:
+            layer = None
+        return snapshot.with_memory(layer).text
 
     async def _step_tools(
         self,

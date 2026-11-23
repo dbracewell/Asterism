@@ -87,7 +87,8 @@ Out of scope:
 
 ## User stories
 
-Suggested order: US-93.1 → 93.2 → 93.3 → 93.4 → 93.5 → 93.6.
+Order: US-93.1 → 93.2 → 93.5 → 93.3 → 93.4 → 93.6 (changed 2026-11-23 so the
+memory page and help describe memories that replies already use, ADR-0032).
 
 ### US-93.1: Memory store and boundary
 
@@ -146,6 +147,11 @@ Asterism remembers about me.
       who can see it (only you) and how it is used.
 - [ ] When the policy or a course turns memory off, the page says so and why.
 - [ ] Help text and a help topic; E2E and accessibility tests.
+- [ ] Show which memories a reply used, in the progress panel or message details,
+      with a link to them in Your Asterism.
+- [ ] Show the memory controls held back in US-93.2 (moved from US-93.5): "Use memory" in Your
+      Asterism and the educator's course switch, with their help and guide text;
+      replace the admin Memory placeholder with the working pane.
 
 ### US-93.4: The agent proposes, the person decides
 
@@ -170,22 +176,22 @@ to remember it, and I decide.
 As a person using Asterism, answers take what it knows about me into account,
 without my repeating it.
 
-- [ ] Before a turn, select memories: - user memories, plus the chat's project memories in project chats; - ranked by similarity with the prompt; - bounded by count and tokens; - all available ones when there are few.
-- [ ] Add them as one information layer, framed as information about the person,
+- [x] Before a turn, select memories: - user memories, plus the chat's project memories in project chats; - ranked by similarity with the prompt; - bounded by count and tokens; - all available ones when there are few.
+- [x] Add them as one information layer, framed as information about the person,
       not instructions, after About you.
-- [ ] Snapshot the selected memories (id, revision and text) privately on the
+- [x] Snapshot the selected memories (id, revision and text) privately on the
       accepted message, like `accepted_about`. Resume uses the snapshot, with
       ownership checked; regeneration selects again; children inherit the layer.
       Deleting a memory, or deleting all, removes its text from every snapshot.
-- [ ] Tests: - an edit between acceptance and resume, where resume sends the accepted
+      Done with a side table (`message_memories`), as execution history is
+      immutable; recorded runs keep ids and revisions (decided 2026-11-23).
+- [x] Tests: - an edit between acceptance and resume, where resume sends the accepted
       text; - a deletion between them, where resume sends nothing for that memory.
-- [ ] Show which memories a reply used, in the progress panel or message details,
-      with a link to them in Your Asterism.
-- [ ] Tests for selection, the budget, pinning, course and policy refusals, and
+- [x] Tests for selection, the budget, pinning, course and policy refusals, and
       that a General chat never receives project memory.
-- [ ] Show the memory controls held back in US-93.2: "Use memory" in Your
-      Asterism and the educator's course switch, with their help and guide text;
-      replace the admin Memory placeholder with the working pane.
+- [x] Read through `memory_available` on every send, resume and regeneration
+      (US-93.2). Reply provenance records which memories were used (ids only),
+      for US-93.3 to show.
 
 ### US-93.6: Memory in exports, backups and upgrades
 

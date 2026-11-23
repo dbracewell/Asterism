@@ -193,9 +193,20 @@ class ForkProvenance(BaseModel):
     overrides: list[InstructionOverrideProvenance] = Field(default_factory=list)
 
 
+class MemoryUse(BaseModel):
+    """A memory a run was prepared with: its id and revision, never its text (ADR-0078)."""
+
+    model_config = ConfigDict(frozen=True)
+    id: uuid.UUID
+    revision: int = Field(ge=1)
+
+
 class MessageExecution(BaseModel):
     skills: list[SkillIdentity] = Field(default_factory=list)
     about: AboutProvenance
+    # Memories pinned on the turn when the run was prepared; runs recorded before
+    # US-93.5 have none. Deleting a memory leaves its id here and removes its text.
+    memories: list[MemoryUse] = Field(default_factory=list)
     learning_mode: LearningModeProvenance
     # The request turn's rubric (US-57.1); a reply is parsed against its labels.
     rubric: RubricProvenance | None = None

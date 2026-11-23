@@ -83,6 +83,9 @@ class ExecutionScope:
     # The About you revision pinned on the turn and its profile layer (None when blank).
     about_revision: int | None = None
     about_layer: PromptLayer | None = field(default=None, repr=False)
+    # This run's memory layer (ADR-0078), built from the turn's pinned memories.
+    # Never recorded; children inherit it like the About you layer.
+    memory_layer: PromptLayer | None = field(default=None, repr=False)
     configuration_provenance: tuple[ConfigurationProvenance, ...] = ()
     selected_sub_agent_ids: frozenset[uuid.UUID] = frozenset()
     project_instructions: str = ""
@@ -117,6 +120,7 @@ class ExecutionScope:
             user_id=self.user_id,
             about_revision=self.about_revision,
             about_layer=self.about_layer,
+            memory_layer=self.memory_layer,
             agent_id=agent_id,
             is_sub_agent=True,
             chat_id=self.chat_id,

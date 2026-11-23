@@ -148,6 +148,14 @@ async def add_message(
             )
             new_message.delegations = delegations
         session.add(new_message)
+        if message.role == "user":
+            from .memories import pin_accepted_memories
+
+            # An edited turn pins memories for its new text, like a send (ADR-0078).
+            await session.flush()
+            await pin_accepted_memories(
+                user_id=user_id, chat=chat, prompt=message.content or "", message_ids=[new_message.id], session=session
+            )
 
         if new_message.parent_message_id:
             await session.flush()

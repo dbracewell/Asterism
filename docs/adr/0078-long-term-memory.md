@@ -93,12 +93,28 @@ label. Audit records hold ids, kinds and times for every memory, never text.
 
 ### Pinning (US-93.5)
 
-Each accepted message keeps a private snapshot of the memories it was sent with:
-each one's id, revision and text, as `accepted_about` keeps the About you text.
-Resume uses the snapshot, so editing a memory afterwards doesn't change a
-recorded turn. Regeneration picks up current memories. Deleting a memory removes
-its text from every snapshot, so once someone deletes something Asterism stops
-sending it, resumes included. Sub-agents inherit the recorded layer.
+Each accepted turn pins the memories chosen for it (decided 2026-11-23):
+
+- **Choosing:** the person's user memories, plus the chat's project memories in a
+  project chat, never another project's. When there are at most 8, all of them;
+  otherwise the ones nearest the prompt by embedding, then by recency for any
+  without a vector. At most 8 memories and 1,000 tokens of their text.
+- **Where the text lives:** execution history is immutable (database triggers on
+  accepted inputs and recorded prompts), so the pinned text is not kept there.
+  It lives in `message_memories` (owner, message, memory, revision, text,
+  position), whose rows are deleted with the memory, the message or the account.
+  A recorded run keeps only the memory ids and revisions
+  (`MessageExecution.memories`), and its recorded prompt never holds a memory
+  layer.
+- **Running:** each run builds the memory layer from the pins it was prepared
+  with, after rechecking `memory_available`. Resume therefore sends the accepted
+  text even after an edit, and nothing for a memory deleted since: once someone
+  deletes something, Asterism stops sending it, resumes included. Regeneration
+  selects again and re-pins. Comparison columns share their turn's pins.
+  Sub-agents inherit the run's layer.
+- **The layer** comes after About you, framed as information about the person
+  that they chose to keep, not instructions, and grants nothing. Only ordinary
+  chats use memory; drafting chats don't.
 
 ### Policies (US-93.2)
 
