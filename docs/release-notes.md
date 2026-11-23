@@ -24,10 +24,8 @@ Unreleased into its version and date.
 
 ### Configuration
 
-- A new admin setting, `memory`, is off by default and can be limited to groups.
-  Admin Settings → Memory is a Planned placeholder for now; the policy can be set
-  through the API (`PUT /settings/app/memory`) and takes effect once memory is
-  used in chats, in a later release. Settings export carries its
+- A new admin setting, `memory` (Admin Settings → Memory), is off by default and
+  can be limited to groups. Settings export carries its
   on/off switch; group limits stay with each installation, as for image
   generation.
 
@@ -46,6 +44,16 @@ Unreleased into its version and date.
   their memories. Deleting an account or a project deletes its memories.
   Nothing saves or uses memories yet: later releases add the settings, the
   agent's proposals and memories in replies.
+
+### Behavior
+
+- Memory (ADR-0078): when an administrator turns it on, Asterism keeps in mind
+  what each person saves about themselves (Settings → Your Asterism → Memory)
+  and about their work in a project (the project's Settings tab), and adds the
+  most relevant ones to each message as information, never instructions. Only
+  the person can see their memories. Each person can turn memory off for
+  themselves, and an educator for a course. A reply's Context lists the
+  memories it used.
 
 ## 0.3.1 (2026-11-23)
 

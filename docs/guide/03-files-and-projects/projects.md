@@ -72,6 +72,14 @@ Open a project from **Projects** in the sidebar. Its page has tabs:
      Reflections. Switching one off hides it but keeps what's in it.
 3. Select **Save settings**.
 
+## Project memory
+
+When memory is on, a project's **Settings** tab has **Project memory**: things
+Asterism keeps in mind about your work in this project, such as a decision or a
+convention you chose. Only this project's chats use them, together with your
+[memories about you](../06-making-it-yours/about-you-and-usage.md#memory), and
+only you can see them. Add, edit or delete them there.
+
 ## Choose sub-agents for a project
 
 A **sub-agent** is a helper with its own instructions and its own model, such as a
@@ -109,8 +117,8 @@ A chat moved into a project can use the project's files from then on.
 2. At the bottom, select **Delete project**, then confirm.
 
 The project's chats move to **General** with their history and their own
-attachments. Your files stay in your library. Only the project and its settings
-are gone.
+attachments. Your files stay in your library. Only the project, its settings and
+its memories are gone.
 
 A course from your educator shows **Leave course** instead. You can add it again
 from **Classes**.

@@ -31,6 +31,7 @@ import { ProjectStudyDecks } from "@/features/study/components/project-study-dec
 import { ProjectStudyQuizzes } from "@/features/study/components/project-study-quizzes";
 import { ProjectStudyNotes } from "@/features/study/components/project-study-notes";
 import { ProjectProgress } from "@/features/study/components/project-progress";
+import { ProjectMemorySection } from "@/features/memory/components/memory-sections";
 
 // `area` names the feature area that can hide a tab (US-65.2); others always show.
 export const PROJECT_TABS = [
@@ -251,6 +252,10 @@ export function ProjectWorkspace({ projectId }: { projectId: string }) {
                 }}
                 disabled={disabled}
               >
+                {/* Loaded only when shown: the panel stays mounted while hidden. */}
+                {active === "settings" && (
+                  <ProjectMemorySection projectId={projectId} />
+                )}
                 <section
                   className="flex flex-col items-start gap-3 border-t pt-6"
                   aria-label="Team pack"

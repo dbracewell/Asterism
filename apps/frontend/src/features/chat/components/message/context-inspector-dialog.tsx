@@ -19,6 +19,7 @@ import {
   layerLabel,
   turnContext,
 } from "@/features/chat/lib/context-manifest";
+import { UsedMemories } from "@/features/memory/components/used-memories";
 import { client } from "@/lib/api";
 import type {
   ContextFile,
@@ -313,6 +314,11 @@ export function ContextInspectorDialog({
               texts={agent.isSubAgent ? null : layers.data?.layers}
             />
           ))}
+          <UsedMemories
+            memories={execution?.memories}
+            enabled={open}
+            titleClassName={sectionTitle}
+          />
         </div>
       </DialogContent>
     </Dialog>

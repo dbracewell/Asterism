@@ -72,21 +72,21 @@ Source: user request (2026-11-20). [EPIC-93](docs/epics/EPIC-93-LONG-TERM-MEMORY
   - [x] A per-person "Use memory" setting (default on when the policy allows).
   - [x] A course setting that turns memory off for chats in the course, included in the effective policy (ADR-0068) with its source shown to the student.
   - [x] One `memory_available(user, chat)` check, used for reading and proposing on every send, resume and regeneration. Tests for each source.
-- [ ] US-93.5: Relevant memories in every turn (in progress, branch `feat/us-93.5-memories-in-turns`)
+- [x] US-93.5: Relevant memories in every turn (merged 2026-11-23, PR #75)
   - [x] Before a turn, select memories: user memories, plus the chat's project memories in project chats; ranked by similarity with the prompt; bounded by count and tokens; all available ones when there are few.
   - [x] Add them as one information layer, framed as information about the person, not instructions, after About you.
   - [x] Snapshot the selected memories (id, revision and text) privately on the accepted message, like `accepted_about`. Resume uses the snapshot, with ownership checked; regeneration selects again; children inherit the layer. Deleting a memory, or deleting all, removes its text from every snapshot.
   - [x] Tests: an edit between acceptance and resume, where resume sends the accepted text; a deletion between them, where resume sends nothing for that memory.
   - [x] Tests for selection, the budget, pinning, course and policy refusals, and that a General chat never receives project memory.
   - [x] Read through `memory_available` on every send, resume and regeneration (US-93.2). Reply provenance records which memories were used (ids only), for US-93.3 to show.
-- [ ] US-93.3: Your memories in Your Asterism
-  - [ ] User Settings → Your Asterism → Memory: user memories by category, with sensitive ones labelled; add, edit, delete, delete all (with confirmation). Built with shadcn/ui, TanStack Query and the generated client.
-  - [ ] Each project's settings: its project memories, with the same controls.
-  - [ ] The "Use memory" setting, with a plain explanation of what is remembered, who can see it (only you) and how it is used.
-  - [ ] When the policy or a course turns memory off, the page says so and why.
-  - [ ] Help text and a help topic; E2E and accessibility tests.
-  - [ ] Show which memories a reply used, in the progress panel or message details, with a link to them in Your Asterism.
-  - [ ] Show the memory controls held back in US-93.2 ("Use memory" in Your Asterism, the course switch) with their help and guide text, and replace the admin Memory placeholder with the working pane.
+- [ ] US-93.3: Your memories in Your Asterism (in progress, branch `feat/us-93.3-memory-page`)
+  - [x] User Settings → Your Asterism → Memory: user memories by category, with sensitive ones labelled; add, edit, delete, delete all (with confirmation). Built with shadcn/ui, TanStack Query and the generated client.
+  - [x] Each project's settings: its project memories, with the same controls.
+  - [x] The "Use memory" setting, with a plain explanation of what is remembered, who can see it (only you) and how it is used.
+  - [x] When the policy or a course turns memory off, the page says so and why.
+  - [x] Help text and a help topic; E2E and accessibility tests.
+  - [x] Show which memories a reply used, in the progress panel or message details, with a link to them in Your Asterism.
+  - [x] Show the memory controls held back in US-93.2 ("Use memory" in Your Asterism, the course switch) with their help and guide text, and replace the admin Memory placeholder with the working pane.
 - [ ] US-93.4: The agent proposes, the person decides
   - [ ] An internal `propose_memory` tool for the main agent in ordinary chats, offered when memory is available and the model supports tools: it takes the kind, text, category and whether the memory is sensitive; it is limited to one proposal per turn; it is never offered to sub-agents or in drafting chats.
   - [ ] Its description and the main prompt set the rules: user memory is only about the person, never project content; accessibility and health memories are only from what the person said about themselves.

@@ -75,14 +75,30 @@ it("needs at least one mode", async () => {
   expect(screen.getByRole("button", { name: "Save policy" })).toBeDisabled();
 });
 
-it("keeps the course's stored memory setting when saving the mode rules", async () => {
-  const user = setup({ memory_enabled: false });
-  expect(screen.queryByRole("switch", { name: /memories/ })).toBeNull();
-  await user.click(await screen.findByRole("button", { name: "Save policy" }));
+it("turns memory off for the course and shows the saved setting", async () => {
+  const user = setup();
+  const memory = await screen.findByRole("switch", {
+    name: "Let Asterism use students' memories in this course",
+  });
+  expect(memory).toBeChecked();
+  expect(memory).toHaveAccessibleDescription(
+    /You never see their memories either way/,
+  );
+  await user.click(memory);
+  await user.click(screen.getByRole("button", { name: "Save policy" }));
   await waitFor(() =>
     expect(mocks.save.mock.calls[0]?.[0]).toEqual({
       path: { class_id: "c1" },
       body: { allowed_modes: null, answer_reveal: true, memory_enabled: false },
     }),
   );
+});
+
+it("starts from a course that already has memory off", async () => {
+  setup({ memory_enabled: false });
+  expect(
+    await screen.findByRole("switch", {
+      name: "Let Asterism use students' memories in this course",
+    }),
+  ).not.toBeChecked();
 });

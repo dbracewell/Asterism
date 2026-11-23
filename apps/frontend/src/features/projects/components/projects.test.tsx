@@ -21,6 +21,11 @@ const mocks = vi.hoisted(() => ({
   search: "",
   selectedAgents: 0,
 }));
+// The memory sections have their own tests (US-93.3).
+vi.mock("@/features/memory/components/memory-sections", () => ({
+  YourMemorySection: () => null,
+  ProjectMemorySection: () => null,
+}));
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: mocks.push }),
   usePathname: () => "/projects/p",

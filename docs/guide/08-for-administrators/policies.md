@@ -45,6 +45,18 @@ it on in their own settings, and the chat's model must support tools. Turning it
 off stops writing to the canvas at once; existing canvas items stay readable and
 downloadable.
 
+## Memory
+
+Turn on **Enable memory** to let Asterism keep in mind what helps it work with
+each person, such as how they learn best, across their chats and projects. It's
+off until you turn it on. Turn on **Limit to selected groups** and tick groups to
+offer it to those groups only.
+
+Memories are private: only the person they belong to can see them, not
+educators and not administrators. Each person can also turn memory off in
+**Your Asterism**, and an educator can turn it off for a course. People can still
+see and delete their memories while memory is off.
+
 ## ChatGPT Plans
 
 Turn on **Allow ChatGPT plan connections** to let people

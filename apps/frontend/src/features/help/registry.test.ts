@@ -142,10 +142,8 @@ describe("help registry", () => {
       })
       .join(" ")
       .toLowerCase();
-    // MCP servers have no UI yet; there is no long-term memory engine.
+    // MCP servers have no UI yet. (Memory shipped with EPIC-93, so it may be described.)
     expect(text).not.toMatch(/\bmcp\b/);
-    expect(text).not.toMatch(/\bremembers?\b/);
-    expect(text).not.toMatch(/long-term memory/);
     // Prompt-layer features never grant tools or files.
     expect(text).not.toMatch(
       /(about you|persona|skill|template|mode)s? (gives?|grants?)/,

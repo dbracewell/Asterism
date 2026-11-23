@@ -18,6 +18,11 @@ const { identity, api } = vi.hoisted(() => ({
     usageGetMine: vi.fn(),
   },
 }));
+// The memory sections have their own tests (US-93.3).
+vi.mock("@/features/memory/components/memory-sections", () => ({
+  YourMemorySection: () => null,
+  ProjectMemorySection: () => null,
+}));
 vi.mock("@/features/auth/components/user-context", () => ({
   useUser: () => identity,
 }));

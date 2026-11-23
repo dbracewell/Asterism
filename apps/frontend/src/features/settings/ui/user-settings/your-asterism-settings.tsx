@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
 import { useUser } from "@/features/auth/components/user-context";
+import { YourMemorySection } from "@/features/memory/components/memory-sections";
 import { aboutQueryOptions } from "@/features/settings/about-queries";
 import {
   SettingsPane,
@@ -42,7 +43,7 @@ function OwnedSettings({ userId }: { userId: string }) {
   return (
     <SettingsPane
       title="Your Asterism"
-      description="What Asterism knows about you, and how much you've used it."
+      description="What Asterism knows and remembers about you, and how much you've used it."
     >
       <YourUsageSection />
       {query.isPending && <FormSkeleton label="Loading About you…" />}
@@ -67,6 +68,7 @@ function OwnedSettings({ userId }: { userId: string }) {
           }}
         />
       )}
+      <YourMemorySection />
     </SettingsPane>
   );
 }

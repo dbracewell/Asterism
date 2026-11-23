@@ -40,6 +40,7 @@ export type PageGuideId =
   | "admin.tools"
   | "admin.skills"
   | "admin.canvas"
+  | "admin.memory"
   | "admin.chatgpt"
   | "admin.context-compaction"
   | "admin.image-captioning"
@@ -290,7 +291,7 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
       {
         name: "Settings",
         description:
-          "The name, description, instructions and goal; exporting a team pack; and deleting the project, which moves its chats to General and keeps your library files. Instructions shape answers but don't grant tools or files.",
+          "The name, description, instructions and goal; project memory, which only this project's chats use; exporting a team pack; and deleting the project, which moves its chats to General and keeps your library files and deletes its memories. Instructions shape answers but don't grant tools or files.",
       },
       {
         name: "Feature areas",
@@ -758,7 +759,7 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
     title: "Your Asterism",
     walkthrough: "06-making-it-yours/about-you-and-usage",
     purpose:
-      "Tell Asterism about yourself so its answers fit you. What you write is used in every chat.",
+      "Tell Asterism about yourself so its answers fit you, and manage what it keeps in mind about you. What you write is used in every chat.",
     areas: [
       {
         name: "Usage",
@@ -770,6 +771,11 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
         description:
           "One text about who you are, what you're studying or working on, and what you already know. New messages use the latest saved text; messages already sent keep the text they were sent with.",
       },
+      {
+        name: "Memory",
+        description:
+          "Use memory, and your memories by category: add, edit or delete one, or delete all. Each message adds the most relevant ones. Only you can see them. If memory is off, the page says why.",
+      },
     ],
     tasks: [
       'Write a few facts about yourself, for example "second-year nursing student; I know basic chemistry".',
@@ -777,6 +783,7 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
     ],
     terms: [
       "concept.about-you",
+      "concept.memory",
       "concept.learning-mode",
       "concept.usage-limit",
     ],
@@ -975,6 +982,22 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
     ],
     tasks: [],
     terms: ["admin.canvas-policy", "concept.canvas"],
+    audience: "admin",
+  },
+  "admin.memory": {
+    title: "Memory policy",
+    walkthrough: "08-for-administrators/policies#memory",
+    purpose:
+      "Turn memory on or off, for everyone or for selected groups. People see and manage only their own memories.",
+    areas: [
+      {
+        name: "Availability",
+        description:
+          "Memory is off until enabled. Limit it to groups if you like. Each person can turn it off for themselves and an educator for a course. Administrators never see anyone's memories.",
+      },
+    ],
+    tasks: [],
+    terms: ["concept.memory"],
     audience: "admin",
   },
   "admin.chatgpt": {
@@ -1257,7 +1280,7 @@ const adminSettingsGuides: Record<string, PageGuideId | null> = {
   usage: "admin.usage",
   status: "admin.status",
   "image-generation": "admin.image-generation",
-  memory: null,
+  memory: "admin.memory",
   "code-execution": null,
 };
 

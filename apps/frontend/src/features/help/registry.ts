@@ -1,9 +1,9 @@
 /**
  * In-app help content (ADR-0032).
  *
- * Help text describes only implemented behavior. About you, skill, mode and
- * template text never grants tools, files or delegation, there is no long-term
- * memory, and planned features get no entry until they ship.
+ * Help text describes only implemented behavior. About you, memory, skill, mode
+ * and template text never grants tools, files or delegation, and planned
+ * features get no entry until they ship.
  */
 
 export type HelpAudience = "everyone" | "admin";
@@ -13,6 +13,7 @@ export type HelpId =
   | "concept.general-chat"
   | "concept.project"
   | "concept.about-you"
+  | "concept.memory"
   | "concept.main-agent"
   | "concept.sub-agent"
   | "concept.skill"
@@ -129,9 +130,28 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
     details: [
       'Write facts about yourself, for example "second-year nursing student; I know basic chemistry". To change how the assistant responds, pick a learning mode or edit your main agent\'s instructions instead.',
       "The text is recorded with each message you send, so changing it later doesn't change earlier replies. Regenerating a reply uses your latest text.",
-      "About you is information, not instructions. It doesn't give the assistant extra tools or access to files, and it isn't a memory: the assistant doesn't store new facts about you in it.",
+      "About you is information, not instructions. It doesn't give the assistant extra tools or access to files, and it isn't a memory: the assistant doesn't store new facts about you in it. Memories are kept separately.",
     ],
-    related: ["concept.main-agent", "concept.skill", "concept.learning-mode"],
+    related: [
+      "concept.memory",
+      "concept.main-agent",
+      "concept.skill",
+      "concept.learning-mode",
+    ],
+    audience: "everyone",
+  },
+  "concept.memory": {
+    title: "Memory",
+    summary:
+      "Things Asterism keeps in mind about you, such as how you like to learn, and about your work in a project. Manage them in Settings → Your Asterism and in each project's settings.",
+    details: [
+      "Memories about you are used in every chat and project. A project's memories are used only in that project's chats and never hold anything from another project.",
+      "Each message adds the memories most relevant to it, as information about you, never as instructions. They don't give the assistant extra tools or access to files.",
+      "Only you can see your memories: not educators and not administrators. Accessibility memories are always marked sensitive, and sensitive memories never appear in logs.",
+      "A reply keeps the memories it was sent with, so editing one later doesn't change earlier replies. Deleting a memory stops it being used, even when you resume a reply. A reply's Context shows which memories it used.",
+      "Memory works only when your administrator turns it on. You can turn it off for yourself with Use memory, and an educator can turn it off in a course.",
+    ],
+    related: ["concept.about-you"],
     audience: "everyone",
   },
   "concept.main-agent": {

@@ -24,7 +24,10 @@ work answers out themselves.
 3. Turn **Let students reveal answers and solutions** on or off. Off removes
    **Show answer** (in Tutor mode) and **Show solution** (in Review my work mode)
    from the course project.
-4. Select **Save policy**.
+4. Turn **Let Asterism use students' memories in this course** off to keep
+   memory out of the course project. You never see students' memories either
+   way.
+5. Select **Save policy**.
 
 Changes apply from each student's next message.
 

@@ -1,6 +1,6 @@
 # EPIC-93: Long-term memory
 
-Status: in progress (US-93.1 merged 2026-11-23, PR #73; proposed 2026-11-20). Source: user request (2026-11-20). Decided
+Status: in progress (US-93.1 PR #73, US-93.2 PR #74 and US-93.5 PR #75 merged 2026-11-23; proposed 2026-11-20). Source: user request (2026-11-20). Decided
 2026-11-20: two kinds of memory (user and project), the agent proposes and the
 person confirms, relevant memories are added each turn, memories are private,
 and a course can turn memory off.
@@ -139,17 +139,17 @@ can keep it out of my course.
 As a person using Asterism, I can see, add, change and delete everything
 Asterism remembers about me.
 
-- [ ] User Settings → Your Asterism → Memory: user memories by category, with
+- [x] User Settings → Your Asterism → Memory: user memories by category, with
       sensitive ones labelled; add, edit, delete, delete all (with confirmation).
       Built with shadcn/ui, TanStack Query and the generated client.
-- [ ] Each project's settings: its project memories, with the same controls.
-- [ ] The "Use memory" setting, with a plain explanation of what is remembered,
+- [x] Each project's settings: its project memories, with the same controls.
+- [x] The "Use memory" setting, with a plain explanation of what is remembered,
       who can see it (only you) and how it is used.
-- [ ] When the policy or a course turns memory off, the page says so and why.
-- [ ] Help text and a help topic; E2E and accessibility tests.
-- [ ] Show which memories a reply used, in the progress panel or message details,
+- [x] When the policy or a course turns memory off, the page says so and why.
+- [x] Help text and a help topic; E2E and accessibility tests.
+- [x] Show which memories a reply used, in the progress panel or message details,
       with a link to them in Your Asterism.
-- [ ] Show the memory controls held back in US-93.2 (moved from US-93.5): "Use memory" in Your
+- [x] Show the memory controls held back in US-93.2 (moved from US-93.5): "Use memory" in Your
       Asterism and the educator's course switch, with their help and guide text;
       replace the admin Memory placeholder with the working pane.
 
