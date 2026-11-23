@@ -1,8 +1,8 @@
 # EPIC-95: No fixable high vulnerabilities
 
-Status: proposed (2026-11-22). Source: user request (2026-11-22), after EPIC-92
-left fixable highs reported but not failing. Starts after EPIC-94, which changes
-the Python dependency tree.
+Status: in progress (US-95.1 started 2026-11-22; proposed 2026-11-22). Source:
+user request (2026-11-22), after EPIC-92 left fixable highs reported but not
+failing. Starts after EPIC-94, which changes the Python dependency tree.
 
 ## Objective
 
@@ -18,18 +18,29 @@ replacing a dependency only to lower its finding count.
 Trivy 0.76.2 on the published 0.2.2 image (amd64), with Dependabot's open alerts
 on `main`. No fixable critical is open.
 
-| Where                          | Fixable highs                                                                                                                                                                                                                                                                                                                                           |
-| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Test tooling in the image      | `vitest` is an optional peer dependency of better-auth 1.7.26. pnpm resolves it into the production install, so `vitest`, `vite` 8.0.16, `jsdom` and `undici` 7.27.1 (8 advisories, fixed in 7.30.1) are in the image's `node_modules`, though nothing at run time uses them. `source-map-js` 1.2.1 comes in through `jsdom` too.                       |
-| Other Node packages            | `fast-uri` 3.1.2 (5 advisories, fixed in 3.1.7), through `ajv` from `@hookform/resolvers`; `browserslist` 4.28.2 (fixed in 4.28.7), through `@babel/core`.                                                                                                                                                                                             |
-| Python packages (`uv.lock`)    | `cryptography` 49.0.0 → 50.0.0 (via PyJWT's crypto extra and pdfminer.six); `filelock` 3.32.0 → 4.2.1 (via huggingface-hub; it stays after EPIC-94); `soupsieve` 2.9.1 → 3.0.2 or 4.0.0 (via beautifulsoup4); `urllib3` 2.7.0 → 2.8.0 (via requests and lance). Three of these are major versions.                                                    |
-| The base image's own pip       | `/usr/local/lib/python3.13/site-packages/pip` in the runtime stage vendors `msgpack` 1.1.2, `setuptools` 70.3.0 and a second `urllib3` 2.7.0. Nothing in the running image uses pip: the app runs from `/app/apps/backend/.venv`.                                                                                                                     |
-| OS packages                    | `zlib1g` 1.3.1-1+b1, fixed in 1.3.1-1+deb13u1, from the pinned `python:3.13-slim-trixie` base.                                                                                                                                                                                                                                                         |
-| Lockfile only (not in image)   | Dependabot also lists `brace-expansion` and `js-yaml` in `pnpm-lock.yaml`, from development tooling. In all: 35 open high alerts in 12 packages.                                                                                                                                                                                                       |
+| Where                        | Fixable highs                                                                                                                                                                                                                                                                                                                     |
+| ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Test tooling in the image    | `vitest` is an optional peer dependency of better-auth 1.7.26. pnpm resolves it into the production install, so `vitest`, `vite` 8.0.16, `jsdom` and `undici` 7.27.1 (8 advisories, fixed in 7.30.1) are in the image's `node_modules`, though nothing at run time uses them. `source-map-js` 1.2.1 comes in through `jsdom` too. |
+| Other Node packages          | `fast-uri` 3.1.2 (5 advisories, fixed in 3.1.7), through `ajv` from `@hookform/resolvers`; `browserslist` 4.28.2 (fixed in 4.28.7), through `@babel/core`.                                                                                                                                                                        |
+| Python packages (`uv.lock`)  | `cryptography` 49.0.0 → 50.0.0 (via PyJWT's crypto extra and pdfminer.six); `filelock` 3.32.0 → 4.2.1 (via huggingface-hub; it stays after EPIC-94); `soupsieve` 2.9.1 → 3.0.2 or 4.0.0 (via beautifulsoup4); `urllib3` 2.7.0 → 2.8.0 (via requests and lance). Three of these are major versions.                                |
+| The base image's own pip     | `/usr/local/lib/python3.13/site-packages/pip` in the runtime stage vendors `msgpack` 1.1.2, `setuptools` 70.3.0 and a second `urllib3` 2.7.0. Nothing in the running image uses pip: the app runs from `/app/apps/backend/.venv`.                                                                                                 |
+| OS packages                  | `zlib1g` 1.3.1-1+b1, fixed in 1.3.1-1+deb13u1, from the pinned `python:3.13-slim-trixie` base.                                                                                                                                                                                                                                    |
+| Lockfile only (not in image) | Dependabot also lists `brace-expansion` and `js-yaml` in `pnpm-lock.yaml`, from development tooling. In all: 35 open high alerts in 12 packages.                                                                                                                                                                                  |
 
 The image findings are 31 advisories in 12 packages. EPIC-94 removes torch and
 diffusers but none of these packages, so the list above is expected to hold;
 US-95.1 checks it again first.
+
+**Rescanned after EPIC-94 (2026-11-22, US-95.1).** Trivy 0.76.2 on an image
+built from `main` at 0.3.0 (arm64): still 31 fixable highs in the same 12
+packages, but the advisory counts moved. `undici` 7.27.1 now has 10 (fixed in
+7.30.1), `fast-uri` 3.1.2 has 7 (fixed in 3.1.7), and pip's vendored `msgpack`
+1.1.2 and `setuptools` 70.3.0 have 2 and 1. One attribution was wrong:
+`source-map-js` 1.2.1 comes through `next` → `postcss`, a runtime dependency,
+not through `jsdom`, so it moves to US-95.2. After US-95.1 the image has 17
+fixable highs in 8 packages: `browserslist`, `fast-uri` and `source-map-js`
+(US-95.2); `cryptography`, `filelock`, `soupsieve` and `urllib3` (US-95.3, with
+`urllib3` now only in the backend's venv); and `zlib1g` (US-95.4).
 
 ## Decisions
 
@@ -61,25 +72,25 @@ Suggested order: US-95.1 → 95.2 → 95.3 → 95.4 → 95.5.
 
 As an administrator, the image holds only what Asterism runs.
 
-- [ ] Scan the image built after EPIC-94 and record its fixable highs in this
+- [x] Scan the image built after EPIC-94 and record its fixable highs in this
       epic, updating "Where things stand" when they differ.
-- [ ] Stop `vitest` (better-auth's optional peer) and what it brings (`vite`,
-      `jsdom`, `undici`, `source-map-js`) from reaching the production install,
+- [x] Stop `vitest` (better-auth's optional peer) and what it brings (`vite`,
+      `jsdom`, `undici`) from reaching the production install,
       without changing the frontend's own test setup. `pnpm why <package> --prod`
       in `apps/frontend` finds none of them.
-- [ ] Remove pip, and the packages it vendors, from the runtime stage. The build
+- [x] Remove pip, and the packages it vendors, from the runtime stage. The build
       stages keep it to install uv.
-- [ ] `pnpm check:image` fails if `vitest`, `vite` or `jsdom` is in the image's
+- [x] `pnpm check:image` fails if `vitest`, `vite` or `jsdom` is in the image's
       `node_modules`, or `pip` is importable by the image's system Python. Tests
       cover both.
-- [ ] Release notes: Image (what was removed, and the new size).
+- [x] Release notes: Image (what was removed, and the new size).
 
 ### US-95.2: Node packages
 
 As an administrator, the frontend's packages have no fixable high.
 
-- [ ] Upgrade what is still flagged after US-95.1 (expected: `fast-uri` through
-      `ajv`, and `browserslist`) and the lockfile-only `brace-expansion` and
+- [ ] Upgrade what is still flagged after US-95.1 (`fast-uri` through `ajv`,
+      `browserslist`, and `source-map-js` through `next` → `postcss`) and the lockfile-only `brace-expansion` and
       `js-yaml`, through `pnpm-lock.yaml`, with overrides only where a parent pins
       an old version.
 - [ ] Tests: form validation through `@hookform/resolvers` and `ajv`; the
@@ -90,16 +101,12 @@ As an administrator, the frontend's packages have no fixable high.
 
 As an administrator, the backend's packages have no fixable high.
 
-- [ ] Upgrade `cryptography` (49 → 50), `filelock` (3 → 4), `soupsieve` (2 → 3 or
-      4) and `urllib3` (2.8) through `uv.lock`, with a constraint only where a
+- [ ] Upgrade `cryptography` (49 → 50), `filelock` (3 → 4), `soupsieve` (2 → 3 or 4) and `urllib3` (2.8) through `uv.lock`, with a constraint only where a
       parent caps one.
-- [ ] Check each major in its changelog and with tests:
-      - cryptography 50: JWT verification (PyJWT's crypto backend) and PDF text
-        extraction (pdfminer.six);
-      - filelock 4: model downloads and the Hugging Face cache, including two
-        downloads at once;
-      - soupsieve: HTML to Markdown conversion (markdownify, markitdown) and the
-        web fetch tool's extraction.
+- [ ] Check each major in its changelog and with tests: - cryptography 50: JWT verification (PyJWT's crypto backend) and PDF text
+      extraction (pdfminer.six); - filelock 4: model downloads and the Hugging Face cache, including two
+      downloads at once; - soupsieve: HTML to Markdown conversion (markdownify, markitdown) and the
+      web fetch tool's extraction.
 - [ ] Record in the pull request, for each, whether Asterism's use reaches the
       advisory. Every one is fixed either way.
 - [ ] The upgrade check (US-91.6) passes. Dependabot shows no open high alert for

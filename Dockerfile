@@ -7,7 +7,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends python3 make g+
   && npm install -g pnpm@11.17.0
 
 WORKDIR /app
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+# .pnpmfile.cjs keeps better-auth's optional vitest peer out of the production
+# install (US-95.1); the lockfile records its checksum.
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .pnpmfile.cjs ./
 COPY apps/frontend/package.json apps/frontend/package.json
 COPY apps/backend/package.json apps/backend/package.json
 
@@ -68,6 +70,10 @@ RUN PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS=1 .venv/bin/playwright install --
 # Bookworm-built native dependencies remain compatible with newer glibc.
 FROM python:3.13-slim-trixie@sha256:e48f59cdba69a3cbd9ed2cf0f348d90d45a8d350d98134cf1070bc106ee9ed90 AS runtime
 
+# Nothing at run time uses the base image's pip (the app runs from the
+# backend's venv), so it and the packages it vendors are removed (US-95.1).
+# The build stages keep it to install uv.
+#
 # Headless Chromium's libraries, without Playwright's install-deps (a virtual
 # display, extra fonts, and LLVM and Mesa through libgbm1). libgbm.so.1 itself
 # is unpacked from its package alone: it needs only libdrm, expat and
@@ -80,6 +86,7 @@ RUN apt-get update \
   && cd /tmp && apt-get download libgbm1 && dpkg-deb -x libgbm1_*.deb gbm \
   && cp -a gbm/usr/lib/. /usr/lib/ && ldconfig && rm -rf /tmp/gbm /tmp/libgbm1_*.deb \
   && rm -rf /var/lib/apt/lists/* \
+  && python -m pip uninstall --yes --no-cache-dir pip \
   && useradd --uid 10001 --create-home asterism \
   && mkdir -p /storage /backups && chown asterism:asterism /storage /backups
 # Node is needed only as a runtime; copied once, without npm (US-90.8).

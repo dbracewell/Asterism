@@ -2,8 +2,10 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
+  developmentPackageProblems,
   largestLayers,
   localImageProblems,
+  pnpmStorePackage,
   sizeProblem,
   uidProblems,
 } from "../scripts/check-image.mjs";
@@ -69,5 +71,46 @@ test("the CPU image has no local-image packages and the GPU image has all of the
   ]);
   assert.deepEqual(localImageProblems({ ...all, diffusers: false }, "gpu"), [
     "The GPU image cannot import diffusers; it must include the local-image extra",
+  ]);
+});
+
+test("pnpm store directories name their package", () => {
+  assert.equal(pnpmStorePackage("vite@8.0.16_@types+node@20.19.41"), "vite");
+  assert.equal(pnpmStorePackage("vite-node@3.2.4"), "vite-node");
+  assert.equal(pnpmStorePackage("@vitest+expect@4.1.8"), "@vitest/expect");
+  assert.equal(pnpmStorePackage("node_modules"), null);
+  assert.equal(pnpmStorePackage("lock.yaml"), null);
+});
+
+test("test tooling in node_modules, or pip in the system Python, fails the image", () => {
+  const runtime = [
+    "next@16.4.6_react@19.3.1",
+    "better-auth@1.7.26",
+    "node_modules",
+  ];
+  assert.deepEqual(developmentPackageProblems(runtime, false), []);
+  // A package whose name only starts with a development package's passes.
+  assert.deepEqual(
+    developmentPackageProblems(
+      [...runtime, "vite-plugin-x@1.0.0", "@vitest+utils@4.1.8"],
+      false,
+    ),
+    [],
+  );
+  assert.deepEqual(
+    developmentPackageProblems(
+      [
+        ...runtime,
+        "vitest@4.1.8_jsdom@29.1.1",
+        "jsdom@29.1.1_@noble+hashes@2.2.0",
+      ],
+      false,
+    ),
+    [
+      "The image's node_modules has vitest, jsdom; test tooling must not reach the production install",
+    ],
+  );
+  assert.deepEqual(developmentPackageProblems(runtime, true), [
+    "The image's system Python can import pip; the runtime stage must remove it",
   ]);
 });

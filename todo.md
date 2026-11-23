@@ -102,14 +102,14 @@ Source: user request (2026-11-22), after EPIC-92. [EPIC-95](docs/epics/EPIC-95-F
 
 ### EPIC-95: No fixable high vulnerabilities
 
-- [ ] US-95.1: Keep development packages out of the image
-  - [ ] Scan the image built after EPIC-94 and record its fixable highs in the epic, updating "Where things stand" when they differ.
-  - [ ] Stop `vitest` (better-auth's optional peer) and what it brings (`vite`, `jsdom`, `undici`, `source-map-js`) from reaching the production install, without changing the frontend's own test setup.
-  - [ ] Remove pip, and the packages it vendors, from the runtime stage. The build stages keep it to install uv.
-  - [ ] `pnpm check:image` fails if `vitest`, `vite` or `jsdom` is in the image's `node_modules`, or `pip` is importable by the image's system Python. Tests cover both.
-  - [ ] Release notes: Image (what was removed, and the new size).
+- [ ] US-95.1: Keep development packages out of the image (in progress, branch `feat/us-95.1-dev-packages-out-of-image`)
+  - [x] Scan the image built after EPIC-94 and record its fixable highs in the epic, updating "Where things stand" when they differ.
+  - [x] Stop `vitest` (better-auth's optional peer) and what it brings (`vite`, `jsdom`, `undici`) from reaching the production install, without changing the frontend's own test setup.
+  - [x] Remove pip, and the packages it vendors, from the runtime stage. The build stages keep it to install uv.
+  - [x] `pnpm check:image` fails if `vitest`, `vite` or `jsdom` is in the image's `node_modules`, or `pip` is importable by the image's system Python. Tests cover both.
+  - [x] Release notes: Image (what was removed, and the new size).
 - [ ] US-95.2: Node packages
-  - [ ] Upgrade what is still flagged after US-95.1 (expected: `fast-uri` through `ajv`, and `browserslist`) and the lockfile-only `brace-expansion` and `js-yaml`, with overrides only where a parent pins an old version.
+  - [ ] Upgrade what is still flagged after US-95.1 (`fast-uri` through `ajv`, `browserslist`, and `source-map-js` through `next` → `postcss`) and the lockfile-only `brace-expansion` and `js-yaml`, with overrides only where a parent pins an old version.
   - [ ] Tests: form validation through `@hookform/resolvers` and `ajv`; the frontend build and E2E.
   - [ ] Dependabot shows no open high alert for `pnpm-lock.yaml`.
 - [ ] US-95.3: Python packages

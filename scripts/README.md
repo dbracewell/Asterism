@@ -330,7 +330,9 @@ that the Better Auth migration ran and the backend database has a schema
 revision, that `/sign-in`, `/api/py/health/ready` and `/api/health` answer 200,
 that every process runs as UID 10001, and that the backend can import none of
 torch, torchvision, diffusers and accelerate (US-94.2; `--variant gpu` checks a
-`TORCH_VARIANT=gpu` build can import all four). It also fails when the unpacked image
+`TORCH_VARIANT=gpu` build can import all four), and that the image has no test
+tooling (`vitest`, `vite` or `jsdom` in pnpm's store under `node_modules`) and
+the system Python cannot import pip (US-95.1). It also fails when the unpacked image
 is over the size budget (`DEFAULT_MAX_SIZE_GB` in the script, 4.25 GB, which CI and
 the release workflow use too), listing the largest layers. On failure
 it prints the container's last log lines. The container and volume are removed

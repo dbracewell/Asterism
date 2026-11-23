@@ -146,7 +146,7 @@ throwaway secrets, containers and volumes:
 
 ```bash
 docker build -t asterism:local .
-pnpm check:image                      # starts it: healthy, both databases migrated, pages answer, UID 10001, size budget
+pnpm check:image                      # starts it: healthy, both databases migrated, pages answer, UID 10001, no test tooling or pip, size budget
 pnpm check:fetch-browser-container    # the web fetch tool's headless Chromium renders JavaScript
 pnpm check:theme-storage-container    # themes save and replace as UID 10001 on a fresh volume
 pnpm check:upgrade                    # the previous release's volume upgrades to this image, keeping its data
