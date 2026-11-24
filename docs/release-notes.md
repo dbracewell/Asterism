@@ -22,6 +22,12 @@ Unreleased into its version and date.
 
 ## Unreleased
 
+### Behavior
+
+- A list that was still loading when you changed something (for example
+  "Your classes" when joining a class from a link) now shows the change instead
+  of the answer from before it.
+
 ## 0.4.0 (2026-11-23)
 
 ### Configuration

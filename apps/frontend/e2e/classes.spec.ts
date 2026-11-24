@@ -77,10 +77,24 @@ test("an admin approves an educator, who runs a class a student joins", async ({
       .getByLabel("Class code", { exact: true })
       .textContent())!;
 
-    // The student joins through a link, and sees who runs the class.
+    // The student joins through a link, and sees who runs the class, even
+    // when "Your classes" was still loading from before the join.
+    let joined: () => void = () => {};
+    const afterJoin = new Promise<void>((resolve) => (joined = resolve));
+    await student.route(
+      "**/api/py/classes/joined?**",
+      async (route) => {
+        // The server answers now, before the join; the page gets it after.
+        const response = await route.fetch();
+        await afterJoin;
+        await route.fulfill({ response });
+      },
+      { times: 1 },
+    );
     await student.goto(`/classes?join=${code}`);
     await student.getByRole("button", { name: "Join class" }).click();
     await expect(student.getByText("You joined Biology 101.")).toBeVisible();
+    joined();
     await expect(student.getByText(`Run by ${educatorName}`)).toBeVisible();
 
     // A student cannot open the educator's view.
