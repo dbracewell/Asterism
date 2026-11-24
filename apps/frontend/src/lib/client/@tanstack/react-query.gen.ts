@@ -642,6 +642,12 @@ import type {
   RubricUpdateData,
   RubricUpdateError,
   RubricUpdateResponse,
+  SetupProgressGetData,
+  SetupProgressGetError,
+  SetupProgressGetResponse,
+  SetupStepUpdateData,
+  SetupStepUpdateError,
+  SetupStepUpdateResponse,
   SkillCreateData,
   SkillCreateError,
   SkillCreateResponse,
@@ -8780,6 +8786,63 @@ export const studyChatPolicyUpdateMutation = (
   > = {
     mutationFn: async (fnOptions) => {
       const { data } = await ApiClient.__registry.get().studyChatPolicyUpdate({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const setupProgressGetQueryKey = (
+  options?: Options<SetupProgressGetData>,
+) => createQueryKey("setupProgressGet", options);
+
+/**
+ * Get Progress
+ */
+export const setupProgressGetOptions = (
+  options?: Options<SetupProgressGetData>,
+) =>
+  queryOptions<
+    SetupProgressGetResponse,
+    SetupProgressGetError,
+    SetupProgressGetResponse,
+    ReturnType<typeof setupProgressGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry.get().setupProgressGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: setupProgressGetQueryKey(options),
+  });
+
+/**
+ * Put Step
+ *
+ * Mark a step done or skipped, or reopen it (state null).
+ */
+export const setupStepUpdateMutation = (
+  options?: Partial<Options<SetupStepUpdateData>>,
+): UseMutationOptions<
+  SetupStepUpdateResponse,
+  SetupStepUpdateError,
+  Options<SetupStepUpdateData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    SetupStepUpdateResponse,
+    SetupStepUpdateError,
+    Options<SetupStepUpdateData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().setupStepUpdate({
         ...options,
         ...fnOptions,
         throwOnError: true,

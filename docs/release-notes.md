@@ -68,6 +68,12 @@ Unreleased into its version and date.
 
 ### Behavior
 
+- Admin Settings has a new **Setup** section that walks through every
+  administrator setting in order, with what each one does and its default.
+  Skip or review each step; progress is shared by every administrator, so setup
+  resumes at the first step nobody reviewed. Finishing the first-run provider
+  steps now offers **Continue setup** as well as **Start chatting**. Setup
+  progress is not included in a settings export.
 - Ask for flashcards or a quiz in a project chat, and the assistant drafts a
   deck or a practice quiz from the conversation and the project's files. A card
   under the reply shows the draft to edit, save to Study or dismiss; nothing is

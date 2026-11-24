@@ -25,8 +25,10 @@ const mocks = vi.hoisted(() => ({
   preview: vi.fn(),
   importSettings: vi.fn(),
   chatModels: vi.fn(),
+  recordStep: vi.fn(),
 }));
 
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
 vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
   appProviderSettingsGetOptions: () => ({
     queryKey: ["appProviderSettingsGet"],
@@ -50,6 +52,7 @@ vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
   userSettingUpdateMutation: () => ({ mutationFn: mocks.updateSetting }),
   appSettingsImportPreviewMutation: () => ({ mutationFn: mocks.preview }),
   appSettingsImportMutation: () => ({ mutationFn: mocks.importSettings }),
+  setupStepUpdateMutation: () => ({ mutationFn: mocks.recordStep }),
   chatModelsListOptions: () => ({
     queryKey: ["chatModels"],
     queryFn: () => mocks.chatModels(),
@@ -110,8 +113,11 @@ function Wrapper({ children }: { children: ReactNode }) {
   );
 }
 
-const renderStep = (onStart = vi.fn()) => {
-  render(<ProviderSetupStep onStart={onStart} />, { wrapper: Wrapper });
+const renderStep = (onStart = vi.fn(), onContinueSetup = vi.fn()) => {
+  render(
+    <ProviderSetupStep onStart={onStart} onContinueSetup={onContinueSetup} />,
+    { wrapper: Wrapper },
+  );
   return onStart;
 };
 
@@ -138,6 +144,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   mocks.settings.mockResolvedValue({ draft_model_id: null, llm_providers: [] });
   mocks.saveProviders.mockResolvedValue({});
+  mocks.recordStep.mockResolvedValue({ steps: {} });
   mocks.discover.mockResolvedValue({ model_count: 2 });
   mocks.listModels.mockResolvedValue({
     models: catalog,
@@ -302,7 +309,14 @@ describe("first-run provider step", () => {
       "You're ready to start your exploration.",
     );
     expect(screen.queryByRole("form")).not.toBeInTheDocument();
-    expect(start).toHaveFocus();
+    // Continuing the walkthrough comes first; the providers step is reviewed.
+    expect(
+      screen.getByRole("button", { name: "Continue setup" }),
+    ).toHaveFocus();
+    expect(mocks.recordStep).toHaveBeenCalledWith(
+      { path: { step_id: "providers" }, body: { state: "done" } },
+      expect.anything(),
+    );
     // The ready step waits for the administrator instead of redirecting.
     expect(onStart).not.toHaveBeenCalled();
     await user.click(start);

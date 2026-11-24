@@ -200,11 +200,11 @@ Complete (2026-11-24) once US-99.4 merges; archive with EPIC-96 and EPIC-97.
   - [x] Add an entrypoint `setup` command and `pnpm configure`. Both are interactive and use the config contract to generate secrets and write `.env`. A non-interactive mode takes flags or environment variables, for scripts.
   - [x] Tests: the written file passes `pnpm config:check`; no overwrite without `--force`; secrets have the required length.
   - [x] Rewrite the README quick start and `docs/deployment.md` §2 around it, and keep the manual path as a reference.
-- [ ] US-101.2: Setup walkthrough frame
-  - [ ] Store setup progress server-side (`setup_progress` in app settings: step states and timestamps), with an Alembic migration if a table is needed, and export it per EPIC-100's registry (or mark it excluded).
-  - [ ] Build the step frame from the section registry: explanation, embedded section, Skip and Next, and resume where the admin left off.
-  - [ ] Fold the existing provider, import and default-model steps (EPIC-48) into it.
-  - [ ] Unit tests and Playwright: a fresh install goes through every step, skips some, and resumes after a reload.
+- [x] US-101.2: Setup walkthrough frame
+  - [x] Store setup progress server-side (`setup_progress` in app settings: step states and timestamps), with an Alembic migration if a table is needed, and export it per EPIC-100's registry (or mark it excluded).
+  - [x] Build the step frame from the section registry: explanation, embedded section, Skip and Next, and resume where the admin left off.
+  - [x] Fold the existing provider, import and default-model steps (EPIC-48) into it.
+  - [x] Unit tests and Playwright: a fresh install goes through every step, skips some, and resumes after a reload.
 - [ ] US-101.3: Explanations and summary
   - [ ] Write each step's explanation: what it does, its default, what users see when it is off, and a link to the guide page.
   - [ ] Add the summary page and Admin Settings → Setup.

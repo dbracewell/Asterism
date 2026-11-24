@@ -884,6 +884,14 @@ def _validate_non_provider_app_setting(
         except ValidationError as exc:
             raise BadDataException("Invalid compaction settings") from exc
 
+    if key == "setup_progress":
+        from asterism.domains.setup.schemas import SetupProgress
+
+        try:
+            return SetupProgress.model_validate(value).model_dump(mode="json"), None
+        except ValidationError as exc:
+            raise BadDataException("Invalid setup progress") from exc
+
     if key == "chatgpt_plan_enabled":
         if type(value) is not bool:
             raise BadDataException("ChatGPT plan policy must be a boolean")

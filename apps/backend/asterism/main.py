@@ -41,6 +41,7 @@ from asterism.domains.prompt_templates.rubric_router import rubrics_router
 from asterism.domains.reflections.router import reflections_router
 from asterism.domains.settings.settings_router import settings_router
 from asterism.domains.settings_transfer.router import settings_transfer_router
+from asterism.domains.setup.router import setup_router
 from asterism.domains.skills.router import skills_router
 from asterism.domains.status.router import status_router
 from asterism.domains.study.chat_policy_router import study_chat_policy_router
@@ -189,6 +190,7 @@ app.include_router(memory_proposal_router)
 app.include_router(memory_policy_router)
 # Before settings_router, whose /settings/app/{key} would match first.
 app.include_router(study_chat_policy_router)
+app.include_router(setup_router)
 app.include_router(settings_router)
 app.include_router(user_router)
 app.include_router(groups_router)

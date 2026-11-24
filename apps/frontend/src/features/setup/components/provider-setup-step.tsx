@@ -14,10 +14,14 @@ import {
 } from "@/features/settings/provider-schema";
 import { client } from "@/lib/api";
 import type { ProviderSettings } from "@/lib/client";
-import { appProviderSettingsGetOptions } from "@/lib/client/@tanstack/react-query.gen";
+import {
+  appProviderSettingsGetOptions,
+  setupStepUpdateMutation,
+} from "@/lib/client/@tanstack/react-query.gen";
 import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import {
@@ -29,6 +33,7 @@ import { ModelStep } from "./provider-model-step";
 import { ImportStep } from "./setup-import-step";
 import { DefaultModelStep } from "./setup-default-model-step";
 import { ReadyStep } from "./setup-ready-step";
+import { setupHref } from "../walkthrough";
 
 /**
  * Steps 2 and 3 of first-run setup: connect one provider, discover its models
@@ -39,12 +44,28 @@ export function ProviderSetupStep({
   className,
   // A full load gives the new-chat page the saved default model.
   onStart = () => window.location.assign("/"),
+  onContinueSetup,
 }: {
   className?: string;
   onStart?: () => void;
+  onContinueSetup?: () => void;
 }) {
+  const router = useRouter();
   const settings = useQuery(appProviderSettingsGetOptions({ client }));
   const [done, setDone] = useState(false);
+  // These steps are the walkthrough's providers step. A failure here only
+  // means the walkthrough offers that step again.
+  const reviewed = useMutation({
+    ...setupStepUpdateMutation({ client }),
+    meta: { skipGlobalInvalidation: true },
+  });
+  const finish = () => {
+    setDone(true);
+    reviewed.mutate({
+      path: { step_id: "providers" },
+      body: { state: "done" },
+    });
+  };
   const [path, setPath] = useState<"provider" | "import" | "default-model">(
     "provider",
   );
@@ -55,7 +76,13 @@ export function ProviderSetupStep({
         <AuthHeading description="Set up your Asterism instance" />
         <SetupSteps current={done ? 2 : 1} />
         {done ? (
-          <ReadyStep onStart={onStart} />
+          <ReadyStep
+            onStart={onStart}
+            // The walkthrough resumes at the first step not reviewed (US-101.2).
+            onContinueSetup={
+              onContinueSetup ?? (() => router.push(setupHref()))
+            }
+          />
         ) : path === "import" ? (
           <ImportStep
             onBack={() => setPath("provider")}
@@ -64,7 +91,7 @@ export function ProviderSetupStep({
         ) : path === "default-model" ? (
           <DefaultModelStep
             onBack={() => setPath("provider")}
-            onDone={() => setDone(true)}
+            onDone={finish}
           />
         ) : settings.isLoading ? (
           <FormSkeleton label="Loading provider settings…" fields={4} />
@@ -78,7 +105,7 @@ export function ProviderSetupStep({
         ) : (
           <ProviderSetupFlow
             settings={settings.data}
-            onDone={() => setDone(true)}
+            onDone={finish}
             onImport={() => setPath("import")}
           />
         )}
