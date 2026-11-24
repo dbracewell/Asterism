@@ -103,3 +103,24 @@ form and routes as Admin settings. `default_model_id` is a per-user setting, so 
 file cannot carry it, and a new chat cannot send without a model. After importing,
 the administrator picks a default from the imported models; none is chosen for them.
 A file with no active models leads back to provider setup.
+
+## Addendum: coverage registry (US-100.1)
+
+The file's contents grew one setting at a time, and the only check, that every
+`ApplicationSettings` field had a bundle field, couldn't see settings stored
+elsewhere. The usage time zone (`usage_timezone`), group budgets and themes were
+left out without anything failing.
+
+`settings_transfer/coverage.py` now lists every stored admin setting:
+
+- where it is stored: an `app_settings` key, or a table or directory;
+- the Admin Settings section that edits it;
+- the bundle field that carries it, or why it is excluded (account data such as
+  users and educator approvals);
+- any parts not carried yet.
+
+Tests scan the backend for the ways an app setting is written, and fail when a
+key found that way, or an `ApplicationSettings` field, is not in the registry.
+They also fail when an entry neither names a bundle field nor explains its
+absence. US-100.2 carries the parts listed as missing, in format version 2;
+US-100.3 shows the registry in the Export pane.

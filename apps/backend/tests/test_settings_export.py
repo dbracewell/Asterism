@@ -247,3 +247,69 @@ async def test_bundle_covers_every_application_setting():
     for field in ApplicationSettings.model_fields:
         assert mapped.get(field, field) in SettingsBundle.model_fields
     assert "captioning" in SettingsBundle.model_fields
+
+
+# A stored app setting is written through one of these. User settings
+# (``user_settings`` rows) are not admin settings and are not matched.
+_KEY_PATTERNS = (
+    r'(?:POLICY|SETTING|TIMEZONE)_KEY\s*=\s*"([a-z_.]+)"',
+    r'session\.get\(\s*ApplicationSettingsModel\s*,\s*"([a-z_.]+)"',
+    r'upsert_app_setting\(\s*"([a-z_.]+)"',
+    r'ApplicationSettingsModel\(\s*key\s*=\s*"([a-z_.]+)"',
+)
+# Keys those patterns find that are per-user settings, not admin ones.
+_USER_SETTING_KEYS = {"memory_enabled"}
+
+
+def _stored_app_setting_keys() -> set[str]:
+    import re
+    from pathlib import Path
+
+    import asterism
+
+    keys: set[str] = set()
+    for path in Path(asterism.__file__).parent.rglob("*.py"):
+        text = path.read_text()
+        if "ApplicationSettingsModel" not in text and "upsert_app_setting" not in text:
+            continue
+        for pattern in _KEY_PATTERNS:
+            keys.update(re.findall(pattern, text))
+    return keys - _USER_SETTING_KEYS
+
+
+def test_every_stored_admin_setting_is_in_the_coverage_registry():
+    """EPIC-100: a setting stored anywhere must say how the export treats it."""
+    from asterism.domains.settings_transfer.coverage import COVERAGE
+
+    listed = {entry.store for entry in COVERAGE}
+    keys = _stored_app_setting_keys() | set(ApplicationSettings.model_fields)
+    assert "usage_timezone" in keys  # the scan finds settings outside ApplicationSettings
+    assert keys - listed == set()
+
+
+def test_every_registry_entry_is_exported_or_explains_why_not():
+    from asterism.domains.settings_transfer.coverage import COVERAGE
+
+    for entry in COVERAGE:
+        if entry.bundle_field is not None:
+            assert entry.bundle_field in SettingsBundle.model_fields, entry
+            assert entry.excluded is None, entry
+        else:
+            assert entry.excluded or entry.missing, entry
+    bundle = set(SettingsBundle.model_fields) - {"exported_at"}
+    assert bundle - {entry.bundle_field for entry in COVERAGE} == set()
+
+
+def test_the_known_gaps_are_listed():
+    """US-100.1 records what the file doesn't carry yet; US-100.2 closes these."""
+    from asterism.domains.settings_transfer.coverage import COVERAGE
+
+    assert {entry.store: entry.missing for entry in COVERAGE if entry.missing} == {
+        "files:themes": ("custom themes",),
+        "table:groups": ("daily and monthly token budgets",),
+        "usage_timezone": ("the usage time zone",),
+        "memory": ("which groups may use memory",),
+        "study_chat": ("which groups may make decks and quizzes from chat",),
+        "image_generation": ("which groups may make images",),
+        "image_generation_onnx": ("accepted model licenses",),
+    }
