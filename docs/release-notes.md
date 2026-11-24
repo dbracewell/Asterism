@@ -27,6 +27,9 @@ Unreleased into its version and date.
 - Setup (Admin Settings → Setup) no longer has Theme, Educators and First
   backup steps. Change those from their own Admin Settings sections; Status
   shows the last backup. Progress already recorded for those steps is ignored.
+- The first-run setup card lists four steps. A new third step, **Review the
+  remaining settings (optional)**, is current once a model is enabled, so the
+  card shows that the setup walkthrough comes next.
 
 ## 0.5.0 (2026-11-24)
 

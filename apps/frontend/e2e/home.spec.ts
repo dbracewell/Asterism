@@ -9,7 +9,7 @@ test("fresh installation renders administrator setup form", async ({
   await expect(page.getByRole("heading", { name: "ASTERISM" })).toBeVisible();
   await expect(page.getByText("Set up your Asterism instance")).toBeVisible();
   const steps = page.getByRole("list", { name: "First-run setup" });
-  await expect(steps.getByRole("listitem")).toHaveCount(3);
+  await expect(steps.getByRole("listitem")).toHaveCount(4);
   await expect(steps.locator('[aria-current="step"]')).toContainText(
     "Create the administrator account",
   );

@@ -137,12 +137,12 @@ Suggested order: US-102.1 → 102.2 → 102.3 → 102.4. Work one story at a tim
 
 ### US-102.2: First-run checklist shows the rest of setup
 
-- [ ] Change `SetupSteps` to four steps, with "Review the remaining settings
+- [x] Change `SetupSteps` to four steps, with "Review the remaining settings
       (optional)" third. The sign-up card shows step 1 current; the provider
       card shows step 2; the ready card shows step 3.
-- [ ] Build the step 3 description and the ready card's "such as …" list from
+- [x] Build the step 3 description and the ready card's "such as …" list from
       `SETUP_STEPS` titles.
-- [ ] Unit tests for each card's current step and its screen-reader text
+- [x] Unit tests for each card's current step and its screen-reader text
       ("current", "complete"). Update `e2e/first-run-setup.spec.ts` and
       `provider-setup.spec.ts`.
 

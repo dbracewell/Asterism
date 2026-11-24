@@ -219,8 +219,9 @@ test("enabling models shows the ready step, which opens the new-chat page", asyn
   await page.getByRole("option", { name: "alpha-chat" }).click();
   await form.getByRole("button", { name: "Continue" }).click();
   const steps = page.getByRole("list", { name: "First-run setup" });
+  // The walkthrough is next; Continue setup opens it (US-102.2).
   await expect(steps.locator('[aria-current="step"]')).toContainText(
-    "Start your first chat",
+    "Review the remaining settings (optional)",
   );
   await expect(page.getByRole("status")).toHaveText(
     "You're ready to start your exploration.",

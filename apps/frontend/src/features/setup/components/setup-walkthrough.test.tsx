@@ -6,7 +6,8 @@ import {
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, expect, it, vi } from "vitest";
-import { SETUP_STEPS, stepGuideHref } from "../walkthrough";
+import { SETUP_STEPS } from "../steps";
+import { stepGuideHref } from "../walkthrough";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { SetupWalkthrough } from "./setup-walkthrough";
 

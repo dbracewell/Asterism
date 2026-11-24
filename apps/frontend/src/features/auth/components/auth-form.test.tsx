@@ -120,9 +120,17 @@ it("shows the branded wordmark and the first-run steps without adding tab stops"
   const steps = within(
     screen.getByRole("list", { name: "First-run setup" }),
   ).getAllByRole("listitem");
-  expect(steps).toHaveLength(3);
+  expect(steps).toHaveLength(4);
   expect(steps[0]).toHaveAttribute("aria-current", "step");
   expect(steps[0]).toHaveTextContent("Create the administrator account");
+  // The walkthrough after the provider step is shown up front (US-102.2).
+  expect(steps[2]).toHaveTextContent(
+    "Review the remaining settings (optional)",
+  );
+  expect(steps[2]).toHaveTextContent(
+    "Groups and budgets, Tools and search, Image captioning and 8 more.",
+  );
+  expect(steps[3]).toHaveTextContent("Start your first chat");
   await userEvent.tab();
   expect(screen.getByLabelText("Name")).toHaveFocus();
 });

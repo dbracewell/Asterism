@@ -18,12 +18,8 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { CheckIcon, ExternalLinkIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import Link from "next/link";
-import {
-  nextStep,
-  SETUP_STEPS,
-  stepGuideHref,
-  type SetupStep,
-} from "../walkthrough";
+import { SETUP_STEPS, type SetupStep } from "../steps";
+import { nextStep, stepGuideHref } from "../walkthrough";
 
 const STATE_LABEL = { done: "Done", skipped: "Skipped" } as const;
 

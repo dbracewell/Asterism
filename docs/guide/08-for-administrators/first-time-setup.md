@@ -63,8 +63,9 @@ choose the file exported from it, with its passphrase.
 
    ![The setup card saying you're ready, with Continue setup and Start chatting buttons](../images/setup-ready.png)
 
-5. Asterism can be used now. Select **Continue setup** to go through the other
-   settings, or **Start chatting** to do that later.
+5. Asterism can be used now. The card's list marks **Review the remaining
+   settings (optional)** as the current step. Select **Continue setup** to go
+   through those settings, or **Start chatting** to do that later.
 
 To connect a provider later instead, select **Skip for now**. You can add
 providers and models at any time in **Admin Settings** › **Providers**.

@@ -16,7 +16,7 @@ vi.mock("next/dynamic", () => ({
   },
 }));
 
-import { NOT_STEPS, SETUP_STEPS } from "@/features/setup/walkthrough";
+import { NOT_STEPS, SETUP_STEPS } from "@/features/setup/steps";
 import { getLazyAdminSettingsSections } from "./lazy-sections";
 
 describe("getLazyAdminSettingsSections", () => {
