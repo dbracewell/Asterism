@@ -17,7 +17,7 @@ def chunk(chunk_id, user, file_id, ordinal, content, *, kind="text", generation=
 
 @pytest.mark.asyncio
 async def test_store_reads_one_owned_chunk_and_counts_its_generation(tmp_path):
-    store = LanceDbVectorStore(tmp_path / "vectors", dimension=2, max_concurrency=1)
+    store = LanceDbVectorStore(tmp_path / "vectors", dimension=2, model_key="test", max_concurrency=1)
     await store.add(
         [
             chunk("c0", "a", "f", 0, "first", generation=2),
@@ -37,7 +37,7 @@ async def test_store_reads_one_owned_chunk_and_counts_its_generation(tmp_path):
 async def test_passage_route_checks_chat_scope_and_reports_its_place(project_api, monkeypatch, tmp_path):
     client, sessions, storage = project_api
     monkeypatch.setattr(config, "storage_root", storage)
-    store = LanceDbVectorStore(tmp_path / "vectors", dimension=2, max_concurrency=1)
+    store = LanceDbVectorStore(tmp_path / "vectors", dimension=2, model_key="test", max_concurrency=1)
     monkeypatch.setattr(vector_module, "vector_store", store)
     agent = await seed_agent(sessions)
     cited, outside = await upload(client, "notes.txt"), await upload(client, "elsewhere.txt")

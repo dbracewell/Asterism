@@ -13,6 +13,7 @@ from asterism.db.database import get_async_db_session
 from asterism.db.mixins import get_unix_timestamp
 from asterism.domains.knowledge.policy import get_captioning_configuration
 
+from .caption_reuse import caption_chunk_id, caption_payload, reusable_caption
 from .embedding import EmbeddingProvider, EmbeddingProviderError, embedding_provider
 from .extractions import load_artifact_extractions
 from .model_download import DownloadNotReadyError
@@ -32,7 +33,7 @@ logger = logging.getLogger(__name__)
 TEXT_EXTRACTION_PROVIDER = "markitdown"
 """The provider that converts a source file into its extracted text."""
 
-EMBEDDING_PROVIDER = "onnx-clip"
+EMBEDDING_PROVIDER = "onnx-e5"
 """The provider that turns chunks and images into vectors."""
 
 
@@ -112,22 +113,19 @@ async def embed_file(
     source: SourceContent,
     *,
     provider: EmbeddingProvider = embedding_provider,
-) -> tuple[list[list[float]], list[str], bool]:
-    if source.file.is_image:
-        contents = [f"Image file: {source.file.name}"]
-        if source.image is None:
-            raise KnowledgeIngestionError("The image source bytes are unavailable")
-        vectors = await provider.embed_image([source.image])
-        visual_ready = True
-    else:
-        contents = chunk_text(source.text or "")
-        vectors = await provider.embed_text(contents)
-        visual_ready = False
+) -> tuple[list[list[float]], list[str]]:
+    """Embed a file's text chunks as passages.
 
+    An image has no text of its own: it is found by its caption, which is
+    embedded when the caption is ready (ADR-0079).
+    """
+    if source.file.is_image:
+        return [], []
+    contents = chunk_text(source.text or "")
+    vectors = await provider.embed_passage(contents)
     if len(vectors) != len(contents):
         raise KnowledgeIngestionError("The embedding provider returned an unexpected result count")
-
-    return vectors, contents, visual_ready
+    return vectors, contents
 
 
 async def ingest(
@@ -205,7 +203,16 @@ async def ingest_file(
             text_extraction.completed_at = get_unix_timestamp()
 
         stage = KnowledgeExtractionKind.EMBEDDING
-        vectors, contents, visual_ready = await embed_file(source, provider=provider)
+        vectors, contents = await embed_file(source, provider=provider)
+        # An image keeps a caption made by the current captioner; only its
+        # embedding is redone (ADR-0079).
+        reused_caption = None
+        caption_configuration = None
+        if source.file.is_image:
+            caption_configuration = await get_captioning_configuration(session=session)
+            reused_caption = await reusable_caption(
+                artifact=artifact, configuration=caption_configuration, session=session
+            )
 
         chunks: Sequence[VectorChunk] = [
             VectorChunk(
@@ -220,6 +227,22 @@ async def ingest_file(
             )
             for ordinal, (content, vector) in enumerate(zip(contents, vectors, strict=True))
         ]
+        if reused_caption is not None:
+            caption_text = str(caption_payload(reused_caption)["text"])
+            [caption_vector] = await provider.embed_passage([caption_text])
+            chunks = [
+                *chunks,
+                VectorChunk(
+                    id=caption_chunk_id(source.file.id, artifact.generation),
+                    user_id=source.file.user_id,
+                    file_id=str(source.file.id),
+                    artifact_generation=artifact.generation,
+                    chunk_ordinal=len(contents),
+                    kind="caption",
+                    content=caption_text,
+                    vector=caption_vector,
+                ),
+            ]
         await store.delete_file_generation(
             user_id=source.file.user_id,
             file_id=str(source.file.id),
@@ -307,28 +330,41 @@ async def ingest_file(
     )
     artifact.status = KnowledgeExtractionStatus.READY
     artifact.is_current = True
-    artifact.chunk_count = len(chunks)
-    artifact.searchable = not source.file.is_image
+    artifact.chunk_count = len(contents)
+    # An image is searchable once it has a caption.
+    artifact.searchable = not source.file.is_image or reused_caption is not None
     artifact.completed_at = get_unix_timestamp()
 
     if embedding is not None:
         embedding.status = KnowledgeExtractionStatus.READY
         embedding.provider = EMBEDDING_PROVIDER
-        embedding.payload = {
-            "text_ready": not source.file.is_image,
-            "visual_ready": visual_ready,
-        }
+        embedding.payload = {"text_ready": not source.file.is_image}
         embedding.completed_at = get_unix_timestamp()
 
-    caption_requested = False
-    if source.file.is_image:
-        caption_configuration = await get_captioning_configuration(session=session)
-        caption_requested = caption_configuration.mode != KnowledgeCaptionMode.DISABLED.value
+    caption_requested = (
+        caption_configuration is not None
+        and reused_caption is None
+        and caption_configuration.mode != KnowledgeCaptionMode.DISABLED.value
+    )
     await sync_captioning_extraction(
         artifact=artifact,
         session=session,
-        requested=caption_requested,
+        requested=caption_requested or reused_caption is not None,
     )
+    if reused_caption is not None:
+        await session.flush()
+        captioning = await session.scalar(
+            select(FileKnowledgeExtractionModel).where(
+                FileKnowledgeExtractionModel.artifact_id == artifact.id,
+                FileKnowledgeExtractionModel.kind == KnowledgeExtractionKind.CAPTIONING,
+            ),
+        )
+        if captioning is not None:
+            captioning.status = KnowledgeExtractionStatus.READY
+            captioning.provider = reused_caption.provider
+            captioning.model = reused_caption.model
+            captioning.payload = caption_payload(reused_caption)
+            captioning.completed_at = get_unix_timestamp()
 
     await session.commit()
 

@@ -1,6 +1,6 @@
 # EPIC-97: Hide what the admin has not enabled
 
-Status: proposed (2026-11-24). Source: user request (2026-11-24): "Don't show
+Status: complete (2026-11-24). US-97.1 PR #87, US-97.2 PR #88, US-97.3 PR #89, US-97.4 PR #90. Source: user request (2026-11-24): "Don't show
 options throughout the system if the admin has not enabled them." Depends on
 EPIC-96, which adds the live availability query this epic reads.
 

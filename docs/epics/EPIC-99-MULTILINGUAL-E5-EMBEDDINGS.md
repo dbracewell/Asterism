@@ -1,6 +1,6 @@
 # EPIC-99: Multilingual text embeddings, images found by caption
 
-Status: in progress (2026-11-24). US-99.1 done. Source: user request (2026-11-24): "Instead of our
+Status: in progress (2026-11-24). US-99.1 and US-99.2 done. Source: user request (2026-11-24): "Instead of our
 current text/image embedding use Xenova/multilingual-e5-small, and for images
 embed the caption, meaning captioning is now required for images to be found in
 search."
@@ -115,18 +115,20 @@ tables, because the two models' vectors differ in size.
 
 ### US-99.2: Model-keyed vectors and re-embedding on upgrade
 
-- [ ] Switch to the e5 provider: download it into `models/knowledge-e5-small`,
+- [x] Switch to the e5 provider: download it into `models/knowledge-e5-small`,
       remove the old `knowledge-clip` directory, and split callers into
       `embed_query` and `embed_passage`.
-- [ ] Add model-keyed table names for knowledge chunks and memory vectors, with
+- [x] Add model-keyed table names for knowledge chunks and memory vectors, with
       the dimension taken from the manifest.
-- [ ] A startup comparison of the stored model with the code's model triggers a
+- [x] A startup comparison of the stored model with the code's model triggers a
       new processing generation. Images re-embed from the stored caption.
-- [ ] Drop the old tables once the new generation is complete.
-- [ ] Alembic data migration plus an upgrade test seeded with CLIP-era files,
+- [x] Drop the old tables once the new generation is complete. Done on start
+      instead: the old vectors can't answer the new model's queries, so a file
+      isn't found until it is re-embedded (ADR-0079, release notes).
+- [x] Alembic data migration plus an upgrade test seeded with CLIP-era files,
       captions and memories: after the upgrade, search finds the same files and
       memories.
-- [ ] Remove `embed_image`, image chunks and `visual_ready`, and update
+- [x] Remove `embed_image`, image chunks and `visual_ready`, and update
       retrieval and similar files.
 
 ### US-99.3: Captioning is required for image search
@@ -155,12 +157,14 @@ tables, because the two models' vectors differ in size.
   - Configuration: `EMBEDDING_DIMENSION` is removed.
   - Behavior: multilingual search; images are found only by caption.
 
+## Settled questions
+
+1. **Captioning stays off by default** (decided 2026-11-24). The setup
+   walkthrough (EPIC-101) offers it, with clear text that images can't be found
+   in search while captioning is off.
+
 ## Open questions
 
-1. **Default captioning mode.** It stays `disabled`, which means a new install
-   finds no images. Should the install walkthrough (EPIC-101) recommend local
-   captioning, or should the default become `local`, a further download of about
-   500 MB?
-2. Should the larger chunk window that e5's 512 tokens allows change the chunk
+1. Should the larger chunk window that e5's 512 tokens allows change the chunk
    size? The proposal is to keep 1,000 characters and revisit after the
    benchmark.

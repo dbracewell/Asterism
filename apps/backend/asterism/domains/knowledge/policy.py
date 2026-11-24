@@ -24,6 +24,7 @@ from asterism.domains.settings.captioning_guard import configure_captioning_sele
 from asterism.domains.settings.models import ApplicationSettingsModel, LLMModel
 from asterism.domains.settings.queries import is_global_model
 
+from .embedding import EMBEDDING_MODEL_KEY
 from .processing_schemas import (
     KnowledgeCaptionConfiguration,
     KnowledgeProcessingCaptioningConfiguration,
@@ -62,13 +63,13 @@ def default_processing_configuration() -> KnowledgeProcessingConfiguration:
         identity=processing_identity(
             extraction_policy="text-extraction-v1",
             chunking_policy="bounded-chunking-v1",
-            embedding_model="onnx-clip-v1",
+            embedding_model=EMBEDDING_MODEL_KEY,
             captioning_policy="captioning-configuration-v1",
             captioning=captioning,
         ),
         extraction_policy="text-extraction-v1",
         chunking_policy="bounded-chunking-v1",
-        embedding_model="onnx-clip-v1",
+        embedding_model=EMBEDDING_MODEL_KEY,
         captioning_policy="captioning-configuration-v1",
         captioning=captioning,
     )

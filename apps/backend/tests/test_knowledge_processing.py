@@ -6,6 +6,7 @@ import pytest_asyncio
 from asterism.core import config
 from asterism.db.model_registry import Base
 from asterism.domains.files.models import FileContentStatus, FileKind, UserFileModel
+from asterism.domains.knowledge.embedding import EMBEDDING_MODEL_KEY
 from asterism.domains.knowledge.ingestion import ingest_file
 from asterism.domains.knowledge.model_download import DownloadNotReadyError
 from asterism.domains.knowledge.models import KnowledgeExtractionStatus
@@ -82,7 +83,7 @@ async def test_malformed_processing_setting_falls_back_and_is_healed_by_an_updat
         payload=KnowledgeProcessingProfileUpdate(
             extraction_policy="extract-v2",
             chunking_policy="chunk-v2",
-            embedding_model="embed-v2",
+            embedding_model=EMBEDDING_MODEL_KEY,
             captioning_policy="caption-v2",
         ),
         session=processing_session,
@@ -192,7 +193,7 @@ async def test_profile_change_queues_replacements_without_retiring_ready_generat
         payload=KnowledgeProcessingProfileUpdate(
             extraction_policy="extract-v2",
             chunking_policy="chunk-v2",
-            embedding_model="embed-v2",
+            embedding_model=EMBEDDING_MODEL_KEY,
             captioning_policy="caption-v2",
         ),
         session=processing_session,
@@ -212,6 +213,8 @@ async def test_profile_change_queues_replacements_without_retiring_ready_generat
     class FailingEmbeddings:
         async def embed_text(self, _):
             raise RuntimeError("provider unavailable")
+
+        embed_query = embed_passage = embed_text
 
         async def embed_image(self, _):
             raise RuntimeError("provider unavailable")
@@ -342,6 +345,8 @@ async def test_ingestion_indexes_text_idempotently_and_never_marks_partial_work_
         async def embed_text(self, texts):
             return [[1.0, 0.0] for _ in texts]
 
+        embed_query = embed_passage = embed_text
+
         async def embed_image(self, images):
             return []
 
@@ -457,6 +462,8 @@ async def test_embedding_provisioning_wait_leaves_artifact_pending(processing_se
     class WaitingEmbeddings:
         async def embed_text(self, _):
             raise DownloadNotReadyError("provisioning")
+
+        embed_query = embed_passage = embed_text
 
         async def embed_image(self, _):
             raise DownloadNotReadyError("provisioning")
@@ -681,3 +688,20 @@ async def test_a_verified_caption_bundle_resumes_captions_left_pending(processin
     await download.on_bundle_ready("bundle-sha256")
     await asyncio.sleep(0.05)
     assert resume_runtime.captioned == [pending.id]
+
+
+@pytest.mark.asyncio
+async def test_a_profile_edit_cannot_name_another_embedding_model(processing_session):
+    """ADR-0079: the code's model is the only one that can embed."""
+    from asterism.core.exceptions import BadDataException
+
+    with pytest.raises(BadDataException, match=EMBEDDING_MODEL_KEY):
+        await update_processing_profile_and_reprocess(
+            payload=KnowledgeProcessingProfileUpdate(
+                extraction_policy="extract-v2",
+                chunking_policy="chunk-v2",
+                embedding_model="another-model",
+                captioning_policy="caption-v2",
+            ),
+            session=processing_session,
+        )

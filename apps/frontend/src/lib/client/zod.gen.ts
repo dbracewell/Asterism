@@ -252,9 +252,12 @@ export const zCapacity = z.object({
  *
  * Attributes:
  * text: The caption text, or ``None`` when none was produced.
+ * captioner: Which captioner made it, so a later generation can reuse
+ * it (ADR-0079); absent on captions made before.
  */
 export const zCaptioningPayload = z.object({
   text: z.string().max(10000).nullish(),
+  captioner: z.string().max(200).nullish(),
 });
 
 /**
@@ -1112,11 +1115,9 @@ export const zEducatorRequestPage = z.object({
  *
  * Attributes:
  * text_ready: Whether the text chunks are embedded and searchable.
- * visual_ready: Whether the file's visual embedding is ready.
  */
 export const zEmbeddingPayload = z.object({
   text_ready: z.boolean().optional().default(false),
-  visual_ready: z.boolean().optional().default(false),
 });
 
 /**

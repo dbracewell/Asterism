@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import asyncio
 import base64
-import hashlib
 import time
 import uuid
 from pathlib import Path
@@ -31,6 +30,7 @@ from asterism.domains.llm.schemas import ImageUrlContent, ImageUrlContentPart, L
 from asterism.domains.settings.service import get_model_and_provider
 from asterism.domains.usage.schemas import UsageSource
 
+from .caption_reuse import LOCAL_CAPTION_MODEL_LABEL, caption_chunk_id, captioner_key
 from .caption_schemas import (
     CaptionErrorCode,
     CaptioningConfiguration,
@@ -126,7 +126,7 @@ class OnnxSmolVlm2CaptionProvider:
         return CaptionResult(
             text=bounded_caption(text, request.max_caption_chars),
             source=CaptionMode.LOCAL,
-            model="SmolVLM2",
+            model=LOCAL_CAPTION_MODEL_LABEL,
         )
 
     async def close(self) -> None:
@@ -276,8 +276,8 @@ async def caption(
                     _caption(artifact=artifact, source=source),
                     timeout=config.file_conversion_timeout_s,
                 )
-                vector = (await embedding_provider.embed_text([result.text]))[0]
-                chunk_id = hashlib.sha256(f"{file_id}:{artifact.generation}:caption".encode()).hexdigest()
+                vector = (await embedding_provider.embed_passage([result.text]))[0]
+                chunk_id = caption_chunk_id(file_id, artifact.generation)
                 await vector_store.delete_chunk(user_id=user_id, chunk_id=chunk_id)
                 await vector_store.add(
                     [
@@ -296,7 +296,14 @@ async def caption(
                 captioning.status = KnowledgeExtractionStatus.READY
                 captioning.provider = result.source.value
                 captioning.model = result.model
-                captioning.payload = {"text": result.text}
+                captioning.payload = {
+                    "text": result.text,
+                    # Lets a later generation reuse this caption (ADR-0079).
+                    "captioner": captioner_key(
+                        result.source.value,
+                        configuration.provider_model_id if result.source is CaptionMode.PROVIDER else None,
+                    ),
+                }
                 captioning.error_code = None
                 captioning.error_reason = None
                 captioning.completed_at = get_unix_timestamp()

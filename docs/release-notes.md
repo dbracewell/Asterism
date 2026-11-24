@@ -22,7 +22,30 @@ Unreleased into its version and date.
 
 ## Unreleased
 
+### Configuration
+
+- `EMBEDDING_DIMENSION` is removed; the vector size now comes from the
+  embedding model. Remove it from `.env` if you set it.
+
+### Data
+
+- Search and memory now use the multilingual-e5-small embedding model instead
+  of CLIP ([ADR-0079](adr/0079-multilingual-text-embeddings.md)). On the first
+  start after upgrading, Asterism downloads the new model (135 MB) into
+  `models/knowledge-e5-small`, deletes `models/knowledge-clip`, and re-embeds
+  every file as a new processing generation. Images reuse the caption they
+  already have. Until a file has been re-embedded, search doesn't find it, so
+  expect search to fill back in over the first minutes to hours, depending on
+  the size of the library. Memory vectors are rebuilt once the model is ready.
+  The vector tables are renamed for the model, and the CLIP ones are dropped.
+  A data migration records the CLIP-era processing policy on installations
+  that never stored one, so this happens there too.
+
 ### Behavior
+
+- Images are found in search only through their caption. With image captioning
+  off, images are stored and can be attached to chats, but search won't find
+  them.
 
 - User Settings no longer shows settings for a feature the admin has turned off
   for that person: the Skills and ChatGPT sections, Use memory and Canvas.

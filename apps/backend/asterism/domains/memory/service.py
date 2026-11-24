@@ -68,7 +68,7 @@ async def _require_project(user_id: str, project_id: uuid.UUID, session: AsyncSe
 async def write_vector(row: MemoryModel) -> bool:
     """Embed and store the memory's vector; False when it failed. Best effort: the row is the record."""
     try:
-        [vector] = await embedding_provider.embed_text([row.text])
+        [vector] = await embedding_provider.embed_passage([row.text])
         await memory_vector_store.write(
             MemoryVector(
                 memory_id=str(row.id),

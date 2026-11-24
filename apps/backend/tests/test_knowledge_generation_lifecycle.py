@@ -380,6 +380,8 @@ async def test_promoting_a_generation_prunes_the_superseded_ones(lifecycle_sessi
         async def embed_text(self, texts):
             return [[1.0, 0.0] for _ in texts]
 
+        embed_query = embed_passage = embed_text
+
         async def embed_image(self, images):
             return []
 

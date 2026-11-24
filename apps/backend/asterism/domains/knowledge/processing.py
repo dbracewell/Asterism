@@ -11,6 +11,8 @@ own an artifact are exactly the files that can be reprocessed. Deriving the
 set here keeps the domain from importing the files domain.
 """
 
+import asyncio
+import shutil
 import uuid
 from collections.abc import Sequence
 from dataclasses import dataclass
@@ -18,7 +20,10 @@ from dataclasses import dataclass
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from asterism.common.log import get_logger
+from asterism.core import config
 from asterism.core.exceptions import BadDataException
+from asterism.db.database import get_async_db_session
 from asterism.domains.knowledge.caption_schemas import CaptioningConfiguration, CaptioningError, CaptionMode
 from asterism.domains.knowledge.models import (
     FileKnowledgeArtifactModel,
@@ -30,6 +35,7 @@ from asterism.domains.knowledge.runtime import start_file_ingestion_job
 from asterism.domains.settings.models import LLMModel
 from asterism.domains.settings.queries import is_global_model
 
+from .embedding import EMBEDDING_MODEL_KEY
 from .policy import (
     load_processing_configuration,
     processing_identity,
@@ -44,6 +50,8 @@ from .processing_schemas import (
     KnowledgeProcessingProfileUpdate,
     KnowledgeReprocessSummary,
 )
+
+logger = get_logger("KnowledgeProcessing")
 
 
 @dataclass(frozen=True)
@@ -221,6 +229,9 @@ async def update_processing_profile_and_reprocess(
     Raises:
         BadDataException: If the stored setting cannot be loaded or persisted.
     """
+    if payload.embedding_model != EMBEDDING_MODEL_KEY:
+        # The code's model is the only one that can embed (ADR-0079).
+        raise BadDataException(f"The embedding model is {EMBEDDING_MODEL_KEY}")
     _, current = await load_processing_configuration(session=session)
     return await _transition_processing_configuration(
         candidate=current.model_copy(
@@ -233,6 +244,39 @@ async def update_processing_profile_and_reprocess(
         ),
         session=session,
     )
+
+
+async def reembed_for_current_model(*, session: AsyncSession) -> KnowledgeReprocessSummary | None:
+    """Start a new generation when the stored files were embedded by another model.
+
+    Runs on every start. After an upgrade that changes the embedding model
+    (ADR-0079), every file is queued again under the new model; images reuse
+    their captions. Nothing happens when the model is unchanged.
+    """
+    _, current = await load_processing_configuration(session=session)
+    if current.embedding_model == EMBEDDING_MODEL_KEY:
+        return None
+    return await _transition_processing_configuration(
+        candidate=current.model_copy(update={"embedding_model": EMBEDDING_MODEL_KEY}),
+        session=session,
+    )
+
+
+async def retire_previous_embedding_model() -> None:
+    """On start, after a change of embedding model, re-embed every file (ADR-0079).
+
+    The previous model's bundle is deleted, and its vector table was dropped
+    when the store opened. Files are queued as a new processing generation and
+    processed once the new bundle is ready.
+    """
+    legacy = config.legacy_knowledge_models_root
+    if legacy.exists():
+        await asyncio.to_thread(shutil.rmtree, legacy, True)
+        logger.info("Removed the previous knowledge embedding model bundle")
+    async with get_async_db_session() as session:
+        summary = await reembed_for_current_model(session=session)
+    if summary is not None:
+        logger.info(f"The embedding model changed; {summary.queued_file_count} files will be embedded again")
 
 
 async def update_captioning_configuration(

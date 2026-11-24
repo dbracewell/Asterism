@@ -246,7 +246,7 @@ async def test_retrieval_ready_pending_failed_unavailable_and_ceiling(context_ru
         for fid, gen in [(ids[0], 1), (ids[0], 0), (ids[1], 1), (unrelated, 1), (foreign, 1)]
     ]
     search = AsyncMock(return_value=matches)
-    monkeypatch.setattr("asterism.domains.chat.retrieval.embedding_provider.embed_text", embed)
+    monkeypatch.setattr("asterism.domains.chat.retrieval.embedding_provider.embed_query", embed)
     monkeypatch.setattr("asterism.domains.chat.retrieval.vector_store.search", search)
     result = await search_knowledge(ctx(r, scope))
     assert [hit["file_id"] for hit in result["results"]] == [str(ids[0])]
@@ -310,7 +310,7 @@ async def test_file_revocation_during_retrieval_never_queries_or_returns_revoked
         ]
 
     query = AsyncMock(side_effect=vector)
-    monkeypatch.setattr("asterism.domains.chat.retrieval.embedding_provider.embed_text", embed)
+    monkeypatch.setattr("asterism.domains.chat.retrieval.embedding_provider.embed_query", embed)
     monkeypatch.setattr("asterism.domains.chat.retrieval.vector_store.search", query)
     with pytest.raises(BadDataException):
         await search_knowledge(ctx(r, scope))
@@ -360,7 +360,7 @@ async def test_general_attachment_retrieval_no_delegation_and_unavailable_servic
     assert scope.delegation.agent_ids == frozenset()
     r.chat = general
     embed = AsyncMock(side_effect=RuntimeError("service unavailable"))
-    monkeypatch.setattr("asterism.domains.chat.retrieval.embedding_provider.embed_text", embed)
+    monkeypatch.setattr("asterism.domains.chat.retrieval.embedding_provider.embed_query", embed)
     result = await search_knowledge(ctx(r, scope))
     assert result["results"] == [] and "unavailable" in result["message"]
     from asterism.domains.llm.schemas import Function, ToolCall

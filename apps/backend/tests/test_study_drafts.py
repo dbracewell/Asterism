@@ -477,7 +477,7 @@ async def test_source_reader_skips_blank_and_stale_chunks():
 
 @pytest.mark.asyncio
 async def test_lancedb_reads_file_chunks_in_order_for_one_owner_and_generation(tmp_path: Path):
-    store = LanceDbVectorStore(tmp_path / "vectors", dimension=2, max_concurrency=1)
+    store = LanceDbVectorStore(tmp_path / "vectors", dimension=2, model_key="test", max_concurrency=1)
     await store.add(
         [
             VectorChunk("c2", "user-a", "file-a", 1, 2, "text", "third", [1.0, 0.0]),

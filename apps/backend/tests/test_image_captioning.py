@@ -208,6 +208,8 @@ async def test_caption_job_transitions_directly_to_ready_and_enables_text_retrie
         async def embed_text(self, _texts: list[str]) -> list[list[float]]:
             return [[0.5, 0.5]]
 
+        embed_query = embed_passage = embed_text
+
     async def fake_caption(*_args: object, **_kwargs: object) -> CaptionResult:
         return CaptionResult(
             text="A bar chart of quarterly revenue",
@@ -237,7 +239,7 @@ async def test_caption_job_transitions_directly_to_ready_and_enables_text_retrie
         )
         assert captioning is not None
         assert captioning.status == KnowledgeExtractionStatus.READY
-        assert captioning.payload == {"text": "A bar chart of quarterly revenue"}
+        assert captioning.payload == {"text": "A bar chart of quarterly revenue", "captioner": "local:"}
         assert captioning.provider == "local"
         assert captioning.model == "local/smolvlm2"
         assert updated.searchable is True

@@ -56,7 +56,7 @@ async def _ranked_ids(user_id: str, project_id: uuid.UUID | None, prompt: str, l
     if not prompt.strip():
         return []
     try:
-        [vector] = await embedding_provider.embed_text([prompt])
+        [vector] = await embedding_provider.embed_query([prompt])
         return await memory_vector_store.search(user_id=user_id, project_id=project_id, vector=vector, limit=limit)
     except Exception as error:
         logger.info(f"Memories for user {user_id} ranked by recency ({type(error).__name__})")

@@ -62,8 +62,9 @@ any setting does.
   3. Groups and budgets
   4. Usage time zone
   5. Tools and search
-  6. Knowledge: captioning, with EPIC-99's warning that images are not found
-     without captions
+  6. Knowledge: captioning. It stays off by default (decided 2026-11-24); the
+     step says plainly that while captioning is off, images can't be found in
+     search
   7. Skills, canvas, memory, image generation, ChatGPT plans, compaction (each one
      a switch with an explanation)
   8. Theme

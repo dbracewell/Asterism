@@ -121,7 +121,8 @@ async def test_artifact_reports_one_extraction_per_kind(extraction_session):
     assert described.extractions["text_extraction"].payload.content == "hello world"
     assert described.extractions["text_extraction"].provider == "markitdown"
     assert described.extractions["embedding"].payload.text_ready is True
-    assert described.extractions["embedding"].payload.visual_ready is False
+    # Rows from before ADR-0079 still carry visual_ready; it is read and ignored.
+    assert not hasattr(described.extractions["embedding"].payload, "visual_ready")
 
 
 @pytest.mark.asyncio
@@ -308,7 +309,7 @@ async def test_retrieval_reads_only_the_artifact_row(extraction_session):
         allowed_file_ids=frozenset({file.id}),
         file_provenance=(),
     )
-    embeddings = SimpleNamespace(embed_text=AsyncMock(return_value=[[0.1]]))
+    embeddings = SimpleNamespace(embed_query=AsyncMock(return_value=[[0.1]]))
     vectors = SimpleNamespace(
         search=AsyncMock(
             return_value=[

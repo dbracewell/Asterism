@@ -2,11 +2,11 @@
 
 Ranks a small fixed corpus of passages in five languages for queries in the
 same and other languages, and reports top-1 accuracy, mean reciprocal rank and
-timing. With ``--clip-root`` it also runs the earlier CLIP model on the same
-corpus, for comparison. Provision the bundles first (see
+timing. ADR-0079 records its result for this model and for the CLIP model it
+replaced. Provision the bundle first (see
 docs/architecture/knowledge-retrieval.md), then run from apps/backend:
 
-    uv run python scripts/benchmark_knowledge_embeddings.py --model-root /path/to/e5 [--clip-root /path/to/clip]
+    uv run python scripts/benchmark_knowledge_embeddings.py --model-root /path/to/e5
 """
 
 import argparse
@@ -18,7 +18,6 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from asterism.domains.knowledge.e5_embedding import OnnxE5EmbeddingProvider
-from asterism.domains.knowledge.embedding import OnnxClipEmbeddingProvider, embedding_model
 
 # (topic, language, passage). Each query names the topic it should find.
 PASSAGES: list[tuple[str, str, str]] = [
@@ -93,25 +92,20 @@ async def run(name: str, initialize: Callable[[], Awaitable[None]], passages: Em
     return Result(name, initialize_seconds, embed_seconds, top1 / count, reciprocal / count, cross_hits / cross_total)
 
 
-async def main(model_root: Path, clip_root: Path | None) -> list[Result]:
+async def main(model_root: Path) -> list[Result]:
     e5 = OnnxE5EmbeddingProvider(model_root)
-    results = [await run("multilingual-e5-small", e5.initialize, e5.embed_passage, e5.embed_query)]
-    if clip_root is not None:
-        clip = OnnxClipEmbeddingProvider(clip_root, pinned_model=embedding_model)
-        results.append(await run("clip-vit-base-patch32", clip.initialize, clip.embed_text, clip.embed_text))
-    return results
+    return [await run("multilingual-e5-small", e5.initialize, e5.embed_passage, e5.embed_query)]
 
 
 def arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--model-root", type=Path, required=True, help="The multilingual-e5-small bundle")
-    parser.add_argument("--clip-root", type=Path, help="Optionally, the earlier CLIP bundle to compare with")
     return parser.parse_args()
 
 
 if __name__ == "__main__":
     options = arguments()
-    for result in asyncio.run(main(options.model_root, options.clip_root)):
+    for result in asyncio.run(main(options.model_root)):
         print(
             f"{result.name}: top-1 {result.top1:.2f}, MRR {result.mrr:.2f}, "
             f"cross-language top-1 {result.top1_cross_language:.2f}, "

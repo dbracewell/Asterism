@@ -54,6 +54,9 @@ async def init_system() -> None:
     # reader; this is where the two are composed.
     await initialize_knowledge_runtime(FileSourceReader())
     logger.info("Knowledge vector store initialized.")
+    from asterism.domains.knowledge.processing import retire_previous_embedding_model
+
+    await retire_previous_embedding_model()
     from asterism.domains.data_export.service import recover_exports
 
     await recover_exports()
