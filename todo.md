@@ -205,10 +205,10 @@ Complete (2026-11-24) once US-99.4 merges; archive with EPIC-96 and EPIC-97.
   - [x] Build the step frame from the section registry: explanation, embedded section, Skip and Next, and resume where the admin left off.
   - [x] Fold the existing provider, import and default-model steps (EPIC-48) into it.
   - [x] Unit tests and Playwright: a fresh install goes through every step, skips some, and resumes after a reload.
-- [ ] US-101.3: Explanations and summary
-  - [ ] Write each step's explanation: what it does, its default, what users see when it is off, and a link to the guide page.
-  - [ ] Add the summary page and Admin Settings → Setup.
-  - [ ] Add the first backup step: explain `SYSTEM_KEY`, run or show the backup command, and record that the step was done.
+- [x] US-101.3: Explanations and summary
+  - [x] Write each step's explanation: what it does, its default, what users see when it is off, and a link to the guide page.
+  - [x] Add the summary page and Admin Settings → Setup.
+  - [x] Add the first backup step: explain `SYSTEM_KEY`, run or show the backup command, and record that the step was done.
 - [ ] US-101.4: Docs
   - [ ] Rewrite `docs/guide/08-for-administrators/first-time-setup.md` around the walkthrough, with refreshed screenshots (`pnpm docs:check`), and update `docs/deployment.md` §5.
   - [ ] Release notes: Behavior (setup walkthrough); Image (the `setup` command).

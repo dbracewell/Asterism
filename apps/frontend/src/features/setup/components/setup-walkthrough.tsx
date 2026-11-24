@@ -15,9 +15,16 @@ import {
 } from "@/lib/client/@tanstack/react-query.gen";
 import { cn, errorMessage } from "@/lib/utils";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { CheckIcon } from "lucide-react";
+import { CheckIcon, ExternalLinkIcon } from "lucide-react";
 import type { ReactNode } from "react";
-import { nextStep, SETUP_STEPS, type SetupStep } from "../walkthrough";
+import Link from "next/link";
+import {
+  nextStep,
+  SETUP_STEPS,
+  stepGuideHref,
+  type SetupStep,
+} from "../walkthrough";
+import { SetupBackupStep } from "./setup-backup-step";
 
 const STATE_LABEL = { done: "Done", skipped: "Skipped" } as const;
 
@@ -119,6 +126,18 @@ function Walkthrough({ panes }: { panes: Record<string, ReactNode> }) {
             </li>
           ))}
         </ol>
+        <Button
+          variant="ghost"
+          size="sm"
+          aria-current={current ? undefined : "step"}
+          className={cn(
+            "h-auto w-full justify-start py-1.5 font-normal",
+            !current && "bg-accent font-medium",
+          )}
+          onClick={() => go(null)}
+        >
+          Summary
+        </Button>
       </nav>
       <div className="flex min-w-0 flex-1 flex-col gap-4">
         {current ? (
@@ -140,6 +159,7 @@ function Walkthrough({ panes }: { panes: Record<string, ReactNode> }) {
               {current.whenOff && (
                 <p className="text-sm font-medium">{current.whenOff}</p>
               )}
+              <GuideLink step={current} />
               <div className="flex flex-wrap items-center gap-2">
                 <Button
                   disabled={record.isPending}
@@ -165,26 +185,108 @@ function Walkthrough({ panes }: { panes: Record<string, ReactNode> }) {
                 </p>
               )}
             </section>
-            <div className="min-w-0">{panes[current.id]}</div>
+            <div className="min-w-0">
+              {current.id === "backup" ? (
+                <SetupBackupStep />
+              ) : (
+                panes[current.id]
+              )}
+            </div>
           </>
         ) : (
-          <section
-            aria-labelledby="setup-finished"
-            className="rounded-surface flex flex-col gap-2 border p-4"
-          >
-            <h2 id="setup-finished" className="text-base font-semibold">
-              {reviewed === SETUP_STEPS.length
-                ? "Every step has been reviewed"
-                : "Setup summary"}
-            </h2>
-            <p className="text-sm">
-              You can return to any step from the list, or change a setting in
-              its own section of Admin Settings at any time.
-            </p>
-          </section>
+          <SetupSummary states={states} onOpen={go} />
         )}
       </div>
     </div>
+  );
+}
+
+function GuideLink({ step }: { step: SetupStep }) {
+  const href = stepGuideHref(step);
+  if (!href) return null;
+  const className =
+    "text-primary w-fit text-sm underline-offset-4 hover:underline";
+  return href.startsWith("/") ? (
+    <Link href={href} className={className}>
+      Read more in the guide: {step.title}
+    </Link>
+  ) : (
+    <a href={href} target="_blank" rel="noreferrer" className={className}>
+      Read more: {step.title}
+      <ExternalLinkIcon aria-hidden className="ml-1 inline size-3.5" />
+      <span className="sr-only"> (opens in a new tab)</span>
+    </a>
+  );
+}
+
+/** Where setup stands: what is left, what was skipped and what was reviewed. */
+function SetupSummary({
+  states,
+  onOpen,
+}: {
+  states: Record<string, SetupStepState>;
+  onOpen: (step: SetupStep) => void;
+}) {
+  const groups = [
+    {
+      id: "left",
+      title: "Not reviewed",
+      steps: SETUP_STEPS.filter((step) => !states[step.id]),
+    },
+    {
+      id: "skipped",
+      title: "Skipped",
+      steps: SETUP_STEPS.filter((step) => states[step.id]?.state === "skipped"),
+    },
+    {
+      id: "done",
+      title: "Reviewed",
+      steps: SETUP_STEPS.filter((step) => states[step.id]?.state === "done"),
+    },
+  ].filter((group) => group.steps.length);
+  const finished = SETUP_STEPS.every((step) => states[step.id]);
+  return (
+    <section
+      aria-labelledby="setup-summary"
+      className="rounded-surface flex flex-col gap-4 border p-4"
+    >
+      <div className="flex flex-col gap-1">
+        <h2 id="setup-summary" className="text-base font-semibold">
+          {finished ? "Every step has been reviewed" : "Setup summary"}
+        </h2>
+        <p className="text-sm">
+          {finished
+            ? "Asterism is set up. Change any setting later in its own section of Admin Settings, or reopen a step here."
+            : "Steps not reviewed or skipped keep their defaults. Open one to review it now, or come back to Admin Settings → Setup later."}
+        </p>
+      </div>
+      {groups.map((group) => (
+        <div key={group.id} className="flex flex-col gap-1">
+          <h3 id={`setup-summary-${group.id}`} className="text-sm font-medium">
+            {group.title} ({group.steps.length})
+          </h3>
+          <ul
+            aria-labelledby={`setup-summary-${group.id}`}
+            className="flex flex-wrap gap-1"
+          >
+            {group.steps.map((step) => (
+              <li key={step.id}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onOpen(step)}
+                >
+                  {step.title}
+                </Button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
+      <Button asChild className="w-fit">
+        <Link href="/">Start chatting</Link>
+      </Button>
+    </section>
   );
 }
 

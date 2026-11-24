@@ -12,6 +12,9 @@ async function routeProgress(page: Page) {
   await page.route("**/api/py/**", (route) =>
     route.fulfill({ status: 503, json: { detail: "Fixture unavailable" } }),
   );
+  await page.route("**/api/py/status", (route) =>
+    route.fulfill({ json: { last_backup: null } }),
+  );
   await page.route("**/api/py/settings/app/setup", (route) =>
     route.fulfill({ json: { steps } }),
   );
@@ -36,7 +39,7 @@ test("an administrator skips, reviews and resumes setup steps", async ({
   await page.goto("/e2e/planned-settings?setting=setup");
 
   const steps = page.getByRole("navigation", { name: "Setup steps" });
-  await expect(steps.getByRole("status")).toHaveText(/1 of 14 steps reviewed/);
+  await expect(steps.getByRole("status")).toHaveText(/1 of 15 steps reviewed/);
   // The first-run provider steps already reviewed Providers.
   await expect(
     steps.getByRole("button", { name: /Providers and models/ }),
@@ -66,13 +69,47 @@ test("an administrator skips, reviews and resumes setup steps", async ({
   await expect(
     current(page).getByRole("heading", { name: "Tools and search" }),
   ).toBeVisible();
-  await expect(steps.getByRole("status")).toHaveText(/3 of 14 steps reviewed/);
+  await expect(steps.getByRole("status")).toHaveText(/3 of 15 steps reviewed/);
 
   // Any step can be opened from the list; captioning says what search needs.
   await steps.getByRole("button", { name: /Image captioning/ }).click();
   await expect(current(page)).toContainText(
     "While it is off, pictures are kept and can be attached to chats, but search can't find them.",
   );
+  await expect(
+    current(page).getByRole("link", {
+      name: "Read more in the guide: Image captioning",
+    }),
+  ).toHaveAttribute(
+    "href",
+    "/help/guide/08-for-administrators/policies#image-captioning",
+  );
+
+  // The last step is the first backup; the server says none was taken.
+  await steps.getByRole("button", { name: /First backup/ }).click();
+  await expect(
+    page.getByRole("heading", {
+      name: "Keep the secrets apart from the backups",
+    }),
+  ).toBeVisible();
+  await expect(page.getByText("No backup has been recorded yet")).toBeVisible();
+  await page.getByRole("button", { name: "Next" }).click();
+
+  // The summary sorts what is left from what was skipped or reviewed.
+  await steps.getByRole("button", { name: "Summary" }).click();
+  await expect(page.getByRole("list", { name: "Skipped (1)" })).toContainText(
+    "Groups and budgets",
+  );
+  await expect(page.getByRole("list", { name: "Reviewed (3)" })).toContainText(
+    "First backup",
+  );
+  await page
+    .getByRole("list", { name: "Skipped (1)" })
+    .getByRole("button", { name: "Groups and budgets" })
+    .click();
+  await expect(
+    current(page).getByRole("heading", { name: "Groups and budgets" }),
+  ).toBeVisible();
 });
 
 test("the walkthrough fits a phone screen", async ({ page }) => {

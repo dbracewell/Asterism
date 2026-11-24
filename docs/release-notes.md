@@ -74,6 +74,10 @@ Unreleased into its version and date.
   resumes at the first step nobody reviewed. Finishing the first-run provider
   steps now offers **Continue setup** as well as **Start chatting**. Setup
   progress is not included in a settings export.
+- Each setup step links to its page in the user guide. The last step, **First
+  backup**, shows the backup and verify commands and the last backup the server
+  recorded, and explains why `SYSTEM_KEY` must be kept apart from backups. A
+  summary lists the steps not reviewed, skipped and reviewed.
 - Ask for flashcards or a quiz in a project chat, and the assistant drafts a
   deck or a practice quiz from the conversation and the project's files. A card
   under the reply shows the draft to edit, save to Study or dismiss; nothing is

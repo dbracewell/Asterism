@@ -3,15 +3,18 @@ import {
   QueryClient,
   QueryClientProvider,
 } from "@tanstack/react-query";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, expect, it, vi } from "vitest";
-import { SETUP_STEPS } from "../walkthrough";
+import { SETUP_STEPS, stepGuideHref } from "../walkthrough";
+import { BACKUP_COMMAND } from "./setup-backup-step";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { SetupWalkthrough } from "./setup-walkthrough";
 
 const mocks = vi.hoisted(() => ({
   get: vi.fn(),
   record: vi.fn(),
+  status: vi.fn(),
   replace: vi.fn(),
   search: "t=admin&setting=setup",
   role: "admin",
@@ -32,6 +35,10 @@ vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
   }),
   setupProgressGetQueryKey: () => [{ _id: "setupProgressGet" }],
   setupStepUpdateMutation: () => ({ mutationFn: mocks.record }),
+  statusGetOptions: () => ({
+    queryKey: [{ _id: "statusGet" }],
+    queryFn: () => mocks.status(),
+  }),
 }));
 
 const panes = Object.fromEntries(
@@ -45,7 +52,9 @@ function setup() {
   });
   render(
     <QueryClientProvider client={cache}>
-      <SetupWalkthrough panes={panes} />
+      <TooltipProvider>
+        <SetupWalkthrough panes={panes} />
+      </TooltipProvider>
     </QueryClientProvider>,
   );
 }
@@ -60,6 +69,7 @@ beforeEach(() => {
   mocks.replace.mockReset();
   mocks.get.mockReset().mockResolvedValue(stepped("providers"));
   mocks.record.mockReset();
+  mocks.status.mockReset().mockResolvedValue({ last_backup: null });
 });
 
 it("is for administrators only", () => {
@@ -127,4 +137,80 @@ it("ends at a summary once every step is reviewed", async () => {
       name: "Every step has been reviewed",
     }),
   ).toBeVisible();
+  expect(screen.getByRole("link", { name: "Start chatting" })).toHaveAttribute(
+    "href",
+    "/",
+  );
+});
+
+it("every step explains itself and links to where to read more", () => {
+  for (const step of SETUP_STEPS) {
+    expect(step.explanation.length, step.id).toBeGreaterThan(40);
+    expect(stepGuideHref(step), step.id).toMatch(
+      /^(\/help\/guide\/|https:\/\/github\.com\/)/,
+    );
+  }
+});
+
+it("shows each step's guide link", async () => {
+  mocks.search = "t=admin&setting=setup&step=memory";
+  setup();
+  expect(
+    await screen.findByRole("link", { name: "Read more in the guide: Memory" }),
+  ).toHaveAttribute(
+    "href",
+    "/help/guide/08-for-administrators/policies#memory",
+  );
+});
+
+it("the summary sorts steps by state and opens one", async () => {
+  mocks.search = "t=admin&setting=setup&step=summary";
+  mocks.get.mockResolvedValue({
+    steps: {
+      providers: { state: "done", at: 1 },
+      usage: { state: "skipped", at: 1 },
+    },
+  });
+  setup();
+  const skipped = await screen.findByRole("list", { name: "Skipped (1)" });
+  expect(skipped).toHaveTextContent("Usage time zone");
+  expect(screen.getByRole("list", { name: "Reviewed (1)" })).toHaveTextContent(
+    "Providers and models",
+  );
+  expect(
+    screen.getByRole("list", {
+      name: `Not reviewed (${SETUP_STEPS.length - 2})`,
+    }),
+  ).toHaveTextContent("First backup");
+  await userEvent
+    .setup()
+    .click(within(skipped).getByRole("button", { name: "Usage time zone" }));
+  expect(mocks.replace).toHaveBeenCalledWith(
+    "/settings?t=admin&setting=setup&step=usage",
+  );
+});
+
+it("the backup step explains SYSTEM_KEY and shows the last backup", async () => {
+  mocks.search = "t=admin&setting=setup&step=backup";
+  setup();
+  expect(
+    await screen.findByText(
+      /A backup can only be restored with the SYSTEM_KEY it was made with, and backups don't contain it\./,
+    ),
+  ).toBeVisible();
+  expect(screen.getByText(BACKUP_COMMAND)).toBeVisible();
+  expect(
+    await screen.findByText(/No backup has been recorded yet/),
+  ).toBeVisible();
+  mocks.status.mockResolvedValue({
+    last_backup: {
+      created_at: 1_700_000_000,
+      archive: "asterism-backup-1.tar.gz",
+      size_bytes: 2048,
+    },
+  });
+  await userEvent
+    .setup()
+    .click(screen.getByRole("button", { name: "Check again" }));
+  expect(await screen.findByText(/asterism-backup-1\.tar\.gz/)).toBeVisible();
 });
