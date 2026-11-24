@@ -45,7 +45,8 @@ Unreleased into its version and date.
 
 - Images are found in search only through their caption. With image captioning
   off, images are stored and can be attached to chats, but search won't find
-  them.
+  them. Admin Settings → Image captioning says so, and counts the images that
+  have no caption.
 
 - User Settings no longer shows settings for a feature the admin has turned off
   for that person: the Skills and ChatGPT sections, Use memory and Canvas.

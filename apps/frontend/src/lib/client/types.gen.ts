@@ -3814,6 +3814,26 @@ export type ImageProviderStatus = {
 };
 
 /**
+ * ImageSearchStatus
+ *
+ * How many images search can't find, because they have no caption (ADR-0079).
+ *
+ * Attributes:
+ * uncaptioned_images: Current images with no caption, so not searchable.
+ * waiting_for_caption: Of those, the ones whose caption is queued or being made.
+ */
+export type ImageSearchStatus = {
+  /**
+   * Uncaptioned Images
+   */
+  uncaptioned_images: number;
+  /**
+   * Waiting For Caption
+   */
+  waiting_for_caption: number;
+};
+
+/**
  * ImageTestRequest
  *
  * An administrator's test generation: one square image.
@@ -17254,6 +17274,33 @@ export type AppKnowledgeProcessingProfileUpdateResponses = {
 
 export type AppKnowledgeProcessingProfileUpdateResponse =
   AppKnowledgeProcessingProfileUpdateResponses[keyof AppKnowledgeProcessingProfileUpdateResponses];
+
+export type AppImageSearchStatusData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/settings/app/image-search/status";
+};
+
+export type AppImageSearchStatusErrors = {
+  /**
+   * Not found
+   */
+  404: ErrorDetail;
+};
+
+export type AppImageSearchStatusError =
+  AppImageSearchStatusErrors[keyof AppImageSearchStatusErrors];
+
+export type AppImageSearchStatusResponses = {
+  /**
+   * Successful Response
+   */
+  200: ImageSearchStatus;
+};
+
+export type AppImageSearchStatusResponse =
+  AppImageSearchStatusResponses[keyof AppImageSearchStatusResponses];
 
 export type AppKnowledgeEmbeddingStatusData = {
   body?: never;

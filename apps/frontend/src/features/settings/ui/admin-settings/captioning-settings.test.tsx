@@ -4,12 +4,13 @@ import userEvent from "@testing-library/user-event";
 import { ReactNode, useState } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { CaptioningSettings } from "./captioning-settings";
+import { CaptioningSettings, uncaptionedSummary } from "./captioning-settings";
 
 const mocks = vi.hoisted(() => ({
   getConfiguration: vi.fn(),
   getModelStatus: vi.fn(),
   getEmbeddingStatus: vi.fn(),
+  getImageSearch: vi.fn(),
   update: vi.fn(),
   download: vi.fn(),
   cancel: vi.fn(),
@@ -51,6 +52,10 @@ vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
     queryKey: ["appKnowledgeEmbeddingStatus"],
     queryFn: mocks.getEmbeddingStatus,
   }),
+  appImageSearchStatusOptions: () => ({
+    queryKey: ["appImageSearchStatus"],
+    queryFn: mocks.getImageSearch,
+  }),
   appCaptioningUpdateMutation: () => ({ mutationFn: mocks.update }),
   appCaptionModelDownloadMutation: () => ({ mutationFn: mocks.download }),
   appCaptionModelCancelMutation: () => ({ mutationFn: mocks.cancel }),
@@ -76,6 +81,10 @@ function renderSettings() {
 describe("captioning settings", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.getImageSearch.mockResolvedValue({
+      uncaptioned_images: 0,
+      waiting_for_caption: 0,
+    });
     mocks.getConfiguration.mockResolvedValue({
       mode: "disabled",
       provider_model_id: null,
@@ -177,5 +186,71 @@ describe("captioning settings", () => {
       ),
     ).toBeVisible();
     expect(screen.getByText(/Image captioning is one part/)).toBeVisible();
+  });
+});
+
+describe("images need captions to be found (US-99.3)", () => {
+  beforeEach(() => {
+    mocks.getConfiguration.mockResolvedValue({
+      mode: "disabled",
+      provider_model_id: null,
+      updated_at: 1,
+    });
+    mocks.getModelStatus.mockResolvedValue({ status: "idle" });
+    mocks.getEmbeddingStatus.mockResolvedValue({ status: "ready" });
+  });
+
+  it("says search finds images only by caption, and so does Disabled", async () => {
+    mocks.getImageSearch.mockResolvedValue({
+      uncaptioned_images: 3,
+      waiting_for_caption: 0,
+    });
+    renderSettings();
+    expect(
+      await screen.findByText(/Search finds images only by their caption/),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("radio", { name: "Disabled" }),
+    ).toHaveAccessibleDescription("No captions, so search can't find images.");
+    expect(await screen.findByRole("status")).toHaveTextContent(
+      "3 images have no caption, so search can't find them.",
+    );
+  });
+
+  it("shows no count when every image has a caption", async () => {
+    mocks.getImageSearch.mockResolvedValue({
+      uncaptioned_images: 0,
+      waiting_for_caption: 0,
+    });
+    renderSettings();
+    await screen.findByText(/Search finds images only by their caption/);
+    await waitFor(() => expect(mocks.getImageSearch).toHaveBeenCalled());
+    expect(screen.queryByText(/have no caption|has no caption/)).toBeNull();
+  });
+
+  it.each([
+    [1, 0, "1 image has no caption, so search can't find it."],
+    [
+      1,
+      1,
+      "1 image has no caption, so search can't find it. It is waiting for one.",
+    ],
+    [
+      4,
+      4,
+      "4 images have no caption, so search can't find them. They are all waiting for one.",
+    ],
+    [
+      4,
+      1,
+      "4 images have no caption, so search can't find them. 1 of them is waiting for one.",
+    ],
+    [
+      4,
+      2,
+      "4 images have no caption, so search can't find them. 2 of them are waiting for one.",
+    ],
+  ])("summarises %i uncaptioned, %i waiting", (count, waiting, text) => {
+    expect(uncaptionedSummary(count, waiting)).toBe(text);
   });
 });

@@ -37,6 +37,9 @@ import type {
   AppCompactionUpdateData,
   AppCompactionUpdateErrors,
   AppCompactionUpdateResponses,
+  AppImageSearchStatusData,
+  AppImageSearchStatusErrors,
+  AppImageSearchStatusResponses,
   AppKnowledgeEmbeddingStatusData,
   AppKnowledgeEmbeddingStatusErrors,
   AppKnowledgeEmbeddingStatusResponses,
@@ -4169,6 +4172,29 @@ export class ApiClient extends HeyApiClient {
         "Content-Type": "application/json",
         ...options.headers,
       },
+    });
+  }
+
+  /**
+   * Count images that search can't find without a caption
+   *
+   * Images are found only by their caption (ADR-0079); count those without one.
+   */
+  public appImageSearchStatus<ThrowOnError extends boolean = false>(
+    options?: Options<AppImageSearchStatusData, ThrowOnError>,
+  ): RequestResult<
+    AppImageSearchStatusResponses,
+    AppImageSearchStatusErrors,
+    ThrowOnError
+  > {
+    return (options?.client ?? this.client).get<
+      AppImageSearchStatusResponses,
+      AppImageSearchStatusErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/settings/app/image-search/status",
+      ...options,
     });
   }
 

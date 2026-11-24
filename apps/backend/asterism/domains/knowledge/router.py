@@ -29,11 +29,13 @@ from .processing import (
     update_processing_profile_and_reprocess,
 )
 from .processing_schemas import (
+    ImageSearchStatus,
     KnowledgeCaptionConfiguration,
     KnowledgeCaptionConfigurationUpdate,
     KnowledgeProcessingProfileUpdate,
     KnowledgeReprocessSummary,
 )
+from .queries import select_uncaptioned_image_counts
 
 knowledge_router = APIRouter(
     prefix="/settings",
@@ -88,6 +90,18 @@ async def update_knowledge_processing_profile(
 ) -> KnowledgeReprocessSummary:
     """Update the knowledge processing profile and reprocess affected files."""
     return await update_processing_profile_and_reprocess(payload=payload, session=session)
+
+
+@knowledge_router.get(
+    "/app/image-search/status",
+    response_model=ImageSearchStatus,
+    operation_id="appImageSearchStatus",
+    summary="Count images that search can't find without a caption",
+)
+async def get_image_search_status(user: AdminUserDep, session: DBSessionDep) -> ImageSearchStatus:
+    """Images are found only by their caption (ADR-0079); count those without one."""
+    uncaptioned, waiting = (await session.execute(select_uncaptioned_image_counts())).one()
+    return ImageSearchStatus(uncaptioned_images=uncaptioned, waiting_for_caption=waiting)
 
 
 @knowledge_router.get(

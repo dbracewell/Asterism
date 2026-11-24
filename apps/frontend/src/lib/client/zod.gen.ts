@@ -1569,6 +1569,20 @@ export const zImageProviderStatus = z.object({
 });
 
 /**
+ * ImageSearchStatus
+ *
+ * How many images search can't find, because they have no caption (ADR-0079).
+ *
+ * Attributes:
+ * uncaptioned_images: Current images with no caption, so not searchable.
+ * waiting_for_caption: Of those, the ones whose caption is queued or being made.
+ */
+export const zImageSearchStatus = z.object({
+  uncaptioned_images: z.int().gte(0),
+  waiting_for_caption: z.int().gte(0),
+});
+
+/**
  * ImageTestRequest
  *
  * An administrator's test generation: one square image.
@@ -7060,6 +7074,11 @@ export const zAppKnowledgeProcessingProfileUpdateBody =
  */
 export const zAppKnowledgeProcessingProfileUpdateResponse =
   zKnowledgeReprocessSummary;
+
+/**
+ * Successful Response
+ */
+export const zAppImageSearchStatusResponse = zImageSearchStatus;
 
 /**
  * Successful Response
