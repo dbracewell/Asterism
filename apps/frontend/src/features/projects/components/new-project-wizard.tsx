@@ -15,6 +15,7 @@ import { FieldGroup } from "@/components/ui/field";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { PROJECT_ACCENTS } from "@/features/projects/project-accent";
+import { useFeature } from "@/features/availability/queries";
 import { client } from "@/lib/api";
 import type { ProjectAreas, ProjectCreate, UserFile } from "@/lib/client";
 import { projectCreateMutation } from "@/lib/client/@tanstack/react-query.gen";
@@ -380,6 +381,11 @@ function StartStep({
   onChoose: (id: StartingPointId) => void;
   disabled: boolean;
 }) {
+  // No agent workspace to offer while the admin has sub-agents off (EPIC-97).
+  const delegation = useFeature("delegation").available;
+  const offered = (Object.keys(STARTING_POINTS) as StartingPointId[]).filter(
+    (id) => delegation || id !== "agents",
+  );
   return (
     <RadioGroup
       aria-label="Starting point"
@@ -388,7 +394,7 @@ function StartStep({
       disabled={disabled}
       className="gap-3"
     >
-      {(Object.keys(STARTING_POINTS) as StartingPointId[]).map((id) => {
+      {offered.map((id) => {
         const point = STARTING_POINTS[id];
         return (
           <div
@@ -436,6 +442,7 @@ function ReviewStep({
   onAreas: (areas: ProjectAreas) => void;
 }) {
   const areas = value.areas ?? ALL_AREAS;
+  const delegation = useFeature("delegation").available;
   const none = <span className="text-muted-foreground">None</span>;
   return (
     <div className="flex flex-col gap-5">
@@ -482,11 +489,13 @@ function ReviewStep({
             )}
           </Row>
         )}
-        <Row term="Sub-agents">
-          None selected yet.
-          {areas.sub_agents &&
-            " Choose them in the Sub-agents tab after creating the project."}
-        </Row>
+        {delegation && (
+          <Row term="Sub-agents">
+            None selected yet.
+            {areas.sub_agents &&
+              " Choose them in the Sub-agents tab after creating the project."}
+          </Row>
+        )}
       </dl>
       <ProjectAreaSwitches
         value={areas}

@@ -7,7 +7,8 @@ export type Feature =
   | "image_generation"
   | "skills"
   | "chatgpt_plans"
-  | "delegation";
+  | "delegation"
+  | "course_memory";
 
 const FEATURES: Feature[] = [
   "memory",
@@ -16,7 +17,11 @@ const FEATURES: Feature[] = [
   "skills",
   "chatgpt_plans",
   "delegation",
+  "course_memory",
 ];
+
+/** Every feature, for specs that exercise features rather than policy. */
+export const ALL_FEATURES: readonly Feature[] = FEATURES;
 
 /** The availability body with the given features on and the rest off. */
 export function availabilityBody(on: Iterable<Feature>) {

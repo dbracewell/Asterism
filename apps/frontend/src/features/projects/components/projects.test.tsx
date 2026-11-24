@@ -7,6 +7,7 @@ import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, expect, it, vi } from "vitest";
 import { ProjectList } from "./project-list";
+import { turnOff } from "@/test/availability";
 import { ProjectWorkspace } from "./project-workspace";
 import { WorkspaceChats } from "./workspace-chats";
 
@@ -22,6 +23,7 @@ const mocks = vi.hoisted(() => ({
   selectedAgents: 0,
 }));
 // The memory sections have their own tests (US-93.3).
+vi.mock("@/features/availability/queries", () => import("@/test/availability"));
 vi.mock("@/features/memory/components/memory-sections", () => ({
   YourMemorySection: () => null,
   ProjectMemorySection: () => null,
@@ -116,6 +118,7 @@ beforeEach(() => {
   mocks.chats.mockResolvedValue({ chats: [], total: 0 });
   mocks.search = "";
   mocks.selectedAgents = 0;
+  turnOff();
   vi.spyOn(window.history, "pushState").mockImplementation(() => {});
 });
 it("shows loading, retry, empty, and searchable paginated project results", async () => {
@@ -452,4 +455,24 @@ it("locks a course project's sub-agent selection", async () => {
   expect(
     screen.queryByRole("region", { name: "Available sub-agents" }),
   ).not.toBeInTheDocument();
+});
+
+it("drops the Sub-agents tab and switch while the admin has sub-agents off (EPIC-97)", async () => {
+  turnOff("delegation");
+  mocks.search = "tab=settings";
+  setup(<ProjectWorkspace projectId="p" />);
+  await screen.findByRole("tab", { name: "Settings" });
+  await waitFor(() =>
+    expect(screen.queryByRole("tab", { name: "Sub-agents" })).toBeNull(),
+  );
+  expect(screen.queryByRole("switch", { name: "Sub-agents" })).toBeNull();
+});
+
+it("keeps the Sub-agents tab for a project with selections while they are off (EPIC-97)", async () => {
+  turnOff("delegation");
+  mocks.selectedAgents = 2;
+  setup(<ProjectWorkspace projectId="p" />);
+  expect(
+    await screen.findByRole("tab", { name: "Sub-agents" }),
+  ).toBeInTheDocument();
 });

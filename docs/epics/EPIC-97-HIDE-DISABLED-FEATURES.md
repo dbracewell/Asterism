@@ -81,13 +81,15 @@ Suggested order: US-97.1 → 97.2 → 97.3 → 97.4.
 
 ### US-97.3: Projects, agents and classes
 
-- [ ] Hide the project Sub-agents tab, Agents → Sub-agents and the General
+- [x] Hide the project Sub-agents tab, Agents → Sub-agents and the General
       sub-agents card when delegation is unavailable, unless the user has
       definitions, in which case use the kept-data line.
-- [ ] Hide the project memory section and the class memory switch when memory is
-      unavailable.
-- [ ] Hide the sub-agent skills picker when skills are off.
-- [ ] Tests.
+- [x] Hide the project memory section and the class memory switch when memory is
+      unavailable. The class switch reads a new `course_memory` entry in
+      `GET /availability` (memory on for any group), since the educator's own
+      group may be left out.
+- [x] Hide the sub-agent skills picker when skills are off.
+- [x] Tests.
 
 ### US-97.4: Help, tour and verification
 

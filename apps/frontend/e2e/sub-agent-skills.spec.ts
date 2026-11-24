@@ -7,6 +7,7 @@ import type {
   Message,
   SubAgentDefinition,
 } from "../src/lib/client";
+import { ALL_FEATURES, mockAvailability } from "./support/availability";
 
 /**
  * US-75.4: give a sub-agent a skill in its editor, then see it load the skill
@@ -151,6 +152,7 @@ for (const width of [1280, 390]) {
   }, info) => {
     await page.setViewportSize({ width, height: 900 });
     const state = await mockAgentSettings(page);
+    await mockAvailability(page, ALL_FEATURES);
     await page.goto("/e2e/agent-settings");
     await page.getByRole("button", { name: "Edit Reviewer" }).click();
     const dialog = page.getByRole("dialog");
@@ -312,6 +314,7 @@ async function openChat(page: Page) {
         socket.send(JSON.stringify({ type: "pong" }));
     });
   });
+  await mockAvailability(page, ALL_FEATURES);
   await page.goto("/e2e/chat-model-session");
   await expect(page.getByText("Review my diff.")).toBeVisible({
     timeout: 15_000,

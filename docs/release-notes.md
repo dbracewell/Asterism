@@ -29,7 +29,11 @@ Unreleased into its version and date.
   Someone who already has skills, a ChatGPT connection or memories saved still
   sees them, to review or delete. Admin Settings no longer lists the planned
   Code execution section. In chats, the composer's menu leaves out Skills and
-  typing "/" offers only templates while skills are off.
+  typing "/" offers only templates while skills are off. While sub-agents are
+  off, Settings → Agents, the project Sub-agents tab and switch, and the Agent
+  workspace starting point are hidden (kept for people who already have
+  sub-agents or selections). Project memory, a sub-agent's skills and a class's
+  memory switch follow the same rule.
 - Turning a feature on or off in Admin Settings (for example memory or canvas)
   now shows in User Settings and chats without reloading the page. Other people's
   open tabs catch up within about 30 seconds, when the tab is next focused.

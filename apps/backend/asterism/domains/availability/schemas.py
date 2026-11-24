@@ -25,3 +25,6 @@ class Availability(BaseModel):
     skills: FeatureAvailability
     chatgpt_plans: FeatureAvailability
     delegation: FeatureAvailability
+    # Whether memory is on for anyone, so an educator's class memory switch can
+    # mean something. The educator's own group may still be left out.
+    course_memory: FeatureAvailability

@@ -2,9 +2,11 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, expect, it, vi } from "vitest";
+import { turnOff } from "@/test/availability";
 import { NewProjectWizard } from "./new-project-wizard";
 
 const mocks = vi.hoisted(() => ({ create: vi.fn(), push: vi.fn() }));
+vi.mock("@/features/availability/queries", () => import("@/test/availability"));
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: mocks.push }),
 }));
@@ -53,6 +55,7 @@ const next = () =>
   userEvent.click(screen.getByRole("button", { name: "Next" }));
 
 beforeEach(() => {
+  turnOff();
   vi.clearAllMocks();
   mocks.create.mockResolvedValue({ id: "p" });
 });
@@ -222,4 +225,14 @@ it("reports a failed create and keeps the entries", async () => {
   );
   expect(screen.getByText("Taken")).toBeVisible();
   expect(mocks.push).not.toHaveBeenCalled();
+});
+
+it("offers no agent workspace while the admin has sub-agents off (EPIC-97)", async () => {
+  turnOff("delegation");
+  setup();
+  await userEvent.click(screen.getByRole("button", { name: "New project" }));
+  expect(
+    await screen.findByRole("radio", { name: "Ask my documents" }),
+  ).toBeInTheDocument();
+  expect(screen.queryByRole("radio", { name: "Agent workspace" })).toBeNull();
 });

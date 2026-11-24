@@ -14,6 +14,7 @@ const mocks = vi.hoisted(() => ({
   deleteClass: vi.fn(),
   push: vi.fn(),
 }));
+vi.mock("@/features/availability/queries", () => import("@/test/availability"));
 vi.mock("@/lib/api", () => ({ client: {} }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: mocks.push }) }));
 vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({

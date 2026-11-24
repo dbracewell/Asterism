@@ -4,9 +4,10 @@ import {
   QueryClient,
   QueryClientProvider,
 } from "@tanstack/react-query";
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, expect, it, vi } from "vitest";
+import { turnOff } from "@/test/availability";
 import { GeneralSubAgents } from "./general-sub-agents";
 
 const mocks = vi.hoisted(() => ({
@@ -14,6 +15,7 @@ const mocks = vi.hoisted(() => ({
   agents: vi.fn(),
   save: vi.fn(),
 }));
+vi.mock("@/features/availability/queries", () => import("@/test/availability"));
 vi.mock("@/lib/api", () => ({ client: {} }));
 vi.mock("sonner", () => ({ toast: { success: vi.fn() } }));
 vi.mock("@/features/help/components/help-topic", () => ({
@@ -72,6 +74,7 @@ function setup() {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  turnOff();
   mocks.agents.mockResolvedValue({
     items: [research, offline],
     total: 2,
@@ -169,4 +172,18 @@ it("keeps pending choices on a conflict until the user reloads", async () => {
   expect(
     within(dialog).getByRole("checkbox", { name: /Research/ }),
   ).toBeChecked();
+});
+
+it("is hidden while the admin has sub-agents off and none are chosen (EPIC-97)", async () => {
+  turnOff("delegation");
+  mocks.set.mockResolvedValue({
+    revision: 1,
+    agents: [],
+    delegation_allowed: false,
+  });
+  setup();
+  await waitFor(() => expect(mocks.set).toHaveBeenCalled());
+  expect(
+    screen.queryByRole("region", { name: "General chat sub-agents" }),
+  ).toBeNull();
 });

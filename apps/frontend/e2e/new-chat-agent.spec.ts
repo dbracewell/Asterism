@@ -1,4 +1,5 @@
 import { expect, test } from "./support/test";
+import { ALL_FEATURES, mockAvailability } from "./support/availability";
 
 test("edits the sole model-free main configuration and exposes unavailable worker bindings", async ({
   page,
@@ -79,6 +80,7 @@ test("edits the sole model-free main configuration and exposes unavailable worke
         json: { revision: 1, agents: [], delegation_allowed: true },
       }),
   );
+  await mockAvailability(page, ALL_FEATURES);
   await page.goto("/e2e/new-chat-agent");
   await expect(
     page.getByRole("button", { name: "Edit main configuration" }),

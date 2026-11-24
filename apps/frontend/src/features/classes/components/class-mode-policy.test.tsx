@@ -3,9 +3,11 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, expect, it, vi } from "vitest";
 import type { TaughtClass } from "@/lib/client";
+import { turnOff } from "@/test/availability";
 import { ClassModePolicy } from "./class-mode-policy";
 
 const mocks = vi.hoisted(() => ({ save: vi.fn() }));
+vi.mock("@/features/availability/queries", () => import("@/test/availability"));
 vi.mock("@/lib/api", () => ({ client: {} }));
 vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
   learningModeGetManyOptions: () => ({
@@ -36,7 +38,10 @@ function setup(overrides: Partial<TaughtClass> = {}) {
   return userEvent.setup();
 }
 
-beforeEach(() => vi.clearAllMocks());
+beforeEach(() => {
+  vi.clearAllMocks();
+  turnOff();
+});
 
 it("narrows the allowed modes and turns reveals off", async () => {
   const user = setup();
@@ -101,4 +106,17 @@ it("starts from a course that already has memory off", async () => {
       name: "Let Asterism use students' memories in this course",
     }),
   ).not.toBeChecked();
+});
+
+it("hides the memory switch while the admin has memory off, and keeps its value", async () => {
+  turnOff("course_memory");
+  const user = setup({ memory_enabled: false });
+  await screen.findByRole("checkbox", { name: "Standard" });
+  expect(
+    screen.queryByRole("switch", { name: /students' memories/ }),
+  ).toBeNull();
+  await user.click(screen.getByRole("button", { name: "Save policy" }));
+  await waitFor(() =>
+    expect(mocks.save.mock.calls[0]?.[0].body.memory_enabled).toBe(false),
+  );
 });

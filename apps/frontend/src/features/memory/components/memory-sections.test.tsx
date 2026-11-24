@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, expect, it, vi } from "vitest";
-import { YourMemorySection } from "./memory-sections";
+import { ProjectMemorySection, YourMemorySection } from "./memory-sections";
 
 const mocks = vi.hoisted(() => ({
   availability: vi.fn(),
@@ -115,4 +115,36 @@ it("shows Use memory when the admin turns memory on, without a reload", async ()
   const toggle = await screen.findByRole("checkbox", { name: "Use memory" });
   expect(toggle).toBeEnabled();
   expect(toggle).toBeChecked();
+});
+
+it("hides project memory while memory is off and the project has none", async () => {
+  mocks.adminSwitches.mockResolvedValue(memorySwitch(false));
+  render(
+    <QueryClientProvider
+      client={
+        new QueryClient({ defaultOptions: { queries: { retry: false } } })
+      }
+    >
+      <ProjectMemorySection projectId="p" />
+    </QueryClientProvider>,
+  );
+  await waitFor(() => expect(mocks.saved).toHaveBeenCalled());
+  expect(screen.queryByRole("region", { name: "Project memory" })).toBeNull();
+});
+
+it("keeps project memories reachable while memory is off", async () => {
+  mocks.adminSwitches.mockResolvedValue(memorySwitch(false));
+  mocks.saved.mockResolvedValue({ items: [], total: 2 });
+  render(
+    <QueryClientProvider
+      client={
+        new QueryClient({ defaultOptions: { queries: { retry: false } } })
+      }
+    >
+      <ProjectMemorySection projectId="p" />
+    </QueryClientProvider>,
+  );
+  expect(
+    await screen.findByRole("region", { name: "Project memory" }),
+  ).toBeInTheDocument();
 });

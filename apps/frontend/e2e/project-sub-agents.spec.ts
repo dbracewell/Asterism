@@ -1,4 +1,5 @@
 import { expect, test } from "./support/test";
+import { ALL_FEATURES, mockAvailability } from "./support/availability";
 const P = "11111111-1111-4111-8111-111111111111";
 const Q = "22222222-2222-4222-8222-222222222222";
 const R = "33333333-3333-4333-8333-333333333333";
@@ -100,6 +101,7 @@ test("selects workers separately for two projects, retains unavailable bindings,
       },
     });
   });
+  await mockAvailability(page, ALL_FEATURES);
   await page.goto(`/e2e/projects?view=project&tab=sub-agents&projectId=${P}`);
   const panel = page.getByRole("region", {
     name: "Project sub-agents",
@@ -115,6 +117,7 @@ test("selects workers separately for two projects, retains unavailable bindings,
   await expect(
     panel.getByText("Fixed model: Fixed model (Provider)").first(),
   ).toBeVisible();
+  await mockAvailability(page, ALL_FEATURES);
   await page.goto(`/e2e/projects?view=project&tab=sub-agents&projectId=${Q}`);
   await expect(
     panel.getByRole("button", { name: "Deselect Reviewer" }),
@@ -122,6 +125,7 @@ test("selects workers separately for two projects, retains unavailable bindings,
   await expect(
     panel.getByRole("button", { name: "Select Research", exact: true }),
   ).toBeVisible();
+  await mockAvailability(page, ALL_FEATURES);
   await page.goto(`/e2e/projects?view=project&tab=sub-agents&projectId=${P}`);
   conflict = true;
   await panel.getByRole("button", { name: "Deselect Research" }).click();
@@ -169,6 +173,7 @@ test("selects workers separately for two projects, retains unavailable bindings,
   workers = workers.filter((worker) => worker.id !== S);
   state[Q].ids = [];
   state[Q].revision++;
+  await mockAvailability(page, ALL_FEATURES);
   await page.goto(`/e2e/projects?view=project&tab=sub-agents&projectId=${Q}`);
   await expect(panel.getByText("No selected sub-agents")).toBeVisible();
   await expect(panel.getByRole("button", { name: /Reviewer/ })).toHaveCount(0);

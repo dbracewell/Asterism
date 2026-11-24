@@ -28,6 +28,7 @@ import {
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
+import { useFeature } from "@/features/availability/queries";
 
 const PAGE_SIZE = 10;
 
@@ -48,6 +49,9 @@ export function GeneralSubAgents() {
     staleTime: 0,
   });
   const models = useQuery({ ...chatModelsListOptions({ client }) });
+  // Hidden while the admin has sub-agents off, unless some are chosen (EPIC-97).
+  const delegation = useFeature("delegation").available;
+  if (!delegation && !set.data?.agents.length) return null;
   return (
     <section
       aria-label="General chat sub-agents"

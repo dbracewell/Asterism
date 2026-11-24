@@ -2,8 +2,11 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
 import { ReactNode, useState } from "react";
-import { expect, it, vi } from "vitest";
+import { beforeEach, expect, it, vi } from "vitest";
+import { turnOff } from "@/test/availability";
 import { AgentsSettings } from "./agents-settings";
+const workers = vi.hoisted(() => ({ none: false }));
+vi.mock("@/features/availability/queries", () => import("@/test/availability"));
 vi.mock("@/features/auth/components/user-context", () => ({
   useUser: () => ({ id: "tester" }),
 }));
@@ -26,24 +29,26 @@ vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
   subAgentsListOptions: () => ({
     queryKey: ["workers"],
     queryFn: async () => ({
-      items: [
-        {
-          id: "worker",
-          name: "Research",
-          description: "Facts",
-          model_id: "fixed",
-          model_available: false,
-        },
-        {
-          id: "tutor",
-          name: "Tutor",
-          description: "Hints",
-          model_id: "fixed",
-          model_available: true,
-          managed_by_class: "Biology 101",
-        },
-      ],
-      total: 2,
+      items: workers.none
+        ? []
+        : [
+            {
+              id: "worker",
+              name: "Research",
+              description: "Facts",
+              model_id: "fixed",
+              model_available: false,
+            },
+            {
+              id: "tutor",
+              name: "Tutor",
+              description: "Hints",
+              model_id: "fixed",
+              model_available: true,
+              managed_by_class: "Biology 101",
+            },
+          ],
+      total: workers.none ? 0 : 2,
       page: 1,
       page_size: 10,
     }),
@@ -59,6 +64,10 @@ function Wrapper({ children }: { children: ReactNode }) {
     </QueryClientProvider>
   );
 }
+beforeEach(() => {
+  turnOff();
+  workers.none = false;
+});
 it("shows one main editor and unavailable fixed-model workers without default/delete-main controls", async () => {
   render(<AgentsSettings />, { wrapper: Wrapper });
   expect(
@@ -94,4 +103,21 @@ it("keeps the full model name readable when the card truncates it (US-75.1)", as
   // Visually clipped with an ellipsis, but the whole name stays in the text.
   expect(label).toHaveTextContent("fixed");
   expect(label).toHaveClass("truncate", "min-w-0");
+});
+
+it("keeps your sub-agents reachable while the admin has sub-agents off (EPIC-97)", async () => {
+  turnOff("delegation");
+  render(<AgentsSettings />, { wrapper: Wrapper });
+  const section = await screen.findByRole("region", { name: "Sub-agents" });
+  expect(section).toHaveTextContent(
+    "An administrator has turned sub-agents off",
+  );
+  expect(await screen.findByText("Research")).toBeInTheDocument();
+});
+it("leaves Sub-agents out while they are off and you have none (EPIC-97)", async () => {
+  turnOff("delegation");
+  workers.none = true;
+  render(<AgentsSettings />, { wrapper: Wrapper });
+  await screen.findByRole("button", { name: "Edit main configuration" });
+  expect(screen.queryByRole("region", { name: "Sub-agents" })).toBeNull();
 });
