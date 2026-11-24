@@ -8,6 +8,7 @@ from collections.abc import Callable, Sequence
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from asterism.common.images import is_decodable_image
 from asterism.core import config
 from asterism.db.database import get_async_db_session
 from asterism.db.mixins import get_unix_timestamp
@@ -203,6 +204,11 @@ async def ingest_file(
             text_extraction.completed_at = get_unix_timestamp()
 
         stage = KnowledgeExtractionKind.EMBEDDING
+        # An image is not decoded to be embedded (it is found by its caption),
+        # so check here that it can be read at all: a damaged image fails its
+        # embedding, as it did when images were embedded visually.
+        if source.file.is_image and (source.image is None or not is_decodable_image(source.image)):
+            raise KnowledgeIngestionError("The image could not be read; the file may be damaged or incomplete")
         vectors, contents = await embed_file(source, provider=provider)
         # An image keeps a caption made by the current captioner; only its
         # embedding is redone (ADR-0079).

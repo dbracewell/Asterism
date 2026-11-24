@@ -9,6 +9,20 @@ import uuid
 from asterism.domains.knowledge.sources import SourceContent, SourceFile
 
 
+def _tiny_png() -> bytes:
+    import io
+
+    from PIL import Image
+
+    buffer = io.BytesIO()
+    Image.new("RGB", (2, 2), "white").save(buffer, format="PNG")
+    return buffer.getvalue()
+
+
+#: A real, decodable image, as ingestion checks images can be read.
+TINY_PNG = _tiny_png()
+
+
 class FakeSourceReader:
     """A source reader that returns canned content.
 
@@ -27,13 +41,13 @@ class FakeSourceReader:
         is_image: bool = False,
         name: str = "notes.txt",
         mime_type: str = "text/plain",
-        image: bytes = b"fake-image",
+        image: bytes | None = None,
     ) -> None:
         self.text = text
         self.is_image = is_image
         self.name = name
         self.mime_type = mime_type
-        self.image = image
+        self.image = image if image is not None else TINY_PNG
 
     async def read_source(
         self,
@@ -73,7 +87,7 @@ def fake_source(
     is_image: bool = False,
     name: str = "notes.txt",
     mime_type: str = "text/plain",
-    image: bytes = b"fake-image",
+    image: bytes = TINY_PNG,
 ) -> SourceContent:
     """Build the source content a fake reader would report.
 

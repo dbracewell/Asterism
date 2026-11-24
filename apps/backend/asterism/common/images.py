@@ -11,6 +11,22 @@ MAX_THUMBNAIL_IMAGE_PIXELS = 25_000_000
 Image.MAX_IMAGE_PIXELS = MAX_THUMBNAIL_IMAGE_PIXELS
 
 
+def is_decodable_image(content: bytes) -> bool:
+    """Whether *content* decodes fully as an image within the pixel cap.
+
+    Decoding the pixels, not only the header, catches a file that was cut off.
+    """
+    try:
+        with Image.open(io.BytesIO(content)) as img:
+            width, height = img.size
+            if width <= 0 or height <= 0 or width * height > MAX_THUMBNAIL_IMAGE_PIXELS:
+                return False
+            img.load()
+            return True
+    except (UnidentifiedImageError, Image.DecompressionBombError, OSError, ValueError, SyntaxError):
+        return False
+
+
 def generate_thumbnail(content: bytes) -> str | None:
     """Render *content* as a downscaled JPEG thumbnail data URL.
 
