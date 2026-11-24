@@ -79,9 +79,9 @@ Source: user review of the EPIC-101 install flow (2026-11-24). See [EPIC-102](do
 
 ### US-102.2: First-run checklist shows the rest of setup
 
-- [ ] Four-step `SetupSteps` with "Review the remaining settings (optional)" third; the ready card marks step 3 current.
-- [ ] Build step 3's description and the ready card's list from `SETUP_STEPS`.
-- [ ] Unit tests per card; update `first-run-setup.spec.ts` and `provider-setup.spec.ts`.
+- [x] Four-step `SetupSteps` with "Review the remaining settings (optional)" third; the ready card marks step 3 current.
+- [x] Build step 3's description and the ready card's list from `SETUP_STEPS`.
+- [x] Unit tests per card; update `first-run-setup.spec.ts` and `provider-setup.spec.ts`.
 
 ### US-102.3: Next saves, Skip discards
 

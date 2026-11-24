@@ -1,5 +1,6 @@
 import Constellation from "@/components/logo";
 import { FieldDescription } from "@/components/ui/field";
+import { remainingStepsSummary } from "@/features/setup/steps";
 import { cn } from "@/lib/utils";
 import { CheckIcon } from "lucide-react";
 
@@ -25,7 +26,7 @@ export function AuthHeading({ description }: { description: string }) {
   );
 }
 
-const SETUP_STEPS = [
+const FIRST_RUN_STEPS = [
   {
     title: "Create the administrator account",
     detail: "This account manages providers, tools and users.",
@@ -33,6 +34,11 @@ const SETUP_STEPS = [
   {
     title: "Add a model provider",
     detail: "Connect a provider and enable a model.",
+  },
+  {
+    // The setup walkthrough; the ready card's Continue setup opens it.
+    title: "Review the remaining settings (optional)",
+    detail: remainingStepsSummary().text,
   },
   {
     title: "Start your first chat",
@@ -47,7 +53,7 @@ export function SetupSteps({ current }: { current: number }) {
       aria-label="First-run setup"
       className="rounded-surface bg-muted/50 flex min-w-0 flex-col gap-3 p-4 text-left"
     >
-      {SETUP_STEPS.map((step, index) => {
+      {FIRST_RUN_STEPS.map((step, index) => {
         const complete = index < current;
         const active = index === current;
         return (
