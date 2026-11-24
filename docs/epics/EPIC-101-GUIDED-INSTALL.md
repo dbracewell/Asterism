@@ -1,6 +1,6 @@
 # EPIC-101: Guided install and setup
 
-Status: in progress (2026-11-24). Source: user request (2026-11-24): "A more robust
+Status: complete (2026-11-24). Source: user request (2026-11-24): "A more robust
 install that explains and walks through setting up the system (all items in the
 admin settings)." Builds on EPIC-97 (what is hidden when off), EPIC-99 (captioning
 and image search) and EPIC-100 (complete settings import).
@@ -117,10 +117,10 @@ Suggested order: US-101.1 → 101.2 → 101.3 → 101.4.
 
 ### US-101.4: Docs
 
-- [ ] Rewrite `docs/guide/08-for-administrators/first-time-setup.md` around the
+- [x] Rewrite `docs/guide/08-for-administrators/first-time-setup.md` around the
       walkthrough, with refreshed screenshots (`pnpm docs:check`), and update
       `docs/deployment.md` §5.
-- [ ] Release notes: Behavior (setup walkthrough); Image (the `setup` command).
+- [x] Release notes: Behavior (setup walkthrough); Image (the `setup` command).
 
 ## Settled questions
 

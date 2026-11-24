@@ -268,3 +268,27 @@ async def test_counts_images_search_cannot_find(processing_session):
     await processing_session.commit()
 
     assert tuple((await processing_session.execute(select_uncaptioned_image_counts())).one()) == (3, 1)
+
+
+async def test_a_damaged_image_fails_processing(processing_session):
+    """A cut-off image isn't decoded to be embedded, so ingestion checks it can be read."""
+    await store_policy(processing_session, embedding_model=EMBEDDING_MODEL_KEY, mode="disabled")
+    file = await add_file(processing_session, image=True)
+    artifact = await add_artifact(processing_session, file, generation=1, status=KnowledgeExtractionStatus.PENDING)
+    await processing_session.commit()
+    reader = FakeSourceReader(
+        is_image=True, name="worksheet.jpg", mime_type="image/jpeg", image=b"Not a real photo: the upload was cut off."
+    )
+    result = await ingest_file(
+        artifact=artifact, reader=reader, session=processing_session, provider=Embeddings(), store=Vectors()
+    )
+    assert result.status is KnowledgeExtractionStatus.FAILED
+    assert result.error_reason == "The image could not be read; the file may be damaged or incomplete"
+    embedding = await processing_session.scalar(
+        select(FileKnowledgeExtractionModel).where(
+            FileKnowledgeExtractionModel.artifact_id == artifact.id,
+            FileKnowledgeExtractionModel.kind == KnowledgeExtractionKind.EMBEDDING,
+        )
+    )
+    # The Files library shows the embedding's state, so that is what fails.
+    assert embedding is not None and embedding.status is KnowledgeExtractionStatus.FAILED
