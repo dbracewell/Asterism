@@ -257,6 +257,8 @@ async def test_ranking_falls_back_to_recency_without_embeddings(memory_on, monke
         async def embed_text(self, texts):
             raise RuntimeError("model not downloaded")
 
+        embed_query = embed_passage = embed_text
+
     monkeypatch.setattr(turns, "embedding_provider", Broken())
     async with sessions() as session:
         chosen = await turns.select_turn_memories(user_id="a", project_id=None, prompt="Hi", session=session)

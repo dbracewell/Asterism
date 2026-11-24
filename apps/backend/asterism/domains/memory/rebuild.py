@@ -55,7 +55,9 @@ async def rebuild_memory_vectors(session: AsyncSession) -> RebuildResult:
 
 
 @event_bus.on(EventType.SYSTEM_START)
+@event_bus.on(EventType.EMBEDDING_MODEL_READY)
 async def _rebuild_on_start(_: Event) -> None:
+    """On start, and again once a newly downloaded embedding model is ready (ADR-0079)."""
     from asterism.db.database import get_async_db_session
 
     try:

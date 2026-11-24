@@ -1,8 +1,8 @@
 # ADR-0079 — Multilingual text embeddings; images found by caption
 
 Status: accepted. The provider, its pinned bundle and the benchmark are
-implemented for US-99.1 (2026-11-24); switching search and memory to it, and
-re-embedding on upgrade, is US-99.2
+implemented for US-99.1, and search and memory switched to it with re-embedding
+on upgrade for US-99.2 (2026-11-24)
 ([EPIC-99](../epics/EPIC-99-MULTILINGUAL-E5-EMBEDDINGS.md)). Amends
 [ADR-0077](0077-torch-free-default-image.md) (the search embedding) and
 [ADR-0078](0078-long-term-memory.md) (memory vectors).
@@ -58,11 +58,32 @@ caption are stored, previewed and attachable as before.
 
 The LanceDB tables are named for the model and vector size
 (`knowledge_chunks__e5-small-384`, `memory_vectors__e5-small-384`), not reused
-across models. Changing the model makes new tables and leaves the old ones to
-be dropped, rather than writing 384-dimension vectors into a 512-dimension
-table. Upgrading re-embeds every file as a new knowledge processing generation,
-from text and stored captions, without captioning again; memory vectors are
-rebuilt from the rows, as on every start (ADR-0078). US-99.2 implements this.
+across models. On start, a table named for another model, or the unnamed tables
+from before, is dropped: its vectors can't be compared with this model's
+queries, so it couldn't keep serving search anyway.
+
+**The code's model is the authority.** The processing policy records it as
+`embedding_model` (`e5-small-384`); an admin edit naming another model is
+refused. On every start, `retire_previous_embedding_model` deletes the old
+`models/knowledge-clip` bundle and, when the stored policy names another model,
+starts a new knowledge processing generation that queues every file. Files are
+processed once the new bundle is ready, and until then search doesn't find
+them.
+
+**Images reuse their caption.** The new generation of an image embeds the
+caption of an earlier generation when the captioner selected now made it
+(`knowledge/caption_reuse.py`); captions now record a `captioner` key, and
+older ones are matched by mode and model label. Changing the captioner still
+captions every image again.
+
+**Memory** vectors are rebuilt from the rows, on start (ADR-0078) and again
+when the embedding bundle finishes downloading (`EMBEDDING_MODEL_READY`), since
+on an upgrade the first start comes before the download.
+
+**Installations that never stored a policy** used the built-in default, which
+now names e5. Data migration `a444c3d08ca3` writes the CLIP-era default as the
+stored policy when files have knowledge artifacts and no policy is stored, so
+the start-up check sees the change there too.
 
 ## Comparison
 
@@ -87,6 +108,6 @@ fails if e5 ranks fewer than three in four queries' topic first.
   find no images, which is now said in the settings and the guide.
 - The download on first start is 135 MB instead of 153 MB, under
   `models/knowledge-e5-small`.
-- An upgrade re-embeds every file, which takes time on a large library; search
-  keeps using the previous generation until the new one is ready.
+- An upgrade re-embeds every file, which takes time on a large library; a file
+  isn't found by search until it has been re-embedded.
 - Chunk size stays at 1,000 characters for now (EPIC-99, open question 2).

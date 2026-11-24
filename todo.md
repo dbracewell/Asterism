@@ -88,6 +88,8 @@ Complete (2026-11-24); archive once its pull requests have merged.
 
 ### [EPIC-97: Hide what the admin has not enabled](docs/epics/EPIC-97-HIDE-DISABLED-FEATURES.md)
 
+Complete (2026-11-24); archive with EPIC-96.
+
 - [x] US-97.1: Settings navigation built from availability
   - [x] Build the User Settings section list from `useFeature()`. Skills and ChatGPT plans are left out when unavailable.
   - [x] Remove the code execution placeholder from Admin Settings.
@@ -138,13 +140,13 @@ Complete (2026-11-24); archive once its pull requests have merged.
   - [x] Implement a text-only `EmbeddingProvider` with pooling, prefixes and truncation.
   - [x] Update `scripts/benchmark_knowledge_embeddings.py` and record quality and speed against CLIP on English and non-English samples in the ADR. Choose quantized or full precision from that.
   - [x] Tests: download verification, dimensions, prefixes, truncation, and that the image stays torch-free (`pnpm check:image`).
-- [ ] US-99.2: Model-keyed vectors and re-embedding on upgrade
-  - [ ] Switch to the e5 provider: download it into `models/knowledge-e5-small`, remove the old `knowledge-clip` directory, and split callers into `embed_query` and `embed_passage`.
-  - [ ] Add model-keyed table names for knowledge chunks and memory vectors, with the dimension taken from the manifest.
-  - [ ] A startup comparison of the stored model with the code's model triggers a new processing generation. Images re-embed from the stored caption.
-  - [ ] Drop the old tables once the new generation is complete.
-  - [ ] Alembic data migration plus an upgrade test seeded with CLIP-era files, captions and memories: after the upgrade, search finds the same files and memories.
-  - [ ] Remove `embed_image`, image chunks and `visual_ready`, and update retrieval and similar files.
+- [x] US-99.2: Model-keyed vectors and re-embedding on upgrade
+  - [x] Switch to the e5 provider: download it into `models/knowledge-e5-small`, remove the old `knowledge-clip` directory, and split callers into `embed_query` and `embed_passage`.
+  - [x] Add model-keyed table names for knowledge chunks and memory vectors, with the dimension taken from the manifest.
+  - [x] A startup comparison of the stored model with the code's model triggers a new processing generation. Images re-embed from the stored caption.
+  - [x] Drop the old tables once the new generation is complete.
+  - [x] Alembic data migration plus an upgrade test seeded with CLIP-era files, captions and memories: after the upgrade, search finds the same files and memories.
+  - [x] Remove `embed_image`, image chunks and `visual_ready`, and update retrieval and similar files.
 - [ ] US-99.3: Captioning is required for image search
   - [ ] Add the captioning pane copy, the mode picker line, and a count of uncaptioned images in status.
   - [ ] When captioning is turned on, images that are already stored get captioned (check that this already happens through the generation change; add it if not).

@@ -40,7 +40,7 @@ const artifact: FileKnowledgeArtifact = {
     embedding: {
       kind: "embedding",
       status: "ready",
-      payload: { text_ready: true, visual_ready: true },
+      payload: { text_ready: true },
     },
     captioning: {
       kind: "captioning",

@@ -16,6 +16,7 @@ import lancedb
 import pyarrow as pa
 
 from asterism.core import config
+from asterism.domains.knowledge.embedding import EMBEDDING_MODEL_KEY, embedding_provider
 
 
 class MemoryVectorError(RuntimeError):
@@ -55,11 +56,14 @@ class MemoryVectorStore(Protocol):
 
 
 class LanceDbMemoryVectorStore:
-    TABLE_NAME = "memory_vectors"
+    # Named for the embedding model, like the knowledge table (ADR-0079); another
+    # model's table is dropped on start and the vectors rebuilt from the rows.
+    TABLE_PREFIX = "memory_vectors"
 
-    def __init__(self, root: Path, *, dimension: int, max_concurrency: int = 2) -> None:
+    def __init__(self, root: Path, *, dimension: int, model_key: str, max_concurrency: int = 2) -> None:
         self._root = root.resolve()
         self._dimension = dimension
+        self.table_name = f"{self.TABLE_PREFIX}__{model_key}"
         self._semaphore = asyncio.Semaphore(max_concurrency)
         self._table = None
 
@@ -84,7 +88,10 @@ class LanceDbMemoryVectorStore:
         self._root.mkdir(parents=True, exist_ok=True)
         try:
             connection = lancedb.connect(str(self._root))
-            self._table = connection.create_table(self.TABLE_NAME, schema=self.schema, exist_ok=True)
+            for name in connection.table_names():
+                if name.startswith(self.TABLE_PREFIX) and name != self.table_name:
+                    connection.drop_table(name)
+            self._table = connection.create_table(self.table_name, schema=self.schema, exist_ok=True)
         except Exception as error:
             raise MemoryVectorError("Memory vector table could not be initialized") from error
 
@@ -176,5 +183,5 @@ class LanceDbMemoryVectorStore:
 
 
 memory_vector_store: MemoryVectorStore = LanceDbMemoryVectorStore(
-    config.knowledge_root / "lancedb", dimension=config.embedding_dimension
+    config.knowledge_root / "lancedb", dimension=embedding_provider.dimension, model_key=EMBEDDING_MODEL_KEY
 )

@@ -80,7 +80,7 @@ async def test_database_vector_prefilter_and_result_provenance(context_runtime, 
     r.chat = Chat.model_validate(response.json())
     r.chat_id = r.chat.info.id
     scope, ceiling = await execution(r)
-    store = LanceDbVectorStore(tmp_path / "vectors", dimension=2)
+    store = LanceDbVectorStore(tmp_path / "vectors", dimension=2, model_key="test")
     await store.add(
         [
             VectorChunk(
@@ -104,7 +104,7 @@ async def test_database_vector_prefilter_and_result_provenance(context_runtime, 
     root = create_retrieval_service(ceiling=ceiling)
     service = RetrievalService(
         read_scope=root.read_scope,
-        embeddings=SimpleNamespace(embed_text=AsyncMock(return_value=[[1.0, 0.0]])),
+        embeddings=SimpleNamespace(embed_query=AsyncMock(return_value=[[1.0, 0.0]])),
         vectors=store,
         limits=root.limits,
     )
@@ -143,7 +143,7 @@ async def test_foreign_matches_limits_caption_and_utf8_budget(context_runtime, m
         await db.commit()
     scope, ceiling = await execution(r)
     root = create_retrieval_service(ceiling=ceiling)
-    embeddings = SimpleNamespace(embed_text=AsyncMock(return_value=[[0.1]]))
+    embeddings = SimpleNamespace(embed_query=AsyncMock(return_value=[[0.1]]))
     vectors = SimpleNamespace(
         search=AsyncMock(
             return_value=[
@@ -165,7 +165,7 @@ async def test_foreign_matches_limits_caption_and_utf8_budget(context_runtime, m
     # Mocked store distance 0.1 over unit vectors -> similarity 1 - 0.1 / 2.
     assert all(hit.score == pytest.approx(0.95) for hit in result.results)
     assert vectors.search.call_args.kwargs == {"user_id": "a", "allowed_file_ids": [str(fid)], "limit": 2}
-    embeddings.embed_text.reset_mock()
+    embeddings.embed_query.reset_mock()
     clamped = await service.search(scope, query="caption", top_k=3)
     assert clamped.message is None
     assert [(hit.match_kind, hit.excerpt) for hit in clamped.results] == [("caption", "éé"), ("text", "E")]
@@ -238,7 +238,7 @@ async def test_replacement_during_vector_search_never_releases_a_new_or_old_gene
     root = create_retrieval_service(ceiling=ceiling)
     service = RetrievalService(
         read_scope=root.read_scope,
-        embeddings=SimpleNamespace(embed_text=AsyncMock(return_value=[[0.1]])),
+        embeddings=SimpleNamespace(embed_query=AsyncMock(return_value=[[0.1]])),
         vectors=SimpleNamespace(search=search),
         limits=root.limits,
     )
@@ -262,7 +262,7 @@ async def test_revocation_wins_over_embedding_failure(context_runtime):
     root = create_retrieval_service(ceiling=ceiling)
     vectors = SimpleNamespace(search=AsyncMock())
     service = RetrievalService(
-        read_scope=root.read_scope, embeddings=SimpleNamespace(embed_text=embed), vectors=vectors, limits=root.limits
+        read_scope=root.read_scope, embeddings=SimpleNamespace(embed_query=embed), vectors=vectors, limits=root.limits
     )
     with pytest.raises(BadDataException):
         await service.search(scope, query="evidence")
@@ -470,7 +470,7 @@ async def test_runtime_tool_injects_shared_retrieval_for_main_and_delegate(conte
     root = create_retrieval_service(ceiling=ceiling)
     service = RetrievalService(
         read_scope=root.read_scope,
-        embeddings=SimpleNamespace(embed_text=AsyncMock(return_value=[[0.1]])),
+        embeddings=SimpleNamespace(embed_query=AsyncMock(return_value=[[0.1]])),
         vectors=SimpleNamespace(search=AsyncMock(return_value=[match(fid)])),
         limits=root.limits,
     )

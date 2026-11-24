@@ -31,13 +31,12 @@ class EmbeddingPayload(BaseModel):
 
     Attributes:
         text_ready: Whether the text chunks are embedded and searchable.
-        visual_ready: Whether the file's visual embedding is ready.
     """
 
-    model_config = ConfigDict(extra="forbid")
+    # Rows embedded before ADR-0079 also carry ``visual_ready``; it is ignored.
+    model_config = ConfigDict(extra="ignore")
 
     text_ready: bool = False
-    visual_ready: bool = False
 
 
 class CaptioningPayload(BaseModel):
@@ -45,11 +44,14 @@ class CaptioningPayload(BaseModel):
 
     Attributes:
         text: The caption text, or ``None`` when none was produced.
+        captioner: Which captioner made it, so a later generation can reuse
+            it (ADR-0079); absent on captions made before.
     """
 
     model_config = ConfigDict(extra="forbid")
 
     text: str | None = Field(default=None, max_length=10_000)
+    captioner: str | None = Field(default=None, max_length=200)
 
 
 class TextExtraction(BaseModel):

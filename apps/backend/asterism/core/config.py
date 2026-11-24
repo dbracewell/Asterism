@@ -132,9 +132,6 @@ class Config(BaseSettings):
     max_produced_bytes_per_run: int = 100 * 1024 * 1024
     """The maximum total size of files tools may produce in one chat run (in bytes)."""
 
-    embedding_dimension: int = 512
-    """Dimension emitted by the pinned CLIP text/image embedding model."""
-
     max_concurrent_knowledge_embeddings: int = 2
     """Maximum simultaneous local ONNX embedding inferences."""
 
@@ -295,8 +292,6 @@ class Config(BaseSettings):
             raise ConfigValidationError("MAX_PRODUCED_FILES_PER_RUN must be from 1 to 1000")
         if not 1 <= self.max_produced_bytes_per_run <= 1024 * 1024 * 1024:
             raise ConfigValidationError("MAX_PRODUCED_BYTES_PER_RUN must be from 1 to 1073741824")
-        if not 1 <= self.embedding_dimension <= 8192:
-            raise ConfigValidationError("KNOWLEDGE_EMBEDDING_DIMENSION must be from 1 to 8192")
         if not 1 <= self.max_concurrent_knowledge_embeddings <= 16:
             raise ConfigValidationError("MAX_CONCURRENT_KNOWLEDGE_EMBEDDINGS must be from 1 to 16")
         if not 1 <= self.max_concurrent_knowledge_vector_operations <= 16:
@@ -387,7 +382,13 @@ class Config(BaseSettings):
     @computed_field
     @property
     def knowledge_models_root(self) -> Path:
-        """Directory for the pinned CLIP embedding model bundle."""
+        """Directory for the pinned multilingual-e5-small embedding bundle (ADR-0079)."""
+        return self.storage_root / "models" / "knowledge-e5-small"
+
+    @computed_field
+    @property
+    def legacy_knowledge_models_root(self) -> Path:
+        """Where the CLIP embedding bundle was kept before ADR-0079; removed on start."""
         return self.storage_root / "models" / "knowledge-clip"
 
     @computed_field

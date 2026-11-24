@@ -10,6 +10,7 @@ import lancedb
 import pyarrow as pa
 
 from asterism.core import config
+from asterism.domains.knowledge.embedding import EMBEDDING_MODEL_KEY, embedding_provider
 
 
 class VectorStoreError(RuntimeError):
@@ -140,13 +141,19 @@ class VectorStore(Protocol):
 
 
 class LanceDbVectorStore:
-    """Single-table LanceDB store; every query is constrained by owner and file IDs."""
+    """Single-table LanceDB store; every query is constrained by owner and file IDs.
 
-    TABLE_NAME = "knowledge_chunks"
+    The table is named for the embedding model that filled it (ADR-0079), and
+    any other model's table is dropped on start: its vectors can't be compared
+    with this model's, and every file is re-embedded instead.
+    """
 
-    def __init__(self, root: Path, *, dimension: int, max_concurrency: int = 2) -> None:
+    TABLE_PREFIX = "knowledge_chunks"
+
+    def __init__(self, root: Path, *, dimension: int, model_key: str, max_concurrency: int = 2) -> None:
         self._root = root.resolve()
         self._dimension = dimension
+        self.table_name = f"{self.TABLE_PREFIX}__{model_key}"
         self._semaphore = asyncio.Semaphore(max_concurrency)
         self._connection = None
         self._table = None
@@ -174,8 +181,11 @@ class LanceDbVectorStore:
         self._root.mkdir(parents=True, exist_ok=True)
         try:
             self._connection = lancedb.connect(str(self._root))
+            for name in self._connection.table_names():
+                if name.startswith(self.TABLE_PREFIX) and name != self.table_name:
+                    self._connection.drop_table(name)
             self._table = self._connection.create_table(
-                self.TABLE_NAME,
+                self.table_name,
                 schema=self.schema,
                 exist_ok=True,
             )
@@ -396,6 +406,7 @@ class LanceDbVectorStore:
 
 vector_store = LanceDbVectorStore(
     config.knowledge_root / "lancedb",
-    dimension=config.embedding_dimension,
+    dimension=embedding_provider.dimension,
+    model_key=EMBEDDING_MODEL_KEY,
     max_concurrency=config.max_concurrent_knowledge_vector_operations,
 )

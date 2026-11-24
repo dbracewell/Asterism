@@ -6,12 +6,21 @@ from pathlib import Path
 from unittest.mock import AsyncMock, patch
 
 import pytest
+from asterism.domains.knowledge.e5_embedding import E5_MODEL_FILE, OnnxE5EmbeddingProvider
 from asterism.domains.knowledge.embedding import embedding_model
-from asterism.domains.knowledge.model_download import MANIFEST_FILENAME, ModelDownloadService
+from asterism.domains.knowledge.model_download import MANIFEST_FILENAME, ModelDownloadService, PinnedModel
 
-PINNED_MODEL_ID = embedding_model.id
-PINNED_REVISION = embedding_model.revision
-REQUIRED_FILES = embedding_model.allow_patterns
+# The download service is generic; these tests use a one-file bundle of their own.
+test_model = PinnedModel(
+    id="test/single-file-model",
+    revision="0" * 40,
+    source_filename="onnx/model.onnx",
+    filename="model.onnx",
+    allow_patterns=["config.json", "tokenizer.json", "model.onnx"],
+)
+PINNED_MODEL_ID = test_model.id
+PINNED_REVISION = test_model.revision
+REQUIRED_FILES = test_model.allow_patterns
 
 
 def _write_verified_bundle(root: Path, model: bytes = b"reviewed-onnx") -> str:
@@ -33,7 +42,7 @@ def _service(root: Path, **kwargs) -> ModelDownloadService:
     return ModelDownloadService(
         root,
         pinned_model=replace(
-            embedding_model,
+            test_model,
             sha256=hashlib.sha256(b"reviewed-onnx").hexdigest(),
             size_bytes=len(b"reviewed-onnx"),
         ),
@@ -42,8 +51,10 @@ def _service(root: Path, **kwargs) -> ModelDownloadService:
 
 
 def test_configured_artifact_matches_reviewed_pinned_revision():
-    assert embedding_model.size_bytes == 152_998_734
-    assert embedding_model.sha256 == "90d3b30b11fc99c781a147df7cb3b8dff38b02b2d838b3b28392e7dfb34920b9"
+    # ADR-0079: multilingual-e5-small, every file pinned.
+    assert embedding_model.revision == "761b726dd34fb83930e26aab4e9ac3899aa1fa78"
+    assert embedding_model.files[E5_MODEL_FILE] == "f80102d3f2a1229f387d3c81909990d8945513e347b0eab049f7de3c6f98c193"
+    assert embedding_model.size_bytes == 135_392_183
 
 
 def test_existing_verified_embedding_bundle_is_ready(tmp_path: Path):
@@ -115,9 +126,9 @@ def test_bundle_rejects_symlinked_required_file(tmp_path: Path):
 
 
 def test_missing_promoted_root_recovers_previous_verified_bundle(tmp_path: Path):
-    previous = tmp_path / "knowledge-clip.previous"
+    previous = tmp_path / "knowledge-e5-small.previous"
     expected = _write_verified_bundle(previous)
-    status = _service(tmp_path / "knowledge-clip").progress()
+    status = _service(tmp_path / "knowledge-e5-small").progress()
     assert status.status == "ready"
     assert status.bundle_sha256 == expected
 
@@ -141,9 +152,7 @@ def test_manifest_verification_is_cached(tmp_path: Path):
 
 @pytest.mark.asyncio
 async def test_embedding_provider_concurrent_initialize_once(tmp_path: Path):
-    from asterism.domains.knowledge.embedding import OnnxClipEmbeddingProvider
-
-    provider = OnnxClipEmbeddingProvider(tmp_path, pinned_model=embedding_model)
+    provider = OnnxE5EmbeddingProvider(tmp_path, pinned_model=embedding_model)
 
     call_count = 0
 

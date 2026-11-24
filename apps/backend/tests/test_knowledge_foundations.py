@@ -5,7 +5,8 @@ import pytest
 from asterism.core.config import Config
 from asterism.db.model_registry import Base
 from asterism.domains.files.models import FileKind, UserFileModel
-from asterism.domains.knowledge.embedding import EmbeddingProviderError, OnnxClipEmbeddingProvider, embedding_model
+from asterism.domains.knowledge.e5_embedding import OnnxE5EmbeddingProvider
+from asterism.domains.knowledge.embedding import EmbeddingProviderError, embedding_model
 from asterism.domains.knowledge.models import FileKnowledgeArtifactModel, KnowledgeExtractionStatus
 from asterism.domains.knowledge.schemas import FileKnowledgeArtifact
 from asterism.domains.knowledge.vector_store import LanceDbVectorStore, VectorChunk
@@ -16,7 +17,7 @@ from sqlalchemy.ext.asyncio import create_async_engine
 
 @pytest.mark.asyncio
 async def test_lancedb_filters_by_owner_and_allowed_file_and_deletes(tmp_path: Path):
-    store = LanceDbVectorStore(tmp_path / "vectors", dimension=2, max_concurrency=1)
+    store = LanceDbVectorStore(tmp_path / "vectors", dimension=2, model_key="test", max_concurrency=1)
     await store.add(
         [
             VectorChunk("one", "user-a", "file-a", 1, 0, "text", "private", [1.0, 0.0]),
@@ -46,8 +47,26 @@ async def test_lancedb_filters_by_owner_and_allowed_file_and_deletes(tmp_path: P
 
 
 @pytest.mark.asyncio
+async def test_another_models_table_is_dropped_on_start(tmp_path: Path):
+    """ADR-0079: vectors are kept per model; a change of model starts empty."""
+    old = LanceDbVectorStore(tmp_path / "vectors", dimension=2, model_key="old-2")
+    await old.add([VectorChunk("one", "user", "file", 1, 0, "text", "body", [1.0, 0.0])])
+    await old.close()
+    # The table from before model-keyed names is dropped too.
+    import lancedb
+
+    connection = lancedb.connect(str(tmp_path / "vectors"))
+    connection.create_table("knowledge_chunks", schema=old.schema)
+
+    new = LanceDbVectorStore(tmp_path / "vectors", dimension=3, model_key="new-3")
+    await new.initialize()
+    assert connection.table_names() == ["knowledge_chunks__new-3"]
+    assert await new.search([1.0, 0.0, 0.0], user_id="user", allowed_file_ids=["file"], limit=1) == []
+
+
+@pytest.mark.asyncio
 async def test_lancedb_rejects_wrong_dimension(tmp_path: Path):
-    store = LanceDbVectorStore(tmp_path / "vectors", dimension=2)
+    store = LanceDbVectorStore(tmp_path / "vectors", dimension=2, model_key="test")
     with pytest.raises(ValueError, match="dimension"):
         await store.add([VectorChunk("one", "user", "file", 1, 0, "text", "body", [1.0])])
     with pytest.raises(ValueError, match="dimension"):
@@ -153,7 +172,7 @@ async def test_file_artifact_contract_keeps_one_current_generation_per_file(tmp_
 def test_embedding_artifact_requires_expected_checksum_and_size(tmp_path: Path):
     artifact = tmp_path / "model.onnx"
     artifact.write_bytes(b"known-artifact")
-    provider = OnnxClipEmbeddingProvider(tmp_path, pinned_model=embedding_model)
+    provider = OnnxE5EmbeddingProvider(tmp_path, pinned_model=embedding_model)
     with pytest.raises(EmbeddingProviderError, match="manifest verification"):
         provider._initialize_sync()
 

@@ -362,7 +362,7 @@ class RetrievalService:
         try:
             # 2. Embed the query, then re-read so the file set passed to the
             #    vector store reflects live authorization, not step-1 state.
-            query_vector = (await self.embeddings.embed_text([query]))[0]
+            query_vector = (await self.embeddings.embed_query([query]))[0]
             snapshot = await self._read(scope)
             queried = {str(artifact.file_id): artifact for artifact in snapshot.artifacts if artifact.ready}
             if not queried:

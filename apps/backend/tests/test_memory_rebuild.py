@@ -24,7 +24,7 @@ def vector(memory_id, user_id="a", revision=1):
 def rebuild(project_api, monkeypatch, tmp_path):
     _, sessions, _ = project_api
     embedding = FakeEmbedding()
-    store = LanceDbMemoryVectorStore(tmp_path / "memory-lancedb", dimension=DIMENSION)
+    store = LanceDbMemoryVectorStore(tmp_path / "memory-lancedb", dimension=DIMENSION, model_key="test")
     monkeypatch.setattr(memory_service, "embedding_provider", embedding)
     monkeypatch.setattr(memory_service, "memory_vector_store", store)
     return sessions, embedding, store

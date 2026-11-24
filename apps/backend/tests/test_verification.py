@@ -56,6 +56,8 @@ class FakeEmbeddings:
     async def embed_text(self, texts):
         return [[0.0] for _ in texts]
 
+    embed_query = embed_passage = embed_text
+
 
 class FakeModel:
     """Extraction reply, then a judgment per claim chosen by a marker in the prompt."""

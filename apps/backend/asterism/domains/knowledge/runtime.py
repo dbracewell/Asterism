@@ -8,6 +8,7 @@ from sqlalchemy import select, update
 from asterism.common.job_queue import JobManager
 from asterism.common.log import get_logger
 from asterism.core import config
+from asterism.core.events import EventType, NoArgEvent, event_bus
 from asterism.db.database import get_async_db_session
 from asterism.domains.knowledge.embedding import embedding_download_service, embedding_provider
 from asterism.domains.knowledge.ingestion import ingest
@@ -143,13 +144,19 @@ async def initialize_knowledge_runtime(source: SourceReader) -> None:
         logger.info("Knowledge model provisioning disabled by runtime configuration")
         return
 
-    embedding_download_service.on_bundle_ready = lambda _: resume_ingestion_jobs()
+    embedding_download_service.on_bundle_ready = _embedding_bundle_ready
     await asyncio.to_thread(embedding_download_service._ensure_checked)
     if embedding_download_service.is_ready():
         await resume_ingestion_jobs()
     else:
         await embedding_download_service.start_download()
     await _provision_local_caption_model()
+
+
+async def _embedding_bundle_ready(_: str) -> None:
+    """The embedding bundle verified: tell memory to rebuild its vectors, then resume files."""
+    event_bus.emit(NoArgEvent(type=EventType.EMBEDDING_MODEL_READY))
+    await resume_ingestion_jobs()
 
 
 async def _provision_local_caption_model() -> None:

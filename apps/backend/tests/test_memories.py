@@ -34,6 +34,8 @@ class FakeEmbedding:
         self.texts.extend(texts)
         return [[1.0, 0.0, 0.0, 0.0] for _ in texts]
 
+    embed_query = embed_passage = embed_text
+
 
 class FakeVectors:
     def __init__(self):
@@ -369,7 +371,7 @@ def vector(memory_id, user_id="a", project_id="", revision=1, value=1.0):
 
 @pytest.mark.asyncio
 async def test_lancedb_memory_vectors_are_one_row_per_memory_and_owner_scoped(tmp_path):
-    store = LanceDbMemoryVectorStore(tmp_path / "lancedb", dimension=DIMENSION)
+    store = LanceDbMemoryVectorStore(tmp_path / "lancedb", dimension=DIMENSION, model_key="test")
     first, second, project_memory, foreign = (uuid.uuid4() for _ in range(4))
     project = uuid.uuid4()
     await store.write(vector(first))

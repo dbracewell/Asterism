@@ -34,6 +34,8 @@ class EventType(StrEnum):
     SYSTEM_START = "system_start"
     SYSTEM_STOP = "system_stop"
     DRAFT_MODEL_UPDATED = "draft_model_updated"
+    # The knowledge embedding model finished downloading (ADR-0079).
+    EMBEDDING_MODEL_READY = "embedding_model_ready"
     WEBHOOK_CHAT_UPDATE = "chat-session:update"
 
 

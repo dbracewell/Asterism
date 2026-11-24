@@ -49,7 +49,7 @@ def _seed_auth(path: Path) -> None:
 
 
 def _vectors(root: Path) -> LanceDbVectorStore:
-    return LanceDbVectorStore(root / "knowledge" / "lancedb", dimension=DIMENSION)
+    return LanceDbVectorStore(root / "knowledge" / "lancedb", dimension=DIMENSION, model_key="test")
 
 
 def _chunk(file_id: str, ordinal: int) -> VectorChunk:
@@ -185,7 +185,7 @@ async def test_backup_during_an_active_chat_restores_to_a_working_instance(insta
 
     restored_vectors = _vectors(target.storage_root)
     await restored_vectors.initialize()
-    rows = manifest["vector_tables"][LanceDbVectorStore.TABLE_NAME]
+    rows = manifest["vector_tables"][f"{LanceDbVectorStore.TABLE_PREFIX}__test"]
     assert rows > 0 and rows % 3 == 0, "each turn's vectors are added in one commit"
     assert restored_vectors._require_table().count_rows() == rows  # pyright: ignore[reportPrivateUsage]
 
@@ -408,7 +408,9 @@ async def test_memory_vectors_are_backed_up_and_a_restore_rebuilds_the_missing_o
                 )
             )
         await session.commit()
-    memories = LanceDbMemoryVectorStore(layout.storage_root / "knowledge" / "lancedb", dimension=DIMENSION)
+    memories = LanceDbMemoryVectorStore(
+        layout.storage_root / "knowledge" / "lancedb", dimension=DIMENSION, model_key="test"
+    )
     await memories.write(
         MemoryVector(
             memory_id=str(embedded), user_id="a", kind="user", project_id="", revision=1, vector=[1.0, 0, 0, 0]
@@ -419,7 +421,7 @@ async def test_memory_vectors_are_backed_up_and_a_restore_rebuilds_the_missing_o
     target = _point(monkeypatch, tmp_path / "restored")
     await db_session_manager.close()
     manifest = restore_backup(archive, target, system_key=KEY)
-    assert manifest["vector_tables"][LanceDbMemoryVectorStore.TABLE_NAME] == 1
+    assert manifest["vector_tables"][f"{LanceDbMemoryVectorStore.TABLE_PREFIX}__test"] == 1
     await initialize_database()
     await db_session_manager.init()
 
@@ -431,8 +433,12 @@ async def test_memory_vectors_are_backed_up_and_a_restore_rebuilds_the_missing_o
             self.texts.extend(texts)
             return [[0.0, 1.0, 0.0, 0.0] for _ in texts]
 
+        embed_query = embed_passage = embed_text
+
     embedding = Embedding()
-    restored = LanceDbMemoryVectorStore(target.storage_root / "knowledge" / "lancedb", dimension=DIMENSION)
+    restored = LanceDbMemoryVectorStore(
+        target.storage_root / "knowledge" / "lancedb", dimension=DIMENSION, model_key="test"
+    )
     monkeypatch.setattr(memory_service, "embedding_provider", embedding)
     monkeypatch.setattr(memory_service, "memory_vector_store", restored)
     assert await restored.list_revisions(user_id="a") == {str(embedded): 1}

@@ -250,7 +250,7 @@ async def test_file_knowledge_status_cancel_and_retry_reuse_one_generation(file_
 
 @pytest.mark.asyncio
 async def test_similar_files_rank_by_cosine_and_stay_user_scoped(file_session, monkeypatch, tmp_path):
-    store = LanceDbVectorStore(tmp_path / "vectors", dimension=2, max_concurrency=1)
+    store = LanceDbVectorStore(tmp_path / "vectors", dimension=2, model_key="test", max_concurrency=1)
     monkeypatch.setattr("asterism.domains.knowledge.runtime.vector_store", store)
     uploaded = await upload_files(
         user_id="user-a",

@@ -398,3 +398,60 @@ async def test_memory_proposals_upgrade_adds_empty_tables_with_their_rules(migra
         assert connection.execute("SELECT status, memory_id FROM memory_proposals").fetchall() == [("saved", None)]
     finally:
         connection.close()
+
+
+@pytest.mark.asyncio
+async def test_clip_era_files_record_their_embedding_model(migration_db):
+    """a444c3d08ca3 (US-99.2): files embedded under the built-in CLIP policy say so."""
+    from asterism.domains.knowledge.processing_schemas import KnowledgeProcessingConfiguration
+
+    await upgrade_to(migration_db, "5d2e7a9c4b1f")
+    with sqlite3.connect(migration_db) as connection:
+        connection.execute("INSERT INTO users (id) VALUES ('user-1')")
+        connection.execute(
+            "INSERT INTO file_knowledge_artifacts (id, user_id, file_id, generation, processing_profile_generation, "
+            "status, is_current, searchable, chunk_count, created_at, updated_at) "
+            "VALUES (?, 'user-1', ?, 1, 1, 'ready', 1, 1, 3, 0, 0)",
+            (uuid.uuid4().hex, uuid.uuid4().hex),
+        )
+
+    await upgrade_to(migration_db, "head")
+
+    with sqlite3.connect(migration_db) as connection:
+        [(value,)] = connection.execute("SELECT value FROM app_settings WHERE key = 'knowledge.processing'").fetchall()
+    stored = KnowledgeProcessingConfiguration.model_validate_json(value)
+    assert (stored.embedding_model, stored.generation, stored.captioning.mode) == ("onnx-clip-v1", 1, "disabled")
+
+
+@pytest.mark.asyncio
+async def test_no_files_leave_the_setting_unstored(migration_db):
+    """a444c3d08ca3: with nothing embedded there is nothing to record."""
+    await upgrade_to(migration_db, "5d2e7a9c4b1f")
+    await upgrade_to(migration_db, "head")
+    with sqlite3.connect(migration_db) as connection:
+        assert connection.execute(
+            "SELECT count(*) FROM app_settings WHERE key = 'knowledge.processing'"
+        ).fetchone() == (0,)
+
+
+@pytest.mark.asyncio
+async def test_a_stored_policy_is_left_as_it_is(migration_db):
+    """a444c3d08ca3: a stored policy already names its model."""
+    await upgrade_to(migration_db, "5d2e7a9c4b1f")
+    with sqlite3.connect(migration_db) as connection:
+        connection.execute("INSERT INTO users (id) VALUES ('user-1')")
+        connection.execute(
+            "INSERT INTO file_knowledge_artifacts (id, user_id, file_id, generation, processing_profile_generation, "
+            "status, is_current, searchable, chunk_count, created_at, updated_at) "
+            "VALUES (?, 'user-1', ?, 1, 1, 'ready', 1, 1, 3, 0, 0)",
+            (uuid.uuid4().hex, uuid.uuid4().hex),
+        )
+        connection.execute(
+            "INSERT INTO app_settings (key, value, created_at, updated_at) VALUES (?, ?, 0, 0)",
+            ("knowledge.processing", '"kept"'),
+        )
+    await upgrade_to(migration_db, "head")
+    with sqlite3.connect(migration_db) as connection:
+        assert connection.execute("SELECT value FROM app_settings WHERE key = 'knowledge.processing'").fetchone() == (
+            '"kept"',
+        )
