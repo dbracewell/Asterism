@@ -21,6 +21,10 @@ vi.mock("sonner", () => ({
 }));
 
 vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
+  availabilityGetQueryKey: () => [{ _id: "availabilityGet" }],
+  availabilityGetOptions: () => ({ queryKey: [{ _id: "availabilityGet" }] }),
+  toolsGetActiveQueryKey: () => [{ _id: "toolsGetActive" }],
+  mainAgentGeneralSubAgentsGetQueryKey: () => [{ _id: "generalSubAgents" }],
   appToolSettingsGetOptions: () => ({
     queryKey: [{ _id: "appToolSettingsGet", baseUrl: "" }],
     queryFn: () => Promise.resolve(settings),

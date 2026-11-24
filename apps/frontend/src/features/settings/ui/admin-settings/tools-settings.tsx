@@ -1,3 +1,4 @@
+import { availabilityQueryKey } from "@/features/availability/queries";
 import { ListSkeleton } from "@/components/loading-skeletons";
 import { QueryError } from "@/components/query-error";
 import { Badge } from "@/components/ui/badge";
@@ -21,6 +22,8 @@ import {
 import {
   appToolSettingsGetOptions,
   appToolSettingsGetQueryKey,
+  mainAgentGeneralSubAgentsGetQueryKey,
+  toolsGetActiveQueryKey,
   appToolSettingsUpdateMutation,
   toolsGetAllOptions,
 } from "@/lib/client/@tanstack/react-query.gen";
@@ -42,7 +45,13 @@ const ToolsSettingsForm = ({ appSettings }: { appSettings: ToolSettings }) => {
       client,
     }),
     meta: {
-      invalidates: [appToolSettingsGetQueryKey({ client })],
+      // The allowlist also decides each person's tool pickers and delegation.
+      invalidates: [
+        appToolSettingsGetQueryKey({ client }),
+        toolsGetActiveQueryKey({ client }),
+        mainAgentGeneralSubAgentsGetQueryKey({ client }),
+        availabilityQueryKey(),
+      ],
     },
     onSuccess: () => {
       toast.success("Settings saved");

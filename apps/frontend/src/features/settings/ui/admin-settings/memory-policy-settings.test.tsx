@@ -15,6 +15,8 @@ vi.mock("@/features/auth/components/user-context", () => ({
 }));
 vi.mock("@/lib/api", () => ({ client: {} }));
 vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
+  availabilityGetQueryKey: () => [{ _id: "availabilityGet" }],
+  availabilityGetOptions: () => ({ queryKey: [{ _id: "availabilityGet" }] }),
   memoryPolicyGetOptions: () => ({
     queryKey: [{ _id: "memory-policy" }],
     queryFn: () => mocks.get(),
@@ -22,7 +24,6 @@ vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
   memoryPolicyGetQueryKey: () => [{ _id: "memory-policy" }],
   memoryPolicyUpdateMutation: () => ({ mutationFn: mocks.save }),
   memoryAvailabilityQueryKey: () => [{ _id: "memory-availability" }],
-  userSettingsGetQueryKey: () => [{ _id: "user-settings" }],
   groupGetManyOptions: () => ({
     queryKey: [{ _id: "groups" }],
     queryFn: () => mocks.groups(),

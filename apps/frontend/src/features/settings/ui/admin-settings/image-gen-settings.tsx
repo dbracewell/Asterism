@@ -1,5 +1,6 @@
 "use client";
 
+import { availabilityQueryKey } from "@/features/availability/queries";
 import { APIImage } from "@/components/api-image";
 import { QueryError } from "@/components/query-error";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -93,6 +94,7 @@ function GeneratorSection() {
         localImageOverviewQueryKey({ client }),
         onnxImageOverviewQueryKey({ client }),
         imageGenerationAvailabilityQueryKey({ client }),
+        availabilityQueryKey(),
       ],
     },
     onSuccess() {
@@ -263,8 +265,13 @@ function PolicySection() {
   const [saved, setSaved] = useState(false);
   const update = useMutation({
     ...imageGenerationPolicyUpdateMutation({ client }),
-    // The policy is written below; only chat availability depends on it.
-    meta: { invalidates: [imageGenerationAvailabilityQueryKey({ client })] },
+    // The policy is written below; only availability depends on it.
+    meta: {
+      invalidates: [
+        imageGenerationAvailabilityQueryKey({ client }),
+        availabilityQueryKey(),
+      ],
+    },
     onSuccess(data) {
       queryClient.setQueryData(
         imageGenerationPolicyGetQueryKey({ client }),

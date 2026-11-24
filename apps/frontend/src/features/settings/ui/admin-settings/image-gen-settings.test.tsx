@@ -24,6 +24,8 @@ vi.mock("@/features/auth/components/user-context", () => ({
 }));
 vi.mock("@/lib/api", () => ({ client: {} }));
 vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
+  availabilityGetQueryKey: () => [{ _id: "availabilityGet" }],
+  availabilityGetOptions: () => ({ queryKey: [{ _id: "availabilityGet" }] }),
   appSettingsGetOptions: () => ({
     queryKey: [{ _id: "settings" }],
     queryFn: () => mocks.settings(),

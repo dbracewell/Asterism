@@ -1,5 +1,6 @@
 "use client";
 
+import { availabilityQueryKey } from "@/features/availability/queries";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { QueryError } from "@/components/query-error";
@@ -27,7 +28,6 @@ import {
   memoryPolicyGetOptions,
   memoryPolicyGetQueryKey,
   memoryPolicyUpdateMutation,
-  userSettingsGetQueryKey,
 } from "@/lib/client/@tanstack/react-query.gen";
 import { errorMessage } from "@/lib/utils";
 
@@ -58,11 +58,12 @@ function MemoryPolicySection() {
   const [saved, setSaved] = useState(false);
   const update = useMutation({
     ...memoryPolicyUpdateMutation({ client }),
-    // The policy is written below; availability and each person's "allowed" flag depend on it.
+    // The policy is written below; memory availability and the admin
+    // switches each person sees (EPIC-96) depend on it.
     meta: {
       invalidates: [
         memoryAvailabilityQueryKey({ client }),
-        userSettingsGetQueryKey({ client }),
+        availabilityQueryKey(),
       ],
     },
     onSuccess(data) {
