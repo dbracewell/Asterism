@@ -37,6 +37,8 @@ dependencies = [
   "requests>=2.34.2",
   "sqlalchemy[asyncio]>=2.0.50",
   "tiktoken>=0.14.0",
+  # Search embeddings tokenize with it directly (ADR-0079); transformers also uses it.
+  "tokenizers>=0.23.3,<1",
   "transformers>=5.14.1",
   "truststore>=0.10.4",
   "uvicorn[standard]>=0.48.0",

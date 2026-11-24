@@ -1,76 +1,122 @@
-"""Offline, deterministic smoke/relevance benchmark for the pinned CLIP artifact.
+"""Offline retrieval benchmark for the knowledge embedding model (EPIC-99).
 
-Provision the model as documented in docs/architecture/knowledge-retrieval.md,
-then run from apps/backend:
-    uv run python scripts/benchmark_knowledge_embeddings.py --model-root /path/to/model
+Ranks a small fixed corpus of passages in five languages for queries in the
+same and other languages, and reports top-1 accuracy, mean reciprocal rank and
+timing. With ``--clip-root`` it also runs the earlier CLIP model on the same
+corpus, for comparison. Provision the bundles first (see
+docs/architecture/knowledge-retrieval.md), then run from apps/backend:
+
+    uv run python scripts/benchmark_knowledge_embeddings.py --model-root /path/to/e5 [--clip-root /path/to/clip]
 """
 
 import argparse
 import asyncio
 import resource
-import tempfile
 import time
+from collections.abc import Awaitable, Callable, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 
-from asterism.domains.knowledge.embedding import embedding_provider
-from PIL import Image
+from asterism.domains.knowledge.e5_embedding import OnnxE5EmbeddingProvider
+from asterism.domains.knowledge.embedding import OnnxClipEmbeddingProvider, embedding_model
 
-ARTIFACT_SHA256 = "0898a3facfdb27f0a041e57649b4989cfd094e4a0040d6ae75ed69917dfc7328"
-ARTIFACT_SIZE_BYTES = 153_695_702
+# (topic, language, passage). Each query names the topic it should find.
+PASSAGES: list[tuple[str, str, str]] = [
+    (
+        "photosynthesis",
+        "en",
+        "Photosynthesis lets plants turn light, water and carbon dioxide into glucose and oxygen.",
+    ),
+    ("revolution", "en", "The French Revolution began in 1789 with the storming of the Bastille in Paris."),
+    ("mitosis", "en", "During mitosis a cell copies its chromosomes and divides into two identical cells."),
+    ("photosynthesis", "es", "La fotosíntesis permite a las plantas convertir la luz en energía química."),
+    ("pythagoras", "es", "El teorema de Pitágoras relaciona los lados de un triángulo rectángulo: a² + b² = c²."),
+    ("water-cycle", "fr", "Le cycle de l'eau comprend l'évaporation, la condensation et les précipitations."),
+    ("revolution", "fr", "La Révolution française a commencé en 1789 avec la prise de la Bastille."),
+    ("supply-demand", "de", "Wenn die Nachfrage steigt und das Angebot gleich bleibt, steigen die Preise."),
+    ("mitosis", "de", "Bei der Mitose teilt sich eine Zelle in zwei genetisch identische Tochterzellen."),
+    ("water-cycle", "zh", "水循环包括蒸发、凝结和降水三个主要过程。"),
+    ("pythagoras", "zh", "勾股定理说明直角三角形两条直角边的平方和等于斜边的平方。"),
+    ("supply-demand", "en", "When demand rises and supply stays the same, prices usually go up."),
+]
+
+QUERIES: list[tuple[str, str, str]] = [
+    ("photosynthesis", "en", "how do plants make food from sunlight"),
+    ("revolution", "en", "when did the French Revolution start"),
+    ("mitosis", "en", "how does a cell divide into two"),
+    ("pythagoras", "en", "right triangle side lengths formula"),
+    ("water-cycle", "en", "evaporation condensation and rain"),
+    ("supply-demand", "en", "why do prices increase"),
+    ("photosynthesis", "es", "¿cómo producen energía las plantas con la luz?"),
+    ("revolution", "fr", "quand a commencé la Révolution française ?"),
+    ("supply-demand", "de", "warum steigen die Preise"),
+    ("water-cycle", "zh", "水是如何循环的"),
+    ("pythagoras", "zh", "直角三角形的边长关系"),
+    ("mitosis", "de", "Wie teilt sich eine Zelle?"),
+]
 
 
 @dataclass(frozen=True)
-class BenchmarkResult:
+class Result:
+    name: str
     initialize_seconds: float
-    text_seconds: float
-    image_seconds: float
-    red_query_scores: list[float]
-    blue_query_scores: list[float]
-    max_rss_kib: int
+    embed_seconds: float
+    top1: float
+    mrr: float
+    top1_cross_language: float
 
 
-def cosine(left: list[float], right: list[float]) -> float:
-    return sum(first * second for first, second in zip(left, right))
+Embed = Callable[[Sequence[str]], Awaitable[list[list[float]]]]
 
 
-async def benchmark(model_root: Path) -> BenchmarkResult:
-    provider = embedding_provider
+async def run(name: str, initialize: Callable[[], Awaitable[None]], passages: Embed, queries: Embed) -> Result:
     start = time.perf_counter()
-    await provider.initialize()
+    await initialize()
     initialize_seconds = time.perf_counter() - start
     start = time.perf_counter()
-    text_embeddings = await provider.embed_text(["a red square", "a blue square"])
-    text_seconds = time.perf_counter() - start
-    with tempfile.TemporaryDirectory(prefix="asterism-knowledge-benchmark-") as directory:
-        root = Path(directory)
-        red, blue = root / "red.png", root / "blue.png"
-        Image.new("RGB", (224, 224), "red").save(red)
-        Image.new("RGB", (224, 224), "blue").save(blue)
-        start = time.perf_counter()
-        image_embeddings = await provider.embed_image([red, blue])
-        image_seconds = time.perf_counter() - start
-    await provider.close()
-    return BenchmarkResult(
-        initialize_seconds=initialize_seconds,
-        text_seconds=text_seconds,
-        image_seconds=image_seconds,
-        red_query_scores=[cosine(text_embeddings[0], image) for image in image_embeddings],
-        blue_query_scores=[cosine(text_embeddings[1], image) for image in image_embeddings],
-        max_rss_kib=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss,
-    )
+    passage_vectors = await passages([text for _, _, text in PASSAGES])
+    query_vectors = await queries([text for _, _, text in QUERIES])
+    embed_seconds = time.perf_counter() - start
+    top1 = reciprocal = 0.0
+    cross_hits = cross_total = 0
+    for (topic, language, _), vector in zip(QUERIES, query_vectors):
+        scores = [sum(a * b for a, b in zip(vector, passage)) for passage in passage_vectors]
+        ranked = sorted(range(len(PASSAGES)), key=lambda index: -scores[index])
+        rank = next(position for position, index in enumerate(ranked, 1) if PASSAGES[index][0] == topic)
+        top1 += rank == 1
+        reciprocal += 1 / rank
+        # Does the best passage in another language still find the topic?
+        others = [index for index in ranked if PASSAGES[index][1] != language]
+        cross_total += 1
+        cross_hits += PASSAGES[others[0]][0] == topic
+    count = len(QUERIES)
+    return Result(name, initialize_seconds, embed_seconds, top1 / count, reciprocal / count, cross_hits / cross_total)
+
+
+async def main(model_root: Path, clip_root: Path | None) -> list[Result]:
+    e5 = OnnxE5EmbeddingProvider(model_root)
+    results = [await run("multilingual-e5-small", e5.initialize, e5.embed_passage, e5.embed_query)]
+    if clip_root is not None:
+        clip = OnnxClipEmbeddingProvider(clip_root, pinned_model=embedding_model)
+        results.append(await run("clip-vit-base-patch32", clip.initialize, clip.embed_text, clip.embed_text))
+    return results
 
 
 def arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--model-root", type=Path, required=True)
+    parser.add_argument("--model-root", type=Path, required=True, help="The multilingual-e5-small bundle")
+    parser.add_argument("--clip-root", type=Path, help="Optionally, the earlier CLIP bundle to compare with")
     return parser.parse_args()
 
 
 if __name__ == "__main__":
-    result = asyncio.run(benchmark(arguments().model_root))
-    print(result)
-    if not (result.red_query_scores[0] > result.red_query_scores[1]):
-        raise SystemExit("Red query did not rank the red image above blue")
-    if not (result.blue_query_scores[1] > result.blue_query_scores[0]):
-        raise SystemExit("Blue query did not rank the blue image above red")
+    options = arguments()
+    for result in asyncio.run(main(options.model_root, options.clip_root)):
+        print(
+            f"{result.name}: top-1 {result.top1:.2f}, MRR {result.mrr:.2f}, "
+            f"cross-language top-1 {result.top1_cross_language:.2f}, "
+            f"init {result.initialize_seconds:.2f}s, embed {result.embed_seconds:.2f}s"
+        )
+        if result.name.startswith("multilingual") and result.top1 < 0.75:
+            raise SystemExit("multilingual-e5-small ranked fewer than 3 in 4 queries' topic first")
+    print(f"max RSS {resource.getrusage(resource.RUSAGE_SELF).ru_maxrss} (KiB on Linux, bytes on macOS)")

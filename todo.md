@@ -132,13 +132,14 @@ Complete (2026-11-24); archive once its pull requests have merged.
 
 ### [EPIC-99: Multilingual text embeddings, images found by caption](docs/epics/EPIC-99-MULTILINGUAL-E5-EMBEDDINGS.md)
 
-- [ ] US-99.1: The e5 provider
-  - [ ] Write the ADR.
-  - [ ] Add a pinned e5 bundle: a `PinnedModel` with files, hashes and sizes, and the models directory `knowledge-e5-small`, migrating the old `knowledge-clip` directory away.
-  - [ ] Implement a text-only `EmbeddingProvider` with pooling, prefixes and truncation.
-  - [ ] Update `scripts/benchmark_knowledge_embeddings.py` and record quality and speed against CLIP on English and non-English samples in the ADR. Choose quantized or full precision from that.
-  - [ ] Tests: download verification, dimensions, prefixes, truncation, and that the image stays torch-free (`pnpm check:image`).
+- [x] US-99.1: The e5 provider
+  - [x] Write the ADR.
+  - [x] Add a pinned e5 bundle: a `PinnedModel` with files, hashes and sizes, and the models directory `knowledge-e5-small`, migrating the old `knowledge-clip` directory away.
+  - [x] Implement a text-only `EmbeddingProvider` with pooling, prefixes and truncation.
+  - [x] Update `scripts/benchmark_knowledge_embeddings.py` and record quality and speed against CLIP on English and non-English samples in the ADR. Choose quantized or full precision from that.
+  - [x] Tests: download verification, dimensions, prefixes, truncation, and that the image stays torch-free (`pnpm check:image`).
 - [ ] US-99.2: Model-keyed vectors and re-embedding on upgrade
+  - [ ] Switch to the e5 provider: download it into `models/knowledge-e5-small`, remove the old `knowledge-clip` directory, and split callers into `embed_query` and `embed_passage`.
   - [ ] Add model-keyed table names for knowledge chunks and memory vectors, with the dimension taken from the manifest.
   - [ ] A startup comparison of the stored model with the code's model triggers a new processing generation. Images re-embed from the stored caption.
   - [ ] Drop the old tables once the new generation is complete.
