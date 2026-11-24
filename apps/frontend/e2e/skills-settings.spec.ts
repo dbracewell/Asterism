@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { ISOLATED_BASE_URL, bearer, register } from "./support/classes";
 import { expect, test, type Page } from "./support/test";
 import type { Skill } from "../src/lib/client";
 
@@ -433,6 +434,7 @@ test("deleting the only skill on a later page returns to a valid page", async ({
 });
 
 test("authenticated settings create and assign a private skill with real APIs", async ({
+  browser,
   page,
   context,
 }) => {
@@ -454,6 +456,43 @@ test("authenticated settings create and assign a private skill with real APIs", 
       })
     ).ok(),
   ).toBeTruthy();
+  // Skills settings are hidden while the admin has skills off (EPIC-97), so an
+  // admin turns them on, and back off at the end. CI runs specs one at a time.
+  const admin = await browser.newContext({ baseURL: ISOLATED_BASE_URL });
+  await register(admin, `Skills admin ${randomUUID().slice(0, 8)}`, true);
+  const adminPage = await admin.newPage();
+  const skillsPolicy = async (enabled: boolean) =>
+    expect(
+      (
+        await adminPage.request.put("/api/py/settings/app/skills", {
+          headers: await bearer(adminPage),
+          data: { enabled },
+        })
+      ).ok(),
+    ).toBeTruthy();
+  await skillsPolicy(true);
+  try {
+    await authorAndAssign(page);
+  } finally {
+    await skillsPolicy(false);
+    await admin.close();
+  }
+  // Off again: the saved skill stays reachable, and its assignment says why
+  // it isn't used.
+  await page.reload();
+  await expect(
+    page.getByRole("tab", { name: "Skills", exact: true }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Manage main-agent skills" }).click();
+  await expect(
+    page.getByRole("checkbox", { name: /real-review/ }),
+  ).toBeChecked();
+  await expect(
+    page.getByText("Skill activation disabled by administrator"),
+  ).toBeVisible();
+});
+
+async function authorAndAssign(page: Page) {
   await page.goto("/settings?t=user&setting=skills");
   await page.getByRole("button", { name: "New skill" }).click();
   await page
@@ -474,7 +513,4 @@ test("authenticated settings create and assign a private skill with real APIs", 
   await expect(
     page.getByRole("checkbox", { name: /real-review/ }),
   ).toBeChecked();
-  await expect(
-    page.getByText("Skill activation disabled by administrator"),
-  ).toBeVisible();
-});
+}
