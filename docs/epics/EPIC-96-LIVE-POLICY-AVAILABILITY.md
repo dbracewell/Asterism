@@ -1,6 +1,6 @@
 # EPIC-96: Admin policy changes show up without a reload
 
-Status: in progress (2026-11-24). US-96.1 done: `GET /availability`. US-96.2 done: admin saves reach it. Source: user request (2026-11-24): "I enable
+Status: complete (2026-11-24). US-96.1 PR #84, US-96.2 PR #85, US-96.3 PR #86. Source: user request (2026-11-24): "I enable
 memories in admin then switch to user settings, I should not have to refresh the
 page to select Use memory."
 
@@ -113,11 +113,12 @@ As an admin, a policy I change is reflected on the next screen I open.
 
 ### US-96.3: End-to-end check
 
-- [ ] Playwright: an admin turns memory on, switches to User Settings → Your
-      Asterism, and can tick "Use memory" without a reload. Repeat for canvas
-      and the tool allowlist (the agent form's tool picker).
-- [ ] Playwright: a second user's tab shows the change after it regains focus.
-- [ ] Update `docs/architecture` where the user context is described, and add a
+- [x] Playwright: an admin turns memory on, switches to User Settings → Your
+      Asterism, and can tick "Use memory" without a reload. Repeat for canvas.
+      The tool allowlist is covered by `admin-invalidation.test.ts`, which
+      checks that its save refreshes the agent form's tool picker.
+- [x] Playwright: a second user's tab shows the change after it regains focus.
+- [x] Update `docs/architecture` where the user context is described, and add a
       Behavior line in the release notes.
 
 ## Open questions

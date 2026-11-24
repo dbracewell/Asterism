@@ -71,3 +71,12 @@ it("lists no exemption that no longer exists", () => {
   );
   expect(Object.keys(EXEMPT).filter((key) => !keys.has(key))).toEqual([]);
 });
+
+it("the tool allowlist save refreshes each person's tool picker and delegation", () => {
+  const tools = sources.find(({ name }) => name === "tools-settings.tsx")!;
+  const save = mutations(tools.source).find(
+    ({ name }) => name === "saveSettings",
+  )!;
+  expect(save.body).toContain("toolsGetActiveQueryKey");
+  expect(save.body).toContain("mainAgentGeneralSubAgentsGetQueryKey");
+});

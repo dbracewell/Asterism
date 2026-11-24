@@ -24,6 +24,9 @@ Unreleased into its version and date.
 
 ### Behavior
 
+- Turning a feature on or off in Admin Settings (for example memory or canvas)
+  now shows in User Settings and chats without reloading the page. Other people's
+  open tabs catch up within about 30 seconds, when the tab is next focused.
 - A list that was still loading when you changed something (for example
   "Your classes" when joining a class from a link) now shows the change instead
   of the answer from before it.
