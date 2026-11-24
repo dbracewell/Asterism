@@ -55,6 +55,10 @@ test("previews a settings file and imports it after confirmation", async ({
   };
   await page.route("**/api/py/**", (route) => {
     const path = new URL(route.request().url()).pathname;
+    if (path.endsWith("/settings/app/transfer/coverage"))
+      return route.fulfill({
+        json: { included: ["Providers"], excluded: [] },
+      });
     if (path.includes("/settings/app/transfer/")) {
       calls.push(path.split("/").pop() ?? "");
       return route.fulfill({ json: summary });

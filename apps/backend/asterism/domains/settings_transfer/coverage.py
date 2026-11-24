@@ -9,6 +9,10 @@ list so administrators know what a file contains.
 """
 
 from dataclasses import dataclass, field
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .schemas import SettingsCoverage
 
 
 @dataclass(frozen=True)
@@ -57,6 +61,11 @@ COVERAGE: tuple[SettingCoverage, ...] = (
         excluded="People and their group membership are account data, kept by a backup, not settings.",
     ),
     SettingCoverage(
+        "files:models",
+        "Image generation and Image captioning",
+        excluded="Downloaded models are large; the new installation downloads them again.",
+    ),
+    SettingCoverage(
         "table:educator_requests",
         "Educators",
         excluded="Who may run classes is account data, kept by a backup, not settings.",
@@ -66,3 +75,19 @@ COVERAGE: tuple[SettingCoverage, ...] = (
 
 def coverage_for(store: str) -> SettingCoverage | None:
     return next((entry for entry in COVERAGE if entry.store == store), None)
+
+
+def summary() -> "SettingsCoverage":
+    """The registry as the Export pane shows it: sections in, and what is left out and why."""
+    from .schemas import CoverageExclusion, SettingsCoverage
+
+    included: list[str] = []
+    for entry in COVERAGE:
+        if entry.bundle_field is not None and entry.section not in included:
+            included.append(entry.section)
+    excluded = [
+        CoverageExclusion(section=entry.section, reason=entry.excluded)
+        for entry in COVERAGE
+        if entry.bundle_field is None and entry.excluded
+    ]
+    return SettingsCoverage(included=included, excluded=excluded)

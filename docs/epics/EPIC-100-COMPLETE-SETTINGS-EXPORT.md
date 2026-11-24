@@ -1,6 +1,6 @@
 # EPIC-100: The settings export covers all of Admin Settings
 
-Status: in progress (2026-11-24). Source: user request (2026-11-24): "Make sure that
+Status: complete (2026-11-24). US-100.1 PR #100, US-100.2 PR #101, US-100.3. Source: user request (2026-11-24): "Make sure that
 the export settings covers all items in the admin settings panel."
 
 ## Objective
@@ -84,9 +84,9 @@ Suggested order: US-100.1 → 100.2 → 100.3.
 
 ### US-100.3: Frontend and docs
 
-- [ ] The Export pane lists what is and isn't included, generated from the
+- [x] The Export pane lists what is and isn't included, generated from the
       registry so it stays accurate.
-- [ ] Update `docs/guide/08-for-administrators` (export and import) and
+- [x] Update `docs/guide/08-for-administrators` (export and import) and
       `docs/deployment.md`, and add release notes (Data: export format 2;
       Behavior: what is now included).
 

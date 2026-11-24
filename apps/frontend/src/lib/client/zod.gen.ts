@@ -839,6 +839,14 @@ export const zCourseVersionPage = z.object({
 });
 
 /**
+ * CoverageExclusion
+ */
+export const zCoverageExclusion = z.object({
+  section: z.string(),
+  reason: z.string(),
+});
+
+/**
  * CreateUserRequest
  *
  * Request model for creating a new user.
@@ -3611,6 +3619,16 @@ export const zSelectField = z.object({
 export const zSetting = z.object({
   key: z.string(),
   value: zJsonValue,
+});
+
+/**
+ * SettingsCoverage
+ *
+ * What a settings file carries (EPIC-100): Admin Settings sections, and what it leaves out.
+ */
+export const zSettingsCoverage = z.object({
+  included: z.array(z.string()),
+  excluded: z.array(zCoverageExclusion),
 });
 
 /**
@@ -6475,6 +6493,11 @@ export const zTeamPackImportBody = zPackImportRequest;
  * Successful Response
  */
 export const zTeamPackImportResponse = zPackImportResult;
+
+/**
+ * Successful Response
+ */
+export const zAppSettingsTransferCoverageResponse = zSettingsCoverage;
 
 export const zAppSettingsExportBody = zSettingsExportRequest;
 

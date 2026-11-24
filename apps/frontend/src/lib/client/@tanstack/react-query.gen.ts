@@ -81,6 +81,9 @@ import type {
   AppSettingsImportPreviewError,
   AppSettingsImportPreviewResponse,
   AppSettingsImportResponse,
+  AppSettingsTransferCoverageData,
+  AppSettingsTransferCoverageError,
+  AppSettingsTransferCoverageResponse,
   AppSettingUpdateData,
   AppSettingUpdateError,
   AppSettingUpdateResponse,
@@ -3364,6 +3367,38 @@ export const teamPackImportMutation = (
   };
   return mutationOptions;
 };
+
+export const appSettingsTransferCoverageQueryKey = (
+  options?: Options<AppSettingsTransferCoverageData>,
+) => createQueryKey("appSettingsTransferCoverage", options);
+
+/**
+ * Get Settings Coverage
+ *
+ * What a settings file includes and leaves out, from the coverage registry.
+ */
+export const appSettingsTransferCoverageOptions = (
+  options?: Options<AppSettingsTransferCoverageData>,
+) =>
+  queryOptions<
+    AppSettingsTransferCoverageResponse,
+    AppSettingsTransferCoverageError,
+    AppSettingsTransferCoverageResponse,
+    ReturnType<typeof appSettingsTransferCoverageQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry
+        .get()
+        .appSettingsTransferCoverage({
+          ...options,
+          ...queryKey[0],
+          signal,
+          throwOnError: true,
+        });
+      return data;
+    },
+    queryKey: appSettingsTransferCoverageQueryKey(options),
+  });
 
 /**
  * Create Settings Export

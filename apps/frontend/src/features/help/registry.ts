@@ -863,8 +863,9 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
   "admin.settings-file": {
     title: "Settings file",
     summary:
-      "One file that moves every application setting between installations: providers, models, tools and policies. Users, chats and files are not included.",
+      "One file that moves everything set in Admin Settings between installations. People, chats, files and downloaded models are not included.",
     details: [
+      "It holds providers and models, groups with their access and budgets, the usage time zone, tools, every policy and its groups, image generation and captioning, accepted licenses and custom themes. The Export page lists it all.",
       "API keys in the file are encrypted with the passphrase you choose when exporting. Without it the file can't be opened, and nobody can recover it.",
       "Importing shows what will change before anything is applied. Providers are added, or updated when the name matches; settings in the file replace current values; nothing is removed.",
     ],

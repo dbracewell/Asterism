@@ -1261,12 +1261,12 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
     title: "Export and import settings",
     walkthrough: "08-for-administrators/policies#export",
     purpose:
-      "Move every application setting between installations in one file. Users, chats and files are not included.",
+      "Move everything set in Admin Settings between installations in one file. People, chats, files and downloaded models are not included.",
     areas: [
       {
         name: "Export settings",
         description:
-          "Saves providers, models, tools, policies and each group's model and tool access. Group membership isn't included. API keys in the file are encrypted with a passphrase you choose; without it the file can't be opened.",
+          "Saves everything set in Admin Settings, as the page lists, including group budgets, which groups each policy is for, the usage time zone and custom themes. People and their group membership aren't included. API keys in the file are encrypted with a passphrase you choose; without it the file can't be opened.",
       },
       {
         name: "Import settings",

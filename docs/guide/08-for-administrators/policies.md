@@ -153,9 +153,13 @@ Approves who may run classes. See
 
 ## Export
 
-Moves every application setting to another installation in one file: providers,
-models, tools, policies and each group's model and tool access. Users, group
-membership, chats and files are **not** included.
+Moves everything you set in Admin Settings to another installation in one file:
+providers and models, groups with their access and token budgets, the usage time
+zone, tools, every policy and which groups it's for, image generation and
+captioning, accepted model licenses, and custom themes. The page lists what a
+file includes and leaves out. People and their group membership, chats, files
+and downloaded models are **not** included: a [backup](../../deployment.md#6-storage-backups-and-upgrades)
+keeps those, and the new installation downloads models again.
 
 - **Export settings**: type a **Passphrase** of at least 12 characters, twice, and
   select **Export settings**. The file contains your provider API keys, encrypted
@@ -163,7 +167,9 @@ membership, chats and files are **not** included.
 - **Import settings**: choose the **Settings file**, type its **File passphrase**
   and select **Preview import** to see what will change before you apply it.
   Providers in the file are added, or updated when the name matches; settings in
-  the file replace current values. Nothing is removed.
+  the file replace current values. A group the file names that doesn't exist here
+  is created. Nothing is removed. Files exported by an older Asterism still
+  import; what they don't carry stays as it is.
 
 ## Related
 

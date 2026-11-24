@@ -5,8 +5,11 @@ import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { client } from "@/lib/api";
 import type { SettingsEnvelope } from "@/lib/client";
-import { appSettingsExportMutation } from "@/lib/client/@tanstack/react-query.gen";
-import { useMutation } from "@tanstack/react-query";
+import {
+  appSettingsExportMutation,
+  appSettingsTransferCoverageOptions,
+} from "@/lib/client/@tanstack/react-query.gen";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { type FormEvent, useId, useState } from "react";
 import { ImportSettings } from "./import-settings";
 import { HelpHeading } from "@/features/help/components/help-heading";
@@ -23,6 +26,43 @@ function downloadSettings(file: SettingsEnvelope) {
   link.download = `asterism-settings-${new Date().toISOString().slice(0, 10)}.json`;
   link.click();
   URL.revokeObjectURL(url);
+}
+
+/** What a file includes and leaves out, from the server's coverage registry (EPIC-100). */
+function FileContents() {
+  const coverage = useQuery({
+    ...appSettingsTransferCoverageOptions({ client }),
+    retry: false,
+  });
+  if (!coverage.data?.included || !coverage.data.excluded) return null;
+  return (
+    <div className="grid gap-2 sm:grid-cols-2">
+      <div>
+        <p className="font-medium">Included</p>
+        <ul
+          aria-label="Included in the file"
+          className="text-muted-foreground list-disc pl-5"
+        >
+          {coverage.data.included.map((section) => (
+            <li key={section}>{section}</li>
+          ))}
+        </ul>
+      </div>
+      <div>
+        <p className="font-medium">Not included</p>
+        <ul
+          aria-label="Not included in the file"
+          className="text-muted-foreground list-disc pl-5"
+        >
+          {coverage.data.excluded.map((item) => (
+            <li key={item.section}>
+              {item.section}: {item.reason}
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  );
 }
 
 const ExportForm = () => {
@@ -53,10 +93,11 @@ const ExportForm = () => {
     <form className="grid max-w-xl gap-4" onSubmit={submit}>
       <div className="grid gap-2 text-sm">
         <p>
-          Save every application setting to one file, including providers,
-          models, tools, policies and each group&apos;s model and tool access.
-          Users, group membership, chats and files are not included.
+          Save every application setting to one file, to set up another
+          installation or keep a copy. Chats and files aren&apos;t included; a
+          backup keeps those.
         </p>
+        <FileContents />
         <p role="note" className="bg-muted rounded-surface p-3">
           The file contains your provider and search API keys, encrypted with
           this passphrase. Choose one you don&apos;t use elsewhere and keep it
