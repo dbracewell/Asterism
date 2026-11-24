@@ -106,30 +106,11 @@ The steps, in order:
 | Image generation     | Off                                               |
 | ChatGPT plans        | Off                                               |
 | Context compaction   | At 80% of the context window                      |
-| Theme                | The built-in themes                               |
-| Educators            | No educators                                      |
-| First backup         | No backup                                         |
 
 > **Image captioning and search.** Search finds a picture in an uploaded file
 > only by its caption. While captioning is off, pictures are kept and can be
 > attached to chats, but search can't find them. See
 > [Image captioning](policies.md#image-captioning).
-
-### The first backup
-
-The last step shows the commands that take and check a backup, which run on the
-server, and the last backup the server recorded.
-
-![The First backup setup step: why SYSTEM_KEY and BETTER_AUTH_SECRET must be kept apart from backups, the backup and verify commands with copy buttons, and the last backup](../images/admin-setup-backup.png)
-
-1. Keep copies of `SYSTEM_KEY` and `BETTER_AUTH_SECRET` from the server's `.env`
-   somewhere safe, such as a password manager, and not with the backups. A
-   backup can only be restored with the `SYSTEM_KEY` it was made with, and
-   backups don't contain it.
-2. Run the backup command on the server, then the verify command with the file
-   it made.
-3. Select **Check again**. The backup appears under **Last backup**.
-4. Select **Next**.
 
 ### The summary
 
@@ -144,8 +125,14 @@ reviewed, skipped or reviewed. Select a step to open it.
 - [Groups, budgets and usage](groups-budgets-and-usage.md): limit models or set
   token budgets for students.
 - [Policies](policies.md): each feature setting in more detail.
-- Schedule nightly backups, as the [deployment guide](../../deployment.md)
-  explains.
+- Take a first backup and schedule nightly ones, as the
+  [deployment guide](../../deployment.md) explains. Keep copies of `SYSTEM_KEY`
+  and `BETTER_AUTH_SECRET` from the server's `.env` somewhere safe, and not with
+  the backups: a backup can only be restored with the `SYSTEM_KEY` it was made
+  with.
+- [Theme editor](theme-editor.md): make a theme in your school's colors.
+- [Educators](policies.md#educators): approve them when someone needs to run
+  classes.
 
 ## If something goes wrong
 
@@ -153,8 +140,6 @@ reviewed, skipped or reviewed. Select a step to open it.
   `/v1`) and the API key, then try again.
 - **The passkey is refused.** Check it with whoever installed Asterism. It's the
   `ADMIN_PASSPHRASE` value in the server's `.env` file.
-- **The first backup step says no backup has been recorded.** Run the backup
-  command on the server while Asterism is running, then select **Check again**.
 
 ## Related
 

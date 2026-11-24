@@ -24,7 +24,6 @@ import {
   stepGuideHref,
   type SetupStep,
 } from "../walkthrough";
-import { SetupBackupStep } from "./setup-backup-step";
 
 const STATE_LABEL = { done: "Done", skipped: "Skipped" } as const;
 
@@ -176,24 +175,16 @@ function Walkthrough({ panes }: { panes: Record<string, ReactNode> }) {
                 </Button>
                 <StepBadge state={states[current.id]} />
               </div>
-              {!current.standalone && (
-                <p className="text-muted-foreground text-xs">
-                  Save any changes below before choosing Next.
-                </p>
-              )}
+              <p className="text-muted-foreground text-xs">
+                Save any changes below before choosing Next.
+              </p>
               {record.isError && (
                 <p role="alert" className="text-destructive text-sm">
                   {errorMessage(record.error, "The step could not be saved.")}
                 </p>
               )}
             </section>
-            <div className="min-w-0">
-              {current.id === "backup" ? (
-                <SetupBackupStep />
-              ) : (
-                panes[current.id]
-              )}
-            </div>
+            <div className="min-w-0">{panes[current.id]}</div>
           </>
         ) : (
           <SetupSummary states={states} onOpen={go} />

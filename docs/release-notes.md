@@ -22,6 +22,12 @@ Unreleased into its version and date.
 
 ## Unreleased
 
+### Behavior
+
+- Setup (Admin Settings → Setup) no longer has Theme, Educators and First
+  backup steps. Change those from their own Admin Settings sections; Status
+  shows the last backup. Progress already recorded for those steps is ignored.
+
 ## 0.5.0 (2026-11-24)
 
 ### Configuration

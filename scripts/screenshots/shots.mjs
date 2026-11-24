@@ -1261,13 +1261,6 @@ export const shots = [
     ready: ["Step 5 of", "search can't find them"],
   },
   {
-    name: "admin-setup-backup",
-    alt: "The First backup setup step: why SYSTEM_KEY and BETTER_AUTH_SECRET must be kept apart from backups, the backup and verify commands with copy buttons, and the last backup",
-    as: "admin",
-    path: () => "/settings?t=admin&setting=setup&step=backup",
-    ready: ["Keep the secrets apart from the backups", "Last backup"],
-  },
-  {
     name: "admin-setup-summary",
     alt: "The setup summary, listing the steps not reviewed and the steps reviewed, each a button that opens it, and Start chatting",
     as: "admin",

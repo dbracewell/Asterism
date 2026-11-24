@@ -12,9 +12,6 @@ async function routeProgress(page: Page) {
   await page.route("**/api/py/**", (route) =>
     route.fulfill({ status: 503, json: { detail: "Fixture unavailable" } }),
   );
-  await page.route("**/api/py/status", (route) =>
-    route.fulfill({ json: { last_backup: null } }),
-  );
   await page.route("**/api/py/settings/app/setup", (route) =>
     route.fulfill({ json: { steps } }),
   );
@@ -39,7 +36,7 @@ test("an administrator skips, reviews and resumes setup steps", async ({
   await page.goto("/e2e/planned-settings?setting=setup");
 
   const steps = page.getByRole("navigation", { name: "Setup steps" });
-  await expect(steps.getByRole("status")).toHaveText(/1 of 15 steps reviewed/);
+  await expect(steps.getByRole("status")).toHaveText(/1 of 12 steps reviewed/);
   // The first-run provider steps already reviewed Providers.
   await expect(
     steps.getByRole("button", { name: /Providers and models/ }),
@@ -69,7 +66,7 @@ test("an administrator skips, reviews and resumes setup steps", async ({
   await expect(
     current(page).getByRole("heading", { name: "Tools and search" }),
   ).toBeVisible();
-  await expect(steps.getByRole("status")).toHaveText(/3 of 15 steps reviewed/);
+  await expect(steps.getByRole("status")).toHaveText(/3 of 12 steps reviewed/);
 
   // Any step can be opened from the list; captioning says what search needs.
   await steps.getByRole("button", { name: /Image captioning/ }).click();
@@ -85,14 +82,8 @@ test("an administrator skips, reviews and resumes setup steps", async ({
     "/help/guide/08-for-administrators/policies#image-captioning",
   );
 
-  // The last step is the first backup; the server says none was taken.
-  await steps.getByRole("button", { name: /First backup/ }).click();
-  await expect(
-    page.getByRole("heading", {
-      name: "Keep the secrets apart from the backups",
-    }),
-  ).toBeVisible();
-  await expect(page.getByText("No backup has been recorded yet")).toBeVisible();
+  // The last step is context compaction; Next from it reviews it.
+  await steps.getByRole("button", { name: /Context compaction/ }).click();
   await page.getByRole("button", { name: "Next" }).click();
 
   // The summary sorts what is left from what was skipped or reviewed.
@@ -101,7 +92,7 @@ test("an administrator skips, reviews and resumes setup steps", async ({
     "Groups and budgets",
   );
   await expect(page.getByRole("list", { name: "Reviewed (3)" })).toContainText(
-    "First backup",
+    "Context compaction",
   );
   await page
     .getByRole("list", { name: "Skipped (1)" })

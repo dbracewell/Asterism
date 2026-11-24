@@ -296,10 +296,10 @@ are listed under [security defaults](#security-defaults).
    **Next** and **Skip for now** on each step. Progress is stored on the server,
    so any administrator can resume it later. The steps cover groups and budgets,
    the usage time zone, tools, image captioning (off by default; **search can't
-   find pictures until it is on**), each feature policy, the theme and educators.
-4. The last step is a first backup: take one (below) while the app runs, check
-   it with `verify`, and select **Check again** to see it recorded. Keep
-   `SYSTEM_KEY` and `BETTER_AUTH_SECRET` apart from the backups.
+   find pictures until it is on**), each feature policy and context compaction.
+4. Take a first backup (below) while the app runs and check it with `verify`.
+   Admin Settings → Status shows the last backup. Keep `SYSTEM_KEY` and
+   `BETTER_AUTH_SECRET` apart from the backups.
 
 People join through class invite links, which educators (and administrators,
 who can run classes too) create for a class. The

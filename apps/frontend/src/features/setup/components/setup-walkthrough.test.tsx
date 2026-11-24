@@ -7,14 +7,12 @@ import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, expect, it, vi } from "vitest";
 import { SETUP_STEPS, stepGuideHref } from "../walkthrough";
-import { BACKUP_COMMAND } from "./setup-backup-step";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { SetupWalkthrough } from "./setup-walkthrough";
 
 const mocks = vi.hoisted(() => ({
   get: vi.fn(),
   record: vi.fn(),
-  status: vi.fn(),
   replace: vi.fn(),
   search: "t=admin&setting=setup",
   role: "admin",
@@ -35,10 +33,6 @@ vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
   }),
   setupProgressGetQueryKey: () => [{ _id: "setupProgressGet" }],
   setupStepUpdateMutation: () => ({ mutationFn: mocks.record }),
-  statusGetOptions: () => ({
-    queryKey: [{ _id: "statusGet" }],
-    queryFn: () => mocks.status(),
-  }),
 }));
 
 const panes = Object.fromEntries(
@@ -69,7 +63,6 @@ beforeEach(() => {
   mocks.replace.mockReset();
   mocks.get.mockReset().mockResolvedValue(stepped("providers"));
   mocks.record.mockReset();
-  mocks.status.mockReset().mockResolvedValue({ last_backup: null });
 });
 
 it("is for administrators only", () => {
@@ -181,7 +174,7 @@ it("the summary sorts steps by state and opens one", async () => {
     screen.getByRole("list", {
       name: `Not reviewed (${SETUP_STEPS.length - 2})`,
     }),
-  ).toHaveTextContent("First backup");
+  ).toHaveTextContent("Context compaction");
   await userEvent
     .setup()
     .click(within(skipped).getByRole("button", { name: "Usage time zone" }));
@@ -190,27 +183,21 @@ it("the summary sorts steps by state and opens one", async () => {
   );
 });
 
-it("the backup step explains SYSTEM_KEY and shows the last backup", async () => {
-  mocks.search = "t=admin&setting=setup&step=backup";
+it("ignores stored progress for steps setup no longer has (US-102.1)", async () => {
+  mocks.search = "t=admin&setting=setup&step=summary";
+  // Installations set up before EPIC-102 may have reviewed these.
+  mocks.get.mockResolvedValue(
+    stepped("providers", "theme_editor", "educators", "backup"),
+  );
   setup();
   expect(
-    await screen.findByText(
-      /A backup can only be restored with the SYSTEM_KEY it was made with, and backups don't contain it\./,
-    ),
-  ).toBeVisible();
-  expect(screen.getByText(BACKUP_COMMAND)).toBeVisible();
+    await screen.findByRole("list", { name: "Reviewed (1)" }),
+  ).toHaveTextContent("Providers and models");
+  expect(screen.getByRole("status")).toHaveTextContent(
+    `1 of ${SETUP_STEPS.length} steps reviewed`,
+  );
+  expect(SETUP_STEPS).toHaveLength(12);
   expect(
-    await screen.findByText(/No backup has been recorded yet/),
-  ).toBeVisible();
-  mocks.status.mockResolvedValue({
-    last_backup: {
-      created_at: 1_700_000_000,
-      archive: "asterism-backup-1.tar.gz",
-      size_bytes: 2048,
-    },
-  });
-  await userEvent
-    .setup()
-    .click(screen.getByRole("button", { name: "Check again" }));
-  expect(await screen.findByText(/asterism-backup-1\.tar\.gz/)).toBeVisible();
+    screen.queryByRole("button", { name: /Theme|Educators|First backup/ }),
+  ).toBeNull();
 });

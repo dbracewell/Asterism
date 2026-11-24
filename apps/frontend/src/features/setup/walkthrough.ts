@@ -2,11 +2,10 @@
  * The guided setup's steps (EPIC-101): the Admin Settings sections in the order
  * a new installation needs them, each with what it does, its default and what
  * people see while it is off. Every Admin Settings section is either a step or
- * listed in NOT_STEPS with a reason; a test keeps that true. Standalone steps
- * have a pane of their own instead of an Admin Settings section.
+ * listed in NOT_STEPS with a reason; a test keeps that true.
  */
 
-import { REPOSITORY_URL, walkthroughHref } from "@/features/guide/links";
+import { walkthroughHref } from "@/features/guide/links";
 import { adminSectionWalkthrough } from "@/features/help/pages";
 
 export interface SetupStep {
@@ -17,10 +16,6 @@ export interface SetupStep {
   explanation: string;
   /** What people see while it is off or unset, when that matters. */
   whenOff?: string;
-  /** Not an Admin Settings section; the walkthrough supplies its pane. */
-  standalone?: true;
-  /** Where to read more, when it isn't the section's user guide page. */
-  guideHref?: string;
 }
 
 export const SETUP_STEPS: readonly SetupStep[] = [
@@ -110,28 +105,6 @@ export const SETUP_STEPS: readonly SetupStep[] = [
     explanation:
       "When a long chat nears its model's limit, Asterism summarises the earlier part so the conversation can continue. Set when that happens and which model writes the summary.",
   },
-  {
-    id: "theme_editor",
-    title: "Theme",
-    explanation:
-      "Make a color theme in your school's colors, or adjust a built-in one. People choose their theme in their own settings.",
-  },
-  {
-    id: "educators",
-    title: "Educators",
-    explanation:
-      "Approve the people who may run classes. Educators can share course projects and see class totals, never students' chats or memories.",
-  },
-  {
-    id: "backup",
-    title: "First backup",
-    standalone: true,
-    explanation:
-      "Take a first backup, and keep SYSTEM_KEY safe apart from it: a backup can only be restored with the SYSTEM_KEY it was made with.",
-    whenOff:
-      "Until there is a backup, nothing can bring back data lost with this server.",
-    guideHref: `${REPOSITORY_URL}/blob/main/docs/architecture/backup-and-restore.md`,
-  },
 ];
 
 /** Admin Settings sections that are not setup steps, and why. */
@@ -140,6 +113,8 @@ export const NOT_STEPS: Record<string, string> = {
   "user-permissions": "People join on their own; manage them when they do.",
   status: "Read-only.",
   export: "Offered in the providers step, to import another installation.",
+  theme_editor: "Appearance only; people choose their own theme.",
+  educators: "Approved later, when someone needs to run classes.",
 };
 
 export type StepState = "done" | "skipped" | undefined;
@@ -153,7 +128,6 @@ export function nextStep(
 
 /** The guide page that explains a step, or undefined when there is none. */
 export function stepGuideHref(step: SetupStep): string | undefined {
-  if (step.guideHref) return step.guideHref;
   const walkthrough = adminSectionWalkthrough(step.id);
   return walkthrough ? walkthroughHref(walkthrough) : undefined;
 }
