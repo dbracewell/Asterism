@@ -36,3 +36,15 @@ class SettingsImportSummary(BaseModel):
     providers: list[ProviderChange]
     kept_providers: list[str]
     changed_settings: list[str]
+
+
+class CoverageExclusion(BaseModel):
+    section: str
+    reason: str
+
+
+class SettingsCoverage(BaseModel):
+    """What a settings file carries (EPIC-100): Admin Settings sections, and what it leaves out."""
+
+    included: list[str]
+    excluded: list[CoverageExclusion]

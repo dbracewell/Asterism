@@ -2261,6 +2261,20 @@ export type CourseVersionPage = {
 };
 
 /**
+ * CoverageExclusion
+ */
+export type CoverageExclusion = {
+  /**
+   * Section
+   */
+  section: string;
+  /**
+   * Reason
+   */
+  reason: string;
+};
+
+/**
  * CreateUserRequest
  *
  * Request model for creating a new user.
@@ -7737,6 +7751,22 @@ export type Setting = {
    */
   key: string;
   value: JsonValue;
+};
+
+/**
+ * SettingsCoverage
+ *
+ * What a settings file carries (EPIC-100): Admin Settings sections, and what it leaves out.
+ */
+export type SettingsCoverage = {
+  /**
+   * Included
+   */
+  included: Array<string>;
+  /**
+   * Excluded
+   */
+  excluded: Array<CoverageExclusion>;
 };
 
 /**
@@ -14146,6 +14176,45 @@ export type TeamPackImportResponses = {
 
 export type TeamPackImportResponse =
   TeamPackImportResponses[keyof TeamPackImportResponses];
+
+export type AppSettingsTransferCoverageData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/settings/app/transfer/coverage";
+};
+
+export type AppSettingsTransferCoverageErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Forbidden
+   */
+  403: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+};
+
+export type AppSettingsTransferCoverageError =
+  AppSettingsTransferCoverageErrors[keyof AppSettingsTransferCoverageErrors];
+
+export type AppSettingsTransferCoverageResponses = {
+  /**
+   * Successful Response
+   */
+  200: SettingsCoverage;
+};
+
+export type AppSettingsTransferCoverageResponse =
+  AppSettingsTransferCoverageResponses[keyof AppSettingsTransferCoverageResponses];
 
 export type AppSettingsExportData = {
   body: SettingsExportRequest;

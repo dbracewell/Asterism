@@ -190,9 +190,9 @@ Complete (2026-11-24) once US-99.4 merges; archive with EPIC-96 and EPIC-97.
     - a v1 file imports;
     - wrong passphrase;
     - a theme that fails validation is refused with the rest of the import.
-- [ ] US-100.3: Frontend and docs
-  - [ ] The Export pane lists what is and isn't included, generated from the registry so it stays accurate.
-  - [ ] Update `docs/guide/08-for-administrators` (export and import) and `docs/deployment.md`, and add release notes (Data: export format 2; Behavior: what is now included).
+- [x] US-100.3: Frontend and docs
+  - [x] The Export pane lists what is and isn't included, generated from the registry so it stays accurate.
+  - [x] Update `docs/guide/08-for-administrators` (export and import) and `docs/deployment.md`, and add release notes (Data: export format 2; Behavior: what is now included).
 
 ### [EPIC-101: Guided install and setup](docs/epics/EPIC-101-GUIDED-INSTALL.md)
 

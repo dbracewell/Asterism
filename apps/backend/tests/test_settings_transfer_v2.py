@@ -151,3 +151,18 @@ async def test_a_version_1_file_changes_and_previews_none_of_the_new_parts(api, 
     async with sessions() as session:
         assert (await session.get(GroupModel, "student")).daily_token_budget == 1_000
     assert (themes_root / "ocean.json").exists()
+
+
+async def test_admins_see_what_a_file_includes_and_leaves_out(api):
+    """US-100.3: the Export pane's list comes from the coverage registry."""
+    client, _ = api
+    from test_projects_api import auth
+
+    # In this fixture "a" is the administrator.
+    assert (await client.get("/settings/app/transfer/coverage", headers=auth("b"))).status_code == 403
+    body = (await client.get("/settings/app/transfer/coverage", headers=auth("a"))).json()
+    assert {"Providers", "Groups", "Usage", "Theme editor", "Memory", "Image captioning"} <= set(body["included"])
+    assert len(body["included"]) == len(set(body["included"]))
+    excluded = {item["section"] for item in body["excluded"]}
+    assert {"Users", "Educators"} <= excluded
+    assert all(item["reason"] for item in body["excluded"])

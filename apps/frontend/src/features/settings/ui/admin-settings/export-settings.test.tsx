@@ -10,6 +10,15 @@ vi.mock("./import-settings", () => ({ ImportSettings: () => null }));
 vi.mock("@/lib/api", () => ({ client: {} }));
 vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
   appSettingsExportMutation: () => ({ mutationFn: mocks.exportSettings }),
+  appSettingsTransferCoverageOptions: () => ({
+    queryKey: ["coverage"],
+    queryFn: async () => ({
+      included: ["Providers", "Groups", "Usage", "Theme editor"],
+      excluded: [
+        { section: "Users", reason: "Account data, kept by a backup." },
+      ],
+    }),
+  }),
 }));
 
 const PASSPHRASE = "correct horse battery";
@@ -115,4 +124,15 @@ it("hides the admin-only settings file help from other viewers", () => {
   expect(
     screen.queryByRole("button", { name: "Help: Settings file" }),
   ).not.toBeInTheDocument();
+});
+
+it("lists what a file includes and leaves out, from the server (EPIC-100)", async () => {
+  setup();
+  const included = await screen.findByRole("list", {
+    name: "Included in the file",
+  });
+  expect(included).toHaveTextContent("Theme editor");
+  expect(
+    screen.getByRole("list", { name: "Not included in the file" }),
+  ).toHaveTextContent("Users: Account data, kept by a backup.");
 });

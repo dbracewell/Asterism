@@ -6,10 +6,11 @@ from asterism.core.schemas import ErrorDetail
 from asterism.db.dependencies import DBSessionDep
 from asterism.domains.user.dependencies import AdminUserDep
 
+from . import coverage
 from .documents import SettingsEnvelope
 from .export import export_settings
 from .importer import import_settings, preview_settings
-from .schemas import SettingsExportRequest, SettingsImportRequest, SettingsImportSummary
+from .schemas import SettingsCoverage, SettingsExportRequest, SettingsImportRequest, SettingsImportSummary
 
 settings_transfer_router = APIRouter(
     prefix="/settings/app/transfer",
@@ -21,6 +22,12 @@ settings_transfer_router = APIRouter(
         409: {"model": ErrorDetail},
     },
 )
+
+
+@settings_transfer_router.get("/coverage", response_model=SettingsCoverage, operation_id="appSettingsTransferCoverage")
+async def get_settings_coverage(user: AdminUserDep) -> SettingsCoverage:
+    """What a settings file includes and leaves out, from the coverage registry."""
+    return coverage.summary()
 
 
 @settings_transfer_router.post("/export", response_model=SettingsEnvelope, operation_id="appSettingsExport")

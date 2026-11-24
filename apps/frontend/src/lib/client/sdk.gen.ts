@@ -82,6 +82,9 @@ import type {
   AppSettingsImportPreviewErrors,
   AppSettingsImportPreviewResponses,
   AppSettingsImportResponses,
+  AppSettingsTransferCoverageData,
+  AppSettingsTransferCoverageErrors,
+  AppSettingsTransferCoverageResponses,
   AppSettingUpdateData,
   AppSettingUpdateErrors,
   AppSettingUpdateResponses,
@@ -2624,6 +2627,29 @@ export class ApiClient extends HeyApiClient {
         "Content-Type": "application/json",
         ...options.headers,
       },
+    });
+  }
+
+  /**
+   * Get Settings Coverage
+   *
+   * What a settings file includes and leaves out, from the coverage registry.
+   */
+  public appSettingsTransferCoverage<ThrowOnError extends boolean = false>(
+    options?: Options<AppSettingsTransferCoverageData, ThrowOnError>,
+  ): RequestResult<
+    AppSettingsTransferCoverageResponses,
+    AppSettingsTransferCoverageErrors,
+    ThrowOnError
+  > {
+    return (options?.client ?? this.client).get<
+      AppSettingsTransferCoverageResponses,
+      AppSettingsTransferCoverageErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/settings/app/transfer/coverage",
+      ...options,
     });
   }
 
