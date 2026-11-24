@@ -136,8 +136,8 @@ the one frame the app's policy allows.
 | Admin policy `canvas_enabled` | Admin Settings → Canvas (`GET`/`PUT /settings/app/canvas`)                   | Off     |
 | User setting `canvas_enabled` | User Settings → General, disabled with an explanation when the policy is off | Off     |
 
-`GET /settings/user` reports `canvas_allowed`, the admin policy, so the interface can
-say why canvas is unavailable. Turning either switch off stops writing at once;
+`GET /availability` reports the admin policy as `canvas`, so the interface can say
+why canvas is unavailable. Turning either switch off stops writing at once;
 reading and downloading keep working.
 
 ## Rules

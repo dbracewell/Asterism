@@ -144,11 +144,6 @@ async def get_user_settings(
         from asterism.domains.groups.service import read_group_refs
 
         user_settings.group = (await read_group_refs([user_id], session)).get(user_id)
-        canvas_policy = await session.get(ApplicationSettingsModel, "canvas_enabled")
-        user_settings.canvas_allowed = canvas_policy is not None and canvas_policy.value is True
-        from asterism.domains.memory.access import memory_allowed
-
-        user_settings.memory_allowed = (await memory_allowed(user_id, session)).available
 
     # settings_cache.set_user_settings(user_id, user_settings)
     return user_settings

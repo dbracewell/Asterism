@@ -1,6 +1,6 @@
 # EPIC-96: Admin policy changes show up without a reload
 
-Status: proposed (2026-11-24). Source: user request (2026-11-24): "I enable
+Status: in progress (2026-11-24). US-96.1 done: `GET /availability`. Source: user request (2026-11-24): "I enable
 memories in admin then switch to user settings, I should not have to refresh the
 page to select Use memory."
 
@@ -57,7 +57,7 @@ is enough.
 - **Policy-derived values come from a TanStack query, not the server layout.**
   The layout keeps identity: name, email, role and group. Everything that answers
   "may I use X" (`*_allowed` and `*_available`) moves to one client query.
-- **One availability endpoint.** Add `GET /me/availability`, owner-only and
+- **One availability endpoint.** Add `GET /availability`, owner-only and
   computed live with the existing checks:
   - `memory.policy`
   - `canvas.policy.read_policy` (fixing `canvas_allowed`, which reads the raw
@@ -86,15 +86,15 @@ Suggested order: US-96.1 → 96.2 → 96.3.
 
 As a user, what I may use is always current.
 
-- [ ] Add `GET /me/availability`, built from the existing policy checks with no new
+- [x] Add `GET /availability`, built from the existing policy checks with no new
       policy logic. Tests: each feature's available and unavailable reasons,
       group-limited policies, and owner-only access. Regenerate the client.
-- [ ] Add a frontend `useAvailability()` hook over the generated query
+- [x] Add a frontend `useFeature()` hook over the generated query
       (`staleTime` 30s, refetch on focus).
-- [ ] Move `memory_allowed` and `canvas_allowed` readers (`memory-sections.tsx`,
+- [x] Move `memory_allowed` and `canvas_allowed` readers (`memory-sections.tsx`,
       `general-settings.tsx`, `chat-session.tsx`) to the hook. Remove those fields
       from `GET /settings/user`, since the frontend and backend ship together.
-- [ ] Unit tests: the memory checkbox enables after the availability query is
+- [x] Unit tests: the memory checkbox enables after the availability query is
       invalidated, without a new `UserProvider` value.
 
 ### US-96.2: Admin saves invalidate what depends on them
@@ -122,6 +122,6 @@ As an admin, a policy I change is reflected on the next screen I open.
 
 ## Open questions
 
-1. Should `GET /me/availability` also return per-model availability, or stay
+1. Should `GET /availability` also return per-model availability, or stay
    feature-only? The proposal is feature-only, because `GET /chat/models` already
    carries `available`.

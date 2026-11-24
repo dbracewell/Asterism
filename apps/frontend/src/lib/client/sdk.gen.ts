@@ -88,6 +88,9 @@ import type {
   AppToolSettingsUpdateData,
   AppToolSettingsUpdateErrors,
   AppToolSettingsUpdateResponses,
+  AvailabilityGetData,
+  AvailabilityGetErrors,
+  AvailabilityGetResponses,
   CanvasExportZipData,
   CanvasExportZipErrors,
   CanvasExportZipResponses,
@@ -7233,6 +7236,29 @@ export class ApiClient extends HeyApiClient {
         "Content-Type": "application/json",
         ...options.headers,
       },
+    });
+  }
+
+  /**
+   * My Availability
+   *
+   * The admin's live switches for each feature, as they apply to the caller.
+   */
+  public availabilityGet<ThrowOnError extends boolean = false>(
+    options?: Options<AvailabilityGetData, ThrowOnError>,
+  ): RequestResult<
+    AvailabilityGetResponses,
+    AvailabilityGetErrors,
+    ThrowOnError
+  > {
+    return (options?.client ?? this.client).get<
+      AvailabilityGetResponses,
+      AvailabilityGetErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/availability",
+      ...options,
     });
   }
 

@@ -113,8 +113,9 @@ targeted `canvas_update`. It grants nothing a typed message couldn't.
 
 `canvas_enabled` is a strict-boolean application setting (default off) with
 admin endpoints `GET/PUT /settings/app/canvas`. Each user has a boolean
-`canvas_enabled` setting (default off), and `GET /settings/user` reports
-`canvas_allowed` (the admin policy) so the UI can explain why it's off.
+`canvas_enabled` setting (default off). `GET /availability` reports the admin
+policy as `canvas` (EPIC-96, replacing `canvas_allowed` on `GET /settings/user`)
+so the UI can explain why it's off.
 
 ### Downloads and the file library (US-72.3)
 

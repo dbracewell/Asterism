@@ -113,7 +113,7 @@ Suggested order: US-98.1 → 98.2 → 98.3 → 98.4.
 
 ### US-98.4: Docs and availability
 
-- [ ] Add the tools to `/me/availability` (EPIC-96) and hide the mention of them
+- [ ] Add the tools to `GET /availability` (EPIC-96) and hide the mention of them
       in help when unavailable (EPIC-97).
 - [ ] Update `docs/architecture/study-tools.md`, the user guide pages
       (`05-studying/flashcards.md`, `practice-quizzes.md`) and the release notes

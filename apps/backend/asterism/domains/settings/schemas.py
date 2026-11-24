@@ -211,13 +211,12 @@ class UserSettings(BaseModel):
     show_thinking: bool = Field(default=True)
     # US-51.6: the composer's "Review prompt" action is opt-in.
     prompt_coach_enabled: bool = Field(default=False)
-    # Canvas (ADR-0063): the user's opt-in, and whether an admin allows it (read-only).
+    # Canvas (ADR-0063): the user's opt-in. Whether an admin allows it is in
+    # ``GET /availability`` (EPIC-96).
     canvas_enabled: bool = Field(default=False)
-    canvas_allowed: bool = Field(default=False)
     # Memory (ADR-0078): the person's "Use memory" setting, on unless they turn it
-    # off, and whether the admin policy allows it for them (read-only).
+    # off. Whether the admin policy allows it is in ``GET /availability``.
     memory_enabled: bool = Field(default=True)
-    memory_allowed: bool = Field(default=False)
     first_chat_tour: FirstChatTourState | None = Field(default=None)
     # The user's group (ADR-0058); read-only here, set by administrators.
     group: GroupRef | None = Field(default=None)
