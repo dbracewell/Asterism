@@ -70,7 +70,7 @@ describe("General settings labels", () => {
     );
   });
 
-  it("offers the canvas when the administrator allows it", () => {
+  it("offers the canvas only when the administrator allows it", () => {
     canvas.allowed = true;
     const { unmount } = render(<GeneralSettings />, {
       wrapper: TooltipProvider,
@@ -80,11 +80,10 @@ describe("General settings labels", () => {
     fireEvent.click(toggle);
     expect(updateSetting).toHaveBeenCalledWith("canvas_enabled", true, false);
     unmount();
+    // Off for this person: the setting is not shown at all (EPIC-97).
     canvas.allowed = false;
     render(<GeneralSettings />, { wrapper: TooltipProvider });
-    const off = screen.getByRole("checkbox", { name: "Canvas" });
-    expect(off).toBeDisabled();
-    expect(off).toHaveAccessibleDescription(/administrator has turned/);
+    expect(screen.queryByRole("checkbox", { name: "Canvas" })).toBeNull();
     canvas.allowed = true;
   });
 

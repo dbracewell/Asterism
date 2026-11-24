@@ -151,15 +151,15 @@ load lazily.
 | General: appearance, Show thinking, default model, Canvas, account and data | Providers, Theme editor, Groups, Users, Usage, Status    |
 | Your Asterism: About you and usage                                          | Tools, Skills, Canvas, ChatGPT Plans, Context compaction |
 | Skills, Templates, Rubrics                                                  | Image generation, Image captioning, Educators, Export    |
-| Agents: the main agent, sub-agents and the General chat set                 | Code execution (marked **Planned**)                      |
+| Agents: the main agent, sub-agents and the General chat set                 |                                                          |
 | ChatGPT: a personal plan connection                                         |                                                          |
 
 The admin sections are defined in
 [`admin-settings/lazy-sections.tsx`](../../apps/frontend/src/features/settings/ui/admin-settings/lazy-sections.tsx)
 and the user sections in
 [`user-settings/index.tsx`](../../apps/frontend/src/features/settings/ui/user-settings/index.tsx).
-Code execution is the only planned section: its pane explains what is coming and
-offers no controls. Admin Settings isn't shown to other users, but that is
+User Settings leaves out a section whose feature the admin has turned off,
+unless the person has something saved there (EPIC-97). Admin Settings isn't shown to other users, but that is
 presentation only; every admin route checks the role itself.
 
 ### In-app help

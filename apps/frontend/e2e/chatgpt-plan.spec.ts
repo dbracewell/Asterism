@@ -4,6 +4,7 @@ import { mockLearningModes } from "./support/learning-modes";
 import { expect, test, type Page, type WebSocketRoute } from "./support/test";
 import { themes } from "./support/theme-matrix";
 import type { Chat, ChatModelChoice } from "../src/lib/client";
+import { mockAvailability } from "./support/availability";
 
 // US-49.4: ChatGPT plan label, limits and recovery against local doubles: a
 // routed OAuth consent page stands in for auth.openai.com, and the routed chat
@@ -288,6 +289,8 @@ for (const width of [1280, 320]) {
     await page.route("**/api/py/chatgpt/connection", (route) =>
       route.fulfill({ json: connection }),
     );
+    // The connection double says the policy is on; so must availability.
+    await mockAvailability(page, ["chatgpt_plans"]);
     await page.route("**/api/py/chatgpt/connection/authorize", (route) =>
       route.fulfill({
         json: {

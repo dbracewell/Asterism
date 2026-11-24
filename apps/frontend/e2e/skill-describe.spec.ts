@@ -1,4 +1,5 @@
 import { expect, test, type Page, type WebSocketRoute } from "./support/test";
+import { mockAvailability } from "./support/availability";
 
 /**
  * US-71.2: describe a skill, watch the writer and its sub-agent through a
@@ -196,6 +197,7 @@ for (const width of [1280, 390]) {
   }, info) => {
     await page.setViewportSize({ width, height: 800 });
     const state = await mockDrafting(page);
+    await mockAvailability(page, ["skills"]);
     await page.goto("/e2e/skills?t=user&setting=skills");
     await page.getByRole("button", { name: "New skill" }).click();
     const dialog = page.getByRole("dialog");

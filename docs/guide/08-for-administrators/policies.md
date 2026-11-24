@@ -124,10 +124,6 @@ Captions describe pictures in uploaded files, so they can be searched.
 
 Changing the mode reprocesses pictures. Files stay searchable while that happens.
 
-## Code execution
-
-Marked **Planned**: running code isn't available yet.
-
 ## Educators
 
 Approves who may run classes. See

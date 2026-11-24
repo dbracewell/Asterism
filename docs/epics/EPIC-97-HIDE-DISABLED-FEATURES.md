@@ -59,12 +59,12 @@ Suggested order: US-97.1 → 97.2 → 97.3 → 97.4.
 
 ### US-97.1: Settings navigation built from availability
 
-- [ ] Build the User Settings section list from `useFeature()`. Skills and
+- [x] Build the User Settings section list from `useFeature()`. Skills and
       ChatGPT plans are left out when unavailable.
-- [ ] Remove the code execution placeholder from Admin Settings.
-- [ ] Memory and canvas toggles: hidden when unavailable, with the kept-data line
+- [x] Remove the code execution placeholder from Admin Settings.
+- [x] Memory and canvas toggles: hidden when unavailable, with the kept-data line
       where the user has saved items.
-- [ ] Unit tests per feature, on and off.
+- [x] Unit tests per feature, on and off.
 
 ### US-97.2: Chat and composer
 
