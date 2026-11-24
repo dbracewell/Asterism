@@ -61,6 +61,40 @@ discards each draft. **Accept all** saves the remaining drafts. Accepting uses
 the ordinary card create route, so citations are checked again on save.
 Drafting again with unaccepted drafts asks for confirmation first.
 
+## Decks and quizzes from chat
+
+In a project chat, the main agent can draft a new deck or quiz with the internal
+tools `propose_deck` and `propose_quiz`
+([`tools/builtin/study.py`](../../apps/backend/asterism/domains/tools/builtin/study.py),
+[ADR-0080](../adr/0080-study-tools-in-chat.md)).
+
+- **When they are offered.** `study/chat_policy.chat_study_available` decides,
+  for the tool list and again when a tool runs. All of these must hold:
+  - the chat is an ordinary conversation in the person's project;
+  - the project's Study area is on;
+  - the admin `study_chat` policy (on by default, optionally by group) allows
+    the person;
+  - for a course project, the class's `study_chat_enabled` is on;
+  - the model supports tools.
+
+  Sub-agents never get them.
+
+- **Drafts.** A call validates its arguments as `StudyProposalDeck` (up to 30
+  cards) or `StudyProposalQuiz` (up to 20 questions, each with a consistent
+  answer key) and stores a pending row in `study_proposals`. A run can make one
+  draft of each kind, and it can cite only files in its scope that are in the
+  project. The tool result carries the draft's id and size, never its text.
+- **Review.** `StudyProposalCards` under the reply reads
+  `GET /study/proposals/{id}` and offers Save to Study, Edit (the title and
+  items' text, or removing items) and Dismiss.
+- **Save.** `POST /study/proposals/{id}/save` checks the chat's project, the
+  gate and the citations again. It then creates the deck and cards, or the
+  quiz (`origin = "chat"`, with the run's model), and marks the draft saved in
+  one transaction. Saved items record `proposal_id` and `source_chat_id`; a
+  second save is a conflict.
+- **Lifetime.** Drafts are deleted with their chat and included in Download my
+  data.
+
 ## Spaced-repetition review
 
 | Route                                            | Behavior                                                         |

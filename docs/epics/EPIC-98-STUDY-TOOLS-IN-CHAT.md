@@ -1,6 +1,6 @@
 # EPIC-98: Decks and quizzes from chat
 
-Status: in progress (2026-11-24). US-98.1 to US-98.4 done. Source: user request (2026-11-24): "New tools for
+Status: complete (2026-11-24). US-98.1 PR #95, US-98.2 PR #96, US-98.3 PR #97, US-98.4 PR #98, US-98.5. Source: user request (2026-11-24): "New tools for
 creating decks and quizzes which are automatically added when chatting in a
 project with those study options available."
 
@@ -144,8 +144,9 @@ Suggested order: US-98.1 → 98.2 → 98.3 → 98.4 → 98.5.
 
 ### US-98.5: Docs
 
-- [ ] Hide the mention of the tools in help when unavailable (EPIC-97).
-- [ ] Update `docs/architecture/study-tools.md`, the user guide pages
+- [x] Hide the mention of the tools in help when unavailable (EPIC-97): the
+      help topic `concept.study-chat` carries `feature: "study_chat"`.
+- [x] Update `docs/architecture/study-tools.md`, the user guide pages
       (`05-studying/flashcards.md`, `practice-quizzes.md`), the educator and
       admin guide pages for the two switches, and the release notes.
 

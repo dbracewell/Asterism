@@ -23,6 +23,15 @@ feedback. This page shows how to make a quiz, take it and read your results.
 Asterism writes the questions and saves the quiz. Each question cites the file it
 came from.
 
+### Or ask for one in a chat
+
+In one of the project's chats, ask for a quiz, for example "Quiz me on
+photosynthesis". Asterism drafts a practice quiz and shows it in a card under
+its reply. Select **Save to Study** to add it, **Edit** to change the title or
+questions first, or **Dismiss**. Nothing is added until you save it. This needs
+the project's Study area and your administrator's **Study in chat** setting,
+and in a course your educator can turn it off.
+
 ## Take the quiz
 
 1. Open the quiz, then select **Take** (or **Retake quiz**).
