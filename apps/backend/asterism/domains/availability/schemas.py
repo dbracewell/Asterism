@@ -28,3 +28,7 @@ class Availability(BaseModel):
     # Whether memory is on for anyone, so an educator's class memory switch can
     # mean something. The educator's own group may still be left out.
     course_memory: FeatureAvailability
+    # Decks and quizzes from chat (EPIC-98): the admin switch and the person's group.
+    study_chat: FeatureAvailability
+    # On for any group, so a class's switch for it means something.
+    course_study_chat: FeatureAvailability

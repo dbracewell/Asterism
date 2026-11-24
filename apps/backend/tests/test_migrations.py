@@ -455,3 +455,25 @@ async def test_a_stored_policy_is_left_as_it_is(migration_db):
         assert connection.execute("SELECT value FROM app_settings WHERE key = 'knowledge.processing'").fetchone() == (
             '"kept"',
         )
+
+
+@pytest.mark.asyncio
+async def test_class_study_chat_switch_upgrade_keeps_classes_with_it_on(migration_db):
+    """5c9a5a096d23 (US-98.1): existing classes keep their policy and get chat study tools on."""
+    await upgrade_to(migration_db, "a444c3d08ca3")
+    class_id = uuid.uuid4().hex
+    with sqlite3.connect(migration_db) as connection:
+        connection.execute("INSERT INTO users (id) VALUES ('teach')")
+        connection.execute(
+            "INSERT INTO classes (id, educator_id, name, join_code, allowed_modes, answer_reveal, memory_enabled, "
+            "created_at, updated_at) VALUES (?, 'teach', 'Biology', 'JOIN1234', NULL, 1, 0, 0, 0)",
+            (class_id,),
+        )
+
+    await upgrade_to(migration_db, "head")
+
+    with sqlite3.connect(migration_db) as connection:
+        row = connection.execute(
+            "SELECT name, memory_enabled, study_chat_enabled FROM classes WHERE id = ?", (class_id,)
+        ).fetchone()
+    assert row == ("Biology", 0, 1)

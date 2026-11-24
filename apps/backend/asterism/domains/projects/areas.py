@@ -1,8 +1,10 @@
 """Which optional feature areas a project shows (US-65.2).
 
-Areas are display preferences only. Nothing on the server reads them to grant,
-remove or narrow a capability: sub-agent selections, file scope and retrieval
-keep their own rules whether or not their area is shown.
+Areas are display preferences, with one exception: the Study area is one of the
+conditions for offering the chat study tools (ADR-0080). It can only narrow:
+turning it on grants no data access by itself. Otherwise nothing on the server
+reads them to grant, remove or narrow a capability: sub-agent selections, file
+scope and retrieval keep their own rules whether or not their area is shown.
 """
 
 from pydantic import BaseModel, ConfigDict, StrictBool

@@ -246,6 +246,8 @@ class ApplicationSettings(BaseModel):
     image_generation: dict[str, Any] | None = None
     # Long-term memory policy (ADR-0078), stored as one JSON value; off when unset.
     memory: dict[str, Any] | None = None
+    # Decks and quizzes from chat (EPIC-98), stored as one JSON value; on when unset.
+    study_chat: dict[str, Any] | None = None
     # The local diffusers generator's model and device (US-76.2).
     image_generation_local: dict[str, Any] | None = None
     # The ONNX generator's model and accepted licenses (US-94.4).

@@ -112,25 +112,32 @@ Complete (2026-11-24); archive with EPIC-96.
 
 ### [EPIC-98: Decks and quizzes from chat](docs/epics/EPIC-98-STUDY-TOOLS-IN-CHAT.md)
 
-- [ ] US-98.1: ADR and draft storage
-  - [ ] Write the ADR (gate, propose-then-save, provenance) and amend the `areas.py` docstring, ADR-0065 and CLAUDE.md §2.4.
+Decided 2026-11-24: admin switch (on by default, by group), class switch (on by default), no edits to existing decks.
+
+- [x] US-98.1: Policy, class switch and ADR
+  - [x] Write the ADR (gate, propose-then-save, provenance) and amend the `areas.py` docstring, ADR-0065 and CLAUDE.md §2.4.
+  - [x] Admin `study_chat` policy (`{enabled, group_ids}`, default on), its admin endpoints and Admin Settings section, and `study_chat` in `GET /availability`.
+  - [x] Class switch `study_chat_enabled` (default on) on the class mode policy, with a migration and an upgrade test, and the switch in the class page.
+  - [x] Settings export covers the admin policy (EPIC-100's registry, or the current export until then).
+  - [x] Tests: defaults, group limits, the class switch, availability.
+- [ ] US-98.2: Draft storage
   - [ ] Add a `study_proposals` table: owner, project, chat, message, execution, kind, payload, status. Ship it with an Alembic migration, an upgrade test from the previous revision, and Download my data coverage.
   - [ ] Add `origin="chat"` and proposal provenance columns on decks and quizzes, as a migration.
-- [ ] US-98.2: The tools
+- [ ] US-98.3: The tools
   - [ ] Add `propose_deck` and `propose_quiz` in `domains/tools/builtin/`, with their constants in `tools/catalog.py` (internal, policy-gated), a gate `_offers_study`, a branch in `require_internal_tool`, and prompt guidance.
   - [ ] Tests:
-    - offered only when the project, the Study area, model tools and availability all line up;
+    - offered only when the project, the Study area, the admin and class switches and model tools all line up;
     - never offered to sub-agents or in General chats;
     - re-checked at execution time;
     - payload validation and caps;
     - one proposal per tool per run.
-- [ ] US-98.3: Review and save in chat
-  - [ ] Save and dismiss endpoints: owner-only; recheck the project, the Study area and file membership; the save is idempotent. Regenerate the client.
+- [ ] US-98.4: Review and save in chat
+  - [ ] Save and dismiss endpoints: owner-only; recheck the project, the Study area, the switches and file membership; the save is idempotent. Regenerate the client.
   - [ ] Frontend `StudyProposalCards` in `message-item.tsx`: preview, edit before saving, Save to Study (with a link to the new deck or quiz), Dismiss, and timeline labels in `agent-timeline.ts`.
   - [ ] Unit tests and a Playwright test: ask for a deck in a project chat, then save it and see it under Study.
-- [ ] US-98.4: Docs and availability
-  - [ ] Add the tools to `GET /availability` (EPIC-96) and hide the mention of them in help when unavailable (EPIC-97).
-  - [ ] Update `docs/architecture/study-tools.md`, the user guide pages (`05-studying/flashcards.md`, `practice-quizzes.md`) and the release notes (Data: the new table; Behavior: the new tools).
+- [ ] US-98.5: Docs
+  - [ ] Hide the mention of the tools in help when unavailable (EPIC-97).
+  - [ ] Update `docs/architecture/study-tools.md`, the user guide pages (`05-studying/flashcards.md`, `practice-quizzes.md`), the educator and admin guide pages for the two switches, and the release notes.
 
 ### [EPIC-99: Multilingual text embeddings, images found by caption](docs/epics/EPIC-99-MULTILINGUAL-E5-EMBEDDINGS.md)
 

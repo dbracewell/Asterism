@@ -8,6 +8,7 @@ import {
 import {
   BookOpenIcon,
   BrainIcon,
+  LayersIcon,
   PanelRightIcon,
   PaletteIcon,
   ToolboxIcon,
@@ -93,6 +94,13 @@ const MemoryPolicySettings = dynamic(
   () =>
     import("@/features/settings/ui/admin-settings/memory-policy-settings").then(
       (module) => module.MemoryPolicySettings,
+    ),
+  { loading: AdminPaneLoading },
+);
+const StudyChatPolicySettings = dynamic(
+  () =>
+    import("@/features/settings/ui/admin-settings/study-chat-policy-settings").then(
+      (module) => module.StudyChatPolicySettings,
     ),
   { loading: AdminPaneLoading },
 );
@@ -219,6 +227,13 @@ export const getLazyAdminSettingsSections = (): Types => [
     value: "memory",
     icon: <BrainIcon />,
     settingsPane: pane("Memory", <MemoryPolicySettings />),
+  },
+  {
+    type: "section",
+    label: "Study in chat",
+    value: "study-chat",
+    icon: <LayersIcon />,
+    settingsPane: pane("Study in chat", <StudyChatPolicySettings />),
   },
   {
     type: "section",

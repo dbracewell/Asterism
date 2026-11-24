@@ -115,6 +115,7 @@ def _changed_settings(bundle: SettingsBundle, current: SettingsBundle) -> list[s
         "Canvas policy": bundle.canvas_enabled != current.canvas_enabled,
         "Image generation policy": bundle.image_generation != current.image_generation,
         "Memory policy": bundle.memory != current.memory,
+        "Decks and quizzes from chat": bundle.study_chat != current.study_chat,
         "Local image model": bundle.image_generation_local != current.image_generation_local,
         "ONNX image model": bundle.image_generation_onnx != current.image_generation_onnx,
         "Image generator": bundle.image_generator_provider is not None
@@ -259,6 +260,14 @@ async def _apply_memory(bundle: SettingsBundle, session: AsyncSession) -> None:
     await _put_setting("memory", policy.model_dump(mode="json"), session)
 
 
+async def _apply_study_chat(bundle: SettingsBundle, session: AsyncSession) -> None:
+    """Imports the switch; this installation keeps its own group limits."""
+    from asterism.domains.study.chat_policy import read_policy
+
+    policy = (await read_policy(session)).model_copy(update={"enabled": bundle.study_chat.enabled})
+    await _put_setting("study_chat", policy.model_dump(mode="json"), session)
+
+
 async def _apply_image_generation(bundle: SettingsBundle, session: AsyncSession) -> None:
     """Imports the switch and provider; this installation keeps its own group limits."""
     from asterism.domains.image_generation.policy import read_policy
@@ -323,6 +332,7 @@ async def import_settings(
         await _put_setting("canvas_enabled", bundle.canvas_enabled, session)
         await _apply_image_generation(bundle, session)
         await _apply_memory(bundle, session)
+        await _apply_study_chat(bundle, session)
         await _put_setting("chatgpt_plan_enabled", bundle.chatgpt_plan_enabled, session)
         await _put_component("web_search_provider", bundle.web_search_provider, session)
         await _put_component("image_search_provider", bundle.image_search_provider, session)

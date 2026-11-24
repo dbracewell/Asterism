@@ -52,6 +52,7 @@ async def _course_source(*, user_id: str, project_id: uuid.UUID | None, session:
         reveal=ModeReveal.ALLOWED if course.answer_reveal else ModeReveal.FORBIDDEN,
         learner_can_lift=False,
         memory_enabled=course.memory_enabled,
+        study_chat_enabled=course.study_chat_enabled,
     )
 
 
@@ -70,7 +71,10 @@ async def mode_policy_for(
     allowed = [mode for mode in _catalog() if all(mode in source.allowed_modes for source in sources)]
     reveal = max((source.reveal for source in sources), key=lambda item: item.rank, default=ModeReveal.ALLOWED)
     memory = all(source.memory_enabled for source in sources)
-    return ModePolicy(allowed_modes=allowed, reveal=reveal, memory_enabled=memory, sources=sources)
+    study_chat = all(source.study_chat_enabled for source in sources)
+    return ModePolicy(
+        allowed_modes=allowed, reveal=reveal, memory_enabled=memory, study_chat_enabled=study_chat, sources=sources
+    )
 
 
 async def effective_mode_policy(*, user_id: str, chat: ChatModel, session: AsyncSession) -> ModePolicy:

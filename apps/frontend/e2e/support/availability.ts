@@ -8,7 +8,9 @@ export type Feature =
   | "skills"
   | "chatgpt_plans"
   | "delegation"
-  | "course_memory";
+  | "course_memory"
+  | "study_chat"
+  | "course_study_chat";
 
 const FEATURES: Feature[] = [
   "memory",
@@ -18,6 +20,8 @@ const FEATURES: Feature[] = [
   "chatgpt_plans",
   "delegation",
   "course_memory",
+  "study_chat",
+  "course_study_chat",
 ];
 
 /** Every feature, for specs that exercise features rather than policy. */

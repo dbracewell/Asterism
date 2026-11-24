@@ -26,6 +26,9 @@ export function ClassModePolicy({ item }: { item: TaughtClass }) {
   // The switch means nothing while the admin has memory off for everyone
   // (EPIC-97); its saved value is kept and sent back unchanged.
   const courseMemory = useFeature("course_memory").available;
+  const [studyChat, setStudyChat] = useState(item.study_chat_enabled ?? true);
+  // Likewise hidden while the admin has study in chat off for everyone.
+  const courseStudyChat = useFeature("course_study_chat").available;
   const save = useMutation(classModePolicyUpdateMutation({ client }));
   const chosen = allowed ?? modes.map((mode) => mode.id);
   const toggle = (mode: LearningModeId, on: boolean) => {
@@ -90,6 +93,29 @@ export function ClassModePolicy({ item }: { item: TaughtClass }) {
           </div>
         </div>
       )}
+      {courseStudyChat && (
+        <div className="flex items-start gap-2 text-sm">
+          <Switch
+            id={`${prefix}-study-chat`}
+            aria-describedby={`${prefix}-study-chat-description`}
+            checked={studyChat}
+            onCheckedChange={setStudyChat}
+          />
+          <div className="grid gap-1">
+            <label htmlFor={`${prefix}-study-chat`}>
+              Let students make decks and quizzes from chat
+            </label>
+            <p
+              id={`${prefix}-study-chat-description`}
+              className="text-muted-foreground text-xs"
+            >
+              Off: the assistant won&apos;t draft flashcard decks or practice
+              quizzes in the course project. Students can still make them in
+              Study.
+            </p>
+          </div>
+        </div>
+      )}
       {chosen.length === 0 && (
         <p role="alert" className="text-destructive text-sm">
           Allow at least one mode.
@@ -106,6 +132,7 @@ export function ClassModePolicy({ item }: { item: TaughtClass }) {
               allowed_modes: allChosen ? null : chosen,
               answer_reveal: reveal,
               memory_enabled: memory,
+              study_chat_enabled: studyChat,
             },
           })
         }

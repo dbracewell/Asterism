@@ -693,6 +693,12 @@ import type {
   StudyCardUpdateData,
   StudyCardUpdateError,
   StudyCardUpdateResponse,
+  StudyChatPolicyGetData,
+  StudyChatPolicyGetError,
+  StudyChatPolicyGetResponse,
+  StudyChatPolicyUpdateData,
+  StudyChatPolicyUpdateError,
+  StudyChatPolicyUpdateResponse,
   StudyDeckCreateData,
   StudyDeckCreateError,
   StudyDeckCreateResponse,
@@ -8591,6 +8597,61 @@ export const memoryPolicyUpdateMutation = (
   > = {
     mutationFn: async (fnOptions) => {
       const { data } = await ApiClient.__registry.get().memoryPolicyUpdate({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const studyChatPolicyGetQueryKey = (
+  options?: Options<StudyChatPolicyGetData>,
+) => createQueryKey("studyChatPolicyGet", options);
+
+/**
+ * Get Policy
+ */
+export const studyChatPolicyGetOptions = (
+  options?: Options<StudyChatPolicyGetData>,
+) =>
+  queryOptions<
+    StudyChatPolicyGetResponse,
+    StudyChatPolicyGetError,
+    StudyChatPolicyGetResponse,
+    ReturnType<typeof studyChatPolicyGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry.get().studyChatPolicyGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: studyChatPolicyGetQueryKey(options),
+  });
+
+/**
+ * Put Policy
+ */
+export const studyChatPolicyUpdateMutation = (
+  options?: Partial<Options<StudyChatPolicyUpdateData>>,
+): UseMutationOptions<
+  StudyChatPolicyUpdateResponse,
+  StudyChatPolicyUpdateError,
+  Options<StudyChatPolicyUpdateData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    StudyChatPolicyUpdateResponse,
+    StudyChatPolicyUpdateError,
+    Options<StudyChatPolicyUpdateData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().studyChatPolicyUpdate({
         ...options,
         ...fnOptions,
         throwOnError: true,

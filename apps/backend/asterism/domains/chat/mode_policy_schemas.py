@@ -34,6 +34,9 @@ class ModePolicySource(BaseModel):
     reveal: ModeReveal
     learner_can_lift: bool
     memory_enabled: bool = Field(default=True, description="False when this source turns memory off (ADR-0078)")
+    study_chat_enabled: bool = Field(
+        default=True, description="False when this source turns off decks and quizzes from chat (EPIC-98)"
+    )
 
 
 class ModePolicy(BaseModel):
@@ -42,6 +45,9 @@ class ModePolicy(BaseModel):
     allowed_modes: list[LearningModeId] = Field(description="Catalog modes every source allows; may be empty")
     reveal: ModeReveal
     memory_enabled: bool = Field(default=True, description="False when any source turns memory off")
+    study_chat_enabled: bool = Field(
+        default=True, description="False when any source turns off decks and quizzes from chat"
+    )
     sources: list[ModePolicySource] = Field(default_factory=list)
 
     def source(self, kind: ModePolicySourceKind) -> ModePolicySource | None:

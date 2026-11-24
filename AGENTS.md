@@ -134,6 +134,12 @@ fixed models and receive the same or narrower execution file scope.
   offered when memory is available for the chat and the model supports tools
   ([ADR-0078](docs/adr/0078-long-term-memory.md)). It records a pending proposal
   (one per run) and saves nothing; sub-agents and drafting chats never get it.
+- `propose_deck` and `propose_quiz` are internal tools for the main agent in
+  project chats whose Study area is on, offered when the admin `study_chat`
+  policy (on by default, optionally by group), the course's class switch and
+  model tool support allow ([ADR-0080](docs/adr/0080-study-tools-in-chat.md)).
+  They record drafts the person reviews and saves; nothing reaches Study
+  automatically. Sub-agents and drafting chats never get them.
 
 ## 2.5 Memory
 
