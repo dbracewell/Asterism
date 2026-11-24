@@ -226,7 +226,9 @@ from it. `src/app/manifest.ts` serves the web manifest, and the root layout sets
   actions are at least 24 CSS pixels, even at the smallest font size.
 - Sidebar actions appear on keyboard focus as well as hover.
 - `prefers-reduced-motion: reduce` turns off CSS animations, transitions and smooth
-  scrolling. Status text stays, and nothing depends on an animation to be understood.
+  scrolling, except loading spinners (`animate-spin`), which turn slowly (1.5 s a
+  turn) because a still spinner reads as stuck. Status text stays, and nothing
+  depends on an animation to be understood.
 - State is never shown by color alone; text or shape carries it too.
 
 ## Testing

@@ -22,6 +22,12 @@ Unreleased into its version and date.
 
 ## Unreleased
 
+### Behavior
+
+- With the system's Reduce motion setting on, loading spinners now turn slowly
+  instead of stopping, which made them look stuck. Other animations and
+  transitions stay off.
+
 ## 0.5.0 (2026-11-24)
 
 ### Configuration
