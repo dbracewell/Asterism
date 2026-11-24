@@ -125,28 +125,31 @@ export const GeneralSettings = () => {
             </p>
           </div>
         </div>
-        <div className="flex items-start gap-3">
-          <Checkbox
-            id="general-canvas"
-            aria-describedby="general-canvas-description"
-            checked={user.settings.canvas_enabled ?? false}
-            disabled={isUpdatingUserSetting || !canvasAllowed}
-            onCheckedChange={(checked) => {
-              updateSetting("canvas_enabled", !!checked, false);
-            }}
-          />
-          <div className="flex min-w-0 flex-col gap-1">
-            <Label htmlFor="general-canvas">Canvas</Label>
-            <p
-              id="general-canvas-description"
-              className="text-muted-foreground text-xs"
-            >
-              {canvasAllowed
-                ? "Lets your main agent put long documents, code and web pages in a panel beside the chat, where you can edit, restore and download them. Needs a model that supports tools."
-                : "Your administrator has turned the canvas off. Existing canvas items stay readable and downloadable."}
-            </p>
+        {/* Hidden while the admin has canvas off (EPIC-97). */}
+        {canvasAllowed && (
+          <div className="flex items-start gap-3">
+            <Checkbox
+              id="general-canvas"
+              aria-describedby="general-canvas-description"
+              checked={user.settings.canvas_enabled ?? false}
+              disabled={isUpdatingUserSetting}
+              onCheckedChange={(checked) => {
+                updateSetting("canvas_enabled", !!checked, false);
+              }}
+            />
+            <div className="flex min-w-0 flex-col gap-1">
+              <Label htmlFor="general-canvas">Canvas</Label>
+              <p
+                id="general-canvas-description"
+                className="text-muted-foreground text-xs"
+              >
+                Lets your main agent put long documents, code and web pages in a
+                panel beside the chat, where you can edit, restore and download
+                them. Needs a model that supports tools.
+              </p>
+            </div>
           </div>
-        </div>
+        )}
       </SettingsSection>
       <SettingsSection
         title="Guided tour"

@@ -1263,7 +1263,6 @@ const userSettingsGuides: Record<string, PageGuideId> = {
   chatgpt: "settings.chatgpt",
 };
 
-// Planned sections get no guide until they ship (ADR-0032), so no Help button.
 const adminSettingsGuides: Record<string, PageGuideId | null> = {
   providers: "admin.providers",
   theme_editor: "admin.theme-editor",
@@ -1281,7 +1280,6 @@ const adminSettingsGuides: Record<string, PageGuideId | null> = {
   status: "admin.status",
   "image-generation": "admin.image-generation",
   memory: "admin.memory",
-  "code-execution": null,
 };
 
 /** Study pages, most specific first; each is under /projects/{id}/study. */

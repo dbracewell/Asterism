@@ -88,11 +88,11 @@ Complete (2026-11-24); archive once its pull requests have merged.
 
 ### [EPIC-97: Hide what the admin has not enabled](docs/epics/EPIC-97-HIDE-DISABLED-FEATURES.md)
 
-- [ ] US-97.1: Settings navigation built from availability
-  - [ ] Build the User Settings section list from `useFeature()`. Skills and ChatGPT plans are left out when unavailable.
-  - [ ] Remove the code execution placeholder from Admin Settings.
-  - [ ] Memory and canvas toggles: hidden when unavailable, with the kept-data line where the user has saved items.
-  - [ ] Unit tests per feature, on and off.
+- [x] US-97.1: Settings navigation built from availability
+  - [x] Build the User Settings section list from `useFeature()`. Skills and ChatGPT plans are left out when unavailable.
+  - [x] Remove the code execution placeholder from Admin Settings.
+  - [x] Memory and canvas toggles: hidden when unavailable, with the kept-data line where the user has saved items.
+  - [x] Unit tests per feature, on and off.
 - [ ] US-97.2: Chat and composer
   - [ ] "+" menu: hide Skills when skills are unavailable. Image generation already works this way.
   - [ ] `/` discovery: show nothing (no "disabled by an administrator" list) when skills are off.

@@ -9,7 +9,6 @@ import {
   BookOpenIcon,
   BrainIcon,
   PanelRightIcon,
-  CodeIcon,
   PaletteIcon,
   ToolboxIcon,
   CloudCogIcon,
@@ -122,13 +121,6 @@ const CaptioningSettings = dynamic(
   () =>
     import("@/features/settings/ui/admin-settings/captioning-settings").then(
       (module) => module.CaptioningSettings,
-    ),
-  { loading: AdminPaneLoading },
-);
-const CodeExecutionSettings = dynamic(
-  () =>
-    import("@/features/settings/ui/admin-settings/code-execution-settings").then(
-      (module) => module.CodeExecutionSettings,
     ),
   { loading: AdminPaneLoading },
 );
@@ -255,14 +247,6 @@ export const getLazyAdminSettingsSections = (): Types => [
     value: "image-captioning",
     icon: <ImageIcon />,
     settingsPane: pane("Image captioning", <CaptioningSettings />),
-  },
-  {
-    type: "section",
-    label: "Code execution",
-    value: "code-execution",
-    icon: <CodeIcon />,
-    badge: "Planned",
-    settingsPane: pane("Code execution", <CodeExecutionSettings />),
   },
   { type: "separator" },
   {

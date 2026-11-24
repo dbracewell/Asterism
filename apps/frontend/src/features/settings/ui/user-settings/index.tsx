@@ -1,3 +1,8 @@
+import { useQuery } from "@tanstack/react-query";
+import { useUser } from "@/features/auth/components/user-context";
+import { useFeature } from "@/features/availability/queries";
+import { chatgptConnectionOptions } from "@/features/chatgpt/queries";
+import { skillsListOptions } from "@/features/skills/queries";
 import { Types } from "@/features/settings/types";
 import { AgentsSettings } from "@/features/settings/ui/user-settings/agents-settings";
 import { GeneralSettings } from "@/features/settings/ui/user-settings/general-settings";
@@ -16,6 +21,7 @@ import {
   ClipboardCheckIcon,
 } from "lucide-react";
 
+/** Every User Settings section; `useUserSettingsSections` leaves some out. */
 export const UserSettings: Types = [
   {
     type: "section",
@@ -68,3 +74,29 @@ export const UserSettings: Types = [
     settingsPane: <ChatGptConnectionSettings />,
   },
 ];
+
+/**
+ * The sections this person sees (EPIC-97). A section whose feature the admin
+ * has turned off is left out, unless the person has something saved there,
+ * so they can still see and remove it.
+ */
+export function useUserSettingsSections(): Types {
+  const user = useUser();
+  const skills = useFeature("skills").available;
+  const chatgpt = useFeature("chatgpt_plans").available;
+  const savedSkills = useQuery({
+    ...skillsListOptions(user.id, "", 1, 1),
+    enabled: !skills,
+  });
+  const connection = useQuery({
+    ...chatgptConnectionOptions(user.id),
+    enabled: !chatgpt,
+  });
+  const shown: Record<string, boolean> = {
+    skills: skills || (savedSkills.data?.total ?? 0) > 0,
+    chatgpt: chatgpt || connection.data?.status != null,
+  };
+  return UserSettings.filter(
+    (section) => section.type !== "section" || shown[section.value] !== false,
+  );
+}

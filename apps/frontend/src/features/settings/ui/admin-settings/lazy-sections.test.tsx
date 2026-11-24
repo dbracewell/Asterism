@@ -44,20 +44,12 @@ describe("getLazyAdminSettingsSections", () => {
     expect(mocks.rendered).toHaveBeenCalledWith(0);
   });
 
-  it("marks only the unfinished pane as Planned and keeps available panes discoverable", () => {
+  it("lists only sections an admin can use, none marked Planned (EPIC-97)", () => {
     const sections = getLazyAdminSettingsSections().filter(
       (section) => section.type === "section",
     );
-    expect(
-      sections
-        .filter((section) => section.badge === "Planned")
-        .map((section) => section.label),
-    ).toEqual(["Code execution"]);
-    expect(
-      sections
-        .filter((section) => !section.badge)
-        .map((section) => section.label),
-    ).toEqual([
+    expect(sections.filter((section) => section.badge)).toEqual([]);
+    expect(sections.map((section) => section.label)).toEqual([
       "Providers",
       "Theme editor",
       "Groups",
