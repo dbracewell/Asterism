@@ -15,7 +15,19 @@ project_api = _project_api
 course = _course
 memory = _memory
 
-FEATURES = {"memory", "canvas", "image_generation", "skills", "chatgpt_plans", "delegation", "course_memory"}
+FEATURES = {
+    "memory",
+    "canvas",
+    "image_generation",
+    "skills",
+    "chatgpt_plans",
+    "delegation",
+    "course_memory",
+    "study_chat",
+    "course_study_chat",
+}
+# Decks and quizzes from chat are on unless an admin turns them off (EPIC-98).
+ON_BY_DEFAULT = {"study_chat", "course_study_chat"}
 
 
 async def read(memory, user="a"):
@@ -31,10 +43,13 @@ async def store(memory, **settings):
         await session.commit()
 
 
-async def test_everything_is_off_by_default_with_a_reason(memory):
+async def test_everything_but_study_chat_is_off_by_default_with_a_reason(memory):
     body = await read(memory)
     assert set(body) == FEATURES
     for feature, state in body.items():
+        if feature in ON_BY_DEFAULT:
+            assert state["available"] is True, feature
+            continue
         assert state["available"] is False, feature
         assert state["reason"], feature
 

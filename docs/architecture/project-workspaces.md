@@ -68,7 +68,9 @@ object with four required booleans: `study`, `reflections`, `goal` and
 on. Settings shows a switch for each, saved with the other settings. An area
 that is off hides its tab (a `tab` link to it opens Overview), and Goal also
 hides the Overview goal card and the goal fields in Settings. Areas are display
-only: no server code reads them, editing them never advances the context
+only, with one exception: the Study area is one of the conditions for the chat
+study tools ([ADR-0080](../adr/0080-study-tools-in-chat.md)), which it can only
+narrow, never widen. Otherwise no server code reads them, editing them never advances the context
 revision, and hidden data (goal text, selections, study records, reflections)
 is kept. In particular, hiding Sub-agents leaves the selections in place and
 chats can still delegate to them; Settings states how many are selected. Tests

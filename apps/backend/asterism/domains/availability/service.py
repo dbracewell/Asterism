@@ -17,10 +17,14 @@ async def read_availability(user_id: str, session: AsyncSession) -> Availability
     from asterism.domains.memory.access import read_policy as read_memory_policy
     from asterism.domains.settings.tool_settings import get_tool_settings
     from asterism.domains.skills import policy as skills_policy
+    from asterism.domains.study.chat_policy import read_policy as read_study_chat_policy
+    from asterism.domains.study.chat_policy import study_chat_allowed
 
     memory = await memory_allowed(user_id, session)
     memory_policy = await read_memory_policy(session)
     images = await image_policy.availability(user_id, session)
+    study_chat, study_chat_reason = await study_chat_allowed(user_id, session)
+    study_chat_policy = await read_study_chat_policy(session)
     return Availability(
         memory=FeatureAvailability(available=memory.available, reason=memory.reason),
         canvas=_switch((await canvas_policy.read_policy(session)).enabled, "Your administrator has turned canvas off"),
@@ -33,6 +37,11 @@ async def read_availability(user_id: str, session: AsyncSession) -> Availability
         delegation=_switch(
             "sub_agent" in (await get_tool_settings(session)).active_tools,
             "Your administrator has turned sub-agents off",
+        ),
+        study_chat=FeatureAvailability(available=study_chat, reason=study_chat_reason),
+        course_study_chat=_switch(
+            study_chat_policy.enabled and study_chat_policy.group_ids != [],
+            "Your administrator has turned off decks and quizzes from chat",
         ),
         course_memory=_switch(
             memory_policy.enabled and memory_policy.group_ids != [],

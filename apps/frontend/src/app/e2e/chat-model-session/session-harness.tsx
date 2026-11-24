@@ -31,6 +31,8 @@ function createCache() {
     chatgpt_plans: off,
     delegation: off,
     course_memory: off,
+    study_chat: off,
+    course_study_chat: off,
   });
   return cache;
 }

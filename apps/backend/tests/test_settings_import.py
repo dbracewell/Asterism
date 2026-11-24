@@ -18,6 +18,7 @@ from asterism.domains.settings_transfer.documents import (
     ExportedMemory,
     ExportedModel,
     ExportedProvider,
+    ExportedStudyChat,
     ModelReference,
     SettingsBundle,
     seal,
@@ -432,3 +433,17 @@ async def test_memory_policy_exports_only_its_switch(api):
         exported = await collect_settings(session)
     # The switch travels; the group limit stays with this installation.
     assert exported.memory.model_dump() == {"enabled": True}
+
+
+async def test_study_chat_policy_travels_as_its_switch(api):
+    """US-98.1: on/off travels, group limits stay; with no row it exports as on."""
+    client, sessions = api
+    async with sessions() as session:
+        assert (await collect_settings(session)).study_chat.model_dump() == {"enabled": True}
+        session.add(ApplicationSettingsModel(key="study_chat", value={"enabled": True, "group_ids": ["student"]}))
+        await session.commit()
+    assert (await post(client, IMPORT, request(bundle(study_chat=ExportedStudyChat(enabled=False))))).status_code == 200
+    async with sessions() as session:
+        stored = await session.get(ApplicationSettingsModel, "study_chat")
+        assert stored.value == {"enabled": False, "group_ids": ["student"]}
+        assert (await collect_settings(session)).study_chat.model_dump() == {"enabled": False}

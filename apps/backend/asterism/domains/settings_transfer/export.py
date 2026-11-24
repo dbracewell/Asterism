@@ -29,6 +29,7 @@ from .documents import (
     ExportedModel,
     ExportedOnnxImage,
     ExportedProvider,
+    ExportedStudyChat,
     ModelReference,
     SettingsBundle,
     SettingsEnvelope,
@@ -125,6 +126,7 @@ async def collect_settings(session: AsyncSession) -> SettingsBundle:
             }
         ),
         memory=ExportedMemory(enabled=(settings.memory or {}).get("enabled") is True),
+        study_chat=ExportedStudyChat(enabled=(settings.study_chat or {}).get("enabled", True) is True),
         compaction=ExportedCompaction(
             **settings.compaction.model_dump(exclude={"model_id"}),
             model=_reference(settings.compaction.model_id, providers),

@@ -1193,6 +1193,8 @@ export const zAvailability = z.object({
   chatgpt_plans: zFeatureAvailability,
   delegation: zFeatureAvailability,
   course_memory: zFeatureAvailability,
+  study_chat: zFeatureAvailability,
+  course_study_chat: zFeatureAvailability,
 });
 
 /**
@@ -1937,6 +1939,7 @@ export const zClassModePolicy = z.object({
   allowed_modes: z.array(zLearningModeId).nullable(),
   answer_reveal: z.boolean(),
   memory_enabled: z.boolean().optional().default(true),
+  study_chat_enabled: z.boolean().optional().default(true),
 });
 
 /**
@@ -2347,6 +2350,7 @@ export const zModePolicySource = z.object({
   reveal: zModeReveal,
   learner_can_lift: z.boolean(),
   memory_enabled: z.boolean().optional().default(true),
+  study_chat_enabled: z.boolean().optional().default(true),
 });
 
 /**
@@ -2358,6 +2362,7 @@ export const zModePolicy = z.object({
   allowed_modes: z.array(zLearningModeId),
   reveal: zModeReveal,
   memory_enabled: z.boolean().optional().default(true),
+  study_chat_enabled: z.boolean().optional().default(true),
   sources: z.array(zModePolicySource).optional(),
 });
 
@@ -3213,6 +3218,7 @@ export const zApplicationSettings = z.object({
   canvas_enabled: z.boolean().optional().default(false),
   image_generation: z.record(z.string(), z.unknown()).nullish(),
   memory: z.record(z.string(), z.unknown()).nullish(),
+  study_chat: z.record(z.string(), z.unknown()).nullish(),
   image_generation_local: z.record(z.string(), z.unknown()).nullish(),
   image_generation_onnx: z.record(z.string(), z.unknown()).nullish(),
   image_generator_provider: zComponentProviderParameters.nullish(),
@@ -3963,6 +3969,16 @@ export const zStudyCardDraftRequest = z.object({
   model_id: z.uuid(),
   count: z.int().gte(1).lte(30),
   file_ids: z.array(z.uuid()).min(1).max(10).nullish(),
+});
+
+/**
+ * StudyChatPolicy
+ *
+ * On by default; optionally for some groups only (ADR-0058 groups).
+ */
+export const zStudyChatPolicy = z.object({
+  enabled: z.boolean().optional().default(true),
+  group_ids: z.array(z.string()).max(200).nullish(),
 });
 
 /**
@@ -4788,6 +4804,7 @@ export const zTaughtClass = z.object({
   allowed_modes: z.array(zLearningModeId).nullable(),
   answer_reveal: z.boolean(),
   memory_enabled: z.boolean().optional().default(true),
+  study_chat_enabled: z.boolean().optional().default(true),
   member_count: z.int().optional().default(0),
   created_at: z.int(),
 });
@@ -5613,6 +5630,7 @@ export const zApplicationSettingsWritable = z.object({
   canvas_enabled: z.boolean().optional().default(false),
   image_generation: z.record(z.string(), z.unknown()).nullish(),
   memory: z.record(z.string(), z.unknown()).nullish(),
+  study_chat: z.record(z.string(), z.unknown()).nullish(),
   image_generation_local: z.record(z.string(), z.unknown()).nullish(),
   image_generation_onnx: z.record(z.string(), z.unknown()).nullish(),
   image_generator_provider: zComponentProviderParameters.nullish(),
@@ -7803,6 +7821,18 @@ export const zMemoryPolicyUpdateBody = zMemoryPolicy;
  * Successful Response
  */
 export const zMemoryPolicyUpdateResponse = zMemoryPolicy;
+
+/**
+ * Successful Response
+ */
+export const zStudyChatPolicyGetResponse = zStudyChatPolicy;
+
+export const zStudyChatPolicyUpdateBody = zStudyChatPolicy;
+
+/**
+ * Successful Response
+ */
+export const zStudyChatPolicyUpdateResponse = zStudyChatPolicy;
 
 /**
  * Successful Response

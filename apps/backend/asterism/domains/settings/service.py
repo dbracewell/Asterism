@@ -854,6 +854,14 @@ def _validate_non_provider_app_setting(
         except ValidationError as exc:
             raise BadDataException("Invalid memory policy") from exc
 
+    if key == "study_chat":
+        from asterism.domains.study.chat_policy_schemas import StudyChatPolicy
+
+        try:
+            return StudyChatPolicy.model_validate(value).model_dump(mode="json"), None
+        except ValidationError as exc:
+            raise BadDataException("Invalid study chat policy") from exc
+
     if key == "image_generation_local":
         from asterism.domains.image_generation.local.schemas import LocalSettings
 

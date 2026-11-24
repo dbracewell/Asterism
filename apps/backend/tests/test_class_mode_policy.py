@@ -84,6 +84,7 @@ async def test_students_see_the_policy_and_who_set_it(course):
         "reveal": "forbidden",
         "learner_can_lift": False,
         "memory_enabled": True,
+        "study_chat_enabled": True,
     }
     # The student's other projects are not limited.
     assert await policy_view(course, course["other"]) is None

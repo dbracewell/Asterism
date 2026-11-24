@@ -92,6 +92,13 @@ class ExportedMemory(_Document):
     enabled: bool = False
 
 
+class ExportedStudyChat(_Document):
+    """Decks and quizzes from chat (EPIC-98). Group limits stay with the
+    installation, as for memory."""
+
+    enabled: bool = True
+
+
 class ExportedLocalImage(_Document):
     """The local generator's model and device (US-76.2). Downloads and license
     acceptance stay with the installation."""
@@ -145,6 +152,8 @@ class SettingsBundle(_Document):
     image_generator_provider: ExportedComponent | None = None
     # Added in US-93.2; files exported before it read as memory off.
     memory: ExportedMemory = Field(default_factory=ExportedMemory)
+    # Added in US-98.1; files exported before it read as on, the default.
+    study_chat: ExportedStudyChat = Field(default_factory=ExportedStudyChat)
     chatgpt_plan_enabled: bool = False
     web_search_provider: ExportedComponent | None = None
     image_search_provider: ExportedComponent | None = None

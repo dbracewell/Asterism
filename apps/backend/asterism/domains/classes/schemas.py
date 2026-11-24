@@ -61,6 +61,7 @@ class TaughtClass(BaseModel):
     allowed_modes: list[LearningModeId] | None
     answer_reveal: bool
     memory_enabled: bool = True
+    study_chat_enabled: bool = True
     member_count: int = 0
     created_at: int
 
@@ -201,6 +202,9 @@ class ClassModePolicy(BaseModel):
     answer_reveal: StrictBool = Field(description="Whether students may reveal answers and solutions")
     memory_enabled: StrictBool = Field(
         default=True, description="Whether Asterism reads and proposes memories in students' course chats"
+    )
+    study_chat_enabled: StrictBool = Field(
+        default=True, description="Whether the assistant may draft decks and quizzes in students' course chats"
     )
 
     @field_validator("allowed_modes")

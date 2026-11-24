@@ -63,6 +63,18 @@ educators and not administrators. Each person can also turn memory off in
 **Your Asterism**, and an educator can turn it off for a course. People can still
 see and delete their memories while memory is off.
 
+## Study in chat
+
+**Enable decks and quizzes from chat** lets the assistant draft a flashcard deck
+or a practice quiz when someone asks for one in a project chat. It's **on** by
+default, unlike the features above, because it only drafts: nothing is added to
+the project's Study area until the person reviews the draft and saves it. Turn
+on **Limit to selected groups** and tick groups to offer it to those groups
+only.
+
+It works only in projects whose **Study** area is on, with a model that supports
+tools, and an educator can turn it off for a course.
+
 ## ChatGPT Plans
 
 Turn on **Allow ChatGPT plan connections** to let people

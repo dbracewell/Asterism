@@ -96,6 +96,9 @@ function useCourseLine(course: ModePolicySource | null) {
     course.reveal === "forbidden" && "answers can't be revealed",
     // ADR-0078: an educator can turn memory off in the course.
     course.memory_enabled === false && "memory is off",
+    // EPIC-98: and decks and quizzes from chat.
+    course.study_chat_enabled === false &&
+      "decks and quizzes from chat are off",
   ].filter(Boolean);
   return `${course.class_name}: ${limits.join(", ")}. Set by ${course.set_by}.`;
 }

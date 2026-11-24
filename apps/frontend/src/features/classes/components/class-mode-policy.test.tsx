@@ -59,6 +59,7 @@ it("narrows the allowed modes and turns reveals off", async () => {
         allowed_modes: ["tutor"],
         answer_reveal: false,
         memory_enabled: true,
+        study_chat_enabled: true,
       },
     }),
   );
@@ -94,7 +95,12 @@ it("turns memory off for the course and shows the saved setting", async () => {
   await waitFor(() =>
     expect(mocks.save.mock.calls[0]?.[0]).toEqual({
       path: { class_id: "c1" },
-      body: { allowed_modes: null, answer_reveal: true, memory_enabled: false },
+      body: {
+        allowed_modes: null,
+        answer_reveal: true,
+        memory_enabled: false,
+        study_chat_enabled: true,
+      },
     }),
   );
 });
@@ -119,4 +125,26 @@ it("hides the memory switch while the admin has memory off, and keeps its value"
   await waitFor(() =>
     expect(mocks.save.mock.calls[0]?.[0].body.memory_enabled).toBe(false),
   );
+});
+
+it("turns decks and quizzes from chat off for the course (EPIC-98)", async () => {
+  const user = setup();
+  await user.click(
+    await screen.findByRole("switch", {
+      name: "Let students make decks and quizzes from chat",
+    }),
+  );
+  await user.click(screen.getByRole("button", { name: "Save policy" }));
+  await waitFor(() =>
+    expect(mocks.save.mock.calls[0]?.[0].body.study_chat_enabled).toBe(false),
+  );
+});
+
+it("hides that switch while the admin has study in chat off for everyone", async () => {
+  turnOff("course_study_chat");
+  setup({ study_chat_enabled: false });
+  await screen.findByRole("checkbox", { name: "Standard" });
+  expect(
+    screen.queryByRole("switch", { name: /decks and quizzes/ }),
+  ).toBeNull();
 });

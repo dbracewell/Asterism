@@ -43,6 +43,7 @@ from asterism.domains.settings.settings_router import settings_router
 from asterism.domains.settings_transfer.router import settings_transfer_router
 from asterism.domains.skills.router import skills_router
 from asterism.domains.status.router import status_router
+from asterism.domains.study.chat_policy_router import study_chat_policy_router
 from asterism.domains.study.router import study_router
 from asterism.domains.tools.router import tools_router
 from asterism.domains.usage.router import usage_router
@@ -184,6 +185,8 @@ app.include_router(chatgpt_router)
 app.include_router(memory_router)
 app.include_router(memory_proposal_router)
 app.include_router(memory_policy_router)
+# Before settings_router, whose /settings/app/{key} would match first.
+app.include_router(study_chat_policy_router)
 app.include_router(settings_router)
 app.include_router(user_router)
 app.include_router(groups_router)

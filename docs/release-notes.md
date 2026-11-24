@@ -24,10 +24,18 @@ Unreleased into its version and date.
 
 ### Configuration
 
+- A new admin setting, **Study in chat** (Admin Settings → Study in chat,
+  `study_chat`), is **on** by default and can be limited to groups. It lets the
+  assistant draft flashcard decks and practice quizzes in project chats whose
+  Study area is on (the drafting tools arrive in a later update). Settings
+  export carries its on/off switch; group limits stay with each installation.
 - `EMBEDDING_DIMENSION` is removed; the vector size now comes from the
   embedding model. Remove it from `.env` if you set it.
 
 ### Data
+
+- Classes get a switch for decks and quizzes from chat, on for existing classes
+  (migration `5c9a5a096d23`).
 
 - Search and memory now use the multilingual-e5-small embedding model instead
   of CLIP ([ADR-0079](adr/0079-multilingual-text-embeddings.md)). On the first

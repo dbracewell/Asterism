@@ -145,6 +145,12 @@ export type ApplicationSettings = {
     [key: string]: unknown;
   } | null;
   /**
+   * Study Chat
+   */
+  study_chat?: {
+    [key: string]: unknown;
+  } | null;
+  /**
    * Image Generation Local
    */
   image_generation_local?: {
@@ -196,6 +202,8 @@ export type Availability = {
   chatgpt_plans: FeatureAvailability;
   delegation: FeatureAvailability;
   course_memory: FeatureAvailability;
+  study_chat: FeatureAvailability;
+  course_study_chat: FeatureAvailability;
 };
 
 /**
@@ -1507,6 +1515,12 @@ export type ClassModePolicy = {
    * Whether Asterism reads and proposes memories in students' course chats
    */
   memory_enabled?: boolean;
+  /**
+   * Study Chat Enabled
+   *
+   * Whether the assistant may draft decks and quizzes in students' course chats
+   */
+  study_chat_enabled?: boolean;
 };
 
 /**
@@ -5405,6 +5419,12 @@ export type ModePolicy = {
    */
   memory_enabled?: boolean;
   /**
+   * Study Chat Enabled
+   *
+   * False when any source turns off decks and quizzes from chat
+   */
+  study_chat_enabled?: boolean;
+  /**
    * Sources
    */
   sources?: Array<ModePolicySource>;
@@ -5444,6 +5464,12 @@ export type ModePolicySource = {
    * False when this source turns memory off (ADR-0078)
    */
   memory_enabled?: boolean;
+  /**
+   * Study Chat Enabled
+   *
+   * False when this source turns off decks and quizzes from chat (EPIC-98)
+   */
+  study_chat_enabled?: boolean;
 };
 
 /**
@@ -8390,6 +8416,22 @@ export type StudyCardUpdate = {
 };
 
 /**
+ * StudyChatPolicy
+ *
+ * On by default; optionally for some groups only (ADR-0058 groups).
+ */
+export type StudyChatPolicy = {
+  /**
+   * Enabled
+   */
+  enabled?: boolean;
+  /**
+   * Group Ids
+   */
+  group_ids?: Array<string> | null;
+};
+
+/**
  * StudyCitation
  *
  * A stored citation plus its live state.
@@ -10054,6 +10096,10 @@ export type TaughtClass = {
    */
   memory_enabled?: boolean;
   /**
+   * Study Chat Enabled
+   */
+  study_chat_enabled?: boolean;
+  /**
    * Member Count
    */
   member_count?: number;
@@ -10951,6 +10997,12 @@ export type ApplicationSettingsWritable = {
    * Memory
    */
   memory?: {
+    [key: string]: unknown;
+  } | null;
+  /**
+   * Study Chat
+   */
+  study_chat?: {
     [key: string]: unknown;
   } | null;
   /**
@@ -21213,6 +21265,80 @@ export type MemoryPolicyUpdateResponses = {
 
 export type MemoryPolicyUpdateResponse =
   MemoryPolicyUpdateResponses[keyof MemoryPolicyUpdateResponses];
+
+export type StudyChatPolicyGetData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/settings/app/study-chat";
+};
+
+export type StudyChatPolicyGetErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Forbidden
+   */
+  403: ErrorDetail;
+};
+
+export type StudyChatPolicyGetError =
+  StudyChatPolicyGetErrors[keyof StudyChatPolicyGetErrors];
+
+export type StudyChatPolicyGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: StudyChatPolicy;
+};
+
+export type StudyChatPolicyGetResponse =
+  StudyChatPolicyGetResponses[keyof StudyChatPolicyGetResponses];
+
+export type StudyChatPolicyUpdateData = {
+  body: StudyChatPolicy;
+  path?: never;
+  query?: never;
+  url: "/settings/app/study-chat";
+};
+
+export type StudyChatPolicyUpdateErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Forbidden
+   */
+  403: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type StudyChatPolicyUpdateError =
+  StudyChatPolicyUpdateErrors[keyof StudyChatPolicyUpdateErrors];
+
+export type StudyChatPolicyUpdateResponses = {
+  /**
+   * Successful Response
+   */
+  200: StudyChatPolicy;
+};
+
+export type StudyChatPolicyUpdateResponse =
+  StudyChatPolicyUpdateResponses[keyof StudyChatPolicyUpdateResponses];
 
 export type MainAgentGetData = {
   body?: never;

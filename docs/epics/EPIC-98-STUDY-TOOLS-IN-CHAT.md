@@ -1,6 +1,6 @@
 # EPIC-98: Decks and quizzes from chat
 
-Status: proposed (2026-11-24). Source: user request (2026-11-24): "New tools for
+Status: in progress (2026-11-24). US-98.1 done. Source: user request (2026-11-24): "New tools for
 creating decks and quizzes which are automatically added when chatting in a
 project with those study options available."
 
@@ -74,58 +74,83 @@ existing decks or quizzes from chat.
 - **Branch-aware.** Drafts belong to the message that made them. Regenerating
   makes new drafts and leaves saved items untouched.
 
+## Policy (decided 2026-11-24)
+
+- **Admin switch.** A `study_chat` admin policy, `{enabled, group_ids}` like
+  memory and image generation, **on by default** (unlike other features, because
+  it only drafts things the person reviews, and Study must also be on). It is
+  reported as `study_chat` in `GET /availability`, so EPIC-97's hiding applies.
+- **Class switch.** A class's mode policy gets "Let students make decks and
+  quizzes from chat", on by default, next to the memory switch. Off, the tools
+  aren't offered in that course's projects.
+- **Existing decks:** out of scope. The tools only create new decks and quizzes,
+  as drafts the person reviews and saves.
+
+The tools are offered when all of these hold: the chat is an ordinary
+conversation in a project; the project's Study area is on; the admin switch
+allows the person; the class switch (for a course project) is on; and the
+model supports tools.
+
 ## User stories
 
-Suggested order: US-98.1 → 98.2 → 98.3 → 98.4.
+Suggested order: US-98.1 → 98.2 → 98.3 → 98.4 → 98.5.
 
-### US-98.1: ADR and draft storage
+### US-98.1: Policy, class switch and ADR
 
-- [ ] Write the ADR (gate, propose-then-save, provenance) and amend the
-      `areas.py` docstring, ADR-0065 and CLAUDE.md §2.4.
+- [x] Write the ADR (gate, propose-then-save, provenance) and amend the
+      `areas.py` docstring, ADR-0065 and CLAUDE.md §2.4. Done as
+      [ADR-0080](../adr/0080-study-tools-in-chat.md); the areas change is noted in
+      `areas.py` and `project-workspaces.md` (ADR-0065 is about the fetch tool).
+- [x] Admin `study_chat` policy (`{enabled, group_ids}`, default on), its admin
+      endpoints and Admin Settings section, and `study_chat` in
+      `GET /availability`.
+- [x] Class switch `study_chat_enabled` (default on) on the class mode policy,
+      with a migration and an upgrade test, and the switch in the class page.
+- [x] Settings export covers the admin policy (EPIC-100's registry, or the
+      current export until then).
+- [x] Tests: defaults, group limits, the class switch, availability.
+
+### US-98.2: Draft storage
+
 - [ ] Add a `study_proposals` table: owner, project, chat, message, execution,
       kind, payload, status. Ship it with an Alembic migration, an upgrade test
       from the previous revision, and Download my data coverage.
 - [ ] Add `origin="chat"` and proposal provenance columns on decks and quizzes,
       as a migration.
 
-### US-98.2: The tools
+### US-98.3: The tools
 
 - [ ] Add `propose_deck` and `propose_quiz` in `domains/tools/builtin/`, with
       their constants in `tools/catalog.py` (internal, policy-gated), a gate
       `_offers_study`, a branch in `require_internal_tool`, and prompt guidance.
 - [ ] Tests:
-  - offered only when the project, the Study area, model tools and availability
-    all line up;
+  - offered only when the project, the Study area, the admin and class
+    switches and model tools all line up;
   - never offered to sub-agents or in General chats;
   - re-checked at execution time;
   - payload validation and caps;
   - one proposal per tool per run.
 
-### US-98.3: Review and save in chat
+### US-98.4: Review and save in chat
 
 - [ ] Save and dismiss endpoints: owner-only; recheck the project, the Study
-      area and file membership; the save is idempotent. Regenerate the client.
+      area, the switches and file membership; the save is idempotent.
+      Regenerate the client.
 - [ ] Frontend `StudyProposalCards` in `message-item.tsx`: preview, edit before
       saving, Save to Study (with a link to the new deck or quiz), Dismiss, and
       timeline labels in `agent-timeline.ts`.
 - [ ] Unit tests and a Playwright test: ask for a deck in a project chat, then
       save it and see it under Study.
 
-### US-98.4: Docs and availability
+### US-98.5: Docs
 
-- [ ] Add the tools to `GET /availability` (EPIC-96) and hide the mention of them
-      in help when unavailable (EPIC-97).
+- [ ] Hide the mention of the tools in help when unavailable (EPIC-97).
 - [ ] Update `docs/architecture/study-tools.md`, the user guide pages
-      (`05-studying/flashcards.md`, `practice-quizzes.md`) and the release notes
-      (Data: the new table; Behavior: the new tools).
+      (`05-studying/flashcards.md`, `practice-quizzes.md`), the educator and
+      admin guide pages for the two switches, and the release notes.
 
-## Open questions
+## Settled questions
 
-1. **Admin control.** Should study tools in chat have an admin policy, such as
-   `study_chat_enabled` with optional groups like memory and image generation, or
-   be on wherever Study is on? The proposal is an admin policy (default on), so
-   EPIC-97's rule applies and courses can rely on it.
-2. **Class control.** Should a class be able to turn chat study tools off for its
-   students, for example during an assessment?
-3. Should the agent also be able to propose cards for an **existing** deck? This
-   is out of scope here.
+1. **Admin control:** yes, an admin policy, on by default, optionally by group.
+2. **Class control:** yes, a class switch, on by default.
+3. **Existing decks:** no; the tools only create new decks and quizzes.

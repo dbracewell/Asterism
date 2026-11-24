@@ -694,6 +694,12 @@ import type {
   StudyCardUpdateData,
   StudyCardUpdateErrors,
   StudyCardUpdateResponses,
+  StudyChatPolicyGetData,
+  StudyChatPolicyGetErrors,
+  StudyChatPolicyGetResponses,
+  StudyChatPolicyUpdateData,
+  StudyChatPolicyUpdateErrors,
+  StudyChatPolicyUpdateResponses,
   StudyDeckCreateData,
   StudyDeckCreateErrors,
   StudyDeckCreateResponses,
@@ -6129,6 +6135,52 @@ export class ApiClient extends HeyApiClient {
     >({
       security: [{ scheme: "bearer", type: "http" }],
       url: "/settings/app/memory",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+  }
+
+  /**
+   * Get Policy
+   */
+  public studyChatPolicyGet<ThrowOnError extends boolean = false>(
+    options?: Options<StudyChatPolicyGetData, ThrowOnError>,
+  ): RequestResult<
+    StudyChatPolicyGetResponses,
+    StudyChatPolicyGetErrors,
+    ThrowOnError
+  > {
+    return (options?.client ?? this.client).get<
+      StudyChatPolicyGetResponses,
+      StudyChatPolicyGetErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/settings/app/study-chat",
+      ...options,
+    });
+  }
+
+  /**
+   * Put Policy
+   */
+  public studyChatPolicyUpdate<ThrowOnError extends boolean = false>(
+    options: Options<StudyChatPolicyUpdateData, ThrowOnError>,
+  ): RequestResult<
+    StudyChatPolicyUpdateResponses,
+    StudyChatPolicyUpdateErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).put<
+      StudyChatPolicyUpdateResponses,
+      StudyChatPolicyUpdateErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/settings/app/study-chat",
       ...options,
       headers: {
         "Content-Type": "application/json",

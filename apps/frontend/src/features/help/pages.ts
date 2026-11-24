@@ -42,6 +42,7 @@ export type PageGuideId =
   | "admin.skills"
   | "admin.canvas"
   | "admin.memory"
+  | "admin.study-chat"
   | "admin.chatgpt"
   | "admin.context-compaction"
   | "admin.image-captioning"
@@ -1005,6 +1006,22 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
     terms: ["concept.memory"],
     audience: "admin",
   },
+  "admin.study-chat": {
+    title: "Study in chat",
+    walkthrough: "08-for-administrators/policies#study-in-chat",
+    purpose:
+      "Turn on or off the assistant drafting flashcard decks and practice quizzes in project chats, for everyone or for selected groups.",
+    areas: [
+      {
+        name: "Availability",
+        description:
+          "On by default. It works only in projects whose Study area is on, and an educator can turn it off for a course. People review every draft and choose whether to save it.",
+      },
+    ],
+    tasks: [],
+    terms: ["concept.flashcard", "concept.quiz"],
+    audience: "admin",
+  },
   "admin.chatgpt": {
     title: "ChatGPT plans",
     walkthrough: "08-for-administrators/policies#chatgpt-plans",
@@ -1290,6 +1307,7 @@ const adminSettingsGuides: Record<string, PageGuideId | null> = {
   status: "admin.status",
   "image-generation": "admin.image-generation",
   memory: "admin.memory",
+  "study-chat": "admin.study-chat",
 };
 
 /** Study pages, most specific first; each is under /projects/{id}/study. */
