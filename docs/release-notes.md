@@ -22,6 +22,8 @@ Unreleased into its version and date.
 
 ## Unreleased
 
+## 0.4.0 (2026-11-23)
+
 ### Configuration
 
 - A new admin setting, `memory` (Admin Settings → Memory), is off by default and
