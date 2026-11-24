@@ -68,13 +68,16 @@ Suggested order: US-97.1 → 97.2 → 97.3 → 97.4.
 
 ### US-97.2: Chat and composer
 
-- [ ] "+" menu: hide Skills when skills are unavailable. Image generation already
+- [x] "+" menu: hide Skills when skills are unavailable. Image generation already
       works this way.
-- [ ] `/` discovery: show nothing (no "disabled by an administrator" list) when
+- [x] `/` discovery: show nothing (no "disabled by an administrator" list) when
       skills are off.
-- [ ] Canvas: no create affordance when unavailable. Existing canvases open
-      read-only.
-- [ ] Tests for each, including a group-limited policy.
+- [x] Canvas: no create affordance when unavailable. Existing canvases open
+      read-only. Done in US-96.1: people never create canvases themselves, and
+      `canEdit` follows availability (`canvas-panel.test.tsx`).
+- [x] Tests for each, including a group-limited policy. Group limits are
+      resolved by `GET /availability` (`test_availability.py`), so the
+      frontend tests the answer it gets.
 
 ### US-97.3: Projects, agents and classes
 

@@ -28,7 +28,8 @@ Unreleased into its version and date.
   for that person: the Skills and ChatGPT sections, Use memory and Canvas.
   Someone who already has skills, a ChatGPT connection or memories saved still
   sees them, to review or delete. Admin Settings no longer lists the planned
-  Code execution section.
+  Code execution section. In chats, the composer's menu leaves out Skills and
+  typing "/" offers only templates while skills are off.
 - Turning a feature on or off in Admin Settings (for example memory or canvas)
   now shows in User Settings and chats without reloading the page. Other people's
   open tabs catch up within about 30 seconds, when the tab is next focused.

@@ -1,12 +1,20 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { beforeEach, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ChatInput } from "./chat-input";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import type { ActiveSkillState } from "@/lib/client";
 
 const { eligible } = vi.hoisted(() => ({ eligible: vi.fn() }));
+// Skills are on unless a test turns them off (EPIC-97).
+const availability = vi.hoisted(() => ({ skills: true }));
+vi.mock("@/features/availability/queries", () => ({
+  useOwnerFeature: (_owner: string, feature: string) => ({
+    available: feature === "skills" ? availability.skills : false,
+    reason: "",
+  }),
+}));
 vi.mock("@/lib/api", () => ({ client: {} }));
 vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
   skillEligibleGetManyOptions: ({ query }: { query: { query: string } }) => ({
@@ -379,4 +387,33 @@ it("opens the skill list from the menu and focuses the message box", async () =>
   await waitFor(() => expect(screen.getByLabelText("Message")).toHaveFocus());
   await user.click(await screen.findByRole("option", { name: /review/ }));
   expect(await findChip("review")).toHaveTextContent("review");
+});
+
+describe("while the admin has skills off (EPIC-97)", () => {
+  beforeEach(() => {
+    availability.skills = false;
+  });
+  afterEach(() => {
+    availability.skills = true;
+  });
+
+  it("leaves Skills out of the menu and the / list, and never looks skills up", async () => {
+    setup();
+    const user = userEvent.setup();
+    await user.click(screen.getByRole("button", { name: "More options" }));
+    await screen.findByRole("menu");
+    expect(screen.queryByRole("menuitem", { name: "Skills" })).toBeNull();
+    await user.keyboard("{Escape}");
+    // "/" still offers templates, never skills.
+    await user.type(screen.getByLabelText("Message"), "/rev");
+    const list = await screen.findByRole("listbox", {
+      name: "Skills and templates",
+    });
+    expect(list).toHaveTextContent("No matching templates.");
+    expect(screen.queryByRole("option", { name: /review/ })).toBeNull();
+    expect(
+      screen.queryByText(/disabled by an administrator/),
+    ).not.toBeInTheDocument();
+    expect(eligible).not.toHaveBeenCalled();
+  });
 });

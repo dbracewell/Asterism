@@ -13,6 +13,7 @@ import {
   PopoverAnchor,
   PopoverContent,
 } from "@/components/ui/popover";
+import { useOwnerFeature } from "@/features/availability/queries";
 import { eligibleSkillOptions } from "@/features/skills/queries";
 import type {
   AppliedTemplate,
@@ -69,6 +70,8 @@ export type SkillComposerControl = {
   /** Pending-change, conflict and error lines below the top row. */
   notices: ReactNode;
   canOpenList: boolean;
+  /** The admin lets this person use skills; otherwise the Skills item is hidden (EPIC-97). */
+  skillsAvailable: boolean;
   /** Opens the skill list, as typing "/" does; the caller focuses the box. */
   openList: () => void;
   keyDown: (event: KeyboardEvent<HTMLTextAreaElement>) => boolean;
@@ -128,6 +131,8 @@ export function SkillComposer({
   const [error, setError] = useState<string>();
   const [resolving, setResolving] = useState(false);
   const listId = useId();
+  // Skills off for this person: "/" still offers templates, never skills.
+  const skillsOn = useOwnerFeature(owner, "skills").available;
   const anchorRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
   // Local draft persistence is separate from API state. Storage is never read on the server.
@@ -204,10 +209,14 @@ export function SkillComposer({
     setError(undefined);
   }
   const search = slashSearch(current.prompt);
-  const open = !disabled && !dismissed && (manual || search !== null);
+  const open =
+    !disabled &&
+    !dismissed &&
+    ((manual && skillsOn) ||
+      (search !== null && (skillsOn || !!onOpenTemplate)));
   const query = useQuery({
     ...eligibleSkillOptions(owner, manual ? "" : (search ?? "")),
-    enabled: open,
+    enabled: open && skillsOn,
   });
   // Templates are offered only for typed slash searches, not the Skills menu item.
   const templateSearch = onOpenTemplate && !manual ? search : null;
@@ -226,9 +235,8 @@ export function SkillComposer({
           frameworks: frameworks.data?.items ?? [],
           templates: ownedTemplates.data?.items ?? [],
         });
-  const skillOptions = query.data?.policy_enabled
-    ? (query.data?.items ?? [])
-    : [];
+  const skillOptions =
+    skillsOn && query.data?.policy_enabled ? (query.data?.items ?? []) : [];
   const options = [
     ...skillOptions.map((item) => ({ kind: "skill" as const, item })),
     ...templateOptions.map((item) => ({ kind: "template" as const, item })),
@@ -566,7 +574,8 @@ export function SkillComposer({
     ready: !!draft && !resolving,
     chips,
     notices,
-    canOpenList: !disabled && !!draft,
+    canOpenList: !disabled && !!draft && skillsOn,
+    skillsAvailable: skillsOn,
     openList() {
       setManual(true);
       setDismissed(false);
@@ -644,7 +653,9 @@ export function SkillComposer({
           }
           className="flex flex-col gap-1"
         >
-          {query.isPending ? (
+          {!skillsOn ? (
+            !templateOptions.length && <p>No matching templates.</p>
+          ) : query.isPending ? (
             <p role="status">Loading skills…</p>
           ) : query.isError ? (
             <EmptyState

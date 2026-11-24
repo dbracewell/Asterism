@@ -585,7 +585,7 @@ const ChatInputCore = ({
               coach ? reviewOffer(coach, prompt, controlsDisabled) : undefined
             }
             skills={
-              skillComposer
+              skillComposer?.skillsAvailable
                 ? { disabled: controlsDisabled || !skillComposer.canOpenList }
                 : undefined
             }

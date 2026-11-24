@@ -1,3 +1,4 @@
+import { mockAvailability } from "./support/availability";
 import { expect, test } from "./support/test";
 test.use({ hasTouch: true });
 test.beforeEach(async ({ page }) => {
@@ -49,11 +50,20 @@ for (const width of [1280, 320]) {
     await page.route("**/api/py/settings/app/providers*", (route) =>
       route.fulfill({ json: { providers: [] } }),
     );
+    await mockAvailability(page, () => (enabled ? ["skills"] : []));
+    // Off: "/" offers templates only, and says nothing about skills (EPIC-97).
+    const offersNoSkills = async () => {
+      await expect(
+        page.getByRole("listbox", { name: "Skills and templates" }),
+      ).toContainText("/template");
+      await expect(page.getByRole("option", { name: /review/ })).toHaveCount(0);
+      await expect(page.getByText(/disabled by an administrator/)).toHaveCount(
+        0,
+      );
+    };
     await page.goto("/e2e/skill-chat");
     await page.getByLabel("Message", { exact: true }).fill("/");
-    await expect(
-      page.getByText("Skill activation is disabled by an administrator."),
-    ).toBeVisible();
+    await offersNoSkills();
     await page.goto(
       "/e2e/skills?admin=true&t=admin&setting=skills&keep=x&keep=y",
     );
@@ -82,9 +92,7 @@ for (const width of [1280, 320]) {
     expect(writes).toEqual([{ enabled: true }, { enabled: false }]);
     await page.goto("/e2e/skill-chat");
     await page.getByLabel("Message", { exact: true }).fill("/");
-    await expect(
-      page.getByText("Skill activation is disabled by an administrator."),
-    ).toBeVisible();
+    await offersNoSkills();
   });
 }
 test("ordinary users cannot open the skills policy pane", async ({ page }) => {
