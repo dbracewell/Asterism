@@ -28,8 +28,19 @@ describe("help center anchors", () => {
 });
 
 describe("searchHelp", () => {
+  it("leaves out help about a feature the admin has turned off (EPIC-97)", () => {
+    const off = searchHelp("skill", {
+      isAdmin: false,
+      has: (feature) => feature !== "skills",
+    });
+    expect(off.concepts.map(([id]) => id)).not.toContain("concept.skill");
+    expect(off.guides.map(([id]) => id)).not.toContain("settings.skills");
+    const on = searchHelp("skill", { isAdmin: false, has: () => true });
+    expect(on.concepts.map(([id]) => id)).toContain("concept.skill");
+  });
+
   const all = (query: string, isAdmin: boolean) => {
-    const results = searchHelp(query, isAdmin);
+    const results = searchHelp(query, { isAdmin, has: () => true });
     return [
       ...results.concepts.map(([id]) => id),
       ...results.controls.map(([id]) => id),
@@ -58,7 +69,10 @@ describe("searchHelp", () => {
   });
 
   it("splits glossary concepts from control help and sorts entries by title", () => {
-    const { concepts, controls } = searchHelp("", true);
+    const { concepts, controls } = searchHelp("", {
+      isAdmin: true,
+      has: () => true,
+    });
     expect(concepts.every(([id]) => id.startsWith("concept."))).toBe(true);
     expect(controls.some(([id]) => id.startsWith("concept."))).toBe(false);
     const titles = concepts.map(([, entry]) => entry.title);

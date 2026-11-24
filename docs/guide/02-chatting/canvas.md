@@ -11,7 +11,7 @@ edit it, and every saved version is kept.
 1. Select your name at the bottom of the sidebar, then **Settings**.
 2. Under **General**, tick **Canvas**.
 
-If the box can't be ticked, your administrator has turned the canvas off. The
+If there's no Canvas box, your administrator has turned the canvas off. The
 chat's model must also be able to use tools.
 
 ## Ask Asterism to write in the canvas

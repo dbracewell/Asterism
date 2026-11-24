@@ -93,12 +93,15 @@ Suggested order: US-97.1 → 97.2 → 97.3 → 97.4.
 
 ### US-97.4: Help, tour and verification
 
-- [ ] Add a `feature` key to help topics and tour steps. Filter by availability,
+- [x] Add a `feature` key to help topics and tour steps. Filter by availability,
       and replace `needsSkills`.
-- [ ] Playwright: with every policy off, a student sees no memory, canvas,
-      skills, sub-agent, image or ChatGPT entry points. With each turned on, the
+- [x] Playwright: with every policy off, a student sees no memory, canvas,
+      skills, sub-agent, image or ChatGPT entry points. Done in
+      `hidden-features.spec.ts` (isolated) for settings and help; sub-agents and
+      the composer are covered by mocked specs, because other isolated specs set
+      the tool allowlist and a fresh stack has no models. With each turned on, the
       entry point appears without a reload (EPIC-96).
-- [ ] Update the user guide where it says features "start off", and refresh the
+- [x] Update the user guide where it says features "start off", and refresh the
       screenshots (`pnpm docs:check`). Add a Behavior line to the release notes.
 
 ## Settled questions

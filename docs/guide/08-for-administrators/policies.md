@@ -4,6 +4,12 @@ The policy pages in **Admin Settings** turn features on and off for everyone, an
 configure the services behind them. Most features start **off**, so you choose
 what your school uses. This page goes through each one.
 
+While a feature is off for someone, they don't see its settings, menu items or
+help. Anything they already saved there, such as memories, skills or
+sub-agents, stays visible to them so they can review or delete it. A change
+shows on their next visit to the page, or within about 30 seconds in a tab they
+already have open.
+
 > **Who can do this:** administrators.
 
 Each page has its own **Save** button at the bottom (for example

@@ -33,7 +33,8 @@ Unreleased into its version and date.
   off, Settings → Agents, the project Sub-agents tab and switch, and the Agent
   workspace starting point are hidden (kept for people who already have
   sub-agents or selections). Project memory, a sub-agent's skills and a class's
-  memory switch follow the same rule.
+  memory switch follow the same rule, and so do the help center, page help and
+  the first-chat tour.
 - Turning a feature on or off in Admin Settings (for example memory or canvas)
   now shows in User Settings and chats without reloading the page. Other people's
   open tabs catch up within about 30 seconds, when the tab is next focused.

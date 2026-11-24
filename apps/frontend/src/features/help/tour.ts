@@ -7,6 +7,8 @@
  * policy is off, are skipped.
  */
 
+import type { Feature } from "@/features/availability/queries";
+
 export type TourStepId =
   "composer" | "skills" | "learning-mode" | "model" | "options";
 
@@ -16,8 +18,8 @@ export interface TourStep {
   target: string;
   title: string;
   body: string;
-  /** Shown only when the skill slash menu can offer skills. */
-  needsSkills?: boolean;
+  /** Shown only while the admin lets the person use this feature (EPIC-97). */
+  feature?: Feature;
 }
 
 export const firstChatTourSteps: readonly TourStep[] = [
@@ -38,7 +40,7 @@ export const firstChatTourSteps: readonly TourStep[] = [
     target: "message",
     title: "Skills",
     body: "Type / in the message box to add one of your skills. Active skills appear as chips above the box. A skill only adds instructions.",
-    needsSkills: true,
+    feature: "skills",
   },
   {
     id: "model",
@@ -82,11 +84,11 @@ export function tourTarget(
 
 /** The steps that can be shown now, in order. */
 export function availableTourSteps(
-  skillsEnabled: boolean,
+  has: (feature: Feature) => boolean,
   root: ParentNode = document,
 ): TourStep[] {
   return firstChatTourSteps.filter(
     (step) =>
-      (!step.needsSkills || skillsEnabled) && tourTarget(step, root) !== null,
+      (!step.feature || has(step.feature)) && tourTarget(step, root) !== null,
   );
 }

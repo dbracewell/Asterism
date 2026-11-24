@@ -55,7 +55,8 @@ function isTypingTarget(target: EventTarget | null): boolean {
 export function PageHelp() {
   const pathname = usePathname();
   const search = useSearchParams();
-  const { isAdmin } = useHelpAudience();
+  const viewer = useHelpAudience();
+  const { isAdmin } = viewer;
   const [open, setOpen] = React.useState(false);
   // The tour and help center links move focus themselves; don't return it to
   // the Help button.
@@ -70,7 +71,7 @@ export function PageHelp() {
     isAdmin,
   );
   const guide = guideId ? pageGuides[guideId] : null;
-  const available = !!guide && isVisibleTo(guide, isAdmin);
+  const available = !!guide && isVisibleTo(guide, viewer);
 
   React.useEffect(() => {
     if (!available) return;
@@ -108,7 +109,7 @@ export function PageHelp() {
           leaving.current = false;
         }}
       >
-        <PageGuideView guide={guide} isAdmin={isAdmin} onNavigate={leave} />
+        <PageGuideView guide={guide} onNavigate={leave} />
         <div className="flex flex-col gap-3 border-t px-4 py-4 text-sm">
           <div>
             <p className="text-muted-foreground mb-2">
@@ -144,15 +145,14 @@ export function PageHelp() {
 
 function PageGuideView({
   guide,
-  isAdmin,
   onNavigate,
 }: {
   guide: PageGuide;
-  isAdmin: boolean;
   onNavigate: () => void;
 }) {
+  const viewer = useHelpAudience();
   const terms = guide.terms.filter((id) =>
-    isVisibleTo(helpEntries[id], isAdmin),
+    isVisibleTo(helpEntries[id], viewer),
   );
   return (
     <>

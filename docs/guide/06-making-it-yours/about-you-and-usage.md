@@ -54,7 +54,8 @@ separately, under [Memory](#memory).
 ## Memory
 
 **Memory**, below About you, lists what Asterism remembers about you when your
-administrator has turned memory on. See
+administrator has turned memory on. While memory is off for you, the section
+appears only if you have memories saved, so you can still delete them. See
 [What Asterism remembers](what-asterism-remembers.md).
 
 ## Usage

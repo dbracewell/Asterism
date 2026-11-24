@@ -65,9 +65,12 @@ in Asterism's logs. Accessibility memories are always sensitive.
 
 ## When memory is off
 
-If memory is off, the Memory section says why:
+If your administrator hasn't turned memory on for your group, there's no Memory
+section, and no **Use memory** box, unless you already have memories saved.
+Then the section says memory is off and still lets you change or delete them.
 
-- your administrator hasn't turned it on for your group;
+Memory is also off when:
+
 - you've turned it off with **Use memory**;
 - in a course project, your educator has turned it off for the course.
 

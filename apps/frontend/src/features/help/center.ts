@@ -6,6 +6,7 @@
 import { pageGuides, type PageGuide, type PageGuideId } from "./pages";
 import {
   helpEntries,
+  type HelpViewer,
   isVisibleTo,
   type HelpEntry,
   type HelpId,
@@ -73,14 +74,17 @@ export interface HelpCenterResults {
  * navigation. Glossary concepts (`concept.*`) are split from help about a single
  * control or setting.
  */
-export function searchHelp(query: string, isAdmin: boolean): HelpCenterResults {
+export function searchHelp(
+  query: string,
+  viewer: HelpViewer,
+): HelpCenterResults {
   const words = terms(query);
   const entries = (Object.entries(helpEntries) as [HelpId, HelpEntry][])
-    .filter(([, entry]) => isVisibleTo(entry, isAdmin))
+    .filter(([, entry]) => isVisibleTo(entry, viewer))
     .filter(([, entry]) => matches(entryText(entry), words))
     .sort(byTitle);
   const guides = (Object.entries(pageGuides) as [PageGuideId, PageGuide][])
-    .filter(([, guide]) => isVisibleTo(guide, isAdmin))
+    .filter(([, guide]) => isVisibleTo(guide, viewer))
     .filter(([, guide]) => matches(guideText(guide), words));
   return {
     concepts: entries.filter(([id]) => id.startsWith("concept.")),

@@ -49,7 +49,7 @@ export function HelpTopic({
     returnFocus: () => void;
   };
 }) {
-  const { isAdmin } = useHelpAudience();
+  const viewer = useHelpAudience();
   const [ownOpen, setOwnOpen] = React.useState(false);
   const open = anchor ? anchor.open : ownOpen;
   const setOpen = anchor ? anchor.onOpenChange : setOwnOpen;
@@ -62,12 +62,12 @@ export function HelpTopic({
   const detailsId = React.useId();
 
   const entry = helpEntries[id];
-  if (!isVisibleTo(entry, isAdmin)) return null;
+  if (!isVisibleTo(entry, viewer)) return null;
 
   const currentId = trail[trail.length - 1];
   const current = helpEntries[currentId];
   const related = current.related.filter((relatedId) =>
-    isVisibleTo(helpEntries[relatedId], isAdmin),
+    isVisibleTo(helpEntries[relatedId], viewer),
   );
 
   const show = (next: HelpId[]) => {

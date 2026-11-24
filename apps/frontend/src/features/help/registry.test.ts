@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { helpEntries, isVisibleTo, type HelpId } from "./registry";
 
+const user = { isAdmin: false, has: () => true };
+const admin = { isAdmin: true, has: () => true };
+
 const ids = Object.keys(helpEntries) as HelpId[];
 
 // US-61.1 acceptance: the glossary covers the composer and learner concepts.
@@ -129,9 +132,21 @@ describe("help registry", () => {
   });
 
   it("hides admin entries from non-admins", () => {
-    expect(isVisibleTo(helpEntries["admin.tools"], false)).toBe(false);
-    expect(isVisibleTo(helpEntries["admin.tools"], true)).toBe(true);
-    expect(isVisibleTo(helpEntries["concept.about-you"], false)).toBe(true);
+    expect(isVisibleTo(helpEntries["admin.tools"], user)).toBe(false);
+    expect(isVisibleTo(helpEntries["admin.tools"], admin)).toBe(true);
+    expect(isVisibleTo(helpEntries["concept.about-you"], user)).toBe(true);
+  });
+
+  it("hides help about a feature that is off for the viewer, admins too (EPIC-97)", () => {
+    const off = (isAdmin: boolean) => ({
+      isAdmin,
+      has: (feature: string) => feature !== "memory",
+    });
+    expect(isVisibleTo(helpEntries["concept.memory"], off(false))).toBe(false);
+    expect(isVisibleTo(helpEntries["concept.memory"], off(true))).toBe(false);
+    expect(isVisibleTo(helpEntries["concept.memory"], user)).toBe(true);
+    // Admin help for the policy itself stays.
+    expect(isVisibleTo(helpEntries["admin.tools"], off(true))).toBe(true);
   });
 
   it("does not describe unimplemented features or grants (ADR-0032)", () => {

@@ -26,7 +26,8 @@ work answers out themselves.
    from the course project.
 4. Turn **Let Asterism use students' memories in this course** off to keep
    memory out of the course project. You never see students' memories either
-   way.
+   way. The switch isn't shown while your administrator has memory off for
+   everyone.
 5. Select **Save policy**.
 
 Changes apply from each student's next message.
