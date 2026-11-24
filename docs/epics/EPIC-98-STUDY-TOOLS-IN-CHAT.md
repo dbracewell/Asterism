@@ -1,6 +1,6 @@
 # EPIC-98: Decks and quizzes from chat
 
-Status: in progress (2026-11-24). US-98.1 done. Source: user request (2026-11-24): "New tools for
+Status: in progress (2026-11-24). US-98.1 and US-98.2 done. Source: user request (2026-11-24): "New tools for
 creating decks and quizzes which are automatically added when chatting in a
 project with those study options available."
 
@@ -112,10 +112,10 @@ Suggested order: US-98.1 → 98.2 → 98.3 → 98.4 → 98.5.
 
 ### US-98.2: Draft storage
 
-- [ ] Add a `study_proposals` table: owner, project, chat, message, execution,
+- [x] Add a `study_proposals` table: owner, project, chat, message, execution,
       kind, payload, status. Ship it with an Alembic migration, an upgrade test
       from the previous revision, and Download my data coverage.
-- [ ] Add `origin="chat"` and proposal provenance columns on decks and quizzes,
+- [x] Add `origin="chat"` and proposal provenance columns on decks and quizzes,
       as a migration.
 
 ### US-98.3: The tools

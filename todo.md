@@ -120,9 +120,9 @@ Decided 2026-11-24: admin switch (on by default, by group), class switch (on by 
   - [x] Class switch `study_chat_enabled` (default on) on the class mode policy, with a migration and an upgrade test, and the switch in the class page.
   - [x] Settings export covers the admin policy (EPIC-100's registry, or the current export until then).
   - [x] Tests: defaults, group limits, the class switch, availability.
-- [ ] US-98.2: Draft storage
-  - [ ] Add a `study_proposals` table: owner, project, chat, message, execution, kind, payload, status. Ship it with an Alembic migration, an upgrade test from the previous revision, and Download my data coverage.
-  - [ ] Add `origin="chat"` and proposal provenance columns on decks and quizzes, as a migration.
+- [x] US-98.2: Draft storage
+  - [x] Add a `study_proposals` table: owner, project, chat, message, execution, kind, payload, status. Ship it with an Alembic migration, an upgrade test from the previous revision, and Download my data coverage.
+  - [x] Add `origin="chat"` and proposal provenance columns on decks and quizzes, as a migration.
 - [ ] US-98.3: The tools
   - [ ] Add `propose_deck` and `propose_quiz` in `domains/tools/builtin/`, with their constants in `tools/catalog.py` (internal, policy-gated), a gate `_offers_study`, a branch in `require_internal_tool`, and prompt guidance.
   - [ ] Tests:

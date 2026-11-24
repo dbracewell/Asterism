@@ -6,9 +6,20 @@ deck to its owner's project and a card to its owner's deck. Deleting a project
 """
 
 import uuid
+from typing import Any
 
 from pydantic import TypeAdapter
-from sqlalchemy import CheckConstraint, Float, ForeignKeyConstraint, Index, Integer, String, Text, UniqueConstraint
+from sqlalchemy import (
+    CheckConstraint,
+    Float,
+    ForeignKey,
+    ForeignKeyConstraint,
+    Index,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import Mapped, mapped_column
 
 from asterism.db.base_model import Base
@@ -29,6 +40,9 @@ class StudyDeckModel(Base, UuidPrimaryKeyMixin, TimestampMixin):
     description: Mapped[str] = mapped_column(Text, nullable=False, default="", server_default="")
     # Topic tags (US-58.3), normalized by the schema; mastery groups cards by them.
     tags: Mapped[list[str]] = mapped_column(jsonb_type(TypeAdapter(list[str])), nullable=False, default=list)
+    # Saved from a chat draft (EPIC-98): the draft and its chat, as plain ids.
+    proposal_id: Mapped[uuid.UUID | None] = mapped_column(nullable=True)
+    source_chat_id: Mapped[uuid.UUID | None] = mapped_column(nullable=True)
 
     __table_args__ = (
         ForeignKeyConstraint(
@@ -158,6 +172,10 @@ class StudyQuizModel(Base, UuidPrimaryKeyMixin, TimestampMixin):
     model_name: Mapped[str | None] = mapped_column(Text, nullable=True)
     # Topic tags (US-58.3); mastery groups original questions by them.
     tags: Mapped[list[str]] = mapped_column(jsonb_type(TypeAdapter(list[str])), nullable=False, default=list)
+    # Saved from a chat draft (EPIC-98): the draft and its chat. Plain ids, so the
+    # quiz keeps its provenance after the chat is deleted.
+    proposal_id: Mapped[uuid.UUID | None] = mapped_column(nullable=True)
+    source_chat_id: Mapped[uuid.UUID | None] = mapped_column(nullable=True)
 
     __table_args__ = (
         ForeignKeyConstraint(
@@ -171,7 +189,7 @@ class StudyQuizModel(Base, UuidPrimaryKeyMixin, TimestampMixin):
             f"length(trim(title)) > 0 AND length(title) <= {MAX_QUIZ_TITLE_CHARS}", name="ck_study_quizzes_title"
         ),
         CheckConstraint(
-            "(origin = 'generated' AND model_name IS NOT NULL) OR origin = 'practice'",
+            "(origin IN ('generated', 'chat') AND model_name IS NOT NULL) OR origin = 'practice'",
             name="ck_study_quizzes_origin",
         ),
         Index("idx_study_quizzes_project", "user_id", "project_id", "created_at", "id"),
@@ -342,4 +360,56 @@ class StudyNoteModel(Base, UuidPrimaryKeyMixin, TimestampMixin):
             f"length(trim(body)) > 0 AND length(body) <= {MAX_NOTE_BODY_CHARS}", name="ck_study_notes_body"
         ),
         Index("idx_study_notes_project", "user_id", "project_id", "updated_at", "id"),
+    )
+
+
+STUDY_PROPOSAL_KINDS = ("deck", "quiz")
+STUDY_PROPOSAL_STATUSES = ("pending", "saved", "dismissed")
+
+
+class StudyProposalModel(Base, UuidPrimaryKeyMixin):
+    """A deck or quiz the assistant drafted in a project chat (EPIC-98, ADR-0080).
+
+    Nothing reaches Study until the person saves it. A branch-aware chat record:
+    anchored to the run's request message and to the run, at most one of each
+    kind per run, and deleted with its chat. Saving creates the deck or quiz
+    and records its id here; the deck or quiz records this draft's id.
+    """
+
+    __tablename__ = "study_proposals"
+
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    project_id: Mapped[uuid.UUID] = mapped_column(nullable=False)
+    chat_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("chats.id", ondelete="CASCADE"), nullable=False)
+    message_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("messages.id", ondelete="CASCADE"), nullable=False)
+    execution_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("chat_executions.id", ondelete="CASCADE"), nullable=False
+    )
+    kind: Mapped[str] = mapped_column(String(8), nullable=False)
+    # The draft, validated by StudyDeckDraft or StudyQuizDraft before it is stored.
+    payload: Mapped[dict[str, Any]] = mapped_column(jsonb_type(TypeAdapter(dict[str, Any])), nullable=False)
+    status: Mapped[str] = mapped_column(String(16), nullable=False, default="pending", server_default="pending")
+    # The saved deck or quiz. A plain id: deleting it keeps the decision.
+    saved_id: Mapped[uuid.UUID | None] = mapped_column(nullable=True)
+    created_at: Mapped[int] = mapped_column(Integer, nullable=False, default=get_unix_timestamp)
+    decided_at: Mapped[int | None] = mapped_column(Integer, nullable=True)
+
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["project_id", "user_id"],
+            ["projects.id", "projects.user_id"],
+            ondelete="CASCADE",
+            name="fk_study_proposals_project_owner",
+        ),
+        UniqueConstraint("execution_id", "kind", name="uq_study_proposals_execution_kind"),
+        CheckConstraint("kind IN ('deck', 'quiz')", name="ck_study_proposals_kind"),
+        CheckConstraint("status IN ('pending', 'saved', 'dismissed')", name="ck_study_proposals_status"),
+        CheckConstraint(
+            "(status = 'pending' AND decided_at IS NULL AND saved_id IS NULL)"
+            " OR (status = 'dismissed' AND decided_at IS NOT NULL AND saved_id IS NULL)"
+            " OR (status = 'saved' AND decided_at IS NOT NULL AND saved_id IS NOT NULL)",
+            name="ck_study_proposals_decided",
+        ),
+        Index("idx_study_proposals_chat", "chat_id", "created_at", "id"),
+        Index("idx_study_proposals_user", "user_id", "created_at"),
     )

@@ -269,7 +269,7 @@ QuizTitle = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1
 StudyQuestionKind = Literal["multiple_choice", "short_answer"]
 StudyVerdict = Literal["correct", "partial", "incorrect", "ungraded"]
 StudyGrader = Literal["exact", "model", "none"]
-StudyQuizOrigin = Literal["generated", "practice"]
+StudyQuizOrigin = Literal["generated", "practice", "chat"]
 
 
 class StudyQuizGenerateRequest(BaseModel):
