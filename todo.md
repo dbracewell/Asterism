@@ -131,10 +131,10 @@ Decided 2026-11-24: admin switch (on by default, by group), class switch (on by 
     - re-checked at execution time;
     - payload validation and caps;
     - one proposal per tool per run.
-- [ ] US-98.4: Review and save in chat
-  - [ ] Save and dismiss endpoints: owner-only; recheck the project, the Study area, the switches and file membership; the save is idempotent. Regenerate the client.
-  - [ ] Frontend `StudyProposalCards` in `message-item.tsx`: preview, edit before saving, Save to Study (with a link to the new deck or quiz), Dismiss, and timeline labels in `agent-timeline.ts`.
-  - [ ] Unit tests and a Playwright test: ask for a deck in a project chat, then save it and see it under Study.
+- [x] US-98.4: Review and save in chat
+  - [x] Save and dismiss endpoints: owner-only; recheck the project, the Study area, the switches and file membership; the save is idempotent. Regenerate the client.
+  - [x] Frontend `StudyProposalCards` in `message-item.tsx`: preview, edit before saving, Save to Study (with a link to the new deck or quiz), Dismiss, and timeline labels in `agent-timeline.ts`.
+  - [x] Unit tests and a Playwright test: ask for a deck in a project chat, then save it and see it under Study.
 - [ ] US-98.5: Docs
   - [ ] Hide the mention of the tools in help when unavailable (EPIC-97).
   - [ ] Update `docs/architecture/study-tools.md`, the user guide pages (`05-studying/flashcards.md`, `practice-quizzes.md`), the educator and admin guide pages for the two switches, and the release notes.

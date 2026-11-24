@@ -11,7 +11,7 @@ carry the draft's id and size, never its text.
 from typing import Any
 
 from asterism.core.exceptions import BadDataException
-from asterism.domains.study.proposal_schemas import StudyDeckDraft, StudyQuizDraft
+from asterism.domains.study.proposal_schemas import StudyProposalDeck, StudyProposalQuiz
 from asterism.domains.tools.registry import ToolContext, tool_registry
 
 DECK_TOOL_DESCRIPTION = (
@@ -32,7 +32,7 @@ QUIZ_TOOL_DESCRIPTION = (
 )
 
 
-async def _record(ctx: ToolContext[Any], draft: StudyDeckDraft | StudyQuizDraft) -> dict[str, object]:
+async def _record(ctx: ToolContext[Any], draft: StudyProposalDeck | StudyProposalQuiz) -> dict[str, object]:
     from asterism.db.database import get_async_db_session
     from asterism.domains.study.proposals import ProposalRun, record_proposal
 
@@ -60,7 +60,7 @@ async def _record(ctx: ToolContext[Any], draft: StudyDeckDraft | StudyQuizDraft)
             proposal = await record_proposal(run, draft, session)
     except BadDataException as exc:
         return {"error": str(exc)}
-    size = len(draft.cards) if isinstance(draft, StudyDeckDraft) else len(draft.questions)
+    size = len(draft.cards) if isinstance(draft, StudyProposalDeck) else len(draft.questions)
     return {
         "proposal_id": str(proposal.id),
         "kind": proposal.kind,
@@ -72,10 +72,10 @@ async def _record(ctx: ToolContext[Any], draft: StudyDeckDraft | StudyQuizDraft)
 
 
 @tool_registry.tool(name="propose_deck", description=DECK_TOOL_DESCRIPTION)
-async def propose_deck(ctx: ToolContext[StudyDeckDraft]) -> dict[str, object]:
+async def propose_deck(ctx: ToolContext[StudyProposalDeck]) -> dict[str, object]:
     return await _record(ctx, ctx.args)
 
 
 @tool_registry.tool(name="propose_quiz", description=QUIZ_TOOL_DESCRIPTION)
-async def propose_quiz(ctx: ToolContext[StudyQuizDraft]) -> dict[str, object]:
+async def propose_quiz(ctx: ToolContext[StudyProposalQuiz]) -> dict[str, object]:
     return await _record(ctx, ctx.args)

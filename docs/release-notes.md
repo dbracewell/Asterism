@@ -27,7 +27,7 @@ Unreleased into its version and date.
 - A new admin setting, **Study in chat** (Admin Settings → Study in chat,
   `study_chat`), is **on** by default and can be limited to groups. It lets the
   assistant draft flashcard decks and practice quizzes in project chats whose
-  Study area is on (the drafting tools arrive in a later update). Settings
+  Study area is on. Settings
   export carries its on/off switch; group limits stay with each installation.
 - `EMBEDDING_DIMENSION` is removed; the vector size now comes from the
   embedding model. Remove it from `.env` if you set it.
@@ -54,6 +54,13 @@ Unreleased into its version and date.
   that never stored one, so this happens there too.
 
 ### Behavior
+
+- Ask for flashcards or a quiz in a project chat, and the assistant drafts a
+  deck or a practice quiz from the conversation and the project's files. A card
+  under the reply shows the draft to edit, save to Study or dismiss; nothing is
+  added to Study until you save it. It needs the project's Study area, the
+  admin's **Study in chat** setting, the course's switch (for course projects)
+  and a model that supports tools.
 
 - Search works across languages: a question in one language finds files and
   memories written in another, and each chunk of a file is read in full (512

@@ -8938,6 +8938,152 @@ export type StudyProjectSummary = {
 };
 
 /**
+ * StudyProposal
+ *
+ * A draft as the chat shows it.
+ */
+export type StudyProposal = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Project Id
+   */
+  project_id: string;
+  /**
+   * Chat Id
+   */
+  chat_id: string;
+  /**
+   * Message Id
+   */
+  message_id: string;
+  /**
+   * Kind
+   */
+  kind: "deck" | "quiz";
+  /**
+   * Status
+   */
+  status: "pending" | "saved" | "dismissed";
+  deck?: StudyProposalDeck | null;
+  quiz?: StudyProposalQuiz | null;
+  /**
+   * Saved Id
+   */
+  saved_id?: string | null;
+  /**
+   * Created At
+   */
+  created_at: number;
+  /**
+   * Decided At
+   */
+  decided_at?: number | null;
+};
+
+/**
+ * StudyProposalCard
+ */
+export type StudyProposalCard = {
+  /**
+   * Front
+   */
+  front: string;
+  /**
+   * Back
+   */
+  back: string;
+  /**
+   * File Ids
+   */
+  file_ids?: Array<string>;
+};
+
+/**
+ * StudyProposalDeck
+ *
+ * A new deck with its cards.
+ */
+export type StudyProposalDeck = {
+  /**
+   * Title
+   */
+  title: string;
+  /**
+   * Description
+   */
+  description?: string;
+  /**
+   * Cards
+   */
+  cards: Array<StudyProposalCard>;
+};
+
+/**
+ * StudyProposalQuestion
+ *
+ * Multiple choice (options and the correct one) or short answer (a rubric).
+ */
+export type StudyProposalQuestion = {
+  /**
+   * Kind
+   */
+  kind: "multiple_choice" | "short_answer";
+  /**
+   * Prompt
+   */
+  prompt: string;
+  /**
+   * Options
+   */
+  options?: Array<string>;
+  /**
+   * Correct Option
+   */
+  correct_option?: number | null;
+  /**
+   * Rubric
+   */
+  rubric?: string;
+  /**
+   * Explanation
+   */
+  explanation?: string;
+  /**
+   * File Ids
+   */
+  file_ids?: Array<string>;
+};
+
+/**
+ * StudyProposalQuiz
+ *
+ * A new quiz with its questions.
+ */
+export type StudyProposalQuiz = {
+  /**
+   * Title
+   */
+  title: string;
+  /**
+   * Questions
+   */
+  questions: Array<StudyProposalQuestion>;
+};
+
+/**
+ * StudyProposalSave
+ *
+ * The draft as the person saves it: as offered or edited, of the draft's own kind.
+ */
+export type StudyProposalSave = {
+  deck?: StudyProposalDeck | null;
+  quiz?: StudyProposalQuiz | null;
+};
+
+/**
  * StudyQuiz
  */
 export type StudyQuiz = {
@@ -17233,6 +17379,150 @@ export type StudyGuideGenerateResponses = {
 
 export type StudyGuideGenerateResponse =
   StudyGuideGenerateResponses[keyof StudyGuideGenerateResponses];
+
+export type StudyProposalGetOneData = {
+  body?: never;
+  path: {
+    /**
+     * Proposal Id
+     */
+    proposal_id: string;
+  };
+  query?: never;
+  url: "/study/proposals/{proposal_id}";
+};
+
+export type StudyProposalGetOneErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type StudyProposalGetOneError =
+  StudyProposalGetOneErrors[keyof StudyProposalGetOneErrors];
+
+export type StudyProposalGetOneResponses = {
+  /**
+   * Successful Response
+   */
+  200: StudyProposal;
+};
+
+export type StudyProposalGetOneResponse =
+  StudyProposalGetOneResponses[keyof StudyProposalGetOneResponses];
+
+export type StudyProposalSaveData = {
+  body: StudyProposalSave;
+  path: {
+    /**
+     * Proposal Id
+     */
+    proposal_id: string;
+  };
+  query?: never;
+  url: "/study/proposals/{proposal_id}/save";
+};
+
+export type StudyProposalSaveErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type StudyProposalSaveError =
+  StudyProposalSaveErrors[keyof StudyProposalSaveErrors];
+
+export type StudyProposalSaveResponses = {
+  /**
+   * Successful Response
+   */
+  201: StudyProposal;
+};
+
+export type StudyProposalSaveResponse =
+  StudyProposalSaveResponses[keyof StudyProposalSaveResponses];
+
+export type StudyProposalDismissData = {
+  body?: never;
+  path: {
+    /**
+     * Proposal Id
+     */
+    proposal_id: string;
+  };
+  query?: never;
+  url: "/study/proposals/{proposal_id}/dismiss";
+};
+
+export type StudyProposalDismissErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type StudyProposalDismissError =
+  StudyProposalDismissErrors[keyof StudyProposalDismissErrors];
+
+export type StudyProposalDismissResponses = {
+  /**
+   * Successful Response
+   */
+  200: StudyProposal;
+};
+
+export type StudyProposalDismissResponse =
+  StudyProposalDismissResponses[keyof StudyProposalDismissResponses];
 
 export type AppCaptioningGetData = {
   body?: never;

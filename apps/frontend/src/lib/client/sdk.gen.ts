@@ -742,6 +742,15 @@ import type {
   StudyProjectSummaryGetData,
   StudyProjectSummaryGetErrors,
   StudyProjectSummaryGetResponses,
+  StudyProposalDismissData,
+  StudyProposalDismissErrors,
+  StudyProposalDismissResponses,
+  StudyProposalGetOneData,
+  StudyProposalGetOneErrors,
+  StudyProposalGetOneResponses,
+  StudyProposalSaveData,
+  StudyProposalSaveErrors,
+  StudyProposalSaveResponses,
   StudyQuizAttemptGetManyData,
   StudyQuizAttemptGetManyErrors,
   StudyQuizAttemptGetManyResponses,
@@ -4099,6 +4108,75 @@ export class ApiClient extends HeyApiClient {
         "Content-Type": "application/json",
         ...options.headers,
       },
+    });
+  }
+
+  /**
+   * Get Proposal
+   */
+  public studyProposalGetOne<ThrowOnError extends boolean = false>(
+    options: Options<StudyProposalGetOneData, ThrowOnError>,
+  ): RequestResult<
+    StudyProposalGetOneResponses,
+    StudyProposalGetOneErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).get<
+      StudyProposalGetOneResponses,
+      StudyProposalGetOneErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/study/proposals/{proposal_id}",
+      ...options,
+    });
+  }
+
+  /**
+   * Save Proposal
+   *
+   * Save the draft to Study, as drafted or edited. The chat, project, switches and citations are checked now.
+   */
+  public studyProposalSave<ThrowOnError extends boolean = false>(
+    options: Options<StudyProposalSaveData, ThrowOnError>,
+  ): RequestResult<
+    StudyProposalSaveResponses,
+    StudyProposalSaveErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).post<
+      StudyProposalSaveResponses,
+      StudyProposalSaveErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/study/proposals/{proposal_id}/save",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+  }
+
+  /**
+   * Dismiss Proposal
+   */
+  public studyProposalDismiss<ThrowOnError extends boolean = false>(
+    options: Options<StudyProposalDismissData, ThrowOnError>,
+  ): RequestResult<
+    StudyProposalDismissResponses,
+    StudyProposalDismissErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).post<
+      StudyProposalDismissResponses,
+      StudyProposalDismissErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/study/proposals/{proposal_id}/dismiss",
+      ...options,
     });
   }
 

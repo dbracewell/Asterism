@@ -4,7 +4,7 @@ import sqlite3
 import uuid
 
 import pytest
-from asterism.domains.study.proposal_schemas import StudyDeckDraft, StudyQuizDraft
+from asterism.domains.study.proposal_schemas import StudyProposalDeck, StudyProposalQuiz
 from migration_harness import upgrade_to
 from pydantic import ValidationError
 from test_migrations import migration_db as _migration_db
@@ -14,21 +14,21 @@ FILE = uuid.uuid4()
 
 
 def test_a_deck_draft_is_bounded_like_the_button_flow():
-    deck = StudyDeckDraft.model_validate(
+    deck = StudyProposalDeck.model_validate(
         {"title": " Cells ", "cards": [{"front": "Organelle?", "back": "Mitochondria", "file_ids": [FILE, FILE]}]}
     )
     assert deck.title == "Cells"
     assert deck.cards[0].file_ids == [FILE]
     with pytest.raises(ValidationError):
-        StudyDeckDraft.model_validate({"title": "Empty", "cards": []})
+        StudyProposalDeck.model_validate({"title": "Empty", "cards": []})
     with pytest.raises(ValidationError):
-        StudyDeckDraft.model_validate({"title": "Many", "cards": [{"front": "a", "back": "b"}] * 31})
+        StudyProposalDeck.model_validate({"title": "Many", "cards": [{"front": "a", "back": "b"}] * 31})
     with pytest.raises(ValidationError):
-        StudyDeckDraft.model_validate({"title": "Extra", "cards": [{"front": "a", "back": "b"}], "owner": "x"})
+        StudyProposalDeck.model_validate({"title": "Extra", "cards": [{"front": "a", "back": "b"}], "owner": "x"})
 
 
 def test_a_quiz_draft_needs_a_consistent_answer_key():
-    ok = StudyQuizDraft.model_validate(
+    ok = StudyProposalQuiz.model_validate(
         {
             "title": "Cells",
             "questions": [
@@ -54,7 +54,7 @@ def test_a_quiz_draft_needs_a_consistent_answer_key():
     ]
     for question in bad:
         with pytest.raises(ValidationError):
-            StudyQuizDraft.model_validate({"title": "Bad", "questions": [question]})
+            StudyProposalQuiz.model_validate({"title": "Bad", "questions": [question]})
 
 
 @pytest.mark.asyncio

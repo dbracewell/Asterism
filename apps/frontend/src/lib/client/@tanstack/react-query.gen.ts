@@ -741,6 +741,15 @@ import type {
   StudyProjectSummaryGetData,
   StudyProjectSummaryGetError,
   StudyProjectSummaryGetResponse,
+  StudyProposalDismissData,
+  StudyProposalDismissError,
+  StudyProposalDismissResponse,
+  StudyProposalGetOneData,
+  StudyProposalGetOneError,
+  StudyProposalGetOneResponse,
+  StudyProposalSaveData,
+  StudyProposalSaveError,
+  StudyProposalSaveResponse,
   StudyQuizAttemptGetManyData,
   StudyQuizAttemptGetManyError,
   StudyQuizAttemptGetManyResponse,
@@ -5728,6 +5737,90 @@ export const studyGuideGenerateMutation = (
   > = {
     mutationFn: async (fnOptions) => {
       const { data } = await ApiClient.__registry.get().studyGuideGenerate({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const studyProposalGetOneQueryKey = (
+  options: Options<StudyProposalGetOneData>,
+) => createQueryKey("studyProposalGetOne", options);
+
+/**
+ * Get Proposal
+ */
+export const studyProposalGetOneOptions = (
+  options: Options<StudyProposalGetOneData>,
+) =>
+  queryOptions<
+    StudyProposalGetOneResponse,
+    StudyProposalGetOneError,
+    StudyProposalGetOneResponse,
+    ReturnType<typeof studyProposalGetOneQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry.get().studyProposalGetOne({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: studyProposalGetOneQueryKey(options),
+  });
+
+/**
+ * Save Proposal
+ *
+ * Save the draft to Study, as drafted or edited. The chat, project, switches and citations are checked now.
+ */
+export const studyProposalSaveMutation = (
+  options?: Partial<Options<StudyProposalSaveData>>,
+): UseMutationOptions<
+  StudyProposalSaveResponse,
+  StudyProposalSaveError,
+  Options<StudyProposalSaveData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    StudyProposalSaveResponse,
+    StudyProposalSaveError,
+    Options<StudyProposalSaveData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().studyProposalSave({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Dismiss Proposal
+ */
+export const studyProposalDismissMutation = (
+  options?: Partial<Options<StudyProposalDismissData>>,
+): UseMutationOptions<
+  StudyProposalDismissResponse,
+  StudyProposalDismissError,
+  Options<StudyProposalDismissData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    StudyProposalDismissResponse,
+    StudyProposalDismissError,
+    Options<StudyProposalDismissData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().studyProposalDismiss({
         ...options,
         ...fnOptions,
         throwOnError: true,

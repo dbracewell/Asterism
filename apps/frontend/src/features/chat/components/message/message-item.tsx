@@ -27,6 +27,7 @@ import { ExerciseBar } from "@/features/chat/components/exercise/exercise-bar";
 import { DraftReviewButton } from "@/features/chat/components/draft-review/draft-review";
 import { StreamingIndicator } from "./streaming-indicator";
 import { CanvasCards } from "@/features/canvas/components/canvas-cards";
+import { StudyProposalCards } from "@/features/study/components/study-proposal-card";
 import { MemoryProposalCards } from "@/features/memory/components/memory-proposal-card";
 
 const NO_REQUESTS: PermissionRequest[] = [];
@@ -185,6 +186,9 @@ export const MessageItem = React.memo(
           )}
           {!fromUser && !!message.tool_call_results?.length && (
             <MemoryProposalCards results={message.tool_call_results} />
+          )}
+          {!fromUser && !!message.tool_call_results?.length && (
+            <StudyProposalCards results={message.tool_call_results} />
           )}
           {!!message.tool_call_results?.length && (
             <RetrievalCitations
