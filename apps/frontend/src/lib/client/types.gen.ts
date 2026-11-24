@@ -8984,7 +8984,7 @@ export type StudyQuiz = {
   /**
    * Origin
    */
-  origin: "generated" | "practice";
+  origin: "generated" | "practice" | "chat";
   /**
    * Model Id
    */
@@ -9393,7 +9393,7 @@ export type StudyQuizSummary = {
   /**
    * Origin
    */
-  origin: "generated" | "practice";
+  origin: "generated" | "practice" | "chat";
   /**
    * Model Id
    */

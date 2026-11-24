@@ -71,7 +71,8 @@ def _normalized(kind: str, sql: str) -> str | tuple[str, ...]:
     text = " ".join(sql.split())
     if kind == "table" and text.startswith("CREATE TABLE "):
         head, _, rest = text.partition("(")
-        return (head.strip(), *_table_items(rest.rsplit(")", 1)[0]))
+        # A table rebuilt by a batch migration quotes its name; quoting is cosmetic.
+        return (head.replace('"', "").strip(), *_table_items(rest.rsplit(")", 1)[0]))
     return text
 
 

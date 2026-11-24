@@ -477,3 +477,49 @@ async def test_class_study_chat_switch_upgrade_keeps_classes_with_it_on(migratio
             "SELECT name, memory_enabled, study_chat_enabled FROM classes WHERE id = ?", (class_id,)
         ).fetchone()
     assert row == ("Biology", 0, 1)
+
+
+@pytest.mark.asyncio
+async def test_study_drafts_upgrade_keeps_decks_and_quizzes(migration_db):
+    """2114351c62ff (US-98.2): decks and quizzes survive the rebuild and chat quizzes are allowed."""
+    await upgrade_to(migration_db, "5c9a5a096d23")
+    project, deck, quiz = uuid.uuid4().hex, uuid.uuid4().hex, uuid.uuid4().hex
+    with sqlite3.connect(migration_db) as connection:
+        connection.execute("INSERT INTO users (id) VALUES ('user-1')")
+        connection.execute(
+            "INSERT INTO projects (id, user_id, name, areas, created_at, updated_at) "
+            "VALUES (?, 'user-1', 'Bio', '{}', 0, 0)",
+            (project,),
+        )
+        connection.execute(
+            "INSERT INTO study_decks (id, user_id, project_id, name, tags, created_at, updated_at) "
+            "VALUES (?, 'user-1', ?, 'Cells', '[]', 0, 0)",
+            (deck, project),
+        )
+        connection.execute(
+            "INSERT INTO study_quizzes (id, user_id, project_id, title, origin, model_name, tags, created_at, "
+            "updated_at) VALUES (?, 'user-1', ?, 'Cells quiz', 'generated', 'gpt-x', '[]', 0, 0)",
+            (quiz, project),
+        )
+
+    await upgrade_to(migration_db, "head")
+
+    with sqlite3.connect(migration_db) as connection:
+        assert connection.execute(
+            "SELECT name, proposal_id, source_chat_id FROM study_decks WHERE id = ?", (deck,)
+        ).fetchone() == ("Cells", None, None)
+        assert connection.execute(
+            "SELECT title, origin, proposal_id FROM study_quizzes WHERE id = ?", (quiz,)
+        ).fetchone() == ("Cells quiz", "generated", None)
+        assert connection.execute("SELECT count(*) FROM study_proposals").fetchone() == (0,)
+        connection.execute(
+            "INSERT INTO study_quizzes (id, user_id, project_id, title, origin, model_name, tags, created_at, "
+            "updated_at) VALUES (?, 'user-1', ?, 'From chat', 'chat', 'gpt-x', '[]', 0, 0)",
+            (uuid.uuid4().hex, project),
+        )
+        with pytest.raises(sqlite3.IntegrityError):
+            connection.execute(
+                "INSERT INTO study_quizzes (id, user_id, project_id, title, origin, tags, created_at, updated_at) "
+                "VALUES (?, 'user-1', ?, 'No model', 'chat', '[]', 0, 0)",
+                (uuid.uuid4().hex, project),
+            )

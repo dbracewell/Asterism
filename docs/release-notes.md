@@ -36,6 +36,10 @@ Unreleased into its version and date.
 
 - Classes get a switch for decks and quizzes from chat, on for existing classes
   (migration `5c9a5a096d23`).
+- A new `study_proposals` table holds the decks and quizzes the assistant drafts
+  in chats, until the person saves or dismisses them; it's in Download my data.
+  Decks and quizzes record the draft and chat they were saved from (migration
+  `2114351c62ff`, which rebuilds `study_quizzes`; existing rows are kept).
 
 - Search and memory now use the multilingual-e5-small embedding model instead
   of CLIP ([ADR-0079](adr/0079-multilingual-text-embeddings.md)). On the first
