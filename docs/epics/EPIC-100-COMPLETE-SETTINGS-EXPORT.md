@@ -1,6 +1,6 @@
 # EPIC-100: The settings export covers all of Admin Settings
 
-Status: proposed (2026-11-24). Source: user request (2026-11-24): "Make sure that
+Status: in progress (2026-11-24). Source: user request (2026-11-24): "Make sure that
 the export settings covers all items in the admin settings panel."
 
 ## Objective
@@ -61,11 +61,12 @@ Suggested order: US-100.1 → 100.2 → 100.3.
 
 ### US-100.1: Coverage registry and test
 
-- [ ] Add the section registry (backend) and a test that fails on any stored
+- [x] Add the section registry (backend) and a test that fails on any stored
       admin setting not marked exported or excluded. It would fail today on
       `usage_timezone`, group budgets, memory and image groups, licenses and
-      themes.
-- [ ] Add an ADR-0052 addendum for v2 and the registry.
+      themes. Done: `settings_transfer/coverage.py`, with those gaps (and study
+      in chat's groups) listed as missing until US-100.2.
+- [x] Add an ADR-0052 addendum for v2 and the registry.
 
 ### US-100.2: Export and import what is missing
 
@@ -89,7 +90,7 @@ Suggested order: US-100.1 → 100.2 → 100.3.
       `docs/deployment.md`, and add release notes (Data: export format 2;
       Behavior: what is now included).
 
-## Open questions
+## Settled questions
 
-1. Should an import be able to **replace** rather than merge, for example to
-   remove providers the source no longer has? The proposal is to keep merge-only.
+1. Import stays **merge-only** (decided 2026-11-24): it never removes providers
+   or other settings the file doesn't have.
