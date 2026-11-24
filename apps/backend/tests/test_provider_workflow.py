@@ -1,6 +1,9 @@
 import uuid
 from unittest.mock import call, patch
 
+# Importing knowledge.policy installs the captioning-selection guard that provider
+# saves check, as the app's routers do; without it this file fails on its own.
+import asterism.domains.knowledge.policy  # noqa: F401  # pyright: ignore[reportUnusedImport]
 import httpx2
 import pytest
 from asterism.core.exceptions import NotFoundException
