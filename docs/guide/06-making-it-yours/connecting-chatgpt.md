@@ -4,7 +4,8 @@ If you pay for ChatGPT Plus or Pro, you can connect your plan to Asterism and ru
 your chats on its models. Only you can use your connection.
 
 > **Who can do this:** everyone, when your administrator allows ChatGPT plan
-> connections, and only on the computer that runs Asterism.
+> connections, and only on the computer that runs Asterism. If there's no
+> **ChatGPT** in Settings, your administrator hasn't allowed them.
 
 ## Before you start
 

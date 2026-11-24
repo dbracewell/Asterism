@@ -17,6 +17,7 @@ import {
   PopoverTitle,
 } from "@/components/ui/popover";
 import { useUser } from "@/features/auth/components/user-context";
+import { useHelpAudience } from "./help-audience";
 import {
   availableTourSteps,
   FIRST_CHAT_TOUR_PARAM,
@@ -46,6 +47,7 @@ export function FirstChatTour({
   skillsEnabled: boolean | undefined;
 }) {
   const user = useUser();
+  const viewer = useHelpAudience();
   const router = useRouter();
   const pathname = usePathname();
   const search = useSearchParams();
@@ -56,11 +58,14 @@ export function FirstChatTour({
   const [offerClosed, setOfferClosed] = React.useState(false);
 
   const start = React.useCallback(() => {
-    const steps = availableTourSteps(!!skillsEnabled);
+    // The page knows whether skills are on; other features come from help.
+    const steps = availableTourSteps((feature) =>
+      feature === "skills" ? !!skillsEnabled : viewer.has(feature),
+    );
     setOfferClosed(true);
     if (steps.length === 0) return;
     setTour({ steps, index: 0, target: tourTarget(steps[0]) });
-  }, [skillsEnabled]);
+  }, [skillsEnabled, viewer]);
 
   // A restart link starts the tour once the skill policy is known.
   const startedFromLink = React.useRef(false);

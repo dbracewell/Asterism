@@ -6,7 +6,15 @@
  * features get no entry until they ship.
  */
 
+import type { Feature } from "@/features/availability/queries";
+
 export type HelpAudience = "everyone" | "admin";
+
+/** Who reads help: admin-only help, and the features the admin allows them. */
+export interface HelpViewer {
+  isAdmin: boolean;
+  has: (feature: Feature) => boolean;
+}
 
 export type HelpId =
   | "concept.chat"
@@ -78,6 +86,8 @@ export interface HelpEntry {
   details: readonly string[];
   related: readonly HelpId[];
   audience: HelpAudience;
+  /** Shown only while the admin lets the viewer use this feature (EPIC-97). */
+  feature?: Feature;
 }
 
 export const helpEntries: Record<HelpId, HelpEntry> = {
@@ -154,6 +164,7 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
     ],
     related: ["concept.about-you"],
     audience: "everyone",
+    feature: "memory",
   },
   "concept.main-agent": {
     title: "Main agent",
@@ -189,6 +200,7 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
       "concept.model",
     ],
     audience: "everyone",
+    feature: "delegation",
   },
   "concept.image-generation": {
     title: "Image generation",
@@ -202,6 +214,7 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
     ],
     related: ["composer.controls", "concept.main-agent", "concept.model"],
     audience: "everyone",
+    feature: "image_generation",
   },
   "concept.canvas": {
     title: "Canvas",
@@ -215,6 +228,7 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
     ],
     related: ["concept.main-agent", "concept.model"],
     audience: "everyone",
+    feature: "canvas",
   },
   "concept.skill": {
     title: "Skill",
@@ -233,6 +247,7 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
       "concept.main-agent",
     ],
     audience: "everyone",
+    feature: "skills",
   },
   "concept.skill-draft": {
     title: "Skill draft",
@@ -246,6 +261,7 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
     ],
     related: ["concept.skill", "concept.main-agent", "concept.sub-agent"],
     audience: "everyone",
+    feature: "skills",
   },
   "concept.learning-mode": {
     title: "Learning mode",
@@ -844,8 +860,9 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
 };
 
 export function isVisibleTo(
-  entry: { audience: HelpAudience },
-  isAdmin: boolean,
+  entry: { audience: HelpAudience; feature?: Feature },
+  viewer: HelpViewer,
 ): boolean {
-  return entry.audience === "everyone" || isAdmin;
+  if (entry.feature && !viewer.has(entry.feature)) return false;
+  return entry.audience === "everyone" || viewer.isAdmin;
 }

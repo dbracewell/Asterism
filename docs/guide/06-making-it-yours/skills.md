@@ -6,6 +6,8 @@ one question at a time". This page shows how to write one, have Asterism draft
 one for you, and assign it so it shows up in chats.
 
 > **Who can do this:** everyone, when your administrator has turned skills on.
+> While skills are off, **Skills** isn't in Settings unless you already have
+> skills, and the message box's `/` list offers only templates.
 
 ## Your skills
 

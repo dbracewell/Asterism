@@ -4,6 +4,7 @@
  * entries. The same accuracy rules as the help registry apply.
  */
 import type { HelpAudience, HelpId } from "./registry";
+import type { Feature } from "@/features/availability/queries";
 
 export type PageGuideId =
   | "new-chat"
@@ -65,6 +66,8 @@ export interface PageGuide {
   tasks: readonly string[];
   terms: readonly HelpId[];
   audience: HelpAudience;
+  /** Shown only while the admin lets the viewer use this feature (EPIC-97). */
+  feature?: Feature;
 }
 
 export const pageGuides: Record<PageGuideId, PageGuide> = {
@@ -790,6 +793,7 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
     audience: "everyone",
   },
   "settings.skills": {
+    feature: "skills",
     title: "Skills",
     walkthrough: "06-making-it-yours/skills",
     purpose:
@@ -892,6 +896,7 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
     audience: "everyone",
   },
   "settings.chatgpt": {
+    feature: "chatgpt_plans",
     title: "ChatGPT",
     walkthrough: "06-making-it-yours/connecting-chatgpt",
     purpose:

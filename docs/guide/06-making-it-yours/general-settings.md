@@ -43,8 +43,8 @@ The **Your data** and **Sign-in and account** parts are explained in
   suggest how to make a draft clearer. See
   [the prompt coach](../02-chatting/skills-templates-and-the-prompt-coach.md#ask-the-prompt-coach-to-review-a-draft).
 - **Canvas**: lets Asterism put long documents, code and web pages in a panel
-  beside the chat. See [Working in the canvas](../02-chatting/canvas.md). If the
-  box can't be ticked, your administrator has turned the canvas off.
+  beside the chat. See [Working in the canvas](../02-chatting/canvas.md). If
+  there's no Canvas box, your administrator has turned the canvas off.
 
 ## Guided tour
 

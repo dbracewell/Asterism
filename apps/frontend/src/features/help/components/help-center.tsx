@@ -38,10 +38,10 @@ type JumpTo = (anchor: string) => void;
  * center" links from popovers and the page help sheet land on it.
  */
 export function HelpCenter() {
-  const { isAdmin } = useHelpAudience();
+  const viewer = useHelpAudience();
   const [query, setQuery] = React.useState("");
   const deferredQuery = React.useDeferredValue(query);
-  const results = searchHelp(deferredQuery, isAdmin);
+  const results = searchHelp(deferredQuery, viewer);
   const total =
     results.concepts.length + results.controls.length + results.guides.length;
   // A link inside the page may target an entry the search hides. Clear the
@@ -126,14 +126,12 @@ export function HelpCenter() {
             id="concepts"
             title="Glossary"
             entries={results.concepts}
-            isAdmin={isAdmin}
             jumpTo={jumpTo}
           />
           <EntrySection
             id="controls"
             title="Controls and settings"
             entries={results.controls}
-            isAdmin={isAdmin}
             jumpTo={jumpTo}
           />
           {results.guides.length > 0 && (
@@ -150,13 +148,7 @@ export function HelpCenter() {
               </h2>
               <ul className="flex flex-col gap-6">
                 {results.guides.map(([id, guide]) => (
-                  <GuideItem
-                    key={id}
-                    id={id}
-                    guide={guide}
-                    isAdmin={isAdmin}
-                    jumpTo={jumpTo}
-                  />
+                  <GuideItem key={id} id={id} guide={guide} jumpTo={jumpTo} />
                 ))}
               </ul>
             </section>
@@ -191,13 +183,11 @@ function EntrySection({
   id,
   title,
   entries,
-  isAdmin,
   jumpTo,
 }: {
   id: string;
   title: string;
   entries: [HelpId, HelpEntry][];
-  isAdmin: boolean;
   jumpTo: JumpTo;
 }) {
   if (entries.length === 0) return null;
@@ -213,13 +203,7 @@ function EntrySection({
       </h2>
       <ul className="flex flex-col gap-6">
         {entries.map(([entryId, entry]) => (
-          <EntryItem
-            key={entryId}
-            id={entryId}
-            entry={entry}
-            isAdmin={isAdmin}
-            jumpTo={jumpTo}
-          />
+          <EntryItem key={entryId} id={entryId} entry={entry} jumpTo={jumpTo} />
         ))}
       </ul>
     </section>
@@ -229,17 +213,16 @@ function EntrySection({
 function EntryItem({
   id,
   entry,
-  isAdmin,
   jumpTo,
 }: {
   id: HelpId;
   entry: HelpEntry;
-  isAdmin: boolean;
   jumpTo: JumpTo;
 }) {
+  const viewer = useHelpAudience();
   const headingId = `${helpAnchor(id)}-title`;
   const related = entry.related.filter((relatedId) =>
-    isVisibleTo(helpEntries[relatedId], isAdmin),
+    isVisibleTo(helpEntries[relatedId], viewer),
   );
   return (
     <li>
@@ -272,18 +255,17 @@ function EntryItem({
 function GuideItem({
   id,
   guide,
-  isAdmin,
   jumpTo,
 }: {
   id: PageGuideId;
   guide: PageGuide;
-  isAdmin: boolean;
   jumpTo: JumpTo;
 }) {
+  const viewer = useHelpAudience();
   const headingId = `${pageGuideAnchor(id)}-title`;
   const location = pageGuideLocation(id);
   const terms = guide.terms.filter((termId) =>
-    isVisibleTo(helpEntries[termId], isAdmin),
+    isVisibleTo(helpEntries[termId], viewer),
   );
   return (
     <li>

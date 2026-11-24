@@ -33,7 +33,7 @@ export const DashboardLayout = async ({
 
   return (
     <UserProvider user={user}>
-      <HelpAudienceProvider isAdmin={user.role === "admin"}>
+      <HelpAudienceProvider isAdmin={user.role === "admin"} owner={user.id}>
         <ThemeCheck />
         <UpdateTimeZone />
         <SidebarProvider
