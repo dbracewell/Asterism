@@ -15,7 +15,7 @@ project_api = _project_api
 course = _course
 memory = _memory
 
-FEATURES = {"memory", "canvas", "image_generation", "skills", "chatgpt_plans", "delegation"}
+FEATURES = {"memory", "canvas", "image_generation", "skills", "chatgpt_plans", "delegation", "course_memory"}
 
 
 async def read(memory, user="a"):
@@ -75,6 +75,10 @@ async def test_group_limits_apply_to_the_caller(memory):
         "available": False,
         "reason": "Memory isn't available to your group",
     }
+    # An educator outside the allowed groups can still set a course's memory.
+    assert (await read(memory, "b"))["course_memory"]["available"] is True
+    await set_memory_policy(memory, enabled=True, group_ids=[])
+    assert (await read(memory, "b"))["course_memory"]["available"] is False
 
 
 async def test_requires_sign_in(memory):

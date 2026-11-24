@@ -1191,6 +1191,7 @@ export const zAvailability = z.object({
   skills: zFeatureAvailability,
   chatgpt_plans: zFeatureAvailability,
   delegation: zFeatureAvailability,
+  course_memory: zFeatureAvailability,
 });
 
 /**

@@ -96,8 +96,22 @@ export function YourMemorySection() {
   );
 }
 
-/** A project's settings → Memory: what Asterism remembers for this project only. */
+/**
+ * A project's settings → Memory: what Asterism remembers for this project only.
+ * Hidden while the admin has memory off for you, unless the project has
+ * memories to see or delete (EPIC-97).
+ */
 export function ProjectMemorySection({ projectId }: { projectId: string }) {
+  const allowed = useFeature("memory").available;
+  const saved = useQuery({
+    ...memoryGetManyOptions({
+      client,
+      query: { project_id: projectId, page: 1, page_size: 100 },
+    }),
+    enabled: !allowed,
+    retry: false,
+  });
+  if (!allowed && (saved.data?.total ?? 0) === 0) return null;
   return (
     <section aria-label="Project memory" className="grid gap-3 border-t pt-6">
       <div className="flex items-center gap-1">

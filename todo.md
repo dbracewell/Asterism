@@ -98,11 +98,11 @@ Complete (2026-11-24); archive once its pull requests have merged.
   - [x] `/` discovery: show nothing (no "disabled by an administrator" list) when skills are off.
   - [x] Canvas: no create affordance when unavailable. Existing canvases open read-only.
   - [x] Tests for each, including a group-limited policy.
-- [ ] US-97.3: Projects, agents and classes
-  - [ ] Hide the project Sub-agents tab, Agents → Sub-agents and the General sub-agents card when delegation is unavailable, unless the user has definitions, in which case use the kept-data line.
-  - [ ] Hide the project memory section and the class memory switch when memory is unavailable.
-  - [ ] Hide the sub-agent skills picker when skills are off.
-  - [ ] Tests.
+- [x] US-97.3: Projects, agents and classes
+  - [x] Hide the project Sub-agents tab, Agents → Sub-agents and the General sub-agents card when delegation is unavailable, unless the user has definitions, in which case use the kept-data line.
+  - [x] Hide the project memory section and the class memory switch when memory is unavailable.
+  - [x] Hide the sub-agent skills picker when skills are off.
+  - [x] Tests.
 - [ ] US-97.4: Help, tour and verification
   - [ ] Add a `feature` key to help topics and tour steps. Filter by availability, and replace `needsSkills`.
   - [ ] Playwright: with every policy off, a student sees no memory, canvas, skills, sub-agent, image or ChatGPT entry points. With each turned on, the entry point appears without a reload (EPIC-96).

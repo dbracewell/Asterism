@@ -3,6 +3,7 @@ import type {
   MainAgentConfiguration,
   SubAgentDefinition,
 } from "../src/lib/client";
+import { ALL_FEATURES, mockAvailability } from "./support/availability";
 
 const modelId = "11111111-1111-4111-8111-111111111111";
 const workerId = "22222222-2222-4222-8222-222222222222";
@@ -76,6 +77,7 @@ test("persists singleton settings and manages fixed-model sub-agents", async ({
       json: { items: workers, total: workers.length, page: 1, page_size: 10 },
     });
   });
+  await mockAvailability(page, ALL_FEATURES);
   await page.goto("/e2e/agent-settings");
   await expect(
     page.getByRole("button", { name: "Edit main configuration" }),
@@ -223,6 +225,7 @@ test("browses pages and recovers query failures while retaining an unavailable b
       },
     });
   });
+  await mockAvailability(page, ALL_FEATURES);
   await page.goto("/e2e/agent-settings");
   await expect(page.locator("main").getByRole("alert")).toContainText(
     "Could not load sub-agents",
@@ -283,6 +286,7 @@ for (const viewport of [
         })),
       }),
     );
+    await mockAvailability(page, ALL_FEATURES);
     await page.goto("/e2e/agent-settings");
     if (viewport.enlarged) {
       await page.addStyleTag({
@@ -392,6 +396,7 @@ for (const width of [1280, 320]) {
         json: { items: [agent], total: 1, page: 1, page_size: 10 },
       }),
     );
+    await mockAvailability(page, ALL_FEATURES);
     await page.goto("/e2e/agent-settings");
     const label = page.getByTitle(`${longName} (LocalProvider)`);
     await expect(label).toBeVisible();

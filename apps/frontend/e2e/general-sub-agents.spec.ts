@@ -7,6 +7,7 @@ import type {
   Message,
   SubAgentDefinition,
 } from "../src/lib/client";
+import { ALL_FEATURES, mockAvailability } from "./support/availability";
 
 // US-68.2: choose General chat sub-agents, then delegate from a General chat.
 const M = "11111111-1111-4111-8111-111111111111";
@@ -109,6 +110,7 @@ test("chooses General chat sub-agents with their fixed models and recovers a con
     }
     return route.fulfill({ json: set });
   });
+  await mockAvailability(page, ALL_FEATURES);
   await page.goto("/e2e/agent-settings");
   const section = page.getByRole("region", {
     name: "General chat sub-agents",
@@ -246,6 +248,7 @@ async function openGeneralChat(page: Page, set: GeneralSubAgents) {
       }, 300);
     });
   });
+  await mockAvailability(page, ALL_FEATURES);
   await page.goto("/e2e/chat-model-session");
   await expect.poll(() => transport.socket).toBeDefined();
 }

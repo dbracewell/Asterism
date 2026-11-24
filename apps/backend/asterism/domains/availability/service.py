@@ -14,10 +14,12 @@ async def read_availability(user_id: str, session: AsyncSession) -> Availability
     from asterism.domains.chatgpt import policy as chatgpt_policy
     from asterism.domains.image_generation import policy as image_policy
     from asterism.domains.memory.access import memory_allowed
+    from asterism.domains.memory.access import read_policy as read_memory_policy
     from asterism.domains.settings.tool_settings import get_tool_settings
     from asterism.domains.skills import policy as skills_policy
 
     memory = await memory_allowed(user_id, session)
+    memory_policy = await read_memory_policy(session)
     images = await image_policy.availability(user_id, session)
     return Availability(
         memory=FeatureAvailability(available=memory.available, reason=memory.reason),
@@ -31,5 +33,9 @@ async def read_availability(user_id: str, session: AsyncSession) -> Availability
         delegation=_switch(
             "sub_agent" in (await get_tool_settings(session)).active_tools,
             "Your administrator has turned sub-agents off",
+        ),
+        course_memory=_switch(
+            memory_policy.enabled and memory_policy.group_ids != [],
+            "Your administrator has turned memory off",
         ),
     )

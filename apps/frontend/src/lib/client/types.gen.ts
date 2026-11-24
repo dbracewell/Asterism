@@ -195,6 +195,7 @@ export type Availability = {
   skills: FeatureAvailability;
   chatgpt_plans: FeatureAvailability;
   delegation: FeatureAvailability;
+  course_memory: FeatureAvailability;
 };
 
 /**

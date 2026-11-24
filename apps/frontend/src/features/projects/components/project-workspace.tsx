@@ -12,7 +12,9 @@ import {
   projectDeleteMutation,
   projectGetOneOptions,
   projectUpdateMutation,
+  projectSubAgentGetManyOptions,
 } from "@/lib/client/@tanstack/react-query.gen";
+import { useFeature } from "@/features/availability/queries";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -99,7 +101,22 @@ export function ProjectWorkspace({ projectId }: { projectId: string }) {
   });
   const disabled = project.isFetching || !!project.error;
   const managedBy = project.data?.managed_by_class ?? undefined;
-  const tabs = project.data ? visibleTabs(project.data.areas) : PROJECT_TABS;
+  // While the admin has sub-agents off, the tab stays only for a project that
+  // has sub-agents selected, so they can be reviewed or removed (EPIC-97).
+  const delegation = useFeature("delegation").available;
+  const selected = useQuery({
+    ...projectSubAgentGetManyOptions({
+      client,
+      path: { project_id: projectId },
+      query: { page: 1, page_size: 1 },
+    }),
+    enabled: !delegation,
+    retry: false,
+  });
+  const keepSubAgents = delegation || (selected.data?.total ?? 0) > 0;
+  const tabs = (
+    project.data ? visibleTabs(project.data.areas) : PROJECT_TABS
+  ).filter((item) => keepSubAgents || item.value !== "sub-agents");
   // A link to a hidden area's tab opens Overview instead.
   const active = tabs.some((item) => item.value === tab) ? tab : "overview";
   const shown = (value: ProjectTab) =>

@@ -16,7 +16,8 @@ import { Input } from "@/components/ui/input";
 import { HelpTopic } from "@/features/help/components/help-topic";
 import { useQuery } from "@tanstack/react-query";
 import { useId, useState } from "react";
-import { skillAvailabilityOptions, skillsListOptions } from "../queries";
+import { skillsListOptions } from "../queries";
+import { useOwnerFeature } from "@/features/availability/queries";
 
 const PAGE_SIZE = 10;
 const MAX_SKILLS = 100;
@@ -53,12 +54,15 @@ export function SubAgentSkillsPicker({
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
   const skills = useQuery(skillsListOptions(owner, query, page, PAGE_SIZE));
-  const policy = useQuery(skillAvailabilityOptions(owner));
+  // While the admin has skills off, the picker shows only for a sub-agent that
+  // already has skills, so they can be reviewed or removed (EPIC-97).
+  const skillsOn = useOwnerFeature(owner, "skills").available;
   const lastPage = skills.data
     ? Math.max(1, Math.ceil(skills.data.total / PAGE_SIZE))
     : page;
   if (page > lastPage) setPage(lastPage);
   const locked = disabled || loading || !!error;
+  if (!skillsOn && !loading && !error && selected.length === 0) return null;
   return (
     <FieldSet className="min-w-0 gap-3">
       <FieldLegend className="flex items-center gap-1">
@@ -68,10 +72,10 @@ export function SubAgentSkillsPicker({
         This sub-agent sees the name and description of each skill you choose
         and loads one when it fits the task. It doesn&apos;t use /.
       </FieldDescription>
-      {policy.data && !policy.data.policy_enabled && (
+      {!skillsOn && (
         <p role="note" className="text-sm">
-          An administrator has turned skills off. You can still choose skills;
-          the sub-agent can load them once skills are turned on.
+          An administrator has turned skills off, so this sub-agent can&apos;t
+          load them right now. Your choices are kept.
         </p>
       )}
       {modelSupportsTools === false && selected.length > 0 && (

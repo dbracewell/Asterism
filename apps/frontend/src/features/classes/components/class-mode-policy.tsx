@@ -9,6 +9,7 @@ import type { LearningModeId, TaughtClass } from "@/lib/client";
 import { classModePolicyUpdateMutation } from "@/lib/client/@tanstack/react-query.gen";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useId, useState } from "react";
+import { useFeature } from "@/features/availability/queries";
 import { HelpHeading } from "@/features/help/components/help-heading";
 import { errorDetail } from "@/lib/utils";
 
@@ -22,6 +23,9 @@ export function ClassModePolicy({ item }: { item: TaughtClass }) {
   );
   const [reveal, setReveal] = useState(item.answer_reveal);
   const [memory, setMemory] = useState(item.memory_enabled ?? true);
+  // The switch means nothing while the admin has memory off for everyone
+  // (EPIC-97); its saved value is kept and sent back unchanged.
+  const courseMemory = useFeature("course_memory").available;
   const save = useMutation(classModePolicyUpdateMutation({ client }));
   const chosen = allowed ?? modes.map((mode) => mode.id);
   const toggle = (mode: LearningModeId, on: boolean) => {
@@ -64,26 +68,28 @@ export function ClassModePolicy({ item }: { item: TaughtClass }) {
           Let students reveal answers and solutions
         </label>
       </div>
-      <div className="flex items-start gap-2 text-sm">
-        <Switch
-          id={`${prefix}-memory`}
-          aria-describedby={`${prefix}-memory-description`}
-          checked={memory}
-          onCheckedChange={setMemory}
-        />
-        <div className="grid gap-1">
-          <label htmlFor={`${prefix}-memory`}>
-            Let Asterism use students&apos; memories in this course
-          </label>
-          <p
-            id={`${prefix}-memory-description`}
-            className="text-muted-foreground text-xs"
-          >
-            Off: Asterism doesn&apos;t use students&apos; memories in the course
-            project. You never see their memories either way.
-          </p>
+      {courseMemory && (
+        <div className="flex items-start gap-2 text-sm">
+          <Switch
+            id={`${prefix}-memory`}
+            aria-describedby={`${prefix}-memory-description`}
+            checked={memory}
+            onCheckedChange={setMemory}
+          />
+          <div className="grid gap-1">
+            <label htmlFor={`${prefix}-memory`}>
+              Let Asterism use students&apos; memories in this course
+            </label>
+            <p
+              id={`${prefix}-memory-description`}
+              className="text-muted-foreground text-xs"
+            >
+              Off: Asterism doesn&apos;t use students&apos; memories in the
+              course project. You never see their memories either way.
+            </p>
+          </div>
         </div>
-      </div>
+      )}
       {chosen.length === 0 && (
         <p role="alert" className="text-destructive text-sm">
           Allow at least one mode.

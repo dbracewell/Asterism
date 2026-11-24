@@ -1,4 +1,5 @@
 import { expect, test } from "./support/test";
+import { ALL_FEATURES, mockAvailability } from "./support/availability";
 const P = "11111111-1111-4111-8111-111111111111";
 const Q = "22222222-2222-4222-8222-222222222222";
 const C = "33333333-3333-4333-8333-333333333333";
@@ -95,6 +96,7 @@ test("browses Projects and General, searches, paginates, and offers scoped new c
       json: { chats: [], total: 0, page: 1, page_size: 20 },
     });
   });
+  await mockAvailability(page, ALL_FEATURES);
   await page.goto("/e2e/projects");
   await expect(
     page.getByRole("link", { name: "General", exact: true }),
@@ -112,6 +114,7 @@ test("browses Projects and General, searches, paginates, and offers scoped new c
   await expect(
     page.getByRole("button", { name: "Previous projects" }),
   ).toBeDisabled();
+  await mockAvailability(page, ALL_FEATURES);
   await page.goto("/e2e/projects?view=project");
   await expect(
     page.getByRole("heading", { name: "Research", exact: true }),
@@ -144,6 +147,7 @@ test("browses Projects and General, searches, paginates, and offers scoped new c
     "aria-selected",
     "true",
   );
+  await mockAvailability(page, ALL_FEATURES);
   await page.goto("/e2e/projects?view=project&tab=study");
   await expect(page.getByText("No decks yet")).toBeVisible();
   await page.screenshot({
@@ -187,6 +191,7 @@ test("browses Projects and General, searches, paginates, and offers scoped new c
   expect(await scrollsVertically()).toBe(false);
   await page.addStyleTag({ content: "html { font-size: 200% !important; }" });
   expect(await scrollsVertically()).toBe(false);
+  await mockAvailability(page, ALL_FEATURES);
   await page.goto("/e2e/projects?view=general");
   await expect(page.getByRole("link", { name: "New chat" })).toHaveAttribute(
     "href",
@@ -225,6 +230,7 @@ test("edits project instructions with a revision guard and explains deletion", a
       return route.fulfill({ json: current });
     },
   );
+  await mockAvailability(page, ALL_FEATURES);
   await page.goto("/e2e/projects?view=project&tab=settings");
   await expect(page.getByLabel("Project instructions")).toHaveValue(
     "Cite evidence",
@@ -289,6 +295,7 @@ test("turns feature areas off from Settings and hides their tabs", async ({
       return route.fulfill({ json: current });
     },
   );
+  await mockAvailability(page, ALL_FEATURES);
   await page.goto("/e2e/projects?view=project&tab=settings");
   const tabs = page.getByRole("tablist", { name: "Project sections" });
   await expect(tabs.getByRole("tab")).toHaveCount(7);
@@ -317,6 +324,7 @@ test("turns feature areas off from Settings and hides their tabs", async ({
   ]);
 
   // A link to the hidden tab opens Overview, without the hidden goal.
+  await mockAvailability(page, ALL_FEATURES);
   await page.goto("/e2e/projects?view=project&tab=study");
   await expect(tabs.getByRole("tab", { name: "Overview" })).toHaveAttribute(
     "aria-selected",
@@ -366,6 +374,7 @@ test("moves a chat to General with explicit history transfer and updates its ide
       },
     });
   });
+  await mockAvailability(page, ALL_FEATURES);
   await page.goto("/e2e/projects?view=chat");
   const header = page.locator('[data-slot="app-header"]');
   await expect(header.getByRole("link", { name: "Research" })).toBeVisible();
@@ -396,6 +405,7 @@ test("creates a project with independent task instructions", async ({
   });
   // The wizard works on the narrowest supported screen.
   await page.setViewportSize({ width: 320, height: 640 });
+  await mockAvailability(page, ALL_FEATURES);
   await page.goto("/e2e/projects");
   await page.getByRole("button", { name: "New project" }).click();
   const dialog = page.getByRole("dialog", { name: "New project" });
@@ -448,6 +458,7 @@ test("retries failed project loading without showing a false empty state", async
           json: { projects: [base], total: 1, page: 1, page_size: 20 },
         }),
   );
+  await mockAvailability(page, ALL_FEATURES);
   await page.goto("/e2e/projects");
   const main = page.locator("main");
   await expect(main.getByRole("alert")).toContainText(

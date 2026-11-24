@@ -3,6 +3,7 @@ import { HelpTopic } from "@/features/help/components/help-topic";
 import { EmptyState } from "@/components/empty-state";
 import { FormSkeleton, ListSkeleton } from "@/components/loading-skeletons";
 import { useUser } from "@/features/auth/components/user-context";
+import { useFeature } from "@/features/availability/queries";
 import { MainAgentSkills } from "@/features/skills/components/main-agent-skills";
 import { useConfirmationDialog } from "@/components/confirmation-dialog";
 import { QueryError } from "@/components/query-error";
@@ -64,6 +65,10 @@ export const AgentsSettings = () => {
   });
 
   const subAgents = agents.data?.items ?? [];
+  // While the admin has sub-agents off, the section shows only to someone who
+  // has sub-agents, so they can still review or delete them (EPIC-97).
+  const delegation = useFeature("delegation").available;
+  const showSubAgents = delegation || (agents.data?.total ?? 0) > 0;
 
   return (
     <SettingsPane
@@ -93,96 +98,104 @@ export const AgentsSettings = () => {
         )}
         {main.data && <GeneralSubAgents />}
       </SettingsSection>
-      <SettingsSection
-        title="Sub-agents"
-        description="Create sub-agents by assigning a model, instructions, and tools. Then choose them for General chats above, or select them in a project."
-        actions={
-          <AgentProfileForm
-            profile={editingAgent}
-            completeEditing={() => setEditingAgent(null)}
-          />
-        }
-      >
-        {agents.isPending && (
-          <ListSkeleton label="Loading sub-agents…" rows={3} detail />
-        )}
-        {agents.isError && (
-          <QueryError
-            error={agents.error}
-            message="Could not load sub-agents."
-            retry={() => void agents.refetch()}
-            isRetrying={agents.isRefetching}
-          />
-        )}
-        {agents.data?.total === 0 && (
-          <EmptyState
-            title="No sub-agents yet"
-            description="Use Create sub-agent to give a model its own instructions and tools for the main agent to hand work to."
-            help={<HelpTopic id="concept.sub-agent" />}
-          />
-        )}
-        {agents.data && agents.data.total > 0 && subAgents.length === 0 && (
-          <p>No sub-agents on this page. Use Previous to return.</p>
-        )}
-        {models.isError && (
-          <QueryError
-            error={models.error}
-            message="Could not load model names."
-            retry={() => void models.refetch()}
-            isRetrying={models.isRefetching}
-          />
-        )}
-        {subAgents.length > 0 && (
-          <div className="flex min-w-0 flex-wrap gap-4">
-            {subAgents.map((agent) => {
-              const model = models.data?.find(
-                (model) => model.id === agent.model_id,
-              );
-              return (
-                <SubAgentCard
-                  key={agent.id}
-                  agent={agent}
-                  modelLabel={
-                    model
-                      ? `${modelLabel(model)} (${model.provider_name})`
-                      : agent.model_id
-                  }
-                  edit={() => setEditingAgent(agent)}
-                />
-              );
-            })}
-          </div>
-        )}
-        {agents.data && !!agents.data.total && (
-          <nav
-            aria-label="Sub-agent pages"
-            className="flex flex-wrap items-center gap-3"
-          >
-            <Button
-              variant="outline"
-              disabled={page === 1 || agents.isFetching}
-              onClick={() => setPage(page - 1)}
+      {showSubAgents && (
+        <SettingsSection
+          title="Sub-agents"
+          description="Create sub-agents by assigning a model, instructions, and tools. Then choose them for General chats above, or select them in a project."
+          actions={
+            <AgentProfileForm
+              profile={editingAgent}
+              completeEditing={() => setEditingAgent(null)}
+            />
+          }
+        >
+          {!delegation && (
+            <p role="status" className="text-sm">
+              An administrator has turned sub-agents off, so chats can&apos;t
+              delegate to them right now. Your sub-agents are kept.
+            </p>
+          )}
+          {agents.isPending && (
+            <ListSkeleton label="Loading sub-agents…" rows={3} detail />
+          )}
+          {agents.isError && (
+            <QueryError
+              error={agents.error}
+              message="Could not load sub-agents."
+              retry={() => void agents.refetch()}
+              isRetrying={agents.isRefetching}
+            />
+          )}
+          {agents.data?.total === 0 && (
+            <EmptyState
+              title="No sub-agents yet"
+              description="Use Create sub-agent to give a model its own instructions and tools for the main agent to hand work to."
+              help={<HelpTopic id="concept.sub-agent" />}
+            />
+          )}
+          {agents.data && agents.data.total > 0 && subAgents.length === 0 && (
+            <p>No sub-agents on this page. Use Previous to return.</p>
+          )}
+          {models.isError && (
+            <QueryError
+              error={models.error}
+              message="Could not load model names."
+              retry={() => void models.refetch()}
+              isRetrying={models.isRefetching}
+            />
+          )}
+          {subAgents.length > 0 && (
+            <div className="flex min-w-0 flex-wrap gap-4">
+              {subAgents.map((agent) => {
+                const model = models.data?.find(
+                  (model) => model.id === agent.model_id,
+                );
+                return (
+                  <SubAgentCard
+                    key={agent.id}
+                    agent={agent}
+                    modelLabel={
+                      model
+                        ? `${modelLabel(model)} (${model.provider_name})`
+                        : agent.model_id
+                    }
+                    edit={() => setEditingAgent(agent)}
+                  />
+                );
+              })}
+            </div>
+          )}
+          {agents.data && !!agents.data.total && (
+            <nav
+              aria-label="Sub-agent pages"
+              className="flex flex-wrap items-center gap-3"
             >
-              Previous
-            </Button>
-            <span>
-              Page {page} /{" "}
-              {Math.ceil(agents.data.total / agents.data.page_size)}
-            </span>
-            <Button
-              variant="outline"
-              disabled={
-                !agents.data ||
-                page * 10 >= agents.data.total ||
-                agents.isFetching
-              }
-              onClick={() => setPage(page + 1)}
-            >
-              Next
-            </Button>
-          </nav>
-        )}
-      </SettingsSection>
+              <Button
+                variant="outline"
+                disabled={page === 1 || agents.isFetching}
+                onClick={() => setPage(page - 1)}
+              >
+                Previous
+              </Button>
+              <span>
+                Page {page} /{" "}
+                {Math.ceil(agents.data.total / agents.data.page_size)}
+              </span>
+              <Button
+                variant="outline"
+                disabled={
+                  !agents.data ||
+                  page * 10 >= agents.data.total ||
+                  agents.isFetching
+                }
+                onClick={() => setPage(page + 1)}
+              >
+                Next
+              </Button>
+            </nav>
+          )}
+        </SettingsSection>
+      )}
     </SettingsPane>
   );
 };

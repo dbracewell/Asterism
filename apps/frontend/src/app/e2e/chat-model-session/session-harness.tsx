@@ -30,6 +30,7 @@ function createCache() {
     skills: off,
     chatgpt_plans: off,
     delegation: off,
+    course_memory: off,
   });
   return cache;
 }

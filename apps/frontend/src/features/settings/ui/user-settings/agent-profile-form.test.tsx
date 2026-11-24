@@ -35,6 +35,7 @@ const mocks = vi.hoisted(() => ({
     agent_revision: 1,
   }),
 }));
+vi.mock("@/features/availability/queries", () => import("@/test/availability"));
 vi.mock("@/features/auth/components/user-context", () => ({
   useUser: () => ({
     id: "owner",

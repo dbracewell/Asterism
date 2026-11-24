@@ -14,6 +14,7 @@ import { client } from "@/lib/api";
 import type { ProjectAreas } from "@/lib/client";
 import { projectSubAgentGetManyOptions } from "@/lib/client/@tanstack/react-query.gen";
 import { useQuery } from "@tanstack/react-query";
+import { useFeature } from "@/features/availability/queries";
 
 export const ALL_AREAS: ProjectAreas = {
   study: true,
@@ -65,6 +66,9 @@ export function ProjectAreaSwitches({
   onChange: (value: ProjectAreas) => void;
   disabled: boolean;
 }) {
+  // No Sub-agents switch while the admin has sub-agents off (EPIC-97).
+  const delegation = useFeature("delegation").available;
+  const areas = AREAS.filter((area) => delegation || area.key !== "sub_agents");
   return (
     <FieldSet>
       <FieldLegend>Feature areas</FieldLegend>
@@ -75,7 +79,7 @@ export function ProjectAreaSwitches({
         change these later in Settings.
       </FieldDescription>
       <FieldGroup>
-        {AREAS.map((area) => (
+        {areas.map((area) => (
           <Field key={area.key} orientation="horizontal">
             <Switch
               id={`project-area-${area.key}`}
