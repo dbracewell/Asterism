@@ -9,6 +9,7 @@ import { HelpTopic } from "@/features/help/components/help-topic";
 import { firstChatTourHref } from "@/features/help/tour";
 import Link from "next/link";
 import { useUser } from "@/features/auth/components/user-context";
+import { useFeature } from "@/features/availability/queries";
 import { useUpdateUserSettings } from "@/features/settings/hooks/use-update-user-settings";
 import { useTheme } from "@/features/theme/components/theme-context";
 import {
@@ -22,6 +23,7 @@ export const GeneralSettings = () => {
   const { updateSetting, isUpdatingUserSetting } = useUpdateUserSettings();
   const user = useUser();
   const userSettings = user.settings;
+  const canvasAllowed = useFeature("canvas").available;
   const { setTheme } = useTheme();
   const themeLabelId = useId();
   // Show the pick at once; the saved setting arrives on the next refresh.
@@ -128,7 +130,7 @@ export const GeneralSettings = () => {
             id="general-canvas"
             aria-describedby="general-canvas-description"
             checked={user.settings.canvas_enabled ?? false}
-            disabled={isUpdatingUserSetting || !user.settings.canvas_allowed}
+            disabled={isUpdatingUserSetting || !canvasAllowed}
             onCheckedChange={(checked) => {
               updateSetting("canvas_enabled", !!checked, false);
             }}
@@ -139,7 +141,7 @@ export const GeneralSettings = () => {
               id="general-canvas-description"
               className="text-muted-foreground text-xs"
             >
-              {user.settings.canvas_allowed
+              {canvasAllowed
                 ? "Lets your main agent put long documents, code and web pages in a panel beside the chat, where you can edit, restore and download them. Needs a model that supports tools."
                 : "Your administrator has turned the canvas off. Existing canvas items stay readable and downloadable."}
             </p>

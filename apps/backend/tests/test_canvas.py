@@ -542,13 +542,13 @@ async def test_policy_endpoints_and_user_setting(canvas_api):
     assert (await client.put("/settings/app/canvas", headers=auth("admin"), json={"enabled": True})).json() == {
         "enabled": True
     }
-    settings = (await client.get("/settings/user", headers=auth())).json()
-    assert (settings["canvas_enabled"], settings["canvas_allowed"]) == (False, True)
+    assert (await client.get("/settings/user", headers=auth())).json()["canvas_enabled"] is False
+    assert (await client.get("/availability", headers=auth())).json()["canvas"] == {"available": True, "reason": ""}
     saved = await client.put("/settings/user/canvas_enabled", headers=auth(), json={"value": True})
     assert saved.status_code == 200, saved.text
     assert (await client.get("/settings/user", headers=auth())).json()["canvas_enabled"] is True
     assert (await client.put("/settings/user/canvas_enabled", headers=auth(), json={"value": "on"})).status_code == 400
-    # The read-only flag can't be written.
+    # The admin's switch is not a user setting.
     assert (await client.put("/settings/user/canvas_allowed", headers=auth(), json={"value": True})).status_code == 400
 
 

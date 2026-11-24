@@ -18,6 +18,7 @@ from asterism.core.lifespan import lifespan
 from asterism.core.request_id import RequestIdMiddleware
 from asterism.core.schemas import ErrorDetail
 from asterism.domains.agent.router import agents_router
+from asterism.domains.availability.router import availability_router
 from asterism.domains.canvas.router import canvas_router
 from asterism.domains.chat.router import chat_router
 from asterism.domains.chatgpt.router import chatgpt_router
@@ -187,6 +188,7 @@ app.include_router(settings_router)
 app.include_router(user_router)
 app.include_router(groups_router)
 app.include_router(usage_router)
+app.include_router(availability_router)
 app.include_router(status_router)
 app.include_router(data_export_router)
 app.include_router(tools_router)

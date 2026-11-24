@@ -6,6 +6,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { useUser } from "@/features/auth/components/user-context";
+import { useFeature } from "@/features/availability/queries";
 import { HelpTopic } from "@/features/help/components/help-topic";
 import { useUpdateUserSettings } from "@/features/settings/hooks/use-update-user-settings";
 import { SettingsSection } from "@/features/settings/ui/settings-section";
@@ -42,7 +43,7 @@ export function MemoryAvailabilityNotice({
 export function YourMemorySection() {
   const user = useUser();
   const { updateSetting, isUpdatingUserSetting } = useUpdateUserSettings();
-  const allowed = user.settings.memory_allowed ?? false;
+  const allowed = useFeature("memory").available;
   return (
     <SettingsSection
       title="Memory"

@@ -81,7 +81,9 @@ async def test_policy_off_names_the_admin(memory):
         "reason": "Your administrator has turned memory off",
     }
     settings = (await memory["client"].get("/settings/user", headers=auth())).json()
-    assert (settings["memory_enabled"], settings["memory_allowed"]) == (True, False)
+    assert settings["memory_enabled"] is True and "memory_allowed" not in settings
+    admin_switches = (await memory["client"].get("/availability", headers=auth())).json()["memory"]
+    assert admin_switches == {"available": False, "reason": "Your administrator has turned memory off"}
 
 
 async def client_get_policy(memory):
@@ -106,7 +108,7 @@ async def test_policy_validates_groups_and_limits_them(memory):
         "off_by": "group",
         "reason": "Memory isn't available to your group",
     }
-    assert (await memory["client"].get("/settings/user", headers=auth("b"))).json()["memory_allowed"] is False
+    assert (await memory["client"].get("/availability", headers=auth("b"))).json()["memory"]["available"] is False
     # An empty list allows no group; null allows every group.
     await set_memory_policy(memory, enabled=True, group_ids=[])
     assert (await availability(memory))["off_by"] == "group"
@@ -117,8 +119,8 @@ async def test_policy_validates_groups_and_limits_them(memory):
 async def test_the_personal_setting_turns_memory_off_for_that_person(memory):
     client = memory["client"]
     await set_memory_policy(memory, enabled=True)
-    settings = (await client.get("/settings/user", headers=auth())).json()
-    assert (settings["memory_enabled"], settings["memory_allowed"]) == (True, True)
+    assert (await client.get("/settings/user", headers=auth())).json()["memory_enabled"] is True
+    assert (await client.get("/availability", headers=auth())).json()["memory"]["available"] is True
     assert (await client.put("/settings/user/memory_enabled", headers=auth(), json={"value": "off"})).status_code == 400
     assert (await client.put("/settings/user/memory_allowed", headers=auth(), json={"value": True})).status_code == 400
     saved = await client.put("/settings/user/memory_enabled", headers=auth(), json={"value": False})

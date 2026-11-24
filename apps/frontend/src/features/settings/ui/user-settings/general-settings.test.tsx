@@ -21,9 +21,11 @@ vi.mock("@/features/auth/components/user-context", () => ({
     settings: {
       theme: "atlas",
       font_size: "16px",
-      canvas_allowed: canvas.allowed,
     },
   }),
+}));
+vi.mock("@/features/availability/queries", () => ({
+  useFeature: () => ({ available: canvas.allowed, reason: "" }),
 }));
 // Tested on its own in account-lifecycle-settings.test.tsx.
 vi.mock("./account-lifecycle-settings", () => ({

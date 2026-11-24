@@ -1165,6 +1165,35 @@ export const zExerciseAttemptRequest = z.object({
 });
 
 /**
+ * FeatureAvailability
+ *
+ * Whether an admin lets this person use one feature now, and why not.
+ */
+export const zFeatureAvailability = z.object({
+  available: z.boolean(),
+  reason: z.string().optional().default(""),
+});
+
+/**
+ * Availability
+ *
+ * The admin's switches for each feature, as they apply to this person.
+ *
+ * These are the admin's decisions only: policies, groups and provider
+ * readiness. The person's own opt-ins (such as Use memory) stay in user
+ * settings. Hiding a feature in the interface never replaces the server's own
+ * checks when the feature is used.
+ */
+export const zAvailability = z.object({
+  memory: zFeatureAvailability,
+  canvas: zFeatureAvailability,
+  image_generation: zFeatureAvailability,
+  skills: zFeatureAvailability,
+  chatgpt_plans: zFeatureAvailability,
+  delegation: zFeatureAvailability,
+});
+
+/**
  * FeedbackSectionId
  *
  * Sections of a structured Explain-back feedback reply, in reply order.
@@ -5359,9 +5388,7 @@ export const zUserSettings = z.object({
   show_thinking: z.boolean().optional().default(true),
   prompt_coach_enabled: z.boolean().optional().default(false),
   canvas_enabled: z.boolean().optional().default(false),
-  canvas_allowed: z.boolean().optional().default(false),
   memory_enabled: z.boolean().optional().default(true),
-  memory_allowed: z.boolean().optional().default(false),
   first_chat_tour: z.enum(["completed", "dismissed"]).nullish(),
   group: zGroupRef.nullish(),
 });
@@ -8112,6 +8139,11 @@ export const zUsageSettingsUpdateBody = zUsageSettings;
  * Successful Response
  */
 export const zUsageSettingsUpdateResponse = zUsageSettings;
+
+/**
+ * Successful Response
+ */
+export const zAvailabilityGetResponse = zAvailability;
 
 /**
  * Successful Response

@@ -9,6 +9,7 @@ import { ChatSession } from "@/features/chat/components/chat-session";
 import { UserProvider } from "@/features/auth/components/user-context";
 import AppPage from "@/app/(main)/page";
 import { ChatHeaderContent } from "@/features/dashboard/components/app-header";
+import { availabilityOptions } from "@/features/availability/queries";
 
 const CHAT_ID = "77777777-7777-4777-8777-777777777777";
 function createCache() {
@@ -19,6 +20,16 @@ function createCache() {
       },
     }),
     defaultOptions: { queries: { retry: false } },
+  });
+  // The harness user may use canvas; everything else the admin leaves off.
+  const off = { available: false, reason: "Off in the harness" };
+  cache.setQueryData(availabilityOptions("test").queryKey, {
+    memory: off,
+    canvas: { available: true, reason: "" },
+    image_generation: off,
+    skills: off,
+    chatgpt_plans: off,
+    delegation: off,
   });
   return cache;
 }
@@ -57,7 +68,6 @@ export function ChatModelSessionHarness({
             default_model_id: "11111111-1111-4111-8111-111111111111",
             show_thinking: showThinking,
             canvas_enabled: true,
-            canvas_allowed: true,
             first_chat_tour: newLearner ? null : "completed",
           },
         }}

@@ -70,11 +70,11 @@ Source: user request (2026-11-24). Suggested order: EPIC-96 → 97 → 99 → 98
 
 ### [EPIC-96: Admin policy changes show up without a reload](docs/epics/EPIC-96-LIVE-POLICY-AVAILABILITY.md)
 
-- [ ] US-96.1: One availability query
-  - [ ] Add `GET /me/availability`, built from the existing policy checks with no new policy logic. Tests: each feature's available and unavailable reasons, group-limited policies, and owner-only access. Regenerate the client.
-  - [ ] Add a frontend `useAvailability()` hook over the generated query (`staleTime` 30s, refetch on focus).
-  - [ ] Move `memory_allowed` and `canvas_allowed` readers (`memory-sections.tsx`, `general-settings.tsx`, `chat-session.tsx`) to the hook. Remove those fields from `GET /settings/user`, since the frontend and backend ship together.
-  - [ ] Unit tests: the memory checkbox enables after the availability query is invalidated, without a new `UserProvider` value.
+- [x] US-96.1: One availability query
+  - [x] Add `GET /availability`, built from the existing policy checks with no new policy logic. Tests: each feature's available and unavailable reasons, group-limited policies, and owner-only access. Regenerate the client.
+  - [x] Add a frontend `useFeature()` hook over the generated query (`staleTime` 30s, refetch on focus).
+  - [x] Move `memory_allowed` and `canvas_allowed` readers (`memory-sections.tsx`, `general-settings.tsx`, `chat-session.tsx`) to the hook. Remove those fields from `GET /settings/user`, since the frontend and backend ship together.
+  - [x] Unit tests: the memory checkbox enables after the availability query is invalidated, without a new `UserProvider` value.
 - [ ] US-96.2: Admin saves invalidate what depends on them
   - [ ] Give every admin settings mutation (memory, canvas, skills, ChatGPT plans, image generation policy and provider, tools, groups, providers and models, captioning) `meta.invalidates` that includes the availability key and the keys of the user-facing queries it affects, such as `toolsGetActiveOptions` and `skillAvailabilityOptions`. Or leave it on global invalidation where that is deliberate.
   - [ ] Remove the dead `userSettingsGetQueryKey` invalidation.
@@ -87,7 +87,7 @@ Source: user request (2026-11-24). Suggested order: EPIC-96 → 97 → 99 → 98
 ### [EPIC-97: Hide what the admin has not enabled](docs/epics/EPIC-97-HIDE-DISABLED-FEATURES.md)
 
 - [ ] US-97.1: Settings navigation built from availability
-  - [ ] Build the User Settings section list from `useAvailability()`. Skills and ChatGPT plans are left out when unavailable.
+  - [ ] Build the User Settings section list from `useFeature()`. Skills and ChatGPT plans are left out when unavailable.
   - [ ] Remove the code execution placeholder from Admin Settings.
   - [ ] Memory and canvas toggles: hidden when unavailable, with the kept-data line where the user has saved items.
   - [ ] Unit tests per feature, on and off.
@@ -125,7 +125,7 @@ Source: user request (2026-11-24). Suggested order: EPIC-96 → 97 → 99 → 98
   - [ ] Frontend `StudyProposalCards` in `message-item.tsx`: preview, edit before saving, Save to Study (with a link to the new deck or quiz), Dismiss, and timeline labels in `agent-timeline.ts`.
   - [ ] Unit tests and a Playwright test: ask for a deck in a project chat, then save it and see it under Study.
 - [ ] US-98.4: Docs and availability
-  - [ ] Add the tools to `/me/availability` (EPIC-96) and hide the mention of them in help when unavailable (EPIC-97).
+  - [ ] Add the tools to `GET /availability` (EPIC-96) and hide the mention of them in help when unavailable (EPIC-97).
   - [ ] Update `docs/architecture/study-tools.md`, the user guide pages (`05-studying/flashcards.md`, `practice-quizzes.md`) and the release notes (Data: the new table; Behavior: the new tools).
 
 ### [EPIC-99: Multilingual text embeddings, images found by caption](docs/epics/EPIC-99-MULTILINGUAL-E5-EMBEDDINGS.md)

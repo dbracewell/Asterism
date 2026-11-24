@@ -87,6 +87,9 @@ import type {
   AppToolSettingsUpdateData,
   AppToolSettingsUpdateError,
   AppToolSettingsUpdateResponse,
+  AvailabilityGetData,
+  AvailabilityGetError,
+  AvailabilityGetResponse,
   CanvasExportZipData,
   CanvasExportZipError,
   CanvasExportZipResponse,
@@ -10112,6 +10115,36 @@ export const usageSettingsUpdateMutation = (
   };
   return mutationOptions;
 };
+
+export const availabilityGetQueryKey = (
+  options?: Options<AvailabilityGetData>,
+) => createQueryKey("availabilityGet", options);
+
+/**
+ * My Availability
+ *
+ * The admin's live switches for each feature, as they apply to the caller.
+ */
+export const availabilityGetOptions = (
+  options?: Options<AvailabilityGetData>,
+) =>
+  queryOptions<
+    AvailabilityGetResponse,
+    AvailabilityGetError,
+    AvailabilityGetResponse,
+    ReturnType<typeof availabilityGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry.get().availabilityGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: availabilityGetQueryKey(options),
+  });
 
 export const healthReadyQueryKey = (options?: Options<HealthReadyData>) =>
   createQueryKey("healthReady", options);

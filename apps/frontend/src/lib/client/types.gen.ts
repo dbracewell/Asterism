@@ -179,6 +179,25 @@ export type ApplicationSettings = {
 };
 
 /**
+ * Availability
+ *
+ * The admin's switches for each feature, as they apply to this person.
+ *
+ * These are the admin's decisions only: policies, groups and provider
+ * readiness. The person's own opt-ins (such as Use memory) stay in user
+ * settings. Hiding a feature in the interface never replaces the server's own
+ * checks when the feature is used.
+ */
+export type Availability = {
+  memory: FeatureAvailability;
+  canvas: FeatureAvailability;
+  image_generation: FeatureAvailability;
+  skills: FeatureAvailability;
+  chatgpt_plans: FeatureAvailability;
+  delegation: FeatureAvailability;
+};
+
+/**
  * Body_chatDraftUpload
  */
 export type BodyChatDraftUpload = {
@@ -3032,6 +3051,22 @@ export type ExerciseView = {
    */
   correction?: string | null;
   source?: SpanCitation | null;
+};
+
+/**
+ * FeatureAvailability
+ *
+ * Whether an admin lets this person use one feature now, and why not.
+ */
+export type FeatureAvailability = {
+  /**
+   * Available
+   */
+  available: boolean;
+  /**
+   * Reason
+   */
+  reason?: string;
 };
 
 /**
@@ -10690,17 +10725,9 @@ export type UserSettings = {
    */
   canvas_enabled?: boolean;
   /**
-   * Canvas Allowed
-   */
-  canvas_allowed?: boolean;
-  /**
    * Memory Enabled
    */
   memory_enabled?: boolean;
-  /**
-   * Memory Allowed
-   */
-  memory_allowed?: boolean;
   /**
    * First Chat Tour
    */
@@ -22806,6 +22833,33 @@ export type UsageSettingsUpdateResponses = {
 
 export type UsageSettingsUpdateResponse =
   UsageSettingsUpdateResponses[keyof UsageSettingsUpdateResponses];
+
+export type AvailabilityGetData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/availability";
+};
+
+export type AvailabilityGetErrors = {
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+};
+
+export type AvailabilityGetError =
+  AvailabilityGetErrors[keyof AvailabilityGetErrors];
+
+export type AvailabilityGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: Availability;
+};
+
+export type AvailabilityGetResponse =
+  AvailabilityGetResponses[keyof AvailabilityGetResponses];
 
 export type HealthReadyData = {
   body?: never;

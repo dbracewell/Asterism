@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { TranscriptSkeleton } from "@/components/loading-skeletons";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useUser } from "@/features/auth/components/user-context";
+import { useFeature } from "@/features/availability/queries";
 import {
   ChatInput,
   ChatInputContainer,
@@ -56,6 +57,7 @@ export const ChatSession = ({
 }) => {
   const queryClient = useQueryClient();
   const user = useUser();
+  const canvasAllowed = useFeature("canvas").available;
   const {
     data: session,
     isLoading,
@@ -438,7 +440,7 @@ export const ChatSession = ({
       ? (prompt) =>
           addUserMessage({ prompt, files: [], requestId: crypto.randomUUID() })
       : null,
-    canEdit: !!(user.settings.canvas_enabled && user.settings.canvas_allowed),
+    canEdit: !!(user.settings.canvas_enabled && canvasAllowed),
   };
 
   return (

@@ -44,7 +44,7 @@ Reusable pieces:
   canvases stay viewable and deletable when a policy is turned off, under one
   short line ("Your administrator has turned off memory. Your saved memories are
   kept."). They are hidden only when the user has none.
-- **One source.** Every hide decision reads `useAvailability()` from EPIC-96. No
+- **One source.** Every hide decision reads `useFeature()` from EPIC-96. No
   component calls a policy endpoint of its own to decide visibility.
 - **Help follows availability.** Help topics and tour steps get an optional
   `feature` key and are filtered by it, generalising `needsSkills`.
@@ -59,7 +59,7 @@ Suggested order: US-97.1 → 97.2 → 97.3 → 97.4.
 
 ### US-97.1: Settings navigation built from availability
 
-- [ ] Build the User Settings section list from `useAvailability()`. Skills and
+- [ ] Build the User Settings section list from `useFeature()`. Skills and
       ChatGPT plans are left out when unavailable.
 - [ ] Remove the code execution placeholder from Admin Settings.
 - [ ] Memory and canvas toggles: hidden when unavailable, with the kept-data line
