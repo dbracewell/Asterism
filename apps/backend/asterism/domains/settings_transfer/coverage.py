@@ -34,36 +34,22 @@ class SettingCoverage:
 COVERAGE: tuple[SettingCoverage, ...] = (
     SettingCoverage("llm_providers", "Providers", "providers"),
     SettingCoverage("draft_model_id", "Providers", "draft_model"),
-    SettingCoverage("files:themes", "Theme editor", missing=("custom themes",)),
-    SettingCoverage(
-        "table:groups",
-        "Groups",
-        "groups",
-        missing=("daily and monthly token budgets",),
-    ),
-    SettingCoverage("usage_timezone", "Usage", missing=("the usage time zone",)),
+    SettingCoverage("files:themes", "Theme editor", "themes"),
+    SettingCoverage("table:groups", "Groups", "groups"),
+    SettingCoverage("usage_timezone", "Usage", "usage_timezone"),
     SettingCoverage("active_tools", "Tools", "active_tools"),
     SettingCoverage("web_search_provider", "Tools", "web_search_provider"),
     SettingCoverage("image_search_provider", "Tools", "image_search_provider"),
     SettingCoverage("skills_enabled", "Skills", "skills_enabled"),
     SettingCoverage("canvas_enabled", "Canvas", "canvas_enabled"),
-    SettingCoverage("memory", "Memory", "memory", missing=("which groups may use memory",)),
-    SettingCoverage(
-        "study_chat", "Study in chat", "study_chat", missing=("which groups may make decks and quizzes from chat",)
-    ),
+    SettingCoverage("memory", "Memory", "memory"),
+    SettingCoverage("study_chat", "Study in chat", "study_chat"),
     SettingCoverage("chatgpt_plan_enabled", "ChatGPT Plans", "chatgpt_plan_enabled"),
     SettingCoverage("compaction", "Context compaction", "compaction"),
-    SettingCoverage(
-        "image_generation", "Image generation", "image_generation", missing=("which groups may make images",)
-    ),
+    SettingCoverage("image_generation", "Image generation", "image_generation"),
     SettingCoverage("image_generator_provider", "Image generation", "image_generator_provider"),
     SettingCoverage("image_generation_local", "Image generation", "image_generation_local"),
-    SettingCoverage(
-        "image_generation_onnx",
-        "Image generation",
-        "image_generation_onnx",
-        missing=("accepted model licenses",),
-    ),
+    SettingCoverage("image_generation_onnx", "Image generation", "image_generation_onnx"),
     SettingCoverage("knowledge.processing", "Image captioning", "captioning"),
     SettingCoverage(
         "table:users",

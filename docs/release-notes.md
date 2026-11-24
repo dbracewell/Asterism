@@ -34,6 +34,11 @@ Unreleased into its version and date.
 
 ### Data
 
+- Settings files are now format version 2. They also carry group token budgets,
+  which groups may use memory, image generation and study in chat (by group
+  name), the usage time zone, accepted model licenses and custom themes.
+  Version 1 files still import, leaving those parts as they are.
+
 - Classes get a switch for decks and quizzes from chat, on for existing classes
   (migration `5c9a5a096d23`).
 - A new `study_proposals` table holds the decks and quizzes the assistant drafts

@@ -7752,7 +7752,7 @@ export type SettingsEnvelope = {
   /**
    * Format Version
    */
-  format_version?: 1;
+  format_version?: 1 | 2;
   /**
    * Salt
    */

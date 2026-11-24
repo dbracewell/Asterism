@@ -22,6 +22,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from asterism.common.log import get_logger
+from asterism.core import config
 from asterism.core.events import EventType, NoArgEvent, event_bus
 from asterism.core.exceptions import BadDataException, ConflictException
 from asterism.domains.groups.models import GroupModel
@@ -40,6 +41,7 @@ from .documents import (
     ExportedComponent,
     ExportedModel,
     ExportedProvider,
+    GroupLimit,
     ModelReference,
     SettingsBundle,
     read_envelope,
@@ -47,6 +49,7 @@ from .documents import (
 )
 from .export import collect_settings
 from .schemas import ProviderChange, SettingsImportSummary
+from .themes import check_themes, write_themes
 
 logger = get_logger("SettingsImport")
 
@@ -107,7 +110,31 @@ def _provider_change(incoming: ExportedProvider, existing: ProviderModel | None)
     )
 
 
+def _as_carried(current: SettingsBundle, bundle: SettingsBundle) -> SettingsBundle:
+    """The current settings as the file sees them: what the file doesn't carry (a
+    version 1 file's missing parts) is set aside, since importing leaves it alone."""
+    update: dict[str, object] = {}
+    for name in ("memory", "image_generation", "study_chat"):
+        if getattr(bundle, name).group_limit is None:
+            update[name] = getattr(current, name).model_copy(update={"group_limit": None})
+    if bundle.image_generation_onnx.accepted_licenses is None:
+        update["image_generation_onnx"] = current.image_generation_onnx.model_copy(update={"accepted_licenses": None})
+    if all(group.budget is None for group in bundle.groups):
+        update["groups"] = tuple(group.model_copy(update={"budget": None}) for group in current.groups)
+    if bundle.usage_timezone is None:
+        update["usage_timezone"] = None
+    return current.model_copy(update=update)
+
+
+def _changed_themes(bundle: SettingsBundle, current: SettingsBundle) -> bool:
+    if bundle.themes is None:
+        return False
+    stored = {theme.id: theme.document for theme in current.themes or ()}
+    return any(stored.get(theme.id) != theme.document for theme in bundle.themes)
+
+
 def _changed_settings(bundle: SettingsBundle, current: SettingsBundle) -> list[str]:
+    current = _as_carried(current, bundle)
     changes = {
         "Draft model": bundle.draft_model is not None and bundle.draft_model != current.draft_model,
         "Active tools": set(bundle.active_tools) != set(current.active_tools),
@@ -128,6 +155,8 @@ def _changed_settings(bundle: SettingsBundle, current: SettingsBundle) -> list[s
         "Image captioning": bundle.captioning != current.captioning,
         "Context compaction": bundle.compaction != current.compaction,
         "Groups": bundle.groups != current.groups,
+        "Usage time zone": bundle.usage_timezone is not None and bundle.usage_timezone != current.usage_timezone,
+        "Themes": _changed_themes(bundle, current),
     }
     return [label for label, changed in changes.items() if changed]
 
@@ -250,30 +279,62 @@ async def _apply_groups(bundle: SettingsBundle, session: AsyncSession) -> None:
             found = [await _find_model(reference, session) for reference in group.models]
             row.model_access = sorted({str(model.id) for model in found if model is not None})
         row.tool_access = None if group.tools is None else sorted(set(group.tools))
+        if group.budget is not None:
+            row.daily_token_budget = group.budget.daily_token_budget
+            row.monthly_token_budget = group.budget.monthly_token_budget
+
+
+async def _group_ids(limit: GroupLimit, session: AsyncSession) -> list[str] | None:
+    """Group names to this installation's ids, creating a custom group that is missing."""
+    if limit.groups is None:
+        return None
+    rows = list(await session.scalars(select(GroupModel)))
+    built_in = {row.id: row for row in rows if row.built_in}
+    by_name = {row.name.casefold(): row for row in rows}
+    ids: set[str] = set()
+    for reference in limit.groups:
+        name = reference.name.strip()
+        row = built_in.get(reference.built_in) if reference.built_in else by_name.get(name.casefold())
+        if row is None:
+            row = GroupModel(name=name)
+            session.add(row)
+            await session.flush()
+            by_name[name.casefold()] = row
+        ids.add(row.id)
+    return sorted(ids)
+
+
+async def _policy_update(enabled: bool, limit: GroupLimit | None, session: AsyncSession) -> dict[str, object]:
+    """The switch, and the group limit when the file carries one (version 2)."""
+    update: dict[str, object] = {"enabled": enabled}
+    if limit is not None:
+        update["group_ids"] = await _group_ids(limit, session)
+    return update
 
 
 async def _apply_memory(bundle: SettingsBundle, session: AsyncSession) -> None:
-    """On or off from the file; this installation keeps its own group limits."""
     from asterism.domains.memory.access import read_policy
 
-    policy = (await read_policy(session)).model_copy(update={"enabled": bundle.memory.enabled})
+    update = await _policy_update(bundle.memory.enabled, bundle.memory.group_limit, session)
+    policy = (await read_policy(session)).model_copy(update=update)
     await _put_setting("memory", policy.model_dump(mode="json"), session)
 
 
 async def _apply_study_chat(bundle: SettingsBundle, session: AsyncSession) -> None:
-    """Imports the switch; this installation keeps its own group limits."""
     from asterism.domains.study.chat_policy import read_policy
 
-    policy = (await read_policy(session)).model_copy(update={"enabled": bundle.study_chat.enabled})
+    update = await _policy_update(bundle.study_chat.enabled, bundle.study_chat.group_limit, session)
+    policy = (await read_policy(session)).model_copy(update=update)
     await _put_setting("study_chat", policy.model_dump(mode="json"), session)
 
 
 async def _apply_image_generation(bundle: SettingsBundle, session: AsyncSession) -> None:
-    """Imports the switch and provider; this installation keeps its own group limits."""
+    """Imports the switch, the group limit (version 2) and the generator choices."""
     from asterism.domains.image_generation.policy import read_policy
 
     current = await read_policy(session)
-    policy = current.model_copy(update=bundle.image_generation.model_dump())
+    update = await _policy_update(bundle.image_generation.enabled, bundle.image_generation.group_limit, session)
+    policy = current.model_copy(update=update)
     await _put_setting("image_generation", policy.model_dump(mode="json"), session)
 
     from asterism.domains.image_generation.local.catalog import entry
@@ -295,10 +356,23 @@ async def _apply_image_generation(bundle: SettingsBundle, session: AsyncSession)
     wanted = bundle.image_generation_onnx.model_id
     # As above: a model this version doesn't know keeps the current choice.
     onnx_model = wanted if wanted is None or onnx_entry(wanted) is not None else onnx.model_id
-    await _put_setting(
-        "image_generation_onnx", onnx.model_copy(update={"model_id": onnx_model}).model_dump(mode="json"), session
-    )
+    onnx_update: dict[str, object] = {"model_id": onnx_model}
+    accepted = bundle.image_generation_onnx.accepted_licenses
+    if accepted is not None:
+        # Licenses name catalog models pinned in code; one this version doesn't know is skipped.
+        onnx_update["accepted_licenses"] = sorted({model for model in accepted if onnx_entry(model) is not None})
+    await _put_setting("image_generation_onnx", onnx.model_copy(update=onnx_update).model_dump(mode="json"), session)
     await _put_component("image_generator_provider", bundle.image_generator_provider, session)
+
+
+async def _apply_usage_timezone(bundle: SettingsBundle, session: AsyncSession) -> None:
+    """A version 2 file carries the usage time zone; an unknown zone refuses the import."""
+    if bundle.usage_timezone is None:
+        return
+    from asterism.domains.usage.service import TIMEZONE_KEY, zone_for
+
+    zone_for(bundle.usage_timezone)
+    await _put_setting(TIMEZONE_KEY, bundle.usage_timezone, session)
 
 
 async def _apply_captioning(bundle: SettingsBundle, session: AsyncSession) -> None:
@@ -322,10 +396,16 @@ async def import_settings(
     """Merge a settings file, or change nothing if any part of it fails."""
     bundle = await _open(source, passphrase)
     summary = await _summary(bundle, session)
+    if bundle.themes:
+        # Checked before anything is written, so a bad theme refuses the whole import.
+        await asyncio.to_thread(check_themes, config.storage_root, bundle.themes)
     try:
         providers = {row.name: row for row in await get_all_providers(session)}
         for provider in bundle.providers:
             _merge_provider(provider, providers.get(provider.name), session)
+        await session.flush()
+        # Groups first: the policies below may name a group the file adds.
+        await _apply_groups(bundle, session)
         await session.flush()
         await _put_setting("active_tools", list(bundle.active_tools), session)
         await _put_setting("skills_enabled", bundle.skills_enabled, session)
@@ -337,7 +417,7 @@ async def import_settings(
         await _put_component("web_search_provider", bundle.web_search_provider, session)
         await _put_component("image_search_provider", bundle.image_search_provider, session)
         await _apply_draft(bundle.draft_model, session)
-        await _apply_groups(bundle, session)
+        await _apply_usage_timezone(bundle, session)
         await _apply_captioning(bundle, session)
         await _apply_compaction(bundle, session)
         await session.commit()
@@ -347,6 +427,9 @@ async def import_settings(
     except Exception:
         await session.rollback()
         raise
+    if bundle.themes:
+        # Theme files aren't in the database; they are written once the rest is committed.
+        await asyncio.to_thread(write_themes, config.storage_root, bundle.themes)
     event_bus.emit(NoArgEvent(type=EventType.DRAFT_MODEL_UPDATED))
     logger.info(f"Admin {admin_id} imported application settings with {len(bundle.providers)} providers")
     return summary

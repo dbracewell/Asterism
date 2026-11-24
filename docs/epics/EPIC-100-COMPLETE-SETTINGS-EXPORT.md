@@ -70,12 +70,12 @@ Suggested order: US-100.1 → 100.2 → 100.3.
 
 ### US-100.2: Export and import what is missing
 
-- [ ] Export and import `usage_timezone`, group budgets, memory and image
+- [x] Export and import `usage_timezone`, group budgets, memory and image
       generation groups by name, accepted ONNX licenses, and themes, as
       `format_version: 2`. v1 files still import.
-- [ ] Preview lists every section and what will change, including groups to be
+- [x] Preview lists every section and what will change, including groups to be
       created.
-- [ ] Tests:
+- [x] Tests:
   - round trip into an empty installation and into one with differently
     numbered groups;
   - a v1 file imports;

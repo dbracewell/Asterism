@@ -3623,7 +3623,10 @@ export const zSettingsEnvelope = z.object({
     .literal("asterism.settings-export")
     .optional()
     .default("asterism.settings-export"),
-  format_version: z.literal(1).optional().default(1),
+  format_version: z
+    .union([z.literal(1), z.literal(2)])
+    .optional()
+    .default(2),
   salt: z.string(),
   ciphertext: z.string(),
 });
