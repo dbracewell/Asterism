@@ -52,7 +52,7 @@ here and the registry disagree, fix both in the same change.
 | Project file     | A library file added to a project, so every chat in it can use it.                                                             | `project_files`                             | "copy" (no copy is made)         |
 | Files in context | The files the assistant may use in this chat: the project's files plus this chat's attachments.                                | execution file scope                        | "knowledge base"                 |
 | Sources          | The passages from your files that an answer relied on.                                                                         | citations, retrieval hits                   | "references"                     |
-| Processing       | Turning an upload into searchable text or an image embedding. Shown as a status in Files.                                      | file knowledge artifact and its generations | "indexing" in user-facing text   |
+| Processing       | Turning an upload into searchable text, or an image into a searchable caption. Shown as a status in Files.                     | file knowledge artifact and its generations | "indexing" in user-facing text   |
 | Team pack        | A file that shares a setup (sub-agents, skills, templates, rubrics, project settings) without files, keys or provider details. | `packs`                                     | "export", "bundle"               |
 
 ## Learning and study

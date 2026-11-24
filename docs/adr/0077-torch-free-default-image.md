@@ -3,7 +3,9 @@
 Status: accepted. Captioning implemented for US-94.1, Diffusers as an optional
 install for US-94.2 and an ONNX image generator for US-94.4, all on 2026-11-22
 ([EPIC-94](../epics/EPIC-94-TORCH-FREE-DEFAULT-IMAGE.md)). Amends
-[ADR-0064](0064-image-generation.md) on where local image generation runs.
+[ADR-0064](0064-image-generation.md) on where local image generation runs. Search
+embeddings moved from CLIP to multilingual-e5-small, also on ONNX Runtime without
+torch, in [ADR-0079](0079-multilingual-text-embeddings.md).
 
 ## Context
 

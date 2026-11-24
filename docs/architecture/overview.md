@@ -113,7 +113,8 @@ Sending a chat message is different, because the reply streams over time:
 Some work starts from a request but finishes later:
 
 - **File processing.** An upload is saved and answered at once. A background job
-  then extracts its text or embeds the image so that it can be searched
+  then extracts its text and embeds it so that it can be searched; an image is
+  searchable once it has a caption
   ([file knowledge processing](file-knowledge-processing.md)).
 - **Chat titles** are written by a model from the chat's first message, while the
   reply is being written, and reach the sidebar through the event stream.
@@ -191,7 +192,7 @@ and `pnpm lint` run the matching script in each app.
 | Authentication              | Better Auth with RS256 JWTs and a JWKS endpoint                                         |
 | Backend                     | FastAPI, Uvicorn, Pydantic                                                              |
 | Relational data             | SQLAlchemy (async) on SQLite 3.45+ in WAL mode, FTS5 for search, Alembic for migrations |
-| Vectors                     | LanceDB, with a pinned local CLIP model for embeddings                                  |
+| Vectors                     | LanceDB, with a pinned local multilingual-e5-small model for embeddings                 |
 | Files                       | The `FileStore` interface, implemented by `LocalFileStore` on disk                      |
 | Models                      | The OpenAI Python SDK, for OpenAI and OpenAI-compatible servers                         |
 | Edge                        | nginx                                                                                   |

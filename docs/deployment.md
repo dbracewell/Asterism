@@ -23,7 +23,8 @@ storage volume.
 - **A model provider:** an OpenAI API key, or any OpenAI-compatible endpoint
   (hosted, or a local server such as one on the same network).
 - **Outbound internet on first start**, to download the pinned embedding model
-  used to index files.
+  used to index files (multilingual-e5-small, about 135 MB, into
+  `models/knowledge-e5-small`).
 - **A browser for the web fetch tool is included.** The tool reads most pages
   directly and renders short or JavaScript-heavy pages in the image's headless
   Chromium, which runs as the container's user with no network of its own: every
@@ -73,7 +74,9 @@ docker compose logs -f
 ```
 
 The first start downloads the embedding model, migrates both databases and then
-reports healthy. Compose publishes port 3000 on `127.0.0.1` only, so only the proxy
+reports healthy. Files uploaded before the model is ready wait and are processed
+once it is. Images are found in search only by their caption, and captioning is
+off until an administrator turns it on (Admin Settings → Image captioning). Compose publishes port 3000 on `127.0.0.1` only, so only the proxy
 on the same host reaches it.
 
 - **Another port.** Set `PORT=8080` and `PUBLIC_URL` to match. Changing the public

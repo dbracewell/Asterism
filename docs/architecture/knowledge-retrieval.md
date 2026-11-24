@@ -36,7 +36,9 @@ service then:
    scope and keeps only files whose current generation is ready and has text
    embeddings. An empty set returns no results, and a scope of more than
    `MAX_KNOWLEDGE_ALLOWED_FILES` (1,000) files is refused.
-2. **Embeds the query** with the same CLIP model used for the files.
+2. **Embeds the query** as an e5 query, with the same model used for the files
+   ([ADR-0079](../adr/0079-multilingual-text-embeddings.md)). Images are matched
+   through their captions.
 3. **Searches LanceDB filtered by user and by those file IDs.** The vector store has
    no search without both filters, so it is never searched globally and filtered
    afterwards.

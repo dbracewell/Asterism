@@ -43,6 +43,9 @@ Unreleased into its version and date.
 
 ### Behavior
 
+- Search works across languages: a question in one language finds files and
+  memories written in another, and each chunk of a file is read in full (512
+  tokens, where the previous model read 77).
 - Images are found in search only through their caption. With image captioning
   off, images are stored and can be attached to chats, but search won't find
   them. Admin Settings → Image captioning says so, and counts the images that

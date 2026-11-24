@@ -134,6 +134,8 @@ Complete (2026-11-24); archive with EPIC-96.
 
 ### [EPIC-99: Multilingual text embeddings, images found by caption](docs/epics/EPIC-99-MULTILINGUAL-E5-EMBEDDINGS.md)
 
+Complete (2026-11-24) once US-99.4 merges; archive with EPIC-96 and EPIC-97.
+
 - [x] US-99.1: The e5 provider
   - [x] Write the ADR.
   - [x] Add a pinned e5 bundle: a `PinnedModel` with files, hashes and sizes, and the models directory `knowledge-e5-small`, migrating the old `knowledge-clip` directory away.
@@ -151,8 +153,8 @@ Complete (2026-11-24); archive with EPIC-96.
   - [x] Add the captioning pane copy, the mode picker line, and a count of uncaptioned images in status.
   - [x] When captioning is turned on, images that are already stored get captioned (check that this already happens through the generation change; add it if not).
   - [x] Unit tests for the copy and the count.
-- [ ] US-99.4: Docs and release notes
-  - [ ] Update:
+- [x] US-99.4: Docs and release notes
+  - [x] Update:
     - `docs/architecture/knowledge-retrieval.md` and `overview.md`
     - `data-and-storage.md`
     - `docs/deployment.md` (first-start download and its size)
@@ -161,7 +163,7 @@ Complete (2026-11-24); archive with EPIC-96.
     - `docs/guide/03-files-and-projects/the-files-library.md` (images need captions to be found)
     - the help pages (`help/pages.ts:162,1080`)
     - ADR-0077 and ADR-0078
-  - [ ] Release notes:
+  - [x] Release notes:
     - Data: every file is re-embedded on upgrade, and memories are rebuilt.
     - Configuration: `EMBEDDING_DIMENSION` is removed.
     - Behavior: multilingual search; images are found only by caption.

@@ -1,6 +1,6 @@
 # EPIC-99: Multilingual text embeddings, images found by caption
 
-Status: in progress (2026-11-24). US-99.1 to US-99.3 done. Source: user request (2026-11-24): "Instead of our
+Status: complete (2026-11-24). US-99.1 PR #91, US-99.2 PR #92, US-99.3 PR #93, US-99.4. Source: user request (2026-11-24): "Instead of our
 current text/image embedding use Xenova/multilingual-e5-small, and for images
 embed the caption, meaning captioning is now required for images to be found in
 search."
@@ -145,7 +145,7 @@ tables, because the two models' vectors differ in size.
 
 ### US-99.4: Docs and release notes
 
-- [ ] Update:
+- [x] Update:
   - `docs/architecture/knowledge-retrieval.md` and `overview.md`
   - `data-and-storage.md`
   - `docs/deployment.md` (first-start download and its size)
@@ -155,7 +155,7 @@ tables, because the two models' vectors differ in size.
     to be found)
   - the help pages (`help/pages.ts:162,1080`)
   - ADR-0077 and ADR-0078
-- [ ] Release notes:
+- [x] Release notes:
   - Data: every file is re-embedded on upgrade, and memories are rebuilt.
   - Configuration: `EMBEDDING_DIMENSION` is removed.
   - Behavior: multilingual search; images are found only by caption.
