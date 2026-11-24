@@ -57,8 +57,7 @@ is enough.
 - **Policy-derived values come from a TanStack query, not the server layout.**
   The layout keeps identity: name, email, role and group. Everything that answers
   "may I use X" (`*_allowed` and `*_available`) moves to one client query.
-- **One availability endpoint.** Add `GET /availability` (served as
-  `/availability`, since there is no `/me` router), owner-only and
+- **One availability endpoint.** Add `GET /availability`, owner-only and
   computed live with the existing checks:
   - `memory.policy`
   - `canvas.policy.read_policy` (fixing `canvas_allowed`, which reads the raw
@@ -123,6 +122,6 @@ As an admin, a policy I change is reflected on the next screen I open.
 
 ## Open questions
 
-1. Should `GET /me/availability` also return per-model availability, or stay
+1. Should `GET /availability` also return per-model availability, or stay
    feature-only? The proposal is feature-only, because `GET /chat/models` already
    carries `available`.
