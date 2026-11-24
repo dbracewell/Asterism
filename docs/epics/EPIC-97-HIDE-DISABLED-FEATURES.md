@@ -96,8 +96,8 @@ Suggested order: US-97.1 → 97.2 → 97.3 → 97.4.
 - [ ] Update the user guide where it says features "start off", and refresh the
       screenshots (`pnpm docs:check`). Add a Behavior line to the release notes.
 
-## Open questions
+## Settled questions
 
-1. Should an admin who is also a user see hidden entry points, with a badge such
-   as "Off for everyone", so they can tell what students are missing? The
-   proposal is no: admins use Admin Settings for that.
+1. Admins who are also users do not see hidden entry points with an "Off for
+   everyone" badge; they use Admin Settings to see what is off (decided
+   2026-11-24).

@@ -1,6 +1,6 @@
 # EPIC-96: Admin policy changes show up without a reload
 
-Status: stories done, awaiting confirmation (2026-11-24). US-96.1 PR #84, US-96.2 PR #85, US-96.3. Source: user request (2026-11-24): "I enable
+Status: complete (2026-11-24). US-96.1 PR #84, US-96.2 PR #85, US-96.3 PR #86. Source: user request (2026-11-24): "I enable
 memories in admin then switch to user settings, I should not have to refresh the
 page to select Use memory."
 

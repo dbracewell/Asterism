@@ -70,6 +70,8 @@ Source: user request (2026-11-24). Suggested order: EPIC-96 → 97 → 99 → 98
 
 ### [EPIC-96: Admin policy changes show up without a reload](docs/epics/EPIC-96-LIVE-POLICY-AVAILABILITY.md)
 
+Complete (2026-11-24); archive once its pull requests have merged.
+
 - [x] US-96.1: One availability query
   - [x] Add `GET /availability`, built from the existing policy checks with no new policy logic. Tests: each feature's available and unavailable reasons, group-limited policies, and owner-only access. Regenerate the client.
   - [x] Add a frontend `useFeature()` hook over the generated query (`staleTime` 30s, refetch on focus).
