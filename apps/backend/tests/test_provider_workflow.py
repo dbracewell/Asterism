@@ -1,7 +1,7 @@
 import uuid
 from unittest.mock import call, patch
 
-import httpx
+import httpx2
 import pytest
 from asterism.core.exceptions import NotFoundException
 from asterism.db.model_registry import Base
@@ -9,7 +9,6 @@ from asterism.domains.llm.client import LLMClient
 from asterism.domains.settings.discovery import (
     OpenAIProviderDiscovery,
     ProviderDiscoveryRequest,
-    _limit_response_size,
 )
 from asterism.domains.settings.provider_types import (
     OPENAI_BASE_URL,
@@ -28,16 +27,10 @@ from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 
 def _discovery(payload: dict[str, object]) -> OpenAIProviderDiscovery:
-    async def handler(_request: httpx.Request) -> httpx.Response:
-        return httpx.Response(200, json=payload)
+    async def handler(_request: httpx2.Request) -> httpx2.Response:
+        return httpx2.Response(200, json=payload)
 
-    return OpenAIProviderDiscovery(
-        http_client_factory=lambda: httpx.AsyncClient(
-            transport=httpx.MockTransport(handler),
-            follow_redirects=False,
-            event_hooks={"response": [_limit_response_size]},
-        ),
-    )
+    return OpenAIProviderDiscovery(transport=httpx2.MockTransport(handler))
 
 
 @pytest.mark.asyncio
