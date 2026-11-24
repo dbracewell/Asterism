@@ -31,10 +31,17 @@ export function availabilityBody(on: Iterable<Feature>) {
   );
 }
 
-/** Mock `GET /availability`; register after any catch-all `**\/api/py/**` route. */
-export async function mockAvailability(page: Page, on: Iterable<Feature>) {
-  const body = availabilityBody(on);
+/**
+ * Mock `GET /availability`; register after any catch-all `**\/api/py/**`
+ * route. Pass a function to answer from the test's current state.
+ */
+export async function mockAvailability(
+  page: Page,
+  on: Iterable<Feature> | (() => Iterable<Feature>),
+) {
   await page.route("**/api/py/availability", (route) =>
-    route.fulfill({ json: body }),
+    route.fulfill({
+      json: availabilityBody(typeof on === "function" ? on() : on),
+    }),
   );
 }

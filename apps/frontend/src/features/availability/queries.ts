@@ -38,7 +38,14 @@ const UNKNOWN: FeatureAvailability = { available: false, reason: "" };
  * the server checks again when the feature is used.
  */
 export function useFeature(feature: Feature): FeatureAvailability {
-  const user = useUser();
-  const { data } = useQuery(availabilityOptions(user.id));
+  return useOwnerFeature(useUser().id, feature);
+}
+
+/** `useFeature` for a component that is handed its owner rather than reading the user. */
+export function useOwnerFeature(
+  owner: string,
+  feature: Feature,
+): FeatureAvailability {
+  const { data } = useQuery(availabilityOptions(owner));
   return data?.[feature] ?? UNKNOWN;
 }

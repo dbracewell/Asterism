@@ -5,6 +5,14 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, expect, it, vi } from "vitest";
 import { ChatInput } from "./chat-input";
 
+// Skills are on unless a test turns them off (EPIC-97).
+const availability = vi.hoisted(() => ({ skills: true }));
+vi.mock("@/features/availability/queries", () => ({
+  useOwnerFeature: (_owner: string, feature: string) => ({
+    available: feature === "skills" ? availability.skills : false,
+    reason: "",
+  }),
+}));
 vi.mock("@/lib/api", () => ({ client: {} }));
 vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
   skillEligibleGetManyOptions: () => ({

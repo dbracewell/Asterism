@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "./support/test";
+import { mockAvailability } from "./support/availability";
 import { mockLearningModes } from "./support/learning-modes";
 test.use({ hasTouch: true });
 const skills = [
@@ -42,6 +43,9 @@ async function mock(page: Page) {
       },
     });
   });
+  // The page loaded with skills on; a policy change mid-test is seen through
+  // the eligible-skills answer, as a stale availability answer would be.
+  await mockAvailability(page, ["skills"]);
   await page.route("**/api/py/test-skill-send", async (route) => {
     state.requests.push(route.request().postDataJSON());
     return route.fulfill({

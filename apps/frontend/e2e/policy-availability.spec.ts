@@ -62,7 +62,10 @@ test("turning memory on in Admin Settings shows Use memory without a reload", as
 }) => {
   const switches = { memory: false, canvas: false };
   await mockApi(page, switches);
+  const answered = page.waitForResponse("**/api/py/availability");
   await page.goto("/e2e/skills?admin=true&t=user&setting=your-asterism");
+  // The first answer, with the feature off, has arrived.
+  await answered;
   const useMemory = page.getByRole("checkbox", { name: "Use memory" });
   // Off, with nothing saved: no Memory section at all (EPIC-97).
   await expect(page.getByRole("tab", { name: "Your Asterism" })).toBeVisible();
@@ -92,7 +95,10 @@ test("turning canvas on in Admin Settings shows the Canvas setting without a rel
 }) => {
   const switches = { memory: false, canvas: false };
   await mockApi(page, switches);
+  const answered = page.waitForResponse("**/api/py/availability");
   await page.goto("/e2e/skills?admin=true&t=user&setting=general");
+  // The first answer, with the feature off, has arrived.
+  await answered;
   const canvas = page.getByRole("checkbox", { name: "Canvas" });
   await expect(page.getByText("Show thinking")).toBeVisible();
   await expect(canvas).toHaveCount(0);
@@ -114,7 +120,10 @@ test("another person's open tab picks up the change when it regains focus", asyn
   const switches = { memory: false, canvas: false };
   await mockApi(page, switches);
   await page.clock.install();
+  const answered = page.waitForResponse("**/api/py/availability");
   await page.goto("/e2e/skills?t=user&setting=your-asterism");
+  // The first answer, with the feature off, has arrived.
+  await answered;
   const useMemory = page.getByRole("checkbox", { name: "Use memory" });
   await expect(page.getByRole("tab", { name: "Your Asterism" })).toBeVisible();
   await expect(useMemory).toHaveCount(0);
@@ -122,6 +131,9 @@ test("another person's open tab picks up the change when it regains focus", asyn
   // The admin turns memory on elsewhere; this tab's answer goes stale after 30s.
   switches.memory = true;
   await page.clock.fastForward(31_000);
-  await page.evaluate(() => window.dispatchEvent(new Event("focus")));
+  // TanStack Query refetches stale queries when the tab becomes visible again.
+  await page.evaluate(() =>
+    window.dispatchEvent(new Event("visibilitychange")),
+  );
   await expect(useMemory).toBeEnabled();
 });

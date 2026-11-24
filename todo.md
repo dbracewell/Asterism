@@ -93,11 +93,11 @@ Complete (2026-11-24); archive once its pull requests have merged.
   - [x] Remove the code execution placeholder from Admin Settings.
   - [x] Memory and canvas toggles: hidden when unavailable, with the kept-data line where the user has saved items.
   - [x] Unit tests per feature, on and off.
-- [ ] US-97.2: Chat and composer
-  - [ ] "+" menu: hide Skills when skills are unavailable. Image generation already works this way.
-  - [ ] `/` discovery: show nothing (no "disabled by an administrator" list) when skills are off.
-  - [ ] Canvas: no create affordance when unavailable. Existing canvases open read-only.
-  - [ ] Tests for each, including a group-limited policy.
+- [x] US-97.2: Chat and composer
+  - [x] "+" menu: hide Skills when skills are unavailable. Image generation already works this way.
+  - [x] `/` discovery: show nothing (no "disabled by an administrator" list) when skills are off.
+  - [x] Canvas: no create affordance when unavailable. Existing canvases open read-only.
+  - [x] Tests for each, including a group-limited policy.
 - [ ] US-97.3: Projects, agents and classes
   - [ ] Hide the project Sub-agents tab, Agents → Sub-agents and the General sub-agents card when delegation is unavailable, unless the user has definitions, in which case use the kept-data line.
   - [ ] Hide the project memory section and the class memory switch when memory is unavailable.
