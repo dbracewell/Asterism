@@ -183,6 +183,10 @@ async def test_internal_tools_hidden_from_users_admin_metadata_and_forged_settin
 @pytest.mark.asyncio
 async def test_automatic_delegation_empty_general_admin_model_and_ordinary_policy(context_runtime):
     r = context_runtime
+    # About delegation and the ordinary tool policy: leave out the study draft tools (ADR-0080).
+    async with r.sessions() as db:
+        db.add(ApplicationSettingsModel(key="study_chat", value={"enabled": False, "group_ids": None}))
+        await db.commit()
     names, scope = await resolve(r)
     assert names == ["sub_agent"]
     assert scope.file_ids == frozenset()
@@ -231,7 +235,7 @@ async def test_retrieval_ready_pending_failed_unavailable_and_ceiling(context_ru
     unrelated = await add_file(r, project=False)
     foreign = await add_file(r, project=False, owner="b")
     names, scope = await resolve(r)
-    assert names == ["search_knowledge", "sub_agent"]
+    assert names == ["propose_deck", "propose_quiz", "search_knowledge", "sub_agent"]
     embed = AsyncMock(return_value=[[0.1]])
     matches = [
         SimpleNamespace(

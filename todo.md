@@ -123,9 +123,9 @@ Decided 2026-11-24: admin switch (on by default, by group), class switch (on by 
 - [x] US-98.2: Draft storage
   - [x] Add a `study_proposals` table: owner, project, chat, message, execution, kind, payload, status. Ship it with an Alembic migration, an upgrade test from the previous revision, and Download my data coverage.
   - [x] Add `origin="chat"` and proposal provenance columns on decks and quizzes, as a migration.
-- [ ] US-98.3: The tools
-  - [ ] Add `propose_deck` and `propose_quiz` in `domains/tools/builtin/`, with their constants in `tools/catalog.py` (internal, policy-gated), a gate `_offers_study`, a branch in `require_internal_tool`, and prompt guidance.
-  - [ ] Tests:
+- [x] US-98.3: The tools
+  - [x] Add `propose_deck` and `propose_quiz` in `domains/tools/builtin/`, with their constants in `tools/catalog.py` (internal, policy-gated), a gate `_offers_study`, a branch in `require_internal_tool`, and prompt guidance.
+  - [x] Tests:
     - offered only when the project, the Study area, the admin and class switches and model tools all line up;
     - never offered to sub-agents or in General chats;
     - re-checked at execution time;

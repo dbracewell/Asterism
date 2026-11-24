@@ -78,7 +78,8 @@ async def test_hidden_areas_keep_their_data(project_api, monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_hiding_every_area_changes_no_capability(project_api, monkeypatch):
+async def test_hiding_areas_changes_no_capability_except_studys_drafting_tools(project_api, monkeypatch):
+    """US-65.2, amended by ADR-0080: the Study area can only take away propose_deck and propose_quiz."""
     client, sessions, p, _, _, _, chat_id = await runtime_setup(project_api, monkeypatch)
     async with sessions() as db:
         file = UserFileModel(
@@ -113,8 +114,12 @@ async def test_hiding_every_area_changes_no_capability(project_api, monkeypatch)
     assert {"sub_agent", "search_knowledge"} <= set(tools)
     assert files["allowed_file_ids"]
 
+    assert {"propose_deck", "propose_quiz"} <= set(tools)
+
     assert (await patch(client, p, areas=ALL_OFF)).status_code == 200
-    assert await capabilities() == before
+    after_delegation, (after_tools, after_ceiling), after_files = await capabilities()
+    assert (after_delegation, after_ceiling, after_files) == (delegation, ceiling, files)
+    assert set(after_tools) == set(tools) - {"propose_deck", "propose_quiz"}
 
 
 @pytest.mark.asyncio

@@ -36,9 +36,14 @@ IMAGE_TOOL_NAME = "generate_image"
 #: The main agent's memory proposal tool (US-93.4, ADR-0078).
 MEMORY_TOOL_NAME = "propose_memory"
 
+#: The main agent's study draft tools (EPIC-98, ADR-0080).
+STUDY_TOOL_NAMES = frozenset({"propose_deck", "propose_quiz"})
+
 #: Internal tools gated by their own admin policy (Skills, Canvas, Image
-#: generation, Memory) instead of the Tools allowlist; they are not listed among admin tools.
-POLICY_GATED_TOOL_NAMES = frozenset({SKILL_TOOL_NAME, IMAGE_TOOL_NAME, MEMORY_TOOL_NAME}) | CANVAS_TOOL_NAMES
+#: generation, Memory, Study in chat) instead of the Tools allowlist; they are not listed among admin tools.
+POLICY_GATED_TOOL_NAMES = (
+    frozenset({SKILL_TOOL_NAME, IMAGE_TOOL_NAME, MEMORY_TOOL_NAME}) | CANVAS_TOOL_NAMES | STUDY_TOOL_NAMES
+)
 
 #: Internal, context-managed tools. Availability is derived server-side from
 #: live context and admin policy; user payloads cannot grant them.

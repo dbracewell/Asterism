@@ -71,7 +71,8 @@ async def test_project_run_records_effective_capabilities_with_grants(context_ru
     profile = await get_main_agent_profile("a")
     live, _ = await resolve_effective_tools(user_id="a", chat_id=chat_id, profile=profile, model_id=A)
     tools = {entry.id: entry for entry in by_kind(manifest, CapabilityKind.TOOL)}
-    assert sorted(tools) == live == ["search_knowledge", "sub_agent", "web_search"]
+    # Study in chat is on by default in project chats (ADR-0080).
+    assert sorted(tools) == live == ["propose_deck", "propose_quiz", "search_knowledge", "sub_agent", "web_search"]
     assert tools["web_search"].grants == TOOL_GRANTS
     # Not on the chat's automatic approval list, so the user is asked first.
     assert tools["web_search"].approval == CapabilityApproval.ASK
