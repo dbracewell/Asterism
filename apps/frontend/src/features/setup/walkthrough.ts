@@ -2,8 +2,12 @@
  * The guided setup's steps (EPIC-101): the Admin Settings sections in the order
  * a new installation needs them, each with what it does, its default and what
  * people see while it is off. Every Admin Settings section is either a step or
- * listed in NOT_STEPS with a reason; a test keeps that true.
+ * listed in NOT_STEPS with a reason; a test keeps that true. Standalone steps
+ * have a pane of their own instead of an Admin Settings section.
  */
+
+import { REPOSITORY_URL, walkthroughHref } from "@/features/guide/links";
+import { adminSectionWalkthrough } from "@/features/help/pages";
 
 export interface SetupStep {
   /** Stored in setup progress; also the Admin Settings section shown. */
@@ -13,6 +17,10 @@ export interface SetupStep {
   explanation: string;
   /** What people see while it is off or unset, when that matters. */
   whenOff?: string;
+  /** Not an Admin Settings section; the walkthrough supplies its pane. */
+  standalone?: true;
+  /** Where to read more, when it isn't the section's user guide page. */
+  guideHref?: string;
 }
 
 export const SETUP_STEPS: readonly SetupStep[] = [
@@ -114,6 +122,16 @@ export const SETUP_STEPS: readonly SetupStep[] = [
     explanation:
       "Approve the people who may run classes. Educators can share course projects and see class totals, never students' chats or memories.",
   },
+  {
+    id: "backup",
+    title: "First backup",
+    standalone: true,
+    explanation:
+      "Take a first backup, and keep SYSTEM_KEY safe apart from it: a backup can only be restored with the SYSTEM_KEY it was made with.",
+    whenOff:
+      "Until there is a backup, nothing can bring back data lost with this server.",
+    guideHref: `${REPOSITORY_URL}/blob/main/docs/architecture/backup-and-restore.md`,
+  },
 ];
 
 /** Admin Settings sections that are not setup steps, and why. */
@@ -131,6 +149,13 @@ export function nextStep(
   states: Record<string, { state: string } | undefined>,
 ): SetupStep | null {
   return SETUP_STEPS.find((step) => !states[step.id]) ?? null;
+}
+
+/** The guide page that explains a step, or undefined when there is none. */
+export function stepGuideHref(step: SetupStep): string | undefined {
+  if (step.guideHref) return step.guideHref;
+  const walkthrough = adminSectionWalkthrough(step.id);
+  return walkthrough ? walkthroughHref(walkthrough) : undefined;
 }
 
 export function setupHref(step?: string) {

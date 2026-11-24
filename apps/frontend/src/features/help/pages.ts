@@ -1290,6 +1290,16 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
         description:
           "Each step shows its explanation above that setting's own section. Next marks it done and Skip for now marks it skipped; both move on to the next step nobody reviewed. Progress is shared by every administrator.",
       },
+      {
+        name: "First backup",
+        description:
+          "The last step shows the commands that take and check a backup, the last backup the server recorded, and why SYSTEM_KEY must be kept apart from the backups.",
+      },
+      {
+        name: "Summary",
+        description:
+          "Lists the steps not reviewed, skipped and reviewed. Open any of them to review it now.",
+      },
     ],
     tasks: [],
     terms: ["admin.providers"],
@@ -1348,6 +1358,14 @@ const studyGuides: [RegExp, PageGuideId][] = [
  * only for admins, and an unknown section falls back to its tab's default.
  * Every page and section has its own guide; a test enforces this.
  */
+/** The user guide page for an Admin Settings section, as a `walkthrough` path. */
+export function adminSectionWalkthrough(section: string): string | undefined {
+  const guide = Object.hasOwn(adminSettingsGuides, section)
+    ? adminSettingsGuides[section]
+    : null;
+  return guide ? pageGuides[guide].walkthrough : undefined;
+}
+
 export function pageGuideFor(
   pathname: string,
   params: { t?: string | null; setting?: string | null },
