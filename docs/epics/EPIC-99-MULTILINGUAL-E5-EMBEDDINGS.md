@@ -1,6 +1,6 @@
 # EPIC-99: Multilingual text embeddings, images found by caption
 
-Status: proposed (2026-11-24). Source: user request (2026-11-24): "Instead of our
+Status: in progress (2026-11-24). US-99.1 done. Source: user request (2026-11-24): "Instead of our
 current text/image embedding use Xenova/multilingual-e5-small, and for images
 embed the caption, meaning captioning is now required for images to be found in
 search."
@@ -94,20 +94,30 @@ Suggested order: US-99.1 → 99.2 → 99.3 → 99.4.
 
 ### US-99.1: The e5 provider
 
-- [ ] Write the ADR.
-- [ ] Add a pinned e5 bundle: a `PinnedModel` with files, hashes and sizes, and
-      the models directory `knowledge-e5-small`, migrating the old `knowledge-clip`
-      directory away.
-- [ ] Implement a text-only `EmbeddingProvider` with pooling, prefixes and
-      truncation.
-- [ ] Update `scripts/benchmark_knowledge_embeddings.py` and record quality and
+Done 2026-11-24, unwired: CLIP keeps serving search until US-99.2 switches the
+tables, because the two models' vectors differ in size.
+
+- [x] Write the ADR ([ADR-0079](../adr/0079-multilingual-text-embeddings.md)).
+- [x] Add a pinned e5 bundle: a `PinnedModel` with files, hashes and sizes
+      (`knowledge/e5_embedding.py`). The models directory `knowledge-e5-small`
+      and moving the old `knowledge-clip` directory away come with the switch, in
+      US-99.2.
+- [x] Implement a text-only `EmbeddingProvider` with pooling, prefixes and
+      truncation (`OnnxE5EmbeddingProvider`, `embed_query` and `embed_passage`;
+      `tokenizers` is now a direct dependency).
+- [x] Update `scripts/benchmark_knowledge_embeddings.py` and record quality and
       speed against CLIP on English and non-English samples in the ADR. Choose
-      quantized or full precision from that.
-- [ ] Tests: download verification, dimensions, prefixes, truncation, and that
-      the image stays torch-free (`pnpm check:image`).
+      quantized or full precision from that: quantized (e5 top-1 1.00 across 5
+      languages, CLIP 0.75).
+- [x] Tests: prefixes, masked pooling, dimensions, refusals for bad bundles and
+      shapes, and the pins (`tests/test_e5_embedding.py`). The image stays
+      torch-free: no new package, checked by `pnpm check:image` in CI.
 
 ### US-99.2: Model-keyed vectors and re-embedding on upgrade
 
+- [ ] Switch to the e5 provider: download it into `models/knowledge-e5-small`,
+      remove the old `knowledge-clip` directory, and split callers into
+      `embed_query` and `embed_passage`.
 - [ ] Add model-keyed table names for knowledge chunks and memory vectors, with
       the dimension taken from the manifest.
 - [ ] A startup comparison of the stored model with the code's model triggers a
