@@ -75,10 +75,10 @@ Source: user request (2026-11-24). Suggested order: EPIC-96 → 97 → 99 → 98
   - [x] Add a frontend `useFeature()` hook over the generated query (`staleTime` 30s, refetch on focus).
   - [x] Move `memory_allowed` and `canvas_allowed` readers (`memory-sections.tsx`, `general-settings.tsx`, `chat-session.tsx`) to the hook. Remove those fields from `GET /settings/user`, since the frontend and backend ship together.
   - [x] Unit tests: the memory checkbox enables after the availability query is invalidated, without a new `UserProvider` value.
-- [ ] US-96.2: Admin saves invalidate what depends on them
-  - [ ] Give every admin settings mutation (memory, canvas, skills, ChatGPT plans, image generation policy and provider, tools, groups, providers and models, captioning) `meta.invalidates` that includes the availability key and the keys of the user-facing queries it affects, such as `toolsGetActiveOptions` and `skillAvailabilityOptions`. Or leave it on global invalidation where that is deliberate.
-  - [ ] Remove the dead `userSettingsGetQueryKey` invalidation.
-  - [ ] A test lists the admin settings mutations and fails if one neither reaches the availability query nor uses global invalidation.
+- [x] US-96.2: Admin saves invalidate what depends on them
+  - [x] Give every admin settings mutation (memory, canvas, skills, ChatGPT plans, image generation policy and provider, tools, groups, providers and models, captioning) `meta.invalidates` that includes the availability key and the keys of the user-facing queries it affects, such as `toolsGetActiveOptions` and `skillAvailabilityOptions`. Or leave it on global invalidation where that is deliberate.
+  - [x] Remove the dead `userSettingsGetQueryKey` invalidation.
+  - [x] A test lists the admin settings mutations and fails if one neither reaches the availability query nor uses global invalidation.
 - [ ] US-96.3: End-to-end check
   - [ ] Playwright: an admin turns memory on, switches to User Settings → Your Asterism, and can tick "Use memory" without a reload. Repeat for canvas and the tool allowlist (the agent form's tool picker).
   - [ ] Playwright: a second user's tab shows the change after it regains focus.

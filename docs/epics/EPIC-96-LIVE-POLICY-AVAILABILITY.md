@@ -1,6 +1,6 @@
 # EPIC-96: Admin policy changes show up without a reload
 
-Status: in progress (2026-11-24). US-96.1 done: `GET /availability`. Source: user request (2026-11-24): "I enable
+Status: in progress (2026-11-24). US-96.1 done: `GET /availability`. US-96.2 done: admin saves reach it. Source: user request (2026-11-24): "I enable
 memories in admin then switch to user settings, I should not have to refresh the
 page to select Use memory."
 
@@ -101,14 +101,14 @@ As a user, what I may use is always current.
 
 As an admin, a policy I change is reflected on the next screen I open.
 
-- [ ] Give every admin settings mutation (memory, canvas, skills, ChatGPT plans,
+- [x] Give every admin settings mutation (memory, canvas, skills, ChatGPT plans,
       image generation policy and provider, tools, groups, providers and models,
       captioning) `meta.invalidates` that includes the availability key and the
       keys of the user-facing queries it affects, such as
       `toolsGetActiveOptions` and `skillAvailabilityOptions`. Or leave it on
       global invalidation where that is deliberate.
-- [ ] Remove the dead `userSettingsGetQueryKey` invalidation.
-- [ ] A test lists the admin settings mutations and fails if one neither reaches
+- [x] Remove the dead `userSettingsGetQueryKey` invalidation.
+- [x] A test lists the admin settings mutations and fails if one neither reaches
       the availability query nor uses global invalidation.
 
 ### US-96.3: End-to-end check
