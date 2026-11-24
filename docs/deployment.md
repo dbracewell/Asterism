@@ -287,16 +287,24 @@ are listed under [security defaults](#security-defaults).
 
 ## 5. First administrator and setup
 
-1. Open `PUBLIC_URL` and create the administrator account with `ADMIN_PASSPHRASE`.
-2. Follow the setup card to connect a model provider and enable a model.
-3. In Admin Settings:
-   - **Groups:** set token budgets for Student and Educator if you need them, and
-     the models and tools each group may use.
-   - **Usage:** choose the time zone that days and months reset in.
-   - **Educators:** approve educators' requests. People join through class invite
-     links, which educators (and administrators, who can run classes too) create
-     for a class.
-4. Take a first backup (below) and check that Admin Settings → Status shows it.
+1. Open `PUBLIC_URL` and create the administrator account with `ADMIN_PASSPHRASE`
+   (the setup command printed it).
+2. Follow the setup card to connect a model provider and enable a model, or
+   import a settings file exported from another installation.
+3. Select **Continue setup**. Admin Settings → Setup walks through every
+   administrator setting in order, saying what each does and its default, with
+   **Next** and **Skip for now** on each step. Progress is stored on the server,
+   so any administrator can resume it later. The steps cover groups and budgets,
+   the usage time zone, tools, image captioning (off by default; **search can't
+   find pictures until it is on**), each feature policy, the theme and educators.
+4. The last step is a first backup: take one (below) while the app runs, check
+   it with `verify`, and select **Check again** to see it recorded. Keep
+   `SYSTEM_KEY` and `BETTER_AUTH_SECRET` apart from the backups.
+
+People join through class invite links, which educators (and administrators,
+who can run classes too) create for a class. The
+[first-time setup guide](guide/08-for-administrators/first-time-setup.md) shows
+each step.
 
 Accounts: admins suspend, reactivate, reset passwords with one-time links, and
 delete accounts. People can ask for deletion in Settings → General, and download

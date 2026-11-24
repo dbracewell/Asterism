@@ -209,6 +209,6 @@ Complete (2026-11-24) once US-99.4 merges; archive with EPIC-96 and EPIC-97.
   - [x] Write each step's explanation: what it does, its default, what users see when it is off, and a link to the guide page.
   - [x] Add the summary page and Admin Settings → Setup.
   - [x] Add the first backup step: explain `SYSTEM_KEY`, run or show the backup command, and record that the step was done.
-- [ ] US-101.4: Docs
-  - [ ] Rewrite `docs/guide/08-for-administrators/first-time-setup.md` around the walkthrough, with refreshed screenshots (`pnpm docs:check`), and update `docs/deployment.md` §5.
-  - [ ] Release notes: Behavior (setup walkthrough); Image (the `setup` command).
+- [x] US-101.4: Docs
+  - [x] Rewrite `docs/guide/08-for-administrators/first-time-setup.md` around the walkthrough, with refreshed screenshots (`pnpm docs:check`), and update `docs/deployment.md` §5.
+  - [x] Release notes: Behavior (setup walkthrough); Image (the `setup` command).

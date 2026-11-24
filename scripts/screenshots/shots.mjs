@@ -42,6 +42,11 @@ export const shots = [
     name: "setup-enable-models",
     alt: "The setup card listing the models the provider offers, with a default model and a draft model chosen",
   },
+  {
+    stage: "first-run",
+    name: "setup-ready",
+    alt: "The setup card saying you're ready, with Continue setup and Start chatting buttons",
+  },
 
   // --- Getting started -------------------------------------------------------------
   {
@@ -1247,6 +1252,27 @@ export const shots = [
     as: "admin",
     path: () => "/settings?t=admin&setting=educators",
     ready: ["Revoke"],
+  },
+  {
+    name: "admin-setup-step",
+    alt: "Admin Settings, Setup: the list of setup steps with Providers and models done, and the Image captioning step explaining that search can't find pictures while captioning is off, with Next, Skip for now and the captioning settings below",
+    as: "admin",
+    path: () => "/settings?t=admin&setting=setup&step=image-captioning",
+    ready: ["Step 5 of", "search can't find them"],
+  },
+  {
+    name: "admin-setup-backup",
+    alt: "The First backup setup step: why SYSTEM_KEY and BETTER_AUTH_SECRET must be kept apart from backups, the backup and verify commands with copy buttons, and the last backup",
+    as: "admin",
+    path: () => "/settings?t=admin&setting=setup&step=backup",
+    ready: ["Keep the secrets apart from the backups", "Last backup"],
+  },
+  {
+    name: "admin-setup-summary",
+    alt: "The setup summary, listing the steps not reviewed and the steps reviewed, each a button that opens it, and Start chatting",
+    as: "admin",
+    path: () => "/settings?t=admin&setting=setup&step=summary",
+    ready: ["Setup summary", "Not reviewed"],
   },
   {
     name: "admin-theme-editor",

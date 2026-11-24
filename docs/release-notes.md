@@ -78,6 +78,10 @@ Unreleased into its version and date.
   backup**, shows the backup and verify commands and the last backup the server
   recorded, and explains why `SYSTEM_KEY` must be kept apart from backups. A
   summary lists the steps not reviewed, skipped and reviewed.
+- A damaged or cut-off image upload shows **Embedding: failed** again. Since
+  images are found by their captions, it had shown as ready.
+- The [first-time setup guide](guide/08-for-administrators/first-time-setup.md)
+  follows the walkthrough, with new screenshots.
 - Ask for flashcards or a quiz in a project chat, and the assistant drafts a
   deck or a practice quiz from the conversation and the project's files. A card
   under the reply shows the draft to edit, save to Study or dismiss; nothing is

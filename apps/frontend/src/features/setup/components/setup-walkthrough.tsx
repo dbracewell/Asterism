@@ -176,9 +176,11 @@ function Walkthrough({ panes }: { panes: Record<string, ReactNode> }) {
                 </Button>
                 <StepBadge state={states[current.id]} />
               </div>
-              <p className="text-muted-foreground text-xs">
-                Save any changes below before choosing Next.
-              </p>
+              {!current.standalone && (
+                <p className="text-muted-foreground text-xs">
+                  Save any changes below before choosing Next.
+                </p>
+              )}
               {record.isError && (
                 <p role="alert" className="text-destructive text-sm">
                   {errorMessage(record.error, "The step could not be saved.")}

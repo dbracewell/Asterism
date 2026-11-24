@@ -156,6 +156,8 @@ async function firstRun(browser, instance, stubUrl) {
   await page.getByRole("option", { name: MODELS.writer }).click();
   await maybe("setup-enable-models");
   await models.getByRole("button", { name: "Continue" }).click();
+  await page.getByRole("button", { name: "Continue setup" }).waitFor();
+  await maybe("setup-ready");
   await page.getByRole("button", { name: "Start chatting" }).click();
   await context.close();
 }
