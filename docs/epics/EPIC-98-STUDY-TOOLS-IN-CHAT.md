@@ -1,6 +1,6 @@
 # EPIC-98: Decks and quizzes from chat
 
-Status: in progress (2026-11-24). US-98.1 and US-98.2 done. Source: user request (2026-11-24): "New tools for
+Status: in progress (2026-11-24). US-98.1 to US-98.3 done; US-98.3 and US-98.4 should ship in the same release (the tools draft, the card saves). Source: user request (2026-11-24): "New tools for
 creating decks and quizzes which are automatically added when chatting in a
 project with those study options available."
 
@@ -120,10 +120,10 @@ Suggested order: US-98.1 → 98.2 → 98.3 → 98.4 → 98.5.
 
 ### US-98.3: The tools
 
-- [ ] Add `propose_deck` and `propose_quiz` in `domains/tools/builtin/`, with
+- [x] Add `propose_deck` and `propose_quiz` in `domains/tools/builtin/`, with
       their constants in `tools/catalog.py` (internal, policy-gated), a gate
       `_offers_study`, a branch in `require_internal_tool`, and prompt guidance.
-- [ ] Tests:
+- [x] Tests:
   - offered only when the project, the Study area, the admin and class
     switches and model tools all line up;
   - never offered to sub-agents or in General chats;

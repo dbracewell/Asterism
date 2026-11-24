@@ -18,6 +18,7 @@ from asterism.domains.tools.catalog import (
     MEMORY_TOOL_NAME,
     POLICY_GATED_TOOL_NAMES,
     SKILL_TOOL_NAME,
+    STUDY_TOOL_NAMES,
     configurable_tools,
 )
 from asterism.domains.tools.context import ContextToolScope
@@ -89,6 +90,8 @@ async def resolve_effective_tools(
             names.add(IMAGE_TOOL_NAME)
         if not profile.sub_agent and await _offers_memory(user_id, chat_id, db):
             names.add(MEMORY_TOOL_NAME)
+        if not profile.sub_agent and await _offers_study(user_id, chat_id, db):
+            names |= STUDY_TOOL_NAMES
         if files.project_id != ceiling.project_id:
             return sorted(names), ceiling
         if profile.sub_agent:
@@ -141,6 +144,14 @@ async def _offers_memory(user_id: str, chat_id: uuid.UUID, session: AsyncSession
     return (await chat_memory_available(user_id, chat_id, session)).available
 
 
+async def _offers_study(user_id: str, chat_id: uuid.UUID, session: AsyncSession) -> bool:
+    """The main agent may draft decks and quizzes in a project chat whose Study area is on (ADR-0080)."""
+    from asterism.domains.study.chat_policy import chat_study_available
+
+    available, _ = await chat_study_available(user_id, chat_id, session)
+    return available
+
+
 async def _offers_skills(user_id: str, agent_id: uuid.UUID, session: AsyncSession) -> bool:
     """A sub-agent gets load_skill while skills are on and it has an assigned skill (ADR-0062)."""
     from asterism.domains.skills.loading import read_skill_catalog
@@ -182,6 +193,10 @@ async def require_internal_tool(
             # The policy, group, personal and course switches and the chat's purpose, read live.
             if profile.sub_agent or not await _offers_memory(user_id, chat_id, db):
                 raise BadDataException("Memory is unavailable in this execution context")
+        elif name in STUDY_TOOL_NAMES:
+            # The chat, project, Study area, admin and class switches, read live.
+            if profile.sub_agent or not await _offers_study(user_id, chat_id, db):
+                raise BadDataException("Drafting decks and quizzes is unavailable in this execution context")
         elif name == SKILL_TOOL_NAME:
             # The tool rechecks the named skill's assignment; this checks the gate.
             from asterism.domains.skills.policy import read_policy
