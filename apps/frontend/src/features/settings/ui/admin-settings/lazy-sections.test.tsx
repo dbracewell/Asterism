@@ -77,9 +77,7 @@ describe("getLazyAdminSettingsSections", () => {
     const values = getLazyAdminSettingsSections().flatMap((section) =>
       section.type === "section" ? [section.value] : [],
     );
-    const steps = SETUP_STEPS.filter((step) => !step.standalone).map(
-      (step) => step.id,
-    );
+    const steps = SETUP_STEPS.map((step) => step.id);
     expect(
       values.filter((value) => !steps.includes(value) && !(value in NOT_STEPS)),
     ).toEqual([]);

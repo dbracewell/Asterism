@@ -65,3 +65,32 @@ Found while taking the Dependabot updates for EPIC-92. Take it as a small pull r
 ## Admin, study and setup epics (proposed 2026-11-24)
 
 EPIC-96 through EPIC-101 (live policy availability, hiding what the admin turned off, multilingual embeddings, decks and quizzes from chat, the complete settings export and guided setup) are complete and archived in the [2026-11-24 checklist](docs/archive/todo-completed-2026-11-24.md).
+
+## Setup walkthrough follow-ups (proposed 2026-11-24)
+
+Source: user review of the EPIC-101 install flow (2026-11-24). See [EPIC-102](docs/epics/EPIC-102-SETUP-WALKTHROUGH-FOLLOW-UPS.md). Suggested order: US-102.1 → 102.2 → 102.3 → 102.4. Work one story at a time.
+
+### US-102.1: Remove theme, educators and first backup from setup
+
+- [x] Remove `theme_editor`, `educators` and `backup` from `SETUP_STEPS`; list the first two in `NOT_STEPS` with reasons.
+- [x] Delete `SetupBackupStep`, the `standalone` and `guideHref` fields, and the backup branch; update `lazy-sections.test.tsx`.
+- [x] Test that stored progress with the removed ids still counts 12 steps and summarises correctly.
+- [x] Update `e2e/setup-walkthrough.spec.ts`.
+
+### US-102.2: First-run checklist shows the rest of setup
+
+- [ ] Four-step `SetupSteps` with "Review the remaining settings (optional)" third; the ready card marks step 3 current.
+- [ ] Build step 3's description and the ready card's list from `SETUP_STEPS`.
+- [ ] Unit tests per card; update `first-run-setup.spec.ts` and `provider-setup.spec.ts`.
+
+### US-102.3: Next saves, Skip discards
+
+- [ ] Add the setup draft context and `useSetupDraft` (no-op outside the walkthrough).
+- [ ] Register drafts in every pane that has one, including captioning's unsaveable provider-without-model case.
+- [ ] Walkthrough: Save and continue / Next, failed save keeps the step, blocked reason, discard prompt on Skip and step-list navigation, "Reviewed" chip, drop the old hint.
+- [ ] Unit tests and Playwright (time zone saved by Save and continue; Skills toggle discarded by Skip).
+
+### US-102.4: Docs and release notes
+
+- [ ] Update `first-time-setup.md` with refreshed screenshots (`pnpm docs:check`) and `docs/deployment.md` §5 if needed.
+- [ ] Release notes (Behavior).
