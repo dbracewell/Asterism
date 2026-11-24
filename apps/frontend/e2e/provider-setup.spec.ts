@@ -31,6 +31,7 @@ async function routeSetupApi(page: Page, failures = 0) {
     updates: {} as Record<string, Record<string, unknown>>,
     defaultModel: null as unknown,
     draftModel: null as string | null,
+    setupSteps: [] as string[],
   };
   const models = () =>
     state.discovered
@@ -117,6 +118,11 @@ async function routeSetupApi(page: Page, failures = 0) {
       await route.fulfill({ json: {} });
     },
   );
+  // Finishing these steps marks the walkthrough's providers step (US-101.2).
+  await page.route("**/api/py/settings/app/setup/steps/*", async (route) => {
+    state.setupSteps.push(route.request().url().split("/").at(-1)!);
+    await route.fulfill({ json: { steps: {} } });
+  });
   // The new-chat page is outside this harness; stand in for it.
   await page.route(
     (url) => url.origin === origin && url.pathname === "/",
@@ -219,8 +225,11 @@ test("enabling models shows the ready step, which opens the new-chat page", asyn
   await expect(page.getByRole("status")).toHaveText(
     "You're ready to start your exploration.",
   );
+  await expect(
+    page.getByRole("button", { name: "Continue setup" }),
+  ).toBeFocused();
+  await expect.poll(() => state.setupSteps).toEqual(["providers"]);
   const start = page.getByRole("button", { name: "Start chatting" });
-  await expect(start).toBeFocused();
   await expect(page).toHaveURL(/\/e2e\/provider-setup$/);
   await start.click();
   await expect(page).toHaveURL(`${origin}/`);
@@ -376,7 +385,7 @@ for (const scenario of authViewports) {
     }
     await expectAuthFits(page);
     await models.getByRole("button", { name: "Continue" }).press("Enter");
-    const start = page.getByRole("button", { name: "Start chatting" });
+    const start = page.getByRole("button", { name: "Continue setup" });
     await expect(start).toBeFocused();
     await expectReachable(start, true);
     // At 200% text on a 300px screen the message sits just above the focused

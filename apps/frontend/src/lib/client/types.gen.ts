@@ -151,6 +151,12 @@ export type ApplicationSettings = {
     [key: string]: unknown;
   } | null;
   /**
+   * Setup Progress
+   */
+  setup_progress?: {
+    [key: string]: unknown;
+  } | null;
+  /**
    * Image Generation Local
    */
   image_generation_local?: {
@@ -7840,6 +7846,48 @@ export type SettingsImportSummary = {
 };
 
 /**
+ * SetupProgress
+ *
+ * Steps not listed have not been reviewed.
+ */
+export type SetupProgress = {
+  /**
+   * Steps
+   */
+  steps?: {
+    [key: string]: SetupStepState;
+  };
+};
+
+/**
+ * SetupStepState
+ */
+export type SetupStepState = {
+  /**
+   * State
+   */
+  state: "done" | "skipped";
+  /**
+   * At
+   */
+  at: number;
+  /**
+   * By
+   */
+  by?: string | null;
+};
+
+/**
+ * SetupStepUpdate
+ */
+export type SetupStepUpdate = {
+  /**
+   * State
+   */
+  state: "done" | "skipped" | null;
+};
+
+/**
  * ShortTextField
  */
 export type ShortTextField = {
@@ -11179,6 +11227,12 @@ export type ApplicationSettingsWritable = {
    * Study Chat
    */
   study_chat?: {
+    [key: string]: unknown;
+  } | null;
+  /**
+   * Setup Progress
+   */
+  setup_progress?: {
     [key: string]: unknown;
   } | null;
   /**
@@ -21698,6 +21752,85 @@ export type StudyChatPolicyUpdateResponses = {
 
 export type StudyChatPolicyUpdateResponse =
   StudyChatPolicyUpdateResponses[keyof StudyChatPolicyUpdateResponses];
+
+export type SetupProgressGetData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/settings/app/setup";
+};
+
+export type SetupProgressGetErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Forbidden
+   */
+  403: ErrorDetail;
+};
+
+export type SetupProgressGetError =
+  SetupProgressGetErrors[keyof SetupProgressGetErrors];
+
+export type SetupProgressGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: SetupProgress;
+};
+
+export type SetupProgressGetResponse =
+  SetupProgressGetResponses[keyof SetupProgressGetResponses];
+
+export type SetupStepUpdateData = {
+  body: SetupStepUpdate;
+  path: {
+    /**
+     * Step Id
+     */
+    step_id: string;
+  };
+  query?: never;
+  url: "/settings/app/setup/steps/{step_id}";
+};
+
+export type SetupStepUpdateErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Forbidden
+   */
+  403: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type SetupStepUpdateError =
+  SetupStepUpdateErrors[keyof SetupStepUpdateErrors];
+
+export type SetupStepUpdateResponses = {
+  /**
+   * Successful Response
+   */
+  200: SetupProgress;
+};
+
+export type SetupStepUpdateResponse =
+  SetupStepUpdateResponses[keyof SetupStepUpdateResponses];
 
 export type MainAgentGetData = {
   body?: never;

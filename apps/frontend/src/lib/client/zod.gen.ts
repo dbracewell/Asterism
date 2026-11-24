@@ -3227,6 +3227,7 @@ export const zApplicationSettings = z.object({
   image_generation: z.record(z.string(), z.unknown()).nullish(),
   memory: z.record(z.string(), z.unknown()).nullish(),
   study_chat: z.record(z.string(), z.unknown()).nullish(),
+  setup_progress: z.record(z.string(), z.unknown()).nullish(),
   image_generation_local: z.record(z.string(), z.unknown()).nullish(),
   image_generation_onnx: z.record(z.string(), z.unknown()).nullish(),
   image_generator_provider: zComponentProviderParameters.nullish(),
@@ -3675,6 +3676,31 @@ export const zSettingsImportSummary = z.object({
   providers: z.array(zProviderChange),
   kept_providers: z.array(z.string()),
   changed_settings: z.array(z.string()),
+});
+
+/**
+ * SetupStepState
+ */
+export const zSetupStepState = z.object({
+  state: z.enum(["done", "skipped"]),
+  at: z.int().gte(0),
+  by: z.string().max(200).nullish(),
+});
+
+/**
+ * SetupProgress
+ *
+ * Steps not listed have not been reviewed.
+ */
+export const zSetupProgress = z.object({
+  steps: z.record(z.string(), zSetupStepState).optional(),
+});
+
+/**
+ * SetupStepUpdate
+ */
+export const zSetupStepUpdate = z.object({
+  state: z.enum(["done", "skipped"]).nullable(),
 });
 
 /**
@@ -5726,6 +5752,7 @@ export const zApplicationSettingsWritable = z.object({
   image_generation: z.record(z.string(), z.unknown()).nullish(),
   memory: z.record(z.string(), z.unknown()).nullish(),
   study_chat: z.record(z.string(), z.unknown()).nullish(),
+  setup_progress: z.record(z.string(), z.unknown()).nullish(),
   image_generation_local: z.record(z.string(), z.unknown()).nullish(),
   image_generation_onnx: z.record(z.string(), z.unknown()).nullish(),
   image_generator_provider: zComponentProviderParameters.nullish(),
@@ -7962,6 +7989,22 @@ export const zStudyChatPolicyUpdateBody = zStudyChatPolicy;
  * Successful Response
  */
 export const zStudyChatPolicyUpdateResponse = zStudyChatPolicy;
+
+/**
+ * Successful Response
+ */
+export const zSetupProgressGetResponse = zSetupProgress;
+
+export const zSetupStepUpdateBody = zSetupStepUpdate;
+
+export const zSetupStepUpdatePath = z.object({
+  step_id: z.string(),
+});
+
+/**
+ * Successful Response
+ */
+export const zSetupStepUpdateResponse = zSetupProgress;
 
 /**
  * Successful Response

@@ -248,6 +248,8 @@ class ApplicationSettings(BaseModel):
     memory: dict[str, Any] | None = None
     # Decks and quizzes from chat (EPIC-98), stored as one JSON value; on when unset.
     study_chat: dict[str, Any] | None = None
+    # Guided setup progress (EPIC-101), stored as one JSON value.
+    setup_progress: dict[str, Any] | None = None
     # The local diffusers generator's model and device (US-76.2).
     image_generation_local: dict[str, Any] | None = None
     # The ONNX generator's model and accepted licenses (US-94.4).

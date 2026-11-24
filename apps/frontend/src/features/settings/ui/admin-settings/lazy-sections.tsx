@@ -23,6 +23,7 @@ import {
   ShrinkIcon,
   GaugeIcon,
   ActivityIcon,
+  ListChecksIcon,
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import type { ReactNode } from "react";
@@ -148,13 +149,44 @@ const ExportSettings = dynamic(
   { loading: AdminPaneLoading },
 );
 
+const SetupWalkthrough = dynamic(
+  () =>
+    import("@/features/setup/components/setup-walkthrough").then(
+      (module) => module.SetupWalkthrough,
+    ),
+  { loading: AdminPaneLoading },
+);
+
 const pane = (paneLabel: string, children: ReactNode) => (
   <AdminPaneErrorBoundary paneLabel={paneLabel}>
     {children}
   </AdminPaneErrorBoundary>
 );
 
-export const getLazyAdminSettingsSections = (): Types => [
+export const getLazyAdminSettingsSections = (): Types => {
+  const sections = adminSections();
+  // The walkthrough (US-101.2) shows each step's own pane.
+  const panes = Object.fromEntries(
+    sections.flatMap((section) =>
+      section.type === "section"
+        ? [[section.value, section.settingsPane] as const]
+        : [],
+    ),
+  );
+  return [
+    {
+      type: "section",
+      label: "Setup",
+      value: "setup",
+      icon: <ListChecksIcon />,
+      settingsPane: pane("Setup", <SetupWalkthrough panes={panes} />),
+    },
+    { type: "separator" },
+    ...sections,
+  ];
+};
+
+const adminSections = (): Types => [
   {
     type: "section",
     label: "Providers",

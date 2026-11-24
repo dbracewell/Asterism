@@ -52,7 +52,8 @@ export type PageGuideId =
   | "admin.status"
   | "admin.users"
   | "admin.educators"
-  | "admin.export";
+  | "admin.export"
+  | "admin.setup";
 
 export interface PageGuide {
   title: string;
@@ -1278,6 +1279,22 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
     terms: ["admin.settings-file", "admin.providers"],
     audience: "admin",
   },
+  "admin.setup": {
+    title: "Setup",
+    walkthrough: "08-for-administrators/first-time-setup",
+    purpose:
+      "Walk through every administrator setting in order, with what each one does and its default. Skip any step and return to it later.",
+    areas: [
+      {
+        name: "Steps",
+        description:
+          "Each step shows its explanation above that setting's own section. Next marks it done and Skip for now marks it skipped; both move on to the next step nobody reviewed. Progress is shared by every administrator.",
+      },
+    ],
+    tasks: [],
+    terms: ["admin.providers"],
+    audience: "admin",
+  },
 };
 
 const userSettingsGuides: Record<string, PageGuideId> = {
@@ -1291,6 +1308,7 @@ const userSettingsGuides: Record<string, PageGuideId> = {
 };
 
 const adminSettingsGuides: Record<string, PageGuideId | null> = {
+  setup: "admin.setup",
   providers: "admin.providers",
   theme_editor: "admin.theme-editor",
   tools: "admin.tools",

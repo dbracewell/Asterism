@@ -199,6 +199,13 @@ test("the administrator connects a provider right after creating the account", a
   const stored = await settings.json();
   expect(stored.draft_model?.name).toBe("First-run alpha");
   expect(stored.llm_providers).toHaveLength(1);
+  // Finishing these steps reviewed the walkthrough's providers step (US-101.2).
+  const progress = await page.request.get("/api/py/settings/app/setup", {
+    headers: { Authorization: `Bearer ${token.token}` },
+  });
+  expect((await progress.json()).steps.providers).toMatchObject({
+    state: "done",
+  });
   // Checked capabilities are manual; untouched unknown ones stay unknown.
   const catalog = await page.request.get(
     `/api/py/settings/app/providers/${stored.llm_providers[0].id}/models?limit=10`,

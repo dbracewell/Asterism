@@ -643,6 +643,12 @@ import type {
   RubricUpdateData,
   RubricUpdateErrors,
   RubricUpdateResponses,
+  SetupProgressGetData,
+  SetupProgressGetErrors,
+  SetupProgressGetResponses,
+  SetupStepUpdateData,
+  SetupStepUpdateErrors,
+  SetupStepUpdateResponses,
   SkillCreateData,
   SkillCreateErrors,
   SkillCreateResponses,
@@ -6285,6 +6291,54 @@ export class ApiClient extends HeyApiClient {
     >({
       security: [{ scheme: "bearer", type: "http" }],
       url: "/settings/app/study-chat",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+  }
+
+  /**
+   * Get Progress
+   */
+  public setupProgressGet<ThrowOnError extends boolean = false>(
+    options?: Options<SetupProgressGetData, ThrowOnError>,
+  ): RequestResult<
+    SetupProgressGetResponses,
+    SetupProgressGetErrors,
+    ThrowOnError
+  > {
+    return (options?.client ?? this.client).get<
+      SetupProgressGetResponses,
+      SetupProgressGetErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/settings/app/setup",
+      ...options,
+    });
+  }
+
+  /**
+   * Put Step
+   *
+   * Mark a step done or skipped, or reopen it (state null).
+   */
+  public setupStepUpdate<ThrowOnError extends boolean = false>(
+    options: Options<SetupStepUpdateData, ThrowOnError>,
+  ): RequestResult<
+    SetupStepUpdateResponses,
+    SetupStepUpdateErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).put<
+      SetupStepUpdateResponses,
+      SetupStepUpdateErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/settings/app/setup/steps/{step_id}",
       ...options,
       headers: {
         "Content-Type": "application/json",

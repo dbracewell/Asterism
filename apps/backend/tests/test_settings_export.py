@@ -243,8 +243,13 @@ async def test_wrong_passphrase_and_tampering_fail_alike():
 
 async def test_bundle_covers_every_application_setting():
     """Fails when a new admin setting has not been added to the file."""
+    from asterism.domains.settings_transfer.coverage import coverage_for
+
     mapped = {"llm_providers": "providers", "draft_model_id": "draft_model"}
     for field in ApplicationSettings.model_fields:
+        entry = coverage_for(field)
+        if entry is not None and entry.excluded:
+            continue  # left out on purpose, with a reason (EPIC-100)
         assert mapped.get(field, field) in SettingsBundle.model_fields
     assert "captioning" in SettingsBundle.model_fields
 

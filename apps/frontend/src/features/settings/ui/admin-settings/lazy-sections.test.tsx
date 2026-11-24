@@ -16,6 +16,7 @@ vi.mock("next/dynamic", () => ({
   },
 }));
 
+import { NOT_STEPS, SETUP_STEPS } from "@/features/setup/walkthrough";
 import { getLazyAdminSettingsSections } from "./lazy-sections";
 
 describe("getLazyAdminSettingsSections", () => {
@@ -50,6 +51,7 @@ describe("getLazyAdminSettingsSections", () => {
     );
     expect(sections.filter((section) => section.badge)).toEqual([]);
     expect(sections.map((section) => section.label)).toEqual([
+      "Setup",
       "Providers",
       "Theme editor",
       "Groups",
@@ -69,5 +71,19 @@ describe("getLazyAdminSettingsSections", () => {
       "Export",
     ]);
     expect(sections.every((section) => !section.disabled)).toBe(true);
+  });
+
+  it("every section is a setup step or says why not (US-101.2)", () => {
+    const values = getLazyAdminSettingsSections().flatMap((section) =>
+      section.type === "section" ? [section.value] : [],
+    );
+    const steps = SETUP_STEPS.map((step) => step.id);
+    expect(
+      values.filter((value) => !steps.includes(value) && !(value in NOT_STEPS)),
+    ).toEqual([]);
+    // Each step and exclusion names a real section, once.
+    expect([...steps, ...Object.keys(NOT_STEPS)].sort()).toEqual(
+      [...values].sort(),
+    );
   });
 });

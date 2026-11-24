@@ -56,6 +56,11 @@ COVERAGE: tuple[SettingCoverage, ...] = (
     SettingCoverage("image_generation_onnx", "Image generation", "image_generation_onnx"),
     SettingCoverage("knowledge.processing", "Image captioning", "captioning"),
     SettingCoverage(
+        "setup_progress",
+        "Setup",
+        excluded="Which setup steps this installation's administrators reviewed belongs to that installation.",
+    ),
+    SettingCoverage(
         "table:users",
         "Users",
         excluded="People and their group membership are account data, kept by a backup, not settings.",

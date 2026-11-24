@@ -97,14 +97,14 @@ Suggested order: US-101.1 → 101.2 → 101.3 → 101.4.
 
 ### US-101.2: Setup walkthrough frame
 
-- [ ] Store setup progress server-side (`setup_progress` in app settings: step
+- [x] Store setup progress server-side (`setup_progress` in app settings: step
       states and timestamps), with an Alembic migration if a table is needed, and
       export it per EPIC-100's registry (or mark it excluded).
-- [ ] Build the step frame from the section registry: explanation, embedded
+- [x] Build the step frame from the section registry: explanation, embedded
       section, Skip and Next, and resume where the admin left off.
-- [ ] Fold the existing provider, import and default-model steps (EPIC-48) into
+- [x] Fold the existing provider, import and default-model steps (EPIC-48) into
       it.
-- [ ] Unit tests and Playwright: a fresh install goes through every step, skips
+- [x] Unit tests and Playwright: a fresh install goes through every step, skips
       some, and resumes after a reload.
 
 ### US-101.3: Explanations and summary
