@@ -37,6 +37,9 @@ import type {
   AppCompactionUpdateData,
   AppCompactionUpdateError,
   AppCompactionUpdateResponse,
+  AppImageSearchStatusData,
+  AppImageSearchStatusError,
+  AppImageSearchStatusResponse,
   AppKnowledgeEmbeddingStatusData,
   AppKnowledgeEmbeddingStatusError,
   AppKnowledgeEmbeddingStatusResponse,
@@ -5818,6 +5821,36 @@ export const appKnowledgeProcessingProfileUpdateMutation = (
   };
   return mutationOptions;
 };
+
+export const appImageSearchStatusQueryKey = (
+  options?: Options<AppImageSearchStatusData>,
+) => createQueryKey("appImageSearchStatus", options);
+
+/**
+ * Count images that search can't find without a caption
+ *
+ * Images are found only by their caption (ADR-0079); count those without one.
+ */
+export const appImageSearchStatusOptions = (
+  options?: Options<AppImageSearchStatusData>,
+) =>
+  queryOptions<
+    AppImageSearchStatusResponse,
+    AppImageSearchStatusError,
+    AppImageSearchStatusResponse,
+    ReturnType<typeof appImageSearchStatusQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry.get().appImageSearchStatus({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: appImageSearchStatusQueryKey(options),
+  });
 
 export const appKnowledgeEmbeddingStatusQueryKey = (
   options?: Options<AppKnowledgeEmbeddingStatusData>,

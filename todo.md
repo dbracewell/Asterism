@@ -147,10 +147,10 @@ Complete (2026-11-24); archive with EPIC-96.
   - [x] Drop the old tables once the new generation is complete.
   - [x] Alembic data migration plus an upgrade test seeded with CLIP-era files, captions and memories: after the upgrade, search finds the same files and memories.
   - [x] Remove `embed_image`, image chunks and `visual_ready`, and update retrieval and similar files.
-- [ ] US-99.3: Captioning is required for image search
-  - [ ] Add the captioning pane copy, the mode picker line, and a count of uncaptioned images in status.
-  - [ ] When captioning is turned on, images that are already stored get captioned (check that this already happens through the generation change; add it if not).
-  - [ ] Unit tests for the copy and the count.
+- [x] US-99.3: Captioning is required for image search
+  - [x] Add the captioning pane copy, the mode picker line, and a count of uncaptioned images in status.
+  - [x] When captioning is turned on, images that are already stored get captioned (check that this already happens through the generation change; add it if not).
+  - [x] Unit tests for the copy and the count.
 - [ ] US-99.4: Docs and release notes
   - [ ] Update:
     - `docs/architecture/knowledge-retrieval.md` and `overview.md`

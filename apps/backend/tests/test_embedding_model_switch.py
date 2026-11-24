@@ -51,7 +51,7 @@ async def store_policy(session, *, embedding_model: str, mode: str = "disabled")
 
 
 async def add_file(session, *, image: bool) -> UserFileModel:
-    name = "bike.png" if image else "notes.txt"
+    name = f"{uuid.uuid4().hex[:8]}-{'bike.png' if image else 'notes.txt'}"
     file = UserFileModel(
         storage_key=str(uuid.uuid4()),
         user_id="user-a",
@@ -237,3 +237,34 @@ async def test_start_removes_the_old_bundle_and_queues_the_files(processing_sess
     assert not legacy.exists()
     _, configuration = await load_processing_configuration(session=processing_session)
     assert configuration.embedding_model == EMBEDDING_MODEL_KEY
+
+
+async def test_counts_images_search_cannot_find(processing_session):
+    """US-99.3: the captioning pane says how many images have no caption."""
+    from asterism.domains.knowledge.queries import select_uncaptioned_image_counts
+
+    async def artifact(*, image: bool, searchable: bool, current=True, caption=None):
+        file = await add_file(processing_session, image=image)
+        row = await add_artifact(
+            processing_session,
+            file,
+            generation=1,
+            status=KnowledgeExtractionStatus.READY,
+        )
+        row.searchable, row.is_current = searchable, current
+        if caption is not None:
+            processing_session.add(
+                FileKnowledgeExtractionModel(
+                    artifact_id=row.id, kind=KnowledgeExtractionKind.CAPTIONING, status=caption
+                )
+            )
+
+    await artifact(image=False, searchable=True)  # a text file
+    await artifact(image=True, searchable=True, caption=KnowledgeExtractionStatus.READY)  # captioned
+    await artifact(image=True, searchable=False, caption=KnowledgeExtractionStatus.PENDING)  # waiting
+    await artifact(image=True, searchable=False)  # captioning off
+    await artifact(image=True, searchable=False, caption=KnowledgeExtractionStatus.FAILED)  # failed
+    await artifact(image=True, searchable=False, current=False)  # an old generation
+    await processing_session.commit()
+
+    assert tuple((await processing_session.execute(select_uncaptioned_image_counts())).one()) == (3, 1)

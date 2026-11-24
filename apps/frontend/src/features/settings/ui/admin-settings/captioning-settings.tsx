@@ -24,12 +24,38 @@ import {
   appCaptionModelCancelMutation,
   appCaptionModelDownloadMutation,
   appCaptionModelStatusOptions,
+  appImageSearchStatusOptions,
   appKnowledgeEmbeddingStatusOptions,
 } from "@/lib/client/@tanstack/react-query.gen";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { TriangleAlertIcon } from "lucide-react";
 import { useEffect, useId, useState } from "react";
 import { errorMessage } from "@/lib/utils";
+
+const MODES: { mode: string; label: string; description?: string }[] = [
+  {
+    mode: "disabled",
+    label: "Disabled",
+    description: "No captions, so search can't find images.",
+  },
+  { mode: "provider", label: "Configured vision provider" },
+  { mode: "local", label: "Local SmolVLM2 (CPU)" },
+];
+
+/** "3 images have no caption…", with how many are waiting for one. */
+export function uncaptionedSummary(count: number, waiting: number): string {
+  const images =
+    count === 1 ? "1 image has no caption" : `${count} images have no caption`;
+  const queued =
+    waiting === 0
+      ? ""
+      : waiting === count
+        ? count === 1
+          ? " It is waiting for one."
+          : " They are all waiting for one."
+        : ` ${waiting} of them ${waiting === 1 ? "is" : "are"} waiting for one.`;
+  return `${images}, so search can't find ${count === 1 ? "it" : "them"}.${queued}`;
+}
 
 function CaptioningSettingsPane() {
   const modeId = useId();
@@ -51,6 +77,8 @@ function CaptioningSettingsPane() {
         ? 1000
         : false,
   });
+  // ADR-0079: images are found only by their caption.
+  const imageSearch = useQuery(appImageSearchStatusOptions({ client }));
   const update = useMutation(appCaptioningUpdateMutation({ client }));
   const download = useMutation(appCaptionModelDownloadMutation({ client }));
   const cancel = useMutation(appCaptionModelCancelMutation({ client }));
@@ -97,18 +125,40 @@ function CaptioningSettingsPane() {
           </p>
         ) : embeddingStatus.data?.status === "ready" ? (
           <p className="text-muted-foreground text-sm">
-            The reviewed local embedding bundle is ready for file processing.
+            The multilingual embedding model is ready for file processing.
           </p>
         ) : (
           <p className="text-muted-foreground text-sm">
-            Asterism provisions the reviewed local embedding bundle
-            automatically. Files uploaded while it is preparing remain queued
-            and are processed when the bundle is ready.
+            Asterism downloads the multilingual embedding model automatically.
+            Files uploaded while it is preparing remain queued and are processed
+            when it is ready.
           </p>
         )}
       </SettingsSection>
 
       <SettingsSection title="Image captioning">
+        <div
+          role="note"
+          className="text-foreground rounded-surface border-primary/40 bg-primary/10 flex items-start gap-2 border p-3 text-sm"
+        >
+          <TriangleAlertIcon
+            aria-hidden="true"
+            className="text-primary mt-0.5 size-4 shrink-0"
+          />
+          <p>
+            Search finds images only by their caption. With captioning off,
+            images are stored and can be attached to chats, but search
+            won&apos;t find them.
+          </p>
+        </div>
+        {!!imageSearch.data?.uncaptioned_images && (
+          <p role="status" className="text-sm">
+            {uncaptionedSummary(
+              imageSearch.data.uncaptioned_images,
+              imageSearch.data.waiting_for_caption,
+            )}
+          </p>
+        )}
         <FieldSet className="gap-2" disabled={update.isPending}>
           <FieldLegend>Mode</FieldLegend>
           <RadioGroup
@@ -126,19 +176,32 @@ function CaptioningSettingsPane() {
               }
             }}
           >
-            {[
-              ["disabled", "Disabled"],
-              ["provider", "Configured vision provider"],
-              ["local", "Local SmolVLM2 (CPU)"],
-            ].map(([mode, label]) => (
-              <div className="flex items-center gap-2" key={mode}>
-                <RadioGroupItem id={`${modeId}-${mode}`} value={mode} />
-                <Label
-                  htmlFor={`${modeId}-${mode}`}
-                  className="cursor-pointer font-normal"
-                >
-                  {label}
-                </Label>
+            {MODES.map(({ mode, label, description }) => (
+              <div className="flex items-start gap-2" key={mode}>
+                <RadioGroupItem
+                  id={`${modeId}-${mode}`}
+                  value={mode}
+                  className="mt-0.5"
+                  aria-describedby={
+                    description ? `${modeId}-${mode}-description` : undefined
+                  }
+                />
+                <div className="grid gap-0.5">
+                  <Label
+                    htmlFor={`${modeId}-${mode}`}
+                    className="cursor-pointer font-normal"
+                  >
+                    {label}
+                  </Label>
+                  {description && (
+                    <p
+                      id={`${modeId}-${mode}-description`}
+                      className="text-muted-foreground text-xs"
+                    >
+                      {description}
+                    </p>
+                  )}
+                </div>
               </div>
             ))}
           </RadioGroup>

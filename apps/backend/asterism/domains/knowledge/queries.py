@@ -3,7 +3,7 @@
 import uuid
 from collections.abc import Sequence
 
-from sqlalchemy import Select, and_, or_, select
+from sqlalchemy import Select, and_, func, or_, select
 
 from .models import (
     INTERRUPTED_ERROR_CODE,
@@ -122,4 +122,24 @@ def select_resumable_captioning_artifacts() -> Select[tuple[FileKnowledgeArtifac
             ),
         )
         .order_by(FileKnowledgeArtifactModel.id)
+    )
+
+
+def select_uncaptioned_image_counts() -> Select[tuple[int, int]]:
+    """Count current images search can't find, and those still waiting for a caption.
+
+    Every file except an image is searchable once ready, so a ready, current
+    generation that isn't searchable is an image without a caption (ADR-0079).
+    """
+    waiting = select(FileKnowledgeExtractionModel.artifact_id).where(
+        FileKnowledgeExtractionModel.kind == KnowledgeExtractionKind.CAPTIONING,
+        FileKnowledgeExtractionModel.status.in_([KnowledgeExtractionStatus.PENDING, KnowledgeExtractionStatus.RUNNING]),
+    )
+    return select(
+        func.count(),
+        func.count().filter(FileKnowledgeArtifactModel.id.in_(waiting)),
+    ).where(
+        FileKnowledgeArtifactModel.is_current.is_(True),
+        FileKnowledgeArtifactModel.status == KnowledgeExtractionStatus.READY,
+        FileKnowledgeArtifactModel.searchable.is_(False),
     )

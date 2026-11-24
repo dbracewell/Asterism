@@ -173,3 +173,15 @@ class KnowledgeCaptionConfigurationUpdate(BaseModel):
 
     mode: Literal["disabled", "provider", "local"]
     provider_model_id: uuid.UUID | None = None
+
+
+class ImageSearchStatus(BaseModel):
+    """How many images search can't find, because they have no caption (ADR-0079).
+
+    Attributes:
+        uncaptioned_images: Current images with no caption, so not searchable.
+        waiting_for_caption: Of those, the ones whose caption is queued or being made.
+    """
+
+    uncaptioned_images: int = Field(ge=0)
+    waiting_for_caption: int = Field(ge=0)

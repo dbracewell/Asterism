@@ -1,6 +1,6 @@
 # EPIC-99: Multilingual text embeddings, images found by caption
 
-Status: in progress (2026-11-24). US-99.1 and US-99.2 done. Source: user request (2026-11-24): "Instead of our
+Status: in progress (2026-11-24). US-99.1 to US-99.3 done. Source: user request (2026-11-24): "Instead of our
 current text/image embedding use Xenova/multilingual-e5-small, and for images
 embed the caption, meaning captioning is now required for images to be found in
 search."
@@ -133,12 +133,15 @@ tables, because the two models' vectors differ in size.
 
 ### US-99.3: Captioning is required for image search
 
-- [ ] Add the captioning pane copy, the mode picker line, and a count of
-      uncaptioned images in status.
-- [ ] When captioning is turned on, images that are already stored get captioned
+- [x] Add the captioning pane copy, the mode picker line, and a count of
+      uncaptioned images in status. The count is in the captioning pane, from
+      `GET /settings/app/image-search/status`.
+- [x] When captioning is turned on, images that are already stored get captioned
       (check that this already happens through the generation change; add it if
-      not).
-- [ ] Unit tests for the copy and the count.
+      not). It does: a captioning change queues every file
+      (`test_knowledge_processing.py`), and an image's new generation asks for
+      a caption unless the current captioner already made one.
+- [x] Unit tests for the copy and the count.
 
 ### US-99.4: Docs and release notes
 
