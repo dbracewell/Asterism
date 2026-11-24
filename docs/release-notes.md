@@ -22,6 +22,8 @@ Unreleased into its version and date.
 
 ## Unreleased
 
+## 0.5.0 (2026-11-24)
+
 ### Configuration
 
 - A new admin setting, **Study in chat** (Admin Settings → Study in chat,
