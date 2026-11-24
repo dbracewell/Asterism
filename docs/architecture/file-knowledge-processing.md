@@ -39,7 +39,7 @@ sequenceDiagram
     participant DB as SQLite
     participant Jobs as Knowledge jobs
     participant Ingest as ingestion.ingest_file
-    participant Embed as CLIP embeddings
+    participant Embed as e5 embeddings
     participant Vectors as LanceDB
 
     User->>Files: POST /api/py/files/
@@ -49,9 +49,9 @@ sequenceDiagram
     Jobs->>Ingest: Run, at most a few at once
     alt Text or document
         Ingest->>Ingest: Convert to text, split into chunks
-        Ingest->>Embed: Embed each chunk
-    else Image
-        Ingest->>Embed: Embed the image
+        Ingest->>Embed: Embed each chunk as a passage
+    else Image with a caption from the current captioner
+        Ingest->>Embed: Embed that caption again
     end
     Ingest->>Vectors: Replace this generation's vectors
     Ingest->>DB: Mark ready and current
@@ -98,16 +98,25 @@ file changed on disk outside Asterism can never feed stale text to a model.
 
 ### Embeddings
 
-Embeddings come from a local CLIP model
-([`knowledge/embedding.py`](../../apps/backend/asterism/domains/knowledge/embedding.py)),
-so file content never leaves the server to be embedded. The model is pinned: a
-specific revision of `Xenova/clip-vit-base-patch32`, its quantized ONNX file
-identified by size and SHA-256. It produces normalized 512-dimensional vectors for
-both text and images, which is what lets a text query find an image.
+Embeddings come from a local multilingual text model
+([`knowledge/e5_embedding.py`](../../apps/backend/asterism/domains/knowledge/e5_embedding.py),
+[ADR-0079](../adr/0079-multilingual-text-embeddings.md)), so file content never
+leaves the server to be embedded. The model is pinned: a specific revision of
+`Xenova/multilingual-e5-small`, every file identified by its SHA-256. It reads up
+to 512 tokens and produces normalized 384-dimensional vectors. File chunks,
+captions and memories are embedded as passages and search text as queries (e5's
+`passage: ` and `query: ` prefixes), and a query in one language finds passages
+in another.
 
-On first start, Asterism downloads the model's allowlisted files (about 150 MB) to
-a temporary directory, verifies them, and moves them into
-`STORAGE_ROOT/models/knowledge-clip`. The server starts serving without waiting;
+**Images have no vector of their own: search finds an image only by its
+caption.** With captioning off, images are stored, previewed and attachable, but
+search and similar files never find them. Admin Settings → Image captioning says
+so and counts the images without a caption
+(`GET /settings/app/image-search/status`).
+
+On first start, Asterism downloads the model's pinned files (about 135 MB) to a
+temporary directory, verifies them, and moves them into
+`STORAGE_ROOT/models/knowledge-e5-small`. The server starts serving without waiting;
 uploads made meanwhile stay pending and are processed once the model is ready. A
 failed download is retried at the next start. `SKIP_KNOWLEDGE_MODEL_PROVISIONING`
 turns this off, for tests.
@@ -118,6 +127,12 @@ Embedding and vector-store calls run in worker threads behind their own limits,
 (2 each). Allow about 1.25 GiB of memory per embedding worker
 ([measurements](../reviews/2026-09-22-knowledge-model-benchmarks.md)).
 
+Vectors live in LanceDB tables named for the model (`knowledge_chunks__e5-small-384`);
+a table from another model is dropped when the store opens. After an upgrade
+that changes the model, startup deletes the old bundle and re-embeds every file as
+a new generation; a file isn't found until it has been re-embedded, and an image
+reuses a caption the current captioner made rather than being captioned again.
+
 Each vector row records its provenance, so it can always be traced and removed:
 
 ```text
@@ -127,8 +142,8 @@ user_id, file_id, generation, chunk_ordinal, content, vector
 
 ### Image captions
 
-Captions make images findable by what they show, not just by visual similarity.
-Captioning is off by default. The admin chooses one of three settings in Admin
+Captions are how images are found: an image has no other vector. Captioning is
+off by default, and the setup walkthrough explains what that means. The admin chooses one of three settings in Admin
 Settings → Image captioning:
 
 - **Off.**
@@ -153,7 +168,7 @@ A caption is queued once an image's artifact is ready. `captioning.caption`
 ([`knowledge/captioning.py`](../../apps/backend/asterism/domains/knowledge/captioning.py))
 checks that the file is an image under `MAX_VISION_IMAGE_BYTES`, asks the chosen
 captioner for a short description, embeds it as one more chunk, and stores the text
-as the artifact's captioning output. The artifact is then searchable through its
+(with a `captioner` key naming who made it) as the artifact's captioning output. The artifact is then searchable through its
 caption. Captions are indexed straight away; there is no approval step. Users can't
 edit a caption, but regenerating the file in Files reprocesses both the embedding
 and the caption.
@@ -167,7 +182,9 @@ The admin edits the policy, and `knowledge/processing.py` owns the only path tha
 changes it. When the policy's fingerprint changes, its revision goes up and every
 eligible file gets a new pending generation. Until a file's new generation
 succeeds, its previous ready generation stays current and searchable, so a policy
-change never makes files disappear from search.
+change never makes files disappear from search. The exception is a change of
+embedding model (ADR-0079): the old vectors can't answer the new model's queries,
+so their table is dropped and each file returns to search as it is re-embedded.
 
 ### Keeping generations bounded
 

@@ -120,15 +120,19 @@ content involving minors.
 
 ## Image captioning
 
-Captions describe pictures in uploaded files, so they can be searched.
+Captions describe pictures in uploaded files. **A caption is the only way search
+finds a picture**, so with captioning off, pictures are kept and can be attached
+to chats, but search won't find them. The page counts the pictures that have no
+caption yet.
 
-- **Disabled**: no captions.
+- **Disabled**: no captions, so search can't find pictures.
 - **Configured vision provider**: a model that can read images writes them. Choose
   the **Vision model**. Pictures are sent to that model's provider, so only choose
   this if that's acceptable for your school's files.
 - **Local SmolVLM2 (CPU)**: a small model on the Asterism server writes them.
 
-Changing the mode reprocesses pictures. Files stay searchable while that happens.
+Changing the mode reprocesses pictures. Files stay searchable while that happens,
+and pictures that are already stored get captions once captioning is on.
 
 ## Educators
 

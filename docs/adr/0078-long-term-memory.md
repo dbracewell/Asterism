@@ -3,7 +3,9 @@
 Status: accepted; implemented in US-93.1 to US-93.6
 ([EPIC-93](../epics/EPIC-93-LONG-TERM-MEMORY.md)). Amends the memory
 boundary in [context isolation](../architecture/context-isolation.md) and
-[ADR-0066](0066-about-you.md) ("no long-term memory engine exists").
+[ADR-0066](0066-about-you.md) ("no long-term memory engine exists"). Amended by
+[ADR-0079](0079-multilingual-text-embeddings.md): memory vectors come from
+multilingual-e5-small, in a table named for the model.
 
 ## Context
 
@@ -191,4 +193,7 @@ proposal the person confirms (US-93.4).
 - Memory is personal data: it is in Download my data, backups and the upgrade
   check (US-93.6), and is refused to everyone but its owner.
 - The vector table is rebuildable, so it needs no migration of its own when the
-  embedding model changes.
+  embedding model changes. Since ADR-0079 it is named for the model
+  (`memory_vectors__e5-small-384`): another model's table is dropped when the
+  store opens, and the vectors are rebuilt on start and again when a new model
+  finishes downloading.

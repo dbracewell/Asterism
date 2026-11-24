@@ -248,7 +248,7 @@ pnpm reset:db -- --yes # explicit noninteractive confirmation
 
 Configuration is validated by `run-with-env.mjs` before this script runs. It removes
 original files and knowledge/vector storage along with both databases, but retains
-`models/knowledge-clip` and `models/captioning-smolvlm2`. Stop all application workers
+`models/knowledge-e5-small` and `models/captioning-smolvlm2`. Stop all application workers
 first. The two-store reset is sequential, not transactional. See the
 [reset runbook](../docs/architecture/development-reset.md) for override paths,
 review, initialization, retained model bundles, and partial failure handling.

@@ -30,8 +30,8 @@ it's used up, new messages wait until it resets.
 outline or some code. You and Asterism can both edit it, and every saved version
 is kept.
 
-**Caption.** A short written description of a picture in your files, so Asterism
-can find the picture by what's in it.
+**Caption.** A short written description of a picture in your files. It's how
+Asterism finds the picture: a picture without a caption isn't found by search.
 
 **Chat.** A conversation with Asterism. Chats are saved, so you can come back to
 them.

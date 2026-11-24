@@ -35,9 +35,10 @@ labels under each file show how that went:
 
 - **Embedding** is the search part. **ready** means Asterism can use the file.
   **failed** means it couldn't read the file.
-- **Caption** is a short written description of a picture, so Asterism can find
-  pictures by what's in them. It says **none** for files that aren't pictures,
-  or when your administrator hasn't turned captions on.
+- **Caption** is a short written description of a picture. It's the only way
+  Asterism finds a picture, so a picture without one isn't found by search, though
+  you can still attach it to a chat. It says **none** for files that aren't
+  pictures, or when your administrator hasn't turned captions on.
 
 A file can't be used in a chat until its embedding is **ready**.
 

@@ -164,7 +164,7 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
       {
         name: "Caption and extracted content",
         description:
-          "The text read from the file when it was processed, and an image's caption. This is what the assistant searches; it isn't available until processing is ready.",
+          "The text read from the file when it was processed, and an image's caption. This is what the assistant searches: an image without a caption isn't found. It isn't available until processing is ready.",
       },
       {
         name: "Similar files",
@@ -1086,8 +1086,13 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
     title: "Image captioning",
     walkthrough: "08-for-administrators/policies#image-captioning",
     purpose:
-      "Choose how images in uploaded files are described so they can be searched.",
+      "Choose how images in uploaded files are described. A caption is the only way search finds an image, so with captioning off, images can't be found.",
     areas: [
+      {
+        name: "Image captioning",
+        description:
+          "Disabled, a vision model from a provider, or a small local model. The page counts the images that have no caption, and how many are waiting for one.",
+      },
       {
         name: "Knowledge processing",
         description:

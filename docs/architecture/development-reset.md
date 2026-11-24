@@ -79,7 +79,7 @@ manually to bypass target review.
 | `STORAGE_ROOT/files`                                        | Remove original uploaded bytes, including sharded source keys                                |
 | `STORAGE_ROOT/knowledge`                                    | Remove derived knowledge/vector storage                                                      |
 | `STORAGE_ROOT/themes`                                       | Preserve administrator-created themes and bundled-palette overrides                          |
-| `STORAGE_ROOT/models/knowledge-clip`                        | Preserve reusable embedding model bundle                                                     |
+| `STORAGE_ROOT/models/knowledge-e5-small`                    | Preserve reusable embedding model bundle                                                     |
 | `STORAGE_ROOT/models/captioning-smolvlm2`                   | Preserve reusable local caption model bundle                                                 |
 | `STORAGE_ROOT/models/image-generation`                      | Preserve downloaded local image generation models (tens of GB each)                          |
 
