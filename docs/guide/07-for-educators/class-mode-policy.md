@@ -28,7 +28,11 @@ work answers out themselves.
    memory out of the course project. You never see students' memories either
    way. The switch isn't shown while your administrator has memory off for
    everyone.
-5. Select **Save policy**.
+5. Turn **Let students make decks and quizzes from chat** off to stop Asterism
+   drafting decks and quizzes in the course project's chats. Students can still
+   make them in Study. The switch isn't shown while your administrator has
+   Study in chat off for everyone.
+6. Select **Save policy**.
 
 Changes apply from each student's next message.
 

@@ -114,6 +114,8 @@ Complete (2026-11-24); archive with EPIC-96.
 
 Decided 2026-11-24: admin switch (on by default, by group), class switch (on by default), no edits to existing decks.
 
+Complete (2026-11-24) once US-98.5 merges.
+
 - [x] US-98.1: Policy, class switch and ADR
   - [x] Write the ADR (gate, propose-then-save, provenance) and amend the `areas.py` docstring, ADR-0065 and CLAUDE.md §2.4.
   - [x] Admin `study_chat` policy (`{enabled, group_ids}`, default on), its admin endpoints and Admin Settings section, and `study_chat` in `GET /availability`.
@@ -135,9 +137,9 @@ Decided 2026-11-24: admin switch (on by default, by group), class switch (on by 
   - [x] Save and dismiss endpoints: owner-only; recheck the project, the Study area, the switches and file membership; the save is idempotent. Regenerate the client.
   - [x] Frontend `StudyProposalCards` in `message-item.tsx`: preview, edit before saving, Save to Study (with a link to the new deck or quiz), Dismiss, and timeline labels in `agent-timeline.ts`.
   - [x] Unit tests and a Playwright test: ask for a deck in a project chat, then save it and see it under Study.
-- [ ] US-98.5: Docs
-  - [ ] Hide the mention of the tools in help when unavailable (EPIC-97).
-  - [ ] Update `docs/architecture/study-tools.md`, the user guide pages (`05-studying/flashcards.md`, `practice-quizzes.md`), the educator and admin guide pages for the two switches, and the release notes.
+- [x] US-98.5: Docs
+  - [x] Hide the mention of the tools in help when unavailable (EPIC-97).
+  - [x] Update `docs/architecture/study-tools.md`, the user guide pages (`05-studying/flashcards.md`, `practice-quizzes.md`), the educator and admin guide pages for the two switches, and the release notes.
 
 ### [EPIC-99: Multilingual text embeddings, images found by caption](docs/epics/EPIC-99-MULTILINGUAL-E5-EMBEDDINGS.md)
 

@@ -145,6 +145,15 @@ describe("help registry", () => {
     expect(isVisibleTo(helpEntries["concept.memory"], off(false))).toBe(false);
     expect(isVisibleTo(helpEntries["concept.memory"], off(true))).toBe(false);
     expect(isVisibleTo(helpEntries["concept.memory"], user)).toBe(true);
+    // EPIC-98: decks and quizzes from chat follow their own setting.
+    const noStudyChat = {
+      isAdmin: false,
+      has: (f: string) => f !== "study_chat",
+    };
+    expect(isVisibleTo(helpEntries["concept.study-chat"], noStudyChat)).toBe(
+      false,
+    );
+    expect(isVisibleTo(helpEntries["concept.study-chat"], user)).toBe(true);
     // Admin help for the policy itself stays.
     expect(isVisibleTo(helpEntries["admin.tools"], off(true))).toBe(true);
   });

@@ -53,6 +53,23 @@ accept a card.
 
 Check each draft against your notes: Asterism can get things wrong.
 
+## Ask for flashcards in a chat
+
+In one of the project's chats, ask for flashcards, for example "Make me
+flashcards on cell parts". Asterism drafts a new deck from the conversation and
+the project's files, and shows it in a card under its reply:
+
+- **Save to Study** adds the deck, with its cards, to the project's Study tab.
+  The card then links to it.
+- **Edit** lets you change the title and the cards, or remove cards, before
+  saving.
+- **Dismiss** leaves it out.
+
+Nothing is added until you save it. This works when the project's Study area is
+on and your administrator allows **Study in chat**; in a course, your educator
+can turn it off. It always makes a new deck; to add cards to a deck you have,
+use **Add card** or **Draft from files**.
+
 ## Review your cards
 
 1. In the Study tab or the deck, select **Review**. The button shows how many cards

@@ -54,6 +54,7 @@ export type HelpId =
   | "concept.citation"
   | "concept.flashcard"
   | "concept.quiz"
+  | "concept.study-chat"
   | "concept.study-note"
   | "concept.class"
   | "concept.educator"
@@ -564,8 +565,20 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
       "Write cards yourself, or use Draft from files to have a model suggest cards from the project's files. Nothing is saved until you accept a draft.",
       "Tag a deck with topics to follow it under Topics in the Progress panel.",
     ],
-    related: ["concept.progress", "concept.quiz"],
+    related: ["concept.progress", "concept.quiz", "concept.study-chat"],
     audience: "everyone",
+  },
+  "concept.study-chat": {
+    title: "Decks and quizzes from chat",
+    summary:
+      "In a project's chat, ask for flashcards or a quiz and Asterism drafts a new deck or practice quiz. You review the draft and choose whether to save it to Study.",
+    details: [
+      "The draft appears in a card under the reply. Save to Study adds it, Edit lets you change it first, and Dismiss leaves it out. Nothing is added until you save it.",
+      "It works in projects whose Study area is on, when your administrator allows it; in a course, your educator can turn it off. It always makes a new deck or quiz.",
+    ],
+    related: ["concept.flashcard", "concept.quiz"],
+    audience: "everyone",
+    feature: "study_chat",
   },
   "concept.quiz": {
     title: "Practice quizzes and attempts",
@@ -580,6 +593,7 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
       "concept.progress",
       "concept.flashcard",
       "concept.class-insights",
+      "concept.study-chat",
     ],
     audience: "everyone",
   },
