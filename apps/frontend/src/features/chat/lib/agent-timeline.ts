@@ -71,6 +71,25 @@ export function memoryToolLabel(
   return "Offer to remember something";
 }
 
+/** "Drafted a flashcard deck" for the study tools (EPIC-98); undefined for other tools. */
+export function studyToolLabel(
+  name: string,
+  status: ToolStepStatus,
+): string | undefined {
+  const thing =
+    name === "propose_deck"
+      ? "a flashcard deck"
+      : name === "propose_quiz"
+        ? "a practice quiz"
+        : undefined;
+  if (!thing) return undefined;
+  if (status === "succeeded") return `Drafted ${thing}`;
+  if (status === "running") return `Drafting ${thing}`;
+  if (status === "failed" || status === "denied")
+    return `Couldn't draft ${thing}`;
+  return `Draft ${thing}`;
+}
+
 const CANVAS_VERBS: Record<string, [string, string, string]> = {
   canvas_create: ["Created", "Creating", "create"],
   canvas_update: ["Updated", "Updating", "update"],
@@ -216,7 +235,8 @@ export function messageTimelineSteps(
           status,
           result?.raw_result ?? result?.content,
         ) ??
-        memoryToolLabel(call.function.name, status),
+        memoryToolLabel(call.function.name, status) ??
+        studyToolLabel(call.function.name, status),
       result: result
         ? (errorOf(result.raw_result) ?? result.content)
         : undefined,

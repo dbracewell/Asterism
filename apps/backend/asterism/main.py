@@ -44,6 +44,7 @@ from asterism.domains.settings_transfer.router import settings_transfer_router
 from asterism.domains.skills.router import skills_router
 from asterism.domains.status.router import status_router
 from asterism.domains.study.chat_policy_router import study_chat_policy_router
+from asterism.domains.study.proposal_router import study_proposal_router
 from asterism.domains.study.router import study_router
 from asterism.domains.tools.router import tools_router
 from asterism.domains.usage.router import usage_router
@@ -166,6 +167,7 @@ app.include_router(classes_router)
 app.include_router(class_invites_router)
 app.include_router(courses_router)
 app.include_router(study_router)
+app.include_router(study_proposal_router)
 # The knowledge router is registered before the settings router: both serve
 # /settings/app/... paths, and the knowledge ones are more specific than the
 # generic /settings/app/{key} routes.

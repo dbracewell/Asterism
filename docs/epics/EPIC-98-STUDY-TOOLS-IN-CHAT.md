@@ -1,6 +1,6 @@
 # EPIC-98: Decks and quizzes from chat
 
-Status: in progress (2026-11-24). US-98.1 to US-98.3 done; US-98.3 and US-98.4 should ship in the same release (the tools draft, the card saves). Source: user request (2026-11-24): "New tools for
+Status: in progress (2026-11-24). US-98.1 to US-98.4 done. Source: user request (2026-11-24): "New tools for
 creating decks and quizzes which are automatically added when chatting in a
 project with those study options available."
 
@@ -133,13 +133,13 @@ Suggested order: US-98.1 → 98.2 → 98.3 → 98.4 → 98.5.
 
 ### US-98.4: Review and save in chat
 
-- [ ] Save and dismiss endpoints: owner-only; recheck the project, the Study
+- [x] Save and dismiss endpoints: owner-only; recheck the project, the Study
       area, the switches and file membership; the save is idempotent.
       Regenerate the client.
-- [ ] Frontend `StudyProposalCards` in `message-item.tsx`: preview, edit before
+- [x] Frontend `StudyProposalCards` in `message-item.tsx`: preview, edit before
       saving, Save to Study (with a link to the new deck or quiz), Dismiss, and
       timeline labels in `agent-timeline.ts`.
-- [ ] Unit tests and a Playwright test: ask for a deck in a project chat, then
+- [x] Unit tests and a Playwright test: ask for a deck in a project chat, then
       save it and see it under Study.
 
 ### US-98.5: Docs

@@ -29,7 +29,7 @@ Option = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, m
 Cited = Annotated[list[uuid.UUID], Field(default_factory=list, max_length=MAX_CARD_CITATIONS)]
 
 
-class StudyCardDraft(BaseModel):
+class StudyProposalCard(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     front: CardSide
@@ -42,17 +42,17 @@ class StudyCardDraft(BaseModel):
         return list(dict.fromkeys(value))
 
 
-class StudyDeckDraft(BaseModel):
+class StudyProposalDeck(BaseModel):
     """A new deck with its cards."""
 
     model_config = ConfigDict(extra="forbid")
 
     title: DeckName
     description: str = Field(default="", max_length=MAX_DECK_DESCRIPTION_CHARS)
-    cards: list[StudyCardDraft] = Field(min_length=1, max_length=MAX_DRAFT_CARDS)
+    cards: list[StudyProposalCard] = Field(min_length=1, max_length=MAX_DRAFT_CARDS)
 
 
-class StudyQuestionDraft(BaseModel):
+class StudyProposalQuestion(BaseModel):
     """Multiple choice (options and the correct one) or short answer (a rubric)."""
 
     model_config = ConfigDict(extra="forbid")
@@ -89,13 +89,13 @@ class StudyQuestionDraft(BaseModel):
         return self
 
 
-class StudyQuizDraft(BaseModel):
+class StudyProposalQuiz(BaseModel):
     """A new quiz with its questions."""
 
     model_config = ConfigDict(extra="forbid")
 
     title: QuizTitle
-    questions: list[StudyQuestionDraft] = Field(min_length=1, max_length=MAX_QUIZ_QUESTIONS)
+    questions: list[StudyProposalQuestion] = Field(min_length=1, max_length=MAX_QUIZ_QUESTIONS)
 
 
 class StudyProposal(BaseModel):
@@ -109,8 +109,17 @@ class StudyProposal(BaseModel):
     message_id: uuid.UUID
     kind: StudyProposalKind
     status: StudyProposalStatus
-    deck: StudyDeckDraft | None = None
-    quiz: StudyQuizDraft | None = None
+    deck: StudyProposalDeck | None = None
+    quiz: StudyProposalQuiz | None = None
     saved_id: uuid.UUID | None = None
     created_at: int
     decided_at: int | None = None
+
+
+class StudyProposalSave(BaseModel):
+    """The draft as the person saves it: as offered or edited, of the draft's own kind."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    deck: StudyProposalDeck | None = None
+    quiz: StudyProposalQuiz | None = None

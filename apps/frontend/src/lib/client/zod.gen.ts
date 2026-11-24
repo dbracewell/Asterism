@@ -4268,6 +4268,80 @@ export const zStudyProjectSummary = z.object({
 });
 
 /**
+ * StudyProposalCard
+ */
+export const zStudyProposalCard = z.object({
+  front: z.string().min(1).max(4000),
+  back: z.string().min(1).max(4000),
+  file_ids: z.array(z.uuid()).max(8).optional(),
+});
+
+/**
+ * StudyProposalDeck
+ *
+ * A new deck with its cards.
+ */
+export const zStudyProposalDeck = z.object({
+  title: z.string().min(1).max(120),
+  description: z.string().max(2000).optional().default(""),
+  cards: z.array(zStudyProposalCard).min(1).max(30),
+});
+
+/**
+ * StudyProposalQuestion
+ *
+ * Multiple choice (options and the correct one) or short answer (a rubric).
+ */
+export const zStudyProposalQuestion = z.object({
+  kind: z.enum(["multiple_choice", "short_answer"]),
+  prompt: z.string().min(1).max(4000),
+  options: z.array(z.string().min(1).max(500)).max(6).optional(),
+  correct_option: z.int().gte(0).nullish(),
+  rubric: z.string().max(4000).optional().default(""),
+  explanation: z.string().max(2000).optional().default(""),
+  file_ids: z.array(z.uuid()).max(8).optional(),
+});
+
+/**
+ * StudyProposalQuiz
+ *
+ * A new quiz with its questions.
+ */
+export const zStudyProposalQuiz = z.object({
+  title: z.string().min(1).max(120),
+  questions: z.array(zStudyProposalQuestion).min(1).max(20),
+});
+
+/**
+ * StudyProposal
+ *
+ * A draft as the chat shows it.
+ */
+export const zStudyProposal = z.object({
+  id: z.uuid(),
+  project_id: z.uuid(),
+  chat_id: z.uuid(),
+  message_id: z.uuid(),
+  kind: z.enum(["deck", "quiz"]),
+  status: z.enum(["pending", "saved", "dismissed"]),
+  deck: zStudyProposalDeck.nullish(),
+  quiz: zStudyProposalQuiz.nullish(),
+  saved_id: z.uuid().nullish(),
+  created_at: z.int(),
+  decided_at: z.int().nullish(),
+});
+
+/**
+ * StudyProposalSave
+ *
+ * The draft as the person saves it: as offered or edited, of the draft's own kind.
+ */
+export const zStudyProposalSave = z.object({
+  deck: zStudyProposalDeck.nullish(),
+  quiz: zStudyProposalQuiz.nullish(),
+});
+
+/**
  * StudyQuizAnswerInput
  *
  * ``choice`` (an option index) answers multiple choice; ``text`` answers short answer.
@@ -7071,6 +7145,35 @@ export const zStudyGuideGeneratePath = z.object({
  * Successful Response
  */
 export const zStudyGuideGenerateResponse = zStudyGuideDraft;
+
+export const zStudyProposalGetOnePath = z.object({
+  proposal_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zStudyProposalGetOneResponse = zStudyProposal;
+
+export const zStudyProposalSaveBody = zStudyProposalSave;
+
+export const zStudyProposalSavePath = z.object({
+  proposal_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zStudyProposalSaveResponse = zStudyProposal;
+
+export const zStudyProposalDismissPath = z.object({
+  proposal_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zStudyProposalDismissResponse = zStudyProposal;
 
 /**
  * Successful Response

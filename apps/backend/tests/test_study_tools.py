@@ -21,7 +21,7 @@ from asterism.domains.projects.models import ProjectFileModel
 from asterism.domains.settings.models import ApplicationSettingsModel
 from asterism.domains.study.chat_policy import chat_study_available
 from asterism.domains.study.models import StudyProposalModel
-from asterism.domains.study.proposal_schemas import StudyDeckDraft, StudyQuizDraft
+from asterism.domains.study.proposal_schemas import StudyProposalDeck, StudyProposalQuiz
 from asterism.domains.tools.builtin.study import propose_deck, propose_quiz
 from asterism.domains.tools.catalog import ToolPolicy, configurable_tools
 from asterism.domains.tools.registry import tool_registry
@@ -148,12 +148,12 @@ async def test_drafts_one_of_each_kind_per_run_and_says_nothing_of_their_text(ca
     await tools_on(sessions)
     _, chat_id, scope = await project_run(client, sessions)
 
-    deck = await propose_deck(tool_ctx(chat_id, scope, StudyDeckDraft.model_validate(DECK)))
+    deck = await propose_deck(tool_ctx(chat_id, scope, StudyProposalDeck.model_validate(DECK)))
     assert deck["status"] == "pending" and deck["kind"] == "deck" and deck["items"] == 1
     assert "Mitochondria" not in json.dumps(deck)
-    again = await propose_deck(tool_ctx(chat_id, scope, StudyDeckDraft.model_validate(DECK)))
+    again = await propose_deck(tool_ctx(chat_id, scope, StudyProposalDeck.model_validate(DECK)))
     assert again == {"error": "You can draft only one deck per turn"}
-    quiz = await propose_quiz(tool_ctx(chat_id, scope, StudyQuizDraft.model_validate(QUIZ)))
+    quiz = await propose_quiz(tool_ctx(chat_id, scope, StudyProposalQuiz.model_validate(QUIZ)))
     assert quiz["kind"] == "quiz"
 
     async with sessions() as db:
@@ -186,10 +186,12 @@ async def test_drafts_cite_only_files_the_run_can_use(canvas_api):
         await db.commit()
     cited = DECK | {"cards": [DECK["cards"][0] | {"file_ids": [str(file.id)]}]}
 
-    outside = await propose_deck(tool_ctx(chat_id, scope, StudyDeckDraft.model_validate(cited)))
+    outside = await propose_deck(tool_ctx(chat_id, scope, StudyProposalDeck.model_validate(cited)))
     assert outside == {"error": "Cite only files this chat can use"}
     inside = await propose_deck(
-        tool_ctx(chat_id, replace(scope, allowed_file_ids=frozenset({file.id})), StudyDeckDraft.model_validate(cited))
+        tool_ctx(
+            chat_id, replace(scope, allowed_file_ids=frozenset({file.id})), StudyProposalDeck.model_validate(cited)
+        )
     )
     assert inside["status"] == "pending"
 
@@ -198,7 +200,78 @@ async def test_refused_outside_a_recorded_main_agent_run(canvas_api):
     client, sessions = canvas_api
     await tools_on(sessions)
     _, chat_id, scope = await project_run(client, sessions)
-    draft = StudyDeckDraft.model_validate(DECK)
+    draft = StudyProposalDeck.model_validate(DECK)
     for bad in (replace(scope, is_sub_agent=True), replace(scope, project_id=None), replace(scope, execution_id=None)):
         result = await propose_deck(tool_ctx(chat_id, bad, draft))
         assert "unavailable" in result["error"]
+
+
+async def drafted(client, sessions, tool=propose_deck, draft=None):
+    await tools_on(sessions)
+    project, chat_id, scope = await project_run(client, sessions)
+    model = StudyProposalDeck if tool is propose_deck else StudyProposalQuiz
+    result = await tool(
+        tool_ctx(chat_id, scope, model.model_validate(draft or (DECK if tool is propose_deck else QUIZ)))
+    )
+    return project, chat_id, result["proposal_id"]
+
+
+async def test_a_deck_draft_is_saved_as_edited_once(canvas_api):
+    client, sessions = canvas_api
+    project, chat_id, proposal = await drafted(client, sessions)
+    path = f"/study/proposals/{proposal}"
+
+    shown = await client.get(path, headers=auth())
+    assert shown.status_code == 200, shown.text
+    assert shown.json()["deck"]["cards"][0]["back"] == "Mitochondria"
+    assert (await client.get(path, headers=auth("b"))).status_code == 404
+
+    edited = DECK | {"title": "Cell parts"}
+    assert (await client.post(f"{path}/save", headers=auth(), json={"quiz": QUIZ})).status_code == 400
+    saved = await client.post(f"{path}/save", headers=auth(), json={"deck": edited})
+    assert saved.status_code == 201, saved.text
+    body = saved.json()
+    assert body["status"] == "saved" and body["saved_id"]
+    # A second save, or a dismiss after it, is a conflict: nothing is made twice.
+    assert (await client.post(f"{path}/save", headers=auth(), json={"deck": edited})).status_code == 409
+    assert (await client.post(f"{path}/dismiss", headers=auth())).status_code == 409
+
+    decks = (await client.get(f"/projects/{project}/study/decks", headers=auth())).json()["items"]
+    assert [deck["name"] for deck in decks] == ["Cell parts"]
+    async with sessions() as db:
+        from asterism.domains.study.models import StudyDeckModel
+
+        deck = await db.get(StudyDeckModel, uuid.UUID(body["saved_id"]))
+        assert (deck.proposal_id, deck.source_chat_id) == (uuid.UUID(proposal), chat_id)
+
+
+async def test_a_quiz_draft_is_saved_with_the_model_that_wrote_it(canvas_api):
+    client, sessions = canvas_api
+    project, _, proposal = await drafted(client, sessions, propose_quiz)
+    saved = await client.post(f"/study/proposals/{proposal}/save", headers=auth(), json={"quiz": QUIZ})
+    assert saved.status_code == 201, saved.text
+    async with sessions() as db:
+        from asterism.domains.study.models import StudyQuizModel
+
+        quiz = await db.get(StudyQuizModel, uuid.UUID(saved.json()["saved_id"]))
+        assert (quiz.origin, quiz.title, quiz.proposal_id) == ("chat", "Cells quiz", uuid.UUID(proposal))
+        assert quiz.model_name
+
+
+async def test_a_dismissed_draft_cannot_be_saved(canvas_api):
+    client, sessions = canvas_api
+    _, _, proposal = await drafted(client, sessions)
+    dismissed = await client.post(f"/study/proposals/{proposal}/dismiss", headers=auth())
+    assert dismissed.status_code == 200 and dismissed.json()["status"] == "dismissed"
+    assert (
+        await client.post(f"/study/proposals/{proposal}/save", headers=auth(), json={"deck": DECK})
+    ).status_code == 409
+
+
+async def test_saving_checks_the_switches_again(canvas_api):
+    client, sessions = canvas_api
+    _, _, proposal = await drafted(client, sessions)
+    await set_policy(sessions, enabled=False)
+    refused = await client.post(f"/study/proposals/{proposal}/save", headers=auth(), json={"deck": DECK})
+    assert refused.status_code == 400
+    assert "turned off" in refused.json()["detail"]

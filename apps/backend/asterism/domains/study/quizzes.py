@@ -199,13 +199,18 @@ async def save_quiz(
     questions: list[QuestionDraft],
     session: AsyncSession,
     tags: list[str] | None = None,
+    quiz_id: uuid.UUID | None = None,
+    proposal_id: uuid.UUID | None = None,
+    source_chat_id: uuid.UUID | None = None,
 ) -> StudyQuizModel:
     """Store a quiz and its questions in one transaction.
 
     The caller has already checked every citation against the live project scope.
+    A quiz saved from a chat draft (EPIC-98) passes its id, the draft and the chat.
     """
     await require_owned_project(user_id=user_id, project_id=project_id, session=session)
     quiz = StudyQuizModel(
+        id=quiz_id or uuid.uuid4(),
         user_id=user_id,
         project_id=project_id,
         title=title,
@@ -213,6 +218,8 @@ async def save_quiz(
         model_id=model_id,
         model_name=model_name,
         tags=tags or [],
+        proposal_id=proposal_id,
+        source_chat_id=source_chat_id,
     )
     session.add(quiz)
     await session.flush()
