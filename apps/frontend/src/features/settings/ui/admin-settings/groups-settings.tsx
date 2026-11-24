@@ -16,6 +16,7 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { HelpTopic } from "@/features/help/components/help-topic";
 import { GroupBudgetEditor } from "@/features/settings/ui/admin-settings/group-budget-editor";
+import { useSetupDraft } from "@/features/setup/setup-draft";
 import { client } from "@/lib/api";
 import type { Group, GroupAccessOptions } from "@/lib/client";
 import {
@@ -114,6 +115,12 @@ function AccessList({
   );
 }
 
+/** Whether two access lists allow the same choices; null allows every one. */
+function sameChoices(a: string[] | null, b: string[] | null) {
+  if (a === null || b === null) return a === b;
+  return a.length === b.length && a.every((choice) => b.includes(choice));
+}
+
 function AccessEditor({
   group,
   options,
@@ -127,6 +134,16 @@ function AccessEditor({
   const save = useMutation({
     ...groupAccessUpdateMutation({ client }),
     onSuccess: () => setSaved(true),
+  });
+  useSetupDraft({
+    dirty:
+      !sameChoices(models, group.models ?? null) ||
+      !sameChoices(tools, group.tools ?? null),
+    save: () =>
+      save.mutateAsync({
+        path: { group_id: group.id },
+        body: { models, tools },
+      }),
   });
   return (
     <form
@@ -194,6 +211,15 @@ function RenameForm({ group, done }: { group: Group; done: () => void }) {
   const rename = useMutation({
     ...groupRenameMutation({ client }),
     onSuccess: done,
+  });
+  useSetupDraft({
+    dirty: name.trim() !== group.name,
+    save: () =>
+      rename.mutateAsync({
+        path: { group_id: group.id },
+        body: { name: name.trim() },
+      }),
+    blocked: name.trim() ? undefined : "Enter a name for the group.",
   });
   return (
     <form

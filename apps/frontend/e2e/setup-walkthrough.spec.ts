@@ -40,7 +40,7 @@ test("an administrator skips, reviews and resumes setup steps", async ({
   // The first-run provider steps already reviewed Providers.
   await expect(
     steps.getByRole("button", { name: /Providers and models/ }),
-  ).toContainText("Done");
+  ).toContainText("Reviewed");
   await expect(
     current(page).getByRole("heading", { name: "Groups and budgets" }),
   ).toBeVisible();
@@ -101,6 +101,57 @@ test("an administrator skips, reviews and resumes setup steps", async ({
   await expect(
     current(page).getByRole("heading", { name: "Groups and budgets" }),
   ).toBeVisible();
+});
+
+test("Next saves a step's edits and Skip discards them (US-102.3)", async ({
+  page,
+}) => {
+  const progress = await routeProgress(page);
+  let timezone = "UTC";
+  let skills = false;
+  await page.route("**/api/py/usage/settings", async (route) => {
+    if (route.request().method() === "PUT")
+      timezone = route.request().postDataJSON().timezone;
+    await route.fulfill({ json: { timezone } });
+  });
+  await page.route("**/api/py/settings/app/skills", async (route) => {
+    if (route.request().method() === "PUT")
+      skills = route.request().postDataJSON().enabled;
+    await route.fulfill({ json: { enabled: skills } });
+  });
+  await page.goto("/e2e/planned-settings?setting=setup&step=usage");
+
+  // Save and continue saves the time zone before moving on.
+  const zone = page.getByLabel("Timezone (IANA name)");
+  await zone.fill("Europe/London");
+  await page.getByRole("button", { name: "Save and continue" }).click();
+  await expect(
+    current(page).getByRole("heading", { name: "Tools and search" }),
+  ).toBeVisible();
+  expect(timezone).toBe("Europe/London");
+  expect(progress.writes).toEqual([{ step: "usage", state: "done" }]);
+  await expect(
+    page
+      .getByRole("navigation", { name: "Setup steps" })
+      .getByRole("button", { name: /Usage time zone/ }),
+  ).toContainText("Reviewed");
+
+  // Skip asks first, and discarding leaves Skills off.
+  await page
+    .getByRole("navigation", { name: "Setup steps" })
+    .getByRole("button", { name: /Skills/ })
+    .click();
+  await page.getByRole("switch").click();
+  await page.getByRole("button", { name: "Skip for now" }).click();
+  await page
+    .getByRole("alertdialog", { name: "Discard unsaved changes?" })
+    .getByRole("button", { name: "Discard changes" })
+    .click();
+  await expect(
+    current(page).getByRole("heading", { name: "Canvas" }),
+  ).toBeVisible();
+  expect(skills).toBe(false);
+  expect(progress.writes.at(-1)).toEqual({ step: "skills", state: "skipped" });
 });
 
 test("the walkthrough fits a phone screen", async ({ page }) => {

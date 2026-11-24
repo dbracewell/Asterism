@@ -85,10 +85,10 @@ Source: user review of the EPIC-101 install flow (2026-11-24). See [EPIC-102](do
 
 ### US-102.3: Next saves, Skip discards
 
-- [ ] Add the setup draft context and `useSetupDraft` (no-op outside the walkthrough).
-- [ ] Register drafts in every pane that has one, including captioning's unsaveable provider-without-model case.
-- [ ] Walkthrough: Save and continue / Next, failed save keeps the step, blocked reason, discard prompt on Skip and step-list navigation, "Reviewed" chip, drop the old hint.
-- [ ] Unit tests and Playwright (time zone saved by Save and continue; Skills toggle discarded by Skip).
+- [x] Add the setup draft context and `useSetupDraft` (no-op outside the walkthrough).
+- [x] Register drafts in every pane that has one, including captioning's unsaveable provider-without-model case.
+- [x] Walkthrough: Save and continue / Next, failed save keeps the step, blocked reason, discard prompt on Skip and step-list navigation, "Reviewed" chip, drop the old hint.
+- [x] Unit tests and Playwright (time zone saved by Save and continue; Skills toggle discarded by Skip).
 
 ### US-102.4: Docs and release notes
 

@@ -27,6 +27,7 @@ import {
   appToolSettingsUpdateMutation,
   toolsGetAllOptions,
 } from "@/lib/client/@tanstack/react-query.gen";
+import { useSetupDraft } from "@/features/setup/setup-draft";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -77,6 +78,18 @@ const ToolsSettingsForm = ({ appSettings }: { appSettings: ToolSettings }) => {
       } as Record<ComponentType, ComponentProviderParameters>,
     });
   }, [appSettings]);
+
+  const body = () => ({
+    body: {
+      active_tools: toolSettings.activeTools,
+      web_search_provider: toolSettings.components.WebSearch,
+      image_search_provider: toolSettings.components.ImageSearch,
+    },
+  });
+  useSetupDraft({
+    dirty: isDirty,
+    save: () => saveSettings.mutateAsync(body()),
+  });
 
   const tools = useMemo(() => {
     if (data == null) {
@@ -220,13 +233,7 @@ const ToolsSettingsForm = ({ appSettings }: { appSettings: ToolSettings }) => {
         <Button
           disabled={!isDirty || saveSettings.isPending}
           onClick={() => {
-            saveSettings.mutate({
-              body: {
-                active_tools: toolSettings.activeTools,
-                web_search_provider: toolSettings.components.WebSearch,
-                image_search_provider: toolSettings.components.ImageSearch,
-              },
-            });
+            saveSettings.mutate(body());
           }}
         >
           Save

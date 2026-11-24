@@ -30,6 +30,10 @@ Unreleased into its version and date.
 - The first-run setup card lists four steps. A new third step, **Review the
   remaining settings (optional)**, is current once a model is enabled, so the
   card shows that the setup walkthrough comes next.
+- In setup, **Next** now saves the step's unsaved changes first and reads
+  **Save and continue** while there are any. **Skip for now** saves nothing and
+  asks before discarding changes, as does opening another step. Reviewed steps
+  are marked **Reviewed** instead of **Done**.
 
 ## 0.5.0 (2026-11-24)
 

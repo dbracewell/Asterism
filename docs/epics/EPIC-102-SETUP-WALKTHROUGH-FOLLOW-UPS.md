@@ -148,22 +148,22 @@ Suggested order: US-102.1 → 102.2 → 102.3 → 102.4. Work one story at a tim
 
 ### US-102.3: Next saves, Skip discards
 
-- [ ] Add the setup draft context and the `useSetupDraft` hook (a no-op outside
+- [x] Add the setup draft context and the `useSetupDraft` hook (a no-op outside
       the walkthrough).
-- [ ] Register drafts in each pane listed under "Where things stand", including
+- [x] Register drafts in each pane listed under "Where things stand", including
       the captioning case that can't be saved.
-- [ ] Walkthrough:
+- [x] Walkthrough:
   - Save and continue / Next.
   - A failed save keeps the step open.
   - A blocked draft shows its reason.
   - Skip and step-list navigation ask before discarding.
   - The "Reviewed" chip.
   - The old hint is removed.
-- [ ] Unit tests: Next saves a dirty boolean policy, then records done. A failed
+- [x] Unit tests: Next saves a dirty boolean policy, then records done. A failed
       save records nothing. Skip with a draft asks, and Cancel keeps the draft.
       Skip without a draft records skipped with no prompt. Admin Settings panes
       are unchanged outside the walkthrough.
-- [ ] Playwright: change the time zone and choose Save and continue, then reload
+- [x] Playwright: change the time zone and choose Save and continue, then reload
       Admin Settings → Usage and see the saved value. Toggle Skills and choose
       Skip for now → Discard, and the policy is still off.
 

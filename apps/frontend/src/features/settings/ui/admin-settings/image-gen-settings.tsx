@@ -24,6 +24,7 @@ import {
   SettingsPane,
   SettingsSection,
 } from "@/features/settings/ui/settings-section";
+import { useSetupDraft } from "@/features/setup/setup-draft";
 import { client } from "@/lib/api";
 import type {
   ComponentProviderParameters,
@@ -101,6 +102,11 @@ function GeneratorSection() {
       setDraft(null);
       setSaved(true);
     },
+  });
+  useSetupDraft({
+    dirty: draft !== null,
+    save: () =>
+      save.mutateAsync({ path: { key: SETTING_KEY }, body: { value: draft } }),
   });
 
   if (!settings.data)
@@ -280,6 +286,16 @@ function PolicySection() {
       setDraft(null);
       setSaved(true);
     },
+  });
+  useSetupDraft({
+    dirty: draft !== null,
+    save: () =>
+      update.mutateAsync({
+        body: {
+          enabled: draft?.enabled ?? false,
+          group_ids: draft?.group_ids ?? null,
+        },
+      }),
   });
 
   if (!policy.data)

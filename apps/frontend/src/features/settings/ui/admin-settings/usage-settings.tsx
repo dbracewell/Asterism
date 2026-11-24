@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/table";
 import { SettingsSection } from "@/features/settings/ui/settings-section";
 import { dayInZone, formatCost, formatTokens } from "@/features/usage/format";
+import { useSetupDraft } from "@/features/setup/setup-draft";
 import { client } from "@/lib/api";
 import type { UsageReport, UsageUserRow } from "@/lib/client";
 import {
@@ -250,6 +251,11 @@ function TimezoneSection({ timeZone }: { timeZone: string }) {
     onSuccess: () => setSaved(true),
   });
   const trimmed = value.trim();
+  useSetupDraft({
+    dirty: trimmed !== timeZone,
+    save: () => save.mutateAsync({ body: { timezone: trimmed } }),
+    blocked: trimmed ? undefined : "Enter a timezone, such as Europe/London.",
+  });
   return (
     <SettingsSection
       title="Budget day"
