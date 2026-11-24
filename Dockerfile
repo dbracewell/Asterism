@@ -119,7 +119,7 @@ COPY --from=frontend-build /app/apps/frontend/src/lib/server-config-core.ts ./ap
 COPY --from=frontend-build /app/apps/frontend/src/lib/content-security-policy.ts ./apps/frontend/src/lib/content-security-policy.ts
 COPY --from=frontend-build /app/scripts/config-check.mjs \
   /app/scripts/config-contract.mjs /app/scripts/run-with-env.mjs \
-  /app/scripts/edge-config.mjs ./scripts/
+  /app/scripts/edge-config.mjs /app/scripts/setup.mjs ./scripts/
 COPY --from=backend-build /app/apps/backend ./apps/backend
 # The user guide, served at /help/guide for this version (US-90.9).
 COPY docs/guide ./docs/guide

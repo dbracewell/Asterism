@@ -1,6 +1,6 @@
 # EPIC-101: Guided install and setup
 
-Status: proposed (2026-11-24). Source: user request (2026-11-24): "A more robust
+Status: in progress (2026-11-24). Source: user request (2026-11-24): "A more robust
 install that explains and walks through setting up the system (all items in the
 admin settings)." Builds on EPIC-97 (what is hidden when off), EPIC-99 (captioning
 and image search) and EPIC-100 (complete settings import).
@@ -84,13 +84,15 @@ Suggested order: US-101.1 → 101.2 → 101.3 → 101.4.
 
 ### US-101.1: Setup command
 
-- [ ] Add an entrypoint `setup` command and `pnpm configure`. Both are
+- [x] Add an entrypoint `setup` command and `pnpm configure` (`scripts/setup.mjs`;
+      run with `--user "$(id -u):$(id -g)"` so the container can write your
+      directory). Both are
       interactive and use the config contract to generate secrets and write
       `.env`. A non-interactive mode takes flags or environment variables, for
       scripts.
-- [ ] Tests: the written file passes `pnpm config:check`; no overwrite without
+- [x] Tests: the written file passes `pnpm config:check`; no overwrite without
       `--force`; secrets have the required length.
-- [ ] Rewrite the README quick start and `docs/deployment.md` §2 around it, and
+- [x] Rewrite the README quick start and `docs/deployment.md` §2 around it, and
       keep the manual path as a reference.
 
 ### US-101.2: Setup walkthrough frame
@@ -120,10 +122,10 @@ Suggested order: US-101.1 → 101.2 → 101.3 → 101.4.
       `docs/deployment.md` §5.
 - [ ] Release notes: Behavior (setup walkthrough); Image (the `setup` command).
 
-## Open questions
+## Settled questions
 
-1. Should the setup command also offer to write `docker-compose.yml`, for example
-   with a reverse proxy?
-2. Should existing installations see the walkthrough once after upgrading? The
-   proposal is no: Admin Settings → Setup shows the summary, and steps never
-   visited are marked "not reviewed".
+1. The setup command writes `.env` only, not `docker-compose.yml`; the
+   deployment guide keeps covering the reverse proxy (decided 2026-11-24).
+2. Existing installations don't see the walkthrough after upgrading; Admin
+   Settings → Setup shows it, with steps never visited marked "not reviewed"
+   (decided 2026-11-24).

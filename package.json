@@ -17,6 +17,7 @@
     "check:trivyignore": "node scripts/check-vulns.mjs --ignore-file-only",
     "check:vulns": "node scripts/check-vulns.mjs",
     "docs:screenshots": "node scripts/docs-screenshots.mjs",
+    "configure": "node scripts/setup.mjs",
     "config:check": "node scripts/config-check.mjs --profile development --scope all --env required",
     "test:config": "node --test test/*.test.mjs",
     "test:container-config": "node docker/config-parity-test.mjs",

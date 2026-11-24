@@ -59,6 +59,13 @@ Unreleased into its version and date.
   A data migration records the CLIP-era processing policy on installations
   that never stored one, so this happens there too.
 
+### Image
+
+- The image has a `setup` command that writes `.env` for a new installation:
+  `docker run --rm -it --user "$(id -u):$(id -g)" -v "$PWD:/out" ghcr.io/dbracewell/asterism:<version> setup`.
+  It generates the secrets, checks the values and never replaces an existing
+  file. In a checkout, `pnpm configure` does the same.
+
 ### Behavior
 
 - Ask for flashcards or a quiz in a project chat, and the assistant drafts a
