@@ -45,13 +45,14 @@ server.
 ```bash
 git clone https://github.com/dbracewell/Asterism.git
 cd Asterism
-cp .env.example .env
+docker run --rm -it --user "$(id -u):$(id -g)" -v "$PWD:/out" ghcr.io/dbracewell/asterism:<version> setup
 ```
 
-Edit `.env`: replace the three `replace-with-…` values with secrets made by
-`openssl rand -base64 32` (one each). Leave `PUBLIC_URL` as
-`http://localhost:3000` to try it on your own machine, and `ASTERISM_VERSION` as
-the release to run. Then start it:
+The setup command asks for the address people will open (press Enter for
+`http://localhost:3000` to try it on your own machine) and any reverse proxy. It
+generates the three secrets and writes `.env`. In a checkout with Node.js,
+`pnpm configure` does the same. It prints the admin passphrase you need next and
+never replaces an existing `.env`. Then start it:
 
 ```bash
 docker compose pull
@@ -64,8 +65,8 @@ This runs the published image, `ghcr.io/dbracewell/asterism`, for amd64 and arm6
 uses to search files. To build from source instead, see
 [Building from source](docs/deployment.md#building-from-source).
 
-Open <http://localhost:3000>, create the administrator account with your
-`ADMIN_PASSPHRASE`, and follow the setup card to connect a model provider.
+Open <http://localhost:3000> and create the administrator account with the admin
+passphrase the setup command printed, then follow the setup in the app.
 
 To run Asterism for real users, behind HTTPS with backups, follow the
 [deployment guide](docs/deployment.md).

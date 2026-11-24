@@ -42,13 +42,18 @@ case "$command" in
         backend_python verify "$@"
         exit
         ;;
+    setup)
+        # US-101.1: write .env for a new installation into the directory mounted at /out.
+        shift
+        exec node /app/scripts/setup.mjs "$@"
+        ;;
     restore)
         shift
         # Never fall through to starting the app: that would run it on the storage being restored.
         (( $# >= 1 )) || { echo "usage: restore /backups/asterism-backup-<time>.tar.gz" >&2; exit 2; }
         ;;
     *)
-        echo "Unknown command: $1 (expected backup, verify or restore)" >&2
+        echo "Unknown command: $1 (expected setup, backup, verify or restore)" >&2
         exit 2
         ;;
 esac

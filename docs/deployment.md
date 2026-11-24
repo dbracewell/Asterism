@@ -37,12 +37,27 @@ Releases are published as `ghcr.io/dbracewell/asterism:<version>`; the
 for its `docker-compose.yml` and `.env.example`:
 
 ```bash
-git clone --branch v0.2.0 https://github.com/dbracewell/Asterism.git asterism && cd asterism
-cp .env.example .env
-openssl rand -base64 32   # run three times: one value for each secret below
+git clone --branch v<version> https://github.com/dbracewell/Asterism.git asterism && cd asterism
+docker run --rm -it --user "$(id -u):$(id -g)" -v "$PWD:/out" ghcr.io/dbracewell/asterism:<version> setup
 ```
 
-Set in `.env`:
+The setup command (US-101.1) writes `.env`:
+
+- It asks for `PUBLIC_URL` and `TRUSTED_PROXIES`, and generates the three secrets.
+- It checks the result against the same rules the container applies at start, so
+  for example a public URL that isn't `https` outside localhost is refused.
+- It writes the file readable only by you.
+- It refuses to replace an existing `.env`, whose secrets protect existing data,
+  unless you add `--force`.
+- It prints the admin passphrase you need to create the first administrator.
+
+`--user` lets it write the file into your directory as you. In a checkout with
+Node.js, `pnpm configure` does the same. For scripts, pass
+`--yes` with `--public-url`, `--trusted-proxies` and `--version` instead of
+answering questions.
+
+To write `.env` by hand instead, copy `.env.example` and set the values below, one
+`openssl rand -base64 32` value for each secret:
 
 | Setting              | Value                                                                                                                                                                        |
 | -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
