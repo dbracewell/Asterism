@@ -79,10 +79,10 @@ Source: user request (2026-11-24). Suggested order: EPIC-96 → 97 → 99 → 98
   - [x] Give every admin settings mutation (memory, canvas, skills, ChatGPT plans, image generation policy and provider, tools, groups, providers and models, captioning) `meta.invalidates` that includes the availability key and the keys of the user-facing queries it affects, such as `toolsGetActiveOptions` and `skillAvailabilityOptions`. Or leave it on global invalidation where that is deliberate.
   - [x] Remove the dead `userSettingsGetQueryKey` invalidation.
   - [x] A test lists the admin settings mutations and fails if one neither reaches the availability query nor uses global invalidation.
-- [ ] US-96.3: End-to-end check
-  - [ ] Playwright: an admin turns memory on, switches to User Settings → Your Asterism, and can tick "Use memory" without a reload. Repeat for canvas and the tool allowlist (the agent form's tool picker).
-  - [ ] Playwright: a second user's tab shows the change after it regains focus.
-  - [ ] Update `docs/architecture` where the user context is described, and add a Behavior line in the release notes.
+- [x] US-96.3: End-to-end check
+  - [x] Playwright: an admin turns memory on, switches to User Settings → Your Asterism, and can tick "Use memory" without a reload. Repeat for canvas. The tool allowlist is covered by `admin-invalidation.test.ts`, which checks that its save refreshes the agent form's tool picker.
+  - [x] Playwright: a second user's tab shows the change after it regains focus.
+  - [x] Update `docs/architecture` where the user context is described, and add a Behavior line in the release notes.
 
 ### [EPIC-97: Hide what the admin has not enabled](docs/epics/EPIC-97-HIDE-DISABLED-FEATURES.md)
 

@@ -38,7 +38,16 @@ Every backend call goes through the generated client and TanStack Query:
 - **Writes** use the generated mutation options with `useMutation`. The shared
   mutation cache ([`lib/mutation-cache.ts`](../../apps/frontend/src/lib/mutation-cache.ts))
   invalidates the affected queries after every mutation, so individual mutations
-  don't invalidate anything themselves.
+  don't invalidate anything themselves. A mutation may narrow that with
+  `meta.invalidates`; an Admin Settings save that does must include the
+  availability query (`admin-invalidation.test.ts` checks).
+- **What the admin allows** comes from `GET /availability` through
+  `useFeature()` ([`features/availability/queries.ts`](../../apps/frontend/src/features/availability/queries.ts)),
+  not from the user loaded by the server layout. The layout is rendered once per
+  full page load, so a value read from it would stay stale after an admin
+  change. The query refetches on focus once it is 30 seconds old, so other open
+  tabs catch up too. Hiding or disabling a feature is presentation only; the
+  server checks again when the feature is used.
 - **Tokens.** The client asks Better Auth for a short-lived JWT and reuses it until a
   minute before it expires ([`lib/backend-token.ts`](../../apps/frontend/src/lib/backend-token.ts)).
   A 401 drops it; a 403 (signed in but not allowed) keeps it.
