@@ -182,10 +182,10 @@ Complete (2026-11-24) once US-99.4 merges; archive with EPIC-96 and EPIC-97.
 - [x] US-100.1: Coverage registry and test
   - [x] Add the section registry (backend) and a test that fails on any stored admin setting not marked exported or excluded. It would fail today on `usage_timezone`, group budgets, memory and image groups, licenses and themes.
   - [x] Add an ADR-0052 addendum for v2 and the registry.
-- [ ] US-100.2: Export and import what is missing
-  - [ ] Export and import `usage_timezone`, group budgets, memory and image generation groups by name, accepted ONNX licenses, and themes, as `format_version: 2`. v1 files still import.
-  - [ ] Preview lists every section and what will change, including groups to be created.
-  - [ ] Tests:
+- [x] US-100.2: Export and import what is missing
+  - [x] Export and import `usage_timezone`, group budgets, memory and image generation groups by name, accepted ONNX licenses, and themes, as `format_version: 2`. v1 files still import.
+  - [x] Preview lists every section and what will change, including groups to be created.
+  - [x] Tests:
     - round trip into an empty installation and into one with differently numbered groups;
     - a v1 file imports;
     - wrong passphrase;

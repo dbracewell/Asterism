@@ -124,3 +124,29 @@ key found that way, or an `ApplicationSettings` field, is not in the registry.
 They also fail when an entry neither names a bundle field nor explains its
 absence. US-100.2 carries the parts listed as missing, in format version 2;
 US-100.3 shows the registry in the Export pane.
+
+## Addendum: format version 2 (US-100.2)
+
+Version 2 carries what the registry listed as missing:
+
+- **Group limits by name.** Memory, image generation and study in chat each have
+  a `group_limit`. A built-in group is identified by its key, and a custom group
+  by its name, since ids differ between installations. Import maps the names to
+  this installation's groups, creating a custom group that is missing. An empty
+  limit (`groups: null`) means every group.
+- **Group budgets.** Each group has its daily and monthly token budgets.
+- **The usage time zone.** An unknown zone refuses the import.
+- **Accepted licenses.** These are the ONNX generator's catalog model ids. Those
+  ids are pinned in code, so they mean the same model on both sides; an id this
+  version doesn't know is skipped.
+- **Custom themes.** Each theme is the editor's document, under its id. Import
+  checks every theme first, with a copy of the editor's strict schema (a test
+  keeps its color keys in step with `features/theme/schemas.ts`) and the rule
+  that names are unique regardless of case, so a bad theme refuses the whole
+  import. Theme files aren't in the database, so they are written atomically
+  once the rest is committed. Themes not in the file stay.
+
+Version 1 files still open. Every new part is optional, and a missing part leaves
+this installation's own value as it is. The preview compares only what the file
+carries, so a version 1 file never shows a change it won't make. Import stays
+merge-only.

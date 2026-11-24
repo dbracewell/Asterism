@@ -348,7 +348,7 @@ async def test_other_files_are_refused(api, source):
 
 async def test_newer_format_is_refused(api):
     client, _ = api
-    source = json.dumps({**json.loads(file()), "format_version": 2})
+    source = json.dumps({**json.loads(file()), "format_version": 3})
     assert (await post(client, PREVIEW, {"source": source, "passphrase": PASSPHRASE})).status_code == 400
 
 
@@ -425,25 +425,27 @@ async def test_memory_policy_imports_its_switch_and_keeps_local_group_limits(api
     assert stored.value == {"enabled": True, "group_ids": ["student"]}
 
 
-async def test_memory_policy_exports_only_its_switch(api):
+async def test_memory_policy_exports_its_switch_and_groups_by_name(api):
     _, sessions = api
     async with sessions() as session:
         session.add(ApplicationSettingsModel(key="memory", value={"enabled": True, "group_ids": ["student"]}))
         await session.commit()
         exported = await collect_settings(session)
-    # The switch travels; the group limit stays with this installation.
-    assert exported.memory.model_dump() == {"enabled": True}
+    # US-100.2: group ids differ between installations, so the file names the group.
+    assert exported.memory.enabled is True
+    [group] = exported.memory.group_limit.groups
+    assert group.built_in == "student"
 
 
-async def test_study_chat_policy_travels_as_its_switch(api):
-    """US-98.1: on/off travels, group limits stay; with no row it exports as on."""
+async def test_study_chat_policy_travels_with_its_groups(api):
+    """US-98.1, US-100.2: a version 1 file keeps local groups; with no row it exports as on."""
     client, sessions = api
     async with sessions() as session:
-        assert (await collect_settings(session)).study_chat.model_dump() == {"enabled": True}
+        exported = await collect_settings(session)
+        assert (exported.study_chat.enabled, exported.study_chat.group_limit.groups) == (True, None)
         session.add(ApplicationSettingsModel(key="study_chat", value={"enabled": True, "group_ids": ["student"]}))
         await session.commit()
     assert (await post(client, IMPORT, request(bundle(study_chat=ExportedStudyChat(enabled=False))))).status_code == 200
     async with sessions() as session:
         stored = await session.get(ApplicationSettingsModel, "study_chat")
         assert stored.value == {"enabled": False, "group_ids": ["student"]}
-        assert (await collect_settings(session)).study_chat.model_dump() == {"enabled": False}

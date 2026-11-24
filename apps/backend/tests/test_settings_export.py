@@ -300,16 +300,8 @@ def test_every_registry_entry_is_exported_or_explains_why_not():
     assert bundle - {entry.bundle_field for entry in COVERAGE} == set()
 
 
-def test_the_known_gaps_are_listed():
-    """US-100.1 records what the file doesn't carry yet; US-100.2 closes these."""
+def test_nothing_an_admin_sets_is_missing_from_the_file():
+    """US-100.2 closed the gaps US-100.1 listed; a new gap needs a decision, not a default."""
     from asterism.domains.settings_transfer.coverage import COVERAGE
 
-    assert {entry.store: entry.missing for entry in COVERAGE if entry.missing} == {
-        "files:themes": ("custom themes",),
-        "table:groups": ("daily and monthly token budgets",),
-        "usage_timezone": ("the usage time zone",),
-        "memory": ("which groups may use memory",),
-        "study_chat": ("which groups may make decks and quizzes from chat",),
-        "image_generation": ("which groups may make images",),
-        "image_generation_onnx": ("accepted model licenses",),
-    }
+    assert [entry for entry in COVERAGE if entry.missing] == []

@@ -23,7 +23,9 @@ from asterism.domains.settings.pricing import ModelPricing
 from asterism.domains.settings.provider_types import ModelCapabilitySource, ProviderType
 
 SETTINGS_FORMAT = "asterism.settings-export"
-SETTINGS_FORMAT_VERSION = 1
+# 2 (US-100.2) adds the group limits, budgets, usage time zone, licenses and
+# themes. Version 1 files still open: what they lack is left as it is.
+SETTINGS_FORMAT_VERSION = 2
 MIN_PASSPHRASE_LENGTH = 12
 MAX_PASSPHRASE_LENGTH = 1024
 MAX_SETTINGS_FILE_BYTES = 8 * 1024 * 1024
@@ -78,25 +80,43 @@ class ExportedCaptioning(_Document):
     model: ModelReference | None = None
 
 
+class GroupReference(_Document):
+    """A group by built-in key or by name, because group ids differ between installations."""
+
+    name: str = Field(min_length=1, max_length=80)
+    built_in: Literal["admin", "educator", "student"] | None = None
+
+
+class GroupLimit(_Document):
+    """Which groups a feature is for. ``groups`` None is every group.
+
+    A policy without a ``group_limit`` (a version 1 file) leaves this
+    installation's own limit as it is.
+    """
+
+    groups: tuple[GroupReference, ...] | None = Field(default=None, max_length=200)
+
+
 class ExportedImageGeneration(_Document):
-    """Image generation policy and provider (ADR-0064). Group limits stay with the
-    installation: group ids differ between installations."""
+    """Image generation policy (ADR-0064) and, since version 2, its group limit."""
 
     enabled: bool = False
+    group_limit: GroupLimit | None = None
 
 
 class ExportedMemory(_Document):
-    """The memory policy (ADR-0078). Group limits stay with the installation:
-    group ids differ between installations. Memories themselves are never in it."""
+    """The memory policy (ADR-0078) and, since version 2, its group limit.
+    Memories themselves are never in it."""
 
     enabled: bool = False
+    group_limit: GroupLimit | None = None
 
 
 class ExportedStudyChat(_Document):
-    """Decks and quizzes from chat (EPIC-98). Group limits stay with the
-    installation, as for memory."""
+    """Decks and quizzes from chat (EPIC-98) and its group limit."""
 
     enabled: bool = True
+    group_limit: GroupLimit | None = None
 
 
 class ExportedLocalImage(_Document):
@@ -108,10 +128,12 @@ class ExportedLocalImage(_Document):
 
 
 class ExportedOnnxImage(_Document):
-    """The ONNX generator's model (US-94.4). Downloads and license acceptance stay
+    """The ONNX generator's model (US-94.4) and, since version 2, the licenses an
+    administrator accepted (catalog model ids, pinned in code). Downloads stay
     with the installation."""
 
     model_id: str | None = None
+    accepted_licenses: tuple[str, ...] | None = Field(default=None, max_length=50)
 
 
 class ExportedCompaction(_Document):
@@ -134,6 +156,22 @@ class ExportedGroup(_Document):
     built_in: Literal["admin", "educator", "student"] | None = None
     models: tuple[ModelReference, ...] | None = None
     tools: tuple[str, ...] | None = None
+    # Since version 2; a version 1 file leaves the group's budgets as they are.
+    budget: "GroupBudget | None" = None
+
+
+class GroupBudget(_Document):
+    """Token budgets (ADR-0073); None is no budget."""
+
+    daily_token_budget: PositiveInt | None = None
+    monthly_token_budget: PositiveInt | None = None
+
+
+class ExportedTheme(_Document):
+    """A custom theme or bundled-theme override (the theme editor's file), by its id."""
+
+    id: str = Field(pattern=r"^[a-z0-9][a-z0-9_-]{0,79}$")
+    document: dict[str, JsonValue]
 
 
 class SettingsBundle(_Document):
@@ -160,13 +198,16 @@ class SettingsBundle(_Document):
     captioning: ExportedCaptioning = Field(default_factory=ExportedCaptioning)
     compaction: ExportedCompaction = Field(default_factory=ExportedCompaction)
     groups: tuple[ExportedGroup, ...] = Field(default=(), max_length=200)
+    # Since version 2. None (a version 1 file) leaves this installation's own.
+    usage_timezone: str | None = Field(default=None, max_length=64)
+    themes: tuple[ExportedTheme, ...] | None = Field(default=None, max_length=200)
 
 
 class SettingsEnvelope(_Document):
     """The file itself. It holds nothing readable beyond the format marker."""
 
     format: Literal["asterism.settings-export"] = SETTINGS_FORMAT
-    format_version: Literal[1] = SETTINGS_FORMAT_VERSION
+    format_version: Literal[1, 2] = SETTINGS_FORMAT_VERSION
     salt: str
     ciphertext: str
 

@@ -11,12 +11,14 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from asterism.common.log import get_logger
+from asterism.core import config
 from asterism.db.mixins import get_unix_timestamp
 from asterism.domains.groups.models import GroupModel
 from asterism.domains.knowledge.policy import load_processing_configuration
 from asterism.domains.settings.models import ProviderModel
 from asterism.domains.settings.schemas import ComponentProviderParameters
 from asterism.domains.settings.service import get_all_providers, get_app_settings
+from asterism.domains.usage.service import read_usage_settings
 
 from .documents import (
     ExportedCaptioning,
@@ -30,11 +32,15 @@ from .documents import (
     ExportedOnnxImage,
     ExportedProvider,
     ExportedStudyChat,
+    GroupBudget,
+    GroupLimit,
+    GroupReference,
     ModelReference,
     SettingsBundle,
     SettingsEnvelope,
     seal,
 )
+from .themes import read_themes
 
 logger = get_logger("SettingsExport")
 
@@ -93,9 +99,27 @@ async def _groups(providers: list[ProviderModel], session: AsyncSession) -> tupl
                 built_in=row.id if row.built_in else None,  # type: ignore[arg-type]
                 models=models,
                 tools=None if row.tool_access is None else tuple(row.tool_access),
+                budget=GroupBudget(
+                    daily_token_budget=row.daily_token_budget, monthly_token_budget=row.monthly_token_budget
+                ),
             )
         )
     return tuple(groups)
+
+
+async def _group_limit(policy: dict | None, session: AsyncSession) -> GroupLimit:
+    """A policy's ``group_ids`` as group names; a group deleted since drops out."""
+    group_ids = (policy or {}).get("group_ids")
+    if group_ids is None:
+        return GroupLimit(groups=None)
+    rows = {row.id: row for row in await session.scalars(select(GroupModel))}
+    return GroupLimit(
+        groups=tuple(
+            GroupReference(name=rows[group_id].name, built_in=group_id if rows[group_id].built_in else None)  # type: ignore[arg-type]
+            for group_id in group_ids
+            if group_id in rows
+        )
+    )
 
 
 async def collect_settings(session: AsyncSession) -> SettingsBundle:
@@ -116,17 +140,23 @@ async def collect_settings(session: AsyncSession) -> SettingsBundle:
                 if key in ExportedLocalImage.model_fields
             }
         ),
-        image_generation_onnx=ExportedOnnxImage(model_id=(settings.image_generation_onnx or {}).get("model_id")),
-        image_generator_provider=_component(settings.image_generator_provider),
-        image_generation=ExportedImageGeneration.model_validate(
-            {
-                key: value
-                for key, value in (settings.image_generation or {}).items()
-                if key in ExportedImageGeneration.model_fields
-            }
+        image_generation_onnx=ExportedOnnxImage(
+            model_id=(settings.image_generation_onnx or {}).get("model_id"),
+            accepted_licenses=tuple((settings.image_generation_onnx or {}).get("accepted_licenses") or ()),
         ),
-        memory=ExportedMemory(enabled=(settings.memory or {}).get("enabled") is True),
-        study_chat=ExportedStudyChat(enabled=(settings.study_chat or {}).get("enabled", True) is True),
+        image_generator_provider=_component(settings.image_generator_provider),
+        image_generation=ExportedImageGeneration(
+            enabled=(settings.image_generation or {}).get("enabled") is True,
+            group_limit=await _group_limit(settings.image_generation, session),
+        ),
+        memory=ExportedMemory(
+            enabled=(settings.memory or {}).get("enabled") is True,
+            group_limit=await _group_limit(settings.memory, session),
+        ),
+        study_chat=ExportedStudyChat(
+            enabled=(settings.study_chat or {}).get("enabled", True) is True,
+            group_limit=await _group_limit(settings.study_chat, session),
+        ),
         compaction=ExportedCompaction(
             **settings.compaction.model_dump(exclude={"model_id"}),
             model=_reference(settings.compaction.model_id, providers),
@@ -139,6 +169,8 @@ async def collect_settings(session: AsyncSession) -> SettingsBundle:
             model=_reference(processing.captioning.provider_model_id, providers),
         ),
         groups=await _groups(providers, session),
+        usage_timezone=(await read_usage_settings(session)).timezone,
+        themes=await asyncio.to_thread(read_themes, config.storage_root),
     )
 
 
