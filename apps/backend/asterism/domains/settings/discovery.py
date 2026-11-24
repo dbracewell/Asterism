@@ -10,10 +10,9 @@ metadata.
 from __future__ import annotations
 
 import uuid
-from collections.abc import Callable
 from typing import Protocol, cast
 
-import httpx
+import httpx2
 from openai import (
     APIConnectionError,
     APIResponseValidationError,
@@ -39,7 +38,7 @@ logger = get_logger("ProviderDiscovery")
 
 # Hard cap on upstream model-list payloads (checked via content-length and stream size).
 MAX_DISCOVERY_RESPONSE_BYTES = 2 * 1024 * 1024
-DISCOVERY_TIMEOUT = httpx.Timeout(20.0, connect=10.0)
+DISCOVERY_TIMEOUT = httpx2.Timeout(20.0, connect=10.0)
 
 
 class ProviderDiscoveryRequest(BaseModel):
@@ -97,10 +96,10 @@ class _DiscoveryResponseTooLarge(Exception):
     pass
 
 
-class _SizeLimitedStream(httpx.AsyncByteStream):
+class _SizeLimitedStream(httpx2.AsyncByteStream):
     """Streaming wrapper that raises :class:`_DiscoveryResponseTooLarge` past the byte cap."""
 
-    def __init__(self, stream: httpx.AsyncByteStream) -> None:
+    def __init__(self, stream: httpx2.AsyncByteStream) -> None:
         self._stream = stream
         self._size = 0
 
@@ -115,8 +114,8 @@ class _SizeLimitedStream(httpx.AsyncByteStream):
         await self._stream.aclose()
 
 
-async def _limit_response_size(response: httpx.Response) -> None:
-    """httpx response hook: reject oversized responses before the body is read."""
+async def _limit_response_size(response: httpx2.Response) -> None:
+    """httpx2 response hook: reject oversized responses before the body is read."""
     content_length = response.headers.get("content-length")
     if content_length is not None:
         try:
@@ -124,23 +123,23 @@ async def _limit_response_size(response: httpx.Response) -> None:
                 raise _DiscoveryResponseTooLarge
         except ValueError:
             pass
-    response.stream = _SizeLimitedStream(cast(httpx.AsyncByteStream, response.stream))
+    response.stream = _SizeLimitedStream(cast(httpx2.AsyncByteStream, response.stream))
 
 
 class OpenAIProviderDiscovery:
     """Discover both first-party and compatible models through the OpenAI SDK."""
 
-    def __init__(
-        self,
-        http_client_factory: Callable[[], httpx.AsyncClient] | None = None,
-    ) -> None:
-        """Args: ``http_client_factory`` overrides the default client (used by tests)."""
-        self._http_client_factory = http_client_factory or (
-            lambda: httpx.AsyncClient(
-                timeout=DISCOVERY_TIMEOUT,
-                follow_redirects=False,
-                event_hooks={"response": [_limit_response_size]},
-            )
+    def __init__(self, transport: httpx2.AsyncBaseTransport | None = None) -> None:
+        """Args: ``transport`` replaces the network (used by tests); the client settings stay."""
+        self._transport = transport
+
+    def _http_client(self) -> httpx2.AsyncClient:
+        """No redirects, so credentials never follow one; responses are capped in size."""
+        return httpx2.AsyncClient(
+            transport=self._transport,
+            timeout=DISCOVERY_TIMEOUT,
+            follow_redirects=False,
+            event_hooks={"response": [_limit_response_size]},
         )
 
     async def discover(
@@ -273,7 +272,7 @@ class OpenAIProviderDiscovery:
         api_key: SecretStr,
     ) -> list[dict[str, object]]:
         """Fetch the raw ``/models`` list, mapping SDK errors to :class:`ProviderDiscoveryError`."""
-        http_client = self._http_client_factory()
+        http_client = self._http_client()
         client = AsyncOpenAI(
             api_key=api_key.get_secret_value(),
             base_url=base_url,
@@ -345,7 +344,7 @@ class OpenAIProviderDiscovery:
 
 
 def _has_cause(error: BaseException, error_type: type[BaseException]) -> bool:
-    """Walk ``__cause__``/``__context__`` chains looking for ``error_type`` (httpx wraps stream errors)."""
+    """Walk ``__cause__``/``__context__`` chains looking for ``error_type`` (httpx2 wraps stream errors)."""
     current: BaseException | None = error
     while current is not None:
         if isinstance(current, error_type):

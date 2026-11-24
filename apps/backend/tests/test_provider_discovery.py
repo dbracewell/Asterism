@@ -1,6 +1,6 @@
 import uuid
 
-import httpx
+import httpx2
 import pytest
 from asterism.domains.settings.discovery import (
     MAX_DISCOVERY_RESPONSE_BYTES,
@@ -9,7 +9,6 @@ from asterism.domains.settings.discovery import (
     ProviderDiscoveryRequest,
     _extract_context_window,
     _extract_vision,
-    _limit_response_size,
     merge_discovered_models,
 )
 from asterism.domains.settings.model_catalog import OPENAI_MODEL_CATALOG_VERSION
@@ -39,14 +38,7 @@ def _request(
 
 
 def _discovery(handler):
-    return OpenAIProviderDiscovery(
-        http_client_factory=lambda: httpx.AsyncClient(
-            transport=httpx.MockTransport(handler),
-            timeout=httpx.Timeout(1),
-            follow_redirects=False,
-            event_hooks={"response": [_limit_response_size]},
-        ),
-    )
+    return OpenAIProviderDiscovery(transport=httpx2.MockTransport(handler))
 
 
 @pytest.mark.asyncio
@@ -54,7 +46,7 @@ async def test_openai_uses_canonical_origin_and_versioned_catalog():
     async def handler(request):
         assert str(request.url) == f"{OPENAI_BASE_URL}/models"
         assert request.headers["authorization"] == f"Bearer {API_KEY}"
-        return httpx.Response(
+        return httpx2.Response(
             200,
             json={
                 "data": [
@@ -111,7 +103,7 @@ async def test_openai_uses_canonical_origin_and_versioned_catalog():
 @pytest.mark.asyncio
 async def test_generic_discovery_extracts_supported_metadata_shapes(metadata, context_window, supports_vision):
     async def handler(_request):
-        return httpx.Response(200, json={"data": [{"id": "local", **metadata}]})
+        return httpx2.Response(200, json={"data": [{"id": "local", **metadata}]})
 
     response = await _discovery(handler).discover(_request())
     model = response.models[0]
@@ -135,7 +127,7 @@ def test_extractors_leave_invalid_missing_and_conflicting_metadata_unknown():
 @pytest.mark.asyncio
 async def test_conflicting_generic_metadata_returns_warnings_and_unknown_values():
     async def handler(_request):
-        return httpx.Response(
+        return httpx2.Response(
             200,
             json={
                 "data": [
@@ -161,18 +153,18 @@ async def test_conflicting_generic_metadata_returns_warnings_and_unknown_values(
 @pytest.mark.parametrize(
     ("response", "category"),
     [
-        (httpx.Response(401), "authentication_failed"),
+        (httpx2.Response(401), "authentication_failed"),
         (
-            httpx.Response(
+            httpx2.Response(
                 302,
                 headers={"location": "https://other.example/models"},
             ),
             "redirect_blocked",
         ),
-        (httpx.Response(200, content=b"not-json"), "malformed_response"),
-        (httpx.Response(200, json={"models": []}), "malformed_response"),
+        (httpx2.Response(200, content=b"not-json"), "malformed_response"),
+        (httpx2.Response(200, json={"models": []}), "malformed_response"),
         (
-            httpx.Response(200, content=b"x" * (MAX_DISCOVERY_RESPONSE_BYTES + 1)),
+            httpx2.Response(200, content=b"x" * (MAX_DISCOVERY_RESPONSE_BYTES + 1)),
             "response_too_large",
         ),
     ],
@@ -196,10 +188,42 @@ async def test_discovery_failures_are_actionable_and_redacted(
 
 
 @pytest.mark.asyncio
+async def test_a_streamed_response_without_a_length_is_cut_off_at_the_limit():
+    chunk = b"x" * 65_536
+    chunks = MAX_DISCOVERY_RESPONSE_BYTES // len(chunk) + 2
+    sent = 0
+
+    async def body():
+        nonlocal sent
+        for _ in range(chunks):
+            sent += 1
+            yield chunk
+
+    async def handler(_request):
+        return httpx2.Response(200, content=body())
+
+    with pytest.raises(ProviderDiscoveryError) as error:
+        await _discovery(handler).discover(_request())
+
+    assert error.value.category == "response_too_large"
+    assert sent < chunks
+
+
+@pytest.mark.asyncio
+async def test_discovery_uses_an_httpx2_client_without_redirects():
+    client = OpenAIProviderDiscovery()._http_client()
+    try:
+        assert isinstance(client, httpx2.AsyncClient)
+        assert client.follow_redirects is False
+    finally:
+        await client.aclose()
+
+
+@pytest.mark.asyncio
 async def test_connectivity_and_timeout_errors_are_categorized_without_secrets():
     for exception, category in [
-        (httpx.ConnectError("failed with secret?"), "connectivity"),
-        (httpx.ReadTimeout("timed out with secret?"), "timeout"),
+        (httpx2.ConnectError("failed with secret?"), "connectivity"),
+        (httpx2.ReadTimeout("timed out with secret?"), "timeout"),
     ]:
 
         async def handler(request, exception=exception):
@@ -273,7 +297,7 @@ async def test_tool_support_uses_explicit_provider_metadata_and_remains_unknown_
         data = {"id": "local"}
         if support is not None:
             data["supports_tools"] = support
-        return httpx.Response(200, json={"data": [data]})
+        return httpx2.Response(200, json={"data": [data]})
 
     model = (await _discovery(handler).discover(_request())).models[0]
     assert model.supports_tools is support
