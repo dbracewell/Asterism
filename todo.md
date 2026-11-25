@@ -60,7 +60,7 @@ Source: user request (2026-11-18). Suggested order: [EPIC-87](docs/epics/EPIC-87
 
 Found while taking the Dependabot updates for EPIC-92. Take it as a small pull request; the completed items are archived in the [2026-11-24 checklist](docs/archive/todo-completed-2026-11-24.md).
 
-- [ ] Take the `python:3.13-slim-trixie` base update that carries `zlib1g` 1.3.1-1+deb13u1 (carried over from US-95.4), and remove `zlib1g` from `BASE_LAG_UPGRADES` in the Dockerfile. `pnpm check:image` fails on the first base that has it, so Dependabot's docker update will prompt this.
+- [ ] Take the `python:3.13-slim-trixie` base update that carries `libzstd1` 1.5.7+dfsg-1+deb13u1 (CVE-2026-124851), and remove `libzstd1` from `BASE_LAG_UPGRADES` in the Dockerfile. `pnpm check:image` fails on the first base that has it, so Dependabot's docker update will prompt this. (The `zlib1g` entry came out with the 2026-11-25 base update.)
 
 ## Admin, study and setup epics (proposed 2026-11-24)
 
