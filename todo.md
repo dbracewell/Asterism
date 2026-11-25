@@ -69,3 +69,31 @@ EPIC-96 through EPIC-101 (live policy availability, hiding what the admin turned
 ## Setup walkthrough follow-ups (proposed 2026-11-24)
 
 [EPIC-102](docs/epics/EPIC-102-SETUP-WALKTHROUGH-FOLLOW-UPS.md) (US-102.1 through US-102.4) is complete and archived in the [2026-11-24 checklist](docs/archive/todo-completed-2026-11-24.md).
+
+## Mermaid diagrams (proposed 2026-11-25)
+
+Source: user request (2026-11-25). [EPIC-103](docs/epics/EPIC-103-MERMAID-DIAGRAMS.md): render ` ```mermaid ` blocks as diagrams everywhere markdown is shown, and steer the agent to mermaid for labelled diagrams. Suggested order: US-103.1 → 103.2 → 103.3 → 103.4. Work one story at a time.
+
+- [x] US-103.1: ADR and safe rendering
+  - [x] ADR-0081 (rendering not a capability, untrusted-source config, sanitizing, lazy load, finished-block rule, fallback)
+  - [x] Exact-pinned `mermaid` and `dompurify`; no `eval` in production; chunk loads only with a diagram
+  - [x] Fixed `markdownMermaidConfig` in `policy.ts` and `MermaidBlock` for `language-mermaid`; sanitize the SVG
+  - [x] Draw only closed fences; fall back to `CodeBlock` on errors, limits, timeouts and load failures
+  - [x] Unit tests (draws, inert labels, fallbacks, unclosed fence, config not overridable)
+  - [x] `/e2e/markdown` harness cases and a Playwright spec (no CSP violations)
+- [ ] US-103.2: The diagram block
+  - [ ] Header: Diagram/Code toggle, Copy source, Expand dialog, Download SVG/PNG
+  - [ ] Keyboard-scrollable region; `role="img"` named from `accTitle`/`accDescr`
+  - [ ] Theme variables from app tokens; redraw on theme change; theme-contrast harness
+  - [ ] Layout at 320px, canvas panel, Study notes and the guide
+  - [ ] Tests (toggle, copy, expand, accessible name, theme redraw)
+- [ ] US-103.3: Agent guidance
+  - [ ] `DIAGRAM_GUIDANCE` in `build_runtime_prompt`
+  - [ ] Narrow `IMAGE_GUIDANCE` to pictures; labelled diagrams go to mermaid
+  - [ ] Mention diagrams in `CANVAS_GUIDANCE`
+  - [ ] Prompt composition tests
+- [ ] US-103.4: Documentation and release
+  - [ ] Guide page `02-chatting/diagrams.md` with a screenshot; link from `creating-images.md`
+  - [ ] Architecture and security docs; `pnpm docs:check`
+  - [ ] Release notes (Behavior)
+  - [ ] Full isolated E2E suite before pushing
