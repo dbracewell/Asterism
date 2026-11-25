@@ -169,12 +169,12 @@ Suggested order: US-102.1 → 102.2 → 102.3 → 102.4. Work one story at a tim
 
 ### US-102.4: Docs and release notes
 
-- [ ] Update `docs/guide/08-for-administrators/first-time-setup.md`: the
+- [x] Update `docs/guide/08-for-administrators/first-time-setup.md`: the
       four-step checklist, Save and continue versus Skip for now, and the shorter
       step list. Refresh its screenshots (`pnpm docs:check`). Point to Theme
       editor, Educators and backup docs from their own pages.
-- [ ] Update `docs/deployment.md` §5 if it lists the walkthrough steps.
-- [ ] Release notes, under Behavior: setup's Next saves unsaved changes, and Skip
+- [x] Update `docs/deployment.md` §5 if it lists the walkthrough steps.
+- [x] Release notes, under Behavior: setup's Next saves unsaved changes, and Skip
       asks before discarding them; theme, educators and first backup are no
       longer setup steps.
 

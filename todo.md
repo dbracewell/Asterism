@@ -92,5 +92,5 @@ Source: user review of the EPIC-101 install flow (2026-11-24). See [EPIC-102](do
 
 ### US-102.4: Docs and release notes
 
-- [ ] Update `first-time-setup.md` with refreshed screenshots (`pnpm docs:check`) and `docs/deployment.md` §5 if needed.
-- [ ] Release notes (Behavior).
+- [x] Update `first-time-setup.md` with refreshed screenshots (`pnpm docs:check`) and `docs/deployment.md` §5 if needed.
+- [x] Release notes (Behavior).

@@ -30,7 +30,7 @@ export const shots = [
   {
     stage: "first-run",
     name: "setup-admin-account",
-    alt: "The first-run sign-up form, asking for the administrator's name, email, password and the admin passkey",
+    alt: "The first-run sign-up form, with the four setup steps above it and the first current, asking for the administrator's name, email, password and the admin passkey",
   },
   {
     stage: "first-run",
@@ -45,7 +45,7 @@ export const shots = [
   {
     stage: "first-run",
     name: "setup-ready",
-    alt: "The setup card saying you're ready, with Continue setup and Start chatting buttons",
+    alt: "The setup card saying you're ready, with Review the remaining settings as the current step, and Continue setup and Start chatting buttons",
   },
 
   // --- Getting started -------------------------------------------------------------
@@ -1255,7 +1255,7 @@ export const shots = [
   },
   {
     name: "admin-setup-step",
-    alt: "Admin Settings, Setup: the list of setup steps with Providers and models done, and the Image captioning step explaining that search can't find pictures while captioning is off, with Next, Skip for now and the captioning settings below",
+    alt: "Admin Settings, Setup: the list of setup steps with Providers and models reviewed, and the Image captioning step explaining that search can't find pictures while captioning is off, with Next, Skip for now and the captioning settings below",
     as: "admin",
     path: () => "/settings?t=admin&setting=setup&step=image-captioning",
     ready: ["Step 5 of", "search can't find them"],

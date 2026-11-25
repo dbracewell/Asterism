@@ -25,7 +25,7 @@ running and you open its address for the first time.
 
 1. Open Asterism's address. It says **Set up your Asterism instance**.
 
-   ![The first-run sign-up form, asking for the administrator's name, email, password and the admin passkey](../images/setup-admin-account.png)
+   ![The first-run sign-up form, with the four setup steps above it and the first current, asking for the administrator's name, email, password and the admin passkey](../images/setup-admin-account.png)
 
 2. Type your **Name**, **Email** and a **Password**.
 3. Type the **Admin passkey**.
@@ -61,7 +61,7 @@ choose the file exported from it, with its passphrase.
    tasks for everyone. A small, fast model works best.
 4. Select **Continue**.
 
-   ![The setup card saying you're ready, with Continue setup and Start chatting buttons](../images/setup-ready.png)
+   ![The setup card saying you're ready, with Review the remaining settings as the current step, and Continue setup and Start chatting buttons](../images/setup-ready.png)
 
 5. Asterism can be used now. The card's list marks **Review the remaining
    settings (optional)** as the current step. Select **Continue setup** to go
@@ -75,7 +75,7 @@ providers and models at any time in **Admin Settings** › **Providers**.
 The walkthrough is in **Admin Settings** › **Setup**. It lists every setup step
 on the left; Providers and models is already reviewed.
 
-![Admin Settings, Setup: the list of setup steps with Providers and models done, and the Image captioning step explaining that search can't find pictures while captioning is off, with Next, Skip for now and the captioning settings below](../images/admin-setup-step.png)
+![Admin Settings, Setup: the list of setup steps with Providers and models reviewed, and the Image captioning step explaining that search can't find pictures while captioning is off, with Next, Skip for now and the captioning settings below](../images/admin-setup-step.png)
 
 Each step explains what the setting does, what it starts as and what people see
 while it is off, with a link to its page in this guide. That setting's own

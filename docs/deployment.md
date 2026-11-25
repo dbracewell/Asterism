@@ -291,9 +291,11 @@ are listed under [security defaults](#security-defaults).
    (the setup command printed it).
 2. Follow the setup card to connect a model provider and enable a model, or
    import a settings file exported from another installation.
-3. Select **Continue setup**. Admin Settings → Setup walks through every
-   administrator setting in order, saying what each does and its default, with
-   **Next** and **Skip for now** on each step. Progress is stored on the server,
+3. Select **Continue setup**. Admin Settings → Setup walks through the
+   administrator settings in order, saying what each does and its default.
+   **Save and continue** (or **Next**, with nothing to save) saves the step's
+   changes and moves on; **Skip for now** saves nothing and leaves the step for
+   later. Progress is stored on the server,
    so any administrator can resume it later. The steps cover groups and budgets,
    the usage time zone, tools, image captioning (off by default; **search can't
    find pictures until it is on**), each feature policy and context compaction.
