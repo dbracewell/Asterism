@@ -1,0 +1,95 @@
+# EPIC-105: Diagrams in canvas exports
+
+Status: proposed (2026-11-25). Source: user request (2026-11-25), the
+follow-up left out of [EPIC-103](EPIC-103-MERMAID-DIAGRAMS.md): "Draw
+diagrams in canvas DOCX/PDF exports."
+
+## Objective
+
+A document canvas's DOCX and PDF downloads, the chat's canvas ZIP and Save to
+Files show each ` ```mermaid ` block as the drawn diagram, the same as the app
+shows it, with its name as alt text. Markdown and text downloads keep the
+source. A diagram that can't be drawn exports as code, as it does today.
+
+Out of scope: diagrams in chat-message exports or Download my data (both keep
+markdown source); new export formats; drawing diagrams in HTML canvases.
+
+## Where things stand (verified 2026-11-25)
+
+- **Exports are made on the server.** `domains/canvas/exports.py` parses markdown
+  with `markdown_it` (commonmark, tables, no HTML, no images) and writes DOCX
+  (`python-docx`, `markdown_docx`) and PDF (`fpdf2`, `markdown_pdf`). Every
+  `fence` becomes a code paragraph (`exports.py:198`). Document canvases export
+  as `md`, `txt`, `docx` and `pdf` (`FORMATS`, :25).
+- **Three ways out.** `downloads.py` has `export_item_version` (one version, one
+  format), `export_chat` (every item as a ZIP) and `save_to_library` (a version
+  into the Files library, then knowledge processing).
+- **A headless browser is already in the image.** The web fetch tool
+  (`tools/builtin/fetch.py`, ADR-0065) pools one Playwright Chromium
+  (`_acquire_browser`, semaphore of 2), opens a fresh context per use and routes
+  every request through its own handler. The browser has no network of its own.
+- **The app draws diagrams in the browser** (ADR-0081): a locked mermaid
+  configuration, a DOMPurify pass, and the SVG shown as a `data:` image.
+  Mermaid is a frontend dependency (12.3.0); the backend has no copy.
+
+## Decisions (to record in an ADR)
+
+- **Draw on the server, with the same rules.** The backend renders each mermaid
+  block in the pooled Chromium, in a fresh context where **every request is
+  aborted**, from a static page holding the mermaid bundle, the same locked
+  configuration and the same sanitizer as the app. No user content reaches the
+  page except the diagram source, passed as data. The result is a PNG at 2× for
+  both DOCX and PDF; Word and fpdf2's SVG support is too uneven.
+- **One mermaid, one configuration.** The image build copies mermaid's
+  standalone bundle from the frontend's pinned dependency, so the app and exports
+  can't drift apart. The locked configuration moves to a shared JSON file that
+  both the frontend `policy.ts` and the backend renderer read, with a test that
+  they match.
+- **Printed colors.** Exports use a fixed light palette (the default Atlas
+  colors), not the person's theme, so a document looks the same for everyone.
+- **Bounded.** At most 30 diagrams per export, an 8 second limit for each and a
+  60 second limit for the whole export. Rendering shares the fetch tool's
+  browser pool and semaphore so it can't starve it or launch more browsers.
+  Anything over a limit, invalid or failed exports as code with a short
+  "Diagram not drawn" note.
+- **Accessible.** The picture's alt text is the diagram's `accTitle` and
+  `accDescr` (DOCX picture description, PDF alt text), or "Diagram: <type>".
+- **No new stored data.** Diagrams are drawn at export time and not cached in
+  the database. Save to Files stores the exported DOCX/PDF as today.
+
+## User stories
+
+Suggested order: US-105.1 → 105.2 → 105.3.
+
+### US-105.1: ADR and a shared diagram configuration
+
+- [ ] Write the ADR (server-side drawing, isolation, limits, palette).
+- [ ] Move the locked mermaid configuration and the sanitizer settings to a
+      shared JSON file read by `policy.ts`, with a frontend test that the app
+      still uses it unchanged.
+- [ ] Copy mermaid's standalone bundle and the shared configuration into the
+      image from the frontend's pinned dependency; `check:image` verifies they
+      are there and match the frontend's version.
+
+### US-105.2: A server-side diagram renderer
+
+- [ ] Share the fetch tool's browser pool (`_acquire_browser` and its semaphore)
+      through a small module both use, without changing fetch behavior.
+- [ ] `render_diagram(source) -> Diagram | None`: a fresh context with every
+      request aborted, the static page, the shared configuration, the sanitizer,
+      the time limit and a PNG of the result, with its name and description.
+- [ ] Tests: a flowchart draws; scripts, `click`, `%%{init}%%`, HTML labels and
+      `url()` styles run nothing and request nothing (counted by the abort
+      route); invalid and slow diagrams return `None`; the pool is shared.
+
+### US-105.3: Diagrams in DOCX, PDF, ZIP and Save to Files
+
+- [ ] `markdown_docx` and `markdown_pdf` embed the drawn PNG for each mermaid
+      fence, with alt text, scaled to the page width; other fences stay code.
+- [ ] Per-export limits (30 diagrams, 60 seconds); over the limit or failed,
+      the fence exports as code with "Diagram not drawn".
+- [ ] The ZIP export and Save to Files get diagrams through the same path.
+- [ ] Tests: a canvas with a diagram exports DOCX and PDF containing an image
+      with the right alt text; markdown and text keep the source; limits and
+      failures fall back to code. Update the canvas guide page and release
+      notes (Behavior; Image, if the bundle adds size).

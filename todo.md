@@ -2,7 +2,7 @@
 
 Completed Projects/Chat Context and provider-settings work remains in the existing archives. This checklist tracks the findings from the [2026-10-17 review](docs/reviews/2026-10-17-codebase-review.md). See the [sequenced roadmap](docs/plans/post-refactor-quality-roadmap.md).
 
-Archives: [2026-11-24](docs/archive/todo-completed-2026-11-24.md), [2026-11-23](docs/archive/todo-completed-2026-11-23.md), [2026-11-22](docs/archive/todo-completed-2026-11-22.md), [2026-11-20](docs/archive/todo-completed-2026-11-20.md), [2026-11-19](docs/archive/todo-completed-2026-11-19.md), [2026-11-18](docs/archive/todo-completed-2026-11-18.md), [2026-11-17](docs/archive/todo-completed-2026-11-17.md), [2026-11-06](docs/archive/todo-completed-2026-11-06.md), [2026-11-03](docs/archive/todo-completed-2026-11-03.md), [2026-11-02](docs/archive/todo-completed-2026-11-02.md), [2026-11-01](docs/archive/todo-completed-2026-11-01.md), [2026-10-31](docs/archive/todo-completed-2026-10-31.md), [2026-10-14](docs/archive/todo-completed-2026-10-14.md), [2026-10-15](docs/archive/todo-completed-2026-10-15.md), [2026-10-16](docs/archive/todo-completed-2026-10-16.md), [2026-10-17](docs/archive/todo-completed-2026-10-17.md), [2026-10-18](docs/archive/todo-completed-2026-10-18.md), [2026-10-19](docs/archive/todo-completed-2026-10-19.md), [2026-10-23](docs/archive/todo-completed-2026-10-23.md), [2026-10-24](docs/archive/todo-completed-2026-10-24.md), [2026-10-25](docs/archive/todo-completed-2026-10-25.md), [2026-10-27](docs/archive/todo-completed-2026-10-27.md), [2026-10-28](docs/archive/todo-completed-2026-10-28.md), [2026-10-29](docs/archive/todo-completed-2026-10-29.md), [2026-10-30](docs/archive/todo-completed-2026-10-30.md), and [US-28.3 verification](docs/archive/us-28.3-verification-2026-10-17.md).
+Archives: [2026-11-25](docs/archive/todo-completed-2026-11-25.md), [2026-11-24](docs/archive/todo-completed-2026-11-24.md), [2026-11-23](docs/archive/todo-completed-2026-11-23.md), [2026-11-22](docs/archive/todo-completed-2026-11-22.md), [2026-11-20](docs/archive/todo-completed-2026-11-20.md), [2026-11-19](docs/archive/todo-completed-2026-11-19.md), [2026-11-18](docs/archive/todo-completed-2026-11-18.md), [2026-11-17](docs/archive/todo-completed-2026-11-17.md), [2026-11-06](docs/archive/todo-completed-2026-11-06.md), [2026-11-03](docs/archive/todo-completed-2026-11-03.md), [2026-11-02](docs/archive/todo-completed-2026-11-02.md), [2026-11-01](docs/archive/todo-completed-2026-11-01.md), [2026-10-31](docs/archive/todo-completed-2026-10-31.md), [2026-10-14](docs/archive/todo-completed-2026-10-14.md), [2026-10-15](docs/archive/todo-completed-2026-10-15.md), [2026-10-16](docs/archive/todo-completed-2026-10-16.md), [2026-10-17](docs/archive/todo-completed-2026-10-17.md), [2026-10-18](docs/archive/todo-completed-2026-10-18.md), [2026-10-19](docs/archive/todo-completed-2026-10-19.md), [2026-10-23](docs/archive/todo-completed-2026-10-23.md), [2026-10-24](docs/archive/todo-completed-2026-10-24.md), [2026-10-25](docs/archive/todo-completed-2026-10-25.md), [2026-10-27](docs/archive/todo-completed-2026-10-27.md), [2026-10-28](docs/archive/todo-completed-2026-10-28.md), [2026-10-29](docs/archive/todo-completed-2026-10-29.md), [2026-10-30](docs/archive/todo-completed-2026-10-30.md), and [US-28.3 verification](docs/archive/us-28.3-verification-2026-10-17.md).
 
 EPIC-31 and EPIC-32 are confirmed complete and archived above. US-38.1 through US-38.6 are confirmed complete and archived above. EPIC-33 (US-33.1 through US-33.3) is confirmed complete and archived above. EPIC-36 (US-36.1) and EPIC-37 (US-37.1) are complete; their already-merged implementation and completed checklists are reconciled and archived above. See the [2026-10-24 reassessment](docs/reviews/2026-10-24-open-epics-reassessment.md). EPIC-34 (US-34.1 through US-34.4) is confirmed complete and archived above, including finite chat admission and the current browser baseline; the old agent-selector repairs are already present. EPIC-35 (US-35.1 and US-35.2) is confirmed complete and archived above. Execute one story at a time; obtain completion confirmation before merge.
 
@@ -72,28 +72,36 @@ EPIC-96 through EPIC-101 (live policy availability, hiding what the admin turned
 
 ## Mermaid diagrams (proposed 2026-11-25)
 
-Source: user request (2026-11-25). [EPIC-103](docs/epics/EPIC-103-MERMAID-DIAGRAMS.md): render ` ```mermaid ` blocks as diagrams everywhere markdown is shown, and steer the agent to mermaid for labelled diagrams. Suggested order: US-103.1 → 103.2 → 103.3 → 103.4. Work one story at a time.
+[EPIC-103](docs/epics/EPIC-103-MERMAID-DIAGRAMS.md) (US-103.1 through US-103.4) is complete and archived in the [2026-11-25 checklist](docs/archive/todo-completed-2026-11-25.md).
 
-- [x] US-103.1: ADR and safe rendering
-  - [x] ADR-0081 (rendering not a capability, untrusted-source config, sanitizing, lazy load, finished-block rule, fallback)
-  - [x] Exact-pinned `mermaid` and `dompurify`; no `eval` in production; chunk loads only with a diagram
-  - [x] Fixed `markdownMermaidConfig` in `policy.ts` and `MermaidBlock` for `language-mermaid`; sanitize the SVG
-  - [x] Draw only closed fences; fall back to `CodeBlock` on errors, limits, timeouts and load failures
-  - [x] Unit tests (draws, inert labels, fallbacks, unclosed fence, config not overridable)
-  - [x] `/e2e/markdown` harness cases and a Playwright spec (no CSP violations)
-- [x] US-103.2: The diagram block
-  - [x] Header: Diagram/Code toggle, Copy source, Expand dialog, Download SVG/PNG
-  - [x] Keyboard-scrollable region; `role="img"` named from `accTitle`/`accDescr`
-  - [x] Theme variables from app tokens; redraw on theme change; theme-contrast harness
-  - [x] Layout at 320px, canvas panel, Study notes and the guide
-  - [x] Tests (toggle, copy, expand, accessible name, theme redraw)
-- [x] US-103.3: Agent guidance
-  - [x] `DIAGRAM_GUIDANCE` in `build_runtime_prompt`
-  - [x] Narrow `IMAGE_GUIDANCE` to pictures; labelled diagrams go to mermaid
-  - [x] Mention diagrams in `CANVAS_GUIDANCE`
-  - [x] Prompt composition tests
-- [x] US-103.4: Documentation and release
-  - [x] Guide page `02-chatting/diagrams.md` with a screenshot; link from `creating-images.md`
-  - [x] Architecture and security docs; `pnpm docs:check`
-  - [x] Release notes (Behavior)
-  - [x] Full isolated E2E suite before pushing
+## Rich content and test cleanup (proposed 2026-11-25)
+
+Source: user request (2026-11-25), follow-ups from EPIC-103. [EPIC-104](docs/epics/EPIC-104-RICH-CONTENT-TEST-CLEANUP.md). Suggested order: US-104.1 → 104.2.
+
+- [x] US-104.1: Settle the comparison test
+  - [x] Wait for the "Continue from Beta" transition before the axe check
+  - [x] Confirm the settled button meets 4.5:1; fix the colour only if not
+  - [x] Repeat the spec 20 times at both widths with no failures
+- [ ] US-104.2: Scroll containers as groups
+  - [ ] Table, math, code and diagram scroll containers become named `role="group"`s
+  - [ ] Update tests; remove the `landmark-unique` skip
+  - [ ] Axe passes with every rule over several code blocks, tables and diagrams
+  - [ ] Update the frontend layout rules and markdown-content.md
+
+## Diagrams in canvas exports (proposed 2026-11-25)
+
+Source: user request (2026-11-25), the EPIC-103 follow-up. [EPIC-105](docs/epics/EPIC-105-DIAGRAMS-IN-CANVAS-EXPORTS.md). Suggested order: US-105.1 → 105.2 → 105.3.
+
+- [ ] US-105.1: ADR and a shared diagram configuration
+  - [ ] ADR (server-side drawing, isolation, limits, palette)
+  - [ ] Locked mermaid configuration and sanitizer settings in a shared JSON file read by `policy.ts`
+  - [ ] Mermaid bundle and shared configuration copied into the image; `check:image` verifies them
+- [ ] US-105.2: A server-side diagram renderer
+  - [ ] Share the fetch tool's browser pool through a small module
+  - [ ] `render_diagram`: aborted requests, static page, shared config, sanitizer, time limit, PNG
+  - [ ] Tests: draws; hostile source inert with zero requests; invalid and slow return None; pool shared
+- [ ] US-105.3: Diagrams in DOCX, PDF, ZIP and Save to Files
+  - [ ] Embed drawn PNGs with alt text in DOCX and PDF; other fences stay code
+  - [ ] Per-export limits; failures export as code with "Diagram not drawn"
+  - [ ] ZIP export and Save to Files use the same path
+  - [ ] Tests, canvas guide page and release notes
