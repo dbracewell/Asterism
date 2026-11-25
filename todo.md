@@ -86,10 +86,10 @@ Source: user request (2026-11-25), the EPIC-103 follow-up. [EPIC-105](docs/epics
   - [x] ADR (server-side drawing, isolation, limits, palette)
   - [x] Locked mermaid configuration and sanitizer settings in a shared JSON file read by `policy.ts`
   - [x] Mermaid bundle and shared configuration copied into the image; `check:image` verifies them
-- [ ] US-105.2: A server-side diagram renderer
-  - [ ] Share the fetch tool's browser pool through a small module
-  - [ ] `render_diagram`: aborted requests, static page, shared config, sanitizer, time limit, PNG
-  - [ ] Tests: draws; hostile source inert with zero requests; invalid and slow return None; pool shared
+- [x] US-105.2: A server-side diagram renderer
+  - [x] Share the fetch tool's browser pool through a small module
+  - [x] `render_diagram`: aborted requests, static page, shared config, sanitizer, time limit, PNG
+  - [x] Tests: draws; hostile source inert with zero requests; invalid and slow return None; pool shared
 - [ ] US-105.3: Diagrams in DOCX, PDF, ZIP and Save to Files
   - [ ] Embed drawn PNGs with alt text in DOCX and PDF; other fences stay code
   - [ ] Per-export limits; failures export as code with "Diagram not drawn"

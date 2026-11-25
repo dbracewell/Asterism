@@ -1,6 +1,6 @@
 # EPIC-105: Diagrams in canvas exports
 
-Status: in progress (2026-11-25). US-105.1 implemented. Source: user request (2026-11-25), the
+Status: in progress (2026-11-25). US-105.1 PR #123; US-105.2 implemented. Source: user request (2026-11-25), the
 follow-up left out of [EPIC-103](EPIC-103-MERMAID-DIAGRAMS.md): "Draw
 diagrams in canvas DOCX/PDF exports."
 
@@ -83,14 +83,24 @@ Suggested order: US-105.1 → 105.2 → 105.3.
 
 ### US-105.2: A server-side diagram renderer
 
-- [ ] Share the fetch tool's browser pool (`_acquire_browser` and its semaphore)
-      through a small module both use, without changing fetch behavior.
-- [ ] `render_diagram(source) -> Diagram | None`: a fresh context with every
-      request aborted, the static page, the shared configuration, the sanitizer,
-      the time limit and a PNG of the result, with its name and description.
-- [ ] Tests: a flowchart draws; scripts, `click`, `%%{init}%%`, HTML labels and
-      `url()` styles run nothing and request nothing (counted by the abort
-      route); invalid and slow diagrams return `None`; the pool is shared.
+- [x] The fetch tool's browser pool moved, unchanged, to
+      `asterism/common/headless_browser.py`; the fetch tool, the renderer and app
+      shutdown use it. The fetch tool's real-browser tests pass.
+- [x] The SVG sanitizer moved into the shared package (`sanitize-svg.js`); the
+      app's viewer calls it, and the renderer's page loads the same file.
+- [x] `draw_diagrams` / `draw_diagram` in `domains/canvas/diagrams.py`: an
+      offline context with every request aborted and counted, the bundles and
+      sanitizer as inline scripts, the shared configuration and print theme, the
+      per-diagram time limit and a batch deadline, and a PNG with its name and
+      description.
+- [x] Tests (`test_canvas_diagrams.py`, real Chromium, skipped without it or
+      the frontend's packages): a flowchart draws as a named 2× PNG; invalid and
+      blank sources aren't drawn and the rest are; the app's hostile sources
+      draw inertly or are refused, with zero requests; a hanging diagram costs
+      only its page; the deadline holds; the pool is shared; a loosened policy
+      is refused.
+- [x] `check:image` draws a diagram inside the built image as the runtime
+      user, since CI's backend job has neither Chromium nor the bundles.
 
 ### US-105.3: Diagrams in DOCX, PDF, ZIP and Save to Files
 

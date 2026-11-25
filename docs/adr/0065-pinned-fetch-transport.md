@@ -40,7 +40,10 @@ Chromium resolves names in its own network stack, so a route guard that
 validates and then calls `route.continue_()` still leaves the rebinding gap.
 Instead:
 
-- The pooled browser launches with `--host-resolver-rules=MAP * ~NOTFOUND`
+- The pooled browser (`asterism/common/headless_browser.py`, shared with the
+  canvas export diagram renderer since
+  [ADR-0082](0082-diagrams-in-canvas-exports.md)) launches with
+  `--host-resolver-rules=MAP * ~NOTFOUND`
   and a dead proxy (`--proxy-server=http://blackhole.invalid:9`,
   `--proxy-bypass-list=<-loopback>`). Any request Chromium makes on its own
   fails, including loopback IPs, WebSockets and redirects it follows itself.

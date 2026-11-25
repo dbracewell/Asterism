@@ -8,6 +8,10 @@ The one copy of how Asterism draws mermaid diagrams from untrusted text:
 - `sanitizer`: the DOMPurify settings for the drawn SVG. `href` is kept only
   when it starts with `internalHrefPrefix`.
 - `renderTimeoutMs`, `png` and `labelLimits`: time, size and name limits.
+- `sanitize-svg.js`: `createDiagramSanitizer(createDOMPurify, window, policy)`,
+  the one function that cleans a drawn SVG and reads its size, name and
+  description. Plain JavaScript with no imports, so the server can load it into
+  its headless page unbundled.
 - `print-theme.json`: mermaid `base` theme variables for exported documents,
   from the light Atlas palette. It is generated from the app's
   `diagramThemeVariables`; a frontend test fails when they differ.

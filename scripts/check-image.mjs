@@ -40,6 +40,47 @@ export const DIAGRAM_ASSETS = [
   "/app/apps/frontend/node_modules/dompurify/dist/purify.min.js",
 ];
 
+// Draws one diagram in the running container with the image's own Chromium,
+// fonts, bundles and policy, and prints the outcome as the last line.
+export const DIAGRAM_DRAW_CHECK = [
+  "import asyncio, json, struct",
+  "from asterism.common.headless_browser import close_browser",
+  "from asterism.domains.canvas.diagrams import draw_diagram",
+  "async def main():",
+  "    try:",
+  "        drawn = await draw_diagram('flowchart LR\\n  accTitle: Image check\\n  a[Draw] --> b[Check]\\n', deadline_seconds=60)",
+  "    finally:",
+  "        await close_browser()",
+  "    png = list(struct.unpack('>II', drawn.png[16:24])) if drawn else None",
+  "    css = [drawn.width, drawn.height] if drawn else None",
+  "    print(json.dumps({'label': drawn.label if drawn else None, 'png': png, 'css': css}))",
+  "asyncio.run(main())",
+].join("\n");
+
+/** Problems with the in-container draw, from its last line of output. */
+export function drawnDiagramProblems(output, scale) {
+  let report;
+  try {
+    report = JSON.parse(output.trim().split("\n").pop());
+  } catch {
+    return ["the diagram draw check printed no result"];
+  }
+  if (!report.png) return ["the image could not draw a diagram"];
+  const problems = [];
+  if (report.label !== "Image check")
+    problems.push(
+      `the drawn diagram was named ${JSON.stringify(report.label)}`,
+    );
+  if (
+    report.png[0] !== report.css[0] * scale ||
+    report.png[1] !== report.css[1] * scale
+  )
+    problems.push(
+      `the drawn PNG is ${report.png.join("x")}, not ${scale}x its ${report.css.join("x")} size`,
+    );
+  return problems;
+}
+
 /**
  * `report` is what the container saw as the runtime user: each asset path
  * mapped to whether it is a readable file, and the mermaid version installed.
@@ -417,6 +458,27 @@ async function checkContainer(image, variant) {
     console.log(
       `ok: the diagram renderer can read its policy and mermaid ${pinned}`,
     );
+
+    const scale = JSON.parse(
+      readFileSync("packages/diagram-policy/policy.json", "utf8"),
+    ).png.scale;
+    const drawProblems = drawnDiagramProblems(
+      docker(
+        [
+          "exec",
+          "-i",
+          "-w",
+          "/app/apps/backend",
+          name,
+          "/app/apps/backend/.venv/bin/python",
+          "-",
+        ],
+        { input: DIAGRAM_DRAW_CHECK },
+      ),
+      scale,
+    );
+    if (drawProblems.length) throw new Error(drawProblems.join("\n"));
+    console.log("ok: the image draws a mermaid diagram as a PNG for exports");
 
     const storeEntries = docker(["exec", name, "ls", "/app/node_modules/.pnpm"])
       .split("\n")
