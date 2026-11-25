@@ -16,7 +16,7 @@ vi.mock("next/dynamic", () => ({
   },
 }));
 
-import { NOT_STEPS, SETUP_STEPS } from "@/features/setup/walkthrough";
+import { NOT_STEPS, SETUP_STEPS } from "@/features/setup/steps";
 import { getLazyAdminSettingsSections } from "./lazy-sections";
 
 describe("getLazyAdminSettingsSections", () => {
@@ -77,9 +77,7 @@ describe("getLazyAdminSettingsSections", () => {
     const values = getLazyAdminSettingsSections().flatMap((section) =>
       section.type === "section" ? [section.value] : [],
     );
-    const steps = SETUP_STEPS.filter((step) => !step.standalone).map(
-      (step) => step.id,
-    );
+    const steps = SETUP_STEPS.map((step) => step.id);
     expect(
       values.filter((value) => !steps.includes(value) && !(value in NOT_STEPS)),
     ).toEqual([]);

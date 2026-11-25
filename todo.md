@@ -65,3 +65,7 @@ Found while taking the Dependabot updates for EPIC-92. Take it as a small pull r
 ## Admin, study and setup epics (proposed 2026-11-24)
 
 EPIC-96 through EPIC-101 (live policy availability, hiding what the admin turned off, multilingual embeddings, decks and quizzes from chat, the complete settings export and guided setup) are complete and archived in the [2026-11-24 checklist](docs/archive/todo-completed-2026-11-24.md).
+
+## Setup walkthrough follow-ups (proposed 2026-11-24)
+
+[EPIC-102](docs/epics/EPIC-102-SETUP-WALKTHROUGH-FOLLOW-UPS.md) (US-102.1 through US-102.4) is complete and archived in the [2026-11-24 checklist](docs/archive/todo-completed-2026-11-24.md).

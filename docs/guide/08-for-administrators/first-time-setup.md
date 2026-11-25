@@ -25,7 +25,7 @@ running and you open its address for the first time.
 
 1. Open Asterism's address. It says **Set up your Asterism instance**.
 
-   ![The first-run sign-up form, asking for the administrator's name, email, password and the admin passkey](../images/setup-admin-account.png)
+   ![The first-run sign-up form, with the four setup steps above it and the first current, asking for the administrator's name, email, password and the admin passkey](../images/setup-admin-account.png)
 
 2. Type your **Name**, **Email** and a **Password**.
 3. Type the **Admin passkey**.
@@ -61,10 +61,11 @@ choose the file exported from it, with its passphrase.
    tasks for everyone. A small, fast model works best.
 4. Select **Continue**.
 
-   ![The setup card saying you're ready, with Continue setup and Start chatting buttons](../images/setup-ready.png)
+   ![The setup card saying you're ready, with Review the remaining settings as the current step, and Continue setup and Start chatting buttons](../images/setup-ready.png)
 
-5. Asterism can be used now. Select **Continue setup** to go through the other
-   settings, or **Start chatting** to do that later.
+5. Asterism can be used now. The card's list marks **Review the remaining
+   settings (optional)** as the current step. Select **Continue setup** to go
+   through those settings, or **Start chatting** to do that later.
 
 To connect a provider later instead, select **Skip for now**. You can add
 providers and models at any time in **Admin Settings** › **Providers**.
@@ -72,19 +73,22 @@ providers and models at any time in **Admin Settings** › **Providers**.
 ## Step 4: Go through the setup walkthrough
 
 The walkthrough is in **Admin Settings** › **Setup**. It lists every setup step
-on the left; Providers and models is already done.
+on the left; Providers and models is already reviewed.
 
-![Admin Settings, Setup: the list of setup steps with Providers and models done, and the Image captioning step explaining that search can't find pictures while captioning is off, with Next, Skip for now and the captioning settings below](../images/admin-setup-step.png)
+![Admin Settings, Setup: the list of setup steps with Providers and models reviewed, and the Image captioning step explaining that search can't find pictures while captioning is off, with Next, Skip for now and the captioning settings below](../images/admin-setup-step.png)
 
 Each step explains what the setting does, what it starts as and what people see
 while it is off, with a link to its page in this guide. That setting's own
 section is below, the same as in Admin Settings.
 
-1. Change what you need and save it in the section below.
-2. Select **Next** to mark the step done, or **Skip for now** to leave it at its
-   default. Either way the walkthrough moves on to the next step nobody has
-   reviewed.
-3. Select any step in the list to go back to it.
+1. Change what you need in the section below.
+2. Select **Save and continue** to save your changes and mark the step
+   reviewed. With nothing to change, the button reads **Next**. If a change
+   can't be saved, the step stays open and the section says why.
+3. Or select **Skip for now** to come back to the step later. It saves nothing:
+   if you made changes, Asterism asks before discarding them.
+4. Select any step in the list to go back to it. Leaving a step with unsaved
+   changes asks first, too.
 
 Progress is saved on the server and shared by every administrator, so you can
 stop at any point: opening **Setup** again resumes at the first step nobody has
@@ -106,30 +110,11 @@ The steps, in order:
 | Image generation     | Off                                               |
 | ChatGPT plans        | Off                                               |
 | Context compaction   | At 80% of the context window                      |
-| Theme                | The built-in themes                               |
-| Educators            | No educators                                      |
-| First backup         | No backup                                         |
 
 > **Image captioning and search.** Search finds a picture in an uploaded file
 > only by its caption. While captioning is off, pictures are kept and can be
 > attached to chats, but search can't find them. See
 > [Image captioning](policies.md#image-captioning).
-
-### The first backup
-
-The last step shows the commands that take and check a backup, which run on the
-server, and the last backup the server recorded.
-
-![The First backup setup step: why SYSTEM_KEY and BETTER_AUTH_SECRET must be kept apart from backups, the backup and verify commands with copy buttons, and the last backup](../images/admin-setup-backup.png)
-
-1. Keep copies of `SYSTEM_KEY` and `BETTER_AUTH_SECRET` from the server's `.env`
-   somewhere safe, such as a password manager, and not with the backups. A
-   backup can only be restored with the `SYSTEM_KEY` it was made with, and
-   backups don't contain it.
-2. Run the backup command on the server, then the verify command with the file
-   it made.
-3. Select **Check again**. The backup appears under **Last backup**.
-4. Select **Next**.
 
 ### The summary
 
@@ -144,8 +129,14 @@ reviewed, skipped or reviewed. Select a step to open it.
 - [Groups, budgets and usage](groups-budgets-and-usage.md): limit models or set
   token budgets for students.
 - [Policies](policies.md): each feature setting in more detail.
-- Schedule nightly backups, as the [deployment guide](../../deployment.md)
-  explains.
+- Take a first backup and schedule nightly ones, as the
+  [deployment guide](../../deployment.md) explains. Keep copies of `SYSTEM_KEY`
+  and `BETTER_AUTH_SECRET` from the server's `.env` somewhere safe, and not with
+  the backups: a backup can only be restored with the `SYSTEM_KEY` it was made
+  with.
+- [Theme editor](theme-editor.md): make a theme in your school's colors.
+- [Educators](policies.md#educators): approve them when someone needs to run
+  classes.
 
 ## If something goes wrong
 
@@ -153,8 +144,6 @@ reviewed, skipped or reviewed. Select a step to open it.
   `/v1`) and the API key, then try again.
 - **The passkey is refused.** Check it with whoever installed Asterism. It's the
   `ADMIN_PASSPHRASE` value in the server's `.env` file.
-- **The first backup step says no backup has been recorded.** Run the backup
-  command on the server while Asterism is running, then select **Check again**.
 
 ## Related
 

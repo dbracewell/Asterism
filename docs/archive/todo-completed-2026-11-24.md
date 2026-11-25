@@ -155,3 +155,36 @@ Completed items from the maintenance list; the base image update for `zlib1g` st
 
 - [x] Fix the flaky class E2E test: `apps/frontend/e2e/classes.spec.ts:84` sometimes fails with "Run by …" not visible, and passes on a rerun (seen on 2026-11-21). Find what the assertion races and wait on that instead.
 - [x] Move provider discovery off openai's legacy httpx client. openai 3 uses httpx2 by default, and `apps/backend/asterism/domains/settings/discovery.py` still passes an `httpx.AsyncClient`, which openai accepts only through a temporary legacy path. Port the response-size limit (`_SizeLimitedStream`, the `response` event hook) and the no-redirects setting to httpx2, with tests, before openai removes that path.
+
+## Setup walkthrough follow-ups
+
+EPIC-102 is complete: every story was confirmed and merged on 2026-11-24 through pull requests #109, #110, #111 and #113, in the order US-102.1 → 102.2 → 102.3 → 102.4.
+
+Source: user review of the EPIC-101 install flow (2026-11-24). See [EPIC-102](../epics/EPIC-102-SETUP-WALKTHROUGH-FOLLOW-UPS.md). Suggested order: US-102.1 → 102.2 → 102.3 → 102.4. Work one story at a time.
+
+### [EPIC-102: Setup walkthrough follow-ups](../epics/EPIC-102-SETUP-WALKTHROUGH-FOLLOW-UPS.md)
+
+#### US-102.1: Remove theme, educators and first backup from setup
+
+- [x] Remove `theme_editor`, `educators` and `backup` from `SETUP_STEPS`; list the first two in `NOT_STEPS` with reasons.
+- [x] Delete `SetupBackupStep`, the `standalone` and `guideHref` fields, and the backup branch; update `lazy-sections.test.tsx`.
+- [x] Test that stored progress with the removed ids still counts 12 steps and summarises correctly.
+- [x] Update `e2e/setup-walkthrough.spec.ts`.
+
+#### US-102.2: First-run checklist shows the rest of setup
+
+- [x] Four-step `SetupSteps` with "Review the remaining settings (optional)" third; the ready card marks step 3 current.
+- [x] Build step 3's description and the ready card's list from `SETUP_STEPS`.
+- [x] Unit tests per card; update `first-run-setup.spec.ts` and `provider-setup.spec.ts`.
+
+#### US-102.3: Next saves, Skip discards
+
+- [x] Add the setup draft context and `useSetupDraft` (no-op outside the walkthrough).
+- [x] Register drafts in every pane that has one, including captioning's unsaveable provider-without-model case.
+- [x] Walkthrough: Save and continue / Next, failed save keeps the step, blocked reason, discard prompt on Skip and step-list navigation, "Reviewed" chip, drop the old hint.
+- [x] Unit tests and Playwright (time zone saved by Save and continue; Skills toggle discarded by Skip).
+
+#### US-102.4: Docs and release notes
+
+- [x] Update `first-time-setup.md` with refreshed screenshots (`pnpm docs:check`) and `docs/deployment.md` §5 if needed.
+- [x] Release notes (Behavior).

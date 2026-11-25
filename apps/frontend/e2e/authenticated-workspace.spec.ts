@@ -482,7 +482,11 @@ test("authenticated project and General chats preserve scope, provenance, and ow
     expect(
       calls[beforeRevocation].tools?.map((tool) => tool.function.name),
     ).not.toContain("sub_agent");
-    await api("PATCH", `/chat/${projectChat}/project`, { project_id: null });
+    // The reply shows before the server releases the run; a move during it
+    // is refused with 409 until then.
+    await expect(async () => {
+      await api("PATCH", `/chat/${projectChat}/project`, { project_id: null });
+    }).toPass({ timeout: 10_000 });
     expect(
       (await api("GET", `/chat/${projectChat}/files/context`)).allowed_file_ids,
     ).not.toContain(file.id);

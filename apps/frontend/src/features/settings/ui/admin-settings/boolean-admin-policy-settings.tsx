@@ -11,6 +11,7 @@ import {
 import { Spinner } from "@/components/ui/spinner";
 import { Switch } from "@/components/ui/switch";
 import { useUser } from "@/features/auth/components/user-context";
+import { useSetupDraft } from "@/features/setup/setup-draft";
 import {
   SettingsPane,
   SettingsSaveBar,
@@ -103,6 +104,13 @@ function BooleanAdminPolicyForm<
     },
   });
   const name = sentence(policyName);
+  const savedEnabled = policy.data?.enabled ?? false;
+  const enabled = draft ?? savedEnabled;
+  const dirty = !!policy.data && enabled !== savedEnabled;
+  useSetupDraft({
+    dirty,
+    save: () => update.mutateAsync({ body: { enabled } }),
+  });
   if (!policy.data)
     return policy.isError ? (
       <QueryError
@@ -114,9 +122,6 @@ function BooleanAdminPolicyForm<
     ) : (
       <Spinner />
     );
-  const savedEnabled = policy.data.enabled ?? false;
-  const enabled = draft ?? savedEnabled;
-  const dirty = enabled !== savedEnabled;
   return (
     <SettingsPane title={title} description={description}>
       {policy.isError && (

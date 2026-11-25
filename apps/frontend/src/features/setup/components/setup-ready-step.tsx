@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { remainingStepsSummary } from "../steps";
 import { actionClassName } from "./provider-setup-shared";
 
 export function ReadyStep({
@@ -16,10 +17,10 @@ export function ReadyStep({
         You&apos;re ready to start your exploration.
       </p>
       <p className="text-muted-foreground text-sm text-balance">
-        Asterism can be used now. The rest of setup walks through each
-        administrator setting, such as groups, tools and image captioning,
-        explaining what it does and its default. You can skip any step and
-        return later from Admin Settings → Setup.
+        Asterism can be used now. The rest of setup walks through the other{" "}
+        {remainingStepsSummary().count} administrator settings, explaining what
+        each does and its default. You can skip any of them and return later
+        from Admin Settings → Setup.
       </p>
       {/* The form that had focus is gone; continue from the next action. */}
       <Button autoFocus className={actionClassName} onClick={onContinueSetup}>

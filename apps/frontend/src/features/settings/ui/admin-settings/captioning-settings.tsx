@@ -16,6 +16,7 @@ import {
   SettingsPane,
   SettingsSection,
 } from "@/features/settings/ui/settings-section";
+import { useSetupDraft } from "@/features/setup/setup-draft";
 import { client } from "@/lib/api";
 import {
   appCaptioningGetOptions,
@@ -97,6 +98,14 @@ function CaptioningSettingsPane() {
     updateError,
     "The captioning configuration could not be saved.",
   );
+
+  // Other modes save as they are chosen; only "provider" waits for a model.
+  useSetupDraft({
+    dirty: !!current && draftMode !== current.mode,
+    save: () =>
+      Promise.reject(new Error("Choose a vision model to caption with.")),
+    blocked: "Choose a vision model for captioning, or choose another mode.",
+  });
 
   if (configuration.isLoading)
     return <FormSkeleton label="Loading knowledge processing settings…" />;

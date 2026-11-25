@@ -1,5 +1,6 @@
 "use client";
 
+import { useSetupDraft } from "@/features/setup/setup-draft";
 import { availabilityQueryKey } from "@/features/availability/queries";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
@@ -69,6 +70,16 @@ function StudyChatPolicySection() {
       setDraft(null);
       setSaved(true);
     },
+  });
+  useSetupDraft({
+    dirty: draft !== null,
+    save: () =>
+      update.mutateAsync({
+        body: {
+          enabled: draft?.enabled ?? true,
+          group_ids: draft?.group_ids ?? null,
+        },
+      }),
   });
 
   if (!policy.data)

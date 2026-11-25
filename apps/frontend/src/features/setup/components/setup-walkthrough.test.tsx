@@ -5,16 +5,17 @@ import {
 } from "@tanstack/react-query";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, expect, it, vi } from "vitest";
-import { SETUP_STEPS, stepGuideHref } from "../walkthrough";
-import { BACKUP_COMMAND } from "./setup-backup-step";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { SETUP_STEPS } from "../steps";
+import { stepGuideHref } from "../walkthrough";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { SetupWalkthrough } from "./setup-walkthrough";
+import { useSetupDraft } from "../setup-draft";
+import { useState, type ReactNode } from "react";
 
 const mocks = vi.hoisted(() => ({
   get: vi.fn(),
   record: vi.fn(),
-  status: vi.fn(),
   replace: vi.fn(),
   search: "t=admin&setting=setup",
   role: "admin",
@@ -35,17 +36,13 @@ vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
   }),
   setupProgressGetQueryKey: () => [{ _id: "setupProgressGet" }],
   setupStepUpdateMutation: () => ({ mutationFn: mocks.record }),
-  statusGetOptions: () => ({
-    queryKey: [{ _id: "statusGet" }],
-    queryFn: () => mocks.status(),
-  }),
 }));
 
 const panes = Object.fromEntries(
   SETUP_STEPS.map((step) => [step.id, <p key={step.id}>{step.id} pane</p>]),
 );
 
-function setup() {
+function setup(overrides: Record<string, ReactNode> = {}) {
   const cache = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
     mutationCache: new MutationCache({}),
@@ -53,7 +50,7 @@ function setup() {
   render(
     <QueryClientProvider client={cache}>
       <TooltipProvider>
-        <SetupWalkthrough panes={panes} />
+        <SetupWalkthrough panes={{ ...panes, ...overrides }} />
       </TooltipProvider>
     </QueryClientProvider>,
   );
@@ -69,7 +66,6 @@ beforeEach(() => {
   mocks.replace.mockReset();
   mocks.get.mockReset().mockResolvedValue(stepped("providers"));
   mocks.record.mockReset();
-  mocks.status.mockReset().mockResolvedValue({ last_backup: null });
 });
 
 it("is for administrators only", () => {
@@ -90,7 +86,7 @@ it("resumes at the first step nobody reviewed, with its pane", async () => {
     `1 of ${SETUP_STEPS.length} steps reviewed`,
   );
   expect(
-    screen.getByRole("button", { name: /Providers and models.*Done/ }),
+    screen.getByRole("button", { name: /Providers and models.*Reviewed/ }),
   ).toBeVisible();
 });
 
@@ -181,7 +177,7 @@ it("the summary sorts steps by state and opens one", async () => {
     screen.getByRole("list", {
       name: `Not reviewed (${SETUP_STEPS.length - 2})`,
     }),
-  ).toHaveTextContent("First backup");
+  ).toHaveTextContent("Context compaction");
   await userEvent
     .setup()
     .click(within(skipped).getByRole("button", { name: "Usage time zone" }));
@@ -190,27 +186,147 @@ it("the summary sorts steps by state and opens one", async () => {
   );
 });
 
-it("the backup step explains SYSTEM_KEY and shows the last backup", async () => {
-  mocks.search = "t=admin&setting=setup&step=backup";
+it("ignores stored progress for steps setup no longer has (US-102.1)", async () => {
+  mocks.search = "t=admin&setting=setup&step=summary";
+  // Installations set up before EPIC-102 may have reviewed these.
+  mocks.get.mockResolvedValue(
+    stepped("providers", "theme_editor", "educators", "backup"),
+  );
   setup();
   expect(
-    await screen.findByText(
-      /A backup can only be restored with the SYSTEM_KEY it was made with, and backups don't contain it\./,
-    ),
-  ).toBeVisible();
-  expect(screen.getByText(BACKUP_COMMAND)).toBeVisible();
+    await screen.findByRole("list", { name: "Reviewed (1)" }),
+  ).toHaveTextContent("Providers and models");
+  expect(screen.getByRole("status")).toHaveTextContent(
+    `1 of ${SETUP_STEPS.length} steps reviewed`,
+  );
+  expect(SETUP_STEPS).toHaveLength(12);
   expect(
-    await screen.findByText(/No backup has been recorded yet/),
-  ).toBeVisible();
-  mocks.status.mockResolvedValue({
-    last_backup: {
-      created_at: 1_700_000_000,
-      archive: "asterism-backup-1.tar.gz",
-      size_bytes: 2048,
-    },
+    screen.queryByRole("button", { name: /Theme|Educators|First backup/ }),
+  ).toBeNull();
+});
+
+/** A pane with one field that reports its unsaved edits, as panes do. */
+function DraftPane({
+  save,
+  blocked,
+}: {
+  save: () => Promise<unknown>;
+  blocked?: (value: string) => string | undefined;
+}) {
+  const [value, setValue] = useState("");
+  useSetupDraft({ dirty: value !== "", save, blocked: blocked?.(value) });
+  return (
+    <input
+      aria-label="Group name"
+      value={value}
+      onChange={(event) => setValue(event.target.value)}
+    />
+  );
+}
+
+const recordsAs = () =>
+  mocks.record.mockImplementation(
+    async ({ path, body }: { path: { step_id: string }; body: object }) => ({
+      steps: { ...stepped("providers").steps, [path.step_id]: body },
+    }),
+  );
+
+describe("unsaved edits (US-102.3)", () => {
+  it("Next saves the pane's edits, then records the step", async () => {
+    recordsAs();
+    const save = vi.fn().mockResolvedValue({});
+    setup({ "group-settings": <DraftPane save={save} /> });
+    const user = userEvent.setup();
+    expect(await screen.findByRole("button", { name: "Next" })).toBeVisible();
+    await user.type(screen.getByLabelText("Group name"), "Year 9");
+    await user.click(screen.getByRole("button", { name: "Save and continue" }));
+    expect(save).toHaveBeenCalledTimes(1);
+    await waitFor(() =>
+      expect(mocks.record).toHaveBeenCalledWith(
+        { path: { step_id: "group-settings" }, body: { state: "done" } },
+        expect.anything(),
+      ),
+    );
+    expect(save.mock.invocationCallOrder[0]).toBeLessThan(
+      mocks.record.mock.invocationCallOrder[0],
+    );
   });
-  await userEvent
-    .setup()
-    .click(screen.getByRole("button", { name: "Check again" }));
-  expect(await screen.findByText(/asterism-backup-1\.tar\.gz/)).toBeVisible();
+
+  it("a failed save keeps the step open and records nothing", async () => {
+    const save = vi.fn().mockRejectedValue(new Error("nope"));
+    setup({ "group-settings": <DraftPane save={save} /> });
+    const user = userEvent.setup();
+    await user.type(await screen.findByLabelText("Group name"), "Year 9");
+    await user.click(screen.getByRole("button", { name: "Save and continue" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Your changes could not be saved, so this step is still open.",
+    );
+    expect(mocks.record).not.toHaveBeenCalled();
+    expect(screen.getByLabelText("Group name")).toHaveValue("Year 9");
+  });
+
+  it("edits that can't be saved block Next and say why", async () => {
+    const save = vi.fn();
+    setup({
+      "group-settings": (
+        <DraftPane
+          save={save}
+          blocked={(value) =>
+            value === "?" ? "Enter a real name." : undefined
+          }
+        />
+      ),
+    });
+    await userEvent
+      .setup()
+      .type(await screen.findByLabelText("Group name"), "?");
+    expect(
+      screen.getByRole("button", { name: "Save and continue" }),
+    ).toBeDisabled();
+    expect(screen.getByText("Enter a real name.")).toBeVisible();
+  });
+
+  it("Skip asks before discarding edits; Cancel keeps them", async () => {
+    recordsAs();
+    const save = vi.fn();
+    setup({ "group-settings": <DraftPane save={save} /> });
+    const user = userEvent.setup();
+    await user.type(await screen.findByLabelText("Group name"), "Year 9");
+    await user.click(screen.getByRole("button", { name: "Skip for now" }));
+    const dialog = await screen.findByRole("alertdialog", {
+      name: "Discard unsaved changes?",
+    });
+    await user.click(within(dialog).getByRole("button", { name: "Cancel" }));
+    expect(mocks.record).not.toHaveBeenCalled();
+    expect(screen.getByLabelText("Group name")).toHaveValue("Year 9");
+
+    await user.click(screen.getByRole("button", { name: "Skip for now" }));
+    await user.click(
+      within(
+        await screen.findByRole("alertdialog", {
+          name: "Discard unsaved changes?",
+        }),
+      ).getByRole("button", { name: "Discard changes" }),
+    );
+    await waitFor(() =>
+      expect(mocks.record).toHaveBeenCalledWith(
+        { path: { step_id: "group-settings" }, body: { state: "skipped" } },
+        expect.anything(),
+      ),
+    );
+    expect(save).not.toHaveBeenCalled();
+  });
+
+  it("opening another step with edits asks first", async () => {
+    setup({ "group-settings": <DraftPane save={vi.fn()} /> });
+    const user = userEvent.setup();
+    await user.type(await screen.findByLabelText("Group name"), "Year 9");
+    await user.click(screen.getByRole("button", { name: /Memory/ }));
+    expect(
+      await screen.findByRole("alertdialog", {
+        name: "Discard unsaved changes?",
+      }),
+    ).toBeVisible();
+    expect(mocks.replace).not.toHaveBeenCalled();
+  });
 });

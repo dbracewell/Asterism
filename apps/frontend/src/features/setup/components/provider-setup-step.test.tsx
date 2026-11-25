@@ -304,7 +304,15 @@ describe("first-run provider step", () => {
     );
     const items = within(steps()).getAllByRole("listitem");
     expect(items[1]).toHaveTextContent("(complete)");
+    // Reviewing the remaining settings is next, then the first chat.
     expect(items[2]).toHaveAttribute("aria-current", "step");
+    expect(items[2]).toHaveTextContent(
+      "Step 3: Review the remaining settings (optional) (current)",
+    );
+    expect(items[3]).not.toHaveAttribute("aria-current");
+    expect(
+      screen.getByText(/walks through the other 11 administrator/),
+    ).toBeVisible();
     expect(screen.getByRole("status")).toHaveTextContent(
       "You're ready to start your exploration.",
     );

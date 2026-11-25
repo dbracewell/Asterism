@@ -1,5 +1,6 @@
 "use client";
 
+import { ConfirmationDialog } from "@/components/confirmation-dialog";
 import { QueryError } from "@/components/query-error";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -15,24 +16,24 @@ import {
 } from "@/lib/client/@tanstack/react-query.gen";
 import { cn, errorMessage } from "@/lib/utils";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import { CheckIcon, ExternalLinkIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import Link from "next/link";
-import {
-  nextStep,
-  SETUP_STEPS,
-  stepGuideHref,
-  type SetupStep,
-} from "../walkthrough";
-import { SetupBackupStep } from "./setup-backup-step";
+import { SETUP_STEPS, type SetupStep } from "../steps";
+import { SetupDraftProvider, useSetupDrafts } from "../setup-draft";
+import { nextStep, stepGuideHref } from "../walkthrough";
 
-const STATE_LABEL = { done: "Done", skipped: "Skipped" } as const;
+const STATE_LABEL = { done: "Reviewed", skipped: "Skipped" } as const;
 
 /**
  * Admin Settings → Setup (US-101.2): every setup step in order, each showing
  * what it does and its default above that section's own pane, with Skip and
  * Next. Progress is stored on the server and shared by every administrator,
  * so setup resumes at the first step nobody reviewed.
+ *
+ * Next saves the pane's unsaved edits first; Skip and leaving the step ask
+ * before discarding them (US-102.3).
  */
 export function SetupWalkthrough({
   panes,
@@ -59,6 +60,14 @@ function Walkthrough({ panes }: { panes: Record<string, ReactNode> }) {
     // Setup progress changes no other setting.
     meta: { invalidates: [setupProgressGetQueryKey({ client })] },
   });
+  const drafts = useSetupDrafts();
+  const saveDrafts = useMutation({
+    mutationFn: drafts.saveAll,
+    // Each pane's own save invalidates what it changed.
+    meta: { skipGlobalInvalidation: true },
+  });
+  // Waiting for the administrator to discard unsaved edits.
+  const [discarding, setDiscarding] = useState<(() => void) | null>(null);
 
   if (!progress.data)
     return progress.isError ? (
@@ -78,9 +87,15 @@ function Walkthrough({ panes }: { panes: Record<string, ReactNode> }) {
   // "summary" shows the end even while some steps are not reviewed.
   const current = param === "summary" ? null : (requested ?? nextStep(states));
   const reviewed = SETUP_STEPS.filter((step) => states[step.id]).length;
-  const go = (step: SetupStep | null) =>
+  const go = (step: SetupStep | null) => {
+    saveDrafts.reset();
     setSearchParams({ step: step?.id ?? "summary" });
+  };
+  // Leaving a step unmounts its pane, which drops its unsaved edits.
+  const leave = (action: () => void) =>
+    drafts.dirty ? setDiscarding(() => action) : action();
 
+  const busy = record.isPending || saveDrafts.isPending;
   const finish = (step: SetupStep, state: "done" | "skipped") =>
     record.mutate(
       { path: { step_id: step.id }, body: { state } },
@@ -116,7 +131,7 @@ function Walkthrough({ panes }: { panes: Record<string, ReactNode> }) {
                   "h-auto w-full justify-between gap-2 py-1.5 text-left font-normal whitespace-normal",
                   step.id === current?.id && "bg-accent font-medium",
                 )}
-                onClick={() => go(step)}
+                onClick={() => leave(() => go(step))}
               >
                 <span>
                   {index + 1}. {step.title}
@@ -134,7 +149,7 @@ function Walkthrough({ panes }: { panes: Record<string, ReactNode> }) {
             "h-auto w-full justify-start py-1.5 font-normal",
             !current && "bg-accent font-medium",
           )}
-          onClick={() => go(null)}
+          onClick={() => leave(() => go(null))}
         >
           Summary
         </Button>
@@ -162,23 +177,37 @@ function Walkthrough({ panes }: { panes: Record<string, ReactNode> }) {
               <GuideLink step={current} />
               <div className="flex flex-wrap items-center gap-2">
                 <Button
-                  disabled={record.isPending}
-                  onClick={() => finish(current, "done")}
+                  disabled={busy || !!drafts.blocked}
+                  onClick={() =>
+                    saveDrafts.mutate(undefined, {
+                      onSuccess: () => finish(current, "done"),
+                    })
+                  }
                 >
-                  {record.isPending ? "Saving…" : "Next"}
+                  {busy
+                    ? "Saving…"
+                    : drafts.dirty
+                      ? "Save and continue"
+                      : "Next"}
                 </Button>
                 <Button
                   variant="outline"
-                  disabled={record.isPending}
-                  onClick={() => finish(current, "skipped")}
+                  disabled={busy}
+                  onClick={() => leave(() => finish(current, "skipped"))}
                 >
                   Skip for now
                 </Button>
                 <StepBadge state={states[current.id]} />
               </div>
-              {!current.standalone && (
-                <p className="text-muted-foreground text-xs">
-                  Save any changes below before choosing Next.
+              {drafts.blocked && (
+                <p role="status" className="text-sm">
+                  {drafts.blocked}
+                </p>
+              )}
+              {saveDrafts.isError && (
+                <p role="alert" className="text-destructive text-sm">
+                  Your changes could not be saved, so this step is still open.
+                  The pane below says what went wrong.
                 </p>
               )}
               {record.isError && (
@@ -188,17 +217,28 @@ function Walkthrough({ panes }: { panes: Record<string, ReactNode> }) {
               )}
             </section>
             <div className="min-w-0">
-              {current.id === "backup" ? (
-                <SetupBackupStep />
-              ) : (
-                panes[current.id]
-              )}
+              <SetupDraftProvider registry={drafts.registry}>
+                {panes[current.id]}
+              </SetupDraftProvider>
             </div>
           </>
         ) : (
           <SetupSummary states={states} onOpen={go} />
         )}
       </div>
+      <ConfirmationDialog
+        open={discarding !== null}
+        onOpenChange={(open) => !open && setDiscarding(null)}
+        title="Discard unsaved changes?"
+        description={`Your changes to ${current?.title ?? "this step"} haven't been saved. Choose Save and continue to keep them.`}
+        confirmText="Discard changes"
+        confirmVariant="destructive"
+        onConfirm={() => {
+          discarding?.();
+          setDiscarding(null);
+        }}
+        onCancel={() => setDiscarding(null)}
+      />
     </div>
   );
 }
