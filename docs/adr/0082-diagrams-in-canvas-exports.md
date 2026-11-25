@@ -1,7 +1,8 @@
 # ADR-0082 — Diagrams in canvas exports
 
-Status: accepted. The shared diagram policy (US-105.1) and the server renderer
-(US-105.2) are implemented (2026-11-25); the exports follow in US-105.3 ([EPIC-105](../epics/EPIC-105-DIAGRAMS-IN-CANVAS-EXPORTS.md)).
+Status: accepted. The shared diagram policy (US-105.1), the server renderer
+(US-105.2) and diagrams in DOCX and PDF exports (US-105.3) are implemented
+(2026-11-25) ([EPIC-105](../epics/EPIC-105-DIAGRAMS-IN-CANVAS-EXPORTS.md)).
 
 ## Context
 
@@ -94,7 +95,22 @@ mermaid and the same rules.
 - Diagrams are drawn when the file is exported and not stored. Markdown and
   text downloads keep the source. No database change.
 
-## Consequences
+## Decision: where pictures go (US-105.3)
+
+- Only single-version **DOCX and PDF** exports draw diagrams, and Save to Files
+  uses that same path. The chat's **ZIP** writes each document as Markdown and
+  **Download my data** writes Markdown too, so both keep the source, as Markdown
+  and text downloads do.
+- `downloads.draw_export_diagrams` draws the document's distinct mermaid fences
+  first (at most 30, within 60 seconds); the writers stay synchronous and take
+  the pictures keyed by source.
+- DOCX: each picture is fitted to the 6.5 inch text width at 96 CSS px per inch,
+  with `docPr` title and description set. PDF: the HTML is written in runs, with
+  `pdf.image` between them, fitted to the 174 mm text width with `title` and
+  `alt_text`. In PDF only top-level fences become pictures; a fence inside a list
+  or quote stays code.
+- A fence that wasn't drawn (invalid, over the cap or the deadline, or refused)
+  is written as code after an italic "Diagram not drawn".
 
 - Changing `packages/diagram-policy` changes what both the app and exports
   accept; it is security policy and is reviewed as such.

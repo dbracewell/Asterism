@@ -711,6 +711,104 @@ async def test_saving_a_version_to_the_library(canvas_api, monkeypatch, tmp_path
     assert (await client.post(path, headers=auth(), json={"format": "source"})).status_code == 400
 
 
+DIAGRAM_SOURCE = "flowchart LR\n  accTitle: Water cycle\n  sea --> cloud --> rain --> sea\n"
+DIAGRAM_DOCUMENT = f"# Weather\n\n```mermaid\n{DIAGRAM_SOURCE}```\n\nAfter.\n"
+
+
+async def diagram_document(client, sessions):
+    """A finished turn that wrote a document with one mermaid diagram."""
+    chat_id, request, run = await started_chat(client, sessions)
+    await switches(sessions)
+    scope = scope_for(chat_id, request, run)
+    args = CanvasCreateArgs(kind="document", title="Weather", content=DIAGRAM_DOCUMENT, language=None)
+    item_id = (await canvas_create(tool_ctx(chat_id, scope, args)))["item_id"]
+    await finish(sessions, chat_id, request, run)
+    return chat_id, item_id
+
+
+def fake_drawer(calls):
+    """Stands in for the browser renderer: one small picture per source."""
+    import io
+
+    from asterism.domains.canvas.diagrams import DrawnDiagram
+    from PIL import Image
+
+    buffer = io.BytesIO()
+    Image.new("RGB", (200, 80), "#e9edf6").save(buffer, format="PNG")
+
+    async def draw(sources, *, deadline_seconds):
+        calls.append(list(sources))
+        return [DrawnDiagram(png=buffer.getvalue(), width=100, height=40, label="Water cycle", description=None)] * len(
+            sources
+        )
+
+    return draw
+
+
+async def test_document_exports_draw_diagrams_only_in_docx_and_pdf(canvas_api, monkeypatch):
+    import io
+
+    import docx
+    import pdfplumber
+
+    calls: list[list[str]] = []
+    monkeypatch.setattr("asterism.domains.canvas.diagrams.draw_diagrams", fake_drawer(calls))
+    client, sessions = canvas_api
+    chat_id, item_id = await diagram_document(client, sessions)
+
+    def url(export):
+        return f"/chat/{chat_id}/canvas/{item_id}/versions/1/export?format={export}"
+
+    word = await client.get(url("docx"), headers=auth())
+    assert word.status_code == 200, word.text
+    shapes = docx.Document(io.BytesIO(word.content)).inline_shapes
+    assert len(shapes) == 1 and shapes[0]._inline.docPr.get("descr") == "Water cycle"
+    pdf = await client.get(url("pdf"), headers=auth())
+    assert len(pdfplumber.open(io.BytesIO(pdf.content)).pages[0].images) == 1
+    assert calls == [[DIAGRAM_SOURCE], [DIAGRAM_SOURCE]]
+    # Markdown keeps the source and draws nothing; so does the chat's ZIP.
+    assert (await client.get(url("md"), headers=auth())).text == DIAGRAM_DOCUMENT
+    archive = await client.get(f"/chat/{chat_id}/canvas/export", headers=auth())
+    assert archive.status_code == 200
+    assert len(calls) == 2
+
+
+async def test_saving_a_document_with_a_diagram_to_the_library_draws_it(canvas_api, monkeypatch, tmp_path):
+    import docx
+    from asterism.domains.files.store import LocalFileStore
+
+    store = LocalFileStore(tmp_path / "files")
+    monkeypatch.setattr("asterism.domains.files.service.get_file_store", lambda: store)
+    monkeypatch.setattr("asterism.domains.files.store.get_file_store", lambda: store)
+    monkeypatch.setattr("asterism.domains.files.service.start_ingestion", lambda **_: None)
+    calls: list[list[str]] = []
+    monkeypatch.setattr("asterism.domains.canvas.diagrams.draw_diagrams", fake_drawer(calls))
+    client, sessions = canvas_api
+    chat_id, item_id = await diagram_document(client, sessions)
+    saved = await client.post(
+        f"/chat/{chat_id}/canvas/{item_id}/versions/1/library", headers=auth(), json={"format": "docx"}
+    )
+    assert saved.status_code == 200, saved.text
+    (stored,) = list((tmp_path / "files").rglob("*.docx"))
+    assert len(docx.Document(str(stored)).inline_shapes) == 1
+    assert calls == [[DIAGRAM_SOURCE]]
+
+
+async def test_a_real_diagram_exports_as_a_picture(canvas_api, chromium):
+    """End to end with the real renderer (skipped without Chromium)."""
+    import io
+
+    import docx
+
+    client, sessions = canvas_api
+    chat_id, item_id = await diagram_document(client, sessions)
+    word = await client.get(f"/chat/{chat_id}/canvas/{item_id}/versions/1/export?format=docx", headers=auth())
+    assert word.status_code == 200, word.text
+    shapes = docx.Document(io.BytesIO(word.content)).inline_shapes
+    assert len(shapes) == 1
+    assert shapes[0]._inline.docPr.get("title") == "Water cycle"
+
+
 async def test_users_start_items_the_next_turn_sees(canvas_api):
     from asterism.domains.canvas.branches import Branch
     from asterism.domains.canvas.service import create_user_item

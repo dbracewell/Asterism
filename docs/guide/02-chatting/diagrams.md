@@ -41,7 +41,9 @@ labels shorter." Asterism draws a new one in its answer.
 ## Good to know
 
 - A diagram can still be wrong. Check it the same way you'd check any answer.
-- Diagrams follow your theme's colors.
+- Diagrams follow your theme's colors. In a canvas document downloaded as Word
+  or PDF, they're pictures in light colors; see
+  [Working in the canvas](canvas.md#download-it).
 - Screen readers read the diagram's name and description, and the code view
   shows the text it's drawn from.
 

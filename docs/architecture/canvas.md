@@ -110,7 +110,16 @@ version as a zip. `POST …/versions/{number}/library` saves an export to the us
 file library through the normal upload path, so it is processed like any upload.
 
 Word and PDF files are rendered from Markdown with raw HTML and images turned off,
-so an export never embeds markup or fetches a URL from canvas content. PDF uses
+so an export never embeds markup or fetches a URL from canvas content. The one
+picture they can hold is a drawn mermaid diagram
+([ADR-0082](../adr/0082-diagrams-in-canvas-exports.md)): before a Word or PDF
+export, `downloads.draw_export_diagrams` draws the document's distinct mermaid
+fences (at most 30, within 60 seconds) with `domains/canvas/diagrams.py` in the
+shared headless Chromium, offline with every request refused. The writers place
+each as a PNG fitted to the page, with the diagram's name and description as alt
+text; one that wasn't drawn is written as code after "Diagram not drawn". In PDF
+only top-level fences become pictures; a fence inside a list or quote stays code.
+Markdown, text, the ZIP and Download my data keep the source. PDF uses
 DejaVu Sans for Unicode text. Downloads are sent as attachments with `nosniff` and a
 sandboxing security policy, so an exported HTML page opened from the API stays inert.
 

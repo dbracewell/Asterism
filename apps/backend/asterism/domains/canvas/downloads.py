@@ -10,9 +10,35 @@ from asterism.core.exceptions import NotFoundException
 
 from . import service
 from .branches import active_branch
-from .exports import FORMATS, MEDIA_TYPES, CanvasExportFormat, ExportedFile, export_version, file_stem, zip_exports
+from .exports import (
+    FORMATS,
+    MEDIA_TYPES,
+    CanvasExportFormat,
+    Diagrams,
+    ExportedFile,
+    export_version,
+    file_stem,
+    mermaid_sources,
+    zip_exports,
+)
 
 logger = get_logger("Canvas")
+
+# ADR-0082: per export, at most this many diagrams are drawn, within this time;
+# the rest export as code with a note.
+MAX_EXPORT_DIAGRAMS = 30
+EXPORT_DIAGRAM_SECONDS = 60.0
+
+
+async def draw_export_diagrams(content: str) -> Diagrams:
+    """Pictures for the document's mermaid fences, keyed by source."""
+    from .diagrams import draw_diagrams
+
+    sources = mermaid_sources(content)[:MAX_EXPORT_DIAGRAMS]
+    if not sources:
+        return {}
+    drawn = await draw_diagrams(sources, deadline_seconds=EXPORT_DIAGRAM_SECONDS)
+    return dict(zip(sources, drawn, strict=True))
 
 
 async def export_item_version(
@@ -26,6 +52,9 @@ async def export_item_version(
     """One version visible on the chat's active branch, as ``export``."""
     branch = await active_branch(user_id, chat_id, session)
     version = service.full_version(await service.visible_item(user_id, chat_id, item_id, branch, session), number)
+    # DOCX and PDF show mermaid fences as drawn diagrams; other formats keep
+    # the source.
+    diagrams = await draw_export_diagrams(version.content) if export in ("docx", "pdf") else None
     # DOCX and PDF layout is CPU work; keep it off the event loop.
     return await asyncio.to_thread(
         export_version,
@@ -34,6 +63,7 @@ async def export_item_version(
         title=version.title,
         content=version.content,
         export=export,
+        diagrams=diagrams,
     )
 
 

@@ -90,8 +90,8 @@ Source: user request (2026-11-25), the EPIC-103 follow-up. [EPIC-105](docs/epics
   - [x] Share the fetch tool's browser pool through a small module
   - [x] `render_diagram`: aborted requests, static page, shared config, sanitizer, time limit, PNG
   - [x] Tests: draws; hostile source inert with zero requests; invalid and slow return None; pool shared
-- [ ] US-105.3: Diagrams in DOCX, PDF, ZIP and Save to Files
-  - [ ] Embed drawn PNGs with alt text in DOCX and PDF; other fences stay code
-  - [ ] Per-export limits; failures export as code with "Diagram not drawn"
-  - [ ] ZIP export and Save to Files use the same path
-  - [ ] Tests, canvas guide page and release notes
+- [x] US-105.3: Diagrams in DOCX, PDF, ZIP and Save to Files
+  - [x] Embed drawn PNGs with alt text in DOCX and PDF; other fences stay code
+  - [x] Per-export limits; failures export as code with "Diagram not drawn"
+  - [x] Save to Files uses the same path; the ZIP and Download my data keep the Markdown source
+  - [x] Tests, canvas guide page and release notes

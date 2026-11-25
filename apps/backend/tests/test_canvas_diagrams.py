@@ -9,7 +9,6 @@ import json
 import struct
 
 import pytest
-import pytest_asyncio
 from asterism.common import headless_browser
 from asterism.domains.canvas import diagrams
 from asterism.domains.canvas.diagrams import (
@@ -55,26 +54,9 @@ def png_size(png: bytes) -> tuple[int, int]:
     return width, height
 
 
-_BUNDLES = MERMAID_BUNDLE.is_file() and DOMPURIFY_BUNDLE.is_file()
-# The backend CI job installs neither the frontend's packages nor Chromium;
-# there `pnpm check:image` draws a diagram inside the built image instead.
-needs_bundles = pytest.mark.skipif(not _BUNDLES, reason="the frontend's packages are not installed")
-
-
-@pytest_asyncio.fixture
-async def chromium():
-    """Skip unless the pooled Chromium can start; close it afterwards."""
-    if not _BUNDLES:
-        pytest.skip("the frontend's packages are not installed")
-    try:
-        await headless_browser.acquire_browser()
-    except Exception as exc:
-        await headless_browser.close_browser()
-        if "Executable doesn't exist" in str(exc):
-            pytest.skip("Playwright Chromium is not installed")
-        raise
-    yield
-    await headless_browser.close_browser()
+needs_bundles = pytest.mark.skipif(
+    not (MERMAID_BUNDLE.is_file() and DOMPURIFY_BUNDLE.is_file()), reason="the frontend's packages are not installed"
+)
 
 
 async def drawn(sources: list[str], **options) -> list[DrawnDiagram | None]:
