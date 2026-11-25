@@ -21,6 +21,7 @@
     "config:check": "node scripts/config-check.mjs --profile development --scope all --env required",
     "test:config": "node --test test/*.test.mjs",
     "test:container-config": "node docker/config-parity-test.mjs",
+    "test:e2e:screenshots": "node scripts/e2e-screenshots.mjs",
     "sync": "cd apps/backend && uv run sync",
     "codegen": "cd apps/frontend && pnpm codegen",
     "reset:db": "node scripts/run-with-env.mjs --env required --scope all --profile reset -- node scripts/reset-databases.mjs",

@@ -210,7 +210,13 @@ To review one:
 3. A change to what ships in the image (a base image, a backend or frontend runtime
    package) gets a release-notes line under Image when it fixes a vulnerability or
    changes behavior. Development-only updates need none.
-4. Merge like any other pull request. A pull request that fails stays open: fix it on
+4. If the update moves `@playwright/test` (and so its Chromium), run
+   `pnpm test:e2e:screenshots` on macOS before merging. CI skips screenshot
+   comparisons, so a new browser can quietly make the baselines stale, as the
+   2026-11-21 update did. If any fail, check the differences are rendering only,
+   refresh them with `pnpm test:e2e:screenshots --update-snapshots`, review each
+   changed image, and commit them on the update's branch.
+5. Merge like any other pull request. A pull request that fails stays open: fix it on
    its branch, or close it and tell Dependabot to ignore that version
    (`@dependabot ignore this minor version`) with a reason in the comment.
 
