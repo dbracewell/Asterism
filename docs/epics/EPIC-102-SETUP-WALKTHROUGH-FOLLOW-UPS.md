@@ -53,6 +53,7 @@ guarding browser navigation away from an Admin Settings pane with unsaved edits.
 
   Captioning saves each choice as it is made, with one exception: choosing
   "provider" before picking a vision model leaves a draft that can't be saved.
+
 - **Steps to remove.**
   - `theme_editor` and `educators` are Admin Settings steps.
   - `backup` is the only `standalone` step and the only one with a `guideHref`;

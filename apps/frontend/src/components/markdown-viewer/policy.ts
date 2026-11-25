@@ -73,6 +73,13 @@ export const markdownMermaidConfig = Object.freeze({
   maxTextSize: 20_000,
   maxEdges: 500,
   fontFamily: MERMAID_FONT_FAMILY,
+  // Mermaid wraps labels at 120px and splits any longer word by characters
+  // ("Light-dependen t"); 200px keeps ordinary words whole.
+  flowchart: Object.freeze({ wrappingWidth: 200 }),
+  state: Object.freeze({ wrappingWidth: 200 }),
+  // Edge label backgrounds are half transparent in mermaid's own stylesheet,
+  // so the line shows through the words. A fixed rule, never from content.
+  themeCSS: ".edgeLabel rect { opacity: 1 !important; }",
   secure: [
     "secure",
     "securityLevel",

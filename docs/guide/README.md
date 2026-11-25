@@ -56,11 +56,13 @@ what your group can use.
    pages beside the chat.
 7. [Creating images](02-chatting/creating-images.md): making a picture from a
    description.
-8. [Skills, prompt templates and the prompt coach](02-chatting/skills-templates-and-the-prompt-coach.md):
+8. [Diagrams](02-chatting/diagrams.md): flowcharts, timelines and other diagrams
+   in an answer, and saving them.
+9. [Skills, prompt templates and the prompt coach](02-chatting/skills-templates-and-the-prompt-coach.md):
    writing clearer messages.
-9. [Long conversations](02-chatting/long-conversations.md): what happens when a
-   chat gets very long.
-10. [Finding old chats](02-chatting/finding-old-chats.md): the sidebar and search.
+10. [Long conversations](02-chatting/long-conversations.md): what happens when a
+    chat gets very long.
+11. [Finding old chats](02-chatting/finding-old-chats.md): the sidebar and search.
 
 ## Files and projects
 

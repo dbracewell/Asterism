@@ -1,6 +1,6 @@
 # EPIC-103: Mermaid diagrams in markdown
 
-Status: in progress (2026-11-25). US-103.1 PR #117; US-103.2 PR #118; US-103.3 implemented. Source: user request (2026-11-25): "add mermaid
+Status: complete (2026-11-25). US-103.1 PR #117, US-103.2 PR #118, US-103.3 PR #119, US-103.4. Source: user request (2026-11-25): "add mermaid
 support to our chat markdown editor since diagrams are good for visual learners
 but the small image generation models are not good at text."
 
@@ -33,7 +33,7 @@ languages (PlantUML, Graphviz); an admin or user switch (see Decisions).
   mermaid only for GitHub rendering (`docs/architecture/CONTRIBUTING.md:93`).
 - **The page CSP** (`lib/content-security-policy.ts`) allows nonce scripts with
   `'strict-dynamic'`, no `eval` in production, `style-src 'self'
-  'unsafe-inline'`, `img-src 'self' blob: data:` and `frame-src 'self'`. Mermaid
+'unsafe-inline'`, `img-src 'self' blob: data:` and `frame-src 'self'`. Mermaid
   renders inline SVG with a `<style>` element, which this allows. Its
   `securityLevel: "sandbox"` mode uses a `data:` iframe, which `frame-src` refuses.
 - **Agent guidance** is added per offered capability in
@@ -64,13 +64,13 @@ languages (PlantUML, Graphviz); an admin or user switch (see Decisions).
     `look`, `dompurifyConfig`).
     Mermaid only protects top-level keys, and theme values go straight into the
     diagram's `<style>`.
-  The SVG goes through DOMPurify with an SVG-only profile: no `<script>`, event
-  attributes, `<foreignObject>`, `<image>` or external `href`. It is then shown
-  as an `<img>` with a `data:image/svg+xml` source, not inserted inline. An SVG
-  image runs no scripts, loads nothing and keeps its `<style>` to itself, so even
-  CSS that escaped mermaid's checks can't restyle the page. `img-src` already
-  allows `data:`. Callers cannot change this configuration (same rule as
-  `markdownMathOptions`).
+    The SVG goes through DOMPurify with an SVG-only profile: no `<script>`, event
+    attributes, `<foreignObject>`, `<image>` or external `href`. It is then shown
+    as an `<img>` with a `data:image/svg+xml` source, not inserted inline. An SVG
+    image runs no scripts, loads nothing and keeps its `<style>` to itself, so even
+    CSS that escaped mermaid's checks can't restyle the page. `img-src` already
+    allows `data:`. Callers cannot change this configuration (same rule as
+    `markdownMathOptions`).
 - **Load it only when needed.** Mermaid is large. The viewer `import()`s it the
   first time a page has a mermaid block, so chats without diagrams load nothing
   new. Pages work during the load and show the source as code until the diagram
@@ -163,12 +163,19 @@ Suggested order: US-103.1 → 103.2 → 103.3 → 103.4.
 
 ### US-103.4: Documentation and release
 
-- [ ] User guide page `docs/guide/02-chatting/diagrams.md` with a screenshot from
-      the screenshot pipeline. Link it from `creating-images.md` ("for labelled
-      diagrams, ask for a diagram instead").
-- [ ] Note diagrams in the frontend rendering section of the architecture docs
-      and in `auth-and-security.md` (the untrusted-source configuration).
-      `pnpm docs:check` passes.
-- [ ] Release notes, Unreleased → Behavior: mermaid blocks render as diagrams,
-      and the agent draws labelled diagrams as mermaid instead of images.
-- [ ] Run the full isolated E2E suite before pushing.
+- [x] User guide page `docs/guide/02-chatting/diagrams.md` with the
+      `chat-diagram` screenshot (a scripted photosynthesis diagram in the demo
+      dataset). `creating-images.md` points labelled diagrams to it, and the
+      guide index lists it.
+- [x] Diagrams in [markdown-content.md](../architecture/markdown-content.md)
+      (policy table and a Diagrams section) and in
+      [auth-and-security.md](../architecture/auth-and-security.md) (no CSP
+      change). `pnpm docs:check` passes.
+- [x] Release notes, Unreleased → Behavior: rendering and the toolbar
+      (US-103.1/103.2) and the agent guidance (US-103.3). This story changes
+      only documentation.
+- [x] Fixes found while taking the screenshot against the real app: labels
+      wrap at 200 px (mermaid's 120 px split "Light-dependent" by characters),
+      edge-label backgrounds are opaque, and an inline diagram shrinks to fit
+      the column down to 75% before it scrolls.
+- [x] The full isolated E2E suite ran before pushing each UI story.

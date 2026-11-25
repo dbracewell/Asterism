@@ -2,7 +2,8 @@
 
 This guide explains what rendered content may and may not do in Asterism: which
 Markdown is supported, why raw HTML is off, which links and resources are allowed,
-how math is constrained, and how file references and citations are resolved. Read it
+how math is constrained, how diagrams are drawn, and how file references and
+citations are resolved. Read it
 before changing `MarkdownViewer`, adding a Markdown plugin or rendering any text that
 came from a model, a user or a file.
 
@@ -13,7 +14,8 @@ messages) and sub-agent replies. Its inputs may include model output, user promp
 file-derived text and retrieval-derived text. Those inputs do not grant HTML,
 network-resource, file or tool capabilities.
 
-The renderer parses CommonMark plus GFM and math. **Raw HTML is disabled**:
+The renderer parses CommonMark plus GFM and math, and draws ` ```mermaid `
+blocks as diagrams. **Raw HTML is disabled**:
 `react-markdown` uses `skipHtml`, and the raw-HTML parser dependency was removed.
 There is no raw-HTML mode or caller-supplied plugin/URL-policy override. This is a
 clean change to accepted content, not an HTML compatibility layer. Depending on
@@ -22,17 +24,18 @@ markup/attributes are never installed as DOM elements.
 
 ## Content and resource policy
 
-| Input             | Behavior                                                                                                                                                                  |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Standard Markdown | Headings, paragraphs, emphasis, quotations, lists, inline code and fenced code remain supported.                                                                          |
-| GFM               | Tables, strikethrough, footnotes and disabled task-list checkboxes remain supported.                                                                                      |
-| Raw HTML          | No user HTML elements, styles, classes, event handlers, forms, frames, scripts, media, metadata or SVG are installed.                                                     |
-| Markdown images   | Always display an omitted-image label with the alt text. No `img`, `src`, `srcset` or network request is produced. The only exception is a file reference token (below).  |
-| Resource URLs     | All untrusted automatic resources are blocked, including remote, protocol-relative, same-origin, data and blob image URLs.                                                |
-| Links             | Explicit HTTP(S) URLs without credentials, application paths beginning with a single `/`, and document fragments beginning with `#` are allowed.                          |
-| Other URLs        | Script/data/blob/file/FTP/mailto schemes, protocol-relative URLs, backslashes, whitespace/control characters, path-relative links and query-only links are not clickable. |
-| Code blocks       | Code is literal text, highlighted and copyable. HTML inside code cannot create active elements.                                                                           |
-| Math              | KaTeX generates approved math markup under the fixed settings below.                                                                                                      |
+| Input             | Behavior                                                                                                                                                                                  |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Standard Markdown | Headings, paragraphs, emphasis, quotations, lists, inline code and fenced code remain supported.                                                                                          |
+| GFM               | Tables, strikethrough, footnotes and disabled task-list checkboxes remain supported.                                                                                                      |
+| Raw HTML          | No user HTML elements, styles, classes, event handlers, forms, frames, scripts, media, metadata or SVG are installed.                                                                     |
+| Markdown images   | Always display an omitted-image label with the alt text. No `img`, `src`, `srcset` or network request is produced. The exceptions are a file reference token and a drawn diagram (below). |
+| Resource URLs     | All untrusted automatic resources are blocked, including remote, protocol-relative, same-origin, data and blob image URLs.                                                                |
+| Links             | Explicit HTTP(S) URLs without credentials, application paths beginning with a single `/`, and document fragments beginning with `#` are allowed.                                          |
+| Other URLs        | Script/data/blob/file/FTP/mailto schemes, protocol-relative URLs, backslashes, whitespace/control characters, path-relative links and query-only links are not clickable.                 |
+| Code blocks       | Code is literal text, highlighted and copyable. HTML inside code cannot create active elements.                                                                                           |
+| Math              | KaTeX generates approved math markup under the fixed settings below.                                                                                                                      |
+| Mermaid diagrams  | A closed ` ```mermaid ` fence is drawn under a fixed configuration, sanitized and shown as a `data:image/svg+xml` image. Anything that can't be drawn stays code.                         |
 
 Links are ordinary anchors requiring an explicit click, with `rel="noreferrer
 noopener"`. The renderer does not use Next.js link prefetching or automatically
@@ -102,6 +105,36 @@ user-supplied HTML. The dependency remains part of the trusted implementation.
 
 See the primary [react-markdown security and HTML documentation](https://github.com/remarkjs/react-markdown#security)
 and [KaTeX options](https://katex.org/docs/options) for the library boundaries.
+
+## Diagrams
+
+[ADR-0081](../adr/0081-mermaid-diagrams.md) adds mermaid diagrams. The diagram
+source is untrusted like any other content, and drawing it grants nothing.
+
+- **Configuration.** `markdownMermaidConfig` in `policy.ts` is frozen:
+  `securityLevel: "strict"`, `htmlLabels: false`, 20,000 characters, 500 edges
+  and an 8 second timeout, plus 200 px label wrapping and opaque edge labels
+  (our own `themeCSS`). Its `secure` list also covers the theme, font, CSS and
+  label keys, so `%%{init}%%` directives and frontmatter can't change them.
+- **Output.** The SVG goes through a separate DOMPurify instance with the SVG
+  profile: no `script`, `foreignObject`, `image`, `a` or `use`, no event
+  attributes, and `href` only for in-document `#` references. It is shown as an
+  `<img>` with a `data:` source, never inlined, so it can't run script, load
+  resources or style the page. Generated `data:` images are trusted renderer
+  output; a `data:` URL in Markdown source is still blocked.
+- **When.** Only a closed fence is drawn, so a streaming diagram stays code.
+  Mermaid loads with `import()` when the first diagram is drawn. A parse error,
+  limit, timeout or empty result shows the code block with "Couldn't draw this
+  diagram".
+- **Theme.** Colors come from the current palette, each text color on the
+  surface it is contrast-checked against (`diagram-theme.ts`).
+- **Actions.** Show code, Expand, Download (SVG, or PNG drawn in the browser) and
+  Copy source. The image's accessible name is `accTitle`, or "Diagram: <type>".
+
+`e2e/markdown-diagrams.spec.ts` checks in a real browser, under the production
+CSP, that hostile directives, labels, `click` and `style` lines run nothing,
+change no page style and request nothing, and covers the toolbar, downloads and
+320px scrolling.
 
 ## Claim citations
 

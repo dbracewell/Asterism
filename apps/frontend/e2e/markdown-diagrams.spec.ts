@@ -186,3 +186,30 @@ test("a wide diagram scrolls inside its block at 320px", async ({ page }) => {
     ),
   ).toBe(true);
 });
+
+test("a diagram slightly wider than the column shrinks to fit instead of scrolling", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 600, height: 800 });
+  await page.goto("/e2e/markdown");
+  const figure = page
+    .locator('section[aria-label="Diagrams"] [data-slot="diagram-block"]')
+    .first();
+  const image = figure.getByRole("img", { name: "Water cycle" });
+  await expect(image).toBeVisible();
+  const region = figure.getByRole("region", {
+    name: "Scrollable diagram: Water cycle",
+  });
+  const sizes = await region.evaluate((el) => {
+    const img = el.querySelector("img")!;
+    return {
+      scroll: el.scrollWidth,
+      client: el.clientWidth,
+      shown: img.getBoundingClientRect().width,
+      natural: img.naturalWidth,
+    };
+  });
+  expect(sizes.shown).toBeLessThan(sizes.natural);
+  expect(sizes.shown).toBeGreaterThanOrEqual(sizes.natural * 0.75 - 1);
+  expect(sizes.scroll).toBeLessThanOrEqual(sizes.client);
+});

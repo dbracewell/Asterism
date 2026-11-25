@@ -115,6 +115,8 @@ async function draw(source: string, theme: DiagramTheme) {
   mermaid.initialize({
     ...markdownMermaidConfig,
     secure: [...markdownMermaidConfig.secure],
+    flowchart: { ...markdownMermaidConfig.flowchart },
+    state: { ...markdownMermaidConfig.state },
     ...(theme.variables
       ? { theme: "base" as const, themeVariables: theme.variables }
       : { theme: theme.dark ? ("dark" as const) : ("default" as const) }),
