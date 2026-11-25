@@ -8,9 +8,10 @@ canvas content.
 import io
 import re
 import zipfile
+from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 from urllib.parse import quote
 
 from markdown_it import MarkdownIt
@@ -19,6 +20,19 @@ from markdown_it.token import Token
 from asterism.core.exceptions import BadDataException
 
 from .schemas import CanvasKind
+
+if TYPE_CHECKING:
+    from .diagrams import DrawnDiagram
+
+# Drawn mermaid diagrams by fence source (ADR-0082). ``None`` (or a missing
+# source) means the diagram couldn't be drawn and exports as code.
+Diagrams = Mapping[str, "DrawnDiagram | None"]
+DIAGRAM_NOT_DRAWN = "Diagram not drawn"
+# Page widths the pictures are fitted to: DOCX's default Letter page with 1 inch
+# margins, and the PDF's A4 page with 18 mm margins.
+_DOCX_TEXT_WIDTH_INCHES = 6.5
+_PDF_TEXT_WIDTH_MM = 210 - 2 * 18
+_CSS_PX_PER_INCH = 96
 
 CanvasExportFormat = Literal["md", "txt", "source", "html", "docx", "pdf"]
 
@@ -120,17 +134,44 @@ def _markdown() -> MarkdownIt:
     return MarkdownIt("commonmark", {"html": False}).enable("table").disable("image")
 
 
+def is_mermaid(token: Token) -> bool:
+    """A fenced block whose language is ``mermaid``."""
+    words = (token.info or "").strip().split(maxsplit=1)
+    return token.type == "fence" and bool(words) and words[0].lower() == "mermaid"
+
+
+def mermaid_sources(content: str) -> list[str]:
+    """The distinct mermaid fence sources in a markdown document, in order."""
+    found: dict[str, None] = {}
+    for token in _markdown().parse(content):
+        if is_mermaid(token) and token.content.strip():
+            found.setdefault(token.content, None)
+    return list(found)
+
+
+def diagram_alt_text(drawn: "DrawnDiagram") -> str:
+    return f"{drawn.label}: {drawn.description}" if drawn.description else drawn.label
+
+
 def export_version(
-    *, kind: CanvasKind, language: str, title: str, content: str, export: CanvasExportFormat
+    *,
+    kind: CanvasKind,
+    language: str,
+    title: str,
+    content: str,
+    export: CanvasExportFormat,
+    diagrams: Diagrams | None = None,
 ) -> ExportedFile:
+    """``diagrams``, for DOCX and PDF: pictures for mermaid fences. Without it
+    every fence exports as code, with no note."""
     if export not in FORMATS[kind]:
         allowed = ", ".join(FORMATS[kind])
         raise BadDataException(f"A {kind} item downloads as {allowed}")
     filename = f"{file_stem(title)}.{extension(kind, language, export)}"
     if export == "docx":
-        data = markdown_docx(title, content)
+        data = markdown_docx(title, content, diagrams)
     elif export == "pdf":
-        data = markdown_pdf(title, content)
+        data = markdown_pdf(title, content, diagrams)
     else:
         data = content.encode("utf-8")
     return ExportedFile(filename=filename, media_type=MEDIA_TYPES[export], content=data)
@@ -155,9 +196,9 @@ def zip_exports(files: list[ExportedFile]) -> bytes:
 # --- DOCX ---------------------------------------------------------------
 
 
-def markdown_docx(title: str, content: str) -> bytes:
+def markdown_docx(title: str, content: str, diagrams: Diagrams | None = None) -> bytes:
     from docx import Document
-    from docx.shared import Pt
+    from docx.shared import Inches, Pt
 
     document = Document()
     document.core_properties.title = title
@@ -175,6 +216,19 @@ def markdown_docx(title: str, content: str) -> bytes:
         run = document.add_paragraph().add_run(text.rstrip("\n"))
         run.font.name = "Courier New"
         run.font.size = Pt(9)
+
+    def diagram(token: Token) -> None:
+        drawn = (diagrams or {}).get(token.content)
+        if drawn is None:
+            document.add_paragraph().add_run(DIAGRAM_NOT_DRAWN).italic = True
+            code(token.content)
+            return
+        inches = min(drawn.width / _CSS_PX_PER_INCH, _DOCX_TEXT_WIDTH_INCHES)
+        document.add_picture(io.BytesIO(drawn.png), width=Inches(inches))
+        # The picture's alternative text, read by screen readers and Word.
+        properties = document.inline_shapes[-1]._inline.docPr
+        properties.set("title", drawn.label)
+        properties.set("descr", diagram_alt_text(drawn))
 
     for token in tokens:
         kind = token.type
@@ -195,6 +249,8 @@ def markdown_docx(title: str, content: str) -> bytes:
             quotes += 1
         elif kind == "blockquote_close":
             quotes -= 1
+        elif diagrams is not None and is_mermaid(token):
+            diagram(token)
         elif kind in ("fence", "code_block"):
             code(token.content)
         elif kind == "hr":
@@ -283,7 +339,7 @@ def _pdf_styles(code_family: str) -> dict:
     }
 
 
-def markdown_pdf(title: str, content: str) -> bytes:
+def markdown_pdf(title: str, content: str, diagrams: Diagrams | None = None) -> bytes:
     from fpdf import FPDF
 
     pdf = FPDF(format="A4")
@@ -305,12 +361,37 @@ def markdown_pdf(title: str, content: str) -> bytes:
         family, code_family = "helvetica", "courier"
         text = content.encode("latin-1", "replace").decode("latin-1")
     pdf.set_font(family, size=11)
-    html = _markdown().render(text)
-    pdf.write_html(
-        html,
-        font_family=family,
-        li_prefix_color=(0, 0, 0),
-        tag_styles=_pdf_styles(code_family),
-        warn_on_tags_not_matching=False,
-    )
+    markdown = _markdown()
+    styles = _pdf_styles(code_family)
+
+    def write(tokens: list[Token]) -> None:
+        if tokens:
+            pdf.write_html(
+                markdown.renderer.render(tokens, markdown.options, {}),
+                font_family=family,
+                li_prefix_color=(0, 0, 0),
+                tag_styles=styles,
+                warn_on_tags_not_matching=False,
+            )
+
+    # Drawn diagrams go between runs of HTML. Only top-level fences are
+    # pictures; one inside a list or quote stays code, as it does in a run.
+    tokens = markdown.parse(text)
+    run: list[Token] = []
+    for token in tokens:
+        if diagrams is None or token.level != 0 or not is_mermaid(token):
+            run.append(token)
+            continue
+        drawn = diagrams.get(token.content)
+        if drawn is None:
+            note = markdown.parse(f"*{DIAGRAM_NOT_DRAWN}*")
+            run.extend([*note, token])
+            continue
+        write(run)
+        run = []
+        width = min(drawn.width * 25.4 / _CSS_PX_PER_INCH, _PDF_TEXT_WIDTH_MM)
+        pdf.ln(2)
+        pdf.image(io.BytesIO(drawn.png), w=width, title=drawn.label, alt_text=diagram_alt_text(drawn))
+        pdf.ln(4)
+    write(run)
     return bytes(pdf.output())

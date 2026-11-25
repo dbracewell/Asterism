@@ -1,7 +1,31 @@
 import pytest
+import pytest_asyncio
+from asterism.common import headless_browser
 from asterism.core.config import config
+from asterism.domains.canvas.diagrams import DOMPURIFY_BUNDLE, MERMAID_BUNDLE
 from asterism.domains.user.lifecycle import clear_suspension_cache
 from asterism.domains.user.service import clear_user_cache
+
+# The backend CI job installs neither the frontend's packages nor Chromium;
+# there `pnpm check:image` draws a diagram inside the built image instead.
+BUNDLES_INSTALLED = MERMAID_BUNDLE.is_file() and DOMPURIFY_BUNDLE.is_file()
+
+
+@pytest_asyncio.fixture
+async def chromium():
+    """Skip unless the pooled Chromium and the diagram bundles are there; close it afterwards."""
+    if not BUNDLES_INSTALLED:
+        pytest.skip("the frontend's packages are not installed")
+    try:
+        await headless_browser.acquire_browser()
+    except Exception as exc:
+        await headless_browser.close_browser()
+        if "Executable doesn't exist" in str(exc):
+            pytest.skip("Playwright Chromium is not installed")
+        raise
+    yield
+    await headless_browser.close_browser()
+
 
 # Tests run under the "test" profile, which skips the SYSTEM_KEY validation that
 # full runtimes enforce. Settings encryption refuses to work without a key, so

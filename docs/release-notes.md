@@ -49,6 +49,11 @@ Unreleased into its version and date.
 - The main agent now draws diagrams, flowcharts, mind maps and timelines as
   mermaid diagrams in its reply instead of asking the image model for them,
   which drew their labels badly. Image generation is for pictures.
+- Canvas documents downloaded as Word or PDF, or saved to Files in those
+  formats, show mermaid diagrams as pictures with alt text, drawn on the server
+  in light colors. A diagram that can't be drawn appears as code with "Diagram
+  not drawn". Markdown, text and ZIP downloads keep the diagram's text. Exports
+  with diagrams take a few seconds longer.
 - Screen readers no longer list every code block, table, equation and diagram
   in an answer as a landmark. Each is a group named for what it holds, such as
   "Code: python" or "Table", and still scrolls with the keyboard. Task-list

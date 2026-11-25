@@ -65,6 +65,11 @@ Use the download menu to save a version as Markdown, plain text, a source file, 
 web page, Word or PDF, to add it to your Files, or to download every canvas item
 in the chat as a ZIP file.
 
+In Word and PDF files, [diagrams](diagrams.md) appear as pictures, in light
+colors whatever your theme. If a diagram can't be drawn, the file shows its code
+with the words **Diagram not drawn**. Markdown, plain text and the ZIP file keep
+the diagram's text.
+
 ## Good to know
 
 - Canvas items belong to the [branch](regenerating-and-branches.md) that wrote

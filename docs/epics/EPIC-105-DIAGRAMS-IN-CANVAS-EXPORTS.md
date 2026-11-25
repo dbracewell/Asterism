@@ -1,6 +1,6 @@
 # EPIC-105: Diagrams in canvas exports
 
-Status: in progress (2026-11-25). US-105.1 PR #123; US-105.2 implemented. Source: user request (2026-11-25), the
+Status: complete (2026-11-25). US-105.1 PR #123, US-105.2 PR #124, US-105.3. Source: user request (2026-11-25), the
 follow-up left out of [EPIC-103](EPIC-103-MERMAID-DIAGRAMS.md): "Draw
 diagrams in canvas DOCX/PDF exports."
 
@@ -104,12 +104,18 @@ Suggested order: US-105.1 → 105.2 → 105.3.
 
 ### US-105.3: Diagrams in DOCX, PDF, ZIP and Save to Files
 
-- [ ] `markdown_docx` and `markdown_pdf` embed the drawn PNG for each mermaid
-      fence, with alt text, scaled to the page width; other fences stay code.
-- [ ] Per-export limits (30 diagrams, 60 seconds); over the limit or failed,
-      the fence exports as code with "Diagram not drawn".
-- [ ] The ZIP export and Save to Files get diagrams through the same path.
-- [ ] Tests: a canvas with a diagram exports DOCX and PDF containing an image
-      with the right alt text; markdown and text keep the source; limits and
-      failures fall back to code. Update the canvas guide page and release
-      notes (Behavior; Image, if the bundle adds size).
+- [x] `markdown_docx` and `markdown_pdf` take drawn pictures keyed by fence
+      source and place each fitted to the page width, with the diagram's name
+      and description as alt text (DOCX `docPr`, PDF `alt_text`); other fences
+      stay code. In PDF only top-level fences become pictures.
+- [x] `draw_export_diagrams`: the document's distinct mermaid fences, at most
+      30, within 60 seconds. A fence not drawn (invalid, over the cap or the
+      deadline, refused) is written as code after "Diagram not drawn".
+- [x] Save to Files uses the same path. The ZIP writes documents as Markdown,
+      and Download my data does too, so both keep the source by design (found
+      while planning: the ZIP never contained DOCX).
+- [x] Tests: the writers with ready-made pictures (picture, size, alt text,
+      position, notes, Markdown unchanged, the cap); the API (DOCX and PDF draw,
+      Markdown and ZIP don't, Save to Files draws); and one export with the real
+      renderer. The canvas and diagrams guide pages, the canvas architecture doc,
+      ADR-0082 and the release notes are updated.
