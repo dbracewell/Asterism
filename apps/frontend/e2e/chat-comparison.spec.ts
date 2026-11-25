@@ -9,7 +9,7 @@ import type {
   MessageExecution,
 } from "../src/lib/client";
 import { mockLearningModes } from "./support/learning-modes";
-import { expect, test, type Page } from "./support/test";
+import { animationsSettled, expect, test, type Page } from "./support/test";
 
 const A = "11111111-1111-4111-8111-111111111111";
 const B = "22222222-2222-4222-8222-222222222222";
@@ -291,6 +291,13 @@ for (const [width, height] of [
         () => document.documentElement.scrollWidth - window.innerWidth,
       ),
     ).toBeLessThanOrEqual(0);
+    // Finishing enables "Continue from Beta", which fades in from half
+    // opacity. Check contrast once it has settled, not mid-transition.
+    const continueFromBeta = beta.getByRole("button", {
+      name: "Continue from Beta",
+    });
+    await expect(continueFromBeta).toBeEnabled();
+    await animationsSettled(block);
     expect(
       (
         await new AxeBuilder({ page })
@@ -299,7 +306,7 @@ for (const [width, height] of [
       ).violations,
     ).toEqual([]);
 
-    await beta.getByRole("button", { name: "Continue from Beta" }).click();
+    await continueFromBeta.click();
     await expect(beta.getByText("Continuing here")).toBeVisible();
     expect(mock.calls.activate).toEqual([{ index: 1 }]);
     expect(errors).toEqual([]);

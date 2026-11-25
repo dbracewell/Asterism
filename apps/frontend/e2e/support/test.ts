@@ -1,4 +1,9 @@
-import { expect, test as base, type ConsoleMessage } from "@playwright/test";
+import {
+  expect,
+  test as base,
+  type ConsoleMessage,
+  type Locator,
+} from "@playwright/test";
 
 export { expect, request } from "@playwright/test";
 export type {
@@ -46,3 +51,25 @@ export const test = base.extend<{
     { auto: true },
   ],
 });
+
+/**
+ * Waits until every finite animation and transition inside `locator` has
+ * finished, so a check such as axe sees the settled state rather than a fade.
+ * Two frames first: a transition only appears once styles recalculate.
+ * Infinite animations (spinners) are ignored; they never finish.
+ */
+export async function animationsSettled(locator: Locator): Promise<void> {
+  await locator.evaluate(async (node) => {
+    await new Promise((done) =>
+      requestAnimationFrame(() => requestAnimationFrame(done)),
+    );
+    await Promise.all(
+      node
+        .getAnimations({ subtree: true })
+        .filter(
+          (animation) => animation.effect?.getTiming().iterations !== Infinity,
+        )
+        .map((animation) => animation.finished.catch(() => undefined)),
+    );
+  });
+}

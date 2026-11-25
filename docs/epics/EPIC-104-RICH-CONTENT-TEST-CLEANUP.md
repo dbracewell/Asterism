@@ -1,6 +1,6 @@
 # EPIC-104: Rich content and test cleanup
 
-Status: proposed (2026-11-25). Source: user request (2026-11-25), from
+Status: in progress (2026-11-25). US-104.1 implemented. Source: user request (2026-11-25), from
 follow-ups found in [EPIC-103](EPIC-103-MERMAID-DIAGRAMS.md): a flaky
 comparison test and repeated region names in rendered markdown.
 
@@ -48,11 +48,15 @@ Suggested order: US-104.1 → 104.2.
 
 ### US-104.1: Settle the comparison test
 
-- [ ] Find the transition (disabled → enabled, or the column's state change)
-      and make the spec wait for it to finish before the axe check.
-- [ ] Confirm the settled button meets 4.5:1 in the tested themes; fix the
-      colour only if it doesn't.
-- [ ] Repeat the spec 20 times at both widths with no failures.
+- [x] The cause: finishing Beta's answer enables "Continue from Beta", whose
+      `transition-all` fades it from `disabled:opacity-50` to full opacity. Axe
+      skips disabled controls, so a check inside that window saw an enabled
+      button at partial opacity. The spec now waits for the button to be enabled
+      and for the comparison block's animations to finish
+      (`animationsSettled` in `e2e/support/test.ts`).
+- [x] The settled button passes axe's contrast check; its colour is unchanged.
+- [x] 20 repeats at 1280px and 390px through the isolated runner: 40 of 40
+      passed (before: 3–4 failures in 8 on `main`).
 
 ### US-104.2: Scroll containers as groups
 

@@ -78,10 +78,10 @@ EPIC-96 through EPIC-101 (live policy availability, hiding what the admin turned
 
 Source: user request (2026-11-25), follow-ups from EPIC-103. [EPIC-104](docs/epics/EPIC-104-RICH-CONTENT-TEST-CLEANUP.md). Suggested order: US-104.1 → 104.2.
 
-- [ ] US-104.1: Settle the comparison test
-  - [ ] Wait for the "Continue from Beta" transition before the axe check
-  - [ ] Confirm the settled button meets 4.5:1; fix the colour only if not
-  - [ ] Repeat the spec 20 times at both widths with no failures
+- [x] US-104.1: Settle the comparison test
+  - [x] Wait for the "Continue from Beta" transition before the axe check
+  - [x] Confirm the settled button meets 4.5:1; fix the colour only if not
+  - [x] Repeat the spec 20 times at both widths with no failures
 - [ ] US-104.2: Scroll containers as groups
   - [ ] Table, math, code and diagram scroll containers become named `role="group"`s
   - [ ] Update tests; remove the `landmark-unique` skip
