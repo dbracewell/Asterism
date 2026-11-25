@@ -71,3 +71,17 @@ Source: user request (2026-11-25), the EPIC-103 follow-up. [EPIC-105](../epics/E
   - [x] Per-export limits; failures export as code with "Diagram not drawn"
   - [x] Save to Files uses the same path; the ZIP and Download my data keep the Markdown source
   - [x] Tests, canvas guide page and release notes
+
+## Screenshot baselines
+
+EPIC-106 is complete: its one story was confirmed and merged on 2026-11-25 through pull request #126. The `delegation-summary` baselines were refreshed after the Playwright 1.65.1 update (icon anti-aliasing only), `pnpm test:e2e:screenshots` runs every screenshot spec, and the Dependabot review steps say to run it when Playwright moves.
+
+### [EPIC-106: Screenshot baselines](../epics/EPIC-106-SCREENSHOT-BASELINES.md)
+
+Source: user request (2026-11-25). [EPIC-106](../epics/EPIC-106-SCREENSHOT-BASELINES.md).
+
+- [x] US-106.1: Refresh the baselines and add the review step (merged 2026-11-25, PR #126)
+  - [x] Regenerate the six `delegation-summary` baselines after checking the differences
+  - [x] `test:e2e:screenshots` runs the five screenshot specs
+  - [x] Review step in `docs/development.md` and the frontend testing docs
+  - [x] Full isolated E2E run on macOS with no screenshot failures

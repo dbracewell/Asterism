@@ -84,10 +84,4 @@ EPIC-96 through EPIC-101 (live policy availability, hiding what the admin turned
 
 ## Screenshot baselines (proposed 2026-11-25)
 
-Source: user request (2026-11-25). [EPIC-106](docs/epics/EPIC-106-SCREENSHOT-BASELINES.md).
-
-- [ ] US-106.1: Refresh the baselines and add the review step
-  - [ ] Regenerate the six `delegation-summary` baselines after checking the differences
-  - [ ] `test:e2e:screenshots` runs the five screenshot specs
-  - [ ] Review step in `docs/development.md` and the frontend testing docs
-  - [ ] Full isolated E2E run on macOS with no screenshot failures
+[EPIC-106](docs/epics/EPIC-106-SCREENSHOT-BASELINES.md) (US-106.1) is complete and archived in the [2026-11-25 checklist](docs/archive/todo-completed-2026-11-25.md).
