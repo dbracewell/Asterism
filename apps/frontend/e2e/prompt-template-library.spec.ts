@@ -126,8 +126,20 @@ async function mock(page: Page) {
   return state;
 }
 
-const axe = (page: Page, selector: string) =>
-  new AxeBuilder({ page }).include(selector).analyze();
+// Scan once dialogs and their overlays have finished animating in: mid-fade,
+// every color is blended with the overlay and fails contrast.
+const axe = async (page: Page, selector: string) => {
+  await page.evaluate(() =>
+    Promise.all(
+      document
+        .getAnimations()
+        // A looping animation, such as a spinner, never finishes.
+        .filter((item) => item.effect?.getTiming().iterations !== Infinity)
+        .map((item) => item.finished.catch(() => null)),
+    ),
+  );
+  return new AxeBuilder({ page }).include(selector).analyze();
+};
 
 for (const [width, height] of [
   [1280, 800],
