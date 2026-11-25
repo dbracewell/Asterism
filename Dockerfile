@@ -68,7 +68,7 @@ RUN PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS=1 .venv/bin/playwright install --
 
 # Runtime needs SQLite >=3.45 for the backend's JSONB SQL functions.
 # Bookworm-built native dependencies remain compatible with newer glibc.
-FROM python:3.13-slim-trixie@sha256:e48f59cdba69a3cbd9ed2cf0f348d90d45a8d350d98134cf1070bc106ee9ed90 AS runtime
+FROM python:3.13-slim-trixie@sha256:7249d5587b78209a006dc4a3b5340678f84ea729239193aa559962cd8c1fce50 AS runtime
 
 # Nothing at run time uses the base image's pip (the app runs from the
 # backend's venv), so it and the packages it vendors are removed (US-95.1).
@@ -82,10 +82,9 @@ FROM python:3.13-slim-trixie@sha256:e48f59cdba69a3cbd9ed2cf0f348d90d45a8d350d981
 # Debian packages with a fix the base image lags by more than a week (EPIC-95):
 # the runtime stage upgrades each one until the base carries it, and
 # `pnpm check:image` fails once it does, so the entry comes out.
-# - zlib1g: 1:1.3.dfsg+really1.3.1-1+deb13u1 fixes CVE-2026-85091 (high). It
-#   reached trixie-security on 2026-11-01; the base, built 2026-11-05, still had
-#   1-1+b1 on 2026-11-23.
-ARG BASE_LAG_UPGRADES="zlib1g"
+# - libzstd1: 1.5.7+dfsg-1+deb13u1 fixes CVE-2026-124851 (high). The latest
+#   base still had 1.5.7+dfsg-1 on 2026-11-25.
+ARG BASE_LAG_UPGRADES="libzstd1"
 RUN apt-get update \
   && if [ -n "$BASE_LAG_UPGRADES" ]; then \
     apt-get install -y --no-install-recommends --only-upgrade $BASE_LAG_UPGRADES; fi \
