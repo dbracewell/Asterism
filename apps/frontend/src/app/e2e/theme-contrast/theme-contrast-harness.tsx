@@ -6,6 +6,7 @@ import {
   adversarialMarkdown,
   fencedCode,
   normalMarkdown,
+  waterCycleDiagram,
 } from "@/components/markdown-viewer/test-content";
 import { useReadWriteSearchParams } from "@/hooks/use-read-write-search-params";
 import { useState } from "react";
@@ -301,6 +302,8 @@ export function ThemeContrastHarness() {
                     normalMarkdown +
                     "\n" +
                     fencedCode +
+                    "\n" +
+                    waterCycleDiagram +
                     "\n" +
                     adversarialMarkdown +
                     "\n" +

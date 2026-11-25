@@ -1,3 +1,5 @@
+import AxeBuilder from "@axe-core/playwright";
+import { readFile } from "node:fs/promises";
 import { expect, test } from "./support/test";
 
 // ADR-0081: mermaid blocks draw under the real page policy (the fixture fails
@@ -82,4 +84,105 @@ test("mermaid blocks draw as images; broken and hostile ones stay inert", async 
   for (const svg of contents)
     expect(svg).toEqual({ parsed: "svg", active: 0, outside: [] });
   expect(untrusted).toEqual([]);
+});
+
+test("the diagram toolbar switches views, expands and downloads SVG and PNG", async ({
+  page,
+}) => {
+  await page.goto("/e2e/markdown");
+  const diagrams = page.locator('section[aria-label="Diagrams"]');
+  const figure = diagrams.locator('[data-slot="diagram-block"]').first();
+  const water = figure.getByRole("img", { name: "Water cycle" });
+  await expect(water).toBeVisible();
+
+  // Code view and back, with focus kept on the toggle.
+  await figure.getByRole("button", { name: "Show code" }).click();
+  const code = diagrams.locator('[data-slot="code-block"]').first();
+  await expect(code).toContainText("accTitle: Water cycle");
+  await expect(
+    code.getByRole("button", { name: "Show diagram" }),
+  ).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(water).toBeVisible();
+  await expect(figure.getByRole("button", { name: "Show code" })).toBeFocused();
+
+  // Full size in a dialog, named and described by the diagram.
+  await figure.getByRole("button", { name: "Expand diagram" }).click();
+  const dialog = page.getByRole("dialog", { name: "Water cycle" });
+  await expect(dialog).toBeVisible();
+  await expect(dialog).toContainText("Water evaporates");
+  await expect(dialog.getByRole("img", { name: "Water cycle" })).toBeVisible();
+  const axe = await new AxeBuilder({ page })
+    .include('[role="dialog"]')
+    .analyze();
+  expect(axe.violations).toEqual([]);
+  await page.keyboard.press("Escape");
+  await expect(dialog).toBeHidden();
+
+  const save = async (format: "SVG" | "PNG") => {
+    await figure.getByRole("button", { name: "Download diagram" }).click();
+    const [download] = await Promise.all([
+      page.waitForEvent("download"),
+      page.getByRole("menuitem", { name: `${format} image` }).click(),
+    ]);
+    const path = await download.path();
+    return { name: download.suggestedFilename(), bytes: await readFile(path) };
+  };
+
+  const svg = await save("SVG");
+  expect(svg.name).toBe("water-cycle.svg");
+  const markup = svg.bytes.toString("utf8");
+  expect(markup).toMatch(/^<svg[^>]+xmlns="http:\/\/www\.w3\.org\/2000\/svg"/);
+  expect(markup).toMatch(/<title[^>]*>Water cycle<\/title>/);
+  expect(markup).not.toMatch(/<script|foreignObject/);
+
+  const png = await save("PNG");
+  expect(png.name).toBe("water-cycle.png");
+  expect(png.bytes.subarray(1, 4).toString("ascii")).toBe("PNG");
+  // IHDR width and height: twice the diagram's own size.
+  const natural = await water.evaluate((img: HTMLImageElement) => [
+    img.naturalWidth,
+    img.naturalHeight,
+  ]);
+  expect([png.bytes.readUInt32BE(16), png.bytes.readUInt32BE(20)]).toEqual(
+    natural.map((side) => side * 2),
+  );
+
+  // Every code block on a page is a region named "Scrollable code" (since
+  // before diagrams), so region names repeat; diagram regions carry the
+  // diagram's own name.
+  const toolbar = await new AxeBuilder({ page })
+    .include('section[aria-label="Diagrams"]')
+    .disableRules(["landmark-unique"])
+    .analyze();
+  expect(toolbar.violations).toEqual([]);
+});
+
+test("a wide diagram scrolls inside its block at 320px", async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 800 });
+  await page.goto("/e2e/markdown");
+  const figure = page
+    .locator('section[aria-label="Diagrams"] [data-slot="diagram-block"]')
+    .first();
+  await expect(figure.getByRole("img", { name: "Water cycle" })).toBeVisible();
+  const region = figure.getByRole("region", {
+    name: "Scrollable diagram: Water cycle",
+  });
+  const sizes = await region.evaluate((el) => ({
+    scroll: el.scrollWidth,
+    client: el.clientWidth,
+    figure: el.closest("figure")!.getBoundingClientRect().right,
+  }));
+  expect(sizes.scroll).toBeGreaterThan(sizes.client);
+  expect(sizes.figure).toBeLessThanOrEqual(320);
+  await region.focus();
+  await page.keyboard.press("ArrowRight");
+  await expect
+    .poll(() => region.evaluate((el) => el.scrollLeft))
+    .toBeGreaterThan(0);
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= window.innerWidth,
+    ),
+  ).toBe(true);
 });

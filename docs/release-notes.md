@@ -34,8 +34,10 @@ Unreleased into its version and date.
 
 - A ` ```mermaid ` block in a reply, canvas, Study note or guide page now
   shows as a diagram. It loads only when a page has one, and a diagram that
-  can't be drawn shows as code with a note. Directives in a diagram can't
-  change its security settings, theme or fonts
+  can't be drawn shows as code with a note. Diagrams use the current theme's
+  colors, and each has buttons to show its code, open it full size, copy the
+  source and download it as SVG or PNG. Directives in a diagram can't change
+  its security settings, theme or fonts
   ([ADR-0081](adr/0081-mermaid-diagrams.md)).
 - With the system's Reduce motion setting on, loading spinners now turn slowly
   instead of stopping, which made them look stuck. Other animations and

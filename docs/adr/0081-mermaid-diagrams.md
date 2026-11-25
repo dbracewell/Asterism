@@ -1,8 +1,8 @@
 # ADR-0081 — Mermaid diagrams in markdown
 
-Status: accepted. Rendering is implemented for US-103.1 (2026-11-25); the
-diagram toolbar, themes and downloads follow in US-103.2 and the agent
-guidance in US-103.3 ([EPIC-103](../epics/EPIC-103-MERMAID-DIAGRAMS.md)).
+Status: accepted. Rendering is implemented for US-103.1 and the diagram
+toolbar, themes and downloads for US-103.2 (2026-11-25); the agent guidance
+follows in US-103.3 ([EPIC-103](../epics/EPIC-103-MERMAID-DIAGRAMS.md)).
 
 ## Context
 
@@ -79,6 +79,27 @@ Verified in Chromium under the production CSP (`e2e/markdown-diagrams.spec.ts`):
 directives are ignored and the diagram draws, HTML-looking labels draw as text,
 `click` lines do nothing, and a `style` with `url()` is refused and shows as
 code. No script runs, the page style is unchanged, and no request leaves.
+
+## Decision: the diagram block (US-103.2)
+
+- **Diagram first, code one click away.** A drawn block opens as the diagram.
+  Its header has Show code / Show diagram, Expand, Download (SVG or PNG) and
+  Copy (the source). The code view is the normal code block with Show diagram
+  in its header; focus stays on the toggle after a switch.
+- **Full size and scrolling.** The diagram is shown at its own size in a
+  keyboard-focusable region that scrolls when it is wider than the column.
+  Expand opens a dialog named and described by `accTitle` and `accDescr`.
+  Regions are named "Scrollable diagram: <name>".
+- **Downloads are made in the browser** from the sanitized SVG, never uploaded:
+  the SVG as is, and a PNG at 2× (at most 8,192 px a side) on the block's card
+  color. The file name comes from the diagram's name (`water-cycle.png`).
+- **The app palette.** Diagrams use mermaid's `base` theme with variables from
+  the current palette (all palette colors are schema-checked hex). Every text
+  color sits on the surface it is paired with in `themeTextPairs`, so the
+  palette checks cover diagrams; a unit test checks 4.5:1 for each pair in
+  every bundled theme. Pie labels take whichever of foreground or background
+  contrasts best with all five chart colors. Drop shadows are off. A palette
+  change draws the diagram again (the cache keys on the palette).
 
 ## Consequences
 

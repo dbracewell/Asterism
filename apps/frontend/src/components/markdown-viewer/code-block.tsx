@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Hint } from "@/components/ui/hint";
 import { cn } from "@/lib/utils";
 import { WrapTextIcon } from "lucide-react";
-import { useState, type CSSProperties } from "react";
+import { useState, type CSSProperties, type ReactNode } from "react";
 import SyntaxHighlighter from "react-syntax-highlighter";
 
 /**
@@ -19,6 +19,7 @@ export function CodeBlock({
   fontSize,
   scrollClassName,
   note,
+  actions,
 }: {
   text: string;
   language?: string;
@@ -27,6 +28,8 @@ export function CodeBlock({
   scrollClassName: string;
   /** A short notice shown above the code, such as why a diagram isn't drawn. */
   note?: string;
+  /** Extra header actions, before wrap and copy. */
+  actions?: ReactNode;
 }) {
   const [wrap, setWrap] = useState(false);
   const wrapLabel = wrap ? "Scroll long lines" : "Wrap long lines";
@@ -41,6 +44,7 @@ export function CodeBlock({
         <span className="min-w-0 flex-1 truncate font-mono">
           {language ?? "text"}
         </span>
+        {actions}
         <Hint asChild hint={wrapLabel}>
           <Button
             variant="ghost"

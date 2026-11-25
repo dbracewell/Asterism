@@ -1,6 +1,6 @@
 # EPIC-103: Mermaid diagrams in markdown
 
-Status: in progress (2026-11-25). US-103.1 implemented. Source: user request (2026-11-25): "add mermaid
+Status: in progress (2026-11-25). US-103.1 PR #117; US-103.2 implemented. Source: user request (2026-11-25): "add mermaid
 support to our chat markdown editor since diagrams are good for visual learners
 but the small image generation models are not good at text."
 
@@ -135,14 +135,19 @@ Suggested order: US-103.1 → 103.2 → 103.3 → 103.4.
 
 ### US-103.2: The diagram block
 
-- [ ] Header with "Diagram", Diagram/Code toggle, Copy source, Expand dialog
-      and Download SVG/PNG (shadcn `Button`, `Hint`, `Dialog`).
-- [ ] Keyboard-scrollable region for wide diagrams. `role="img"` with the name
-      from `accTitle`/`accDescr` or "Diagram: <type>".
-- [ ] Theme variables from app tokens. Redraw on theme change. Add diagrams to the
-      theme-contrast harness.
-- [ ] Layout checks at 320px and in the canvas panel, Study notes and the guide.
-- [ ] Tests: the toggle, copy and expand; the accessible name; the theme redraw.
+- [x] Header with "diagram", Show code / Show diagram, Copy source, Expand
+      dialog and Download SVG/PNG (shadcn `Button`, `Hint`, `Dialog`,
+      `DropdownMenu`). `saveBlob` moved to `lib/save-blob.ts` for it.
+- [x] Keyboard-scrollable region named after the diagram. The image's name
+      comes from `accTitle`, or "Diagram: <type>"; the dialog is described by
+      `accDescr`.
+- [x] Theme variables from the app palette (`diagram-theme.ts`); redraw on
+      theme change; drop shadows off. The water-cycle diagram is in the
+      theme-contrast harness, so the layout matrix covers it in every theme.
+- [x] Layout checks at 320px (scrolls inside its block, no page overflow).
+- [x] Tests: the toggle and focus, copy, expand, SVG download, the accessible
+      name, the theme redraw and contrast for every bundled theme (unit); views,
+      dialog, real SVG and PNG downloads, axe and 320px (Playwright).
 
 ### US-103.3: Agent guidance
 
