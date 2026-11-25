@@ -73,7 +73,7 @@ providers and models at any time in **Admin Settings** › **Providers**.
 ## Step 4: Go through the setup walkthrough
 
 The walkthrough is in **Admin Settings** › **Setup**. It lists every setup step
-on the left; Providers and models is already done.
+on the left; Providers and models is already reviewed.
 
 ![Admin Settings, Setup: the list of setup steps with Providers and models done, and the Image captioning step explaining that search can't find pictures while captioning is off, with Next, Skip for now and the captioning settings below](../images/admin-setup-step.png)
 
@@ -81,11 +81,14 @@ Each step explains what the setting does, what it starts as and what people see
 while it is off, with a link to its page in this guide. That setting's own
 section is below, the same as in Admin Settings.
 
-1. Change what you need and save it in the section below.
-2. Select **Next** to mark the step done, or **Skip for now** to leave it at its
-   default. Either way the walkthrough moves on to the next step nobody has
-   reviewed.
-3. Select any step in the list to go back to it.
+1. Change what you need in the section below.
+2. Select **Save and continue** to save your changes and mark the step
+   reviewed. With nothing to change, the button reads **Next**. If a change
+   can't be saved, the step stays open and the section says why.
+3. Or select **Skip for now** to come back to the step later. It saves nothing:
+   if you made changes, Asterism asks before discarding them.
+4. Select any step in the list to go back to it. Leaving a step with unsaved
+   changes asks first, too.
 
 Progress is saved on the server and shared by every administrator, so you can
 stop at any point: opening **Setup** again resumes at the first step nobody has

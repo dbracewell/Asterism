@@ -23,6 +23,7 @@ import {
   SettingsSaveBar,
   SettingsSection,
 } from "@/features/settings/ui/settings-section";
+import { useSetupDraft } from "@/features/setup/setup-draft";
 import { client } from "@/lib/api";
 import type { CompactionSettings } from "@/lib/client";
 import {
@@ -107,7 +108,20 @@ function CompactionForm() {
       setSaved(true);
     },
   });
-  if (!policy.data)
+  const stored = policy.data ? toDraft(policy.data.settings) : null;
+  const current = draft ?? stored;
+  const dirty =
+    stored !== null && JSON.stringify(current) !== JSON.stringify(stored);
+  const parsed = current ? parseCompactionDraft(current) : null;
+  useSetupDraft({
+    dirty,
+    save: () =>
+      parsed && "settings" in parsed
+        ? update.mutateAsync({ body: parsed.settings })
+        : Promise.reject(new Error("Context compaction settings are invalid.")),
+    blocked: parsed && "error" in parsed ? parsed.error : undefined,
+  });
+  if (!policy.data || !current || !parsed)
     return policy.isError ? (
       <QueryError
         error={policy.error}
@@ -119,10 +133,6 @@ function CompactionForm() {
       <Spinner />
     );
 
-  const stored = toDraft(policy.data.settings);
-  const current = draft ?? stored;
-  const dirty = JSON.stringify(current) !== JSON.stringify(stored);
-  const parsed = parseCompactionDraft(current);
   const change = (patch: Partial<Draft>) => {
     setDraft({ ...current, ...patch });
     setSaved(false);

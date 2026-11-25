@@ -5,6 +5,7 @@ import { useId, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useSetupDraft } from "@/features/setup/setup-draft";
 import { client } from "@/lib/api";
 import type { Group } from "@/lib/client";
 import { groupBudgetUpdateMutation } from "@/lib/client/@tanstack/react-query.gen";
@@ -38,6 +39,19 @@ export function GroupBudgetEditor({ group }: { group: Group }) {
   const dailyTokens = parseBudget(daily, MAX_DAILY);
   const monthlyTokens = parseBudget(monthly, MAX_MONTHLY);
   const invalid = dailyTokens === "invalid" || monthlyTokens === "invalid";
+  const body = {
+    daily_token_budget: dailyTokens === "invalid" ? null : dailyTokens,
+    monthly_token_budget: monthlyTokens === "invalid" ? null : monthlyTokens,
+  };
+  useSetupDraft({
+    dirty:
+      dailyTokens !== (group.daily_token_budget ?? null) ||
+      monthlyTokens !== (group.monthly_token_budget ?? null),
+    save: () => save.mutateAsync({ path: { group_id: group.id }, body }),
+    blocked: invalid
+      ? `Enter whole numbers of tokens for ${group.name}'s budget, or leave them empty.`
+      : undefined,
+  });
   const change = (set: (value: string) => void) => (value: string) => {
     setSaved(false);
     set(value);
@@ -48,13 +62,7 @@ export function GroupBudgetEditor({ group }: { group: Group }) {
       onSubmit={(event) => {
         event.preventDefault();
         if (invalid) return;
-        save.mutate({
-          path: { group_id: group.id },
-          body: {
-            daily_token_budget: dailyTokens,
-            monthly_token_budget: monthlyTokens,
-          },
-        });
+        save.mutate({ path: { group_id: group.id }, body });
       }}
     >
       <div className="flex flex-wrap gap-4">

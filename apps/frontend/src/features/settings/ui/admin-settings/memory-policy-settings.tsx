@@ -1,5 +1,6 @@
 "use client";
 
+import { useSetupDraft } from "@/features/setup/setup-draft";
 import { availabilityQueryKey } from "@/features/availability/queries";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
@@ -71,6 +72,16 @@ function MemoryPolicySection() {
       setDraft(null);
       setSaved(true);
     },
+  });
+  useSetupDraft({
+    dirty: draft !== null,
+    save: () =>
+      update.mutateAsync({
+        body: {
+          enabled: draft?.enabled ?? false,
+          group_ids: draft?.group_ids ?? null,
+        },
+      }),
   });
 
   if (!policy.data)

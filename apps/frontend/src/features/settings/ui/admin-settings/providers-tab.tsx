@@ -41,6 +41,7 @@ import {
   SettingsPane,
   SettingsSaveBar,
 } from "@/features/settings/ui/settings-section";
+import { useSetupDraft } from "@/features/setup/setup-draft";
 import { client } from "@/lib/api";
 import { Llm, ProviderSettings, ProviderSummary } from "@/lib/client";
 import {
@@ -629,6 +630,15 @@ function ProvidersForm({ appSettings }: { appSettings: ProviderSettings }) {
       /* mutations report errors */
     }
   };
+
+  useSetupDraft({
+    dirty: hasChanges,
+    save: async () => {
+      // The form shows what is wrong; the walkthrough keeps the step open.
+      if (!(await trigger())) throw new Error("Provider settings are invalid");
+      await save(getValues(), "Settings saved.");
+    },
+  });
 
   const changeDraft = (draft: ModelDraft) => {
     setDrafts((current) => ({ ...current, [draft.model.id]: draft }));
