@@ -92,9 +92,12 @@ panes and with text enlarged to 200%:
   errors, long drafts). The composer can't cover the last message. Both share a
   64rem maximum width.
 - **Rich content wraps or scrolls in place.** Prose and long tokens wrap. Tables, code
-  blocks and long equations get their own keyboard-focusable horizontal scroll
-  regions, and a code block's header (language, wrap toggle, copy) stays put while
-  its body scrolls.
+  blocks, long equations and wide diagrams get their own keyboard-focusable
+  horizontal scroll areas, and a code block's header (language, wrap toggle, copy)
+  stays put while its body scrolls. Each scroll area is a named `role="group"`
+  ("Code: python", "Table", "Math", "Diagram: Water cycle"), not a landmark, so a
+  reply with many blocks doesn't fill the page's landmark list and repeated names
+  are fine. Task-list checkboxes are disabled and named "Done" or "Not done".
 - **Settings.** `SettingsCard` watches its own width: below 640 px its section tabs
   become a horizontally scrolling strip, above it a vertical navigation column. The
   active section scrolls on its own.

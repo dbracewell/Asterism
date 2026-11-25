@@ -42,6 +42,10 @@ Unreleased into its version and date.
 - The main agent now draws diagrams, flowcharts, mind maps and timelines as
   mermaid diagrams in its reply instead of asking the image model for them,
   which drew their labels badly. Image generation is for pictures.
+- Screen readers no longer list every code block, table, equation and diagram
+  in an answer as a landmark. Each is a group named for what it holds, such as
+  "Code: python" or "Table", and still scrolls with the keyboard. Task-list
+  checkboxes in answers are named "Done" or "Not done".
 - With the system's Reduce motion setting on, loading spinners now turn slowly
   instead of stopping, which made them look stuck. Other animations and
   transitions stay off.

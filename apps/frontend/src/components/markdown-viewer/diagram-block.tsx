@@ -132,6 +132,11 @@ function ViewToggle({
   );
 }
 
+// Scroll containers are named groups, not landmarks (EPIC-104): "Diagram:
+// Water cycle". An untitled diagram's label already starts with "Diagram:".
+const groupName = (label: string) =>
+  label.startsWith("Diagram") ? label : `Diagram: ${label}`;
+
 /** Inline diagrams shrink to fit the column down to this scale, then scroll. */
 const MIN_FIT_SCALE = 0.75;
 
@@ -221,8 +226,8 @@ function DrawnDiagram({
               </DialogDescription>
             </DialogHeader>
             <div
-              role="region"
-              aria-label={`Scrollable diagram: ${diagram.label}`}
+              role="group"
+              aria-label={groupName(diagram.label)}
               tabIndex={0}
               className={cn(scrollClassName, "bg-card rounded-control p-2")}
             >
@@ -250,8 +255,8 @@ function DrawnDiagram({
         <CopyButton text={source} />
       </div>
       <div
-        role="region"
-        aria-label={`Scrollable diagram: ${diagram.label}`}
+        role="group"
+        aria-label={groupName(diagram.label)}
         tabIndex={0}
         className={cn(scrollClassName, "p-3")}
       >

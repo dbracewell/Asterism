@@ -82,11 +82,11 @@ Source: user request (2026-11-25), follow-ups from EPIC-103. [EPIC-104](docs/epi
   - [x] Wait for the "Continue from Beta" transition before the axe check
   - [x] Confirm the settled button meets 4.5:1; fix the colour only if not
   - [x] Repeat the spec 20 times at both widths with no failures
-- [ ] US-104.2: Scroll containers as groups
-  - [ ] Table, math, code and diagram scroll containers become named `role="group"`s
-  - [ ] Update tests; remove the `landmark-unique` skip
-  - [ ] Axe passes with every rule over several code blocks, tables and diagrams
-  - [ ] Update the frontend layout rules and markdown-content.md
+- [x] US-104.2: Scroll containers as groups
+  - [x] Table, math, code and diagram scroll containers become named `role="group"`s
+  - [x] Update tests; remove the `landmark-unique` skip
+  - [x] Axe passes with every rule over several code blocks, tables and diagrams
+  - [x] Update the frontend layout rules and markdown-content.md
 
 ## Diagrams in canvas exports (proposed 2026-11-25)
 

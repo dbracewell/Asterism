@@ -73,6 +73,7 @@ describe("shared Markdown trust boundary", () => {
     expect(screen.getByRole("table")).toHaveTextContent("sample42");
     expect(screen.getByRole("checkbox")).toBeDisabled();
     expect(screen.getByRole("checkbox")).toBeChecked();
+    expect(screen.getByRole("checkbox", { name: "Done" })).toBeTruthy();
     expect(screen.getByRole("link", { name: "Documentation" })).toHaveAttribute(
       "href",
       "https://example.test/docs",
@@ -138,8 +139,14 @@ describe("rich content navigation", () => {
     const { container } = view(
       `\`\`\`\n${plain}\n\`\`\`\n\n\`\`\`javascript\n${highlighted}\n\`\`\``,
     );
-    const regions = screen.getAllByRole("region", { name: "Scrollable code" });
+    const regions = screen.getAllByRole("group", { name: /^Code: / });
     expect(regions).toHaveLength(2);
+    // Named after the language; groups, so no landmark per code block.
+    expect(regions.map((region) => region.getAttribute("aria-label"))).toEqual([
+      "Code: text",
+      "Code: javascript",
+    ]);
+    expect(screen.queryByRole("region")).toBeNull();
     for (const [index, text] of [plain, highlighted].entries()) {
       expect(regions[index]).toHaveAttribute("tabindex", "0");
       expect(regions[index].querySelector("pre code")).toHaveTextContent(text);
@@ -189,12 +196,14 @@ describe("rich content navigation", () => {
     const { container } = view(
       "| A | B |\n|---|---|\n| one | two |\n\n$$\nx^2 + y^2\n$$",
     );
-    expect(
-      screen.getByRole("region", { name: "Scrollable table" }),
-    ).toHaveAttribute("tabindex", "0");
-    expect(
-      screen.getByRole("region", { name: "Scrollable math" }),
-    ).toHaveAttribute("tabindex", "0");
+    expect(screen.getByRole("group", { name: "Table" })).toHaveAttribute(
+      "tabindex",
+      "0",
+    );
+    expect(screen.getByRole("group", { name: "Math" })).toHaveAttribute(
+      "tabindex",
+      "0",
+    );
     expect(container.querySelector(".katex")).not.toBeNull();
   });
 });

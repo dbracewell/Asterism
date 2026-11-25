@@ -1,5 +1,5 @@
 import AxeBuilder from "@axe-core/playwright";
-import { expect, test, type Page } from "./support/test";
+import { animationsSettled, expect, test, type Page } from "./support/test";
 import {
   DOCX_ID,
   FOREIGN_ID,
@@ -172,6 +172,8 @@ test("inline files are reachable and operable by keyboard with accessible names"
   await page.keyboard.press("Enter");
   const dialog = page.getByRole("dialog", { name: "Quarterly chart" });
   await expect(dialog).toBeVisible();
+  // The dialog and its overlay fade in; scan once they have settled.
+  await animationsSettled(page.locator("body"));
   expect(
     (await new AxeBuilder({ page }).include('[role="dialog"]').analyze())
       .violations,

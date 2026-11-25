@@ -210,12 +210,8 @@ for (const { width, height, pane, enlarged } of [
       await page.getByRole("button", { name: "Toggle test panels" }).click();
     const history = page.getByRole("region", { name: "Conversation history" });
     await expect(history).toBeVisible();
-    for (const name of [
-      "Scrollable code",
-      "Scrollable table",
-      "Scrollable math",
-    ]) {
-      const region = history.getByRole("region", { name, exact: true }).first();
+    for (const name of [/^Code: /, "Table", "Math"]) {
+      const region = history.getByRole("group", { name, exact: true }).first();
       await reachable(region);
       expect(
         await region.evaluate(

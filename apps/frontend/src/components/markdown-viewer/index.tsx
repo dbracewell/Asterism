@@ -108,12 +108,27 @@ const MarkdownViewer = ({
               </span>
             );
           },
+          input({ node, checked, type }) {
+            void node;
+            // Only GFM task items create inputs (raw HTML is off): a disabled
+            // checkbox, named so screen readers say what its state means.
+            if (type !== "checkbox") return null;
+            return (
+              <input
+                type="checkbox"
+                checked={!!checked}
+                disabled
+                readOnly
+                aria-label={checked ? "Done" : "Not done"}
+              />
+            );
+          },
           table({ children, node, ...props }) {
             void node;
             return (
               <div
-                role="region"
-                aria-label="Scrollable table"
+                role="group"
+                aria-label="Table"
                 tabIndex={0}
                 className={cn(scrollRegion, "rounded-control mb-5 last:mb-0")}
               >
@@ -140,8 +155,8 @@ const MarkdownViewer = ({
                 }
                 {...(math
                   ? {
-                      role: "region",
-                      "aria-label": "Scrollable math",
+                      role: "group",
+                      "aria-label": "Math",
                       tabIndex: 0,
                     }
                   : {})}

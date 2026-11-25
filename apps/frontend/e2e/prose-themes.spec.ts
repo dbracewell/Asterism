@@ -75,7 +75,7 @@ test("wraps long code lines on request without widening the page", async ({
   await page.goto("/e2e/prose");
   const section = page.getByRole("region", { name: "Prose on background" });
   const block = section.locator("[data-slot=code-block]");
-  const code = block.getByRole("region", { name: "Scrollable code" });
+  const code = block.getByRole("group", { name: "Code: python" });
   await expect(block.getByText("python")).toBeVisible();
   expect(
     await code.evaluate((node) => node.scrollWidth > node.clientWidth + 20),
