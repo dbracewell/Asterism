@@ -434,6 +434,11 @@ body {
     transition: none !important;
     scroll-behavior: auto !important;
   }
+  /* A loading spinner keeps turning, slowly: a still one reads as stuck. It is
+     small, stays in place and always has status text beside or behind it. */
+  .animate-spin {
+    animation: spin 1.5s linear infinite !important;
+  }
   .mask-fade-on-scroll {
     mask-image: none !important;
   }

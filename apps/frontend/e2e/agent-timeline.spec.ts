@@ -249,7 +249,7 @@ test("streams reasoning and a running tool, then settles with its duration", asy
   ).toContainText(/Done · \d+(\.\d)? (ms|s)$/);
 });
 
-test("stops the running spinner under reduced motion", async ({ page }) => {
+test("slows the running spinner under reduced motion", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   const { socket } = await openChat(page, false);
   socket.send(JSON.stringify({ type: "start" }));
@@ -270,8 +270,8 @@ test("stops the running spinner under reduced motion", async ({ page }) => {
     exact: true,
   });
   await expect(running).toHaveAttribute("aria-expanded", "false");
-  await expect(running.locator("svg.animate-spin")).toHaveCSS(
-    "animation-name",
-    "none",
-  );
+  // A still spinner reads as stuck, so it keeps turning, slowly.
+  const spinner = running.locator("svg.animate-spin");
+  await expect(spinner).toHaveCSS("animation-name", "spin");
+  await expect(spinner).toHaveCSS("animation-duration", "1.5s");
 });

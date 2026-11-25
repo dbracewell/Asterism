@@ -101,10 +101,19 @@ for (const theme of [
     const animationNames = await page
       .locator('[class*="animate-"]')
       .evaluateAll((nodes) =>
-        nodes.map((el) => getComputedStyle(el).animationName),
+        nodes.map((el) => ({
+          spin: el.classList.contains("animate-spin"),
+          name: getComputedStyle(el).animationName,
+          duration: getComputedStyle(el).animationDuration,
+        })),
       );
     expect(animationNames.length).toBeGreaterThan(0);
-    expect(animationNames.every((name) => name === "none")).toBe(true);
+    // Only loading spinners move, slowly; everything else is still.
+    expect(
+      animationNames.every(({ spin, name, duration }) =>
+        spin ? name === "spin" && duration === "1.5s" : name === "none",
+      ),
+    ).toBe(true);
     const zoom = page.getByRole("button", { name: "Enlarge Test diagram" });
     await zoom.focus();
     await page.keyboard.press("Enter");

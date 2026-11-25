@@ -32,6 +32,9 @@ Unreleased into its version and date.
 
 ### Behavior
 
+- With the system's Reduce motion setting on, loading spinners now turn slowly
+  instead of stopping, which made them look stuck. Other animations and
+  transitions stay off.
 - Setup (Admin Settings → Setup) no longer has Theme, Educators and First
   backup steps. Change those from their own Admin Settings sections; Status
   shows the last backup. Progress already recorded for those steps is ignored.
