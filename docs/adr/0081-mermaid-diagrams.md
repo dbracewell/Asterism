@@ -1,8 +1,8 @@
 # ADR-0081 — Mermaid diagrams in markdown
 
-Status: accepted. Rendering is implemented for US-103.1 and the diagram
-toolbar, themes and downloads for US-103.2 (2026-11-25); the agent guidance
-follows in US-103.3 ([EPIC-103](../epics/EPIC-103-MERMAID-DIAGRAMS.md)).
+Status: accepted. Rendering (US-103.1), the diagram toolbar, themes and
+downloads (US-103.2) and the agent guidance (US-103.3) are implemented
+(2026-11-25) ([EPIC-103](../epics/EPIC-103-MERMAID-DIAGRAMS.md)).
 
 ## Context
 
@@ -101,6 +101,22 @@ code. No script runs, the page style is unchanged, and no request leaves.
   contrasts best with all five chart colors. Drop shadows are off. A palette
   change draws the diagram again (the cache keys on the palette).
 
+## Decision: the main agent is told it can draw (US-103.3)
+
+`DIAGRAM_GUIDANCE` is in every main-agent runtime prompt, whatever tools the
+run has, because a diagram is markdown and needs none. It asks for a
+` ```mermaid ` block when a diagram helps (processes, sequences, hierarchies,
+timelines, relationships), with short labels, punctuation in quoted labels,
+`accTitle` and `accDescr`, and an explanation in words so the reply stands
+without the diagram. It tells the agent not to write `click`, `style` or
+`%%{init}%%` lines, which the locked configuration ignores or refuses.
+Sub-agents don't get it; a diagram one writes still renders.
+
+`IMAGE_GUIDANCE` now sends pictures (illustrations, scenes, photos) to
+`generate_image` and diagrams, flowcharts, mind maps, timelines and charts to
+mermaid. `CANVAS_GUIDANCE` says markdown canvases can include diagrams.
+Recorded turns keep their stored prompt, so resume is unaffected.
+
 ## Consequences
 
 - Mermaid and DOMPurify are new frontend dependencies, pinned exactly
@@ -108,5 +124,3 @@ code. No script runs, the page style is unchanged, and no request leaves.
   Mermaid brings its own `katex@0.18` for math in labels.
 - Diagram text is drawn with system fonts, because an SVG image can't use the
   page's web fonts.
-- The agent learns to write diagrams in US-103.3. Until then, diagrams appear
-  only when a model writes mermaid on its own or a person pastes one.

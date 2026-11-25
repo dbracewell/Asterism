@@ -1,6 +1,6 @@
 # EPIC-103: Mermaid diagrams in markdown
 
-Status: in progress (2026-11-25). US-103.1 PR #117; US-103.2 implemented. Source: user request (2026-11-25): "add mermaid
+Status: in progress (2026-11-25). US-103.1 PR #117; US-103.2 PR #118; US-103.3 implemented. Source: user request (2026-11-25): "add mermaid
 support to our chat markdown editor since diagrams are good for visual learners
 but the small image generation models are not good at text."
 
@@ -151,15 +151,15 @@ Suggested order: US-103.1 → 103.2 → 103.3 → 103.4.
 
 ### US-103.3: Agent guidance
 
-- [ ] Add `DIAGRAM_GUIDANCE` to `build_runtime_prompt` for the main agent: when
-      a diagram would help (a process, sequence, hierarchy, timeline or
-      relationships), write a ` ```mermaid ` block with short labels,
-      `accTitle` and `accDescr`, and explain it in words as well.
-- [ ] Narrow `IMAGE_GUIDANCE`: use mermaid for labelled diagrams and charts
-      of structure; use `generate_image` for pictures, scenes and illustrations.
-- [ ] Mention in `CANVAS_GUIDANCE` that markdown canvases can hold diagrams.
-- [ ] Prompt composition tests for the new text, with and without
-      `generate_image`.
+- [x] Add `DIAGRAM_GUIDANCE` to `build_runtime_prompt` for the main agent (not
+      sub-agents): when a diagram would help, write a ` ```mermaid ` block with
+      short labels, quoted labels for punctuation, `accTitle` and `accDescr`,
+      and explain it in words as well; no `click`, `style` or `%%{init}%%`.
+- [x] Narrow `IMAGE_GUIDANCE`: pictures go to `generate_image`; diagrams,
+      flowcharts, mind maps, timelines and charts go to mermaid.
+- [x] Mention in `CANVAS_GUIDANCE` that markdown canvases can hold diagrams.
+- [x] Prompt composition tests (`tests/test_diagram_guidance.py`): main agent
+      with no tools, not sub-agents, order with `generate_image`, and the text.
 
 ### US-103.4: Documentation and release
 

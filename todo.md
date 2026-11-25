@@ -87,11 +87,11 @@ Source: user request (2026-11-25). [EPIC-103](docs/epics/EPIC-103-MERMAID-DIAGRA
   - [x] Theme variables from app tokens; redraw on theme change; theme-contrast harness
   - [x] Layout at 320px, canvas panel, Study notes and the guide
   - [x] Tests (toggle, copy, expand, accessible name, theme redraw)
-- [ ] US-103.3: Agent guidance
-  - [ ] `DIAGRAM_GUIDANCE` in `build_runtime_prompt`
-  - [ ] Narrow `IMAGE_GUIDANCE` to pictures; labelled diagrams go to mermaid
-  - [ ] Mention diagrams in `CANVAS_GUIDANCE`
-  - [ ] Prompt composition tests
+- [x] US-103.3: Agent guidance
+  - [x] `DIAGRAM_GUIDANCE` in `build_runtime_prompt`
+  - [x] Narrow `IMAGE_GUIDANCE` to pictures; labelled diagrams go to mermaid
+  - [x] Mention diagrams in `CANVAS_GUIDANCE`
+  - [x] Prompt composition tests
 - [ ] US-103.4: Documentation and release
   - [ ] Guide page `02-chatting/diagrams.md` with a screenshot; link from `creating-images.md`
   - [ ] Architecture and security docs; `pnpm docs:check`

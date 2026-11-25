@@ -27,7 +27,11 @@ def scope(file_ids: frozenset[uuid.UUID]) -> ContextToolScope:
 )
 async def test_guidance_only_with_scoped_files(ceiling, expected):
     prompt = await build_runtime_prompt(
-        user_id="a", chat_id=uuid.uuid4(), profile=SimpleNamespace(id=uuid.uuid4()), tools=[], scope=ceiling
+        user_id="a",
+        chat_id=uuid.uuid4(),
+        profile=SimpleNamespace(id=uuid.uuid4(), sub_agent=False),
+        tools=[],
+        scope=ceiling,
     )
     assert (FILE_REFERENCE_GUIDANCE in prompt) is expected
     assert prompt.startswith("Server-authorized tools at turn start: none.")
