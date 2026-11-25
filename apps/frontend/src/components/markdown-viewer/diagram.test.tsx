@@ -300,7 +300,7 @@ describe("the diagram block", () => {
     await user.click(screen.getByRole("button", { name: "Show code" }));
     expect(screen.queryByRole("img")).toBeNull();
     expect(
-      screen.getByRole("region", { name: "Scrollable code" }).textContent,
+      screen.getByRole("group", { name: "Code: mermaid" }).textContent,
     ).toContain("flowchart LR");
     const back = screen.getByRole("button", { name: "Show diagram" });
     expect(back).toBe(document.activeElement);

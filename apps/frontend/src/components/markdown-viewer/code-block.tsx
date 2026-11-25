@@ -65,8 +65,8 @@ export function CodeBlock({
         </p>
       )}
       <div
-        role="region"
-        aria-label="Scrollable code"
+        role="group"
+        aria-label={`Code: ${language ?? "text"}`}
         tabIndex={0}
         className={cn(scrollClassName, wrap && "overflow-x-hidden")}
       >

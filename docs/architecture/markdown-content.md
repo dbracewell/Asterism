@@ -27,7 +27,7 @@ markup/attributes are never installed as DOM elements.
 | Input             | Behavior                                                                                                                                                                                  |
 | ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Standard Markdown | Headings, paragraphs, emphasis, quotations, lists, inline code and fenced code remain supported.                                                                                          |
-| GFM               | Tables, strikethrough, footnotes and disabled task-list checkboxes remain supported.                                                                                                      |
+| GFM               | Tables, strikethrough, footnotes and disabled task-list checkboxes (named "Done" or "Not done") remain supported.                                                                                                      |
 | Raw HTML          | No user HTML elements, styles, classes, event handlers, forms, frames, scripts, media, metadata or SVG are installed.                                                                     |
 | Markdown images   | Always display an omitted-image label with the alt text. No `img`, `src`, `srcset` or network request is produced. The exceptions are a file reference token and a drawn diagram (below). |
 | Resource URLs     | All untrusted automatic resources are blocked, including remote, protocol-relative, same-origin, data and blob image URLs.                                                                |

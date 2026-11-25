@@ -148,14 +148,22 @@ test("the diagram toolbar switches views, expands and downloads SVG and PNG", as
     natural.map((side) => side * 2),
   );
 
-  // Every code block on a page is a region named "Scrollable code" (since
-  // before diagrams), so region names repeat; diagram regions carry the
-  // diagram's own name.
-  const toolbar = await new AxeBuilder({ page })
+  // Every rule on, over replies with several code blocks, tables, math and
+  // diagrams: their scroll containers are named groups, not landmarks, so
+  // repeated names are fine (EPIC-104).
+  const rich = await new AxeBuilder({ page })
     .include('section[aria-label="Diagrams"]')
-    .disableRules(["landmark-unique"])
+    .include('section[aria-label="Main reply"]')
     .analyze();
-  expect(toolbar.violations).toEqual([]);
+  expect(rich.violations).toEqual([]);
+  expect(
+    await page
+      .locator(
+        'section[aria-label="Diagrams"], section[aria-label="Main reply"]',
+      )
+      .locator('[role="region"]')
+      .count(),
+  ).toBe(0);
 });
 
 test("a wide diagram scrolls inside its block at 320px", async ({ page }) => {
@@ -165,8 +173,8 @@ test("a wide diagram scrolls inside its block at 320px", async ({ page }) => {
     .locator('section[aria-label="Diagrams"] [data-slot="diagram-block"]')
     .first();
   await expect(figure.getByRole("img", { name: "Water cycle" })).toBeVisible();
-  const region = figure.getByRole("region", {
-    name: "Scrollable diagram: Water cycle",
+  const region = figure.getByRole("group", {
+    name: "Diagram: Water cycle",
   });
   const sizes = await region.evaluate((el) => ({
     scroll: el.scrollWidth,
@@ -197,8 +205,8 @@ test("a diagram slightly wider than the column shrinks to fit instead of scrolli
     .first();
   const image = figure.getByRole("img", { name: "Water cycle" });
   await expect(image).toBeVisible();
-  const region = figure.getByRole("region", {
-    name: "Scrollable diagram: Water cycle",
+  const region = figure.getByRole("group", {
+    name: "Diagram: Water cycle",
   });
   const sizes = await region.evaluate((el) => {
     const img = el.querySelector("img")!;

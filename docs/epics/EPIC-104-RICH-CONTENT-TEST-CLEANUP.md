@@ -1,6 +1,6 @@
 # EPIC-104: Rich content and test cleanup
 
-Status: in progress (2026-11-25). US-104.1 implemented. Source: user request (2026-11-25), from
+Status: complete (2026-11-25). US-104.1 PR #121, US-104.2. Source: user request (2026-11-25), from
 follow-ups found in [EPIC-103](EPIC-103-MERMAID-DIAGRAMS.md): a flaky
 comparison test and repeated region names in rendered markdown.
 
@@ -60,13 +60,16 @@ Suggested order: US-104.1 → 104.2.
 
 ### US-104.2: Scroll containers as groups
 
-- [ ] Change the table, math, code and diagram scroll containers to
-      `role="group"` with names that describe the content ("Code: python",
-      "Table", "Math", "Diagram: <name>"), keeping `tabIndex={0}`.
-- [ ] Update the tests that find them by role and name, and remove the
+- [x] The table, math, code and diagram scroll containers are `role="group"`
+      named "Table", "Math", "Code: <language>" and "Diagram: <name>", still
+      with `tabIndex={0}`. (The file dialog's text preview stays a region: there
+      is one per dialog.)
+- [x] Updated the tests that found them by role and name, and removed the
       `landmark-unique` skip in `markdown-diagrams.spec.ts`.
-- [ ] An axe check over a reply with several code blocks, tables and diagrams
-      passes with every rule on.
-- [ ] Update the layout rules in
+- [x] Axe with every rule on passes over the harness's main reply (tables, math,
+      code, a task list) and diagram section (four diagrams, two code
+      fallbacks), and neither has a `role="region"` left. This found the GFM
+      task-list checkbox had no name; it is now named "Done" or "Not done".
+- [x] Updated the layout rules in
       [frontend](../architecture/frontend.md#layout-and-scrolling-rules) and
-      [markdown-content.md](../architecture/markdown-content.md).
+      ADR-0081.

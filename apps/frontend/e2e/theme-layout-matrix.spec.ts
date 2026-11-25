@@ -220,7 +220,7 @@ for (const theme of themes)
         await region.scrollIntoViewIfNeeded();
         await region.focus();
         await expect(region).toBeFocused();
-        const code = region.getByRole("region", { name: "Scrollable code" });
+        const code = region.getByRole("group", { name: /^Code: / }).first();
         await code.scrollIntoViewIfNeeded();
         expect(
           await code

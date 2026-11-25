@@ -94,7 +94,8 @@ code. No script runs, the page style is unchanged, and no request leaves.
 - **Fit, then scroll.** Inline, a diagram shrinks to fit the column down to 75%
   of its own size, and beyond that shows at 75% in a keyboard-focusable region
   that scrolls. Expand opens a dialog at full size, named and described by
-  `accTitle` and `accDescr`. Regions are named "Scrollable diagram: <name>".
+  `accTitle` and `accDescr`. The scroll areas are named groups, "Diagram: <name>" (EPIC-104 made every
+  rich-content scroll area a group instead of a landmark).
 - **Downloads are made in the browser** from the sanitized SVG, never uploaded:
   the SVG as is, and a PNG at 2× (at most 8,192 px a side) on the block's card
   color. The file name comes from the diagram's name (`water-cycle.png`).
