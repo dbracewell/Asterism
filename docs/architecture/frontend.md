@@ -248,6 +248,13 @@ parallel, the dev server's first compile of a route can reload other tests' page
 Every Playwright case fails on a content-security-policy violation or an unhandled
 page error, so the suite as a whole shows the app runs under the page policy.
 
+Screenshot comparisons (`toHaveScreenshot`) use macOS baselines
+(`*-chromium-darwin.png`); CI on Linux skips only those comparisons
+(`ignoreSnapshots` in `playwright.config.ts`). Run `pnpm test:e2e:screenshots` on
+macOS after changing what those specs show or updating Playwright, and add
+`--update-snapshots` to refresh the baselines, then review every changed image
+before committing ([EPIC-106](../epics/EPIC-106-SCREENSHOT-BASELINES.md)).
+
 Visual and contrast coverage across themes is described in the
 [theme and layout review matrix](../reviews/theme-layout-review-matrix.md).
 

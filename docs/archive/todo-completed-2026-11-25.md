@@ -49,3 +49,25 @@ Source: user request (2026-11-25), follow-ups from EPIC-103. [EPIC-104](../epics
   - [x] Update tests; remove the `landmark-unique` skip
   - [x] Axe passes with every rule over several code blocks, tables and diagrams
   - [x] Update the frontend layout rules and markdown-content.md
+
+## Diagrams in canvas exports
+
+EPIC-105 is complete: every story was confirmed and merged on 2026-11-25 through pull requests #123 to #125. Canvas Word and PDF downloads show mermaid diagrams as pictures with alt text, drawn on the server in the shared headless Chromium with the same policy, bundles and sanitizer as the app.
+
+### [EPIC-105: Diagrams in canvas exports](../epics/EPIC-105-DIAGRAMS-IN-CANVAS-EXPORTS.md)
+
+Source: user request (2026-11-25), the EPIC-103 follow-up. [EPIC-105](../epics/EPIC-105-DIAGRAMS-IN-CANVAS-EXPORTS.md). Suggested order: US-105.1 → 105.2 → 105.3.
+
+- [x] US-105.1: ADR and a shared diagram configuration (merged 2026-11-25, PR #123)
+  - [x] ADR (server-side drawing, isolation, limits, palette)
+  - [x] Locked mermaid configuration and sanitizer settings in a shared JSON file read by `policy.ts`
+  - [x] Mermaid bundle and shared configuration copied into the image; `check:image` verifies them
+- [x] US-105.2: A server-side diagram renderer (merged 2026-11-25, PR #124)
+  - [x] Share the fetch tool's browser pool through a small module
+  - [x] `render_diagram`: aborted requests, static page, shared config, sanitizer, time limit, PNG
+  - [x] Tests: draws; hostile source inert with zero requests; invalid and slow return None; pool shared
+- [x] US-105.3: Diagrams in DOCX, PDF, ZIP and Save to Files (merged 2026-11-25, PR #125)
+  - [x] Embed drawn PNGs with alt text in DOCX and PDF; other fences stay code
+  - [x] Per-export limits; failures export as code with "Diagram not drawn"
+  - [x] Save to Files uses the same path; the ZIP and Download my data keep the Markdown source
+  - [x] Tests, canvas guide page and release notes

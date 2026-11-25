@@ -80,18 +80,14 @@ EPIC-96 through EPIC-101 (live policy availability, hiding what the admin turned
 
 ## Diagrams in canvas exports (proposed 2026-11-25)
 
-Source: user request (2026-11-25), the EPIC-103 follow-up. [EPIC-105](docs/epics/EPIC-105-DIAGRAMS-IN-CANVAS-EXPORTS.md). Suggested order: US-105.1 → 105.2 → 105.3.
+[EPIC-105](docs/epics/EPIC-105-DIAGRAMS-IN-CANVAS-EXPORTS.md) (US-105.1 through US-105.3) is complete and archived in the [2026-11-25 checklist](docs/archive/todo-completed-2026-11-25.md).
 
-- [x] US-105.1: ADR and a shared diagram configuration
-  - [x] ADR (server-side drawing, isolation, limits, palette)
-  - [x] Locked mermaid configuration and sanitizer settings in a shared JSON file read by `policy.ts`
-  - [x] Mermaid bundle and shared configuration copied into the image; `check:image` verifies them
-- [x] US-105.2: A server-side diagram renderer
-  - [x] Share the fetch tool's browser pool through a small module
-  - [x] `render_diagram`: aborted requests, static page, shared config, sanitizer, time limit, PNG
-  - [x] Tests: draws; hostile source inert with zero requests; invalid and slow return None; pool shared
-- [x] US-105.3: Diagrams in DOCX, PDF, ZIP and Save to Files
-  - [x] Embed drawn PNGs with alt text in DOCX and PDF; other fences stay code
-  - [x] Per-export limits; failures export as code with "Diagram not drawn"
-  - [x] Save to Files uses the same path; the ZIP and Download my data keep the Markdown source
-  - [x] Tests, canvas guide page and release notes
+## Screenshot baselines (proposed 2026-11-25)
+
+Source: user request (2026-11-25). [EPIC-106](docs/epics/EPIC-106-SCREENSHOT-BASELINES.md).
+
+- [ ] US-106.1: Refresh the baselines and add the review step
+  - [ ] Regenerate the six `delegation-summary` baselines after checking the differences
+  - [ ] `test:e2e:screenshots` runs the five screenshot specs
+  - [ ] Review step in `docs/development.md` and the frontend testing docs
+  - [ ] Full isolated E2E run on macOS with no screenshot failures

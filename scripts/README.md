@@ -294,6 +294,15 @@ double. Other specs retain mocked HTTP/WebSocket boundaries for focused failure/
 states. Embedding model provisioning is disabled in isolated runs; pending retrieval
 is explicit, and backend tests verify ready-vector retrieval separately.
 
+### `e2e-screenshots.mjs`
+
+`pnpm test:e2e:screenshots` runs, through `run-isolated-e2e.mjs`, every spec in
+`apps/frontend/e2e` that calls `toHaveScreenshot`. Extra arguments go to
+Playwright: `--update-snapshots` refreshes the baselines. The baselines are macOS
+renders and CI skips the comparisons, so the script refuses to run elsewhere. Run
+it after updating Playwright or changing what those specs show, and review every
+refreshed image before committing.
+
 ### `run-with-env.mjs`
 
 The central configuration launcher. It resolves the repository root independently of

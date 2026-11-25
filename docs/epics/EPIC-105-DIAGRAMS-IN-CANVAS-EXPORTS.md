@@ -1,6 +1,6 @@
 # EPIC-105: Diagrams in canvas exports
 
-Status: complete (2026-11-25). US-105.1 PR #123, US-105.2 PR #124, US-105.3. Source: user request (2026-11-25), the
+Status: complete (2026-11-25). US-105.1 PR #123, US-105.2 PR #124, US-105.3 PR #125. Source: user request (2026-11-25), the
 follow-up left out of [EPIC-103](EPIC-103-MERMAID-DIAGRAMS.md): "Draw
 diagrams in canvas DOCX/PDF exports."
 
