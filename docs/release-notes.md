@@ -22,6 +22,14 @@ Unreleased into its version and date.
 
 ## Unreleased
 
+### Image
+
+- The runtime stage is on a newer `python:3.13-slim-trixie` base, which carries
+  `zlib1g` 1.3.1-1+deb13u1, so the image no longer upgrades `zlib1g` itself.
+- `libzstd1` is 1.5.7+dfsg-1+deb13u1, which fixes CVE-2026-124851 (high). The
+  base doesn't carry the fix yet, so the runtime stage upgrades it
+  (`BASE_LAG_UPGRADES` in the Dockerfile) until a base update does.
+
 ### Behavior
 
 - Setup (Admin Settings → Setup) no longer has Theme, Educators and First
