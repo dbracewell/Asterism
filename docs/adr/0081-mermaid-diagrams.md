@@ -33,7 +33,12 @@ Mermaid runs with a frozen configuration (`markdownMermaidConfig` in
 - `securityLevel: "strict"` (labels are text, `click` and links do nothing),
   `htmlLabels: false`, `startOnLoad: false`, `suppressErrorRendering: true`;
 - limits of 20,000 characters and 500 edges, and an 8 second timeout;
-- a fixed system font stack.
+- a fixed system font stack;
+- labels wrapped at 200 px in flowcharts and state diagrams (mermaid's 120 px
+  default split ordinary words such as "Light-dependent" by characters), and a
+  fixed `themeCSS` rule that makes edge-label backgrounds opaque (mermaid draws
+  them half transparent, so the line showed through the words). Both are our
+  constants; directives still can't change `themeCSS`.
 
 Mermaid lets a diagram change its own configuration through `%%{init}%%`
 directives and frontmatter, except for the keys in `secure`, and it protects
@@ -86,10 +91,10 @@ code. No script runs, the page style is unchanged, and no request leaves.
   Its header has Show code / Show diagram, Expand, Download (SVG or PNG) and
   Copy (the source). The code view is the normal code block with Show diagram
   in its header; focus stays on the toggle after a switch.
-- **Full size and scrolling.** The diagram is shown at its own size in a
-  keyboard-focusable region that scrolls when it is wider than the column.
-  Expand opens a dialog named and described by `accTitle` and `accDescr`.
-  Regions are named "Scrollable diagram: <name>".
+- **Fit, then scroll.** Inline, a diagram shrinks to fit the column down to 75%
+  of its own size, and beyond that shows at 75% in a keyboard-focusable region
+  that scrolls. Expand opens a dialog at full size, named and described by
+  `accTitle` and `accDescr`. Regions are named "Scrollable diagram: <name>".
 - **Downloads are made in the browser** from the sanitized SVG, never uploaded:
   the SVG as is, and a PNG at 2× (at most 8,192 px a side) on the block's card
   color. The file name comes from the diagram's name (`water-cycle.png`).

@@ -1,7 +1,10 @@
 # Creating images
 
-Asterism can make a picture from a description, such as a diagram idea or an
-illustration for a poster. This page shows the two ways to ask.
+Asterism can make a picture from a description, such as an illustration for a
+poster. This page shows the two ways to ask.
+
+For a diagram with labels, such as a flowchart or a timeline, ask for a
+[diagram](diagrams.md) instead. Pictures made by AI often get the words wrong.
 
 > **Who can do this:** everyone, when your administrator has turned image
 > creation on for your group.
@@ -52,7 +55,7 @@ Every picture is saved in your **Files** library.
 
 - Every request is recorded, and some requests are always refused, such as
   sexual content involving anyone under 18.
-- Pictures made by AI can contain mistakes, for example a diagram with the wrong
+- Pictures made by AI can contain mistakes, for example wrong or misspelled
   labels. Check them before you use them in your work.
 
 ## If something goes wrong

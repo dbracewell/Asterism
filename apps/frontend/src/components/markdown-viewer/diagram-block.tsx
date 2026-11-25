@@ -132,12 +132,18 @@ function ViewToggle({
   );
 }
 
+/** Inline diagrams shrink to fit the column down to this scale, then scroll. */
+const MIN_FIT_SCALE = 0.75;
+
 function DiagramImage({
   diagram,
   className,
+  fit = false,
 }: {
   diagram: Diagram;
   className?: string;
+  /** Shrink to the column (down to MIN_FIT_SCALE) instead of full size. */
+  fit?: boolean;
 }) {
   return (
     // eslint-disable-next-line @next/next/no-img-element -- a local data: SVG, never a remote image
@@ -148,6 +154,13 @@ function DiagramImage({
       width={diagram.width}
       height={diagram.height}
       className={cn("block h-auto max-w-none", className)}
+      style={
+        fit
+          ? {
+              maxWidth: `max(100%, ${Math.round(diagram.width * MIN_FIT_SCALE)}px)`,
+            }
+          : undefined
+      }
       draggable={false}
     />
   );
@@ -242,7 +255,7 @@ function DrawnDiagram({
         tabIndex={0}
         className={cn(scrollClassName, "p-3")}
       >
-        <DiagramImage diagram={diagram} className="mx-auto" />
+        <DiagramImage diagram={diagram} className="mx-auto" fit />
       </div>
       {diagram.description && (
         <figcaption className="sr-only">{diagram.description}</figcaption>

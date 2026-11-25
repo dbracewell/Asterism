@@ -273,6 +273,19 @@ export const shots = [
     },
   },
   {
+    name: "chat-diagram",
+    alt: "A reply with a diagram of photosynthesis: light and water feed the light-dependent reactions, which give oxygen and pass ATP and NADPH to the Calvin cycle, which turns carbon dioxide into glucose. Buttons above it show the code, expand, download and copy",
+    as: "student",
+    path: (ids) => `/c/${ids.chats.diagram}`,
+    ready: ["Which arrow would you like"],
+    steps: async (page) => {
+      await page
+        .getByRole("img", { name: "Photosynthesis in two stages" })
+        .first()
+        .waitFor();
+    },
+  },
+  {
     name: "chat-new-phone",
     viewport: "phone",
     alt: "The new chat screen on a phone, with the message box at the bottom",

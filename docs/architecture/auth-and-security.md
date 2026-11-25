@@ -205,6 +205,11 @@ The canvas preview runs the agent's HTML in a sandboxed frame with an opaque
 origin and no network access, under its own stricter policy
 ([ADR-0063](../adr/0063-canvas.md)).
 
+Mermaid diagrams in rendered markdown need no change to this policy. Mermaid
+loads as one of the app's own chunks, and each diagram is sanitized and shown
+as a `data:image/svg+xml` image, which can't run script, load anything or style
+the page ([ADR-0081](../adr/0081-mermaid-diagrams.md)).
+
 **API responses are data.** nginx replaces the security headers of every
 `/api/py/` and `/api/auth/` response with a policy that allows nothing to run,
 load or be framed. Every response also sends `X-Content-Type-Options: nosniff`

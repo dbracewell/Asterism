@@ -229,6 +229,29 @@ It sits in the thylakoid membranes inside chloroplasts. It absorbs mostly red an
     answer: `I wasn't able to read that page, so I can't summarize it. If you paste the part you need, or upload it to your files, I can work from that instead.`,
   },
   {
+    // A diagram: the reply's mermaid block is drawn in the chat (US-103.4).
+    match: "diagram of photosynthesis",
+    title: "Photosynthesis diagram",
+    answer: `Here's photosynthesis as a diagram. Light, water and carbon dioxide go in; sugar and oxygen come out.
+
+\`\`\`mermaid
+flowchart LR
+  accTitle: Photosynthesis in two stages
+  accDescr: Light and water feed the light-dependent reactions, which release oxygen and make ATP and NADPH. The Calvin cycle uses them with carbon dioxide to make glucose.
+  light["Light"] --> ldr
+  water["Water"] --> ldr
+  ldr["Light-dependent reactions (thylakoids)"] -->|"ATP and NADPH"| calvin
+  ldr --> oxygen["Oxygen"]
+  co2["Carbon dioxide"] --> calvin
+  calvin["Calvin cycle (stroma)"] --> glucose["Glucose"]
+\`\`\`
+
+1. **Light-dependent reactions.** In the thylakoids, light energy splits water. Oxygen is released, and the energy is stored in ATP and NADPH.
+2. **Calvin cycle.** In the stroma, ATP and NADPH power the building of glucose from carbon dioxide.
+
+Which arrow would you like to look at more closely?`,
+  },
+  {
     // Create image: the picture comes from the image generator; this names the chat.
     match: "drawing of a plant cell",
     title: "Plant cell drawing",

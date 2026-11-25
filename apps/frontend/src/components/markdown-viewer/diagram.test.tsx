@@ -171,6 +171,17 @@ describe("renderDiagram", () => {
 
 it("cannot be reconfigured by callers", () => {
   expect(Object.isFrozen(markdownMermaidConfig)).toBe(true);
+  expect(Object.isFrozen(markdownMermaidConfig.flowchart)).toBe(true);
+});
+
+it("keeps words whole and edge labels opaque", async () => {
+  await renderDiagram("flowchart LR\na-->b", light);
+  const config = mermaid.initialize.mock.calls[0][0];
+  expect(config.flowchart.wrappingWidth).toBe(200);
+  expect(config.state.wrappingWidth).toBe(200);
+  expect(config.themeCSS).toContain(".edgeLabel rect { opacity: 1");
+  // A copy, so mermaid can merge into it.
+  expect(Object.isFrozen(config.flowchart)).toBe(false);
 });
 
 describe("MarkdownViewer diagrams", () => {

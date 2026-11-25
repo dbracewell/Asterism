@@ -92,8 +92,8 @@ Source: user request (2026-11-25). [EPIC-103](docs/epics/EPIC-103-MERMAID-DIAGRA
   - [x] Narrow `IMAGE_GUIDANCE` to pictures; labelled diagrams go to mermaid
   - [x] Mention diagrams in `CANVAS_GUIDANCE`
   - [x] Prompt composition tests
-- [ ] US-103.4: Documentation and release
-  - [ ] Guide page `02-chatting/diagrams.md` with a screenshot; link from `creating-images.md`
-  - [ ] Architecture and security docs; `pnpm docs:check`
-  - [ ] Release notes (Behavior)
-  - [ ] Full isolated E2E suite before pushing
+- [x] US-103.4: Documentation and release
+  - [x] Guide page `02-chatting/diagrams.md` with a screenshot; link from `creating-images.md`
+  - [x] Architecture and security docs; `pnpm docs:check`
+  - [x] Release notes (Behavior)
+  - [x] Full isolated E2E suite before pushing

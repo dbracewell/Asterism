@@ -374,6 +374,10 @@ export async function seedDemo({
     user_prompt: "Can you help me write an outline for my lab report?",
   });
   await maya.api("canvas", "POST", `/chat/${lab.info.id}/canvas`, demo.canvas);
+  const diagram = await maya.newChat({
+    model_id: tutor,
+    user_prompt: "Can you draw me a diagram of photosynthesis?",
+  });
   // One example chat for each learning mode that has its own way of answering.
   const modeChats = {};
   for (const [key, body] of Object.entries(demo.modeChats))
@@ -582,6 +586,7 @@ export async function seedDemo({
       branched: branched.info.id,
       branchedProject: branchedProject.info.id,
       lab: lab.info.id,
+      diagram: diagram.info.id,
       revision: revision.info.id,
     },
     deck: deck.id,
