@@ -70,6 +70,10 @@ Suggested order: US-104.1 → 104.2.
       code, a task list) and diagram section (four diagrams, two code
       fallbacks), and neither has a `role="region"` left. This found the GFM
       task-list checkbox had no name; it is now named "Done" or "Not done".
+- [x] The full run's other flake, `inline-files.spec.ts` ("reachable and
+      operable by keyboard"), was the same kind: axe scanned the file dialog
+      while it faded in (4.09:1 on the half-faded overlay). It now waits with
+      `animationsSettled`; 15 of 15 repeats pass.
 - [x] Updated the layout rules in
       [frontend](../architecture/frontend.md#layout-and-scrolling-rules) and
       ADR-0081.
