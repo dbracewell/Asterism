@@ -1,7 +1,7 @@
 # ADR-0083 — Images in the canvas
 
-Status: accepted. Read-time resolution and the canvas preview (US-107.1) are
-implemented (2026-11-25)
+Status: accepted. Read-time resolution and the canvas preview (US-107.1) and
+the agent guidance (US-107.2) are implemented (2026-11-25)
 ([EPIC-107](../epics/EPIC-107-IMAGES-IN-CANVAS.md)).
 
 ## Context
@@ -51,5 +51,13 @@ preview loads nothing.
 
 - Each version read runs one live-scope query and one file query when the
   content has references; content without references costs nothing extra.
-- The agent is told it can embed chat images in a markdown canvas (US-107.2),
-  and DOCX and PDF downloads embed them (US-107.3).
+- DOCX and PDF downloads embed them (US-107.3).
+
+## Decision: the agent is told (US-107.2)
+
+`CANVAS_GUIDANCE` says a markdown canvas can hold images and files from the
+conversation as `![short description](asterism-file:<file id>)`, such as the
+`embed` that `generate_image` returns, and that other ids show as unavailable.
+`IMAGE_GUIDANCE` now asks the agent not to repeat generated images in its
+reply, rather than never to repeat their ids, so the two don't conflict. The
+canvas tools store references as written; the guidance grants nothing.

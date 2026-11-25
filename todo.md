@@ -90,15 +90,15 @@ EPIC-96 through EPIC-101 (live policy availability, hiding what the admin turned
 
 Source: user request (2026-11-25). [EPIC-107](docs/epics/EPIC-107-IMAGES-IN-CANVAS.md). Suggested order: US-107.1 → 107.2 → 107.3.
 
-- [x] US-107.1: Show chat images in the canvas preview (awaiting confirmation)
+- [x] US-107.1: Show chat images in the canvas preview (merged 2026-11-25, PR #128)
   - [x] ADR-0083: read-time resolution, scope rule and limits
   - [x] `CanvasVersion.inline_files` resolved against the live chat scope; regenerate the client
   - [x] The canvas preview provides `InlineFilesContext`
   - [x] Backend, frontend and E2E tests
   - [x] Canvas guide page, ADR-0063 cross-reference, release notes
-- [ ] US-107.2: Tell the agent it can put images in a canvas
-  - [ ] `CANVAS_GUIDANCE` names the image Markdown; guidance test
-  - [ ] `canvas_read` and `canvas_update` keep references unchanged
+- [ ] US-107.2: Tell the agent it can put images in a canvas (awaiting confirmation)
+  - [x] `CANVAS_GUIDANCE` names the image Markdown; guidance test
+  - [x] `canvas_read` and `canvas_update` keep references unchanged
   - [ ] Check "make an image, then a canvas document using it" in the running app
 - [ ] US-107.3: Images in canvas downloads
   - [ ] DOCX and PDF embed in-scope raster images with alt text

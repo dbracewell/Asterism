@@ -1,6 +1,6 @@
 # EPIC-107: Images in the canvas
 
-Status: in progress (2026-11-25); US-107.1 implemented. Source: user request (2026-11-25): "In canvas mode
+Status: in progress (2026-11-25); US-107.1 merged; US-107.2 implemented. Source: user request (2026-11-25): "In canvas mode
 markdown cannot display created images."
 
 ## Objective
@@ -86,11 +86,14 @@ sandboxed preview loads nothing); images from outside the chat (web URLs stay
 
 ### US-107.2: Tell the agent it can put images in a canvas
 
-- [ ] `CANVAS_GUIDANCE` names the `asterism-file:` image Markdown for a
-      markdown canvas; the guidance test covers it
-- [ ] `canvas_read` and `canvas_update` keep references unchanged (test)
+- [x] `CANVAS_GUIDANCE` names the `asterism-file:` image Markdown for a
+      markdown canvas and the `embed` from `generate_image`;
+      `IMAGE_GUIDANCE` no longer forbids repeating ids, only repeating the
+      image in the reply. Guidance test in `test_canvas_inline_files.py`
+- [x] `canvas_create`, `canvas_update` (edits) and `canvas_read` keep the
+      reference unchanged, and the version API resolves it (test)
 - [ ] Check in the running app that "make an image, then a canvas document
-      using it" shows the picture
+      using it" shows the picture (by the user; see the PR)
 
 ### US-107.3: Images in canvas downloads
 
