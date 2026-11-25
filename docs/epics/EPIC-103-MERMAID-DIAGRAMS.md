@@ -1,6 +1,6 @@
 # EPIC-103: Mermaid diagrams in markdown
 
-Status: complete (2026-11-25). US-103.1 PR #117, US-103.2 PR #118, US-103.3 PR #119, US-103.4. Source: user request (2026-11-25): "add mermaid
+Status: complete (2026-11-25). US-103.1 PR #117, US-103.2 PR #118, US-103.3 PR #119, US-103.4 PR #120. Source: user request (2026-11-25): "add mermaid
 support to our chat markdown editor since diagrams are good for visual learners
 but the small image generation models are not good at text."
 
