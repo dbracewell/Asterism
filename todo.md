@@ -92,10 +92,10 @@ Source: user request (2026-11-25), follow-ups from EPIC-103. [EPIC-104](docs/epi
 
 Source: user request (2026-11-25), the EPIC-103 follow-up. [EPIC-105](docs/epics/EPIC-105-DIAGRAMS-IN-CANVAS-EXPORTS.md). Suggested order: US-105.1 → 105.2 → 105.3.
 
-- [ ] US-105.1: ADR and a shared diagram configuration
-  - [ ] ADR (server-side drawing, isolation, limits, palette)
-  - [ ] Locked mermaid configuration and sanitizer settings in a shared JSON file read by `policy.ts`
-  - [ ] Mermaid bundle and shared configuration copied into the image; `check:image` verifies them
+- [x] US-105.1: ADR and a shared diagram configuration
+  - [x] ADR (server-side drawing, isolation, limits, palette)
+  - [x] Locked mermaid configuration and sanitizer settings in a shared JSON file read by `policy.ts`
+  - [x] Mermaid bundle and shared configuration copied into the image; `check:image` verifies them
 - [ ] US-105.2: A server-side diagram renderer
   - [ ] Share the fetch tool's browser pool through a small module
   - [ ] `render_diagram`: aborted requests, static page, shared config, sanitizer, time limit, PNG

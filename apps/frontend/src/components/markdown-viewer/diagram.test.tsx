@@ -6,6 +6,8 @@ import MarkdownViewer from ".";
 import { contrastRatio } from "@/features/theme/contrast";
 import type { Theme } from "@/features/theme/types";
 import atlas from "@/features/theme/bundled/atlas.json";
+import policy from "@asterism/diagram-policy/policy.json";
+import printTheme from "@asterism/diagram-policy/print-theme.json";
 
 const bundledThemes = import.meta.glob<Theme>(
   "../../features/theme/bundled/*.json",
@@ -373,5 +375,31 @@ describe("the diagram block", () => {
     expect(mermaid.initialize.mock.calls[1][0].themeVariables.background).toBe(
       "#101010",
     );
+  });
+});
+
+describe("the shared diagram policy (ADR-0082)", () => {
+  it("is what the viewer draws and sanitizes with", async () => {
+    await renderDiagram("flowchart LR\na-->b", light);
+    const config = mermaid.initialize.mock.calls[0][0];
+    const { secure, ...rest } = policy.mermaid;
+    expect(config).toMatchObject(rest);
+    expect(config.secure).toEqual(secure);
+    expect(MERMAID_RENDER_TIMEOUT_MS).toBe(policy.renderTimeoutMs);
+    // Every forbidden tag from the shared settings is removed.
+    const forbidden = policy.sanitizer.forbidTags
+      .map((tag) => `<${tag}></${tag}>`)
+      .join("");
+    const clean = sanitizeDiagramSvg(svg(forbidden + "<g/>"))!.svg;
+    for (const tag of policy.sanitizer.forbidTags)
+      expect(clean.toLowerCase()).not.toContain(`<${tag.toLowerCase()}`);
+  });
+
+  it("exports with the app's own Atlas mapping", () => {
+    expect(printTheme).toEqual({
+      palette: "atlas",
+      theme: "base",
+      themeVariables: diagramThemeVariables(atlas.colors, false),
+    });
   });
 });

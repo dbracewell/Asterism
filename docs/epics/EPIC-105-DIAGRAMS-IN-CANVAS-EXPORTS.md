@@ -1,6 +1,6 @@
 # EPIC-105: Diagrams in canvas exports
 
-Status: proposed (2026-11-25). Source: user request (2026-11-25), the
+Status: in progress (2026-11-25). US-105.1 implemented. Source: user request (2026-11-25), the
 follow-up left out of [EPIC-103](EPIC-103-MERMAID-DIAGRAMS.md): "Draw
 diagrams in canvas DOCX/PDF exports."
 
@@ -30,7 +30,9 @@ markdown source); new export formats; drawing diagrams in HTML canvases.
   every request through its own handler. The browser has no network of its own.
 - **The app draws diagrams in the browser** (ADR-0081): a locked mermaid
   configuration, a DOMPurify pass, and the SVG shown as a `data:` image.
-  Mermaid is a frontend dependency (12.3.0); the backend has no copy.
+  Mermaid is a frontend dependency (12.3.0). The runtime image already holds
+  the frontend's production `node_modules` (mermaid and DOMPurify included) at
+  `/app/apps/frontend/node_modules`, beside the backend.
 
 ## Decisions (to record in an ADR)
 
@@ -40,11 +42,12 @@ markdown source); new export formats; drawing diagrams in HTML canvases.
   configuration and the same sanitizer as the app. No user content reaches the
   page except the diagram source, passed as data. The result is a PNG at 2× for
   both DOCX and PDF; Word and fpdf2's SVG support is too uneven.
-- **One mermaid, one configuration.** The image build copies mermaid's
-  standalone bundle from the frontend's pinned dependency, so the app and exports
-  can't drift apart. The locked configuration moves to a shared JSON file that
-  both the frontend `policy.ts` and the backend renderer read, with a test that
-  they match.
+- **One mermaid, one configuration.** The server loads the mermaid and
+  DOMPurify bundles the image already ships for the app, and `check:image`
+  verifies they are there and that mermaid is the frontend's pinned version.
+  The locked configuration, sanitizer settings, limits and export palette move
+  to a workspace package, `@asterism/diagram-policy`, which the frontend and the
+  backend renderer both read.
 - **Printed colors.** Exports use a fixed light palette (the default Atlas
   colors), not the person's theme, so a document looks the same for everyone.
 - **Bounded.** At most 30 diagrams per export, an 8 second limit for each and a
@@ -63,13 +66,20 @@ Suggested order: US-105.1 → 105.2 → 105.3.
 
 ### US-105.1: ADR and a shared diagram configuration
 
-- [ ] Write the ADR (server-side drawing, isolation, limits, palette).
-- [ ] Move the locked mermaid configuration and the sanitizer settings to a
-      shared JSON file read by `policy.ts`, with a frontend test that the app
-      still uses it unchanged.
-- [ ] Copy mermaid's standalone bundle and the shared configuration into the
-      image from the frontend's pinned dependency; `check:image` verifies they
-      are there and match the frontend's version.
+- [x] Write [ADR-0082](../adr/0082-diagrams-in-canvas-exports.md)
+      (server-side drawing, isolation, limits, palette, the shared policy).
+- [x] `packages/diagram-policy`: `policy.json` (the locked mermaid
+      configuration, sanitizer settings and limits) and `print-theme.json`
+      (export theme variables from the light Atlas palette). `policy.ts` and
+      `diagram.ts` read it; `policy.ts` deep-freezes it and refuses to load
+      unless mermaid stays strict without HTML labels. Frontend tests check the
+      viewer draws and sanitizes with it unchanged, and that `print-theme.json`
+      matches `diagramThemeVariables` for Atlas.
+- [x] The image installs the package and copies it to the runtime stage.
+      `check:image` checks, as the runtime user, that the policy, print theme,
+      `mermaid.min.js` and `purify.min.js` are readable and that mermaid is the
+      pinned version (`diagramAssetProblems`, with a unit test). No separate
+      bundle copy was needed: the image already ships them for the app.
 
 ### US-105.2: A server-side diagram renderer
 

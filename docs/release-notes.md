@@ -29,6 +29,10 @@ Unreleased into its version and date.
 - `libzstd1` is 1.5.7+dfsg-1+deb13u1, which fixes CVE-2026-124851 (high). The
   base doesn't carry the fix yet, so the runtime stage upgrades it
   (`BASE_LAG_UPGRADES` in the Dockerfile) until a base update does.
+- The image includes `packages/diagram-policy`, the diagram rules the app and
+  canvas exports share. `pnpm check:image` also checks that the mermaid and
+  DOMPurify bundles the export renderer needs are readable and that mermaid is
+  the frontend's pinned version.
 
 ### Behavior
 
