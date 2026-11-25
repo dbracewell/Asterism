@@ -215,7 +215,11 @@ async def test_guidance_only_when_the_run_can_search(tools, expected):
     from types import SimpleNamespace
 
     prompt = await build_runtime_prompt(
-        user_id="a", chat_id=uuid.uuid4(), profile=SimpleNamespace(id=uuid.uuid4()), tools=tools, scope=None
+        user_id="a",
+        chat_id=uuid.uuid4(),
+        profile=SimpleNamespace(id=uuid.uuid4(), sub_agent=False),
+        tools=tools,
+        scope=None,
     )
     assert (CITATION_GUIDANCE in prompt) is expected
     assert "[the claim](asterism-cite:<key>)" in CITATION_GUIDANCE

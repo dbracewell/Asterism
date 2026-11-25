@@ -39,6 +39,9 @@ Unreleased into its version and date.
   source and download it as SVG or PNG. Directives in a diagram can't change
   its security settings, theme or fonts
   ([ADR-0081](adr/0081-mermaid-diagrams.md)).
+- The main agent now draws diagrams, flowcharts, mind maps and timelines as
+  mermaid diagrams in its reply instead of asking the image model for them,
+  which drew their labels badly. Image generation is for pictures.
 - With the system's Reduce motion setting on, loading spinners now turn slowly
   instead of stopping, which made them look stuck. Other animations and
   transitions stay off.
