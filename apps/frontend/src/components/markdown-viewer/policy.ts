@@ -56,3 +56,41 @@ export const markdownMathOptions = {
   maxSize: 20,
   maxExpand: 1000,
 };
+
+// ADR-0081: diagram source is untrusted. Labels are text, links and click
+// handlers are off, and directives in a diagram (`%%{init}%%`, frontmatter)
+// cannot change any key listed in `secure`. Mermaid only protects top-level
+// keys, and theme values are written into the diagram's <style>, so the theme,
+// fonts and CSS are locked too. No caller can override these settings.
+export const MERMAID_FONT_FAMILY =
+  'ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+
+export const markdownMermaidConfig = Object.freeze({
+  startOnLoad: false,
+  securityLevel: "strict" as const,
+  htmlLabels: false,
+  suppressErrorRendering: true,
+  maxTextSize: 20_000,
+  maxEdges: 500,
+  fontFamily: MERMAID_FONT_FAMILY,
+  secure: [
+    "secure",
+    "securityLevel",
+    "startOnLoad",
+    "maxTextSize",
+    "maxEdges",
+    "suppressErrorRendering",
+    "htmlLabels",
+    "dompurifyConfig",
+    "theme",
+    "themeVariables",
+    "themeCSS",
+    "darkMode",
+    "fontFamily",
+    "altFontFamily",
+    "look",
+  ],
+});
+
+/** A diagram that takes longer than this to draw shows as code. */
+export const MERMAID_RENDER_TIMEOUT_MS = 8_000;

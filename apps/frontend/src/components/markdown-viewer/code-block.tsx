@@ -18,12 +18,15 @@ export function CodeBlock({
   theme,
   fontSize,
   scrollClassName,
+  note,
 }: {
   text: string;
   language?: string;
   theme: Record<string, CSSProperties>;
   fontSize: string;
   scrollClassName: string;
+  /** A short notice shown above the code, such as why a diagram isn't drawn. */
+  note?: string;
 }) {
   const [wrap, setWrap] = useState(false);
   const wrapLabel = wrap ? "Scroll long lines" : "Wrap long lines";
@@ -52,6 +55,11 @@ export function CodeBlock({
         </Hint>
         <CopyButton text={text} />
       </div>
+      {note && (
+        <p className="text-muted-foreground border-border border-b px-3 py-1.5 text-xs">
+          {note}
+        </p>
+      )}
       <div
         role="region"
         aria-label="Scrollable code"

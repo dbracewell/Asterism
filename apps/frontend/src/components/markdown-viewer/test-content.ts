@@ -116,3 +116,66 @@ New launches this week:
 
 Researchers reported a new comet.
 `;
+
+// ADR-0081: one diagram that draws, one that can't, and one whose source tries
+// to change the locked configuration, run script, add HTML or reach a host.
+export const diagramMarkdown =
+  String.raw`
+` +
+  "```mermaid" +
+  String.raw`
+flowchart LR
+  accTitle: Water cycle
+  accDescr: Water evaporates, condenses into clouds and falls as rain.
+  sea[Sea] --> cloud[Clouds] --> rain[Rain] --> sea
+` +
+  "```" +
+  String.raw`
+
+` +
+  "```mermaid" +
+  String.raw`
+this is not a diagram
+` +
+  "```" +
+  String.raw`
+
+` +
+  "```mermaid" +
+  String.raw`
+%%{init: {"securityLevel": "loose", "htmlLabels": true, "themeCSS": "} body { display: none } .x {", "theme": "forest", "fontFamily": "x; background: url(/untrusted-markdown/font)"}}%%
+flowchart TD
+  directive --> ignored
+` +
+  "```" +
+  String.raw`
+
+` +
+  "```mermaid" +
+  String.raw`
+flowchart TD
+  a["<img src=/untrusted-markdown/label onerror=window.__diagramPwned=1>"] --> b["<b>bold</b>"]
+` +
+  "```" +
+  String.raw`
+
+` +
+  "```mermaid" +
+  String.raw`
+flowchart TD
+  a --> b
+  click a "javascript:window.__diagramPwned=1"
+  click b href "/untrusted-markdown/click"
+` +
+  "```" +
+  String.raw`
+
+` +
+  "```mermaid" +
+  String.raw`
+flowchart TD
+  a --> b
+  style b fill:url(/untrusted-markdown/fill)
+` +
+  "```" +
+  "\n";

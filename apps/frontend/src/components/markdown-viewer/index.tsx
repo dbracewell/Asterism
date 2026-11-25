@@ -5,6 +5,8 @@ import "katex/dist/katex.min.css";
 import { isValidElement, type HTMLAttributes } from "react";
 import ReactMarkdown from "react-markdown";
 import { CodeBlock } from "./code-block";
+import { isClosedFence } from "./diagram";
+import { DiagramBlock } from "./diagram-block";
 import { syntaxTheme } from "./syntax-theme";
 import rehypeKatex from "rehype-katex";
 import remarkGfm from "remark-gfm";
@@ -132,7 +134,7 @@ const MarkdownViewer = ({
               </span>
             );
           },
-          pre({ children }) {
+          pre({ children, node }) {
             const code = isValidElement<HTMLAttributes<HTMLElement>>(children)
               ? children.props
               : null;
@@ -140,13 +142,29 @@ const MarkdownViewer = ({
             const language = /language-([\w-]+)/.exec(
               code?.className ?? "",
             )?.[1];
-            return (
+            const codeBlock = (note?: string) => (
               <CodeBlock
                 text={text}
                 language={language}
                 theme={codeTheme}
                 fontSize={codeFontSize ?? globalTheme.fontSize}
                 scrollClassName={scrollRegion}
+                note={note}
+              />
+            );
+            if (language !== "mermaid") return codeBlock();
+            const span = node?.position;
+            return (
+              <DiagramBlock
+                source={text}
+                closed={
+                  !!span &&
+                  isClosedFence(
+                    content.slice(span.start.offset, span.end.offset),
+                  )
+                }
+                theme={globalTheme.currentThemeType}
+                fallback={codeBlock}
               />
             );
           },
