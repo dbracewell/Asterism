@@ -1,6 +1,6 @@
 # EPIC-104: Rich content and test cleanup
 
-Status: complete (2026-11-25). US-104.1 PR #121, US-104.2. Source: user request (2026-11-25), from
+Status: complete (2026-11-25). US-104.1 PR #121, US-104.2 PR #122. Source: user request (2026-11-25), from
 follow-ups found in [EPIC-103](EPIC-103-MERMAID-DIAGRAMS.md): a flaky
 comparison test and repeated region names in rendered markdown.
 
