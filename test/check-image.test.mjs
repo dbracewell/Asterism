@@ -6,6 +6,7 @@ import {
   DIAGRAM_ASSETS,
   developmentPackageProblems,
   diagramAssetProblems,
+  drawnDiagramProblems,
   largestLayers,
   localImageProblems,
   pnpmStorePackage,
@@ -200,4 +201,30 @@ test("the diagram renderer needs every asset and the pinned mermaid", () => {
     diagramAssetProblems({ readable, mermaidVersion: null }, "12.3.0")[0],
     /mermaid \(none\)/,
   );
+});
+
+test("the in-image diagram draw must produce a named PNG at the policy scale", () => {
+  const ok = JSON.stringify({
+    label: "Image check",
+    png: [720, 118],
+    css: [360, 59],
+  });
+  assert.deepEqual(drawnDiagramProblems(`INFO: Drew 1 of 1\n${ok}\n`, 2), []);
+  assert.deepEqual(
+    drawnDiagramProblems(
+      JSON.stringify({ label: null, png: null, css: null }),
+      2,
+    ),
+    ["the image could not draw a diagram"],
+  );
+  assert.deepEqual(
+    drawnDiagramProblems(
+      JSON.stringify({ label: "Image check", png: [360, 59], css: [360, 59] }),
+      2,
+    ),
+    ["the drawn PNG is 360x59, not 2x its 360x59 size"],
+  );
+  assert.deepEqual(drawnDiagramProblems("Traceback ...", 2), [
+    "the diagram draw check printed no result",
+  ]);
 });

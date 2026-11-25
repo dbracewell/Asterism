@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
+from asterism.common.headless_browser import close_browser
 from asterism.common.log import get_logger
 from asterism.core import config
 from asterism.db.database import db_session_manager
@@ -19,7 +20,6 @@ from asterism.domains.knowledge.runtime import (
 )
 from asterism.domains.llm.client import close_openai_clients
 from asterism.domains.llm.draft import get_draft_model
-from asterism.domains.tools.builtin.fetch import close_fetch_browser
 from asterism.domains.tools.registry import tool_registry
 
 from .events import EventType, NoArgEvent, event_bus
@@ -100,7 +100,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     await export_jobs.shutdown()
     await shutdown_knowledge_runtime()
     await _shutdown_image_generation()
-    await close_fetch_browser()
+    await close_browser()
     await close_openai_clients()
     await close_oauth_client()
     await close_api_http()

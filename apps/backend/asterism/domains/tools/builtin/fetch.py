@@ -17,8 +17,9 @@ from urllib.parse import urljoin, urlsplit, urlunsplit
 import httpx
 import markdownify
 from bs4 import BeautifulSoup
-from playwright.async_api import Browser, Playwright, Route, async_playwright
+from playwright.async_api import Route
 
+from asterism.common.headless_browser import BROWSER_SEMAPHORE, acquire_browser
 from asterism.common.log import get_logger
 from asterism.core.schemas import Document
 
@@ -32,17 +33,8 @@ _MAX_RESPONSE_BYTES = 2 * 1024 * 1024
 # PDFs, octet streams) is rejected before its body is read.
 _TEXTUAL_MIME_TYPES = {"application/xhtml+xml", "application/xml", "application/json"}
 _TEXTUAL_MIME_SUFFIXES = ("+xml", "+json")
-_PLAYWRIGHT_SEMAPHORE = asyncio.Semaphore(2)
 _FORBIDDEN_HOSTNAMES = {"localhost", "localhost.localdomain"}
 _FORBIDDEN_HOST_SUFFIXES = (".localhost", ".local", ".internal", ".home.arpa")
-# Chromium only ever receives responses the route handler fulfills: it resolves
-# no names and sends anything unrouted (WebSockets, loopback included) to a dead
-# proxy, so a request that slips past page routing fails instead of connecting.
-_BROWSER_LAUNCH_ARGS = [
-    "--host-resolver-rules=MAP * ~NOTFOUND",
-    "--proxy-server=http://blackhole.invalid:9",
-    "--proxy-bypass-list=<-loopback>",
-]
 # Sub-resources that never contribute page text; aborted instead of fetched.
 _BROWSER_SKIPPED_RESOURCE_TYPES = {"image", "media", "font"}
 # Connection-level headers never forwarded between Chromium and the pinned
@@ -78,12 +70,6 @@ _HTML_TAGS_TO_REMOVE = [
     "select",
     "textarea",
 ]
-
-# Pooled headless-browser state shared by all JavaScript fetches (see
-# _acquire_browser); released via close_fetch_browser during app teardown.
-_playwright_instance: Playwright | None = None
-_browser: Browser | None = None
-_browser_lock = asyncio.Lock()
 
 
 class UnsafeFetchUrlError(ValueError):
@@ -365,7 +351,7 @@ def _fulfilled_headers(headers: httpx.Headers) -> dict[str, str]:
 async def _serve_browser_request(client: httpx.AsyncClient, timeout: float, route: Route) -> None:
     """Answer one Chromium request through the pinned client.
 
-    Chromium cannot reach the network itself (see ``_BROWSER_LAUNCH_ARGS``), so
+    Chromium cannot reach the network itself (see ``headless_browser.BROWSER_LAUNCH_ARGS``), so
     every request comes here: skipped resource types are aborted, URLs failing
     SSRF validation are denied, and everything else (with each redirect hop) is
     fetched over its validated address with a capped body and fulfilled back.
@@ -399,53 +385,6 @@ async def _serve_browser_request(client: httpx.AsyncClient, timeout: float, rout
     await route.fulfill(status=response.status_code, headers=_fulfilled_headers(response.headers), body=body)
 
 
-def _browser_is_connected(browser: Browser) -> bool:
-    """Report whether the pooled browser is still usable (crashes raise)."""
-    try:
-        return browser.is_connected()
-    except Exception:
-        return False
-
-
-async def _release_pool() -> None:
-    """Close the pooled browser and Playwright session, best effort."""
-    global _playwright_instance, _browser
-    if _browser is not None:
-        try:
-            await _browser.close()
-        except Exception:
-            pass
-        _browser = None
-    if _playwright_instance is not None:
-        try:
-            await _playwright_instance.stop()
-        except Exception:
-            pass
-        _playwright_instance = None
-
-
-async def _acquire_browser() -> Browser:
-    """Return the pooled headless Chromium browser, launching it on first use.
-
-    One browser is shared across all JavaScript fetches (a fresh page is
-    created per fetch) instead of launching a new browser per call; a dead or
-    disconnected browser is relaunched transparently.
-    """
-    global _playwright_instance, _browser
-    async with _browser_lock:
-        if _browser is None or not _browser_is_connected(_browser):
-            await _release_pool()
-            _playwright_instance = await async_playwright().start()
-            _browser = await _playwright_instance.chromium.launch(headless=True, args=_BROWSER_LAUNCH_ARGS)
-        return _browser
-
-
-async def close_fetch_browser() -> None:
-    """Shut down the pooled Playwright browser; called during app teardown."""
-    async with _browser_lock:
-        await _release_pool()
-
-
 async def _js_site_fetch(url: str, timeout: float) -> tuple[str, str]:
     """Render a page in headless Chromium and return its HTML and media type.
 
@@ -454,8 +393,8 @@ async def _js_site_fetch(url: str, timeout: float) -> tuple[str, str]:
     pinned httpx client. Rendered HTML is truncated to ``_MAX_RESPONSE_BYTES``.
     """
     validated_url = await validate_public_http_url(url)
-    async with _PLAYWRIGHT_SEMAPHORE, httpx.AsyncClient(timeout=timeout, follow_redirects=False) as client:
-        browser = await _acquire_browser()
+    async with BROWSER_SEMAPHORE, httpx.AsyncClient(timeout=timeout, follow_redirects=False) as client:
+        browser = await acquire_browser()
         context = await browser.new_context(service_workers="block")
         try:
             await context.route("**/*", functools.partial(_serve_browser_request, client, timeout))

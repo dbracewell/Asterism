@@ -1,8 +1,7 @@
 # ADR-0082 — Diagrams in canvas exports
 
-Status: accepted. The shared diagram policy is implemented for US-105.1
-(2026-11-25); the server renderer and the exports follow in US-105.2 and
-US-105.3 ([EPIC-105](../epics/EPIC-105-DIAGRAMS-IN-CANVAS-EXPORTS.md)).
+Status: accepted. The shared diagram policy (US-105.1) and the server renderer
+(US-105.2) are implemented (2026-11-25); the exports follow in US-105.3 ([EPIC-105](../epics/EPIC-105-DIAGRAMS-IN-CANVAS-EXPORTS.md)).
 
 ## Context
 
@@ -63,6 +62,27 @@ policy, the print theme, mermaid's `dist/mermaid.min.js` and DOMPurify's
 `dist/purify.min.js` are readable, and that the image's mermaid is exactly the
 version the frontend pins. So the app and exports always draw with the same
 mermaid and the same rules.
+
+## Decision: the renderer (US-105.2)
+
+- **One pool.** The pooled browser moved from the fetch tool to
+  `asterism/common/headless_browser.py` (`acquire_browser`, `close_browser`,
+  `BROWSER_SEMAPHORE`, the launch arguments), unchanged; the fetch tool and the
+  renderer both use it, and app shutdown closes it once.
+- **One sanitizer.** `sanitize-svg.js` in the shared package
+  (`createDiagramSanitizer`) is what the app's viewer calls and what the
+  renderer's page loads as an inline module, so both clean SVG identically.
+- **`draw_diagrams(sources, deadline_seconds=…)`** in
+  `domains/canvas/diagrams.py` opens one offline context (service workers
+  blocked, every routed request aborted and counted), loads the mermaid and
+  DOMPurify bundles and the sanitizer as inline scripts, and draws each source
+  passed as data. Each result is a `DrawnDiagram` (PNG at the policy scale, CSS
+  size, name, description) or `None`. A diagram that exceeds the time limit
+  costs its page and the next gets a fresh one; the batch stops at its deadline.
+  Logs count diagrams and never include their text.
+- **Checked in the image.** `check:image` draws a diagram inside the running
+  container, as the runtime user, with the image's own Chromium, DejaVu fonts,
+  bundles and policy, and checks the PNG's name and 2× size.
 
 ## Decision: bounded, accessible, nothing stored
 

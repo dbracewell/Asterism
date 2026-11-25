@@ -21,6 +21,7 @@ if (!/^[a-zA-Z0-9][a-zA-Z0-9._/:@-]*$/.test(values.image)) {
 
 const check = String.raw`
 import asyncio, os, pwd
+from asterism.common import headless_browser
 from asterism.domains.tools.builtin import fetch
 
 PAGE = "<html><body><main id='out'></main><script>document.getElementById('out').textContent = 'Rendered by JavaScript';</script></body></html>"
@@ -28,7 +29,9 @@ PAGE = "<html><body><main id='out'></main><script>document.getElementById('out')
 async def main():
     user = pwd.getpwuid(os.getuid()).pw_name
     assert os.getuid() != 0, "the check must run as the image's non-root user"
-    browser = await fetch._acquire_browser()
+    # The fetch tool uses the shared pool (ADR-0082), as the export renderer does.
+    assert fetch.acquire_browser is headless_browser.acquire_browser
+    browser = await headless_browser.acquire_browser()
     try:
         context = await browser.new_context(service_workers="block")
         await context.route("**/*", lambda route: route.fulfill(status=200, content_type="text/html", body=PAGE))
@@ -37,9 +40,9 @@ async def main():
         html = await page.content()
         await context.close()
     finally:
-        await fetch.close_fetch_browser()
+        await headless_browser.close_browser()
     assert "Rendered by JavaScript" in html, html
-    print(f"ok: {browser.browser_type.name} {browser.version} rendered JavaScript as {user} with {len(fetch._BROWSER_LAUNCH_ARGS)} launch arguments")
+    print(f"ok: {browser.browser_type.name} {browser.version} rendered JavaScript as {user} with {len(headless_browser.BROWSER_LAUNCH_ARGS)} launch arguments")
 
 asyncio.run(main())
 `;

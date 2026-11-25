@@ -6,10 +6,16 @@
   "type": "module",
   "exports": {
     "./policy.json": "./policy.json",
-    "./print-theme.json": "./print-theme.json"
+    "./print-theme.json": "./print-theme.json",
+    "./sanitize-svg.js": {
+      "types": "./sanitize-svg.d.ts",
+      "default": "./sanitize-svg.js"
+    }
   },
   "files": [
     "policy.json",
-    "print-theme.json"
+    "print-theme.json",
+    "sanitize-svg.js",
+    "sanitize-svg.d.ts"
   ]
 }

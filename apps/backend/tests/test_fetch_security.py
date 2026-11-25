@@ -5,6 +5,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import httpx
 import pytest
+from asterism.common import headless_browser
 from asterism.core.schemas import Document
 from asterism.domains.tools.builtin import fetch as fetch_module
 from asterism.domains.tools.builtin.fetch import (
@@ -542,7 +543,7 @@ async def test_browser_fetch_only_reaches_network_through_the_pinned_client(
                     pytest.skip("Playwright Chromium is not installed")
                 raise
     finally:
-        await fetch_module.close_fetch_browser()
+        await headless_browser.close_browser()
 
     assert mime_type == "text/html"
     assert "rendered by script" in html
@@ -565,7 +566,7 @@ async def test_pooled_browser_cannot_reach_the_network_unrouted() -> None:
     try:
         async with server:
             try:
-                browser = await fetch_module._acquire_browser()
+                browser = await headless_browser.acquire_browser()
             except Exception as exc:
                 if "Executable doesn't exist" in str(exc):
                     pytest.skip("Playwright Chromium is not installed")
@@ -579,7 +580,7 @@ async def test_pooled_browser_cannot_reach_the_network_unrouted() -> None:
             finally:
                 await context.close()
     finally:
-        await fetch_module.close_fetch_browser()
+        await headless_browser.close_browser()
 
     assert hits == []
 

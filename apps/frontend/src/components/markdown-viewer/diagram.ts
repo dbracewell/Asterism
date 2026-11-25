@@ -1,3 +1,7 @@
+import {
+  createDiagramSanitizer,
+  type SanitizedDiagram,
+} from "@asterism/diagram-policy/sanitize-svg.js";
 import createDOMPurify from "dompurify";
 import type { DiagramTheme } from "./diagram-theme";
 import {
@@ -37,24 +41,9 @@ export function isClosedFence(raw: string): boolean {
   );
 }
 
-const sanitizer = diagramPolicy.sanitizer;
-
-// A separate instance, so these hooks never change how mermaid sanitizes its
-// own labels with the default one.
-let purifier: ReturnType<typeof createDOMPurify> | null = null;
-function svgPurifier() {
-  if (purifier) return purifier;
-  purifier = createDOMPurify(window);
-  purifier.addHook("uponSanitizeAttribute", (_node, data) => {
-    // Markers and gradients refer to their own document; nothing else may.
-    if (
-      (data.attrName === "href" || data.attrName === "xlink:href") &&
-      !data.attrValue.startsWith(sanitizer.internalHrefPrefix)
-    )
-      data.keepAttr = false;
-  });
-  return purifier;
-}
+// The shared sanitizer (ADR-0082): the server's export renderer runs the same
+// file, so the app and exports clean diagrams identically.
+let sanitize: ((svg: string) => SanitizedDiagram | null) | null = null;
 
 /**
  * Keeps only static SVG: no scripts, event attributes, foreign HTML, embedded
@@ -62,44 +51,8 @@ function svgPurifier() {
  * explicit size, or null when nothing drawable is left.
  */
 export function sanitizeDiagramSvg(svg: string): Omit<Diagram, "ok"> | null {
-  const clean = svgPurifier().sanitize(svg, {
-    USE_PROFILES: { ...sanitizer.profiles },
-    ADD_TAGS: [...sanitizer.addTags],
-    FORBID_TAGS: [...sanitizer.forbidTags],
-    FORBID_ATTR: [...sanitizer.forbidAttributes],
-    RETURN_DOM_FRAGMENT: true,
-  });
-  const root = clean.firstElementChild;
-  if (!(root instanceof SVGSVGElement) && root?.localName !== "svg")
-    return null;
-  const box = root
-    .getAttribute("viewBox")
-    ?.trim()
-    .split(/[\s,]+/)
-    .map(Number);
-  const [width, height] =
-    box?.length === 4 && box.every(Number.isFinite) ? box.slice(2) : [0, 0];
-  if (!(width > 0 && height > 0)) return null;
-  // Mermaid sizes the SVG for inline use (width="100%", max-width style). As a
-  // standalone image it needs its own size.
-  root.setAttribute("width", String(Math.ceil(width)));
-  root.setAttribute("height", String(Math.ceil(height)));
-  root.removeAttribute("style");
-  const title = root.querySelector(":scope > title")?.textContent?.trim();
-  const description =
-    root.querySelector(":scope > desc")?.textContent?.trim() || null;
-  const type = root.getAttribute("aria-roledescription")?.trim();
-  return {
-    svg: new XMLSerializer().serializeToString(root),
-    width: Math.ceil(width),
-    height: Math.ceil(height),
-    label: (title || (type ? `Diagram: ${type}` : "Diagram")).slice(
-      0,
-      diagramPolicy.labelLimits.name,
-    ),
-    description:
-      description?.slice(0, diagramPolicy.labelLimits.description) ?? null,
-  };
+  sanitize ??= createDiagramSanitizer(createDOMPurify, window, diagramPolicy);
+  return sanitize(svg);
 }
 
 export const diagramImageSource = (svg: string) =>

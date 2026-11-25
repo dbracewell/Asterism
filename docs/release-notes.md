@@ -33,6 +33,9 @@ Unreleased into its version and date.
   canvas exports share. `pnpm check:image` also checks that the mermaid and
   DOMPurify bundles the export renderer needs are readable and that mermaid is
   the frontend's pinned version.
+- `pnpm check:image` draws a mermaid diagram inside the running container, as
+  the runtime user, to check the export renderer works with the image's own
+  Chromium, fonts and bundles.
 
 ### Behavior
 
