@@ -2,11 +2,17 @@
 import { useTheme } from "@/features/theme/components/theme-context";
 import { cn } from "@/lib/utils";
 import "katex/dist/katex.min.css";
-import { isValidElement, type HTMLAttributes } from "react";
+import {
+  isValidElement,
+  useMemo,
+  type HTMLAttributes,
+  type ReactNode,
+} from "react";
 import ReactMarkdown from "react-markdown";
 import { CodeBlock } from "./code-block";
 import { isClosedFence } from "./diagram";
 import { DiagramBlock } from "./diagram-block";
+import { diagramTheme } from "./diagram-theme";
 import { syntaxTheme } from "./syntax-theme";
 import rehypeKatex from "rehype-katex";
 import remarkGfm from "remark-gfm";
@@ -43,6 +49,16 @@ const MarkdownViewer = ({
   const codeTheme = syntaxTheme(
     globalTheme.currentTheme,
     globalTheme.currentThemeType,
+  );
+  const palette = globalTheme.getTheme?.(globalTheme.currentTheme)?.colors;
+  const diagram = useMemo(
+    () =>
+      diagramTheme(
+        globalTheme.currentTheme,
+        palette,
+        globalTheme.currentThemeType === "dark",
+      ),
+    [globalTheme.currentTheme, palette, globalTheme.currentThemeType],
   );
   return (
     <div
@@ -142,7 +158,7 @@ const MarkdownViewer = ({
             const language = /language-([\w-]+)/.exec(
               code?.className ?? "",
             )?.[1];
-            const codeBlock = (note?: string) => (
+            const codeBlock = (note?: string, actions?: ReactNode) => (
               <CodeBlock
                 text={text}
                 language={language}
@@ -150,6 +166,7 @@ const MarkdownViewer = ({
                 fontSize={codeFontSize ?? globalTheme.fontSize}
                 scrollClassName={scrollRegion}
                 note={note}
+                actions={actions}
               />
             );
             if (language !== "mermaid") return codeBlock();
@@ -163,8 +180,9 @@ const MarkdownViewer = ({
                     content.slice(span.start.offset, span.end.offset),
                   )
                 }
-                theme={globalTheme.currentThemeType}
+                theme={diagram}
                 fallback={codeBlock}
+                scrollClassName={scrollRegion}
               />
             );
           },

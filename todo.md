@@ -81,12 +81,12 @@ Source: user request (2026-11-25). [EPIC-103](docs/epics/EPIC-103-MERMAID-DIAGRA
   - [x] Draw only closed fences; fall back to `CodeBlock` on errors, limits, timeouts and load failures
   - [x] Unit tests (draws, inert labels, fallbacks, unclosed fence, config not overridable)
   - [x] `/e2e/markdown` harness cases and a Playwright spec (no CSP violations)
-- [ ] US-103.2: The diagram block
-  - [ ] Header: Diagram/Code toggle, Copy source, Expand dialog, Download SVG/PNG
-  - [ ] Keyboard-scrollable region; `role="img"` named from `accTitle`/`accDescr`
-  - [ ] Theme variables from app tokens; redraw on theme change; theme-contrast harness
-  - [ ] Layout at 320px, canvas panel, Study notes and the guide
-  - [ ] Tests (toggle, copy, expand, accessible name, theme redraw)
+- [x] US-103.2: The diagram block
+  - [x] Header: Diagram/Code toggle, Copy source, Expand dialog, Download SVG/PNG
+  - [x] Keyboard-scrollable region; `role="img"` named from `accTitle`/`accDescr`
+  - [x] Theme variables from app tokens; redraw on theme change; theme-contrast harness
+  - [x] Layout at 320px, canvas panel, Study notes and the guide
+  - [x] Tests (toggle, copy, expand, accessible name, theme redraw)
 - [ ] US-103.3: Agent guidance
   - [ ] `DIAGRAM_GUIDANCE` in `build_runtime_prompt`
   - [ ] Narrow `IMAGE_GUIDANCE` to pictures; labelled diagrams go to mermaid

@@ -119,9 +119,7 @@ Researchers reported a new comet.
 
 // ADR-0081: one diagram that draws, one that can't, and one whose source tries
 // to change the locked configuration, run script, add HTML or reach a host.
-export const diagramMarkdown =
-  String.raw`
-` +
+export const waterCycleDiagram =
   "```mermaid" +
   String.raw`
 flowchart LR
@@ -129,10 +127,12 @@ flowchart LR
   accDescr: Water evaporates, condenses into clouds and falls as rain.
   sea[Sea] --> cloud[Clouds] --> rain[Rain] --> sea
 ` +
-  "```" +
-  String.raw`
+  "```\n";
 
-` +
+export const diagramMarkdown =
+  "\n" +
+  waterCycleDiagram +
+  "\n" +
   "```mermaid" +
   String.raw`
 this is not a diagram

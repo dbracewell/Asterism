@@ -1,9 +1,20 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import MarkdownViewer from ".";
+import { contrastRatio } from "@/features/theme/contrast";
+import type { Theme } from "@/features/theme/types";
+import atlas from "@/features/theme/bundled/atlas.json";
+
+const bundledThemes = import.meta.glob<Theme>(
+  "../../features/theme/bundled/*.json",
+  { eager: true, import: "default" },
+);
+import { diagramTheme, diagramThemeVariables } from "./diagram-theme";
 import {
   clearDiagramCacheForTests,
+  diagramFileName,
   isClosedFence,
   renderDiagram,
   sanitizeDiagramSvg,
@@ -15,15 +26,32 @@ const mermaid = vi.hoisted(() => ({
   render: vi.fn(),
 }));
 vi.mock("mermaid", () => ({ default: mermaid }));
-vi.mock("@/features/theme/components/theme-context", () => ({
-  useTheme: () => ({ currentThemeType: "light", fontSize: "16px" }),
+const themeState = vi.hoisted(() => ({
+  current: { currentThemeType: "light", fontSize: "16px" } as Record<
+    string,
+    unknown
+  >,
 }));
+vi.mock("@/features/theme/components/theme-context", () => ({
+  useTheme: () => themeState.current,
+}));
+const saveBlob = vi.hoisted(() => vi.fn());
+vi.mock("@/lib/save-blob", () => ({ saveBlob }));
+
+const light = { key: "light", dark: false };
+const dark = { key: "dark", dark: true };
 
 const svg = (body: string, attrs = 'viewBox="0 0 120 40"') =>
   `<svg xmlns="http://www.w3.org/2000/svg" width="100%" style="max-width: 120px;" ${attrs} aria-roledescription="flowchart-v2">${body}</svg>`;
 
 beforeEach(() => {
   clearDiagramCacheForTests();
+  saveBlob.mockReset();
+  themeState.current = { currentThemeType: "light", fontSize: "16px" };
+  Object.defineProperty(navigator, "clipboard", {
+    configurable: true,
+    value: { writeText: vi.fn().mockResolvedValue(undefined) },
+  });
   mermaid.initialize.mockReset();
   mermaid.render.mockReset();
   mermaid.render.mockResolvedValue({
@@ -101,7 +129,7 @@ describe("sanitizeDiagramSvg", () => {
 describe("renderDiagram", () => {
   it("draws with the locked configuration and the chat theme", async () => {
     await expect(
-      renderDiagram("flowchart LR\na-->b", "dark"),
+      renderDiagram("flowchart LR\na-->b", dark),
     ).resolves.toMatchObject({ ok: true });
     const config = mermaid.initialize.mock.calls[0][0];
     expect(config).toMatchObject({
@@ -123,19 +151,19 @@ describe("renderDiagram", () => {
 
   it("returns a failure for invalid diagrams instead of throwing", async () => {
     mermaid.render.mockRejectedValueOnce(new Error("Parse error <b>x</b>"));
-    await expect(renderDiagram("nope", "light")).resolves.toEqual({
+    await expect(renderDiagram("nope", light)).resolves.toEqual({
       ok: false,
     });
     // The queue keeps working after a failure.
     await expect(
-      renderDiagram("flowchart LR\na-->b", "light"),
+      renderDiagram("flowchart LR\na-->b", light),
     ).resolves.toMatchObject({ ok: true });
   });
 
   it("gives up on a diagram that takes too long", async () => {
     vi.useFakeTimers();
     mermaid.render.mockReturnValueOnce(new Promise(() => {}));
-    const result = renderDiagram("flowchart LR\na-->b", "light");
+    const result = renderDiagram("flowchart LR\na-->b", light);
     await vi.advanceTimersByTimeAsync(MERMAID_RENDER_TIMEOUT_MS + 1);
     await expect(result).resolves.toEqual({ ok: false });
   });
@@ -185,5 +213,154 @@ describe("MarkdownViewer diagrams", () => {
   it("leaves other code blocks alone", () => {
     view("```python\nprint(1)\n```");
     expect(mermaid.render).not.toHaveBeenCalled();
+  });
+});
+
+describe("diagram themes", () => {
+  it("draws with the app palette through mermaid's base theme", async () => {
+    const theme = diagramTheme("atlas", atlas.colors, false);
+    await renderDiagram("flowchart LR\na-->b", theme);
+    const config = mermaid.initialize.mock.calls[0][0];
+    expect(config.theme).toBe("base");
+    expect(config.themeVariables).toMatchObject({
+      primaryColor: atlas.colors.secondary,
+      primaryTextColor: atlas.colors["secondary-foreground"],
+      background: atlas.colors.card,
+    });
+  });
+
+  it.each(Object.entries(bundledThemes))(
+    "%s: every diagram text color reads on its surface",
+    (_name, theme) => {
+      const v = diagramThemeVariables(theme.colors, theme.type === "dark");
+      for (const [text, surface] of [
+        ["primaryTextColor", "primaryColor"],
+        ["nodeTextColor", "mainBkg"],
+        ["actorTextColor", "actorBkg"],
+        ["noteTextColor", "noteBkgColor"],
+        ["labelTextColor", "labelBoxBkgColor"],
+        ["secondaryTextColor", "secondaryColor"],
+        ["tertiaryTextColor", "tertiaryColor"],
+        ["textColor", "background"],
+        ["signalTextColor", "background"],
+        ["pieTitleTextColor", "background"],
+        ["cScaleLabel0", "cScale0"],
+        ["cScaleLabel1", "cScale1"],
+        ["cScaleLabel2", "cScale2"],
+        ["cScaleLabel3", "cScale3"],
+      ])
+        expect(
+          contrastRatio(String(v[text]), String(v[surface])),
+          `${text} on ${surface}`,
+        ).toBeGreaterThanOrEqual(4.5);
+    },
+  );
+
+  it("falls back to mermaid's own theme without a palette", () => {
+    expect(diagramTheme(undefined, undefined, true)).toEqual({
+      key: "mermaid-dark",
+      dark: true,
+    });
+  });
+});
+
+it.each([
+  ["Water cycle", "svg", "water-cycle.svg"],
+  ["Diagram: flowchart-v2", "png", "flowchart-v2.png"],
+  ["Ünïcode  ✓ title!", "svg", "unicode-title.svg"],
+  ["✓✓", "png", "diagram.png"],
+] as const)("names the download for %j", (label, format, name) =>
+  expect(diagramFileName(label, format)).toBe(name),
+);
+
+describe("the diagram block", () => {
+  const view = (content: string) =>
+    render(
+      <TooltipProvider>
+        <MarkdownViewer content={content} />
+      </TooltipProvider>,
+    );
+  const block = "```mermaid\nflowchart LR\n  a --> b\n```\n";
+
+  it("opens as the diagram, and the toggle shows the code and back", async () => {
+    const user = userEvent.setup();
+    view(block);
+    await screen.findByRole("img", { name: "Diagram: flowchart-v2" });
+    await user.click(screen.getByRole("button", { name: "Show code" }));
+    expect(screen.queryByRole("img")).toBeNull();
+    expect(
+      screen.getByRole("region", { name: "Scrollable code" }).textContent,
+    ).toContain("flowchart LR");
+    const back = screen.getByRole("button", { name: "Show diagram" });
+    expect(back).toBe(document.activeElement);
+    await user.click(back);
+    expect(
+      screen.getByRole("img", { name: "Diagram: flowchart-v2" }),
+    ).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Show code" })).toBe(
+      document.activeElement,
+    );
+    expect(mermaid.render).toHaveBeenCalledTimes(1);
+  });
+
+  it("copies the source and shows the diagram at full size", async () => {
+    const user = userEvent.setup();
+    view(block);
+    await screen.findByRole("img");
+    await user.click(screen.getByRole("button", { name: "Copy" }));
+    expect(await navigator.clipboard.readText()).toBe(
+      "flowchart LR\n  a --> b",
+    );
+    await user.click(screen.getByRole("button", { name: "Expand diagram" }));
+    const dialog = await screen.findByRole("dialog", {
+      name: "Diagram: flowchart-v2",
+    });
+    expect(dialog.querySelector("img")?.getAttribute("width")).toBe("120");
+  });
+
+  it("downloads the SVG under the diagram's name", async () => {
+    mermaid.render.mockResolvedValueOnce({
+      svg: svg("<title>Water cycle</title><g/>"),
+    });
+    const user = userEvent.setup();
+    view(block);
+    await screen.findByRole("img", { name: "Water cycle" });
+    await user.click(screen.getByRole("button", { name: "Download diagram" }));
+    await user.click(
+      await screen.findByRole("menuitem", { name: "SVG image" }),
+    );
+    expect(saveBlob).toHaveBeenCalledWith(expect.any(Blob), "water-cycle.svg");
+    const blob = saveBlob.mock.calls[0][0] as Blob;
+    expect(blob.type).toMatch(/^image\/svg\+xml/);
+    expect(await blob.text()).toContain("<title>Water cycle</title>");
+  });
+
+  it("draws again when the theme changes", async () => {
+    themeState.current = {
+      currentThemeType: "light",
+      currentTheme: "atlas",
+      fontSize: "16px",
+      getTheme: () => atlas,
+    };
+    const { rerender } = view(block);
+    await screen.findByRole("img");
+    themeState.current = {
+      currentThemeType: "dark",
+      currentTheme: "night",
+      fontSize: "16px",
+      getTheme: () => ({
+        ...atlas,
+        colors: { ...atlas.colors, card: "#101010" },
+      }),
+    };
+    rerender(
+      <TooltipProvider>
+        <MarkdownViewer content={block} />
+      </TooltipProvider>,
+    );
+    await vi.waitFor(() => expect(mermaid.render).toHaveBeenCalledTimes(2));
+    expect(mermaid.initialize.mock.calls[1][0].themeVariables.background).toBe(
+      "#101010",
+    );
   });
 });

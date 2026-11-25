@@ -268,7 +268,8 @@ for (const theme of themes)
         expect(
           await region
             .locator(
-              'script,iframe,img,form,style,link,input:not([type="checkbox"][disabled]),video',
+              // Diagrams (ADR-0081) are the only images: sanitized data: SVGs.
+              'script,iframe,img:not([data-slot="diagram-image"][src^="data:image/svg+xml"]),form,style,link,input:not([type="checkbox"][disabled]),video',
             )
             .count(),
         ).toBe(0);

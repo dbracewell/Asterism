@@ -1,7 +1,8 @@
 import createDOMPurify from "dompurify";
+import type { DiagramTheme } from "./diagram-theme";
 import { markdownMermaidConfig, MERMAID_RENDER_TIMEOUT_MS } from "./policy";
 
-export type DiagramTheme = "light" | "dark";
+export type { DiagramTheme } from "./diagram-theme";
 
 export type Diagram = {
   ok: true;
@@ -114,7 +115,9 @@ async function draw(source: string, theme: DiagramTheme) {
   mermaid.initialize({
     ...markdownMermaidConfig,
     secure: [...markdownMermaidConfig.secure],
-    theme: theme === "dark" ? "dark" : "default",
+    ...(theme.variables
+      ? { theme: "base" as const, themeVariables: theme.variables }
+      : { theme: theme.dark ? ("dark" as const) : ("default" as const) }),
   });
   const { svg } = await mermaid.render(
     `asterism-diagram-${++sequence}`,
@@ -176,7 +179,7 @@ export function diagramStore(
   source: string,
   theme: DiagramTheme,
 ): DiagramStore {
-  const key = `${theme}\n${source}`;
+  const key = `${theme.key}\n${source}`;
   let store = stores.get(key);
   if (store) {
     stores.delete(key);
@@ -190,4 +193,55 @@ export function diagramStore(
 
 export function clearDiagramCacheForTests() {
   stores.clear();
+}
+
+/** A download name from the diagram's label: "Water cycle" → "water-cycle". */
+export function diagramFileName(label: string, extension: "svg" | "png") {
+  const base = label
+    .replace(/^Diagram: /, "")
+    .normalize("NFKD")
+    .replace(/\p{M}/gu, "")
+    .replace(/[^\p{L}\p{N}]+/gu, "-")
+    .replace(/^-+|-+$/g, "")
+    .toLowerCase()
+    .slice(0, 60);
+  return `${base || "diagram"}.${extension}`;
+}
+
+export const diagramSvgBlob = (diagram: Diagram) =>
+  new Blob([diagram.svg], { type: "image/svg+xml;charset=utf-8" });
+
+/** The largest PNG side, so a huge diagram can't exhaust canvas memory. */
+const PNG_MAX_SIDE = 8_192;
+
+/**
+ * The sanitized SVG drawn at twice its size on `background`. Made in the
+ * browser from the same image the page shows; nothing is uploaded.
+ */
+export async function diagramPngBlob(
+  diagram: Diagram,
+  background: string,
+): Promise<Blob> {
+  const image = new Image();
+  image.src = diagramImageSource(diagram.svg);
+  await image.decode();
+  const scale = Math.min(
+    2,
+    PNG_MAX_SIDE / diagram.width,
+    PNG_MAX_SIDE / diagram.height,
+  );
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.round(diagram.width * scale);
+  canvas.height = Math.round(diagram.height * scale);
+  const context = canvas.getContext("2d");
+  if (!context) throw new Error("Canvas is unavailable");
+  context.fillStyle = background;
+  context.fillRect(0, 0, canvas.width, canvas.height);
+  context.drawImage(image, 0, 0, canvas.width, canvas.height);
+  return new Promise((resolve, reject) =>
+    canvas.toBlob(
+      (blob) => (blob ? resolve(blob) : reject(new Error("PNG failed"))),
+      "image/png",
+    ),
+  );
 }
