@@ -136,22 +136,6 @@ export const zCanvasRestore = z.object({
 });
 
 /**
- * CanvasVersion
- */
-export const zCanvasVersion = z.object({
-  number: z.int(),
-  title: z.string(),
-  author: z.enum(["agent", "user"]),
-  message_id: z.uuid(),
-  size: z.int(),
-  created_at: z.int(),
-  item_id: z.uuid(),
-  kind: z.enum(["document", "code", "html"]),
-  language: z.string(),
-  content: z.string(),
-});
-
-/**
  * CanvasVersionCreate
  *
  * A user's edit, saved on top of ``base_version``, the version being edited.
@@ -1620,6 +1604,23 @@ export const zInlineFileReference = z.object({
   mime_type: z.string().nullish(),
   kind: zFileKind.nullish(),
   size: z.int().gte(0).nullish(),
+});
+
+/**
+ * CanvasVersion
+ */
+export const zCanvasVersion = z.object({
+  number: z.int(),
+  title: z.string(),
+  author: z.enum(["agent", "user"]),
+  message_id: z.uuid(),
+  size: z.int(),
+  created_at: z.int(),
+  item_id: z.uuid(),
+  kind: z.enum(["document", "code", "html"]),
+  language: z.string(),
+  content: z.string(),
+  inline_files: z.array(zInlineFileReference).optional(),
 });
 
 /**

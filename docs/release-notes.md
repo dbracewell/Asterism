@@ -54,6 +54,9 @@ Unreleased into its version and date.
   in light colors. A diagram that can't be drawn appears as code with "Diagram
   not drawn". Markdown, text and ZIP downloads keep the diagram's text. Exports
   with diagrams take a few seconds longer.
+- Pictures made in a chat, and files attached to it or its project, now show
+  in that chat's canvas documents instead of "File unavailable"
+  ([ADR-0083](adr/0083-images-in-canvas.md)).
 - Screen readers no longer list every code block, table, equation and diagram
   in an answer as a landmark. Each is a group named for what it holds, such as
   "Code: python" or "Table", and still scrolls with the keyboard. Task-list

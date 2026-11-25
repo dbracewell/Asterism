@@ -5,6 +5,8 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, StrictBool
 
+from asterism.domains.chat.schemas import InlineFileReference
+
 CanvasKind = Literal["document", "code", "html"]
 CanvasAuthor = Literal["agent", "user"]
 
@@ -56,6 +58,10 @@ class CanvasVersion(CanvasVersionSummary):
     kind: CanvasKind
     language: str
     content: str
+    inline_files: list[InlineFileReference] = Field(
+        default_factory=list,
+        description="The content's asterism-file: references, resolved against the chat's live file scope on read",
+    )
 
 
 class CanvasVersionCreate(BaseModel):

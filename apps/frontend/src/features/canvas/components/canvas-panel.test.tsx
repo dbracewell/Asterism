@@ -32,6 +32,18 @@ vi.mock("@/lib/api", () => ({
 vi.mock("@/features/theme/components/theme-context", () => ({
   useTheme: () => ({ currentTheme: "light", currentThemeType: "light" }),
 }));
+// Chat-file bytes for inline images; everything else is the generated client.
+vi.mock("@/lib/client/@tanstack/react-query.gen", async (importOriginal) => ({
+  ...(await importOriginal<object>()),
+  chatFileDownloadOptions: ({
+    path,
+  }: {
+    path: { chat_id: string; file_id: string };
+  }) => ({
+    queryKey: ["chatFileDownload", path],
+    queryFn: async () => new Blob(["bytes"]),
+  }),
+}));
 // CodeMirror needs layout APIs jsdom lacks; a textarea stands in for it.
 vi.mock("next/dynamic", () => ({
   default: () =>
@@ -251,6 +263,52 @@ describe("CanvasPanel", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "Canvas item not found in this conversation",
     );
+  });
+});
+
+describe("CanvasPanel images", () => {
+  const IMAGE = "10000000-0000-4000-8000-000000000001";
+  const STRANGER = "10000000-0000-4000-8000-000000000002";
+
+  it("shows the chat files the server resolved for the version", async () => {
+    URL.createObjectURL = vi.fn(() => "blob:test/1");
+    URL.revokeObjectURL = vi.fn();
+    contents[2] =
+      `# Weather\n\n![The water cycle](asterism-file:${IMAGE})\n\n` +
+      `![Not here](asterism-file:${STRANGER})`;
+    api.canvasVersionGetOne.mockImplementation(({ path }) =>
+      Promise.resolve({
+        data: {
+          ...versions[path.number - 1],
+          item_id: ITEM,
+          kind: "document",
+          language: "",
+          content: contents[path.number],
+          inline_files:
+            path.number === 2
+              ? [
+                  {
+                    file_id: IMAGE,
+                    available: true,
+                    role: "referenced",
+                    name: "sea.png",
+                    mime_type: "image/png",
+                    kind: "image",
+                    size: 5,
+                  },
+                  { file_id: STRANGER, available: false },
+                ]
+              : [],
+        },
+      }),
+    );
+    setup();
+    await screen.findByRole("textbox", { name: "Notes, version 2" });
+    await userEvent.click(screen.getByRole("tab", { name: "Preview" }));
+    const image = await screen.findByRole("img", { name: "The water cycle" });
+    expect(image).toHaveAttribute("src", "blob:test/1");
+    expect(screen.getByText("File unavailable: Not here")).toBeVisible();
+    contents[2] = "second draft";
   });
 });
 

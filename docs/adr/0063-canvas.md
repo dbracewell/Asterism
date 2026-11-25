@@ -88,6 +88,11 @@ and `GET …/versions/{number}` one version's content. Reads are owner-scoped an
 work while canvas is switched off, so existing content stays reachable; only
 writing is gated.
 
+Each version response also carries `inline_files`, the content's
+`asterism-file:` references resolved against the chat's live file scope when
+read, so the preview shows chat images
+([ADR-0083](0083-images-in-canvas.md)).
+
 ### User edits and restores (US-72.2)
 
 `POST /chat/{chat_id}/canvas/{item_id}/versions` (`{base_version, content,

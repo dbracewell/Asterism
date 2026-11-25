@@ -1,6 +1,13 @@
+import AxeBuilder from "@axe-core/playwright";
 import { measure } from "./support/contrast";
 import { mockLearningModes } from "./support/learning-modes";
-import { expect, test, type Page, type WebSocketRoute } from "./support/test";
+import {
+  animationsSettled,
+  expect,
+  test,
+  type Page,
+  type WebSocketRoute,
+} from "./support/test";
 import type {
   CanvasVersion,
   Chat,
@@ -16,6 +23,13 @@ const MODEL = "11111111-1111-4111-8111-111111111111";
 const CHAT = "77777777-7777-4777-8777-777777777777";
 const ITEM = "cccccccc-cccc-4ccc-8ccc-000000000001";
 const NEW_ITEM = "cccccccc-cccc-4ccc-8ccc-000000000002";
+const IMAGE = "99999999-9999-4999-8999-000000000001";
+const STRANGER = "99999999-9999-4999-8999-000000000002";
+// A 640 x 80 PNG, wider than a phone, so the preview must scale it down.
+const WIDE_PNG = Buffer.from(
+  "iVBORw0KGgoAAAANSUhEUgAAAoAAAABQCAIAAAAGDlNyAAABGUlEQVR42u3VMQ0AAAgEsZeGNKQhDQ8MTE2q4JZL9QAAzyIBABgwABgwAGDAAGDAAIABA4ABAwAGDAAGDAAYMAAYMAAYMABgwABgwACAAQOAAQMABgwABgwAGDAAGDAAGDAAYMAAYMAAgAEDgAEDAAYMAAYMABgwABgwABgwAGDAAGDAAIABA4ABAwAGDAAGDAAYMAAYMAAYMABgwABgwACAAQOAAQMABgwABgwAGDAAGDAAGDAAYMAAYMAAgAEDgAEDAAYMAAYMABgwABgwABgwAGDAAGDAAIABA4ABAwAGDAAGDAAYMAAYMAAYMABgwABgwACAAQOAAQMABgwABgwAGDAAGDAAGDAAYMAAYMAAgAEDgAEDADcLtuURlRLSdUUAAAAASUVORK5CYII=",
+  "base64",
+);
 
 const model: ChatModelChoice = {
   id: MODEL,
@@ -66,7 +80,7 @@ const step: Message = {
   ],
 };
 
-function canvasState() {
+function canvasState(first: Partial<CanvasVersion> = {}) {
   const versions: CanvasVersion[] = [
     {
       number: 1,
@@ -79,6 +93,7 @@ function canvasState() {
       kind: "document",
       language: "",
       content: "# Launch\n\nShip on Friday.",
+      ...first,
     },
   ];
   const writes: { url: string; body: Record<string, unknown> }[] = [];
@@ -97,7 +112,7 @@ function canvasState() {
   return { versions, writes, add };
 }
 
-async function openChat(page: Page) {
+async function openChat(page: Page, first: Partial<CanvasVersion> = {}) {
   await mockLearningModes(page);
   const chat: Chat = {
     info: {
@@ -113,7 +128,7 @@ async function openChat(page: Page) {
     },
     messages: [userMessage],
   };
-  const canvas = canvasState();
+  const canvas = canvasState(first);
   const sends: Record<string, unknown>[] = [];
   await page.route("**/api/py/chat/models", (route) =>
     route.fulfill({ json: [model] }),
@@ -363,6 +378,76 @@ test("opens as a full-screen sheet on mobile", async ({ page }, info) => {
   await page.screenshot({ path: info.outputPath("canvas-mobile.png") });
   await page.keyboard.press("Escape");
   await expect(sheet).toBeHidden();
+});
+
+test("a document shows the chat's images in its preview", async ({ page }) => {
+  // US-107.1 (ADR-0083): only files the server resolved for the version load.
+  const requested: string[] = [];
+  await page.route(`**/api/py/chat/${CHAT}/files/*`, (route) => {
+    const path = new URL(route.request().url()).pathname;
+    requested.push(path);
+    if (path.endsWith(`/files/${IMAGE}`))
+      return route.fulfill({ body: WIDE_PNG, contentType: "image/png" });
+    if (path.endsWith("/files/context")) return route.fallback();
+    return route.fulfill({ status: 404, json: { detail: "File not found" } });
+  });
+  await page.setViewportSize({ width: 320, height: 800 });
+  await openChat(page, {
+    content:
+      "# Launch\n\nShip on Friday.\n\n" +
+      `![Launch poster](asterism-file:${IMAGE})\n\n` +
+      `![Somebody else's file](asterism-file:${STRANGER})`,
+    inline_files: [
+      {
+        file_id: IMAGE,
+        available: true,
+        role: "referenced",
+        name: "poster.png",
+        mime_type: "image/png",
+        kind: "image",
+        size: WIDE_PNG.length,
+      },
+      { file_id: STRANGER, available: false },
+    ],
+  });
+  await page.getByRole("button", { name: "Open canvas Launch plan" }).click();
+  const sheet = page.getByRole("dialog", { name: "Canvas" });
+  await sheet.getByRole("tab", { name: "Preview" }).click();
+  const image = sheet.getByRole("img", { name: "Launch poster" });
+  await expect(image).toBeVisible();
+  await expect
+    .poll(() => image.evaluate((node: HTMLImageElement) => node.naturalWidth))
+    .toBe(640);
+  await expect(
+    sheet.getByText("File unavailable: Somebody else's file"),
+  ).toBeVisible();
+  expect(requested.filter((path) => path.includes(STRANGER))).toEqual([]);
+
+  // Scaled to the sheet, which itself never scrolls sideways.
+  const box = await image.boundingBox();
+  expect(box!.x + box!.width).toBeLessThanOrEqual(320);
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= window.innerWidth,
+    ),
+  ).toBe(true);
+
+  await sheet.getByRole("button", { name: "Open image Launch poster" }).click();
+  const viewer = page.getByRole("dialog", { name: "Launch poster" });
+  await expect(viewer).toBeVisible();
+  // Escape while the viewer is still opening reaches the sheet too (Radix
+  // registers the layer after mount), so wait for it like a person would.
+  await animationsSettled(viewer);
+  await page.keyboard.press("Escape");
+  await expect(viewer).toBeHidden();
+  await animationsSettled(page.locator("body"));
+  await expect(sheet).toBeVisible();
+
+  await animationsSettled(page.locator("body"));
+  const scan = await new AxeBuilder({ page })
+    .include('[role="dialog"]')
+    .analyze();
+  expect(scan.violations).toEqual([]);
 });
 
 test("start a canvas item from the composer's Canvas chip", async ({

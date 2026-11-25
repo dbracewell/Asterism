@@ -50,6 +50,14 @@ message box. Select the chip, then an item, to open it.
 To have Asterism change just one part, select the text, then select
 **Ask about selection** and say what you want.
 
+## Pictures in a document
+
+Pictures Asterism made in this chat, and files attached to the chat or its
+project, show in a document's **Preview** as they do in an answer. Select a
+picture to see it full size. A file that isn't part of this chat shows as
+**File unavailable**, and a picture added while you edit appears once you
+select **Save version**.
+
 ## Go back to an earlier version
 
 1. In the canvas, open the **Version** list and choose an older version.

@@ -91,17 +91,47 @@ async def resolve_inline_files(
             file = produced.get(file_id) or referenced.get(file_id)
             if file is None:
                 continue
-            resolved[file_id] = InlineFileReference(
-                file_id=file_id,
-                available=True,
-                role="produced" if file_id in produced else "referenced",
-                producing_execution_id=execution.id if file_id in produced else None,
-                name=file.original_name,
-                filename=file.filename,
-                mime_type=file.mime_type,
-                kind=file.kind,
-                size=file.size,
-            )
+            resolved[file_id] = _available(file, execution.id if file_id in produced else None)
+    return _in_order(ids, resolved)
+
+
+async def resolve_in_live_scope(
+    *, user_id: str, chat_id: uuid.UUID, text: str, session: AsyncSession
+) -> list[InlineFileReference]:
+    """Resolve the references in text the owner keeps in a chat (ADR-0083).
+
+    Used for canvas versions, which people and the agent both write and which
+    are resolved on every read: a reference is available while the file is in
+    the chat's live file scope. There is no run ceiling, because only the owner
+    reads the result and the owner can already open every file in scope.
+    """
+    ids = parse_file_references(text)
+    if not ids:
+        return []
+    live = await read_live_file_ids(user_id=user_id, chat_id=chat_id, session=session)
+    eligible = [file_id for file_id in ids[:MAX_INLINE_FILES] if file_id in live]
+    if not eligible:
+        return _in_order(ids, {})
+    files = await session.scalars(select_owned_files(user_id=user_id).where(UserFileModel.id.in_(eligible)))
+    return _in_order(ids, {file.id: _available(file, None) for file in files})
+
+
+def _available(file: UserFileModel, producing_execution_id: uuid.UUID | None) -> InlineFileReference:
+    return InlineFileReference(
+        file_id=file.id,
+        available=True,
+        role="produced" if producing_execution_id is not None else "referenced",
+        producing_execution_id=producing_execution_id,
+        name=file.original_name,
+        filename=file.filename,
+        mime_type=file.mime_type,
+        kind=file.kind,
+        size=file.size,
+    )
+
+
+def _in_order(ids: Sequence[uuid.UUID], resolved: dict[uuid.UUID, InlineFileReference]) -> list[InlineFileReference]:
+    """One entry per ID; anything unresolved is the bare unavailable entry."""
     return [resolved.get(file_id) or InlineFileReference(file_id=file_id, available=False) for file_id in ids]
 
 
