@@ -1,6 +1,6 @@
 # EPIC-102: Setup walkthrough follow-ups
 
-Status: proposed (2026-11-24). Source: user review of the EPIC-101 install flow
+Status: complete (2026-11-24). Source: user review of the EPIC-101 install flow
 (2026-11-24):
 
 1. After the provider step, the first-run checklist doesn't show that more setup
