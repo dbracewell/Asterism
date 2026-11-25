@@ -28,7 +28,8 @@ DOCX/PDF exports keep the fenced source (exports show it as code).
 ## Decision: untrusted source, locked configuration
 
 Mermaid runs with a frozen configuration (`markdownMermaidConfig` in
-`policy.ts`) that no caller can change:
+`policy.ts`, read from the shared `@asterism/diagram-policy` package since
+[ADR-0082](0082-diagrams-in-canvas-exports.md)) that no caller can change:
 
 - `securityLevel: "strict"` (labels are text, `click` and links do nothing),
   `htmlLabels: false`, `startOnLoad: false`, `suppressErrorRendering: true`;

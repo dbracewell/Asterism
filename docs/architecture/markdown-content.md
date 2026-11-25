@@ -27,7 +27,7 @@ markup/attributes are never installed as DOM elements.
 | Input             | Behavior                                                                                                                                                                                  |
 | ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Standard Markdown | Headings, paragraphs, emphasis, quotations, lists, inline code and fenced code remain supported.                                                                                          |
-| GFM               | Tables, strikethrough, footnotes and disabled task-list checkboxes (named "Done" or "Not done") remain supported.                                                                                                      |
+| GFM               | Tables, strikethrough, footnotes and disabled task-list checkboxes (named "Done" or "Not done") remain supported.                                                                         |
 | Raw HTML          | No user HTML elements, styles, classes, event handlers, forms, frames, scripts, media, metadata or SVG are installed.                                                                     |
 | Markdown images   | Always display an omitted-image label with the alt text. No `img`, `src`, `srcset` or network request is produced. The exceptions are a file reference token and a drawn diagram (below). |
 | Resource URLs     | All untrusted automatic resources are blocked, including remote, protocol-relative, same-origin, data and blob image URLs.                                                                |
@@ -111,7 +111,9 @@ and [KaTeX options](https://katex.org/docs/options) for the library boundaries.
 [ADR-0081](../adr/0081-mermaid-diagrams.md) adds mermaid diagrams. The diagram
 source is untrusted like any other content, and drawing it grants nothing.
 
-- **Configuration.** `markdownMermaidConfig` in `policy.ts` is frozen:
+- **Configuration.** `markdownMermaidConfig` in `policy.ts` is frozen and comes
+  from `packages/diagram-policy/policy.json`, which canvas exports read too
+  ([ADR-0082](../adr/0082-diagrams-in-canvas-exports.md)):
   `securityLevel: "strict"`, `htmlLabels: false`, 20,000 characters, 500 edges
   and an 8 second timeout, plus 200 px label wrapping and opaque edge labels
   (our own `themeCSS`). Its `secure` list also covers the theme, font, CSS and

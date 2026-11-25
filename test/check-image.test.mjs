@@ -3,7 +3,9 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
   baseLagProblems,
+  DIAGRAM_ASSETS,
   developmentPackageProblems,
+  diagramAssetProblems,
   largestLayers,
   localImageProblems,
   pnpmStorePackage,
@@ -173,4 +175,29 @@ test("a package upgraded past the base passes, and fails once the base catches u
     ["BASE_LAG_UPGRADES names zlibl, which the base image does not install"],
   );
   assert.deepEqual(baseLagProblems([], {}, {}), []);
+});
+
+test("the diagram renderer needs every asset and the pinned mermaid", () => {
+  const readable = Object.fromEntries(
+    DIAGRAM_ASSETS.map((path) => [path, true]),
+  );
+  assert.deepEqual(
+    diagramAssetProblems({ readable, mermaidVersion: "12.3.0" }, "12.3.0"),
+    [],
+  );
+  const missing = { ...readable, [DIAGRAM_ASSETS[2]]: false };
+  assert.deepEqual(
+    diagramAssetProblems(
+      { readable: missing, mermaidVersion: "12.2.0" },
+      "12.3.0",
+    ),
+    [
+      `the diagram renderer cannot read ${DIAGRAM_ASSETS[2]}`,
+      "the image has mermaid 12.2.0, but the frontend pins 12.3.0",
+    ],
+  );
+  assert.match(
+    diagramAssetProblems({ readable, mermaidVersion: null }, "12.3.0")[0],
+    /mermaid \(none\)/,
+  );
 });

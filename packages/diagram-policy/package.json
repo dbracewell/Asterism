@@ -1,0 +1,15 @@
+{
+  "name": "@asterism/diagram-policy",
+  "version": "0.5.0",
+  "private": true,
+  "description": "The locked mermaid configuration, SVG sanitizer settings and limits shared by the app and the server (ADR-0081, ADR-0082).",
+  "type": "module",
+  "exports": {
+    "./policy.json": "./policy.json",
+    "./print-theme.json": "./print-theme.json"
+  },
+  "files": [
+    "policy.json",
+    "print-theme.json"
+  ]
+}

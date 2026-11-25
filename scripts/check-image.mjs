@@ -31,6 +31,31 @@ export const AUTH_TABLES = [
 ];
 const HEALTHY_TIMEOUT_MS = 10 * 60 * 1000;
 
+// What the server's diagram renderer reads (ADR-0082): the shared policy, the
+// print theme, and the same mermaid and DOMPurify bundles the app uses.
+export const DIAGRAM_ASSETS = [
+  "/app/packages/diagram-policy/policy.json",
+  "/app/packages/diagram-policy/print-theme.json",
+  "/app/apps/frontend/node_modules/mermaid/dist/mermaid.min.js",
+  "/app/apps/frontend/node_modules/dompurify/dist/purify.min.js",
+];
+
+/**
+ * `report` is what the container saw as the runtime user: each asset path
+ * mapped to whether it is a readable file, and the mermaid version installed.
+ * `expectedMermaid` is the frontend's pinned version.
+ */
+export function diagramAssetProblems(report, expectedMermaid) {
+  const problems = DIAGRAM_ASSETS.filter(
+    (path) => !report.readable?.[path],
+  ).map((path) => `the diagram renderer cannot read ${path}`);
+  if (report.mermaidVersion !== expectedMermaid)
+    problems.push(
+      `the image has mermaid ${report.mermaidVersion ?? "(none)"}, but the frontend pins ${expectedMermaid}`,
+    );
+  return problems;
+}
+
 function docker(args, options = {}) {
   const result = spawnSync("docker", args, { encoding: "utf8", ...options });
   if (result.status !== 0) {
@@ -363,6 +388,34 @@ async function checkContainer(image, variant) {
       variant === "cpu"
         ? `ok: the backend cannot import ${LOCAL_IMAGE_PACKAGES.join(", ")}`
         : `ok: the backend can import ${LOCAL_IMAGE_PACKAGES.join(", ")}`,
+    );
+
+    const diagramReport = JSON.parse(
+      docker([
+        "exec",
+        name,
+        "/usr/local/bin/python",
+        "-c",
+        [
+          "import json, os, sys",
+          "paths = sys.argv[1:]",
+          "readable = {p: os.path.isfile(p) and os.access(p, os.R_OK) for p in paths}",
+          "try:",
+          "    version = json.load(open('/app/apps/frontend/node_modules/mermaid/package.json'))['version']",
+          "except OSError:",
+          "    version = None",
+          "print(json.dumps({'readable': readable, 'mermaidVersion': version}))",
+        ].join("\n"),
+        ...DIAGRAM_ASSETS,
+      ]),
+    );
+    const pinned = JSON.parse(
+      readFileSync("apps/frontend/package.json", "utf8"),
+    ).dependencies.mermaid;
+    const diagrams = diagramAssetProblems(diagramReport, pinned);
+    if (diagrams.length) throw new Error(diagrams.join("\n"));
+    console.log(
+      `ok: the diagram renderer can read its policy and mermaid ${pinned}`,
     );
 
     const storeEntries = docker(["exec", name, "ls", "/app/node_modules/.pnpm"])

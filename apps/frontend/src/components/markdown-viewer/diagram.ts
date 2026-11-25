@@ -1,6 +1,10 @@
 import createDOMPurify from "dompurify";
 import type { DiagramTheme } from "./diagram-theme";
-import { markdownMermaidConfig, MERMAID_RENDER_TIMEOUT_MS } from "./policy";
+import {
+  diagramPolicy,
+  markdownMermaidConfig,
+  MERMAID_RENDER_TIMEOUT_MS,
+} from "./policy";
 
 export type { DiagramTheme } from "./diagram-theme";
 
@@ -33,6 +37,8 @@ export function isClosedFence(raw: string): boolean {
   );
 }
 
+const sanitizer = diagramPolicy.sanitizer;
+
 // A separate instance, so these hooks never change how mermaid sanitizes its
 // own labels with the default one.
 let purifier: ReturnType<typeof createDOMPurify> | null = null;
@@ -43,7 +49,7 @@ function svgPurifier() {
     // Markers and gradients refer to their own document; nothing else may.
     if (
       (data.attrName === "href" || data.attrName === "xlink:href") &&
-      !data.attrValue.startsWith("#")
+      !data.attrValue.startsWith(sanitizer.internalHrefPrefix)
     )
       data.keepAttr = false;
   });
@@ -57,10 +63,10 @@ function svgPurifier() {
  */
 export function sanitizeDiagramSvg(svg: string): Omit<Diagram, "ok"> | null {
   const clean = svgPurifier().sanitize(svg, {
-    USE_PROFILES: { svg: true, svgFilters: true },
-    ADD_TAGS: ["style"],
-    FORBID_TAGS: ["foreignObject", "image", "a", "script", "use"],
-    FORBID_ATTR: ["onload", "onerror", "onclick"],
+    USE_PROFILES: { ...sanitizer.profiles },
+    ADD_TAGS: [...sanitizer.addTags],
+    FORBID_TAGS: [...sanitizer.forbidTags],
+    FORBID_ATTR: [...sanitizer.forbidAttributes],
     RETURN_DOM_FRAGMENT: true,
   });
   const root = clean.firstElementChild;
@@ -87,8 +93,12 @@ export function sanitizeDiagramSvg(svg: string): Omit<Diagram, "ok"> | null {
     svg: new XMLSerializer().serializeToString(root),
     width: Math.ceil(width),
     height: Math.ceil(height),
-    label: (title || (type ? `Diagram: ${type}` : "Diagram")).slice(0, 300),
-    description: description?.slice(0, 2_000) ?? null,
+    label: (title || (type ? `Diagram: ${type}` : "Diagram")).slice(
+      0,
+      diagramPolicy.labelLimits.name,
+    ),
+    description:
+      description?.slice(0, diagramPolicy.labelLimits.description) ?? null,
   };
 }
 
@@ -214,7 +224,7 @@ export const diagramSvgBlob = (diagram: Diagram) =>
   new Blob([diagram.svg], { type: "image/svg+xml;charset=utf-8" });
 
 /** The largest PNG side, so a huge diagram can't exhaust canvas memory. */
-const PNG_MAX_SIDE = 8_192;
+const PNG_MAX_SIDE = diagramPolicy.png.maxSide;
 
 /**
  * The sanitized SVG drawn at twice its size on `background`. Made in the
@@ -228,7 +238,7 @@ export async function diagramPngBlob(
   image.src = diagramImageSource(diagram.svg);
   await image.decode();
   const scale = Math.min(
-    2,
+    diagramPolicy.png.scale,
     PNG_MAX_SIDE / diagram.width,
     PNG_MAX_SIDE / diagram.height,
   );

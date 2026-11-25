@@ -1,3 +1,4 @@
+import policy from "@asterism/diagram-policy/policy.json";
 import type { UrlTransform } from "react-markdown";
 
 // Links require a user gesture. Images and other resource URLs never pass this
@@ -57,47 +58,38 @@ export const markdownMathOptions = {
   maxExpand: 1000,
 };
 
-// ADR-0081: diagram source is untrusted. Labels are text, links and click
-// handlers are off, and directives in a diagram (`%%{init}%%`, frontmatter)
-// cannot change any key listed in `secure`. Mermaid only protects top-level
-// keys, and theme values are written into the diagram's <style>, so the theme,
-// fonts and CSS are locked too. No caller can override these settings.
-export const MERMAID_FONT_FAMILY =
-  'ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+// ADR-0081: diagram source is untrusted. The locked mermaid configuration,
+// sanitizer settings and limits live in @asterism/diagram-policy, which the
+// server's export renderer reads too (ADR-0082), so the two can't drift.
+// Labels are text, links and click handlers are off, and directives in a
+// diagram cannot change any key listed in `secure`. No caller can override
+// these settings.
+const deepFreeze = <T>(value: T): T => {
+  if (value && typeof value === "object") {
+    Object.values(value).forEach(deepFreeze);
+    Object.freeze(value);
+  }
+  return value;
+};
 
-export const markdownMermaidConfig = Object.freeze({
-  startOnLoad: false,
-  securityLevel: "strict" as const,
-  htmlLabels: false,
-  suppressErrorRendering: true,
-  maxTextSize: 20_000,
-  maxEdges: 500,
-  fontFamily: MERMAID_FONT_FAMILY,
-  // Mermaid wraps labels at 120px and splits any longer word by characters
-  // ("Light-dependen t"); 200px keeps ordinary words whole.
-  flowchart: Object.freeze({ wrappingWidth: 200 }),
-  state: Object.freeze({ wrappingWidth: 200 }),
-  // Edge label backgrounds are half transparent in mermaid's own stylesheet,
-  // so the line shows through the words. A fixed rule, never from content.
-  themeCSS: ".edgeLabel rect { opacity: 1 !important; }",
-  secure: [
-    "secure",
-    "securityLevel",
-    "startOnLoad",
-    "maxTextSize",
-    "maxEdges",
-    "suppressErrorRendering",
-    "htmlLabels",
-    "dompurifyConfig",
-    "theme",
-    "themeVariables",
-    "themeCSS",
-    "darkMode",
-    "fontFamily",
-    "altFontFamily",
-    "look",
-  ],
-});
+export const diagramPolicy = deepFreeze(structuredClone(policy));
+
+// JSON widens literals; check the one that matters, then narrow the type.
+if (
+  diagramPolicy.mermaid.securityLevel !== "strict" ||
+  diagramPolicy.mermaid.htmlLabels !== false
+)
+  throw new Error(
+    "The diagram policy must keep mermaid strict, without HTML labels",
+  );
+
+export const markdownMermaidConfig = diagramPolicy.mermaid as Readonly<
+  Omit<typeof diagramPolicy.mermaid, "securityLevel"> & {
+    securityLevel: "strict";
+  }
+>;
+
+export const MERMAID_FONT_FAMILY = markdownMermaidConfig.fontFamily;
 
 /** A diagram that takes longer than this to draw shows as code. */
-export const MERMAID_RENDER_TIMEOUT_MS = 8_000;
+export const MERMAID_RENDER_TIMEOUT_MS = diagramPolicy.renderTimeoutMs;

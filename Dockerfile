@@ -12,6 +12,9 @@ WORKDIR /app
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .pnpmfile.cjs ./
 COPY apps/frontend/package.json apps/frontend/package.json
 COPY apps/backend/package.json apps/backend/package.json
+# The diagram policy the app and the export renderer share (ADR-0082): JSON
+# only, so the whole package is copied for the workspace install.
+COPY packages/diagram-policy packages/diagram-policy
 
 # Only the frontend's runtime packages reach the image: next, the auth CLI and
 # their dependencies, without test, lint and build tools (US-90.8).
@@ -106,6 +109,9 @@ WORKDIR /app
 # Preserve pnpm's workspace symlinks and native Node modules.
 COPY --from=frontend-deps /app/node_modules ./node_modules
 COPY --from=frontend-deps /app/apps/frontend/node_modules ./apps/frontend/node_modules
+# The workspace link above points here, and the backend's export renderer reads
+# the same policy and the same mermaid bundle (ADR-0082).
+COPY --from=frontend-deps /app/packages/diagram-policy ./packages/diagram-policy
 COPY --from=frontend-build --chown=asterism:asterism /app/apps/frontend/.next ./apps/frontend/.next
 COPY --from=frontend-build /app/apps/frontend/public ./apps/frontend/public
 COPY --from=frontend-build /app/apps/frontend/package.json /app/apps/frontend/next.config.ts ./apps/frontend/

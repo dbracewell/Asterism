@@ -76,26 +76,16 @@ EPIC-96 through EPIC-101 (live policy availability, hiding what the admin turned
 
 ## Rich content and test cleanup (proposed 2026-11-25)
 
-Source: user request (2026-11-25), follow-ups from EPIC-103. [EPIC-104](docs/epics/EPIC-104-RICH-CONTENT-TEST-CLEANUP.md). Suggested order: US-104.1 → 104.2.
-
-- [x] US-104.1: Settle the comparison test
-  - [x] Wait for the "Continue from Beta" transition before the axe check
-  - [x] Confirm the settled button meets 4.5:1; fix the colour only if not
-  - [x] Repeat the spec 20 times at both widths with no failures
-- [x] US-104.2: Scroll containers as groups
-  - [x] Table, math, code and diagram scroll containers become named `role="group"`s
-  - [x] Update tests; remove the `landmark-unique` skip
-  - [x] Axe passes with every rule over several code blocks, tables and diagrams
-  - [x] Update the frontend layout rules and markdown-content.md
+[EPIC-104](docs/epics/EPIC-104-RICH-CONTENT-TEST-CLEANUP.md) (US-104.1 and US-104.2) is complete and archived in the [2026-11-25 checklist](docs/archive/todo-completed-2026-11-25.md).
 
 ## Diagrams in canvas exports (proposed 2026-11-25)
 
 Source: user request (2026-11-25), the EPIC-103 follow-up. [EPIC-105](docs/epics/EPIC-105-DIAGRAMS-IN-CANVAS-EXPORTS.md). Suggested order: US-105.1 → 105.2 → 105.3.
 
-- [ ] US-105.1: ADR and a shared diagram configuration
-  - [ ] ADR (server-side drawing, isolation, limits, palette)
-  - [ ] Locked mermaid configuration and sanitizer settings in a shared JSON file read by `policy.ts`
-  - [ ] Mermaid bundle and shared configuration copied into the image; `check:image` verifies them
+- [x] US-105.1: ADR and a shared diagram configuration
+  - [x] ADR (server-side drawing, isolation, limits, palette)
+  - [x] Locked mermaid configuration and sanitizer settings in a shared JSON file read by `policy.ts`
+  - [x] Mermaid bundle and shared configuration copied into the image; `check:image` verifies them
 - [ ] US-105.2: A server-side diagram renderer
   - [ ] Share the fetch tool's browser pool through a small module
   - [ ] `render_diagram`: aborted requests, static page, shared config, sanitizer, time limit, PNG
