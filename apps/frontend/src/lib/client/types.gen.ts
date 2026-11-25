@@ -457,6 +457,12 @@ export type CanvasVersion = {
    * Content
    */
   content: string;
+  /**
+   * Inline Files
+   *
+   * The content's asterism-file: references, resolved against the chat's live file scope on read
+   */
+  inline_files?: Array<InlineFileReference>;
 };
 
 /**

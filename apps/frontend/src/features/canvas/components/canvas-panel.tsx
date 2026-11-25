@@ -1,5 +1,6 @@
 "use client";
 import MarkdownViewer from "@/components/markdown-viewer";
+import { InlineFilesProvider } from "@/components/markdown-viewer/inline-files";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -225,6 +226,7 @@ function VersionView({
         <Skeleton className="m-3 h-full" />
       ) : (
         <VersionBody
+          chatId={chatId}
           version={version.data}
           value={draft ?? version.data.content}
           onChange={setDraft}
@@ -345,12 +347,14 @@ function VersionView({
 }
 
 function VersionBody({
+  chatId,
   version,
   value,
   onChange,
   readOnly,
   onSelection,
 }: {
+  chatId: string;
   version: CanvasVersion;
   value: string;
   onChange: (value: string) => void;
@@ -386,7 +390,17 @@ function VersionBody({
         <HtmlPreview content={value} title={version.title} />
       ) : (
         <div className="h-full overflow-y-auto p-4">
-          <MarkdownViewer content={value} />
+          {/* Files the server resolved for this saved version (ADR-0083); a
+              reference typed into unsaved edits stays unavailable until saved. */}
+          <InlineFilesProvider
+            value={{
+              chatId,
+              files: version.inline_files ?? [],
+              citations: [],
+            }}
+          >
+            <MarkdownViewer content={value} />
+          </InlineFilesProvider>
         </div>
       ),
   };

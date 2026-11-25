@@ -7,6 +7,7 @@ from fastapi import APIRouter, Query, Response
 from asterism.common.log import get_logger
 from asterism.core.schemas import ErrorDetail
 from asterism.db.dependencies import DBSessionDep
+from asterism.domains.chat.inline_files import resolve_in_live_scope
 from asterism.domains.files.schemas import UserFile
 from asterism.domains.files.service import SOURCE_RESPONSE_HEADERS
 from asterism.domains.user.dependencies import AdminUserDep, AuthedUserDep
@@ -36,6 +37,12 @@ canvas_router = APIRouter(
     },
 )
 logger = get_logger("Canvas")
+
+
+async def _with_files(user_id: str, chat_id: uuid.UUID, version: CanvasVersion, session: DBSessionDep) -> CanvasVersion:
+    """Add the content's file references, resolved against the live chat scope (ADR-0083)."""
+    files = await resolve_in_live_scope(user_id=user_id, chat_id=chat_id, text=version.content, session=session)
+    return version.model_copy(update={"inline_files": files})
 
 
 @canvas_router.get("/settings/app/canvas", operation_id="canvasPolicyGet")
@@ -74,7 +81,7 @@ async def create_item(
         content=payload.content,
         session=session,
     )
-    return service.full_version(entry)
+    return await _with_files(user.id, chat_id, service.full_version(entry), session)
 
 
 _BINARY = {
@@ -123,7 +130,8 @@ async def get_version(
     chat_id: uuid.UUID, item_id: uuid.UUID, number: int, user: AuthedUserDep, session: DBSessionDep
 ) -> CanvasVersion:
     branch = await active_branch(user.id, chat_id, session)
-    return service.full_version(await service.visible_item(user.id, chat_id, item_id, branch, session), number)
+    version = service.full_version(await service.visible_item(user.id, chat_id, item_id, branch, session), number)
+    return await _with_files(user.id, chat_id, version, session)
 
 
 @canvas_router.post("/chat/{chat_id}/canvas/{item_id}/versions", operation_id="canvasVersionCreate")
@@ -144,7 +152,7 @@ async def create_version(
         session=session,
     )
     logger.info(f"User {user.id} saved canvas item {item_id} version {entry.current.number}")
-    return service.full_version(entry)
+    return await _with_files(user.id, chat_id, service.full_version(entry), session)
 
 
 @canvas_router.post("/chat/{chat_id}/canvas/{item_id}/versions/{number}/restore", operation_id="canvasVersionRestore")
@@ -163,7 +171,7 @@ async def restore_version(
         user.id, chat_id, item_id, branch, number=number, base_version=payload.base_version, session=session
     )
     logger.info(f"User {user.id} restored canvas item {item_id} version {number} as {entry.current.number}")
-    return service.full_version(entry)
+    return await _with_files(user.id, chat_id, service.full_version(entry), session)
 
 
 @canvas_router.get(
