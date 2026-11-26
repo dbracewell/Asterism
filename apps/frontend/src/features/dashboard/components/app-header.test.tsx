@@ -24,6 +24,7 @@ const route = vi.hoisted(() => ({
   pathname: "/projects",
   search: "",
   mobile: true,
+  areas: { study: true, reflections: true, goal: true, sub_agents: true },
 }));
 const mocks = vi.hoisted(() => ({
   chat: vi.fn(),
@@ -47,7 +48,11 @@ vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
   }),
   projectGetOneOptions: ({ path }: { path: { project_id: string } }) => ({
     queryKey: ["project", path.project_id],
-    queryFn: async () => ({ id: path.project_id, name: "Research" }),
+    queryFn: async () => ({
+      id: path.project_id,
+      name: "Research",
+      areas: { ...route.areas },
+    }),
   }),
   projectGetManyOptions: () => ({
     queryKey: ["projects"],
@@ -73,6 +78,9 @@ vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
   chatSessionDeleteMutation: () => ({ mutationFn: mocks.remove }),
   chatSessionCreateMutation: () => ({ mutationFn: vi.fn() }),
   chatSessionGetManyQueryKey: () => ["chats"],
+  reflectionDraftCreateMutation: () => ({ mutationFn: vi.fn() }),
+  reflectionCreateMutation: () => ({ mutationFn: vi.fn() }),
+  reflectionGetManyQueryKey: () => ["reflections"],
 }));
 
 const user = {
@@ -155,6 +163,7 @@ beforeEach(() => {
   route.pathname = "/projects";
   route.search = "";
   route.mobile = true;
+  route.areas.reflections = true;
   mocks.chat.mockResolvedValue(chatInfo());
   mocks.rename.mockReset();
   mocks.move.mockReset();
@@ -454,5 +463,69 @@ describe("mobile sidebar interactions", () => {
     await waitFor(() =>
       expect(screen.queryByRole("dialog")).not.toBeInTheDocument(),
     );
+  });
+});
+
+describe("reflecting from the chat header (US-111.1)", () => {
+  const answered = (overrides: object = {}) => ({
+    ...chatInfo(overrides),
+    messages: [
+      { id: "m1", role: "user", content: "Explain osmosis" },
+      { id: "m2", role: "assistant", content: "Water moves..." },
+    ],
+  });
+
+  async function menuItems() {
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Chat actions" }),
+    );
+    const items = (await screen.findAllByRole("menuitem")).map((item) =>
+      item.textContent?.trim(),
+    );
+    await userEvent.keyboard("{Escape}");
+    return items;
+  }
+
+  it("offers Reflect once the chat has an answer", async () => {
+    route.pathname = "/c/c";
+    mocks.chat.mockResolvedValue(answered());
+    render(<Shell />);
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Reflect on this session" }),
+    );
+    expect(
+      await screen.findByRole("dialog", { name: "Reflect on this session" }),
+    ).toBeInTheDocument();
+  });
+
+  it("waits for an answer, and leaves file views alone", async () => {
+    route.pathname = "/c/c";
+    render(<Shell />);
+    expect(await menuItems()).toContain("Reflect on this session");
+    expect(
+      screen.queryByRole("button", { name: "Reflect on this session" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("hides Reflect in a project whose Reflections area is off", async () => {
+    route.pathname = "/c/c";
+    route.areas.reflections = false;
+    mocks.chat.mockResolvedValue(answered());
+    render(<Shell />);
+    expect(await menuItems()).not.toContain("Reflect on this session");
+    expect(
+      screen.queryByRole("button", { name: "Reflect on this session" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("always offers Reflect in General", async () => {
+    route.pathname = "/c/c";
+    route.areas.reflections = false;
+    mocks.chat.mockResolvedValue(answered({ project_id: null }));
+    render(<Shell />);
+    expect(
+      await screen.findByRole("button", { name: "Reflect on this session" }),
+    ).toBeInTheDocument();
+    expect(await menuItems()).toContain("Reflect on this session");
   });
 });

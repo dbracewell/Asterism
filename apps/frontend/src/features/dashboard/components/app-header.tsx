@@ -14,6 +14,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ModePolicyControl } from "@/features/chat/components/mode-policy-notice";
 import { ChatSessionActionMenu } from "@/features/dashboard/components/chat-session-action-menu";
 import { PageHelp } from "@/features/help/components/page-help";
+import { ReflectButton } from "@/features/reflections/components/reflect-button";
 import { client } from "@/lib/api";
 import type { ChatInfo } from "@/lib/client";
 import {
@@ -150,6 +151,14 @@ export function ChatHeaderContent({
       />
       <ChatChips info={info} />
       {!file && <ModePolicyControl info={info} />}
+      {!file && (
+        <ReflectButton
+          chat={info}
+          answered={chat.data.messages.some(
+            (message) => message.role === "assistant",
+          )}
+        />
+      )}
       <ChatSessionActionMenu chat={info} variant="header" />
     </>
   );

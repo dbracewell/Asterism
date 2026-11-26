@@ -7,6 +7,7 @@ import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import { beforeEach, expect, it, vi } from "vitest";
+import { toast } from "sonner";
 import { handleMutationSuccess } from "@/lib/mutation-cache";
 import { ReflectDialog } from "./reflect-dialog";
 
@@ -14,7 +15,9 @@ const mocks = vi.hoisted(() => ({
   draft: vi.fn(),
   create: vi.fn(),
   closed: vi.fn(),
+  push: vi.fn(),
 }));
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push: mocks.push }) }));
 vi.mock("@/lib/api", () => ({ client: {} }));
 vi.mock("sonner", () => ({ toast: { success: vi.fn() } }));
 vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
@@ -30,6 +33,7 @@ function Wrapper({ children }: { children: ReactNode }) {
 
 beforeEach(() => {
   Object.values(mocks).forEach((fn) => fn.mockReset());
+  vi.mocked(toast.success).mockReset();
   mocks.draft.mockResolvedValue({
     learned: "I learned osmosis.",
     unclear: "Tonicity terms",
@@ -43,10 +47,16 @@ beforeEach(() => {
   });
 });
 
-function open() {
-  render(<ReflectDialog chatId="chat" open onOpenChange={mocks.closed} />, {
-    wrapper: Wrapper,
-  });
+function open(projectId: string | null = "p") {
+  render(
+    <ReflectDialog
+      chatId="chat"
+      projectId={projectId}
+      open
+      onOpenChange={mocks.closed}
+    />,
+    { wrapper: Wrapper },
+  );
   return screen.getByRole("dialog", { name: "Reflect on this session" });
 }
 
@@ -105,3 +115,33 @@ it("explains when no model can suggest a draft", async () => {
     "Suggestions need a draft model",
   );
 });
+
+it.each([
+  [
+    "p",
+    "It's in this project's Reflections tab.",
+    "/projects/p?tab=reflections",
+  ],
+  [null, "It's on the General page, under Reflections.", "/general"],
+])(
+  "says where a reflection in %s was kept, with a link there",
+  async (projectId, description, href) => {
+    const user = userEvent.setup();
+    const dialog = open(projectId);
+    await user.type(
+      within(dialog).getByLabelText("What did I learn?"),
+      "Osmosis",
+    );
+    await user.click(
+      within(dialog).getByRole("button", { name: "Save reflection" }),
+    );
+    await waitFor(() => expect(toast.success).toHaveBeenCalled());
+    const [title, options] = vi.mocked(toast.success).mock.calls[0];
+    expect(title).toBe("Reflection saved");
+    expect(options?.description).toBe(description);
+    const action = options?.action as { label: string; onClick: () => void };
+    expect(action.label).toBe("View reflections");
+    action.onClick();
+    expect(mocks.push).toHaveBeenCalledWith(href);
+  },
+);

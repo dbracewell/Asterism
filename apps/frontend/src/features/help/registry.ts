@@ -388,7 +388,8 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
     summary:
       "A short note at the end of a session about what you learned and what's still unclear. They're listed in the project's Reflections tab, or on the General page for General chats.",
     details: [
-      "Choose Reflect on this session in a chat's menu. Suggest a draft fills both answers from the chat; edit it so it says what you think before saving.",
+      "Select Reflect at the top of a chat once it has an answer, or Reflect on this session in the chat's menu. Suggest a draft fills both answers from the chat; edit it so it says what you think before saving.",
+      "In a project, you can reflect while its Reflections area is on (the project's Settings tab).",
       "Reflections are yours only. Each is filed under the chat's project, and the assistant doesn't read them automatically.",
       "In a project, Practice in Progress opens the Study tab's Progress panel, which lists each unclear item. You write each answer and confirm each card, and it can also count under Needs practice until you recall it.",
     ],

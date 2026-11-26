@@ -11,8 +11,15 @@ Two tools help you look back on how you learned:
 
 ## Reflect on a session
 
-1. In the chat, select the **…** button (**Chat actions**) at the top right.
-2. Select **Reflect on this session**.
+1. Once Asterism has answered in the chat, select **Reflect** at the top right
+   (on a phone, the notebook button). You can also select the **…** button
+   (**Chat actions**) and then **Reflect on this session**.
+
+   In a project, **Reflect** appears only while the project's **Reflections**
+   area is on. To turn it on, open the project's **Settings** tab and switch on
+   **Reflections**. General chats always have it.
+
+2. The **Reflect on this session** window opens.
 3. Answer the two questions, **What did I learn?** and **What's still unclear?**
    A few sentences are enough.
 
@@ -21,7 +28,8 @@ Two tools help you look back on how you learned:
 
    ![The Reflect on this session window, with What did I learn? and What's still unclear? filled in by Suggest a draft, and a Save reflection button](../images/reflect.png)
 
-4. Select **Save reflection**.
+4. Select **Save reflection**. The message that appears says where the
+   reflection was kept; select **View reflections** to go there.
 
 ## Read your reflections
 
