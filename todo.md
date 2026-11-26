@@ -93,3 +93,21 @@ EPIC-96 through EPIC-101 (live policy availability, hiding what the admin turned
 ## Diagrams that real models draw (proposed 2026-11-25)
 
 [EPIC-108](docs/epics/EPIC-108-DIAGRAMS-FROM-REAL-MODELS.md) (US-108.1 and US-108.2) is complete and archived in the [2026-11-25 checklist](docs/archive/todo-completed-2026-11-25.md).
+
+## Pictures in lists, quotes and tables in exports (proposed 2026-11-26)
+
+Source: user request (2026-11-26), PDF downloads showing a note instead of a picture under a step. [EPIC-109](docs/epics/EPIC-109-PICTURES-IN-NESTED-PDF-BLOCKS.md).
+
+- [x] US-109.1: Loose lists keep their numbers and bullets in PDF (awaiting confirmation)
+  - [x] Markers and indent for items whose text is in paragraphs, at each level
+  - [x] Tight lists, quotes and headings unchanged
+  - [x] Tests from text extracted from the PDF; release notes
+- [ ] US-109.2: Pictures in lists and quotes in PDF
+  - [ ] HTML renderer subclass with private `src` tokens; ADR-0083 and ADR-0082
+  - [ ] Images and diagrams at any list depth and in quotes, fitted to the indent, with alt text
+  - [ ] Unloaded images and undrawn diagrams keep their notes; other `<img>` never loads
+  - [ ] Tests, canvas guide page, release notes
+- [ ] US-109.3: Images in table cells in PDF and Word
+  - [ ] Spike: alt text on an fpdf2 cell image; record the choice in ADR-0083
+  - [ ] PDF and Word cell images with alt text, fitted to the cell
+  - [ ] Tests, canvas guide page, release notes

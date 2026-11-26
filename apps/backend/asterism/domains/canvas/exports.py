@@ -13,6 +13,7 @@ import uuid
 import zipfile
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
+from functools import cache
 from pathlib import Path
 from typing import TYPE_CHECKING, Literal
 from urllib.parse import quote
@@ -513,6 +514,48 @@ def _without_images(tokens: list[Token]) -> list[Token]:
     return tokens
 
 
+def _list_paragraphs(tokens: list[Token]) -> list[Token]:
+    """Loose list items written as tight ones, with a blank line between two of
+    their paragraphs. fpdf2 drops an item's marker and indent when its text is
+    in a ``<p>``, and loose items are how a step with a picture under it is
+    written. Text after a nested block reopens at the item's indent
+    (``_ExportHTML``)."""
+    # Per open list item: its level, and the last block written directly in it.
+    items: list[tuple[int, str | None]] = []
+    for index, token in enumerate(tokens):
+        if token.type == "list_item_open":
+            items.append((token.level, None))
+        elif token.type == "list_item_close":
+            items.pop()
+        elif not items or token.nesting == -1 or token.level != items[-1][0] + 1:
+            continue
+        elif token.type == "paragraph_open":
+            token.hidden = tokens[index + 2].hidden = True  # And its close.
+            if items[-1][1] == "paragraph":
+                inline = tokens[index + 1]
+                inline.children = [Token("hardbreak", "br", 0), Token("hardbreak", "br", 0), *(inline.children or [])]
+            items[-1] = (items[-1][0], "paragraph")
+        else:
+            items[-1] = (items[-1][0], token.type)
+    return tokens
+
+
+@cache
+def _export_html() -> type:
+    """fpdf2's HTML renderer, keeping a list item's indent for text that follows
+    a nested list or code block in the same item."""
+    from fpdf.html import HTML2FPDF
+
+    class _ExportHTML(HTML2FPDF):
+        def _write_paragraph(self, text: str, link: int | str | None = None) -> None:
+            if text and not self._paragraph and "li" in self._tags_stack:
+                margin = getattr(self.tag_styles["li"], "l_margin", 0)
+                self._new_paragraph(indent=(margin if isinstance(margin, (int, float)) else 0) * self.indent)
+            super()._write_paragraph(text, link)
+
+    return _ExportHTML
+
+
 def _paragraph(children: list[Token]) -> list[Token]:
     """A paragraph of ``children``, or nothing if they hold no text."""
     while children and (
@@ -535,6 +578,7 @@ def markdown_pdf(title: str, content: str, diagrams: Diagrams | None = None, ima
     from fpdf import FPDF
 
     pdf = FPDF(format="A4")
+    pdf.HTML2FPDF_CLASS = _export_html()
     pdf.set_title(title)
     pdf.set_margins(18, 18, 18)
     pdf.add_page()
@@ -576,7 +620,7 @@ def markdown_pdf(title: str, content: str, diagrams: Diagrams | None = None, ima
     # Drawn diagrams and loaded images go between runs of HTML. Only top-level
     # fences and paragraphs hold pictures; inside a list, quote or table a
     # diagram stays code and an image is written as a note.
-    tokens = markdown.parse(text)
+    tokens = _list_paragraphs(markdown.parse(text))
     run: list[Token] = []
     index = 0
     while index < len(tokens):
