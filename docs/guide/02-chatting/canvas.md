@@ -80,9 +80,9 @@ with the words **Diagram not drawn**. Markdown, plain text and the ZIP file keep
 the diagram's text.
 
 Pictures from the chat appear in Word and PDF files with their descriptions as
-alt text, fitted to the page. In a PDF, a picture inside a list, quote or table
-is written as **Image not included** with its description. So is a picture
-from the web or from outside the chat, in either format. Markdown and plain
+alt text, fitted to the page, including inside lists and quotes. In a table, a
+picture is written as **Image not included** with its description. So is a
+picture from the web or from outside the chat, in either format. Markdown and plain
 text files show each picture's description. The ZIP file puts the pictures in
 an `images` folder, and its documents link to them.
 

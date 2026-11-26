@@ -1,6 +1,6 @@
 # EPIC-109: Pictures in lists, quotes and tables in exports
 
-Status: in progress (2026-11-26); US-109.1 implemented. Source: user request (2026-11-26), the follow-up
+Status: in progress (2026-11-26); US-109.1 merged, US-109.2 implemented. Source: user request (2026-11-26), the follow-up
 to [EPIC-107](EPIC-107-IMAGES-IN-CANVAS.md) and
 [EPIC-108](EPIC-108-DIAGRAMS-FROM-REAL-MODELS.md): models often put a diagram or
 an image under a numbered step, and the PDF download shows a text note there
@@ -80,18 +80,19 @@ Suggested order: US-109.1 → 109.2 → 109.3.
 
 ### US-109.2: Pictures in lists and quotes in PDF
 
-- [ ] ADR-0083 and ADR-0082 updated: the HTML renderer subclass, private
+- [x] ADR-0083 and ADR-0082 updated: the HTML renderer subclass, private
       `src` tokens and why no other `<img>` is drawn
-- [ ] Loaded images and drawn diagrams inside list items (any depth) and quotes
+- [x] Loaded images and drawn diagrams inside list items (any depth) and quotes
       draw with title and alt text, fitted to the indented width; text after a
-      picture keeps its indent
-- [ ] Unloaded images and undrawn diagrams keep their notes; a model-written
+      picture keeps its indent; a picture that starts an item keeps its marker
+- [x] Unloaded images and undrawn diagrams keep their notes; a model-written
       `<img>` or path never loads
-- [ ] Top-level pictures go through the same path, unchanged in size
-- [ ] Tests (`test_canvas_image_exports.py`, `test_canvas_diagrams.py`): image
-      and diagram positions and alt text read back from the PDF, nested and
-      quoted; the not-included and not-drawn notes; a path or URL `src`
-- [ ] Canvas guide page, release notes (Behavior)
+- [x] Top-level pictures go through the same path, unchanged in size
+- [x] Tests (`test_canvas_pdf_pictures.py`, updated `test_canvas_image_exports.py`):
+      positions and alt text read back from the PDF, nested and quoted; width
+      and height limits; the not-included and not-drawn notes; a path, URL,
+      guessed token or raw `<img>`
+- [x] Canvas guide page, release notes (Behavior)
 
 ### US-109.3: Images in table cells in PDF and Word
 

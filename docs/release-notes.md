@@ -39,6 +39,10 @@ Unreleased into its version and date.
 
 ### Behavior
 
+- Canvas PDF downloads now show chat pictures and diagrams inside list items
+  and quotes, lined up with the item's text, instead of an "Image not
+  included" note or the diagram's code. Pictures in table cells are still
+  notes.
 - Canvas PDF downloads keep the numbers and bullets of list items written
   with blank lines between them, and indent an item's later paragraphs
   under it. Before, those items printed as plain paragraphs.
