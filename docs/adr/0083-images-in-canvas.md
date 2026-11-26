@@ -84,9 +84,10 @@ canvas tools store references as written; the guidance grants nothing.
   - Every other image becomes an italic "Image not included: <description>":
     a web URL, another chat's file, SVG, or a file over a limit. Nothing is
     ever fetched from an image URL.
-  - DOCX embeds images anywhere text goes, except table cells, which hold the
-    note. PDF draws them in paragraphs, list items at any depth and quotes;
-    a table cell holds the note.
+  - DOCX embeds images anywhere text goes, table cells included (fitted to the
+    column's share of the text width, with the cell's text and formatting
+    around them). PDF draws them in paragraphs, list items at any depth,
+    quotes and table cells (below).
   - PDF placement (EPIC-109, US-109.2). Each loaded image and drawn diagram
     gets an `<img>` whose `src` is `asterism-export-<random>:<n>`, made fresh
     for each export. The export's `HTML2FPDF` subclass (`_export_html`, set
@@ -97,6 +98,17 @@ canvas tools store references as written; the guidance grants nothing.
     indent with its title and alt text, fitted to the width left; text after it
     reopens at the same indent. Raw HTML is never parsed, so the only `<img>`
     tags are the export's own.
+  - PDF table cells (US-109.3). fpdf2 2.9.0 holds one run of text or one image
+    per cell, and refuses a cell with mixed formatting (bold, code, a link),
+    which stopped such a PDF being made at all. So a cell that is exactly one
+    loaded image draws it, and every other cell is its plain text with images
+    as `[Image not included: <description>]`, as DOCX cells were before. fpdf2
+    draws a cell image at the full column width with no alt text; the export's
+    `FPDF` subclass (`_export_pdf`) caps it at the natural size (and the height
+    limit) and adds its title and alt text. fpdf2 lays a table out twice, the
+    first time with writing switched off, so the alt text is added only on the
+    pass that writes, or the structure tree would hold a second, empty figure.
+    A table with a picture gets 1 mm cell padding so pictures don't touch.
   - A link to a chat file keeps only its label in both formats.
 - **Markdown and text** downloads of a document write each image as
   `[Image not included: <description>]` and each chat file link as its label,

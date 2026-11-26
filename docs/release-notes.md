@@ -39,10 +39,13 @@ Unreleased into its version and date.
 
 ### Behavior
 
+- Canvas downloads now show chat pictures in table cells. In Word, cells also
+  keep their bold, code and links. In a PDF, a cell shows a picture when the
+  picture is all it holds, and other cells are plain text: a PDF whose table
+  had bold, code or a link in a cell used to fail to download.
 - Canvas PDF downloads now show chat pictures and diagrams inside list items
   and quotes, lined up with the item's text, instead of an "Image not
-  included" note or the diagram's code. Pictures in table cells are still
-  notes.
+  included" note or the diagram's code.
 - Canvas PDF downloads keep the numbers and bullets of list items written
   with blank lines between them, and indent an item's later paragraphs
   under it. Before, those items printed as plain paragraphs.

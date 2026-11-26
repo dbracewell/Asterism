@@ -320,7 +320,7 @@ def markdown_docx(title: str, content: str, diagrams: Diagrams | None = None, im
     quotes = 0
     pending = None  # A list item's paragraph, waiting for its first text.
     paragraph = None
-    table: list[list[str]] | None = None
+    table: list[list[Token]] | None = None
 
     def body_paragraph():
         return document.add_paragraph(style="Quote" if quotes else None)
@@ -373,18 +373,20 @@ def markdown_docx(title: str, content: str, diagrams: Diagrams | None = None, im
         elif kind == "tr_open" and table is not None:
             table.append([])
         elif kind == "inline" and table is not None:
-            table[-1].append(_cell_text(token))
+            table[-1].append(token)
         elif kind == "table_close" and table is not None:
             columns = max((len(row) for row in table), default=0)
             if columns:
                 grid = document.add_table(rows=len(table), cols=columns)
                 grid.style = "Table Grid"
+                # Columns share the text width; leave room for the cell margins.
+                width = _DOCX_TEXT_WIDTH_INCHES / columns - 0.15
                 for r, row in enumerate(table):
-                    for c, text in enumerate(row):
-                        cell = grid.cell(r, c)
-                        cell.text = text
+                    for c, cell_token in enumerate(row):
+                        paragraph = grid.cell(r, c).paragraphs[0]
+                        _docx_inline(paragraph, cell_token.children or [], pictures, max_width=width)
                         if r == 0:
-                            for run in cell.paragraphs[0].runs:
+                            for run in paragraph.runs:
                                 run.bold = True
             table = None
         elif kind == "inline":
@@ -396,7 +398,7 @@ def markdown_docx(title: str, content: str, diagrams: Diagrams | None = None, im
 
 
 def _cell_text(token: Token) -> str:
-    """A table cell's text, with each image as its note."""
+    """A table cell's plain text, with each image as its note (PDF)."""
     parts = []
     for child in token.children or []:
         if child.type == "image":
@@ -408,17 +410,17 @@ def _cell_text(token: Token) -> str:
     return "".join(parts)
 
 
-def _docx_picture(paragraph, image: ExportImage, alt: str) -> None:
+def _docx_picture(paragraph, image: ExportImage, alt: str, max_width: float = _DOCX_TEXT_WIDTH_INCHES) -> None:
     from docx.shared import Inches
 
-    inches = _fit(image, _DOCX_TEXT_WIDTH_INCHES, _DOCX_MAX_IMAGE_HEIGHT_INCHES, 1 / _CSS_PX_PER_INCH)
+    inches = _fit(image, max_width, _DOCX_MAX_IMAGE_HEIGHT_INCHES, 1 / _CSS_PX_PER_INCH)
     shape = paragraph.add_run().add_picture(io.BytesIO(image.png), width=Inches(inches))
     properties = shape._inline.docPr
     properties.set("title", image.name)
     properties.set("descr", image_description(alt, image))
 
 
-def _docx_inline(paragraph, children: list[Token], images: Images) -> None:
+def _docx_inline(paragraph, children: list[Token], images: Images, max_width: float = _DOCX_TEXT_WIDTH_INCHES) -> None:
     bold = italic = False
     link: str | None = None
     for child in children:
@@ -450,7 +452,7 @@ def _docx_inline(paragraph, children: list[Token], images: Images) -> None:
             file_id = _image_id(child)
             image = images.get(file_id) if file_id else None
             if image is not None:
-                _docx_picture(paragraph, image, child.content)
+                _docx_picture(paragraph, image, child.content, max_width)
             else:
                 paragraph.add_run(image_note(child.content)).italic = True
         elif kind == "softbreak":
@@ -503,6 +505,22 @@ class _PdfPicture:
     alt: str
     max_height_mm: float | None
 
+    def max_width_mm(self) -> float:
+        """Its width at 96 CSS px per inch, narrowed to keep the height limit."""
+        width = self.width_px * 25.4 / _CSS_PX_PER_INCH
+        if self.max_height_mm is None:
+            return width
+        return min(width, self.max_height_mm * self.width_px / self.height_px)
+
+
+class _CellImage(io.BytesIO):
+    """A picture handed to an fpdf2 table cell, which draws it at the column's
+    width with no alt text; ``_export_pdf`` reads these to fix both."""
+
+    def __init__(self, picture: _PdfPicture) -> None:
+        super().__init__(picture.png)
+        self.picture = picture
+
 
 def _note_paragraph(text: str, level: int) -> list[Token]:
     children = [Token("em_open", "em", 1), Token("text", "", 0, content=text), Token("em_close", "em", -1)]
@@ -518,9 +536,9 @@ def _pdf_pictures(
 ) -> tuple[list[Token], dict[str, "_PdfPicture"]]:
     """Give each loaded image and drawn diagram, at any depth, a private ``src``
     that only the renderer (``_export_html``) draws. Every other image becomes
-    its note and a chat file link its label, so no other ``<img>`` is written;
-    an image in a table cell stays a note. Diagrams draw only when ``diagrams``
-    is given; an undrawn one is its note and the code."""
+    its note and a chat file link its label, so no other ``<img>`` is written.
+    Table cells follow ``_pdf_cell``. Diagrams draw only when ``diagrams`` is
+    given; an undrawn one is its note and the code."""
     key = f"asterism-export-{uuid.uuid4().hex}:"
     pictures: dict[str, _PdfPicture] = {}
 
@@ -530,9 +548,12 @@ def _pdf_pictures(
         return Token("image", "img", 0, attrs={"src": src, "alt": ""}, children=[])
 
     out: list[Token] = []
-    tables = 0
+    tables: list[Token] = []
     for token in tokens:
-        tables += {"table_open": 1, "table_close": -1}.get(token.type, 0)
+        if token.type == "table_open":
+            tables.append(token)
+        elif token.type == "table_close":
+            tables.pop()
         if diagrams is not None and is_mermaid(token):
             drawn = diagrams.get(token.content)
             if drawn is None:
@@ -544,22 +565,21 @@ def _pdf_pictures(
             ]
             out.extend(paragraph)
             continue
-        if token.children:
+        if token.type == "inline" and tables:
+            token.children = _pdf_cell(token, images, add)
+            if token.children[0].type == "image":
+                tables[-1].attrSet("cellpadding", "1")  # 1 mm, so pictures don't touch.
+        elif token.children:
             children: list[Token] = []
             depth = 0  # Inside a dropped chat file link.
             for child in token.children:
                 if child.type == "image":
                     file_id = _image_id(child)
-                    image = images.get(file_id) if file_id and not tables else None
+                    image = images.get(file_id) if file_id else None
                     if image is None:
                         children.extend(_note_tokens(child.content))
-                        continue
-                    alt = image_description(child.content, image)
-                    children.append(
-                        add(
-                            _PdfPicture(image.png, image.width, image.height, image.name, alt, _PDF_MAX_IMAGE_HEIGHT_MM)
-                        )
-                    )
+                    else:
+                        children.append(add(_image_picture(image, child.content)))
                 elif child.type == "link_open" and (
                     depth or str(child.attrs.get("href") or "").startswith("asterism-file:")
                 ):
@@ -571,6 +591,26 @@ def _pdf_pictures(
             token.children = children
         out.append(token)
     return out, pictures
+
+
+def _image_picture(image: ExportImage, alt: str) -> _PdfPicture:
+    return _PdfPicture(
+        image.png, image.width, image.height, image.name, image_description(alt, image), _PDF_MAX_IMAGE_HEIGHT_MM
+    )
+
+
+def _pdf_cell(token: Token, images: Images, add: Callable[[_PdfPicture], Token]) -> list[Token]:
+    """A table cell's content. fpdf2 holds one run of text or one image per
+    cell, and refuses mixed formatting, so a cell that is one loaded image draws
+    it, and any other cell is its plain text, with notes for images, as in DOCX."""
+    children = token.children or []
+    found = [child for child in children if child.type == "image"]
+    if len(found) == 1 and _only_pictures(children):
+        file_id = _image_id(found[0])
+        image = images.get(file_id) if file_id else None
+        if image is not None:
+            return [add(_image_picture(image, found[0].content))]
+    return [Token("text", "", 0, content=_cell_text(token))]
 
 
 def _list_paragraphs(tokens: list[Token]) -> list[Token]:
@@ -647,7 +687,12 @@ def _export_html() -> type:
                 super().handle_starttag(tag, attrs)
                 return
             picture = self._pictures.get(dict(attrs).get("src") or "")
-            if picture is None or self.table_row is not None:
+            if picture is None:
+                return
+            if self.table_row is not None:
+                if self.td_th is not None and "inserted" not in self.td_th:
+                    self.table_row.cell(img=_CellImage(picture), img_fill_width=True)
+                    self.td_th["inserted"] = True
                 return
             in_item = "li" in self._tags_stack
             if self._paragraph is not None:
@@ -663,16 +708,11 @@ def _export_html() -> type:
             self._resume = indent
 
         def _draw(self, picture: _PdfPicture, indent: float) -> None:
-            per_px = 25.4 / _CSS_PX_PER_INCH
-            width, height = picture.width_px * per_px, picture.height_px * per_px
-            scale = min(1.0, (self.pdf.epw - indent) / width)
-            if picture.max_height_mm is not None:
-                scale = min(scale, picture.max_height_mm / height)
             self.pdf.ln(2)
             self.pdf.image(
                 io.BytesIO(picture.png),
                 x=self.pdf.l_margin + indent,
-                w=width * scale,
+                w=min(picture.max_width_mm(), self.pdf.epw - indent),
                 title=picture.title,
                 alt_text=picture.alt,
             )
@@ -681,11 +721,35 @@ def _export_html() -> type:
     return _ExportHTML
 
 
-def markdown_pdf(title: str, content: str, diagrams: Diagrams | None = None, images: Images | None = None) -> bytes:
+@cache
+def _export_pdf() -> type:
+    """fpdf2's document with the export's HTML renderer. A table cell's picture
+    (``_CellImage``) keeps its natural size within the column and gets its
+    title and alt text, once: fpdf2 lays a table out twice, the first time with
+    writing switched off, and marked content then would be a second, empty
+    entry in the structure tree."""
+    import types
+
     from fpdf import FPDF
 
-    pdf = FPDF(format="A4")
-    pdf.HTML2FPDF_CLASS = _export_html()
+    class _ExportPDF(FPDF):
+        HTML2FPDF_CLASS = _export_html()
+
+        def image(self, name, *args, **kwargs):
+            if isinstance(name, _CellImage):
+                picture = name.picture
+                if kwargs.get("w"):
+                    kwargs["w"] = min(kwargs["w"], picture.max_width_mm())
+                if isinstance(self._out, types.MethodType):  # Not the measuring pass.
+                    kwargs.setdefault("title", picture.title)
+                    kwargs.setdefault("alt_text", picture.alt)
+            return super().image(name, *args, **kwargs)
+
+    return _ExportPDF
+
+
+def markdown_pdf(title: str, content: str, diagrams: Diagrams | None = None, images: Images | None = None) -> bytes:
+    pdf = _export_pdf()(format="A4")
     pdf.set_title(title)
     pdf.set_margins(18, 18, 18)
     pdf.add_page()

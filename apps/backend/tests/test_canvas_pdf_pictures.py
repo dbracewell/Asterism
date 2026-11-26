@@ -127,17 +127,17 @@ def test_a_diagram_under_a_step_draws_with_its_alt_text():
     assert alt_texts(data) == ["Flow: a to b"]
 
 
-def test_unloaded_images_undrawn_diagrams_and_table_cells_keep_their_notes():
+def test_unloaded_images_undrawn_diagrams_and_mixed_table_cells_keep_their_notes():
     content = (
         f"- {image('Gone', GONE)} and ![Web](https://example.com/x.png)\n"
         f"- Broken:\n\n  ```mermaid\n{indented(BROKEN, 2)}  ```\n\n"
-        f"| A | B |\n| - | - |\n| {image('Cell')} | x |\n"
+        f"| A | B |\n| - | - |\n| Text and {image('Cell')} | x |\n"
     )
     found = page(pdf(content, diagrams={}))
     text = found.extract_text()
     assert found.images == []
     assert f"{IMAGE_NOT_INCLUDED}: Gone" in text and f"{IMAGE_NOT_INCLUDED}: Web" in text
-    assert f"{IMAGE_NOT_INCLUDED}: Cell" in text
+    assert f"Text and [{IMAGE_NOT_INCLUDED}: Cell]" in text  # A cell is text or one image.
     assert DIAGRAM_NOT_DRAWN in text and "broken -->" in text
     assert "example.com" not in text
 
