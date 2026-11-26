@@ -150,3 +150,21 @@ it.each([
     within(item).queryByRole("link", { name: "Practice in Progress" }),
   ).toBeNull();
 });
+
+it.each([
+  ["proj", "Once a chat in this project has an answer, choose Reflect"],
+  [null, "Once a General chat has an answer, choose Reflect"],
+])(
+  "explains how to write one when the list is empty",
+  async (projectId, text) => {
+    mocks.list.mockResolvedValue({
+      items: [],
+      total: 0,
+      page: 1,
+      page_size: 10,
+    });
+    render(<ReflectionList projectId={projectId} />, { wrapper: Wrapper });
+    expect(await screen.findByText("No reflections yet")).toBeInTheDocument();
+    expect(screen.getByText(new RegExp(text))).toBeInTheDocument();
+  },
+);

@@ -13,7 +13,8 @@ Two tools help you look back on how you learned:
 
 1. Once Asterism has answered in the chat, select **Reflect** at the top right
    (on a phone, the notebook button). You can also select the **…** button
-   (**Chat actions**) and then **Reflect on this session**.
+   (**Chat actions**) and then **Reflect on this session**. The same menu is on
+   the chat's row in the sidebar: point at the chat, then select **…**.
 
    In a project, **Reflect** appears only while the project's **Reflections**
    area is on. To turn it on, open the project's **Settings** tab and switch on
@@ -34,8 +35,12 @@ Two tools help you look back on how you learned:
 ## Read your reflections
 
 Reflections are kept with the chat's project, in the project's **Reflections**
-tab. Reflections on General chats are on the **General** page, under
-**Reflections**.
+tab. The project's **Overview** tab also shows your newest reflection; select
+**All reflections** (or **Open Reflections** when there's one) to see the rest.
+Reflections on General chats are on the **General** page, under
+**Reflections**: select **General** in the sidebar to open it.
+
+Before you've written one, these places say how to start.
 
 ![The General page with a saved reflection under Reflections, showing what the student learned and what is still unclear](../images/reflections-list.png)
 

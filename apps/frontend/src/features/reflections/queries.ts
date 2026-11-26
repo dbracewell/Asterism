@@ -58,3 +58,9 @@ export function useReflectionsShown(chat: ChatInfo): boolean {
 export function reflectionsHref(projectId: string | null): string {
   return projectId ? `/projects/${projectId}?tab=reflections` : "/general";
 }
+
+/** How to write a reflection, for empty lists (US-111.2). */
+export function reflectionHowTo(projectId: string | null): string {
+  const where = projectId ? "a chat in this project" : "a General chat";
+  return `Once ${where} has an answer, choose Reflect at the top of the chat to note what you learned and what's still unclear.`;
+}
