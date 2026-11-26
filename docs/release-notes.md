@@ -39,6 +39,8 @@ Unreleased into its version and date.
 
 ### Behavior
 
+- Canvas PDF downloads keep bold and italics in table cells. Code and links
+  in a cell still print as plain text.
 - Canvas downloads now show chat pictures in table cells. In Word, cells also
   keep their bold, code and links. In a PDF, a cell shows a picture when the
   picture is all it holds, and other cells are plain text: a PDF whose table

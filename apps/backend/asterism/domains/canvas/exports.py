@@ -397,15 +397,32 @@ def markdown_docx(title: str, content: str, diagrams: Diagrams | None = None, im
     return buffer.getvalue()
 
 
-def _cell_text(token: Token) -> str:
-    """A table cell's plain text, with each image as its note (PDF)."""
+# fpdf2 writes a table cell as one run, formatted with its Markdown markers.
+# The export's markers are control characters (the core fonts take Latin-1
+# only), removed from the cell's own text, so nothing a document says is read
+# as formatting (``_export_pdf``).
+_CELL_BOLD, _CELL_ITALIC = "\x01\x01", "\x02\x02"
+_CELL_UNUSED = ("\x03\x03", "\x04\x04")  # Strikethrough and underline.
+_CELL_ESCAPE = "\x05"
+_CELL_PRIVATE = re.compile("[\x01-\x05]")
+
+
+def _cell_text(token: Token, *, heading: bool = False) -> str:
+    """A table cell's text for PDF, with bold and italics as fpdf2 markers, code
+    and link labels as plain text and each image as its note. A heading cell is
+    bold already, so it gets no bold markers."""
     parts = []
     for child in token.children or []:
-        if child.type == "image":
+        kind = child.type
+        if kind in ("strong_open", "strong_close") and not heading:
+            parts.append(_CELL_BOLD)
+        elif kind in ("em_open", "em_close"):
+            parts.append(_CELL_ITALIC)
+        elif kind == "image":
             parts.append(f"[{image_note(child.content)}]")
-        elif child.type in ("text", "code_inline"):
-            parts.append(child.content)
-        elif child.type in ("softbreak", "hardbreak"):
+        elif kind in ("text", "code_inline"):
+            parts.append(_CELL_PRIVATE.sub("", child.content))
+        elif kind in ("softbreak", "hardbreak"):
             parts.append(" ")
     return "".join(parts)
 
@@ -549,11 +566,14 @@ def _pdf_pictures(
 
     out: list[Token] = []
     tables: list[Token] = []
+    heading = False  # Whether the open cell is a heading cell.
     for token in tokens:
         if token.type == "table_open":
             tables.append(token)
         elif token.type == "table_close":
             tables.pop()
+        elif token.type in ("th_open", "td_open"):
+            heading = token.type == "th_open"
         if diagrams is not None and is_mermaid(token):
             drawn = diagrams.get(token.content)
             if drawn is None:
@@ -566,7 +586,7 @@ def _pdf_pictures(
             out.extend(paragraph)
             continue
         if token.type == "inline" and tables:
-            token.children = _pdf_cell(token, images, add)
+            token.children = _pdf_cell(token, images, add, heading=heading)
             if token.children[0].type == "image":
                 tables[-1].attrSet("cellpadding", "1")  # 1 mm, so pictures don't touch.
         elif token.children:
@@ -599,10 +619,13 @@ def _image_picture(image: ExportImage, alt: str) -> _PdfPicture:
     )
 
 
-def _pdf_cell(token: Token, images: Images, add: Callable[[_PdfPicture], Token]) -> list[Token]:
+def _pdf_cell(
+    token: Token, images: Images, add: Callable[[_PdfPicture], Token], *, heading: bool = False
+) -> list[Token]:
     """A table cell's content. fpdf2 holds one run of text or one image per
-    cell, and refuses mixed formatting, so a cell that is one loaded image draws
-    it, and any other cell is its plain text, with notes for images, as in DOCX."""
+    cell, and refuses nested HTML tags, so a cell that is one loaded image draws
+    it, and any other cell is one run of text (``_cell_text``) with notes for
+    images, as in DOCX."""
     children = token.children or []
     found = [child for child in children if child.type == "image"]
     if len(found) == 1 and _only_pictures(children):
@@ -610,7 +633,7 @@ def _pdf_cell(token: Token, images: Images, add: Callable[[_PdfPicture], Token])
         image = images.get(file_id) if file_id else None
         if image is not None:
             return [add(_image_picture(image, found[0].content))]
-    return [Token("text", "", 0, content=_cell_text(token))]
+    return [Token("text", "", 0, content=_cell_text(token, heading=heading))]
 
 
 def _list_paragraphs(tokens: list[Token]) -> list[Token]:
@@ -685,6 +708,10 @@ def _export_html() -> type:
         def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
             if tag != "img":
                 super().handle_starttag(tag, attrs)
+                if tag == "table" and self.table is not None:
+                    # fpdf2 has no option for this here; cells carry the
+                    # export's private markers (``_cell_text``).
+                    self.table._markdown = True
                 return
             picture = self._pictures.get(dict(attrs).get("src") or "")
             if picture is None:
@@ -727,13 +754,24 @@ def _export_pdf() -> type:
     (``_CellImage``) keeps its natural size within the column and gets its
     title and alt text, once: fpdf2 lays a table out twice, the first time with
     writing switched off, and marked content then would be a second, empty
-    entry in the structure tree."""
+    entry in the structure tree. Its Markdown (used only in table cells) reads
+    just the export's own bold and italic markers: no links, bullets,
+    escapes or other marks from the document's text."""
     import types
 
     from fpdf import FPDF
 
+    never = re.compile(r"(?!)")
+
     class _ExportPDF(FPDF):
         HTML2FPDF_CLASS = _export_html()
+        MARKDOWN_BOLD_MARKER = _CELL_BOLD
+        MARKDOWN_ITALICS_MARKER = _CELL_ITALIC
+        MARKDOWN_STRIKETHROUGH_MARKER, MARKDOWN_UNDERLINE_MARKER = _CELL_UNUSED
+        MARKDOWN_MARKERS = (_CELL_BOLD, _CELL_ITALIC, *_CELL_UNUSED)
+        MARKDOWN_ESCAPE_CHARACTER = _CELL_ESCAPE
+        MARKDOWN_LINK_REGEX = never
+        MARKDOWN_BULLET_REGEX = never
 
         def image(self, name, *args, **kwargs):
             if isinstance(name, _CellImage):
