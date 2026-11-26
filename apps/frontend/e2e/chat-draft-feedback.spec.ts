@@ -206,11 +206,16 @@ test("sends the chosen rubric and renders feedback by criterion", async ({
   await picker.click();
   await page.getByRole("option", { name: "Argumentative essay" }).click();
   await expect(picker).toHaveText("Argumentative essay");
+  // Enter pressed while the rubric list is still closing never reaches the
+  // composer, so wait for it to close and press Enter on the message box.
+  await expect(page.getByRole("listbox")).toBeHidden();
 
-  await page
-    .getByLabel("Message", { exact: true })
-    .fill("Uniforms should be required. Also, a study said bullying drops.");
-  await page.keyboard.press("Enter");
+  const message = page.getByLabel("Message", { exact: true });
+  await message.fill(
+    "Uniforms should be required. Also, a study said bullying drops.",
+  );
+  await message.press("Enter");
+  await expect(message).toHaveValue("");
 
   const reply = page.getByRole("group", {
     name: "Feedback against Argumentative essay",
