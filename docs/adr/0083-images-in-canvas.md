@@ -83,11 +83,20 @@ canvas tools store references as written; the guidance grants nothing.
   image's description, or else the file name.
   - Every other image becomes an italic "Image not included: <description>":
     a web URL, another chat's file, SVG, or a file over a limit. Nothing is
-    ever fetched from an image URL. In PDF, the HTML renderer never receives
-    an `<img>`.
+    ever fetched from an image URL.
   - DOCX embeds images anywhere text goes, except table cells, which hold the
-    note. PDF, as with diagrams, places pictures only in top-level paragraphs;
-    in a list, quote or table an image is a note.
+    note. PDF draws them in paragraphs, list items at any depth and quotes;
+    a table cell holds the note.
+  - PDF placement (EPIC-109, US-109.2). Each loaded image and drawn diagram
+    gets an `<img>` whose `src` is `asterism-export-<random>:<n>`, made fresh
+    for each export. The export's `HTML2FPDF` subclass (`_export_html`, set
+    through `FPDF.HTML2FPDF_CLASS`) draws an `<img>` only when its `src` is in
+    that export's picture map, and ignores every other one, so a path, URL or
+    guessed token in the text never loads. (fpdf2 itself would load any `src`,
+    and takes no alt text from HTML.) The picture goes at the current list
+    indent with its title and alt text, fitted to the width left; text after it
+    reopens at the same indent. Raw HTML is never parsed, so the only `<img>`
+    tags are the export's own.
   - A link to a chat file keeps only its label in both formats.
 - **Markdown and text** downloads of a document write each image as
   `[Image not included: <description>]` and each chat file link as its label,

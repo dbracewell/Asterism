@@ -107,10 +107,11 @@ mermaid and the same rules.
   first (at most 30, within 60 seconds); the writers stay synchronous and take
   the pictures keyed by source.
 - DOCX: each picture is fitted to the 6.5 inch text width at 96 CSS px per inch,
-  with `docPr` title and description set. PDF: the HTML is written in runs, with
-  `pdf.image` between them, fitted to the 174 mm text width with `title` and
-  `alt_text`. In PDF only top-level fences become pictures; a fence inside a list
-  or quote stays code.
+  with `docPr` title and description set. PDF: a drawn fence, at any depth,
+  becomes an `<img>` whose `src` is a private per-export token, and the export's
+  HTML renderer subclass draws it with `title` and `alt_text`, fitted to the
+  174 mm text width less the list indent (ADR-0083). Before EPIC-109 only
+  top-level fences became pictures in PDF.
 - A fence that wasn't drawn (invalid, over the cap or the deadline, or refused)
   is written as code after an italic "Diagram not drawn".
 

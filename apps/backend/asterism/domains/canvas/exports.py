@@ -492,16 +492,74 @@ def _note_tokens(alt: str) -> list[Token]:
     ]
 
 
-def _without_images(tokens: list[Token]) -> list[Token]:
-    """Every image as an italic note, so the HTML renderer never writes ``<img>``,
-    and a chat file link as its label alone."""
+@dataclass(frozen=True)
+class _PdfPicture:
+    """A loaded image or drawn diagram, drawn where its Markdown is."""
+
+    png: bytes
+    width_px: int
+    height_px: int
+    title: str
+    alt: str
+    max_height_mm: float | None
+
+
+def _note_paragraph(text: str, level: int) -> list[Token]:
+    children = [Token("em_open", "em", 1), Token("text", "", 0, content=text), Token("em_close", "em", -1)]
+    return [
+        Token("paragraph_open", "p", 1, level=level, block=True),
+        Token("inline", "", 0, level=level + 1, children=children),
+        Token("paragraph_close", "p", -1, level=level, block=True),
+    ]
+
+
+def _pdf_pictures(
+    tokens: list[Token], diagrams: Diagrams | None, images: Images
+) -> tuple[list[Token], dict[str, "_PdfPicture"]]:
+    """Give each loaded image and drawn diagram, at any depth, a private ``src``
+    that only the renderer (``_export_html``) draws. Every other image becomes
+    its note and a chat file link its label, so no other ``<img>`` is written;
+    an image in a table cell stays a note. Diagrams draw only when ``diagrams``
+    is given; an undrawn one is its note and the code."""
+    key = f"asterism-export-{uuid.uuid4().hex}:"
+    pictures: dict[str, _PdfPicture] = {}
+
+    def add(picture: _PdfPicture) -> Token:
+        src = f"{key}{len(pictures)}"
+        pictures[src] = picture
+        return Token("image", "img", 0, attrs={"src": src, "alt": ""}, children=[])
+
+    out: list[Token] = []
+    tables = 0
     for token in tokens:
+        tables += {"table_open": 1, "table_close": -1}.get(token.type, 0)
+        if diagrams is not None and is_mermaid(token):
+            drawn = diagrams.get(token.content)
+            if drawn is None:
+                out.extend([*_note_paragraph(DIAGRAM_NOT_DRAWN, token.level), token])
+                continue
+            paragraph = _note_paragraph("", token.level)
+            paragraph[1].children = [
+                add(_PdfPicture(drawn.png, drawn.width, drawn.height, drawn.label, diagram_alt_text(drawn), None))
+            ]
+            out.extend(paragraph)
+            continue
         if token.children:
             children: list[Token] = []
             depth = 0  # Inside a dropped chat file link.
             for child in token.children:
                 if child.type == "image":
-                    children.extend(_note_tokens(child.content))
+                    file_id = _image_id(child)
+                    image = images.get(file_id) if file_id and not tables else None
+                    if image is None:
+                        children.extend(_note_tokens(child.content))
+                        continue
+                    alt = image_description(child.content, image)
+                    children.append(
+                        add(
+                            _PdfPicture(image.png, image.width, image.height, image.name, alt, _PDF_MAX_IMAGE_HEIGHT_MM)
+                        )
+                    )
                 elif child.type == "link_open" and (
                     depth or str(child.attrs.get("href") or "").startswith("asterism-file:")
                 ):
@@ -511,7 +569,8 @@ def _without_images(tokens: list[Token]) -> list[Token]:
                 else:
                     children.append(child)
             token.children = children
-    return tokens
+        out.append(token)
+    return out, pictures
 
 
 def _list_paragraphs(tokens: list[Token]) -> list[Token]:
@@ -531,47 +590,95 @@ def _list_paragraphs(tokens: list[Token]) -> list[Token]:
             continue
         elif token.type == "paragraph_open":
             token.hidden = tokens[index + 2].hidden = True  # And its close.
-            if items[-1][1] == "paragraph":
-                inline = tokens[index + 1]
+            inline = tokens[index + 1]
+            kind = "picture" if _only_pictures(inline.children or []) else "paragraph"
+            if kind == items[-1][1] == "paragraph":
                 inline.children = [Token("hardbreak", "br", 0), Token("hardbreak", "br", 0), *(inline.children or [])]
-            items[-1] = (items[-1][0], "paragraph")
+            items[-1] = (items[-1][0], kind)
         else:
             items[-1] = (items[-1][0], token.type)
     return tokens
 
 
+def _only_pictures(children: list[Token]) -> bool:
+    """Whether an inline run is pictures alone, which end the text anyway."""
+    blank = all(
+        child.type in ("image", "softbreak", "hardbreak") or (child.type == "text" and not child.content.strip())
+        for child in children
+    )
+    return blank and any(child.type == "image" for child in children)
+
+
 @cache
 def _export_html() -> type:
-    """fpdf2's HTML renderer, keeping a list item's indent for text that follows
-    a nested list or code block in the same item."""
+    """fpdf2's HTML renderer for exports. It draws an ``<img>`` only when its
+    ``src`` is one of this export's pictures (``_pdf_pictures``), fitted to the
+    width left after the indent, with its title and alt text, and ignores any
+    other. Text keeps its list item's indent after a picture, a nested list or
+    a code block."""
     from fpdf.html import HTML2FPDF
 
     class _ExportHTML(HTML2FPDF):
+        def __init__(self, *args, pictures: Mapping[str, _PdfPicture] | None = None, **kwargs) -> None:
+            self._pictures = pictures or {}
+            self._resume: float | None = None  # The indent text reopens at after a picture.
+            self._written = False  # Whether the current paragraph has text.
+            super().__init__(*args, **kwargs)
+
+        def _item_indent(self) -> float:
+            margin = getattr(self.tag_styles["li"], "l_margin", 0)
+            return (margin if isinstance(margin, (int, float)) else 0) * self.indent
+
+        def _new_paragraph(self, *args, **kwargs) -> None:
+            self._resume, self._written = None, False
+            super()._new_paragraph(*args, **kwargs)
+
         def _write_paragraph(self, text: str, link: int | str | None = None) -> None:
-            if text and not self._paragraph and "li" in self._tags_stack:
-                margin = getattr(self.tag_styles["li"], "l_margin", 0)
-                self._new_paragraph(indent=(margin if isinstance(margin, (int, float)) else 0) * self.indent)
+            if text and not self._paragraph:
+                if self._resume is not None:
+                    self._new_paragraph(indent=self._resume)
+                elif "li" in self._tags_stack:
+                    self._new_paragraph(indent=self._item_indent())
+            self._written = self._written or bool(text)
             super()._write_paragraph(text, link)
 
+        def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+            if tag != "img":
+                super().handle_starttag(tag, attrs)
+                return
+            picture = self._pictures.get(dict(attrs).get("src") or "")
+            if picture is None or self.table_row is not None:
+                return
+            in_item = "li" in self._tags_stack
+            if self._paragraph is not None:
+                indent = getattr(self._paragraph, "indent", 0) or 0
+                if not self._written and in_item:
+                    super()._write_paragraph("\u00a0")  # So the item's marker prints.
+            elif self._resume is not None:
+                indent = self._resume
+            else:
+                indent = self._item_indent() if in_item else 0
+            self._end_paragraph()
+            self._draw(picture, indent)
+            self._resume = indent
+
+        def _draw(self, picture: _PdfPicture, indent: float) -> None:
+            per_px = 25.4 / _CSS_PX_PER_INCH
+            width, height = picture.width_px * per_px, picture.height_px * per_px
+            scale = min(1.0, (self.pdf.epw - indent) / width)
+            if picture.max_height_mm is not None:
+                scale = min(scale, picture.max_height_mm / height)
+            self.pdf.ln(2)
+            self.pdf.image(
+                io.BytesIO(picture.png),
+                x=self.pdf.l_margin + indent,
+                w=width * scale,
+                title=picture.title,
+                alt_text=picture.alt,
+            )
+            self.pdf.ln(4)
+
     return _ExportHTML
-
-
-def _paragraph(children: list[Token]) -> list[Token]:
-    """A paragraph of ``children``, or nothing if they hold no text."""
-    while children and (
-        children[0].type in ("softbreak", "hardbreak")
-        or (children[0].type == "text" and not children[0].content.strip())
-    ):
-        children = children[1:]
-    while children and (
-        children[-1].type in ("softbreak", "hardbreak")
-        or (children[-1].type == "text" and not children[-1].content.strip())
-    ):
-        children = children[:-1]
-    if not children:
-        return []
-    inline = Token("inline", "", 0, children=children, level=1)
-    return [Token("paragraph_open", "p", 1, block=True), inline, Token("paragraph_close", "p", -1, block=True)]
 
 
 def markdown_pdf(title: str, content: str, diagrams: Diagrams | None = None, images: Images | None = None) -> bytes:
@@ -599,64 +706,14 @@ def markdown_pdf(title: str, content: str, diagrams: Diagrams | None = None, ima
     pdf.set_font(family, size=11)
     markdown = _markdown(images=True)
     styles = _pdf_styles(code_family)
-    pictures = images or {}
 
-    def write(tokens: list[Token]) -> None:
-        if tokens:
-            pdf.write_html(
-                markdown.renderer.render(_without_images(tokens), markdown.options, {}),
-                font_family=family,
-                li_prefix_color=(0, 0, 0),
-                tag_styles=styles,
-                warn_on_tags_not_matching=False,
-            )
-
-    def picture(image: ExportImage, alt: str) -> None:
-        width = _fit(image, _PDF_TEXT_WIDTH_MM, _PDF_MAX_IMAGE_HEIGHT_MM, 25.4 / _CSS_PX_PER_INCH)
-        pdf.ln(2)
-        pdf.image(io.BytesIO(image.png), w=width, title=image.name, alt_text=image_description(alt, image))
-        pdf.ln(4)
-
-    # Drawn diagrams and loaded images go between runs of HTML. Only top-level
-    # fences and paragraphs hold pictures; inside a list, quote or table a
-    # diagram stays code and an image is written as a note.
-    tokens = _list_paragraphs(markdown.parse(text))
-    run: list[Token] = []
-    index = 0
-    while index < len(tokens):
-        token = tokens[index]
-        index += 1
-        if token.type == "paragraph_open" and token.level == 0 and index < len(tokens):
-            inline = tokens[index]
-            children = inline.children or []
-            found = [pictures.get(_image_id(child)) if child.type == "image" else None for child in children]
-            if any(found):
-                index += 2  # The inline token and paragraph_close.
-                segment: list[Token] = []
-                for child, image in zip(children, found, strict=True):
-                    if image is None:
-                        segment.append(child)
-                        continue
-                    run.extend(_paragraph(segment))
-                    segment = []
-                    write(run)
-                    run = []
-                    picture(image, child.content)
-                run.extend(_paragraph(segment))
-                continue
-        if diagrams is None or token.level != 0 or not is_mermaid(token):
-            run.append(token)
-            continue
-        drawn = diagrams.get(token.content)
-        if drawn is None:
-            note = markdown.parse(f"*{DIAGRAM_NOT_DRAWN}*")
-            run.extend([*note, token])
-            continue
-        write(run)
-        run = []
-        width = min(drawn.width * 25.4 / _CSS_PX_PER_INCH, _PDF_TEXT_WIDTH_MM)
-        pdf.ln(2)
-        pdf.image(io.BytesIO(drawn.png), w=width, title=drawn.label, alt_text=diagram_alt_text(drawn))
-        pdf.ln(4)
-    write(run)
+    tokens, pictures = _pdf_pictures(markdown.parse(text), diagrams, images or {})
+    pdf.write_html(
+        markdown.renderer.render(_list_paragraphs(tokens), markdown.options, {}),
+        pictures=pictures,
+        font_family=family,
+        li_prefix_color=(0, 0, 0),
+        tag_styles=styles,
+        warn_on_tags_not_matching=False,
+    )
     return bytes(pdf.output())

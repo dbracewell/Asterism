@@ -108,17 +108,18 @@ def test_pdf_places_top_level_images_between_the_text():
     data = export("pdf", {SEA: picture()})
     pages = pdfplumber.open(io.BytesIO(data)).pages
     page = pages[0]
-    # Only the top-level paragraph's image; the list's and table's are notes.
-    assert len(page.images) == 1
-    image = page.images[0]
+    # The top-level paragraph's image and the list item's (US-109.2); the
+    # table cell's is a note.
+    assert len(page.images) == 2
+    image = min(page.images, key=lambda item: item["top"])
     before = page.search("Before the picture.")[0]
     after = page.search("After the picture")[0]
     assert before["bottom"] <= image["top"] and image["bottom"] <= after["top"]
     assert image["width"] == pytest.approx(225, abs=1)  # 300 CSS px is 225 pt.
     text = "\n".join(p.extract_text() or "" for p in pages)
     assert f"{IMAGE_NOT_INCLUDED}: Not loaded" in text
-    assert f"{IMAGE_NOT_INCLUDED}: In a list" not in text  # The list's alt is "The sea at dusk".
-    assert f"{IMAGE_NOT_INCLUDED}: The sea at dusk" in text
+    assert f"{IMAGE_NOT_INCLUDED}: The sea at dusk" not in text
+    assert f"{IMAGE_NOT_INCLUDED}: In a table" in text
     assert b"/Alt" in data
 
 
