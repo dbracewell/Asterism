@@ -100,21 +100,7 @@ EPIC-96 through EPIC-101 (live policy availability, hiding what the admin turned
 
 ## PDF layout polish (proposed 2026-11-26)
 
-[EPIC-110](docs/epics/EPIC-110-PDF-LAYOUT-POLISH.md)
-
-- [x] US-110.1: Bold and italics in PDF table cells
-  - [x] Bold and italic runs print as such; literal marks print as written
-  - [x] Code and link text print plain; link targets stay out
-  - [x] Picture cells and notes unchanged
-  - [x] Tests, ADR-0083 note, guide and release note
-- [x] US-110.2: Code blocks under list items in PDF
-  - [x] Code blocks start at the item's indent at every level and wrap inside the page
-  - [x] Top-level code blocks unchanged
-  - [x] Tests, guide and release note
-- [x] US-110.3: Quotes that look like quotes in PDF
-  - [x] Indent and a left bar for the full height, across page breaks; nested quotes further in
-  - [x] Lists, pictures and diagrams in a quote line up with its text
-  - [x] Tests, guide and release note
+[EPIC-110](docs/epics/EPIC-110-PDF-LAYOUT-POLISH.md) (US-110.1 through US-110.3) is complete and archived in the [2026-11-26 checklist](docs/archive/todo-completed-2026-11-26.md).
 
 ## Finding reflections (proposed 2026-11-26)
 

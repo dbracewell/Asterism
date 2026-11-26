@@ -21,3 +21,24 @@ Source: user request (2026-11-26), PDF downloads showing a note instead of a pic
   - [x] Spike: alt text on an fpdf2 cell image; record the choice in ADR-0083
   - [x] PDF and Word cell images with alt text, fitted to the cell; formatted PDF cells no longer fail
   - [x] Tests, canvas guide page, release notes
+
+## PDF layout polish
+
+EPIC-110 is complete: every story was confirmed and merged on 2026-11-26 through pull requests #140 to #142. Canvas PDF downloads keep bold and italics in table cells, line up code blocks under their list item with a gap below, and indent quotes with a bar at the left that continues across page breaks (ADR-0083).
+
+### [EPIC-110: PDF layout polish](../epics/EPIC-110-PDF-LAYOUT-POLISH.md)
+
+- [x] US-110.1: Bold and italics in PDF table cells
+  - [x] Bold and italic runs print as such; literal marks print as written
+  - [x] Code and link text print plain; link targets stay out
+  - [x] Picture cells and notes unchanged
+  - [x] Tests, ADR-0083 note, guide and release note
+- [x] US-110.2: Code blocks under list items in PDF
+  - [x] Code blocks start at the item's indent at every level and wrap inside the page
+  - [x] Top-level code blocks unchanged
+  - [x] Tests, guide and release note
+- [x] US-110.3: Quotes that look like quotes in PDF
+  - [x] Indent and a left bar for the full height, across page breaks; nested quotes further in
+  - [x] Lists, pictures and diagrams in a quote line up with its text
+  - [x] Tests, guide and release note
+  - [x] A gap under every code block (found in US-110.2)
