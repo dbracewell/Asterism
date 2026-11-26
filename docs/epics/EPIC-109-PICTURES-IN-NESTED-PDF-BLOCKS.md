@@ -1,6 +1,6 @@
 # EPIC-109: Pictures in lists, quotes and tables in exports
 
-Status: in progress (2026-11-26); US-109.1 and US-109.2 merged, US-109.3 implemented. Source: user request (2026-11-26), the follow-up
+Status: complete (2026-11-26). Source: user request (2026-11-26), the follow-up
 to [EPIC-107](EPIC-107-IMAGES-IN-CANVAS.md) and
 [EPIC-108](EPIC-108-DIAGRAMS-FROM-REAL-MODELS.md): models often put a diagram or
 an image under a numbered step, and the PDF download shows a text note there
