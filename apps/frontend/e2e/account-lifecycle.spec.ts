@@ -19,7 +19,7 @@ async function register(
   admin = false,
 ): Promise<{ id: string; email: string }> {
   const email = `${randomUUID()}@example.test`;
-  const query = `?adminKey=${encodeURIComponent(process.env.ADMIN_PASSPHRASE!)}&role=${admin ? "admin" : "user"}`;
+  const query = `?adminKey=${encodeURIComponent(process.env.ADMIN_PASSPHRASE!)}&systemKey=${encodeURIComponent(process.env.SYSTEM_KEY!)}&role=${admin ? "admin" : "user"}`;
   const signup = await client.request.post(`/api/auth/sign-up/email${query}`, {
     data: { name, email, password: OLD_PASSWORD },
   });
@@ -169,7 +169,7 @@ test("an administrator resets, suspends, reactivates and deletes an account", as
   );
   // The email is free again: the old auth account is really gone.
   const again = await gone.request.post(
-    `/api/auth/sign-up/email?adminKey=${encodeURIComponent(process.env.ADMIN_PASSPHRASE!)}&role=user`,
+    `/api/auth/sign-up/email?adminKey=${encodeURIComponent(process.env.ADMIN_PASSPHRASE!)}&systemKey=${encodeURIComponent(process.env.SYSTEM_KEY!)}&role=user`,
     {
       data: {
         name: "New person",

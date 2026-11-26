@@ -289,7 +289,7 @@ test("the administrator connects a provider right after creating the account", a
 
 test("a standard user never sees the provider step", async ({ page }) => {
   const signup = await page.request.post(
-    `/api/auth/sign-up/email?adminKey=${encodeURIComponent(process.env.ADMIN_PASSPHRASE!)}&role=user`,
+    `/api/auth/sign-up/email?adminKey=${encodeURIComponent(process.env.ADMIN_PASSPHRASE!)}&systemKey=${encodeURIComponent(process.env.SYSTEM_KEY!)}&role=user`,
     {
       data: {
         name: "Standard user",

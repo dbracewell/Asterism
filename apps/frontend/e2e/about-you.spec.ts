@@ -15,7 +15,7 @@ for (const width of [1280, 320]) {
     page.on("pageerror", (error) => errors.push(error.message));
     const email = `${randomUUID()}@example.test`;
     const signup = await context.request.post(
-      `/api/auth/sign-up/email?adminKey=${encodeURIComponent(process.env.ADMIN_PASSPHRASE!)}&role=user`,
+      `/api/auth/sign-up/email?adminKey=${encodeURIComponent(process.env.ADMIN_PASSPHRASE!)}&systemKey=${encodeURIComponent(process.env.SYSTEM_KEY!)}&role=user`,
       {
         data: { name: "About tester", email, password: "About-test-832!" },
       },

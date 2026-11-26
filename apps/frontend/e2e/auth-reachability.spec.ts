@@ -21,7 +21,7 @@ test.beforeAll(async () => {
   });
   try {
     const response = await account.post(
-      `/api/auth/sign-up/email?adminKey=${encodeURIComponent(process.env.ADMIN_PASSPHRASE!)}`,
+      `/api/auth/sign-up/email?adminKey=${encodeURIComponent(process.env.ADMIN_PASSPHRASE!)}&systemKey=${encodeURIComponent(process.env.SYSTEM_KEY!)}`,
       {
         data: {
           name: "Reachability",

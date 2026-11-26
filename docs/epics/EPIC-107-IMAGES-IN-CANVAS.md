@@ -74,14 +74,11 @@ sandboxed preview loads nothing); images from outside the chat (web URLs stay
       reference building with reply resolution; client regenerated
 - [x] The canvas preview provides `InlineFilesContext`; unsaved references stay
       unavailable until saved
-- [x] Tests:
-      - backend (`test_canvas_inline_files.py`): a generated image and an
-        attachment resolve; library-only, foreign, other-chat and missing IDs
-        are bare; a deleted file turns bare; a saved edit resolves; the limit
-      - frontend: the preview shows the resolved image and leaves the other
-        reference unavailable
-      - E2E (`canvas.spec.ts`): at 320 px the image loads only through the
-        scoped route, fits the sheet, opens full size and passes axe
+- [x] Tests: - backend (`test_canvas_inline_files.py`): a generated image and an
+      attachment resolve; library-only, foreign, other-chat and missing IDs
+      are bare; a deleted file turns bare; a saved edit resolves; the limit - frontend: the preview shows the resolved image and leaves the other
+      reference unavailable - E2E (`canvas.spec.ts`): at 320 px the image loads only through the
+      scoped route, fits the sheet, opens full size and passes axe
 - [x] Docs: the canvas guide page, ADR-0063 cross-reference, release notes (Behavior)
 
 ### US-107.2: Tell the agent it can put images in a canvas
@@ -105,10 +102,5 @@ sandboxed preview loads nothing); images from outside the chat (web URLs stay
 - [x] Markdown and text downloads replace tokens with the description; the
       chat ZIP includes the images under `images/` with relative links
 - [x] Save to Files uses the same path; Download my data keeps the stored text
-- [x] Tests (`test_canvas_image_exports.py`):
-      - each format, with code blocks left alone
-      - the count, byte and pixel limits
-      - a foreign file, another chat's file, an SVG and a broken image
-      - GIF to PNG
-      - the routes and the ZIP
+- [x] Tests (`test_canvas_image_exports.py`): - each format, with code blocks left alone - the count, byte and pixel limits - a foreign file, another chat's file, an SVG and a broken image - GIF to PNG - the routes and the ZIP
       ADR-0083, ADR-0063, canvas guide page and release notes

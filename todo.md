@@ -105,3 +105,122 @@ EPIC-96 through EPIC-101 (live policy availability, hiding what the admin turned
 ## Finding reflections (proposed 2026-11-26)
 
 [EPIC-111](docs/epics/EPIC-111-FINDING-REFLECTIONS.md) (US-111.1 and US-111.2) is complete and archived in the [2026-11-26 checklist](docs/archive/todo-completed-2026-11-26.md).
+
+## Repository review follow-ups (proposed 2026-11-26)
+
+Source: repository review (2026-11-26), verified against the code at `40101ac7`. Suggested order: EPIC-112 → 113 → 114 → 115 → 116 → 117. Work one story at a time.
+
+[EPIC-112](docs/epics/EPIC-112-SIGN-UP-AND-ACCOUNT-HARDENING.md): Sign-up and account hardening
+
+- [x] US-112.1: Sign-up limits that match the docs and fit a classroom
+  - [x] The passphrase alone works only before any account exists; afterwards it also needs the system key
+  - [x] Invite sign-up limited per invite as well as per address (a class of 30 on one network)
+  - [x] A full rate-limit store drops its oldest entries; IPv6 grouped by /64
+  - [x] Tests, auth-and-security doc and release note
+- [ ] US-112.2: Admin changes only from active admins, through the app
+  - [ ] `POST /users/` from a signed-in admin checks the caller is still active and not deleted; user ids are bounded and system keys are secret fields.
+  - [ ] Better Auth admin HTTP routes the app doesn't use are closed.
+  - [ ] Suspending or deleting admins re-checks that one active admin remains in the same transaction, so two admins acting at once can't remove both.
+  - [ ] Tests and release note.
+- [ ] US-112.3: Access ends with the account
+  - [ ] An open chat connection closes when its token expires.
+  - [ ] Invite redemption creates the user, claims the invite and adds the class membership in one transaction.
+  - [ ] The ChatGPT connection callback checks the account is active and uses its sign-in attempt exactly once.
+  - [ ] Issuing a password reset link revokes the account's earlier unused links.
+  - [ ] Tests and release note.
+
+[EPIC-113](docs/epics/EPIC-113-AGENT-AND-BUDGET-LIMITS.md): Agent and budget limits
+
+- [ ] US-113.1: Quiz grading within the token budget
+  - [ ] Submitting an attempt checks the budget before grading short answers.
+  - [ ] Over budget, the attempt is still saved, with short answers marked ungraded and a message saying why.
+  - [ ] ADR-0073 note, tests and release note.
+- [ ] US-113.2: Text tool calls only when tools were offered
+  - [ ] Tool calls written as text are read only when that request offered tools.
+  - [ ] Tool-call tags inside fenced or inline code are left as text.
+  - [ ] The final loop step, which offers no tools, never runs a tool call.
+  - [ ] Tests and release note.
+- [ ] US-113.3: Tool and stream errors end cleanly
+  - [ ] Tool errors that would repeat (bad input, coded errors) are not retried.
+  - [ ] A structured-output error ends the stream without a completion event.
+  - [ ] Duplicate tool call ids are made unique before approval.
+  - [ ] Regenerate is refused while a reply is running and reaches every open tab.
+  - [ ] Tool approvals accept only true or false; unexpected tool errors return a generic message.
+  - [ ] Tests and release note.
+
+[EPIC-114](docs/epics/EPIC-114-CI-AND-IMAGE-SUPPLY-CHAIN.md): CI and image supply chain
+
+- [ ] US-114.1: Dependency build scripts follow the allowlist
+  - [ ] CI and `ci:local:*` drop `approve-builds --all` and the flags that turn the allowlist off; `strictDepBuilds` is on.
+  - [ ] `minimumReleaseAge` is set to the week Dependabot already assumes.
+  - [ ] CI passes (better-sqlite3 and Playwright still build); release note.
+- [ ] US-114.2: Workflow tokens and timeouts
+  - [ ] Every checkout sets `persist-credentials: false` unless a later step pushes.
+  - [ ] Every release job has a timeout; fork pull requests get their own concurrency group.
+  - [ ] The Node version comes from one place; `vuln-issue.mjs` survives a bad marker.
+- [ ] US-114.3: Scans see every runtime component
+  - [ ] `check:image` records and checks the extracted `libgbm1`, Node and Chromium versions.
+  - [ ] `uv` comes from a digest-pinned image.
+  - [ ] `install-trivy.mjs` uses a private temporary directory; `check-pins.mjs` compares paths reliably.
+  - [ ] Tests for the scripts; release note (Image).
+
+[EPIC-115](docs/epics/EPIC-115-PROXY-AND-DEPLOYMENT-HARDENING.md): Proxy and deployment hardening
+
+- [ ] US-115.1: The proxy trusts only what it should
+  - [ ] The forwarded scheme is honoured only from trusted proxies; requests for unknown hosts are refused.
+  - [ ] The internal system-key header is removed from public requests.
+  - [ ] The one-hour timeouts and unbuffered proxying apply only to chat, events and other streaming routes.
+  - [ ] Readiness checks reuse a result for a few seconds.
+  - [ ] Tests (`check:image` or edge-config) and release note.
+- [ ] US-115.2: Container and setup defaults
+  - [ ] `docker-compose.yml` drops capabilities, sets `no-new-privileges` and a process limit; the host gateway mapping is documented as optional.
+  - [ ] `setup.mjs --force` leaves `.env` readable only by its owner.
+  - [ ] Secret files with Windows line endings give the same key in every entrypoint command.
+  - [ ] API docs are off in production.
+  - [ ] Release note (Configuration, Image).
+- [ ] US-115.3: Backups restore privately and refuse a missing key
+  - [ ] Restored databases are readable only by their owner.
+  - [ ] A restore stops when the backup recorded a system key and none is set.
+  - [ ] Extraction has total size and file count limits; vector table names are checked.
+  - [ ] A cancelled data export leaves no partial file.
+  - [ ] Tests, backup guide and release note.
+
+[EPIC-116](docs/epics/EPIC-116-UNTRUSTED-FILES-AND-INPUT.md): Untrusted files and input
+
+- [ ] US-116.1: Office files checked before conversion
+  - [ ] DOCX, XLSX, PPTX and EPUB uploads get the same member-count and uncompressed-size checks as previews before conversion.
+  - [ ] A conversion that times out stops using memory and threads.
+  - [ ] Tests and release note.
+- [ ] US-116.2: Shown files and preferences are sanitized
+  - [ ] Uploaded SVGs are sanitized before they are shown or opened.
+  - [ ] The font-size preference is checked against the allowed sizes; preference cookies are `SameSite=Lax` and secure over HTTPS.
+  - [ ] File names lose control and text-direction characters.
+  - [ ] Downloaded diagram SVGs contain no external references.
+  - [ ] Tests and release note.
+- [ ] US-116.3: Prompt checks and fetches resist evasion
+  - [ ] The image prompt check normalizes accents and removes invisible characters before matching.
+  - [ ] `web_fetch` ignores proxy environment variables, uses the browser only for HTML, and caps a page's subrequests.
+  - [ ] Model provider clients don't follow redirects and are dropped when a provider changes or is deleted.
+  - [ ] Tests and release note.
+
+[EPIC-117](docs/epics/EPIC-117-CORRECTNESS-CLEANUP.md): Correctness cleanup
+
+- [ ] US-117.1: Settings and admin consistency
+  - [ ] A settings import that fails partway leaves nothing applied, and never gives the admin group a budget.
+  - [ ] Model discovery keeps the draft model.
+  - [ ] Pack review and course apply offer only tools the person's group allows.
+  - [ ] Tool settings check component parameters; the generic setting route for study chat checks groups; nested secrets are redacted.
+  - [ ] Tests and release note.
+- [ ] US-117.2: Chat and frontend fixes
+  - [ ] The chat connection's heartbeat timeout has a margin over the server's ping; stray `console.log` calls are removed.
+  - [ ] Chat titles can be generated again later in a chat.
+  - [ ] File names containing `%` open and show correctly.
+  - [ ] Sending a message refreshes only the queries it changes.
+  - [ ] Downloads share one helper; the shared event worker drops closed tabs and closes the stream on sign-out.
+  - [ ] The query client is per request on the server; the canvas preview keeps listening until a valid message arrives.
+  - [ ] Tests and release note.
+- [ ] US-117.3: Housekeeping
+  - [ ] Word tables with many columns keep a positive picture width; ZIP names keep their folder when disambiguated.
+  - [ ] `SECURITY.md` names the supported version.
+  - [ ] The container health check doesn't follow redirects; `reset-databases` checks the database URL prefix; `.dockerignore` excludes docs, tests and local data.
+  - [ ] The unused proxy-list call in `setup.mjs` is removed.

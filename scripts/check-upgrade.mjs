@@ -553,6 +553,7 @@ async function seed(run, stub) {
   const email = `upgrade-${randomUUID().slice(0, 8)}@upgrade.test`;
   const query = new URLSearchParams({
     adminKey: run.secrets.ADMIN_PASSPHRASE,
+    systemKey: run.secrets.SYSTEM_KEY,
     role: "admin",
   });
   const { user } = await session.json(

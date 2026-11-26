@@ -15,7 +15,7 @@ test("a person prepares and downloads an archive of their data", async ({
 }) => {
   test.setTimeout(120_000);
   const email = `${randomUUID()}@example.test`;
-  const query = `?adminKey=${encodeURIComponent(process.env.ADMIN_PASSPHRASE!)}&role=user`;
+  const query = `?adminKey=${encodeURIComponent(process.env.ADMIN_PASSPHRASE!)}&systemKey=${encodeURIComponent(process.env.SYSTEM_KEY!)}&role=user`;
   const signup = await context.request.post(`/api/auth/sign-up/email${query}`, {
     data: { name: "Archive student", email, password: "Isolated-test-283!" },
   });

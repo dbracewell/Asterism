@@ -22,11 +22,11 @@ The model wrote mermaid each time, with good labels, title and description.
 **None of the three drew.** Testing mermaid 12.3.0 in the export renderer's
 Chromium showed why:
 
-| Diagram | `accTitle`/`accDescr` before the type line | after it |
-| --- | --- | --- |
-| flowchart, sequence, gantt, pie | doesn't draw | draws, named from `accTitle` |
-| timeline | doesn't draw | draws, but mermaid ignores the title |
-| mindmap | doesn't draw | still doesn't draw: not supported |
+| Diagram                         | `accTitle`/`accDescr` before the type line | after it                             |
+| ------------------------------- | ------------------------------------------ | ------------------------------------ |
+| flowchart, sequence, gantt, pie | doesn't draw                               | draws, named from `accTitle`         |
+| timeline                        | doesn't draw                               | draws, but mermaid ignores the title |
+| mindmap                         | doesn't draw                               | still doesn't draw: not supported    |
 
 - `DIAGRAM_GUIDANCE` says "Start each diagram with accTitle: and accDescr:
   lines", which the model followed literally.
@@ -65,13 +65,10 @@ Chromium showed why:
 - [x] The sanitizer names an untitled diagram from the prepared title, and
       drops `-v2` from type names
 - [x] `DIAGRAM_GUIDANCE`: type line first, example, mind maps
-- [x] Tests:
-      - unit (`diagram-source.test.ts`): moves, mind maps, block `accDescr`,
-        front matter and comments, nothing else changes
-      - E2E: a "Diagrams from models" harness section; the user's three kinds
-        draw, are named, keep their source in the code view and pass axe
-      - backend with the real renderer: the same diagrams, the block form,
-        front matter, an untitled flowchart, the guidance example
+- [x] Tests: - unit (`diagram-source.test.ts`): moves, mind maps, block `accDescr`,
+      front matter and comments, nothing else changes - E2E: a "Diagrams from models" harness section; the user's three kinds
+      draw, are named, keep their source in the code view and pass axe - backend with the real renderer: the same diagrams, the block form,
+      front matter, an untitled flowchart, the guidance example
 - [x] ADR-0081 and ADR-0082 notes, package README, release notes
 
 ### US-108.2: A reusable check on real models
@@ -79,24 +76,20 @@ Chromium showed why:
 Only one model is configured (a local Inkling-2-Mini on an OpenAI-compatible
 server), so the user chose a reusable check over a one-off survey.
 
-- [x] `scripts/evaluate_diagrams.py` with `domains/chat/diagram_evaluation.py`:
-      - seven fixed prompts under the main agent's runtime prompt: process,
-        cycle, sequence, timeline, mind map, hierarchy, and a control that
-        shouldn't get a diagram
-      - each mermaid block is drawn with the export renderer
-      - it reports diagram, drew, named, accessibility-first, types and words,
-        prints a table and writes JSON with `--json`
-      - `--repeat` and `--prompt` options; informational, never gates CI
+- [x] `scripts/evaluate_diagrams.py` with `domains/chat/diagram_evaluation.py`: - seven fixed prompts under the main agent's runtime prompt: process,
+      cycle, sequence, timeline, mind map, hierarchy, and a control that
+      shouldn't get a diagram - each mermaid block is drawn with the export renderer - it reports diagram, drew, named, accessibility-first, types and words,
+      prints a table and writes JSON with `--json` - `--repeat` and `--prompt` options; informational, never gates CI
 - [x] Unit tests for the scorer (`test_diagram_evaluation.py`); backend README
       section
 - [x] Ran it on the local model and fixed the guidance; results below
 
 #### Results: Inkling-2-Mini (local), 3 runs of 7 prompts
 
-| Run | Passed | Diagrams drawn | Named | Lines before type |
-| --- | --- | --- | --- | --- |
-| US-108.1 guidance | 18 of 21 | 18 of 18 | 15 of 18 | 0 |
-| after the change below | 21 of 21 | 18 of 18 | 18 of 18 | 0 |
+| Run                    | Passed   | Diagrams drawn | Named    | Lines before type |
+| ---------------------- | -------- | -------------- | -------- | ----------------- |
+| US-108.1 guidance      | 18 of 21 | 18 of 18       | 15 of 18 | 0                 |
+| after the change below | 21 of 21 | 18 of 18       | 18 of 18 | 0                 |
 
 - **Every diagram drew, and no answer put the accessibility lines first.**
   US-108.1's instructions work, and the renderer would have fixed the order

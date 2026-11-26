@@ -131,6 +131,7 @@ export async function seedDemo({
     const browser = session();
     const query = new URLSearchParams({
       adminKey: instance.secrets.ADMIN_PASSPHRASE,
+      systemKey: instance.secrets.SYSTEM_KEY,
       role: "user",
     });
     const { user } = await browser.json(
