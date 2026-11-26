@@ -22,7 +22,7 @@ to the space it is in (no wrapping text around pictures, no image captions).
 - `markdown_pdf` (`domains/canvas/exports.py`) writes runs of HTML with fpdf2's
   `write_html` and places pictures between runs, so only top-level paragraphs
   and fences can hold one. Inside a list, quote or table, `_without_images`
-  turns every image into "_Image not included: <description>_", and a mermaid
+  turns every image into "*Image not included: <description>*", and a mermaid
   fence stays code.
 - `write_html` never receives `<img>`. fpdf2 2.9.0 would load any `src` it was
   given (a path or a URL) and takes no alt text, so the export must keep
@@ -34,7 +34,7 @@ to the space it is in (no wrapping text around pictures, no image captions).
   picture can line up with its item; text after it needs that indent again.
 - Loose lists (items separated by blank lines, which is how models usually
   write a step with a picture under it) already lose their numbers and bullets
-  in PDF: "1. Step one\n\n More.\n\n2. Step two" prints "Step one / More. /
+  in PDF: "1. Step one\n\n   More.\n\n2. Step two" prints "Step one / More. /
   Step two". Tight lists are fine.
 - Word (`markdown_docx`) already embeds images and diagrams in lists and
   quotes. Table cells are text only (`_cell_text`), so an image in a cell is
