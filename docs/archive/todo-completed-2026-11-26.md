@@ -42,3 +42,20 @@ EPIC-110 is complete: every story was confirmed and merged on 2026-11-26 through
   - [x] Lists, pictures and diagrams in a quote line up with its text
   - [x] Tests, guide and release note
   - [x] A gap under every code block (found in US-110.2)
+
+## Finding reflections
+
+EPIC-111 is complete: every story was confirmed and merged on 2026-11-26 through pull requests #144 and #146. Chats have a Reflect button that follows the project's Reflections area, saving says where the reflection went, a project's Overview shows the newest reflection, and empty lists explain how to write one.
+
+### [EPIC-111: Finding reflections](../epics/EPIC-111-FINDING-REFLECTIONS.md)
+
+- [x] US-111.1: A visible Reflect button that follows the project's areas
+  - [x] Reflect button in the chat header once the chat has an answer
+  - [x] Button and menu item only when the project's Reflections area is on (General always)
+  - [x] Saving says where the reflection went, with a link
+  - [x] Tests, guide (with screenshot) and release note
+- [x] US-111.2: Reflections easy to find afterwards
+  - [x] Empty lists explain how to write one
+  - [x] Project Overview shows the newest reflection or a prompt
+  - [x] Help topics and guide name every way in
+  - [x] Tests, guide and release note
