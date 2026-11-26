@@ -62,6 +62,16 @@ the page. The page CSP already allows `data:` images; nothing in the CSP
 changed. The accessible name is the diagram's `accTitle`, or "Diagram:
 <type>"; `accDescr` becomes a visually hidden caption.
 
+Before drawing, `prepareDiagramSource` (in `packages/diagram-policy`, shared
+with exports) puts `accTitle` and `accDescr` lines where mermaid accepts them
+([EPIC-108](../epics/EPIC-108-DIAGRAMS-FROM-REAL-MODELS.md)). It moves them
+from above the type line to just below it, and removes them from mind maps,
+which refuse them. Their text still names the picture when the SVG doesn't:
+mind maps, and timelines, where mermaid ignores them. The fallback type name
+drops mermaid's version suffix ("flowchart", not "flowchart-v2"). Only those
+lines move, so nothing a diagram may do changes, and the code view keeps the
+source as written.
+
 Considered and rejected: inline SVG (the diagram's `<style>` applies to the
 whole page), and mermaid's `sandbox` level (a `data:` iframe, which
 `frame-src 'self'` refuses, and a frame per diagram).
@@ -116,7 +126,10 @@ run has, because a diagram is markdown and needs none. It asks for a
 timelines, relationships), with short labels, punctuation in quoted labels,
 `accTitle` and `accDescr`, and an explanation in words so the reply stands
 without the diagram. It tells the agent not to write `click`, `style` or
-`%%{init}%%` lines, which the locked configuration ignores or refuses.
+`%%{init}%%` lines, which the locked configuration ignores or refuses. Since
+EPIC-108 it says the type line comes first, with a short example, and that
+mind maps take no accessibility lines: "Start each diagram with accTitle"
+had led models to put them above the type, which mermaid refuses.
 Sub-agents don't get it; a diagram one writes still renders.
 
 `IMAGE_GUIDANCE` now sends pictures (illustrations, scenes, photos) to

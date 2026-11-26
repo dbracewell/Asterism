@@ -89,3 +89,17 @@ EPIC-96 through EPIC-101 (live policy availability, hiding what the admin turned
 ## Images in the canvas (proposed 2026-11-25)
 
 [EPIC-107](docs/epics/EPIC-107-IMAGES-IN-CANVAS.md) (US-107.1 through US-107.3) is complete and archived in the [2026-11-25 checklist](docs/archive/todo-completed-2026-11-25.md).
+
+## Diagrams that real models draw (proposed 2026-11-25)
+
+Source: user request (2026-11-25), checking the diagram guidance on real models. [EPIC-108](docs/epics/EPIC-108-DIAGRAMS-FROM-REAL-MODELS.md).
+
+- [ ] US-108.1: Accessibility lines in any order (awaiting confirmation)
+  - [x] Shared `prepareDiagramSource`, used by the app and exports; `check:image` covers it
+  - [x] Prepared names for untitled SVGs; no `-v2` in type names
+  - [x] Guidance: type line first, example, mind maps
+  - [x] Unit, E2E and real-renderer tests
+  - [x] ADR-0081, ADR-0082, package README, release notes
+- [ ] US-108.2: Check the guidance on more models (proposed)
+  - [ ] Fixed diagram prompts on each enabled model; record diagram, drew, titled
+  - [ ] Adjust the guidance for common failures; record results in the epic

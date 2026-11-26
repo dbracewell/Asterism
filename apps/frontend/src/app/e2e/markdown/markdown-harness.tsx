@@ -3,6 +3,7 @@ import MarkdownViewer from "@/components/markdown-viewer";
 import {
   adversarialMarkdown,
   diagramMarkdown,
+  modelDiagramMarkdown,
   normalMarkdown,
   fencedCode,
 } from "@/components/markdown-viewer/test-content";
@@ -60,6 +61,9 @@ export function MarkdownHarness() {
       <RetrievalCitations chatId="example-chat" results={results} />
       <section aria-label="Diagrams">
         <MarkdownViewer content={diagramMarkdown} />
+      </section>
+      <section aria-label="Diagrams from models">
+        <MarkdownViewer content={modelDiagramMarkdown} />
       </section>
       <section aria-label="File preview">
         <FileView filename="fixture.md" />

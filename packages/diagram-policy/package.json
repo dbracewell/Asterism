@@ -10,12 +10,18 @@
     "./sanitize-svg.js": {
       "types": "./sanitize-svg.d.ts",
       "default": "./sanitize-svg.js"
+    },
+    "./diagram-source.js": {
+      "types": "./diagram-source.d.ts",
+      "default": "./diagram-source.js"
     }
   },
   "files": [
     "policy.json",
     "print-theme.json",
     "sanitize-svg.js",
-    "sanitize-svg.d.ts"
+    "sanitize-svg.d.ts",
+    "diagram-source.js",
+    "diagram-source.d.ts"
   ]
 }

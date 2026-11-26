@@ -39,6 +39,13 @@ Unreleased into its version and date.
 
 ### Behavior
 
+- Diagrams whose `accTitle` or `accDescr` lines come before the diagram type,
+  as the main agent's instructions used to suggest, now draw instead of
+  showing as code. So do mind maps with those lines. Mind maps and timelines
+  are named from them too. An unnamed flowchart is now called "Diagram:
+  flowchart" (and downloads as `flowchart.svg` or `.png`), not
+  "flowchart-v2". The main agent is now shown where those lines go. This
+  applies in the app and in Word and PDF exports.
 - A ` ```mermaid ` block in a reply, canvas, Study note or guide page now
   shows as a diagram. It loads only when a page has one, and a diagram that
   can't be drawn shows as code with a note. Diagrams use the current theme's

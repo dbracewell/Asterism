@@ -1,4 +1,8 @@
 import {
+  prepareDiagramSource,
+  type PreparedDiagram,
+} from "@asterism/diagram-policy/diagram-source.js";
+import {
   createDiagramSanitizer,
   type SanitizedDiagram,
 } from "@asterism/diagram-policy/sanitize-svg.js";
@@ -43,16 +47,19 @@ export function isClosedFence(raw: string): boolean {
 
 // The shared sanitizer (ADR-0082): the server's export renderer runs the same
 // file, so the app and exports clean diagrams identically.
-let sanitize: ((svg: string) => SanitizedDiagram | null) | null = null;
+let sanitize: ReturnType<typeof createDiagramSanitizer> | null = null;
 
 /**
  * Keeps only static SVG: no scripts, event attributes, foreign HTML, embedded
  * images or links out of the document. Returns standalone markup with an
  * explicit size, or null when nothing drawable is left.
  */
-export function sanitizeDiagramSvg(svg: string): Omit<Diagram, "ok"> | null {
+export function sanitizeDiagramSvg(
+  svg: string,
+  names?: Pick<PreparedDiagram, "title" | "description">,
+): SanitizedDiagram | null {
   sanitize ??= createDiagramSanitizer(createDOMPurify, window, diagramPolicy);
-  return sanitize(svg);
+  return sanitize(svg, names);
 }
 
 export const diagramImageSource = (svg: string) =>
@@ -96,13 +103,19 @@ export function renderDiagram(
   source: string,
   theme: DiagramTheme,
 ): Promise<DiagramResult> {
+  // Accessibility lines go where mermaid accepts them (EPIC-108); the code
+  // view and copy keep the source as written.
+  const prepared = prepareDiagramSource(source);
   const run = queue.then(() =>
-    Promise.race([draw(source, theme), timeout(MERMAID_RENDER_TIMEOUT_MS)]),
+    Promise.race([
+      draw(prepared.source, theme),
+      timeout(MERMAID_RENDER_TIMEOUT_MS),
+    ]),
   );
   queue = run.catch(() => undefined);
   return run.then(
     (svg) => {
-      const diagram = sanitizeDiagramSvg(svg);
+      const diagram = sanitizeDiagramSvg(svg, prepared);
       return diagram ? { ok: true as const, ...diagram } : FAILED;
     },
     () => FAILED,

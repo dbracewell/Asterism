@@ -57,3 +57,12 @@ def test_image_guidance_sends_labelled_diagrams_to_mermaid():
 
 def test_canvas_guidance_mentions_diagrams():
     assert "mermaid diagrams" in CANVAS_GUIDANCE
+
+
+def test_the_example_puts_the_type_line_first():
+    # EPIC-108: "Start each diagram with accTitle" put those lines above the
+    # type, where mermaid refuses the diagram.
+    example = DIAGRAM_GUIDANCE.split("```mermaid\n")[1].split("```")[0].splitlines()
+    assert example[0] == "flowchart TD"
+    assert example[1].strip().startswith("accTitle:") and example[2].strip().startswith("accDescr:")
+    assert "Mind maps can't have accTitle or accDescr" in DIAGRAM_GUIDANCE
