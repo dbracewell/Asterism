@@ -142,8 +142,10 @@ file-store response headers (`nosniff`, `sandbox` CSP), so an HTML export
 opened from the API origin stays inert.
 
 DOCX (python-docx) and PDF (fpdf2) are rendered from Markdown parsed with
-markdown-it with raw HTML **and images disabled**, so no export embeds markup
-or fetches a URL from canvas content. PDF uses DejaVu Sans
+markdown-it with raw HTML disabled, so no export embeds markup or fetches a URL
+from canvas content. Images are embedded only from chat files the server loads
+itself; every other image is written as a note
+([ADR-0083](0083-images-in-canvas.md)). PDF uses DejaVu Sans
 (`fonts-dejavu-core` in the image) for Unicode text; without a Unicode font it
 falls back to the Latin-1 core fonts and replaces other characters. Layout
 runs in a worker thread.

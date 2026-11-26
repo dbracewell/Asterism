@@ -1,6 +1,6 @@
 # EPIC-107: Images in the canvas
 
-Status: in progress (2026-11-25); US-107.1 merged; US-107.2 implemented. Source: user request (2026-11-25): "In canvas mode
+Status: in progress (2026-11-25); US-107.1 and US-107.2 merged; US-107.3 implemented. Source: user request (2026-11-25): "In canvas mode
 markdown cannot display created images."
 
 ## Objective
@@ -92,15 +92,23 @@ sandboxed preview loads nothing); images from outside the chat (web URLs stay
       image in the reply. Guidance test in `test_canvas_inline_files.py`
 - [x] `canvas_create`, `canvas_update` (edits) and `canvas_read` keep the
       reference unchanged, and the version API resolves it (test)
-- [ ] Check in the running app that "make an image, then a canvas document
-      using it" shows the picture (by the user; see the PR)
+- [x] Checked in the running app by the user: "make an image, then a canvas
+      document using it" shows the picture
 
 ### US-107.3: Images in canvas downloads
 
-- [ ] DOCX and PDF embed in-scope raster images with alt text, fitted to the
-      page; everything else exports as "Image not included: <description>"
-- [ ] Markdown and text downloads replace tokens with the description; the
+- [x] DOCX and PDF embed in-scope raster images with alt text, fitted to the
+      page. Everything else exports as "Image not included: <description>":
+      web URLs, other chats' files, SVG, files over a limit, PDF images inside
+      lists, quotes or tables, and DOCX table cells. Chat file links keep only
+      their label.
+- [x] Markdown and text downloads replace tokens with the description; the
       chat ZIP includes the images under `images/` with relative links
-- [ ] Save to Files uses the same path; Download my data keeps the stored text
-- [ ] Tests for each format, the limits, a foreign file ID and SVG; ADR-0083,
-      canvas guide page and release notes
+- [x] Save to Files uses the same path; Download my data keeps the stored text
+- [x] Tests (`test_canvas_image_exports.py`):
+      - each format, with code blocks left alone
+      - the count, byte and pixel limits
+      - a foreign file, another chat's file, an SVG and a broken image
+      - GIF to PNG
+      - the routes and the ZIP
+      ADR-0083, ADR-0063, canvas guide page and release notes

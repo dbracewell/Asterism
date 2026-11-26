@@ -1,7 +1,8 @@
 # ADR-0083 — Images in the canvas
 
-Status: accepted. Read-time resolution and the canvas preview (US-107.1) and
-the agent guidance (US-107.2) are implemented (2026-11-25)
+Status: accepted. Read-time resolution and the canvas preview (US-107.1), the
+agent guidance (US-107.2) and images in downloads (US-107.3) are implemented
+(2026-11-25)
 ([EPIC-107](../epics/EPIC-107-IMAGES-IN-CANVAS.md)).
 
 ## Context
@@ -51,7 +52,7 @@ preview loads nothing.
 
 - Each version read runs one live-scope query and one file query when the
   content has references; content without references costs nothing extra.
-- DOCX and PDF downloads embed them (US-107.3).
+- DOCX and PDF downloads embed them (US-107.3, below).
 
 ## Decision: the agent is told (US-107.2)
 
@@ -61,3 +62,38 @@ conversation as `![short description](asterism-file:<file id>)`, such as the
 `IMAGE_GUIDANCE` now asks the agent not to repeat generated images in its
 reply, rather than never to repeat their ids, so the two don't conflict. The
 canvas tools store references as written; the guidance grants nothing.
+
+## Decision: images in downloads (US-107.3)
+
+- **Loading.** `downloads.load_export_images` collects the
+  `![…](asterism-file:<id>)` images outside code blocks and keeps those in the
+  chat's live file scope. It reads them through the owner's file records and
+  the file store. Limits:
+  - at most 32 images per export (`MAX_EXPORT_IMAGES`);
+  - at most 20 MB each, matching inline images in the app;
+  - at most 40 million decoded pixels each.
+
+  Only raster types (PNG, JPEG, GIF, WebP, BMP) load, never SVG. Pillow
+  decodes each image in a worker thread and re-encodes it as PNG, using the
+  first frame of an animation. Anything not loaded is left out. Logs give
+  counts and file ids, never content.
+- **DOCX and PDF** parse images but embed only loaded ones. The picture is
+  fitted to the text width and a maximum height (8 in in DOCX, 230 mm in PDF)
+  at 96 CSS px per inch. Its title is the file name and its alt text is the
+  image's description, or else the file name.
+  - Every other image becomes an italic "Image not included: <description>":
+    a web URL, another chat's file, SVG, or a file over a limit. Nothing is
+    ever fetched from an image URL. In PDF, the HTML renderer never receives
+    an `<img>`.
+  - DOCX embeds images anywhere text goes, except table cells, which hold the
+    note. PDF, as with diagrams, places pictures only in top-level paragraphs;
+    in a list, quote or table an image is a note.
+  - A link to a chat file keeps only its label in both formats.
+- **Markdown and text** downloads of a document write each image as
+  `[Image not included: <description>]` and each chat file link as its label,
+  outside code blocks.
+- **The chat's ZIP** adds each loaded image once, as its stored file, under
+  `images/` with a distinct name. Its documents link to them relatively, and
+  the rest become notes.
+- **Save to Files** uses the single-version path. **Download my data** passes
+  no images, so it keeps the stored text exactly.
