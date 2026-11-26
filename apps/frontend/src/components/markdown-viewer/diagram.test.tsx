@@ -116,9 +116,7 @@ describe("sanitizeDiagramSvg", () => {
   });
 
   it("names a diagram without a title by its type", () => {
-    expect(sanitizeDiagramSvg(svg("<g/>"))!.label).toBe(
-      "Diagram: flowchart-v2",
-    );
+    expect(sanitizeDiagramSvg(svg("<g/>"))!.label).toBe("Diagram: flowchart");
   });
 
   it("refuses markup that is not a sized SVG", () => {
@@ -197,7 +195,7 @@ describe("MarkdownViewer diagrams", () => {
   it("draws a finished mermaid block as an image", async () => {
     view("Here:\n\n```mermaid\nflowchart LR\n  a --> b\n```\n");
     const image = await screen.findByRole("img", {
-      name: "Diagram: flowchart-v2",
+      name: "Diagram: flowchart",
     });
     expect(image.getAttribute("src")).toMatch(/^data:image\/svg\+xml/);
     expect(mermaid.render).toHaveBeenCalledWith(
@@ -279,7 +277,7 @@ describe("diagram themes", () => {
 
 it.each([
   ["Water cycle", "svg", "water-cycle.svg"],
-  ["Diagram: flowchart-v2", "png", "flowchart-v2.png"],
+  ["Diagram: flowchart", "png", "flowchart.png"],
   ["Ünïcode  ✓ title!", "svg", "unicode-title.svg"],
   ["✓✓", "png", "diagram.png"],
 ] as const)("names the download for %j", (label, format, name) =>
@@ -298,7 +296,7 @@ describe("the diagram block", () => {
   it("opens as the diagram, and the toggle shows the code and back", async () => {
     const user = userEvent.setup();
     view(block);
-    await screen.findByRole("img", { name: "Diagram: flowchart-v2" });
+    await screen.findByRole("img", { name: "Diagram: flowchart" });
     await user.click(screen.getByRole("button", { name: "Show code" }));
     expect(screen.queryByRole("img")).toBeNull();
     expect(
@@ -308,7 +306,7 @@ describe("the diagram block", () => {
     expect(back).toBe(document.activeElement);
     await user.click(back);
     expect(
-      screen.getByRole("img", { name: "Diagram: flowchart-v2" }),
+      screen.getByRole("img", { name: "Diagram: flowchart" }),
     ).toBeTruthy();
     expect(screen.getByRole("button", { name: "Show code" })).toBe(
       document.activeElement,
@@ -326,7 +324,7 @@ describe("the diagram block", () => {
     );
     await user.click(screen.getByRole("button", { name: "Expand diagram" }));
     const dialog = await screen.findByRole("dialog", {
-      name: "Diagram: flowchart-v2",
+      name: "Diagram: flowchart",
     });
     expect(dialog.querySelector("img")?.getAttribute("width")).toBe("120");
   });

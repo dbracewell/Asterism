@@ -91,7 +91,9 @@ mermaid and the same rules.
   seconds for the whole export. Anything invalid, over a limit or failed exports
   as code with a short "Diagram not drawn" note.
 - The picture's alt text is the diagram's `accTitle` and `accDescr` (DOCX
-  picture description, PDF alt text), or "Diagram: <type>".
+  picture description, PDF alt text), or "Diagram: <type>". The renderer's
+  page runs the same `prepareDiagramSource` as the app before drawing
+  (EPIC-108), so the same diagrams draw and get the same names.
 - Diagrams are drawn when the file is exported and not stored. Markdown and
   text downloads keep the source. No database change.
 

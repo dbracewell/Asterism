@@ -42,13 +42,16 @@ _DRAW = """
 async ({ source, config, policy, id }) => {
   globalThis.__sanitize ??= globalThis.__createDiagramSanitizer(DOMPurify, window, policy);
   mermaid.initialize(config);
+  // The same preparation as the app (EPIC-108): accessibility lines go where
+  // mermaid accepts them, and their text names the picture if the SVG can't.
+  const prepared = globalThis.__prepareDiagramSource(source);
   let svg;
   try {
-    ({ svg } = await mermaid.render(id, source));
+    ({ svg } = await mermaid.render(id, prepared.source));
   } catch {
     return null;
   }
-  const diagram = globalThis.__sanitize(svg);
+  const diagram = globalThis.__sanitize(svg, prepared);
   if (!diagram) return null;
   const css = policy.png.maxSide / policy.png.scale;
   const fit = Math.min(1, css / diagram.width, css / diagram.height);
@@ -102,10 +105,14 @@ def _print_theme() -> dict[str, Any]:
 @cache
 def _scripts() -> tuple[str, str, str]:
     sanitizer = (POLICY_DIR / "sanitize-svg.js").read_text(encoding="utf-8")
+    source = (POLICY_DIR / "diagram-source.js").read_text(encoding="utf-8")
     return (
         MERMAID_BUNDLE.read_text(encoding="utf-8"),
         DOMPURIFY_BUNDLE.read_text(encoding="utf-8"),
-        f"{sanitizer}\nglobalThis.__createDiagramSanitizer = createDiagramSanitizer;\n",
+        # Two inline modules in one: both files are plain JavaScript with no imports.
+        f"{sanitizer}\n{source}\n"
+        "globalThis.__createDiagramSanitizer = createDiagramSanitizer;\n"
+        "globalThis.__prepareDiagramSource = prepareDiagramSource;\n",
     )
 
 
@@ -139,7 +146,7 @@ async def _open(blocked: list[str] | None = None) -> _Session:
     await session.page.add_script_tag(content=mermaid_js)
     await session.page.add_script_tag(content=purify_js)
     await session.page.add_script_tag(content=sanitizer_js, type="module")
-    await session.page.wait_for_function("() => !!globalThis.__createDiagramSanitizer", timeout=5000)
+    await session.page.wait_for_function("() => !!globalThis.__prepareDiagramSource", timeout=5000)
     return session
 
 

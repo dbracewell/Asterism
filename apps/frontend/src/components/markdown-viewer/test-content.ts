@@ -179,3 +179,32 @@ flowchart TD
 ` +
   "```" +
   "\n";
+
+// EPIC-108: diagrams as models write them, accessibility lines above the
+// type (which mermaid refuses unless they are moved), a timeline (whose title
+// mermaid ignores) and a mind map (which refuses them anywhere).
+const fence = (source: string) => "```mermaid\n" + source + "```\n";
+export const modelDiagramMarkdown = [
+  fence(`accTitle: How a bill becomes a law
+accDescr: From idea to law, with the places a bill can die.
+flowchart TD
+  A["Idea for a bill"] --> B{"Committee approves?"}
+  B -- "No" --> C["Bill dies"]
+  B -- "Yes" --> D["Bill becomes law"]
+`),
+  fence(`accTitle: Stages of a bill
+accDescr: How long each stage usually takes.
+timeline
+  title Stages
+  Introduction : Days
+  Committee : Weeks to months
+`),
+  fence(`accTitle: Branches of government
+accDescr: The three branches and what each does.
+mindmap
+  root((Government))
+    Legislative
+    Executive
+    Judicial
+`),
+].join("\n");

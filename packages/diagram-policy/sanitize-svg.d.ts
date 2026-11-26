@@ -10,4 +10,7 @@ export function createDiagramSanitizer(
   createDOMPurify: (root: never) => unknown,
   window: Window & typeof globalThis,
   policy: unknown,
-): (svg: string) => SanitizedDiagram | null;
+): (
+  svg: string,
+  names?: { title?: string | null; description?: string | null },
+) => SanitizedDiagram | null;

@@ -14,7 +14,7 @@ test("mermaid blocks draw as images; broken and hostile ones stay inert", async 
   });
   await page.goto("/e2e/markdown");
   const diagrams = page
-    .getByRole("region", { name: "Diagrams" })
+    .getByRole("region", { name: "Diagrams", exact: true })
     .or(page.locator('section[aria-label="Diagrams"]'));
 
   const water = diagrams.getByRole("img", { name: "Water cycle" });
@@ -220,4 +220,39 @@ test("a diagram slightly wider than the column shrinks to fit instead of scrolli
   expect(sizes.shown).toBeLessThan(sizes.natural);
   expect(sizes.shown).toBeGreaterThanOrEqual(sizes.natural * 0.75 - 1);
   expect(sizes.scroll).toBeLessThanOrEqual(sizes.client);
+});
+
+test("diagrams as models write them draw and keep their names", async ({
+  page,
+}) => {
+  // EPIC-108: accessibility lines above the type, a timeline and a mind map.
+  await page.goto("/e2e/markdown");
+  const section = page.locator('section[aria-label="Diagrams from models"]');
+  const names = [
+    "How a bill becomes a law",
+    "Stages of a bill",
+    "Branches of government",
+  ];
+  for (const name of names) {
+    const image = section.getByRole("img", { name });
+    await expect(image).toBeVisible();
+    await expect
+      .poll(() => image.evaluate((img: HTMLImageElement) => img.naturalWidth))
+      .toBeGreaterThan(0);
+    await expect(
+      section.getByRole("group", { name: `Diagram: ${name}` }),
+    ).toBeVisible();
+  }
+  await expect(section.getByText("Couldn't draw this diagram")).toHaveCount(0);
+
+  // The code view shows the source as written, not as it was prepared.
+  await section.getByRole("button", { name: "Show code" }).first().click();
+  await expect(
+    section.locator('[data-slot="code-block"]').first().locator("pre"),
+  ).toContainText(/^accTitle: How a bill becomes a law\s+accDescr:/);
+
+  const scan = await new AxeBuilder({ page })
+    .include('section[aria-label="Diagrams from models"]')
+    .analyze();
+  expect(scan.violations).toEqual([]);
 });

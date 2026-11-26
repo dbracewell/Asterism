@@ -38,17 +38,20 @@ export const DIAGRAM_ASSETS = [
   "/app/packages/diagram-policy/print-theme.json",
   "/app/apps/frontend/node_modules/mermaid/dist/mermaid.min.js",
   "/app/apps/frontend/node_modules/dompurify/dist/purify.min.js",
+  "/app/packages/diagram-policy/sanitize-svg.js",
+  "/app/packages/diagram-policy/diagram-source.js",
 ];
 
 // Draws one diagram in the running container with the image's own Chromium,
-// fonts, bundles and policy, and prints the outcome as the last line.
+// fonts, bundles and policy, and prints the outcome as the last line. Its title
+// comes before the type line, so the shared source preparation runs too.
 export const DIAGRAM_DRAW_CHECK = [
   "import asyncio, json, struct",
   "from asterism.common.headless_browser import close_browser",
   "from asterism.domains.canvas.diagrams import draw_diagram",
   "async def main():",
   "    try:",
-  "        drawn = await draw_diagram('flowchart LR\\n  accTitle: Image check\\n  a[Draw] --> b[Check]\\n', deadline_seconds=60)",
+  "        drawn = await draw_diagram('accTitle: Image check\\nflowchart LR\\n  a[Draw] --> b[Check]\\n', deadline_seconds=60)",
   "    finally:",
   "        await close_browser()",
   "    png = list(struct.unpack('>II', drawn.png[16:24])) if drawn else None",

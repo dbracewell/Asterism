@@ -233,10 +233,15 @@ DIAGRAM_GUIDANCE = (
     "cycle, steps or messages in order, a hierarchy, a timeline or how things relate), draw it "
     "as a ```mermaid code block in your reply; it is shown as a diagram. Use valid mermaid, keep "
     "labels short and put any label with punctuation in double quotes, for example "
-    'A["Evaporation (heat)"]. Start each diagram with accTitle: and accDescr: lines that name '
-    "and describe it, and explain the key points in words too, so the reply makes sense without "
-    "the diagram. One idea per diagram. Don't add click, style or %%{init}%% lines: they are "
-    "ignored or stop the diagram from drawing."
+    'A["Evaporation (heat)"]. The first line names the diagram type; then add accTitle: and '
+    "accDescr: lines that name and describe it, for example:\n"
+    "```mermaid\nflowchart TD\n  accTitle: Water cycle\n"
+    "  accDescr: Water evaporates, forms clouds and falls as rain.\n"
+    '  A["Evaporation"] --> B["Clouds"] --> C["Rain"] --> A\n```\n'
+    "Mind maps can't have accTitle or accDescr lines: name them in your text instead. Explain "
+    "the key points in words too, so the reply makes sense without the diagram. One idea per "
+    "diagram. Don't add click, style or %%{init}%% lines: they are ignored or stop the diagram "
+    "from drawing."
 )
 """ADR-0081: for the main agent; a diagram is rendered markdown and grants nothing."""
 

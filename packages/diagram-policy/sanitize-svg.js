@@ -20,7 +20,9 @@
  * @param {(window: Window) => any} createDOMPurify DOMPurify's factory.
  * @param {Window} window The window whose DOM parses and serializes the SVG.
  * @param {any} policy The parsed `policy.json`.
- * @returns {(svg: string) => SanitizedDiagram | null}
+ * @returns {(svg: string, names?: { title?: string | null, description?: string | null }) => SanitizedDiagram | null}
+ *   `names` (from `prepareDiagramSource`) name a diagram whose SVG carries no
+ *   title or description, such as a mind map or a timeline.
  */
 export function createDiagramSanitizer(createDOMPurify, window, policy) {
   const { sanitizer, labelLimits } = policy;
@@ -39,7 +41,7 @@ export function createDiagramSanitizer(createDOMPurify, window, policy) {
    * embedded images or links out of the document. Returns standalone markup
    * with an explicit size, or null when nothing drawable is left.
    */
-  return function sanitizeDiagramSvg(svg) {
+  return function sanitizeDiagramSvg(svg, names) {
     const clean = purifier.sanitize(svg, {
       USE_PROFILES: { ...sanitizer.profiles },
       ADD_TAGS: [...sanitizer.addTags],
@@ -62,10 +64,18 @@ export function createDiagramSanitizer(createDOMPurify, window, policy) {
     root.setAttribute("width", String(Math.ceil(width)));
     root.setAttribute("height", String(Math.ceil(height)));
     root.removeAttribute("style");
-    const title = root.querySelector(":scope > title")?.textContent?.trim();
+    const title =
+      root.querySelector(":scope > title")?.textContent?.trim() ||
+      names?.title?.trim();
     const description =
-      root.querySelector(":scope > desc")?.textContent?.trim() || null;
-    const type = root.getAttribute("aria-roledescription")?.trim();
+      root.querySelector(":scope > desc")?.textContent?.trim() ||
+      names?.description?.trim() ||
+      null;
+    // Mermaid's internal names carry a version ("flowchart-v2").
+    const type = root
+      .getAttribute("aria-roledescription")
+      ?.trim()
+      .replace(/-v\d+$/, "");
     return {
       svg: new window.XMLSerializer().serializeToString(root),
       width: Math.ceil(width),

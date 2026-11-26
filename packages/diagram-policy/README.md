@@ -10,8 +10,13 @@ The one copy of how Asterism draws mermaid diagrams from untrusted text:
 - `renderTimeoutMs`, `png` and `labelLimits`: time, size and name limits.
 - `sanitize-svg.js`: `createDiagramSanitizer(createDOMPurify, window, policy)`,
   the one function that cleans a drawn SVG and reads its size, name and
-  description. Plain JavaScript with no imports, so the server can load it into
+  description (falling back to the names `prepareDiagramSource` found). Plain JavaScript with no imports, so the server can load it into
   its headless page unbundled.
+- `diagram-source.js`: `prepareDiagramSource(source)`, run before drawing.
+  It moves `accTitle`/`accDescr` lines that a model put above the diagram type
+  to just below it, drops them from diagram types that refuse them (mind
+  maps), and returns the title and description for the sanitizer to name the
+  picture (EPIC-108). It changes nothing else.
 - `print-theme.json`: mermaid `base` theme variables for exported documents,
   from the light Atlas palette. It is generated from the app's
   `diagramThemeVariables`; a frontend test fails when they differ.
