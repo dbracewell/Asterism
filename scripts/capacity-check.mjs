@@ -68,7 +68,7 @@ function notes(seed, size = 40_000) {
 }
 
 async function signUp(session, name, admin) {
-  const query = new URLSearchParams({ adminKey: instance.secrets.ADMIN_PASSPHRASE, role: admin ? "admin" : "user" });
+  const query = new URLSearchParams({ adminKey: instance.secrets.ADMIN_PASSPHRASE, systemKey: instance.secrets.SYSTEM_KEY, role: admin ? "admin" : "user" });
   const email = `${name}-${newRequestId().slice(0, 8)}@capacity.test`;
   const { user } = await session.json("setup sign-up", `/api/auth/sign-up/email?${query}`, {
     method: "POST",

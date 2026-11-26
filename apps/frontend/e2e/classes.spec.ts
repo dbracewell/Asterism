@@ -8,7 +8,7 @@ test.skip(
 );
 
 async function register(client: BrowserContext, name: string, admin = false) {
-  const query = `?adminKey=${encodeURIComponent(process.env.ADMIN_PASSPHRASE!)}&role=${admin ? "admin" : "user"}`;
+  const query = `?adminKey=${encodeURIComponent(process.env.ADMIN_PASSPHRASE!)}&systemKey=${encodeURIComponent(process.env.SYSTEM_KEY!)}&role=${admin ? "admin" : "user"}`;
   const signup = await client.request.post(`/api/auth/sign-up/email${query}`, {
     data: {
       name,

@@ -22,6 +22,13 @@ Unreleased into its version and date.
 
 ## Unreleased
 
+### Configuration
+
+- After first-run setup, creating an account with `ADMIN_PASSPHRASE` over
+  Better Auth's sign-up route also needs `SYSTEM_KEY` (`systemKey` in the query).
+  Scripts that create accounts this way must send both; the bundled browser
+  tests, screenshot seed, capacity check and upgrade check already do.
+
 ### Image
 
 - The runtime stage is on a newer `python:3.13-slim-trixie` base, which carries
@@ -38,6 +45,12 @@ Unreleased into its version and date.
   Chromium, fonts and bundles.
 
 ### Behavior
+
+- Invite sign-up allows 60 attempts per address and 5 per invite link every 15
+  minutes, so a class of 30 behind one school network can join together; before,
+  10 per address blocked most of the class. First-run setup keeps 10 per address.
+  The sign-up limiters count IPv6 clients by /64 network and, when full, forget
+  the oldest address instead of refusing everyone.
 
 - Chats have a **Reflect** button at the top once they have an answer, so
   reflections are easier to find. In a project, it and the **Reflect on this

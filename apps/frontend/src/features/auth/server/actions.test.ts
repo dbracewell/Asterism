@@ -3,7 +3,7 @@ import { BaseUserSchema } from "@/features/auth/schemas";
 import { decideSignupRole, hashMatch } from "@/lib/auth-core";
 import { installApp, signUpWithInvite } from "./actions";
 import { INVALID_INVITE } from "./invites";
-import { signupLimiter } from "./signup-limit";
+import { clearSignupLimits, inviteTokenLimiter } from "./signup-limit";
 
 const { countMock, deleteUserMock, signUpEmailMock } = vi.hoisted(() => ({
   countMock: vi.fn(),
@@ -101,7 +101,7 @@ describe("installApp", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.unstubAllGlobals();
-    signupLimiter.clear();
+    clearSignupLimits();
   });
 
   it("limits install attempts from one address", async () => {
@@ -174,6 +174,7 @@ describe("decideSignupRole", () => {
     requestedRole: undefined,
     adminPassphrase: "admin-pass",
     systemKey: "system-key",
+    installed: false,
   };
 
   it("needs the admin key or a signed-in admin", () => {
@@ -189,6 +190,39 @@ describe("decideSignupRole", () => {
         requestedRole: "admin",
       }),
     ).toBe("admin");
+  });
+
+  it("needs the system key with the admin key once installed", () => {
+    const installed = { ...base, installed: true };
+    expect(() =>
+      decideSignupRole({ ...installed, query: { adminKey: "admin-pass" } }),
+    ).toThrow("Invalid admin key");
+    expect(() =>
+      decideSignupRole({
+        ...installed,
+        query: { adminKey: "admin-pass", systemKey: "guess" },
+      }),
+    ).toThrow("Invalid admin key");
+    expect(
+      decideSignupRole({
+        ...installed,
+        query: { adminKey: "admin-pass", systemKey: "system-key" },
+      }),
+    ).toBe("admin");
+    expect(
+      decideSignupRole({
+        ...installed,
+        query: {
+          adminKey: "admin-pass",
+          systemKey: "system-key",
+          role: "user",
+        },
+      }),
+    ).toBe("user");
+    // A signed-in administrator still needs no key.
+    expect(decideSignupRole({ ...installed, sessionRole: "admin" })).toBe(
+      "user",
+    );
   });
 
   it("makes invite signups ordinary users, and only with the system key", () => {
@@ -226,7 +260,7 @@ describe("signUpWithInvite", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.unstubAllGlobals();
-    signupLimiter.clear();
+    clearSignupLimits();
     countMock.mockResolvedValue(1);
   });
 
@@ -297,14 +331,31 @@ describe("signUpWithInvite", () => {
     expect(deleteUserMock).toHaveBeenCalledWith("loser");
   });
 
-  it("limits attempts from one address", async () => {
+  it("lets a class of 30 on one network join, then limits the address", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(refused));
-    for (let attempt = 0; attempt < 10; attempt++) {
+    for (let student = 0; student < 60; student++) {
+      await expect(
+        signUpWithInvite({ ...payload, token: `invite-${student}` }),
+      ).resolves.toEqual({ ok: false, error: INVALID_INVITE });
+    }
+    await expect(
+      signUpWithInvite({ ...payload, token: "invite-61" }),
+    ).resolves.toEqual({
+      ok: false,
+      error: "Too many sign-up attempts. Try again in a few minutes.",
+    });
+  });
+
+  it("limits attempts on one invite", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(refused));
+    for (let attempt = 0; attempt < 5; attempt++) {
       await signUpWithInvite(payload);
     }
     await expect(signUpWithInvite(payload)).resolves.toEqual({
       ok: false,
       error: "Too many sign-up attempts. Try again in a few minutes.",
     });
+    // Another student's invite from the same network still works.
+    expect(inviteTokenLimiter.attempt("another-invite")).toBe(true);
   });
 });

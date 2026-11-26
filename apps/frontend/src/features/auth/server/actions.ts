@@ -12,7 +12,11 @@ import { headers } from "next/headers";
 import { checkInvite, redeemInvite } from "./invites";
 import { countAdmins, countUsers } from "./session";
 import { clientIpKey } from "@/lib/rate-limit";
-import { signupLimiter } from "./signup-limit";
+import {
+  installLimiter,
+  inviteAddressLimiter,
+  inviteTokenLimiter,
+} from "./signup-limit";
 
 const TOO_MANY_SIGNUPS =
   "Too many sign-up attempts. Try again in a few minutes.";
@@ -23,7 +27,7 @@ export const installApp = async (data: InstallUserSchemaType) => {
     throw Error(parsed.error.message);
   }
   const headerList = await headers();
-  if (!signupLimiter.attempt(clientIpKey(headerList.get("x-forwarded-for")))) {
+  if (!installLimiter.attempt(clientIpKey(headerList.get("x-forwarded-for")))) {
     throw Error(TOO_MANY_SIGNUPS);
   }
 
@@ -103,7 +107,12 @@ export const signUpWithInvite = async (
     };
   }
   const headerList = await headers();
-  if (!signupLimiter.attempt(clientIpKey(headerList.get("x-forwarded-for")))) {
+  if (
+    !inviteAddressLimiter.attempt(
+      clientIpKey(headerList.get("x-forwarded-for")),
+    ) ||
+    !inviteTokenLimiter.attempt(parsed.data.token)
+  ) {
     return { ok: false, error: TOO_MANY_SIGNUPS };
   }
   // Invites only work once an administrator has set Asterism up.

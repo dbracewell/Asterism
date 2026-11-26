@@ -444,7 +444,7 @@ test("authenticated settings create and assign a private skill with real APIs", 
   );
   const email = `${randomUUID()}@example.test`;
   const signup = await context.request.post(
-    `/api/auth/sign-up/email?adminKey=${encodeURIComponent(process.env.ADMIN_PASSPHRASE!)}`,
+    `/api/auth/sign-up/email?adminKey=${encodeURIComponent(process.env.ADMIN_PASSPHRASE!)}&systemKey=${encodeURIComponent(process.env.SYSTEM_KEY!)}`,
     { data: { name: "Skills tester", email, password: "Skills-test-321!" } },
   );
   expect(signup.ok()).toBeTruthy();

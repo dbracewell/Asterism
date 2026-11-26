@@ -128,16 +128,32 @@ There is no open sign-up. In the app, accounts are created in two ways:
 
 Better Auth's user-create hook (`decideSignupRole` in
 [`auth-core.ts`](../../apps/frontend/src/lib/auth-core.ts)) enforces this. It
-accepts a sign-up only with the admin passphrase, from a signed-in administrator's
-session, or for an invite redemption that carries the system key. The invite
-server action adds that key itself, so the browser never sees it. There is no
-screen for an administrator to create an account directly; they create invite
-links instead.
+accepts a sign-up only:
 
-Anything else, including a direct call to Better Auth's sign-up route, is
-refused. Account creation from one address is limited to 10 attempts per 15
-minutes, which slows passphrase guessing and invite probing
-([`signup-limit.ts`](../../apps/frontend/src/features/auth/server/signup-limit.ts)).
+- with the admin passphrase while no account exists yet (first-run setup);
+- once any account exists, with the admin passphrase **and** the system key,
+  which only operator tooling holds (browser tests, the screenshot seed,
+  `pnpm check:capacity` and the upgrade check);
+- from a signed-in administrator's session;
+- for an invite redemption that carries the system key.
+
+The invite server action adds the system key itself, so the browser never sees
+it. There is no screen for an administrator to create an account directly; they
+create invite links instead. Anything else, including a direct call to Better
+Auth's sign-up route with the passphrase alone after setup, is refused.
+
+The sign-up pages are rate-limited per process
+([`signup-limit.ts`](../../apps/frontend/src/features/auth/server/signup-limit.ts)):
+
+| Page            | Limit per 15 minutes                       |
+| --------------- | ------------------------------------------ |
+| First-run setup | 10 attempts per address                    |
+| Invite sign-up  | 60 attempts per address, 5 per invite link |
+
+The invite limit leaves room for a class of 30 behind one school address. These
+limiters count IPv6 clients by their /64 network, and when one is full of
+addresses it forgets the oldest instead of refusing everyone
+([`rate-limit.ts`](../../apps/frontend/src/lib/rate-limit.ts)).
 
 The backend side of each account is created through `POST /users/`, which
 accepts an admin token or the system key, or automatically on the user's first

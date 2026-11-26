@@ -15,7 +15,7 @@ test("administrator saves persist and a real write failure retains edits for ret
   const failures: string[] = [];
   page.on("pageerror", (error) => failures.push(error.message));
   const signup = await context.request.post(
-    `/api/auth/sign-up/email?adminKey=${encodeURIComponent(process.env.ADMIN_PASSPHRASE!)}`,
+    `/api/auth/sign-up/email?adminKey=${encodeURIComponent(process.env.ADMIN_PASSPHRASE!)}&systemKey=${encodeURIComponent(process.env.SYSTEM_KEY!)}`,
     {
       data: {
         name: "Theme administrator",

@@ -23,7 +23,10 @@ export function hashMatch(candidate: unknown, configured: string): boolean {
  *
  * - An invite signup comes only from the server action that then claims the
  *   invite (it holds the system key) and always makes an ordinary user.
- * - Otherwise the admin key or a signed-in admin is required.
+ * - Otherwise the admin key or a signed-in admin is required. Once anyone has
+ *   an account, the admin key also needs the system key (US-112.1), so the
+ *   passphrase alone can't make accounts after install; operator tooling holds
+ *   both.
  */
 export function decideSignupRole({
   query,
@@ -31,12 +34,15 @@ export function decideSignupRole({
   requestedRole,
   adminPassphrase,
   systemKey,
+  installed,
 }: {
   query: Record<string, unknown>;
   sessionRole: string | undefined;
   requestedRole: unknown;
   adminPassphrase: string;
   systemKey: string;
+  /** Whether any account exists yet. */
+  installed: boolean;
 }): "admin" | "user" {
   if (
     typeof query.inviteToken === "string" &&
@@ -44,7 +50,9 @@ export function decideSignupRole({
   ) {
     return "user";
   }
-  const hasValidAdminKey = hashMatch(query.adminKey, adminPassphrase);
+  const hasValidAdminKey =
+    hashMatch(query.adminKey, adminPassphrase) &&
+    (!installed || hashMatch(query.systemKey, systemKey));
   if (!hasValidAdminKey && sessionRole !== "admin") {
     throw new Error("Invalid admin key");
   }
@@ -70,10 +78,16 @@ export const LIFECYCLE_PATHS_WITHOUT_HTTP = [
 function createAuth() {
   const config = getFrontendServerConfig();
   mkdirSync(dirname(config.authDbPath), { recursive: true });
+  const database = new Database(config.authDbPath);
+  // Read directly: the create hook runs inside the sign-up transaction, which
+  // holds the adapter's connection, so an adapter query here would wait on it.
+  const installed = () =>
+    database.prepare('SELECT EXISTS (SELECT 1 FROM "user")').pluck().get() ===
+    1;
   return betterAuth({
     baseURL: config.publicUrl,
     secret: config.betterAuthSecret,
-    database: new Database(config.authDbPath),
+    database,
     // Browser tests run a production build and create many accounts and
     // sessions from one address in parallel; production keeps the limiter,
     // sized for a class on one address.
@@ -133,6 +147,7 @@ function createAuth() {
               requestedRole: user.role,
               adminPassphrase: config.adminPassphrase,
               systemKey: config.systemKey,
+              installed: installed(),
             });
             return { data: { ...user, role } };
           },

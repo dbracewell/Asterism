@@ -270,7 +270,7 @@ for (const width of [1280, 320]) {
     test.setTimeout(90_000);
     const email = `${randomUUID()}@example.test`;
     const signup = await context.request.post(
-      `/api/auth/sign-up/email?adminKey=${encodeURIComponent(process.env.ADMIN_PASSPHRASE!)}&role=user`,
+      `/api/auth/sign-up/email?adminKey=${encodeURIComponent(process.env.ADMIN_PASSPHRASE!)}&systemKey=${encodeURIComponent(process.env.SYSTEM_KEY!)}&role=user`,
       { data: { name: "Plan tester", email, password: "Plan-test-4974!" } },
     );
     expect(signup.ok()).toBeTruthy();
