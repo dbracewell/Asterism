@@ -44,6 +44,9 @@ Unreleased into its version and date.
   session** menu item appear only while the project's Reflections area is on;
   before, a reflection could be saved to a hidden tab. Saving now says where
   the reflection was kept, with a link.
+- A project's Overview shows its newest reflection, or how to write one, while
+  the Reflections area is on. Empty reflection lists now point to the Reflect
+  button.
 - Canvas PDF downloads indent quotes, one step per level, with a grey bar at
   the left that continues across page breaks. Lists, code and pictures in a
   quote line up with its text.

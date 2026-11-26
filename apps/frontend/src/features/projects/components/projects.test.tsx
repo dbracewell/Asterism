@@ -18,6 +18,7 @@ const mocks = vi.hoisted(() => ({
   update: vi.fn(),
   remove: vi.fn(),
   chats: vi.fn(),
+  reflections: vi.fn(),
   push: vi.fn(),
   search: "",
   selectedAgents: 0,
@@ -34,6 +35,9 @@ vi.mock("next/navigation", () => ({
   useSearchParams: () => new URLSearchParams(mocks.search),
 }));
 vi.mock("@/lib/api", () => ({ client: {} }));
+vi.mock("@/features/auth/components/user-context", () => ({
+  useUser: () => ({ id: "owner" }),
+}));
 vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
   projectGetManyOptions: ({ query }: { query: object }) => ({
     queryKey: ["projects", query],
@@ -76,6 +80,11 @@ vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
     queryKey: ["chats", query],
     queryFn: () => mocks.chats(query),
   }),
+  reflectionGetManyOptions: ({ query }: { query: object }) => ({
+    queryKey: [{ _id: "reflectionGetMany", query }],
+    queryFn: () => mocks.reflections(query),
+  }),
+  reflectionGetManyQueryKey: () => [{ _id: "reflectionGetMany" }],
 }));
 const project = {
   id: "p",
@@ -116,6 +125,12 @@ beforeEach(() => {
   });
   mocks.get.mockResolvedValue(project);
   mocks.chats.mockResolvedValue({ chats: [], total: 0 });
+  mocks.reflections.mockResolvedValue({
+    items: [],
+    total: 0,
+    page: 1,
+    page_size: 10,
+  });
   mocks.search = "";
   mocks.selectedAgents = 0;
   turnOff();
@@ -269,6 +284,26 @@ it("hides the tabs and Overview goal of areas that are off", async () => {
   ]);
   await screen.findByRole("heading", { name: "Recent chats" });
   expect(screen.queryByText("Pass the exam")).not.toBeInTheDocument();
+  expect(
+    screen.queryByRole("region", { name: "Latest reflection" }),
+  ).not.toBeInTheDocument();
+  expect(mocks.reflections).not.toHaveBeenCalled();
+});
+
+it("prompts for a reflection on Overview while the Reflections area is on", async () => {
+  setup(<ProjectWorkspace projectId="p" />);
+  const latest = await screen.findByRole("region", {
+    name: "Latest reflection",
+  });
+  expect(latest).toHaveTextContent("No reflections yet");
+  expect(latest).toHaveTextContent(
+    "Once a chat in this project has an answer, choose Reflect",
+  );
+  expect(mocks.reflections).toHaveBeenCalledWith({
+    project_id: "p",
+    page: 1,
+    page_size: 10,
+  });
 });
 it("saves feature areas from Settings and says selected sub-agents stay in use", async () => {
   mocks.search = "tab=settings";

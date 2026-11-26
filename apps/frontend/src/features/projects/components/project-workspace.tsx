@@ -26,6 +26,7 @@ import { ProjectFields } from "./project-fields";
 import { WorkspaceChats } from "./workspace-chats";
 import { ProjectGoal } from "./project-goal";
 import { ReflectionList } from "@/features/reflections/components/reflection-list";
+import { LatestReflection } from "@/features/reflections/components/latest-reflection";
 import { AiUseLogDialog } from "@/features/chat/components/ai-use-log/ai-use-log-dialog";
 import { ExportPackDialog } from "./export-pack-dialog";
 import { ProjectAreaSwitches } from "./project-areas";
@@ -196,6 +197,13 @@ export function ProjectWorkspace({ projectId }: { projectId: string }) {
                 <ProjectGoal
                   goal={project.data.goal}
                   targetDate={project.data.goal_target_date}
+                />
+              )}
+              {project.data.areas.reflections && (
+                <LatestReflection
+                  key={`latest-reflection-${projectId}`}
+                  projectId={projectId}
+                  showAll={() => selectTab("reflections")}
                 />
               )}
               <WorkspaceChats

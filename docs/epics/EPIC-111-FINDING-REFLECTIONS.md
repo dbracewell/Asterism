@@ -1,6 +1,6 @@
 # EPIC-111: Finding reflections
 
-Status: in progress (2026-11-26). Source: user report (2026-11-26): "I don't
+Status: complete (2026-11-26). Source: user report (2026-11-26): "I don't
 actually see how to do them anywhere."
 
 ## Objective
@@ -40,8 +40,8 @@ that I can reflect without searching menus.
 
 As a learner, I want to find my reflections from the places I already look.
 
-- [ ] An empty Reflections tab or General list explains how to write one.
-- [ ] The project Overview shows the newest reflection, or a prompt to write
+- [x] An empty Reflections tab or General list explains how to write one.
+- [x] The project Overview shows the newest reflection, or a prompt to write
       one, when the Reflections area is on.
-- [ ] Help topics and the guide name every way in.
-- [ ] Tests, guide and release note.
+- [x] Help topics and the guide name every way in.
+- [x] Tests, guide and release note.

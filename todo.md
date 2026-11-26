@@ -111,8 +111,8 @@ EPIC-96 through EPIC-101 (live policy availability, hiding what the admin turned
   - [x] Button and menu item only when the project's Reflections area is on (General always)
   - [x] Saving says where the reflection went, with a link
   - [x] Tests, guide (with screenshot) and release note
-- [ ] US-111.2: Reflections easy to find afterwards
-  - [ ] Empty lists explain how to write one
-  - [ ] Project Overview shows the newest reflection or a prompt
-  - [ ] Help topics and guide name every way in
-  - [ ] Tests, guide and release note
+- [x] US-111.2: Reflections easy to find afterwards
+  - [x] Empty lists explain how to write one
+  - [x] Project Overview shows the newest reflection or a prompt
+  - [x] Help topics and guide name every way in
+  - [x] Tests, guide and release note

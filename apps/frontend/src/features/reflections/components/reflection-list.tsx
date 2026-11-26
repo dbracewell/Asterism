@@ -19,6 +19,7 @@ import Link from "next/link";
 import { useId, useState } from "react";
 import {
   REFLECTION_PAGE_SIZE,
+  reflectionHowTo,
   reflectionListOptions,
   reflectionMutationInvalidates,
 } from "../queries";
@@ -73,7 +74,7 @@ function OwnedReflectionList({
       {reflections.data?.total === 0 && (
         <EmptyState
           title="No reflections yet"
-          description="At the end of a session, choose Reflect on this session in the chat's menu to note what you learned and what's still unclear."
+          description={reflectionHowTo(projectId)}
         />
       )}
       {!!reflections.data?.items.length && (
