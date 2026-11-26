@@ -1,6 +1,6 @@
 # EPIC-107: Images in the canvas
 
-Status: in progress (2026-11-25); US-107.1 and US-107.2 merged; US-107.3 implemented. Source: user request (2026-11-25): "In canvas mode
+Status: complete (2026-11-25). Source: user request (2026-11-25): "In canvas mode
 markdown cannot display created images."
 
 ## Objective
