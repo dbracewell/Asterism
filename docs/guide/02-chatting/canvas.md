@@ -82,8 +82,9 @@ the diagram's text.
 Pictures from the chat appear in Word and PDF files with their descriptions as
 alt text, fitted to the page, including inside lists, quotes and tables. In a
 PDF, a table cell shows a picture only when the picture is all it holds;
-otherwise the cell is plain text, and the picture is written as **Image not
-included** with its description. So is a picture from the web or from outside
+otherwise the cell is text, with bold and italics kept but code and links
+printed as plain text, and the picture is written as **Image not included**
+with its description. So is a picture from the web or from outside
 the chat, in either format. Markdown and plain
 text files show each picture's description. The ZIP file puts the pictures in
 an `images` folder, and its documents link to them.

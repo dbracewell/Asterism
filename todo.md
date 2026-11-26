@@ -97,3 +97,36 @@ EPIC-96 through EPIC-101 (live policy availability, hiding what the admin turned
 ## Pictures in lists, quotes and tables in exports (proposed 2026-11-26)
 
 [EPIC-109](docs/epics/EPIC-109-PICTURES-IN-NESTED-PDF-BLOCKS.md) (US-109.1 through US-109.3) is complete and archived in the [2026-11-26 checklist](docs/archive/todo-completed-2026-11-26.md).
+
+## PDF layout polish (proposed 2026-11-26)
+
+[EPIC-110](docs/epics/EPIC-110-PDF-LAYOUT-POLISH.md)
+
+- [x] US-110.1: Bold and italics in PDF table cells
+  - [x] Bold and italic runs print as such; literal marks print as written
+  - [x] Code and link text print plain; link targets stay out
+  - [x] Picture cells and notes unchanged
+  - [x] Tests, ADR-0083 note, guide and release note
+- [ ] US-110.2: Code blocks under list items in PDF
+  - [ ] Code blocks start at the item's indent at every level and wrap inside the page
+  - [ ] Top-level code blocks unchanged
+  - [ ] Tests, guide and release note
+- [ ] US-110.3: Quotes that look like quotes in PDF
+  - [ ] Indent and a left bar for the full height, across page breaks; nested quotes further in
+  - [ ] Lists, pictures and diagrams in a quote line up with its text
+  - [ ] Tests, guide and release note
+
+## Finding reflections (proposed 2026-11-26)
+
+[EPIC-111](docs/epics/EPIC-111-FINDING-REFLECTIONS.md)
+
+- [ ] US-111.1: A visible Reflect button that follows the project's areas
+  - [ ] Reflect button in the chat header once the chat has an answer
+  - [ ] Button and menu item only when the project's Reflections area is on (General always)
+  - [ ] Saving says where the reflection went, with a link
+  - [ ] Tests, guide (with screenshot) and release note
+- [ ] US-111.2: Reflections easy to find afterwards
+  - [ ] Empty lists explain how to write one
+  - [ ] Project Overview shows the newest reflection or a prompt
+  - [ ] Help topics and guide name every way in
+  - [ ] Tests, guide and release note

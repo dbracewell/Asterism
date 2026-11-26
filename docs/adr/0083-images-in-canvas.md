@@ -108,6 +108,16 @@ canvas tools store references as written; the guidance grants nothing.
     limit) and adds its title and alt text. fpdf2 lays a table out twice, the
     first time with writing switched off, so the alt text is added only on the
     pass that writes, or the structure tree would hold a second, empty figure.
+  - Bold and italics in PDF table cells (US-110.1). A text cell is still one
+    run, written in fpdf2's table Markdown mode, which the HTML renderer has no
+    option for, so `_ExportHTML` sets it on each table it makes. fpdf2's own
+    markers (`**`, `__`, `--`, `~~`, `\`) and its link and bullet syntax would
+    read a document's literal text as formatting, and its escape doesn't cover
+    `[`. So the export's `FPDF` subclass uses control characters as markers
+    (Latin-1, for the core fonts), matches no links or bullets, and
+    `_cell_text` removes those characters from the cell's own text. Code and
+    link labels are plain text; a heading cell gets no bold markers, since it
+    is bold already.
     A table with a picture gets 1 mm cell padding so pictures don't touch.
   - A link to a chat file keeps only its label in both formats.
 - **Markdown and text** downloads of a document write each image as
