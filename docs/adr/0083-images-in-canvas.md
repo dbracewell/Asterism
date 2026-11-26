@@ -2,7 +2,7 @@
 
 Status: accepted. Read-time resolution and the canvas preview (US-107.1), the
 agent guidance (US-107.2) and images in downloads (US-107.3) are implemented
-(2026-11-25)
+(2026-11-25); the epic is complete
 ([EPIC-107](../epics/EPIC-107-IMAGES-IN-CANVAS.md)).
 
 ## Context

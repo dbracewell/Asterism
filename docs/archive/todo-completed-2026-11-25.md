@@ -85,3 +85,27 @@ Source: user request (2026-11-25). [EPIC-106](../epics/EPIC-106-SCREENSHOT-BASEL
   - [x] `test:e2e:screenshots` runs the five screenshot specs
   - [x] Review step in `docs/development.md` and the frontend testing docs
   - [x] Full isolated E2E run on macOS with no screenshot failures
+
+## Images in the canvas
+
+EPIC-107 is complete: every story was confirmed and merged on 2026-11-25 through pull requests #128 to #130. Pictures from a chat show in its canvas documents, the agent is told it can put them there, and Word, PDF, Markdown, text and ZIP downloads carry them or their descriptions (ADR-0083).
+
+### [EPIC-107: Images in the canvas](../epics/EPIC-107-IMAGES-IN-CANVAS.md)
+
+Source: user request (2026-11-25). [EPIC-107](../epics/EPIC-107-IMAGES-IN-CANVAS.md). Suggested order: US-107.1 → 107.2 → 107.3.
+
+- [x] US-107.1: Show chat images in the canvas preview (merged 2026-11-25, PR #128)
+  - [x] ADR-0083: read-time resolution, scope rule and limits
+  - [x] `CanvasVersion.inline_files` resolved against the live chat scope; regenerate the client
+  - [x] The canvas preview provides `InlineFilesContext`
+  - [x] Backend, frontend and E2E tests
+  - [x] Canvas guide page, ADR-0063 cross-reference, release notes
+- [x] US-107.2: Tell the agent it can put images in a canvas (merged 2026-11-25, PR #129)
+  - [x] `CANVAS_GUIDANCE` names the image Markdown; guidance test
+  - [x] `canvas_read` and `canvas_update` keep references unchanged
+  - [x] Check "make an image, then a canvas document using it" in the running app
+- [x] US-107.3: Images in canvas downloads (merged 2026-11-25, PR #130)
+  - [x] DOCX and PDF embed in-scope raster images with alt text
+  - [x] Markdown and text use the description; the chat ZIP includes `images/`
+  - [x] Save to Files uses the same path; Download my data keeps the stored text
+  - [x] Tests, ADR-0083, canvas guide page, release notes
