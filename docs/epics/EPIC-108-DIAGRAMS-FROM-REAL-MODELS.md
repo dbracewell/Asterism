@@ -1,6 +1,6 @@
 # EPIC-108: Diagrams that real models draw
 
-Status: in progress (2026-11-25); US-108.1 merged, US-108.2 implemented. Source: user request (2026-11-25), the
+Status: complete (2026-11-26). Source: user request (2026-11-25), the
 follow-up to [EPIC-103](EPIC-103-MERMAID-DIAGRAMS.md): check the diagram
 guidance against real models.
 

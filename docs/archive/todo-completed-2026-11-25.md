@@ -109,3 +109,22 @@ Source: user request (2026-11-25). [EPIC-107](../epics/EPIC-107-IMAGES-IN-CANVAS
   - [x] Markdown and text use the description; the chat ZIP includes `images/`
   - [x] Save to Files uses the same path; Download my data keeps the stored text
   - [x] Tests, ADR-0083, canvas guide page, release notes
+
+## Diagrams that real models draw
+
+EPIC-108 is complete: both stories were confirmed and merged through pull requests #132 (2026-11-25) and #133 (2026-11-26). Diagrams draw and keep their names whether a model writes the accessibility lines before or after the type line, and `scripts/evaluate_diagrams.py` checks the diagram guidance on any OpenAI-compatible model.
+
+### [EPIC-108: Diagrams that real models draw](../epics/EPIC-108-DIAGRAMS-FROM-REAL-MODELS.md)
+
+Source: user request (2026-11-25), checking the diagram guidance on real models. [EPIC-108](../epics/EPIC-108-DIAGRAMS-FROM-REAL-MODELS.md). Suggested order: US-108.1 → 108.2.
+
+- [x] US-108.1: Accessibility lines in any order (merged 2026-11-25, PR #132)
+  - [x] Shared `prepareDiagramSource`, used by the app and exports; `check:image` covers it
+  - [x] Prepared names for untitled SVGs; no `-v2` in type names
+  - [x] Guidance: type line first, example, mind maps
+  - [x] Unit, E2E and real-renderer tests
+  - [x] ADR-0081, ADR-0082, package README, release notes
+- [x] US-108.2: A reusable check on real models (merged 2026-11-26, PR #133)
+  - [x] `scripts/evaluate_diagrams.py`: seven fixed prompts, drawn with the export renderer, table and JSON
+  - [x] Scorer unit tests; backend README
+  - [x] Ran on the local model (21 of 21 after the mind-map guidance fix); results in the epic
