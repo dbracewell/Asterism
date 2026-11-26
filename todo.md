@@ -104,15 +104,4 @@ EPIC-96 through EPIC-101 (live policy availability, hiding what the admin turned
 
 ## Finding reflections (proposed 2026-11-26)
 
-[EPIC-111](docs/epics/EPIC-111-FINDING-REFLECTIONS.md)
-
-- [x] US-111.1: A visible Reflect button that follows the project's areas
-  - [x] Reflect button in the chat header once the chat has an answer
-  - [x] Button and menu item only when the project's Reflections area is on (General always)
-  - [x] Saving says where the reflection went, with a link
-  - [x] Tests, guide (with screenshot) and release note
-- [x] US-111.2: Reflections easy to find afterwards
-  - [x] Empty lists explain how to write one
-  - [x] Project Overview shows the newest reflection or a prompt
-  - [x] Help topics and guide name every way in
-  - [x] Tests, guide and release note
+[EPIC-111](docs/epics/EPIC-111-FINDING-REFLECTIONS.md) (US-111.1 and US-111.2) is complete and archived in the [2026-11-26 checklist](docs/archive/todo-completed-2026-11-26.md).
