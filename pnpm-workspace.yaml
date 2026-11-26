@@ -19,3 +19,11 @@ overrides:
   # @hey-api/json-schema-ref-parser 1.4.4 (through @hey-api/openapi-ts 0.99.0)
   # pins js-yaml 4.2.0 exactly.
   "@hey-api/json-schema-ref-parser>js-yaml": 4.3.2
+  # GHSA for minimatch globparts amplification (medium, Dependabot #285):
+  # @typescript-eslint/typescript-estree < 8.73 and @ts-morph/common < 0.29.1
+  # (through eslint-config-next, @tanstack/eslint-plugin-query and shadcn) ask
+  # for minimatch ^10. 11.0.8 is the version eslint already uses.
+  "minimatch@>=7.0.0 <11.0.1": 11.0.8
+  # postcss-selector-parser quadratic parsing (medium, Dependabot #273):
+  # @tailwindcss/typography 0.5.20 pins 6.0.10 exactly.
+  "@tailwindcss/typography>postcss-selector-parser": 6.1.6
