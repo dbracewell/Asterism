@@ -677,8 +677,8 @@ def _export_html() -> type:
     """fpdf2's HTML renderer for exports. It draws an ``<img>`` only when its
     ``src`` is one of this export's pictures (``_pdf_pictures``), fitted to the
     width left after the indent, with its title and alt text, and ignores any
-    other. Text keeps its list item's indent after a picture, a nested list or
-    a code block."""
+    other. A code block in a list item starts at the item's indent, and text
+    keeps that indent after a picture, a nested list or a code block."""
     from fpdf.html import HTML2FPDF
 
     class _ExportHTML(HTML2FPDF):
@@ -694,6 +694,9 @@ def _export_html() -> type:
 
         def _new_paragraph(self, *args, **kwargs) -> None:
             self._resume, self._written = None, False
+            if self._tags_stack[-1:] == ["pre"] and "li" in self._tags_stack:
+                # fpdf2 opens a code block at the margin, wherever it is.
+                kwargs["indent"] = (kwargs.get("indent") or 0) + self._item_indent()
             super()._new_paragraph(*args, **kwargs)
 
         def _write_paragraph(self, text: str, link: int | str | None = None) -> None:
