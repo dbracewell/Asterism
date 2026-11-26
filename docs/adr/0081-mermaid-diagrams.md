@@ -127,9 +127,12 @@ timelines, relationships), with short labels, punctuation in quoted labels,
 `accTitle` and `accDescr`, and an explanation in words so the reply stands
 without the diagram. It tells the agent not to write `click`, `style` or
 `%%{init}%%` lines, which the locked configuration ignores or refuses. Since
-EPIC-108 it says the type line comes first, with a short example, and that
-mind maps take no accessibility lines: "Start each diagram with accTitle"
-had led models to put them above the type, which mermaid refuses.
+EPIC-108 it says the type line comes first, with a short example: "Start each
+diagram with accTitle" had led models to put them above the type, which
+mermaid refuses. It asks for the lines on every diagram, mind maps included,
+since the renderer drops them from a mind map but names the picture from
+them. `scripts/evaluate_diagrams.py` measures the guidance against a live
+model (US-108.2).
 Sub-agents don't get it; a diagram one writes still renders.
 
 `IMAGE_GUIDANCE` now sends pictures (illustrations, scenes, photos) to

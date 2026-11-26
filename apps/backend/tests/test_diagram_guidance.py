@@ -65,4 +65,6 @@ def test_the_example_puts_the_type_line_first():
     example = DIAGRAM_GUIDANCE.split("```mermaid\n")[1].split("```")[0].splitlines()
     assert example[0] == "flowchart TD"
     assert example[1].strip().startswith("accTitle:") and example[2].strip().startswith("accDescr:")
-    assert "Mind maps can't have accTitle or accDescr" in DIAGRAM_GUIDANCE
+    # Every diagram gets them, mind maps too: the renderer drops them from a
+    # mind map but names the picture from them (US-108.2 found unnamed mind maps).
+    assert "Mind maps" not in DIAGRAM_GUIDANCE

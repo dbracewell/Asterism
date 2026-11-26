@@ -425,3 +425,35 @@ node ../../scripts/run-with-env.mjs --env none --scope backend --profile test --
 ```
 
 See [ADR-0029](../../docs/adr/0029-branch-local-hint-levels.md).
+
+## Diagram evaluation
+
+`scripts/evaluate_diagrams.py` checks whether a model answers with diagrams
+that draw ([EPIC-108](../../docs/epics/EPIC-108-DIAGRAMS-FROM-REAL-MODELS.md)).
+It sends seven fixed prompts to any OpenAI-compatible endpoint, under the main
+agent's runtime prompt. The prompts cover a process, a cycle, a sequence, a
+timeline, a mind map and a hierarchy, plus a control that shouldn't get a
+diagram. It draws every mermaid block with the export renderer, which uses the
+app's preparation, configuration and sanitizer.
+
+For each answer it reports:
+
+- whether it held a diagram, whether that drew, and whether it has a name;
+- whether the accessibility lines came before the type line;
+- which diagram types it used, and how many words it wrote outside code.
+
+An answer passes when a wanted diagram is there, draws, is named and is
+explained in at least 20 words. The control passes with no diagram. The run is
+informational and never gates CI. It needs the frontend's packages and
+Playwright's Chromium. Run it from `apps/backend`, and use it whenever a model
+is added or the diagram guidance changes:
+
+```sh
+node ../../scripts/run-with-env.mjs --env none --scope backend --profile test -- \
+  uv run python scripts/evaluate_diagrams.py \
+  --base-url http://localhost:11434/v1 --model llama3.1 \
+  [--api-key-env OPENAI_API_KEY] [--repeat 3] [--prompt mind-map] [--json report.json]
+```
+
+Answers vary from run to run, so use `--repeat`. `--json` also saves every
+answer, for reading the failures.
