@@ -39,6 +39,8 @@ Unreleased into its version and date.
 
 ### Behavior
 
+- Canvas PDF downloads line up a code block in a list item with the item's
+  text, at every level, instead of starting it at the page margin.
 - Canvas PDF downloads keep bold and italics in table cells. Code and links
   in a cell still print as plain text.
 - Canvas downloads now show chat pictures in table cells. In Word, cells also

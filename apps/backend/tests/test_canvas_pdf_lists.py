@@ -1,8 +1,10 @@
-"""US-109.1: loose lists keep their numbers, bullets and indent in PDF downloads."""
+"""US-109.1: loose lists keep their numbers, bullets and indent in PDF downloads;
+US-110.2: code blocks in list items line up with the item."""
 
 import io
 
 import pdfplumber
+import pytest
 from asterism.domains.canvas.exports import markdown_pdf
 
 
@@ -43,3 +45,29 @@ def test_a_paragraph_after_code_in_an_item_keeps_the_item_indent():
     found = lines("1. One\n\n   ```\n   code\n   ```\n\n   After code.\n\nOutside.\n")
     assert texts(found) == ["1. One", "code", "After code.", "Outside."]
     assert x_of(found, "After code.") > x_of(found, "Outside.")
+
+
+# --- US-110.2: code blocks under list items ----------------------------------
+
+
+def test_a_code_block_in_an_item_starts_at_the_items_text():
+    found = lines("1. One\n\n   ```\n   fenced code\n   ```\n\n   After.\n\n```\ntop code\n```\n")
+    assert texts(found) == ["1. One", "fenced code", "After.", "top code"]
+    assert x_of(found, "fenced code") == pytest.approx(x_of(found, "After."), abs=1.5)
+    assert x_of(found, "fenced code") > x_of(found, "top code")
+
+
+def test_code_blocks_indent_with_each_nesting_level():
+    content = "- a\n\n      indented code\n\n  - b\n\n    ```\n    nested code\n    ```\n\n    After b.\n\nOutside.\n"
+    found = lines(content)
+    assert x_of(found, "Outside.") < x_of(found, "indented code") < x_of(found, "nested code")
+    assert x_of(found, "nested code") == pytest.approx(x_of(found, "After b."), abs=1.5)
+
+
+def test_a_long_code_line_in_an_item_wraps_inside_the_page():
+    long = " ".join(f"word{n}" for n in range(60))
+    page = pdfplumber.open(io.BytesIO(markdown_pdf("Lists", f"- Step\n\n  ```\n  {long}\n  ```\n"))).pages[0]
+    words = [word for word in page.extract_words() if word["text"].startswith("word")]
+    assert len({round(word["top"]) for word in words}) > 1
+    assert max(word["x1"] for word in words) <= page.width - 18 * 72 / 25.4 + 1
+    assert min(word["x0"] for word in words) > 18 * 72 / 25.4 + 5

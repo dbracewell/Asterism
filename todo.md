@@ -107,10 +107,10 @@ EPIC-96 through EPIC-101 (live policy availability, hiding what the admin turned
   - [x] Code and link text print plain; link targets stay out
   - [x] Picture cells and notes unchanged
   - [x] Tests, ADR-0083 note, guide and release note
-- [ ] US-110.2: Code blocks under list items in PDF
-  - [ ] Code blocks start at the item's indent at every level and wrap inside the page
-  - [ ] Top-level code blocks unchanged
-  - [ ] Tests, guide and release note
+- [x] US-110.2: Code blocks under list items in PDF
+  - [x] Code blocks start at the item's indent at every level and wrap inside the page
+  - [x] Top-level code blocks unchanged
+  - [x] Tests, guide and release note
 - [ ] US-110.3: Quotes that look like quotes in PDF
   - [ ] Indent and a left bar for the full height, across page breaks; nested quotes further in
   - [ ] Lists, pictures and diagrams in a quote line up with its text

@@ -42,10 +42,10 @@ table to stay bold and italic, so tables read like they do in the canvas.
 As a person downloading a canvas as PDF, I want a code block under a numbered
 step to line up with the step's text, so it's clear which step it belongs to.
 
-- [ ] A fenced or indented code block in a list item starts at the item's
+- [x] A fenced or indented code block in a list item starts at the item's
       indent, at every nesting level, and long lines still wrap inside the page.
-- [ ] Top-level code blocks are unchanged.
-- [ ] Tests, guide and release note.
+- [x] Top-level code blocks are unchanged.
+- [x] Tests, guide and release note.
 
 ### US-110.3: Quotes that look like quotes in PDF
 
