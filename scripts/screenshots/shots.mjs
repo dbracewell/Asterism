@@ -732,13 +732,10 @@ export const shots = [
     path: (ids) => `/c/${ids.chats.general}`,
     ready: ["what do you think a plant needs"],
     steps: async (page) => {
-      // The chat's own menu in the top bar, not one in the sidebar's chat list.
+      // The Reflect button in the top bar (US-111.1).
       await page
         .locator("header")
-        .getByRole("button", { name: "Chat actions" })
-        .click();
-      await page
-        .getByRole("menuitem", { name: "Reflect on this session" })
+        .getByRole("button", { name: "Reflect on this session" })
         .click();
       await page.getByRole("button", { name: "Suggest a draft" }).click();
       await page.getByText("Suggested from this chat").waitFor();

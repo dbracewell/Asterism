@@ -21,7 +21,8 @@ import { useMutation } from "@tanstack/react-query";
 import { SparklesIcon } from "lucide-react";
 import { useId, useState } from "react";
 import { toast } from "sonner";
-import { reflectionMutationInvalidates } from "../queries";
+import { useRouter } from "next/navigation";
+import { reflectionMutationInvalidates, reflectionsHref } from "../queries";
 import { HelpTopic } from "@/features/help/components/help-topic";
 import { errorDetail } from "@/lib/utils";
 
@@ -32,14 +33,17 @@ export const MAX_REFLECTION_CHARS = 2000;
 /**
  * Reflect at the end of a session (US-58.2): two short prompts, an optional
  * suggested draft from the chat that the learner edits, then save. The
- * reflection is filed under the chat's project.
+ * reflection is filed under the chat's project (`projectId`, null for
+ * General), and the saved message says where, with a link (US-111.1).
  */
 export function ReflectDialog({
   chatId,
+  projectId,
   open,
   onOpenChange,
 }: {
   chatId: string;
+  projectId: string | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
@@ -47,7 +51,11 @@ export function ReflectDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       {open && (
         <DialogContent className="sm:max-w-xl">
-          <ReflectForm chatId={chatId} onClose={() => onOpenChange(false)} />
+          <ReflectForm
+            chatId={chatId}
+            projectId={projectId}
+            onClose={() => onOpenChange(false)}
+          />
         </DialogContent>
       )}
     </Dialog>
@@ -56,11 +64,14 @@ export function ReflectDialog({
 
 function ReflectForm({
   chatId,
+  projectId,
   onClose,
 }: {
   chatId: string;
+  projectId: string | null;
   onClose: () => void;
 }) {
+  const router = useRouter();
   const id = useId();
   const [learned, setLearned] = useState("");
   const [unclear, setUnclear] = useState("");
@@ -79,7 +90,15 @@ function ReflectForm({
     ...reflectionCreateMutation({ client }),
     meta: { invalidates: reflectionMutationInvalidates() },
     onSuccess: () => {
-      toast.success("Reflection saved");
+      toast.success("Reflection saved", {
+        description: projectId
+          ? "It's in this project's Reflections tab."
+          : "It's on the General page, under Reflections.",
+        action: {
+          label: "View reflections",
+          onClick: () => router.push(reflectionsHref(projectId)),
+        },
+      });
       onClose();
     },
   });

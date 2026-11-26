@@ -1,6 +1,6 @@
 # EPIC-111: Finding reflections
 
-Status: proposed (2026-11-26). Source: user report (2026-11-26): "I don't
+Status: in progress (2026-11-26). Source: user report (2026-11-26): "I don't
 actually see how to do them anywhere."
 
 ## Objective
@@ -28,13 +28,13 @@ are unchanged: owner-only, never read by agents.
 As a learner, I want a Reflect button in the chat I'm working in, so I can see
 that I can reflect without searching menus.
 
-- [ ] The chat header shows a **Reflect** button (icon only on narrow screens)
+- [x] The chat header shows a **Reflect** button (icon only on narrow screens)
       once the chat has an answer; it opens the existing dialog.
-- [ ] In a project chat, the button and the menu item appear only when the
+- [x] In a project chat, the button and the menu item appear only when the
       project's Reflections area is on; General chats always have them.
-- [ ] After saving, the message says where the reflection was kept, with a link
+- [x] After saving, the message says where the reflection was kept, with a link
       to the project's Reflections tab or the General page.
-- [ ] Tests, guide (reflections page and screenshot) and release note.
+- [x] Tests, guide (reflections page and screenshot) and release note.
 
 ### US-111.2: Reflections easy to find afterwards
 

@@ -23,6 +23,7 @@ import { Input } from "@/components/ui/input";
 import { SidebarMenuAction } from "@/components/ui/sidebar";
 import { AiUseLogDialog } from "@/features/chat/components/ai-use-log/ai-use-log-dialog";
 import { ReflectDialog } from "@/features/reflections/components/reflect-dialog";
+import { useReflectionsShown } from "@/features/reflections/queries";
 import { useChatSessionCrud } from "@/features/chat/hooks/use-chat-session-crud";
 import { MoveChatDialog } from "@/features/projects/components/move-chat-dialog";
 import { client } from "@/lib/api";
@@ -53,6 +54,7 @@ export const ChatSessionActionMenu = ({
     "rename" | "move" | "log" | "reflect" | null
   >(null);
   const { deleteChatSession, isDeleting } = useChatSessionCrud();
+  const reflections = useReflectionsShown(chat);
   const { confirm, dialog: confirmDialog } = useConfirmationDialog({
     title: "Delete chat?",
     description: "This permanently deletes this chat and its messages.",
@@ -95,9 +97,11 @@ export const ChatSessionActionMenu = ({
             <DropdownMenuItem onSelect={() => setDialog("move")}>
               <FolderInputIcon /> Move
             </DropdownMenuItem>
-            <DropdownMenuItem onSelect={() => setDialog("reflect")}>
-              <NotebookPenIcon /> Reflect on this session
-            </DropdownMenuItem>
+            {reflections && (
+              <DropdownMenuItem onSelect={() => setDialog("reflect")}>
+                <NotebookPenIcon /> Reflect on this session
+              </DropdownMenuItem>
+            )}
             <DropdownMenuItem onSelect={() => setDialog("log")}>
               <ScrollTextIcon /> Export AI-use log
             </DropdownMenuItem>
@@ -135,6 +139,7 @@ export const ChatSessionActionMenu = ({
       />
       <ReflectDialog
         chatId={chat.id}
+        projectId={chat.project_id ?? null}
         open={dialog === "reflect"}
         onOpenChange={closeDialog}
       />

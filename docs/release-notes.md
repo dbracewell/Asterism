@@ -39,6 +39,11 @@ Unreleased into its version and date.
 
 ### Behavior
 
+- Chats have a **Reflect** button at the top once they have an answer, so
+  reflections are easier to find. In a project, it and the **Reflect on this
+  session** menu item appear only while the project's Reflections area is on;
+  before, a reflection could be saved to a hidden tab. Saving now says where
+  the reflection was kept, with a link.
 - Canvas PDF downloads indent quotes, one step per level, with a grey bar at
   the left that continues across page breaks. Lists, code and pictures in a
   quote line up with its text.
