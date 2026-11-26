@@ -1,6 +1,6 @@
 # EPIC-110: PDF layout polish
 
-Status: in progress (2026-11-26). Source: user request (2026-11-26), from the
+Status: complete (2026-11-26). Source: user request (2026-11-26), from the
 limits found in [EPIC-109](EPIC-109-PICTURES-IN-NESTED-PDF-BLOCKS.md).
 
 ## Objective
