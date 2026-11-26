@@ -111,10 +111,10 @@ EPIC-96 through EPIC-101 (live policy availability, hiding what the admin turned
   - [x] Code blocks start at the item's indent at every level and wrap inside the page
   - [x] Top-level code blocks unchanged
   - [x] Tests, guide and release note
-- [ ] US-110.3: Quotes that look like quotes in PDF
-  - [ ] Indent and a left bar for the full height, across page breaks; nested quotes further in
-  - [ ] Lists, pictures and diagrams in a quote line up with its text
-  - [ ] Tests, guide and release note
+- [x] US-110.3: Quotes that look like quotes in PDF
+  - [x] Indent and a left bar for the full height, across page breaks; nested quotes further in
+  - [x] Lists, pictures and diagrams in a quote line up with its text
+  - [x] Tests, guide and release note
 
 ## Finding reflections (proposed 2026-11-26)
 

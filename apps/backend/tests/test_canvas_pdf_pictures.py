@@ -98,7 +98,8 @@ def test_nested_items_and_quotes_draw_their_images_further_in():
     data = pdf(content)
     found = page(data)
     outer, inner, quoted = sorted(found.images, key=lambda item: item["top"])
-    assert inner["x0"] > outer["x0"] > quoted["x0"] - 1
+    assert inner["x0"] > outer["x0"] > 18 * 72 / 25.4
+    assert quoted["x0"] > 18 * 72 / 25.4 + 10  # Quotes are indented (US-110.3).
     assert top_of(found, "A quote") < quoted["top"] < top_of(found, "and more quote.")
     assert alt_texts(data) == ["Outer sea", "Inner sea", "Quoted sea"]
 

@@ -52,7 +52,9 @@ step to line up with the step's text, so it's clear which step it belongs to.
 As a person downloading a canvas as PDF, I want quotes indented with a bar at
 the left, so a quoted passage stands out from the text around it.
 
-- [ ] A quote is indented and has a thin bar at the left for its full height,
+- [x] A quote is indented and has a thin bar at the left for its full height,
       including across a page break; nested quotes indent further.
-- [ ] Lists, pictures and diagrams inside a quote line up with the quote's text.
-- [ ] Tests, guide and release note.
+- [x] Lists, pictures and diagrams inside a quote line up with the quote's text.
+- [x] Tests, guide and release note.
+- [x] A small gap under every code block, so the next list item doesn't touch
+      it (found in US-110.2).
