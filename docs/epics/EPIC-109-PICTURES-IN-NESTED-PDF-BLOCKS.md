@@ -1,6 +1,6 @@
 # EPIC-109: Pictures in lists, quotes and tables in exports
 
-Status: in progress (2026-11-26); US-109.1 merged, US-109.2 implemented. Source: user request (2026-11-26), the follow-up
+Status: in progress (2026-11-26); US-109.1 and US-109.2 merged, US-109.3 implemented. Source: user request (2026-11-26), the follow-up
 to [EPIC-107](EPIC-107-IMAGES-IN-CANVAS.md) and
 [EPIC-108](EPIC-108-DIAGRAMS-FROM-REAL-MODELS.md): models often put a diagram or
 an image under a numbered step, and the PDF download shows a text note there
@@ -96,11 +96,17 @@ Suggested order: US-109.1 → 109.2 → 109.3.
 
 ### US-109.3: Images in table cells in PDF and Word
 
-- [ ] Spike: alt text on an fpdf2 table cell image; record the choice in
+- [x] Spike: fpdf2 can take alt text on a cell image through an `FPDF.image`
+      override, written only on the pass that writes (it lays tables out
+      twice). It cannot mix text and an image in a cell, and refuses mixed
+      formatting in a cell, which made such PDFs fail on `main`. Recorded in
       ADR-0083
-- [ ] PDF: a loaded image in a cell draws with alt text, fitted to the cell (or
-      follows the table, per the spike); other cells unchanged
-- [ ] Word: a loaded image in a cell is a picture with title and description,
-      fitted to the column; text around it stays
-- [ ] Tests for both formats, including an unloaded image in a cell
-- [ ] Canvas guide page, release notes (Behavior)
+- [x] PDF: a cell that is one loaded image draws it with alt text, at its
+      natural size within the column; every other cell is plain text with
+      notes, which also fixes the formatted-cell failure
+- [x] Word: a loaded image in a cell is a picture with title and description,
+      fitted to the column; the cell's text, formatting and links stay
+- [x] Tests (`test_canvas_table_pictures.py`, updated image export tests):
+      both formats, sizes, single alt text, mixed and unloaded cells,
+      formatted cells
+- [x] Canvas guide page, ADR-0083, release notes (Behavior)

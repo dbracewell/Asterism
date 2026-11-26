@@ -81,8 +81,8 @@ def test_image_references_are_distinct_images_outside_code():
 def test_docx_embeds_loaded_images_with_alt_text_and_notes_the_rest():
     document = docx.Document(io.BytesIO(export("docx", {SEA: picture()})))
     shapes = document.inline_shapes
-    # The top-level paragraph and the list item; the table cell gets a note.
-    assert len(shapes) == 2
+    # The top-level paragraph, the list item and the table cell (US-109.3).
+    assert len(shapes) == 3
     properties = shapes[0]._inline.docPr
     assert properties.get("title") == "sea.png"
     assert properties.get("descr") == "The sea at dusk"
@@ -93,8 +93,10 @@ def test_docx_embeds_loaded_images_with_alt_text_and_notes_the_rest():
     assert "asterism-file:" not in text.split("![Kept as code]")[0]
     assert "with the notes." in text
     assert "https://example.com/x.png" not in text
-    cell = document.tables[0].cell(1, 0).text
-    assert cell == f"[{IMAGE_NOT_INCLUDED}: In a table]"
+    cell = document.tables[0].cell(1, 0)
+    (shape,) = cell._element.xpath(".//wp:docPr")
+    assert shape.get("descr") == "In a table"
+    assert IMAGE_NOT_INCLUDED not in cell.text
 
 
 def test_docx_fits_wide_and_tall_images_to_the_page():
@@ -108,9 +110,9 @@ def test_pdf_places_top_level_images_between_the_text():
     data = export("pdf", {SEA: picture()})
     pages = pdfplumber.open(io.BytesIO(data)).pages
     page = pages[0]
-    # The top-level paragraph's image and the list item's (US-109.2); the
-    # table cell's is a note.
-    assert len(page.images) == 2
+    # The top-level paragraph's image, the list item's (US-109.2) and the
+    # table cell's (US-109.3).
+    assert len(page.images) == 3
     image = min(page.images, key=lambda item: item["top"])
     before = page.search("Before the picture.")[0]
     after = page.search("After the picture")[0]
@@ -119,7 +121,7 @@ def test_pdf_places_top_level_images_between_the_text():
     text = "\n".join(p.extract_text() or "" for p in pages)
     assert f"{IMAGE_NOT_INCLUDED}: Not loaded" in text
     assert f"{IMAGE_NOT_INCLUDED}: The sea at dusk" not in text
-    assert f"{IMAGE_NOT_INCLUDED}: In a table" in text
+    assert IMAGE_NOT_INCLUDED + ": In a table" not in text
     assert b"/Alt" in data
 
 
