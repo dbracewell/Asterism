@@ -59,6 +59,13 @@ Unreleased into its version and date.
   ([ADR-0083](adr/0083-images-in-canvas.md)).
 - The main agent is told it can put pictures and files from the chat in a
   canvas document, for example an image it just made.
+- Canvas documents downloaded as Word or PDF, or saved to Files in those
+  formats, include the chat's pictures with alt text. Other images, such as
+  pictures from the web, are written as "Image not included" with their
+  description; nothing is fetched. Markdown and text downloads write each
+  picture's description instead of its internal link, and the chat's ZIP
+  includes the pictures in an `images` folder. Download my data still keeps
+  the stored text.
 - Screen readers no longer list every code block, table, equation and diagram
   in an answer as a landmark. Each is a group named for what it holds, such as
   "Code: python" or "Table", and still scrolls with the keyboard. Task-list

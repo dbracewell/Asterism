@@ -56,7 +56,8 @@ Pictures Asterism made in this chat, and files attached to the chat or its
 project, show in a document's **Preview** as they do in an answer. Select a
 picture to see it full size. A file that isn't part of this chat shows as
 **File unavailable**, and a picture added while you edit appears once you
-select **Save version**.
+select **Save version**. Downloads include the pictures too (see
+[Download it](#download-it)).
 
 ## Go back to an earlier version
 
@@ -77,6 +78,13 @@ In Word and PDF files, [diagrams](diagrams.md) appear as pictures, in light
 colors whatever your theme. If a diagram can't be drawn, the file shows its code
 with the words **Diagram not drawn**. Markdown, plain text and the ZIP file keep
 the diagram's text.
+
+Pictures from the chat appear in Word and PDF files with their descriptions as
+alt text, fitted to the page. In a PDF, a picture inside a list, quote or table
+is written as **Image not included** with its description. So is a picture
+from the web or from outside the chat, in either format. Markdown and plain
+text files show each picture's description. The ZIP file puts the pictures in
+an `images` folder, and its documents link to them.
 
 ## Good to know
 

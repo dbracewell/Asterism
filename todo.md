@@ -96,12 +96,12 @@ Source: user request (2026-11-25). [EPIC-107](docs/epics/EPIC-107-IMAGES-IN-CANV
   - [x] The canvas preview provides `InlineFilesContext`
   - [x] Backend, frontend and E2E tests
   - [x] Canvas guide page, ADR-0063 cross-reference, release notes
-- [ ] US-107.2: Tell the agent it can put images in a canvas (awaiting confirmation)
+- [x] US-107.2: Tell the agent it can put images in a canvas (merged 2026-11-25, PR #129)
   - [x] `CANVAS_GUIDANCE` names the image Markdown; guidance test
   - [x] `canvas_read` and `canvas_update` keep references unchanged
-  - [ ] Check "make an image, then a canvas document using it" in the running app
-- [ ] US-107.3: Images in canvas downloads
-  - [ ] DOCX and PDF embed in-scope raster images with alt text
-  - [ ] Markdown and text use the description; the chat ZIP includes `images/`
-  - [ ] Save to Files uses the same path; Download my data keeps the stored text
-  - [ ] Tests, ADR-0083, canvas guide page, release notes
+  - [x] Check "make an image, then a canvas document using it" in the running app
+- [x] US-107.3: Images in canvas downloads (awaiting confirmation)
+  - [x] DOCX and PDF embed in-scope raster images with alt text
+  - [x] Markdown and text use the description; the chat ZIP includes `images/`
+  - [x] Save to Files uses the same path; Download my data keeps the stored text
+  - [x] Tests, ADR-0083, canvas guide page, release notes
