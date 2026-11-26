@@ -94,12 +94,13 @@ EPIC-96 through EPIC-101 (live policy availability, hiding what the admin turned
 
 Source: user request (2026-11-25), checking the diagram guidance on real models. [EPIC-108](docs/epics/EPIC-108-DIAGRAMS-FROM-REAL-MODELS.md).
 
-- [ ] US-108.1: Accessibility lines in any order (awaiting confirmation)
+- [x] US-108.1: Accessibility lines in any order (merged 2026-11-25, PR #132)
   - [x] Shared `prepareDiagramSource`, used by the app and exports; `check:image` covers it
   - [x] Prepared names for untitled SVGs; no `-v2` in type names
   - [x] Guidance: type line first, example, mind maps
   - [x] Unit, E2E and real-renderer tests
   - [x] ADR-0081, ADR-0082, package README, release notes
-- [ ] US-108.2: Check the guidance on more models (proposed)
-  - [ ] Fixed diagram prompts on each enabled model; record diagram, drew, titled
-  - [ ] Adjust the guidance for common failures; record results in the epic
+- [x] US-108.2: A reusable check on real models (awaiting confirmation)
+  - [x] `scripts/evaluate_diagrams.py`: seven fixed prompts, drawn with the export renderer, table and JSON
+  - [x] Scorer unit tests; backend README
+  - [x] Ran on the local model (21 of 21 after the mind-map guidance fix); results in the epic

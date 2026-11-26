@@ -1,6 +1,6 @@
 # EPIC-108: Diagrams that real models draw
 
-Status: in progress (2026-11-25). Source: user request (2026-11-25), the
+Status: in progress (2026-11-25); US-108.1 merged, US-108.2 implemented. Source: user request (2026-11-25), the
 follow-up to [EPIC-103](EPIC-103-MERMAID-DIAGRAMS.md): check the diagram
 guidance against real models.
 
@@ -74,10 +74,39 @@ Chromium showed why:
         front matter, an untitled flowchart, the guidance example
 - [x] ADR-0081 and ADR-0082 notes, package README, release notes
 
-### US-108.2: Check the guidance on more models (proposed)
+### US-108.2: A reusable check on real models
 
-- [ ] Run a fixed set of diagram prompts (process, cycle, sequence, timeline,
-      mind map, hierarchy) on each enabled model. Record whether it answered
-      with a diagram, whether it drew, and whether it has a title.
-- [ ] Adjust the guidance for any failure common to several models; record
-      the results in this epic
+Only one model is configured (a local Inkling-2-Mini on an OpenAI-compatible
+server), so the user chose a reusable check over a one-off survey.
+
+- [x] `scripts/evaluate_diagrams.py` with `domains/chat/diagram_evaluation.py`:
+      - seven fixed prompts under the main agent's runtime prompt: process,
+        cycle, sequence, timeline, mind map, hierarchy, and a control that
+        shouldn't get a diagram
+      - each mermaid block is drawn with the export renderer
+      - it reports diagram, drew, named, accessibility-first, types and words,
+        prints a table and writes JSON with `--json`
+      - `--repeat` and `--prompt` options; informational, never gates CI
+- [x] Unit tests for the scorer (`test_diagram_evaluation.py`); backend README
+      section
+- [x] Ran it on the local model and fixed the guidance; results below
+
+#### Results: Inkling-2-Mini (local), 3 runs of 7 prompts
+
+| Run | Passed | Diagrams drawn | Named | Lines before type |
+| --- | --- | --- | --- | --- |
+| US-108.1 guidance | 18 of 21 | 18 of 18 | 15 of 18 | 0 |
+| after the change below | 21 of 21 | 18 of 18 | 18 of 18 | 0 |
+
+- **Every diagram drew, and no answer put the accessibility lines first.**
+  US-108.1's instructions work, and the renderer would have fixed the order
+  anyway.
+- **All three mind maps were unnamed.** The US-108.1 guidance told the model
+  mind maps can't have `accTitle`/`accDescr`, so it left them out. The
+  renderer already drops those lines from a mind map and names the picture
+  from them, so the guidance now asks for them on every diagram.
+- **The control never got a diagram.**
+- **Diagram types:** the model mostly picks a flowchart. For the timeline it
+  used `timeline` in 2 of 6 answers; for the sequence, `sequenceDiagram` in 1
+  of 6; for the mind map, `mindmap` in 4 of 6. These all draw and are named,
+  so the guidance doesn't push a type.

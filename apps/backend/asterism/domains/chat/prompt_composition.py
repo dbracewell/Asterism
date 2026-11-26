@@ -238,8 +238,7 @@ DIAGRAM_GUIDANCE = (
     "```mermaid\nflowchart TD\n  accTitle: Water cycle\n"
     "  accDescr: Water evaporates, forms clouds and falls as rain.\n"
     '  A["Evaporation"] --> B["Clouds"] --> C["Rain"] --> A\n```\n'
-    "Mind maps can't have accTitle or accDescr lines: name them in your text instead. Explain "
-    "the key points in words too, so the reply makes sense without the diagram. One idea per "
+    "Explain the key points in words too, so the reply makes sense without the diagram. One idea per "
     "diagram. Don't add click, style or %%{init}%% lines: they are ignored or stop the diagram "
     "from drawing."
 )
