@@ -39,6 +39,9 @@ Unreleased into its version and date.
 
 ### Behavior
 
+- Canvas PDF downloads keep the numbers and bullets of list items written
+  with blank lines between them, and indent an item's later paragraphs
+  under it. Before, those items printed as plain paragraphs.
 - Diagrams whose `accTitle` or `accDescr` lines come before the diagram type,
   as the main agent's instructions used to suggest, now draw instead of
   showing as code. So do mind maps with those lines. Mind maps and timelines
