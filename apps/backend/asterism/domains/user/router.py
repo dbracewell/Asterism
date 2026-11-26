@@ -91,13 +91,18 @@ async def create_user(
     has_valid_system_key = bool(
         payload.system_key
         and config.system_key
-        and hmac.compare_digest(payload.system_key.encode(), config.system_key.encode())
+        and hmac.compare_digest(payload.system_key.get_secret_value().encode(), config.system_key.encode())
     )
-    if not (has_valid_system_key or (user and user.role == "admin")):
-        # A valid token is not the problem for a signed-in non-admin (US-90.1).
-        if user:
+    if not has_valid_system_key:
+        if user is None:
+            raise UnauthorizedException()
+        if user.role != "admin":
+            # A valid token is not the problem for a signed-in non-admin (US-90.1).
             raise ForbiddenException(ADMIN_REQUIRED_MESSAGE)
-        raise UnauthorizedException()
+        # An admin token alone counts only while that account is still live:
+        # a deleted or suspended admin's unexpired token is refused (US-112.2).
+        await user_service.ensure_user(user_id=user.id, session=session)
+        await lifecycle.assert_active(user.id, session)
     return (
         await user_service.create_user(
             user_id=payload.user_id,

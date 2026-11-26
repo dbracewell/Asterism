@@ -163,3 +163,57 @@ async def test_administrators_cannot_request_deletion(accounts):
     client, _ = accounts
     response = await client.put("/users/me/deletion-request", headers=auth("admin"))
     assert response.status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_racing_admin_actions_keep_one_active_administrator(accounts, monkeypatch):
+    """US-112.2: the guard is re-checked after the write, in its transaction."""
+    from asterism.domains.user import service as user_service
+
+    client, sessions = accounts
+    await provision(client, "admin", "admin2")
+
+    # Both admins passed the first check at the same moment.
+    async def passed(*args, **kwargs):
+        return None
+
+    monkeypatch.setattr(lifecycle, "check_admin_action", passed)
+    async with sessions() as session:
+        await lifecycle.suspend_user(actor_id="admin", user_id="admin2", session=session)
+    async with sessions() as session:
+        with pytest.raises(ConflictException, match="last administrator"):
+            await lifecycle.suspend_user(actor_id="admin2", user_id="admin", session=session)
+    async with sessions() as session:
+        with pytest.raises(ConflictException, match="last administrator"):
+            await user_service.delete_user("admin", session=session)
+    async with sessions() as session:
+        kept = await session.get(UserModel, "admin")
+        assert kept is not None and kept.suspended_at is None
+    lifecycle._suspended_cache.clear()
+
+
+@pytest.mark.asyncio
+async def test_create_user_refuses_a_suspended_or_deleted_admin_token(accounts):
+    """US-112.2: an admin token creates users only while that account is live."""
+    client, _ = accounts
+    await provision(client, "admin", "admin2")
+
+    created = await client.post("/users/", json={"user_id": "fresh"}, headers=auth("admin2"))
+    assert created.status_code == 200
+    assert (await client.put("/users/admin2/suspension", headers=auth("admin"))).status_code == 200
+    refused = await client.post("/users/", json={"user_id": "other"}, headers=auth("admin2"))
+    assert refused.status_code == 401
+    assert (await client.delete("/users/admin2/suspension", headers=auth("admin"))).status_code == 200
+    assert (await client.delete("/users/admin2", headers=auth("admin"))).status_code == 200
+    gone = await client.post("/users/", json={"user_id": "other"}, headers=auth("admin2"))
+    assert gone.status_code == 401
+    lifecycle._suspended_cache.clear()
+
+
+@pytest.mark.asyncio
+async def test_create_user_bounds_the_user_id(accounts):
+    client, _ = accounts
+    await provision(client, "admin")
+    for user_id in ("", "x" * 256):
+        response = await client.post("/users/", json={"user_id": user_id}, headers=auth("admin"))
+        assert response.status_code == 422

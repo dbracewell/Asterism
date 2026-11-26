@@ -10,6 +10,7 @@ import hmac
 import secrets
 import uuid
 
+from pydantic import SecretStr
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -43,9 +44,11 @@ def hash_invite_token(token: str) -> str:
     return hashlib.sha256(token.strip().encode()).hexdigest()
 
 
-def require_system_key(candidate: str) -> None:
+def require_system_key(candidate: SecretStr) -> None:
     """The check and redeem routes are server-to-server only."""
-    if not (config.system_key and hmac.compare_digest(candidate.encode(), config.system_key.encode())):
+    if not (
+        config.system_key and hmac.compare_digest(candidate.get_secret_value().encode(), config.system_key.encode())
+    ):
         raise UnauthorizedException()
 
 

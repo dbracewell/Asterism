@@ -3,7 +3,7 @@
 import uuid
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, StrictBool, StringConstraints, field_validator
+from pydantic import BaseModel, ConfigDict, Field, SecretStr, StrictBool, StringConstraints, field_validator
 
 from asterism.domains.agent.learning_inputs import LearningModeId
 
@@ -171,7 +171,7 @@ class InviteCheckRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     token: InviteToken
-    system_key: str
+    system_key: SecretStr
 
 
 class InvitePreview(BaseModel):
@@ -188,7 +188,7 @@ class InviteRedeemRequest(BaseModel):
     user_id: Annotated[str, StringConstraints(min_length=1, max_length=255)]
     display_name: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=255)]
     email: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=320)]
-    system_key: str
+    system_key: SecretStr
 
 
 class ClassModePolicy(BaseModel):

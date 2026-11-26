@@ -117,11 +117,11 @@ Source: repository review (2026-11-26), verified against the code at `40101ac7`.
   - [x] Invite sign-up limited per invite as well as per address (a class of 30 on one network)
   - [x] A full rate-limit store drops its oldest entries; IPv6 grouped by /64
   - [x] Tests, auth-and-security doc and release note
-- [ ] US-112.2: Admin changes only from active admins, through the app
-  - [ ] `POST /users/` from a signed-in admin checks the caller is still active and not deleted; user ids are bounded and system keys are secret fields.
-  - [ ] Better Auth admin HTTP routes the app doesn't use are closed.
-  - [ ] Suspending or deleting admins re-checks that one active admin remains in the same transaction, so two admins acting at once can't remove both.
-  - [ ] Tests and release note.
+- [x] US-112.2: Admin changes only from active admins, through the app
+  - [x] `POST /users/` from a signed-in admin checks the caller is still active and not deleted; user ids are bounded and system keys are secret fields.
+  - [x] Better Auth admin HTTP routes the app doesn't use are closed.
+  - [x] Suspending or deleting admins re-checks that one active admin remains in the same transaction, so two admins acting at once can't remove both.
+  - [x] Tests and release note.
 - [ ] US-112.3: Access ends with the account
   - [ ] An open chat connection closes when its token expires.
   - [ ] Invite redemption creates the user, claims the invite and adds the class membership in one transaction.

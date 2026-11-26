@@ -21,7 +21,10 @@ admin permission and refuses self-ban and self-removal, and the backend checks
 again. Better Auth's `/admin/ban-user`, `/admin/unban-user` and `/admin/remove-user`
 HTTP routes, and the public `/request-password-reset`, are listed in
 `disabledPaths`. They remain callable from the server only, so no change can skip
-the backend half.
+the backend half. Since US-112.2 every other admin plugin route (such as
+`/admin/set-role`, `/admin/create-user` and `/admin/set-user-password`) is
+listed too: nothing calls them, and over HTTP they would skip the backend and
+the last-admin guard.
 
 **Suspension.** Suspending calls the backend first (`users.suspended_at` is set,
 the account's chat jobs are retired and its file jobs cancelled), then bans the

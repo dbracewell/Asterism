@@ -2318,7 +2318,7 @@ export type CreateUserRequest = {
    *
    * Optional system key for user creation.
    */
-  system_key?: string | null;
+  system_key?: null;
 };
 
 /**
@@ -4048,10 +4048,6 @@ export type InviteCheckRequest = {
    * Token
    */
   token: string;
-  /**
-   * System Key
-   */
-  system_key: string;
 };
 
 /**
@@ -4090,10 +4086,6 @@ export type InviteRedeemRequest = {
    * Email
    */
   email: string;
-  /**
-   * System Key
-   */
-  system_key: string;
 };
 
 /**
@@ -11276,6 +11268,85 @@ export type ApplicationSettingsWritable = {
 };
 
 /**
+ * CreateUserRequest
+ *
+ * Request model for creating a new user.
+ *
+ * Attributes:
+ * user_id: The stable identifier to provision. Must match the id claim
+ * of the BetterAuth token this user will present.
+ * name: The account's current display name, copied for display.
+ * email: The account's current email, copied for administrators.
+ * system_key: Optional shared secret (``SYSTEM_KEY``) that lets an
+ * unauthenticated caller create users. When omitted, the caller must
+ * be an authenticated admin.
+ */
+export type CreateUserRequestWritable = {
+  /**
+   * User Id
+   */
+  user_id: string;
+  /**
+   * Name
+   */
+  name?: string | null;
+  /**
+   * Email
+   */
+  email?: string | null;
+  /**
+   * System Key
+   *
+   * Optional system key for user creation.
+   */
+  system_key?: string | null;
+};
+
+/**
+ * InviteCheckRequest
+ *
+ * Server-to-server: the signup page asks whether an invite can be used.
+ */
+export type InviteCheckRequestWritable = {
+  /**
+   * Token
+   */
+  token: string;
+  /**
+   * System Key
+   */
+  system_key: string;
+};
+
+/**
+ * InviteRedeemRequest
+ *
+ * Server-to-server: provision a just-created account through an invite.
+ */
+export type InviteRedeemRequestWritable = {
+  /**
+   * Token
+   */
+  token: string;
+  /**
+   * User Id
+   */
+  user_id: string;
+  /**
+   * Display Name
+   */
+  display_name: string;
+  /**
+   * Email
+   */
+  email: string;
+  /**
+   * System Key
+   */
+  system_key: string;
+};
+
+/**
  * Provider
  *
  * Full provider configuration including its models.
@@ -15555,7 +15626,7 @@ export type ClassInviteRevokeResponse =
   ClassInviteRevokeResponses[keyof ClassInviteRevokeResponses];
 
 export type ClassInviteCheckData = {
-  body: InviteCheckRequest;
+  body: InviteCheckRequestWritable;
   path?: never;
   query?: never;
   url: "/class-invites/check";
@@ -15602,7 +15673,7 @@ export type ClassInviteCheckResponse =
   ClassInviteCheckResponses[keyof ClassInviteCheckResponses];
 
 export type ClassInviteRedeemData = {
-  body: InviteRedeemRequest;
+  body: InviteRedeemRequestWritable;
   path?: never;
   query?: never;
   url: "/class-invites/redeem";
@@ -22645,7 +22716,7 @@ export type UserGetManyResponse =
   UserGetManyResponses[keyof UserGetManyResponses];
 
 export type UserCreateUserData = {
-  body: CreateUserRequest;
+  body: CreateUserRequestWritable;
   path?: never;
   query?: never;
   url: "/users/";
