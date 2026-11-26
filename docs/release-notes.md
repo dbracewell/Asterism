@@ -39,8 +39,12 @@ Unreleased into its version and date.
 
 ### Behavior
 
+- Canvas PDF downloads indent quotes, one step per level, with a grey bar at
+  the left that continues across page breaks. Lists, code and pictures in a
+  quote line up with its text.
 - Canvas PDF downloads line up a code block in a list item with the item's
-  text, at every level, instead of starting it at the page margin.
+  text, at every level, instead of starting it at the page margin, and leave a
+  small gap under every code block.
 - Canvas PDF downloads keep bold and italics in table cells. Code and links
   in a cell still print as plain text.
 - Canvas downloads now show chat pictures in table cells. In Word, cells also

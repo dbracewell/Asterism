@@ -79,7 +79,8 @@ colors whatever your theme. If a diagram can't be drawn, the file shows its code
 with the words **Diagram not drawn**. Markdown, plain text and the ZIP file keep
 the diagram's text.
 
-In a PDF, code blocks and pictures in a list line up under their item.
+In a PDF, code blocks and pictures in a list line up under their item, and
+quotes are indented with a bar at the left.
 
 Pictures from the chat appear in Word and PDF files with their descriptions as
 alt text, fitted to the page, including inside lists, quotes and tables. In a

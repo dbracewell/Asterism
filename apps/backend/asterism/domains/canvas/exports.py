@@ -15,7 +15,7 @@ from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from functools import cache
 from pathlib import Path
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Literal, Protocol, cast
 from urllib.parse import quote
 
 from markdown_it import MarkdownIt
@@ -481,6 +481,22 @@ def _docx_inline(paragraph, children: list[Token], images: Images, max_width: fl
 # --- PDF ----------------------------------------------------------------
 
 
+class _QuoteBars(Protocol):
+    """What the export's renderer uses of its document for quote bars."""
+
+    y: float
+    l_margin: float
+    quote_bars: list[list[float]]
+
+    def quote_bar(self, x: float, top: float, bottom: float) -> None: ...
+
+
+_PDF_QUOTE_INDENT_MM = 6
+_PDF_QUOTE_BAR_OFFSET_MM = 1.5  # From the quote's outer edge.
+_PDF_QUOTE_BAR_WIDTH_MM = 0.8
+_PDF_QUOTE_BAR_COLOR = (190, 190, 190)
+
+
 def _font(name: str) -> str | None:
     for directory in FONT_DIRS:
         for filename in FONTS[name]:
@@ -498,7 +514,8 @@ def _pdf_styles(code_family: str) -> dict:
     styles = {tag: DEFAULT_TAG_STYLES[tag].replace(color=color) for tag, color in ink.items()}
     # <pre> is a TextStyle (font_family), <code> a FontFace (family).
     return styles | {
-        "pre": DEFAULT_TAG_STYLES["pre"].replace(font_family=code_family),
+        # A gap under a code block, so the next list item doesn't touch it.
+        "pre": DEFAULT_TAG_STYLES["pre"].replace(font_family=code_family, b_margin=3),
         "code": DEFAULT_TAG_STYLES["code"].replace(family=code_family),
     }
 
@@ -677,8 +694,10 @@ def _export_html() -> type:
     """fpdf2's HTML renderer for exports. It draws an ``<img>`` only when its
     ``src`` is one of this export's pictures (``_pdf_pictures``), fitted to the
     width left after the indent, with its title and alt text, and ignores any
-    other. A code block in a list item starts at the item's indent, and text
-    keeps that indent after a picture, a nested list or a code block."""
+    other. A quote is indented, one step per level, with a bar at its left
+    (``_export_pdf`` carries the bar across page breaks). A code block in a list
+    item or quote starts at that block's indent, and text keeps the indent
+    after a picture, a nested list or a code block."""
     from fpdf.html import HTML2FPDF
 
     class _ExportHTML(HTML2FPDF):
@@ -688,27 +707,44 @@ def _export_html() -> type:
             self._written = False  # Whether the current paragraph has text.
             super().__init__(*args, **kwargs)
 
-        def _item_indent(self) -> float:
+        def _list_indent(self) -> float:
             margin = getattr(self.tag_styles["li"], "l_margin", 0)
             return (margin if isinstance(margin, (int, float)) else 0) * self.indent
 
-        def _new_paragraph(self, *args, **kwargs) -> None:
+        def _quote_indent(self) -> float:
+            return _PDF_QUOTE_INDENT_MM * self._tags_stack.count("blockquote")
+
+        def _item_indent(self) -> float:
+            """The indent of the innermost list item or quote's text."""
+            return self._list_indent() + self._quote_indent()
+
+        def _new_paragraph(self, *args, own: bool = False, **kwargs) -> None:
+            """fpdf2's paragraphs indent for lists only, and a code block not
+            even for those; ours (``own``) carry their full indent."""
             self._resume, self._written = None, False
-            if self._tags_stack[-1:] == ["pre"] and "li" in self._tags_stack:
-                # fpdf2 opens a code block at the margin, wherever it is.
-                kwargs["indent"] = (kwargs.get("indent") or 0) + self._item_indent()
+            if not own:
+                extra = self._quote_indent()
+                if self._tags_stack[-1:] == ["pre"] and "li" in self._tags_stack:
+                    extra += self._list_indent()
+                kwargs["indent"] = (kwargs.get("indent") or 0) + extra
             super()._new_paragraph(*args, **kwargs)
 
         def _write_paragraph(self, text: str, link: int | str | None = None) -> None:
             if text and not self._paragraph:
                 if self._resume is not None:
-                    self._new_paragraph(indent=self._resume)
-                elif "li" in self._tags_stack:
-                    self._new_paragraph(indent=self._item_indent())
+                    self._new_paragraph(indent=self._resume, own=True)
+                elif "li" in self._tags_stack or "blockquote" in self._tags_stack:
+                    self._new_paragraph(indent=self._item_indent(), own=True)
             self._written = self._written or bool(text)
             super()._write_paragraph(text, link)
 
         def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+            if tag == "blockquote":
+                self._end_paragraph()
+                margin = getattr(self.tag_styles["blockquote"], "t_margin", 0) or 0
+                pdf = cast(_QuoteBars, self.pdf)
+                x = pdf.l_margin + self._item_indent() + _PDF_QUOTE_BAR_OFFSET_MM
+                pdf.quote_bars.append([x, pdf.y + margin])
             if tag != "img":
                 super().handle_starttag(tag, attrs)
                 if tag == "table" and self.table is not None:
@@ -732,10 +768,18 @@ def _export_html() -> type:
             elif self._resume is not None:
                 indent = self._resume
             else:
-                indent = self._item_indent() if in_item else 0
+                indent = self._item_indent()
             self._end_paragraph()
             self._draw(picture, indent)
             self._resume = indent
+
+        def handle_endtag(self, tag: str) -> None:
+            super().handle_endtag(tag)
+            pdf = cast(_QuoteBars, self.pdf)
+            if tag == "blockquote" and pdf.quote_bars:
+                self._end_paragraph()
+                x, top = pdf.quote_bars.pop()
+                pdf.quote_bar(x, top, pdf.y)
 
         def _draw(self, picture: _PdfPicture, indent: float) -> None:
             self.pdf.ln(2)
@@ -757,7 +801,9 @@ def _export_pdf() -> type:
     (``_CellImage``) keeps its natural size within the column and gets its
     title and alt text, once: fpdf2 lays a table out twice, the first time with
     writing switched off, and marked content then would be a second, empty
-    entry in the structure tree. Its Markdown (used only in table cells) reads
+    entry in the structure tree. Each open quote's bar (``quote_bars``) is drawn
+    to the last line of a page that breaks inside it and restarts at the next page's
+    top. Its Markdown (used only in table cells) reads
     just the export's own bold and italic markers: no links, bullets,
     escapes or other marks from the document's text."""
     import types
@@ -775,6 +821,22 @@ def _export_pdf() -> type:
         MARKDOWN_ESCAPE_CHARACTER = _CELL_ESCAPE
         MARKDOWN_LINK_REGEX = never
         MARKDOWN_BULLET_REGEX = never
+
+        def __init__(self, *args, **kwargs) -> None:
+            super().__init__(*args, **kwargs)
+            self.quote_bars: list[list[float]] = []  # [x, top] per open quote.
+
+        def quote_bar(self, x: float, top: float, bottom: float) -> None:
+            if bottom > top:
+                with self.local_context(draw_color=_PDF_QUOTE_BAR_COLOR, line_width=_PDF_QUOTE_BAR_WIDTH_MM):
+                    self.line(x, top, x, bottom)
+
+        def add_page(self, *args, **kwargs) -> None:
+            for bar in self.quote_bars:
+                self.quote_bar(bar[0], bar[1], min(self.y, self.page_break_trigger))
+            super().add_page(*args, **kwargs)
+            for bar in self.quote_bars:
+                bar[1] = self.t_margin
 
         def image(self, name, *args, **kwargs):
             if isinstance(name, _CellImage):

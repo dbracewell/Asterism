@@ -71,3 +71,9 @@ def test_a_long_code_line_in_an_item_wraps_inside_the_page():
     assert len({round(word["top"]) for word in words}) > 1
     assert max(word["x1"] for word in words) <= page.width - 18 * 72 / 25.4 + 1
     assert min(word["x0"] for word in words) > 18 * 72 / 25.4 + 5
+
+
+def test_a_gap_separates_a_code_block_from_the_next_item():
+    page = pdfplumber.open(io.BytesIO(markdown_pdf("Lists", "1. One\n\n   ```\n   code\n   ```\n2. Two\n"))).pages[0]
+    gap = page.search("2. Two")[0]["top"] - page.search("code")[0]["bottom"]
+    assert gap >= 2.5 * 72 / 25.4
