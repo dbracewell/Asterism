@@ -116,26 +116,7 @@ Source: repository review (2026-11-26), verified against the code at `40101ac7`.
 
 [EPIC-114](docs/epics/EPIC-114-CI-AND-IMAGE-SUPPLY-CHAIN.md) (US-114.1 through US-114.3) is complete and archived in the [2026-11-26 checklist](docs/archive/todo-completed-2026-11-26.md).
 
-[EPIC-115](docs/epics/EPIC-115-PROXY-AND-DEPLOYMENT-HARDENING.md): Proxy and deployment hardening
-
-- [ ] US-115.1: The proxy trusts only what it should
-  - [x] The forwarded scheme is honoured only from trusted proxies; requests for unknown hosts are refused.
-  - [x] The internal system-key header is removed from public requests.
-  - [x] The one-hour timeouts and unbuffered proxying apply only to chat, events and other streaming routes.
-  - [x] Readiness checks reuse a result for a few seconds.
-  - [x] Tests (`check:image` or edge-config) and release note.
-- [x] US-115.2: Container and setup defaults
-  - [x] `docker-compose.yml` drops capabilities, sets `no-new-privileges` and a process limit; the host gateway mapping is documented as optional.
-  - [x] `setup.mjs --force` leaves `.env` readable only by its owner.
-  - [x] Secret files with Windows line endings give the same key in every entrypoint command.
-  - [x] API docs are off in production.
-  - [x] Release note (Configuration, Image).
-- [x] US-115.3: Backups restore privately and refuse a missing key
-  - [x] Restored databases are readable only by their owner.
-  - [x] A restore stops when the backup recorded a system key and none is set.
-  - [x] Extraction has total size and file count limits; vector table names are checked.
-  - [x] A cancelled data export leaves no partial file.
-  - [x] Tests, backup guide and release note.
+[EPIC-115](docs/epics/EPIC-115-PROXY-AND-DEPLOYMENT-HARDENING.md) (US-115.1 through US-115.3) is complete and archived in the [2026-11-26 checklist](docs/archive/todo-completed-2026-11-26.md).
 
 [EPIC-116](docs/epics/EPIC-116-UNTRUSTED-FILES-AND-INPUT.md): Untrusted files and input
 

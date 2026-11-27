@@ -125,3 +125,28 @@ EPIC-114 is complete: every story was confirmed and merged on 2026-11-27 through
   - [x] `uv` comes from a digest-pinned image.
   - [x] `install-trivy.mjs` uses a private temporary directory; `check-pins.mjs` compares paths reliably.
   - [x] Tests for the scripts; release note (Image).
+
+## Proxy and deployment hardening
+
+EPIC-115 is complete: every story was confirmed and merged on 2026-11-27 through pull requests #160, #161 and #162. The bundled nginx trusts forwarded headers only from configured proxies, serves only the public host and keeps the system key inside the container; the default container drops capabilities and file secrets read the same everywhere; and restores stay private and refuse a missing key.
+
+### [EPIC-115: Proxy and deployment hardening](../epics/EPIC-115-PROXY-AND-DEPLOYMENT-HARDENING.md)
+
+- [ ] US-115.1: The proxy trusts only what it should
+  - [x] The forwarded scheme is honoured only from trusted proxies; requests for unknown hosts are refused.
+  - [x] The internal system-key header is removed from public requests.
+  - [x] The one-hour timeouts and unbuffered proxying apply only to chat, events and other streaming routes.
+  - [x] Readiness checks reuse a result for a few seconds.
+  - [x] Tests (`check:image` or edge-config) and release note.
+- [x] US-115.2: Container and setup defaults
+  - [x] `docker-compose.yml` drops capabilities, sets `no-new-privileges` and a process limit; the host gateway mapping is documented as optional.
+  - [x] `setup.mjs --force` leaves `.env` readable only by its owner.
+  - [x] Secret files with Windows line endings give the same key in every entrypoint command.
+  - [x] API docs are off in production.
+  - [x] Release note (Configuration, Image).
+- [x] US-115.3: Backups restore privately and refuse a missing key
+  - [x] Restored databases are readable only by their owner.
+  - [x] A restore stops when the backup recorded a system key and none is set.
+  - [x] Extraction has total size and file count limits; vector table names are checked.
+  - [x] A cancelled data export leaves no partial file.
+  - [x] Tests, backup guide and release note.
