@@ -28,11 +28,22 @@ export function findingKey(finding) {
   return `${finding.id} ${finding.package}`;
 }
 
-/** The keys an issue body records, from its hidden marker. */
+/**
+ * The keys an issue body records, from its hidden marker. A missing or edited
+ * marker records nothing, so the next scan rewrites the issue (US-114.2).
+ */
 export function recordedKeys(body) {
   const match = (body ?? "").match(MARKER);
   if (!match) return new Set();
-  return new Set(JSON.parse(match[1]));
+  let keys;
+  try {
+    keys = JSON.parse(match[1]);
+  } catch {
+    return new Set();
+  }
+  return new Set(
+    Array.isArray(keys) ? keys.filter((key) => typeof key === "string") : [],
+  );
 }
 
 /** The issue body listing the current fixable criticals and highs. */

@@ -364,3 +364,17 @@ test("an issue without the marker records nothing", () => {
   assert.deepEqual([...recordedKeys(null)], []);
   assert.match(issueBody(SCAN, []), /<!-- vulnerability-scan: \[\] -->$/);
 });
+
+test("an edited or broken marker records nothing, so the next scan rewrites the issue (US-114.2)", () => {
+  for (const marker of ["[not json", '{"a":1}', "42", '["CVE-1 zlib", 7]']) {
+    const body = `edited\n<!-- vulnerability-scan: ${marker} -->`;
+    const keys = [...recordedKeys(body)];
+    assert.deepEqual(keys, marker.startsWith('["') ? ["CVE-1 zlib"] : []);
+  }
+  const plan = planIssue(
+    scan(vulnerability("CVE-1", "CRITICAL", "2.0.0", "openssl")),
+    { number: 7, body: "<!-- vulnerability-scan: [oops -->" },
+  );
+  assert.equal(plan.action, "update");
+  assert.match(plan.body, /<!-- vulnerability-scan: \["CVE-1 openssl"\] -->$/);
+});

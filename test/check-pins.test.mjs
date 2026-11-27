@@ -66,7 +66,7 @@ test("a uses needs a commit SHA unless it is local; images need a digest", () =>
     "      db:",
     "        image: postgres:17",
     "    steps:",
-    `      - uses: actions/checkout@${SHA} # v4.4.0`,
+    `      - uses: actions/cache@${SHA} # v4.4.0`,
     "      - uses: actions/setup-node@v4",
     `      - uses: "docker/build-push-action@${SHA.slice(0, 7)}"`,
     "      - uses: ./.github/actions/local",
@@ -96,21 +96,21 @@ test("flow-style steps and containers are read like block style", () => {
   const workflow = [
     "jobs:",
     "  build: { container: { image: 'ubuntu:24.04' }, steps: [",
-    "    { uses: actions/checkout@v4 },",
+    "    { uses: actions/cache@v4 },",
     `    { name: pinned, uses: actions/setup-node@${SHA} }`,
     "    ] }",
   ].join("\n");
   assert.deepEqual(workflowProblems(workflow, "ci.yml"), [
     "ci.yml:2: image ubuntu:24.04 is not pinned by digest (image:tag@sha256:…)",
-    "ci.yml:3: uses actions/checkout@v4 is not pinned to a full commit SHA (owner/repo@<sha> # vX.Y.Z)",
+    "ci.yml:3: uses actions/cache@v4 is not pinned to a full commit SHA (owner/repo@<sha> # vX.Y.Z)",
   ]);
 });
 
 test("layouts the check can't read fail instead of passing", () => {
   const aliases = [
     "x-step: &checkout",
-    "  uses: actions/checkout@v4",
-    "x-action: &action actions/checkout@v4",
+    "  uses: actions/cache@v4",
+    "x-action: &action actions/cache@v4",
     "jobs:",
     "  build:",
     "    steps:",
@@ -132,11 +132,11 @@ test("the check walks Dockerfiles and workflows under the root", () => {
     writeFileSync(join(root, "Dockerfile"), `FROM node@${DIGEST} AS base\nFROM base\n`);
     writeFileSync(join(root, "docker", "gpu.Dockerfile"), "FROM nvidia/cuda:12\n");
     writeFileSync(join(root, "docker", "node_modules", "Dockerfile"), "FROM ignored\n");
-    writeFileSync(join(root, ".github", "workflows", "ci.yml"), "jobs:\n  build:\n    steps:\n      - uses: actions/checkout@v4\n");
+    writeFileSync(join(root, ".github", "workflows", "ci.yml"), "jobs:\n  build:\n    steps:\n      - uses: actions/cache@v4\n");
     writeFileSync(join(root, ".github", "workflows", "notes.txt"), "uses: not/a-workflow@v1\n");
     assert.deepEqual(checkPins(root), [
       "docker/gpu.Dockerfile:1: FROM nvidia/cuda:12 is not pinned by digest (image:tag@sha256:…)",
-      ".github/workflows/ci.yml:4: uses actions/checkout@v4 is not pinned to a full commit SHA (owner/repo@<sha> # vX.Y.Z)",
+      ".github/workflows/ci.yml:4: uses actions/cache@v4 is not pinned to a full commit SHA (owner/repo@<sha> # vX.Y.Z)",
     ]);
   } finally {
     rmSync(root, { recursive: true, force: true });
@@ -145,4 +145,36 @@ test("the check walks Dockerfiles and workflows under the root", () => {
 
 test("this repository's build inputs are pinned", () => {
   assert.deepEqual(checkPins(new URL("..", import.meta.url).pathname), []);
+});
+
+test("checkouts drop the token and Node comes from .node-version (US-114.2)", () => {
+  const workflow = [
+    "jobs:",
+    "  e2e:",
+    "    container:",
+    `      image: node:22.12.0-bookworm@${DIGEST}`,
+    "    steps:",
+    `      - uses: actions/checkout@${SHA} # v4.4.0`,
+    `      - uses: actions/checkout@${SHA} # v4.4.0`,
+    "        with:",
+    "          persist-credentials: false",
+    `      - uses: actions/setup-node@${SHA} # v4.4.0`,
+    "        with:",
+    '          node-version: "22.13.0"',
+    `      - uses: actions/setup-node@${SHA} # v4.4.0`,
+    "        with:",
+    "          node-version-file: .node-version",
+    "  same:",
+    "    container:",
+    `      image: node:22.13.0-bookworm@${DIGEST}`,
+  ].join("\n");
+  assert.deepEqual(workflowProblems(workflow, "ci.yml", { nodeVersion: "22.13.0" }), [
+    `ci.yml:4: image node:22.12.0-bookworm@${DIGEST} is not Node 22.13.0 from .node-version`,
+    "ci.yml:6: checkout keeps the token; set persist-credentials: false",
+    "ci.yml:10: setup-node does not read node-version-file: .node-version",
+  ]);
+  // Without a version file only the token rule applies.
+  assert.deepEqual(workflowProblems(workflow, "ci.yml"), [
+    "ci.yml:6: checkout keeps the token; set persist-credentials: false",
+  ]);
 });
