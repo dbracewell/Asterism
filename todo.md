@@ -116,10 +116,10 @@ Source: repository review (2026-11-26), verified against the code at `40101ac7`.
 
 [EPIC-114](docs/epics/EPIC-114-CI-AND-IMAGE-SUPPLY-CHAIN.md): CI and image supply chain
 
-- [ ] US-114.1: Dependency build scripts follow the allowlist
+- [x] US-114.1: Dependency build scripts follow the allowlist
   - [x] CI and `ci:local:*` drop `approve-builds --all` and the flags that turn the allowlist off; `strictDepBuilds` is on.
   - [x] `minimumReleaseAge` is set to the week Dependabot already assumes.
-  - [ ] CI passes (better-sqlite3 and Playwright still build); release note.
+  - [x] CI passes (better-sqlite3 and Playwright still build); release note.
 - [ ] US-114.2: Workflow tokens and timeouts
   - [ ] Every checkout sets `persist-credentials: false` unless a later step pushes.
   - [ ] Every release job has a timeout; fork pull requests get their own concurrency group.
