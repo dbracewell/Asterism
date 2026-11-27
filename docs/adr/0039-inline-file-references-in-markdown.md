@@ -210,7 +210,12 @@ Unrecognized binary content is rejected rather than stored.
   the scoped download. Browsers do not run scripts or load external resources in
   SVG used as an image. SVG is never inlined into the DOM, put in an `iframe`,
   `object` or `embed`, or opened by navigation. SVG stays out of the vision
-  allowlist. Server-side rasterization is not needed for this rule.
+  allowlist. Server-side rasterization is not needed for this rule. Because a
+  person can still open that `blob:` URL in its own tab, where it would run with
+  the app's origin, the bytes are first cleaned with the diagram sanitizer's
+  rules (US-116.2): no scripts, event attributes, foreign HTML, links, embedded
+  images or stylesheets out of the document. An SVG with nothing drawable left
+  shows as unavailable.
 - **HTML** and other markup files are never rendered. They show as a document
   card with a text excerpt.
 - All scoped chat-file responses add `X-Content-Type-Options: nosniff` and

@@ -65,6 +65,12 @@ Unreleased into its version and date.
 
 ### Behavior
 
+- Uploaded and produced SVGs are cleaned before they are shown, so opening one
+  in its own tab runs nothing; one with nothing drawable left shows as
+  unavailable. Downloaded diagram SVGs keep no external stylesheet or `url()`.
+- Uploaded file names lose control and text-direction characters instead of
+  being refused for them. The font-size setting accepts only 12, 14, 16, 18 or
+  20 px, and preference cookies are `SameSite=Lax` and `Secure` over HTTPS.
 - Uploaded DOCX, XLSX, PPTX, EPUB and zip files with more than 10,000 members or
   more than 512 MiB uncompressed are not converted ("File expands beyond the
   processing limit"). Conversion runs in a child process that is stopped when

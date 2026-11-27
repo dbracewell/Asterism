@@ -24,12 +24,12 @@ As an admin, I want uploaded documents bounded before they are converted.
 As a person using Asterism, I want uploaded pictures and preferences shown
 safely.
 
-- [ ] Uploaded SVGs are sanitized before they are shown or opened.
-- [ ] The font-size preference is checked against the allowed sizes; preference
+- [x] Uploaded SVGs are sanitized before they are shown or opened.
+- [x] The font-size preference is checked against the allowed sizes; preference
       cookies are `SameSite=Lax` and secure over HTTPS.
-- [ ] File names lose control and text-direction characters.
-- [ ] Downloaded diagram SVGs contain no external references.
-- [ ] Tests and release note.
+- [x] File names lose control and text-direction characters.
+- [x] Downloaded diagram SVGs contain no external references.
+- [x] Tests and release note.
 
 ### US-116.3: Prompt checks and fetches resist evasion
 

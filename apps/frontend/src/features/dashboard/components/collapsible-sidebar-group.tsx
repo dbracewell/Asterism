@@ -1,3 +1,4 @@
+import { setPreferenceCookie } from "@/lib/preference-cookie";
 import { Button } from "@/components/ui/button";
 import {
   Collapsible,
@@ -10,7 +11,6 @@ import {
   SidebarGroupLabel,
 } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
-import Cookie from "js-cookie";
 import {
   ChevronDownIcon,
   ChevronRightIcon,
@@ -50,7 +50,7 @@ export const CollapsibleSidebarGroup = ({
 
   const handleOpenChange = (open: boolean) => {
     setIsOpen(open);
-    Cookie.set(cookieName, `${open}`, { path: "/", expires: 365 });
+    setPreferenceCookie(cookieName, `${open}`, 365);
   };
 
   const actions = (

@@ -23,6 +23,9 @@ vi.mock("@/components/api-download", () => ({
   APIDownload: ({ linkText }: { linkText: string }) => <span>{linkText}</span>,
 }));
 const downloads = vi.fn();
+const UNSAFE_SVG =
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 4 4"><script>alert(1)</script><style>@import url(https://tracker.example/a.css); rect{fill:url(https://tracker.example/p)}</style><rect onload="alert(2)" width="4" height="4"/></svg>';
+let svgBody = UNSAFE_SVG;
 const previews = vi.fn();
 const previewBodies: Record<string, object> = {};
 vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
@@ -34,7 +37,7 @@ vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
     queryKey: ["chatFileDownload", path],
     queryFn: async () => {
       downloads(path);
-      return new Blob(["bytes"]);
+      return new Blob([path.file_id === SVG ? svgBody : "bytes"]);
     },
   }),
   chatFileGetPreviewOptions: ({
@@ -83,12 +86,16 @@ const files = [
 const token = (id: string) => `asterism-file:${id}`;
 
 const created: string[] = [];
+const blobs: Blob[] = [];
 beforeEach(() => {
   downloads.mockClear();
   previews.mockClear();
   created.length = 0;
+  svgBody = UNSAFE_SVG;
+  blobs.length = 0;
   URL.createObjectURL = vi.fn((blob: Blob) => {
     created.push(blob.type);
+    blobs.push(blob);
     return `blob:test/${created.length}`;
   });
   URL.revokeObjectURL = vi.fn();
@@ -146,11 +153,26 @@ it("renders resolved images through the scoped route only, as typed blobs", asyn
     { chat_id: "chat-1", file_id: SVG },
   ]);
   expect(created.sort()).toEqual(["image/png", "image/svg+xml"]);
+  // US-116.2: the SVG behind the object URL was cleaned.
+  const svg = await blobs.find((blob) => blob.type === "image/svg+xml")!.text();
+  expect(svg).toContain("<rect");
+  expect(svg).not.toMatch(/script|onload|tracker\.example|@import/);
   // No token ever reaches a DOM href or src.
   expect(container.innerHTML).not.toContain("asterism-file:");
   expect(
     container.querySelector("svg script, object, embed, iframe"),
   ).toBeNull();
+});
+
+it("shows an SVG with nothing drawable left as unavailable", async () => {
+  svgBody = "<html><script>alert(1)</script></html>";
+  const { container } = view(`![](${token(SVG)})`, { chatId: "chat-1", files });
+  await waitFor(() =>
+    expect(
+      container.querySelector('[data-inline-file="unavailable"]'),
+    ).not.toBeNull(),
+  );
+  expect(created).toEqual([]);
 });
 
 it("opens a lightbox with download from the inline image", async () => {

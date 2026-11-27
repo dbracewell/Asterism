@@ -1,3 +1,4 @@
+import { setRootTextSize } from "./support/text-size";
 import { expect, type Page, test } from "./support/test";
 import {
   authViewports,
@@ -297,13 +298,7 @@ for (const scenario of authViewports) {
     page,
   }) => {
     await routeSetupApi(page, 1);
-    await page.context().addCookies([
-      {
-        name: "asterism-font-size",
-        value: `${scenario.fontSize}px`,
-        url: origin,
-      },
-    ]);
+    await setRootTextSize(page, scenario.fontSize);
     await page.setViewportSize(scenario);
     await page.goto("/e2e/provider-setup");
     const form = connectForm(page);

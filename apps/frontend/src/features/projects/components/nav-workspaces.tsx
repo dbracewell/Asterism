@@ -1,4 +1,5 @@
 "use client";
+import { setPreferenceCookie } from "@/lib/preference-cookie";
 import { NavListSkeleton } from "@/components/loading-skeletons";
 import { PROJECTS_OPEN_COOKIE } from "@/features/dashboard/constants";
 import { WorkspaceNavigationRow } from "@/features/dashboard/components/workspace-navigation-row";
@@ -18,7 +19,6 @@ import { ProjectAccentDot } from "@/features/projects/project-accent";
 import { client } from "@/lib/api";
 import { projectGetManyOptions } from "@/lib/client/@tanstack/react-query.gen";
 import { useQuery } from "@tanstack/react-query";
-import cookies from "js-cookie";
 import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -60,10 +60,11 @@ export function NavWorkspaces({
             open={isProjectsVisible}
             active={pathname === "/projects"}
             onToggle={() => {
-              cookies.set(PROJECTS_OPEN_COOKIE, String(!isProjectsVisible), {
-                path: "/",
-                expires: 365,
-              });
+              setPreferenceCookie(
+                PROJECTS_OPEN_COOKIE,
+                String(!isProjectsVisible),
+                365,
+              );
               setIsProjectVisible(!isProjectsVisible);
             }}
           />

@@ -1,5 +1,6 @@
 "use client";
 
+import { setPreferenceCookie } from "@/lib/preference-cookie";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
@@ -19,7 +20,6 @@ import {
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { cva, VariantProps } from "class-variance-authority";
-import Cookies from "js-cookie";
 import { PanelLeftOpenIcon } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { Slot } from "radix-ui";
@@ -86,10 +86,11 @@ function SidebarProvider({
       } else {
         _setOpen(openState);
       }
-      Cookies.set(SIDEBAR_COOKIE_NAME, String(openState), {
-        path: "/",
-        expires: SIDEBAR_COOKIE_MAX_AGE,
-      });
+      setPreferenceCookie(
+        SIDEBAR_COOKIE_NAME,
+        String(openState),
+        SIDEBAR_COOKIE_MAX_AGE,
+      );
       router.refresh();
     },
     [setOpenProp, open, router],
@@ -177,7 +178,7 @@ const Sidebar = ({
   const stopResizing = React.useCallback(() => {
     if (isResizing) {
       setIsResizing(false);
-      Cookies.set(SIDEBAR_WIDTH_COOKIE_NAME, `${localWidth}`);
+      setPreferenceCookie(SIDEBAR_WIDTH_COOKIE_NAME, `${localWidth}`);
     }
   }, [isResizing, localWidth]);
 

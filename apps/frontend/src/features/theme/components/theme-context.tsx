@@ -1,10 +1,11 @@
 "use client";
+import { setPreferenceCookie } from "@/lib/preference-cookie";
 import {
+  allowedFontSize,
   FONT_SIZE_COOKIE,
   THEME_NAME_COOKIE,
 } from "@/features/theme/constants";
 import { Theme } from "@/features/theme/types";
-import Cookies from "js-cookie";
 import { useRouter } from "next/navigation";
 import React, { createContext, useCallback, useMemo } from "react";
 
@@ -80,9 +81,7 @@ export const ThemeProvider = ({
   const setFontSize = useCallback(
     (fontSize: string) => {
       try {
-        Cookies.set(FONT_SIZE_COOKIE, fontSize, {
-          expires: 365,
-        });
+        setPreferenceCookie(FONT_SIZE_COOKIE, allowedFontSize(fontSize), 365);
         router.refresh();
       } catch (error) {
         console.log(error);
@@ -100,9 +99,7 @@ export const ThemeProvider = ({
 
   const setTheme = useCallback(
     (themeFileName: string) => {
-      Cookies.set(THEME_NAME_COOKIE, themeFileName, {
-        expires: 365,
-      });
+      setPreferenceCookie(THEME_NAME_COOKIE, themeFileName, 365);
       router.refresh();
     },
     [router],

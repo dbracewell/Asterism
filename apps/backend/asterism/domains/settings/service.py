@@ -69,6 +69,8 @@ from .tool_settings import COMPONENT_PROVIDER_KEYS, get_tool_settings
 logger = get_logger("Settings")
 
 _REDACTED_API_KEY = REDACTED_SECRET
+# The sizes Settings offers (the frontend's FONT_SIZES, US-116.2).
+FONT_SIZES = ("12px", "14px", "16px", "18px", "20px")
 _APP_SETTING_KEYS = frozenset(ApplicationSettings.model_fields.keys())
 
 
@@ -294,6 +296,8 @@ async def _validate_user_setting(user_id: str, key: str, value: Any, session: As
         raise BadDataException(f"{key} must be boolean")
     if value is not None and key in {"theme", "font_size"} and not isinstance(value, str):
         raise BadDataException(f"{key} must be text")
+    if value is not None and key == "font_size" and value not in FONT_SIZES:
+        raise BadDataException(f"font_size must be one of: {', '.join(FONT_SIZES)}")
     if value is not None and key == FIRST_CHAT_TOUR_SETTING and value not in get_args(FirstChatTourState):
         raise BadDataException(f"{key} must be one of: completed, dismissed")
 

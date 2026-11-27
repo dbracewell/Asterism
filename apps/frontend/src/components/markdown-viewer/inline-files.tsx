@@ -1,6 +1,7 @@
 "use client";
 /* eslint-disable @next/next/no-img-element -- bytes come from a local blob URL */
 
+import { displayableImage } from "@/lib/displayable-image";
 import { APIDownload } from "@/components/api-download";
 import { Button } from "@/components/ui/button";
 import {
@@ -209,19 +210,33 @@ function useImageUrl(
     retry: false,
   });
   const [url, setUrl] = useState<string | null>(null);
+  const [undrawable, setUndrawable] = useState(false);
   // Object URL lifecycle only; the bytes themselves are loaded by the query.
+  // SVGs are cleaned first (US-116.2).
   useEffect(() => {
     if (!data || !file.mime_type) return;
-    const objectUrl = URL.createObjectURL(
-      new Blob([data], { type: file.mime_type }),
-    );
-    setUrl(objectUrl);
+    let active = true;
+    let objectUrl: string | null = null;
+    void displayableImage(
+      data instanceof Blob ? data : new Blob([data as BlobPart]),
+      file.mime_type,
+    ).then((image) => {
+      if (!active) return;
+      if (!image) {
+        setUndrawable(true);
+        return;
+      }
+      objectUrl = URL.createObjectURL(image);
+      setUrl(objectUrl);
+    });
     return () => {
-      URL.revokeObjectURL(objectUrl);
+      active = false;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
       setUrl(null);
+      setUndrawable(false);
     };
   }, [data, file.mime_type]);
-  return { url, isError };
+  return { url, isError: isError || undrawable };
 }
 
 function InlineImage({

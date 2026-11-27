@@ -1,3 +1,4 @@
+import { setRootTextSize } from "./text-size";
 import {
   expect,
   type Locator,
@@ -72,13 +73,7 @@ export async function exerciseAuth(
 ) {
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
-  await page.context().addCookies([
-    {
-      name: "asterism-font-size",
-      value: `${scenario.fontSize}px`,
-      url: "http://localhost:3100",
-    },
-  ]);
+  await setRootTextSize(page, scenario.fontSize);
   await page.setViewportSize(scenario);
   await page.goto("/sign-in");
   const form = page.getByRole("form", {

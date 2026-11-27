@@ -15,6 +15,7 @@ import asyncio
 import hashlib
 import mimetypes
 import re
+import unicodedata
 import uuid
 from dataclasses import dataclass
 from pathlib import Path
@@ -221,8 +222,10 @@ async def get_user_file_info(
 def sanitize_filename(name: str) -> str:
     """Reduce a client-supplied filename to a safe, displayable name.
 
-    Strips any directory component, leading dots and control characters, and
-    rejects names that are empty, too long, or carry a denied extension.
+    Strips any directory component, leading dots, and control, format and
+    text-direction characters (Unicode categories Cc and Cf, such as U+202E,
+    which can make ``evil.exe`` read as ``exe.live``), and rejects names that
+    are empty, too long, or carry a denied extension.
 
     Args:
         name: Raw filename as sent by the client.
@@ -234,7 +237,9 @@ def sanitize_filename(name: str) -> str:
         BadDataException: If the name is malformed or carries a denied
             extension.
     """
-    if not name or any(ord(character) < 32 for character in name):
+    # US-116.2: invisible and direction-changing characters are dropped.
+    name = "".join(character for character in name if unicodedata.category(character) not in {"Cc", "Cf"})
+    if not name:
         raise BadDataException("Filename is malformed")
     # Browsers may send either path separator in upload names.
     filename = name.replace("\\", "/").rsplit("/", 1)[-1].strip()

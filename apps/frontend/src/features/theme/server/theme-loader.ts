@@ -1,7 +1,7 @@
 import "server-only";
 
 import {
-  DEFAULT_FONT_SIZE,
+  allowedFontSize,
   DEFAULT_THEME_NAME,
   FONT_SIZE_COOKIE,
   THEME_NAME_COOKIE,
@@ -14,8 +14,8 @@ export async function getTheme() {
   const cookieStore = await cookies();
   let themeNameCookie =
     cookieStore.get(THEME_NAME_COOKIE)?.value ?? DEFAULT_THEME_NAME;
-  const fontSize =
-    cookieStore.get(FONT_SIZE_COOKIE)?.value ?? DEFAULT_FONT_SIZE;
+  // Rendered into the page's style: only the offered sizes (US-116.2).
+  const fontSize = allowedFontSize(cookieStore.get(FONT_SIZE_COOKIE)?.value);
 
   const allThemes = await getAllThemes();
   if (!Object.hasOwn(allThemes, themeNameCookie)) {
