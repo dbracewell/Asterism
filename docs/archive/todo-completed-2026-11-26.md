@@ -198,3 +198,15 @@ EPIC-117 is complete: every story was confirmed and merged on 2026-11-27 through
   - [x] `SECURITY.md` names the supported version.
   - [x] The container health check doesn't follow redirects; `reset-databases` checks the database URL prefix; `.dockerignore` excludes docs, tests and local data.
   - [x] The unused proxy-list call in `setup.mjs` is removed.
+
+## Release pages
+
+EPIC-118 is complete: US-118.1 was confirmed and merged on 2026-11-27 through pull request #172. The release workflow creates each tag's GitHub Release from its release notes, with links pointing at that version's files, and the missing pages for v0.2.2 through v0.5.0 were created from the release notes.
+
+### [EPIC-118: Release pages](../epics/EPIC-118-RELEASE-PAGES.md)
+
+- [x] US-118.1: The release workflow creates the Release page
+  - [x] After the image is published and verified, a job creates the tag's Release from its section of the release notes, marked latest only when it is the newest tag, and updates it on a re-run.
+  - [x] Only that job can write to the repository.
+  - [x] Pages for v0.2.2 through v0.5.0 are created from the release notes.
+  - [x] Tests, release guide and release note.

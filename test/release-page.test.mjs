@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
 
+import { absoluteLinks } from "../scripts/release-page.mjs";
 import { releaseNotesFor } from "../scripts/release.mjs";
 
 const NOTES = `# Release notes
@@ -26,29 +27,65 @@ const NOTES = `# Release notes
 test("a release page shows that version's notes, without the heading", () => {
   assert.equal(releaseNotesFor(NOTES, "0.3.0"), "### Image\n\n- Newer.\n");
   assert.equal(releaseNotesFor(NOTES, "0.2.2"), "### Behavior\n\n- Older.\n");
-  assert.throws(() => releaseNotesFor(NOTES, "0.9.0"), /no section for 0\.9\.0/);
-  // "0.3.0" must not match "0.3.01" or "0x3y0".
-  assert.throws(() => releaseNotesFor(NOTES.replace("0.3.0", "0x3y0"), "0.3.0"), /no section/);
   assert.throws(
-    () => releaseNotesFor("## 0.4.0 (2026-11-23)\n\n## 0.3.0 (2026-11-22)\n- x\n", "0.4.0"),
+    () => releaseNotesFor(NOTES, "0.9.0"),
+    /no section for 0\.9\.0/,
+  );
+  // "0.3.0" must not match "0.3.01" or "0x3y0".
+  assert.throws(
+    () => releaseNotesFor(NOTES.replace("0.3.0", "0x3y0"), "0.3.0"),
+    /no section/,
+  );
+  assert.throws(
+    () =>
+      releaseNotesFor(
+        "## 0.4.0 (2026-11-23)\n\n## 0.3.0 (2026-11-22)\n- x\n",
+        "0.4.0",
+      ),
     /empty/,
   );
 });
 
 test("every tagged release in the notes has a page body", () => {
-  const notes = readFileSync(new URL("../docs/release-notes.md", import.meta.url), "utf8");
-  const versions = [...notes.matchAll(/^## (\d+\.\d+\.\d+) \(/gm)].map((match) => match[1]);
+  const notes = readFileSync(
+    new URL("../docs/release-notes.md", import.meta.url),
+    "utf8",
+  );
+  const versions = [...notes.matchAll(/^## (\d+\.\d+\.\d+) \(/gm)].map(
+    (match) => match[1],
+  );
   assert.ok(versions.length >= 5);
-  for (const version of versions) assert.match(releaseNotesFor(notes, version), /^### /);
+  for (const version of versions)
+    assert.match(releaseNotesFor(notes, version), /^### /);
 });
 
 test("only the release-page job can write to the repository, and only after publishing", () => {
-  const workflow = readFileSync(new URL("../.github/workflows/release.yml", import.meta.url), "utf8");
+  const workflow = readFileSync(
+    new URL("../.github/workflows/release.yml", import.meta.url),
+    "utf8",
+  );
   const jobs = workflow.split(/\n  (?=[a-z-]+:\n)/).slice(1);
   const page = jobs.find((job) => job.startsWith("release-page:"));
   assert.ok(page, "the release-page job exists");
   assert.match(page, /needs: \[version, publish\]/);
-  assert.match(page, /if: github\.event_name == 'push' && github\.ref_type == 'tag'/);
+  assert.match(
+    page,
+    /if: github\.event_name == 'push' && github\.ref_type == 'tag'/,
+  );
   assert.match(page, /contents: write/);
-  for (const job of jobs.filter((job) => job !== page)) assert.doesNotMatch(job, /contents: write/);
+  for (const job of jobs.filter((job) => job !== page))
+    assert.doesNotMatch(job, /contents: write/);
+});
+
+test("relative links point at that version's files on GitHub", () => {
+  const body =
+    "See [ADR](adr/0079-x.md), [start](deployment.md#3-start), [policy](../SECURITY.md), " +
+    "[site](https://example.com/a) and [here](#upgrade).";
+  assert.equal(
+    absoluteLinks(body, "0.5.0", "owner/repo"),
+    "See [ADR](https://github.com/owner/repo/blob/v0.5.0/docs/adr/0079-x.md), " +
+      "[start](https://github.com/owner/repo/blob/v0.5.0/docs/deployment.md#3-start), " +
+      "[policy](https://github.com/owner/repo/blob/v0.5.0/SECURITY.md), " +
+      "[site](https://example.com/a) and [here](#upgrade).",
+  );
 });
