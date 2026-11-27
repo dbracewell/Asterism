@@ -109,7 +109,8 @@ earlier stage or `scratch`. Workflows are parsed as YAML, so flow-style steps
 and comments read as GitHub reads them: every job's and step's `uses:` names an
 action or reusable workflow by full commit SHA, a local one (`./…`) or a
 `docker://` image by digest, and every job `container:` and service `image:`
-names an image by digest (expressions are skipped). Aliases where a step or
+names an image by digest (expressions are skipped). A `COPY --from=` names an
+earlier stage, its index, or an image by digest. Aliases where a step or
 value belongs, and invalid YAML, fail rather than pass unchecked. Every checkout
 sets `persist-credentials: false`, so no later step holds the token, and Node
 comes from [`.node-version`](../.node-version): setup-node reads that file, and a
@@ -121,8 +122,9 @@ the file and line. CI runs it in the quality job.
 Downloads the pinned Trivy release for this platform (Linux x64 and ARM64, macOS
 ARM64) and refuses it unless its SHA-256 matches the one in the script (US-92.2).
 Prints the binary's path; in GitHub Actions it also adds the directory to `PATH`.
-`--dir <directory>` picks where it goes (default: a `trivy-<version>` directory in
-`RUNNER_TEMP` or the system temp directory).
+`--dir <directory>` picks where it goes (default: a new private `trivy-<version>-…`
+directory under `RUNNER_TEMP` or the system temp directory, never a fixed name
+someone else could create first; US-114.3).
 
 ### `check-vulns.mjs`
 
@@ -349,7 +351,10 @@ the system Python cannot import pip (US-95.1). It also fails when the unpacked i
 is over the size budget (`DEFAULT_MAX_SIZE_GB` in the script, 4.25 GB, which CI and
 the release workflow use too), listing the largest layers. On failure
 it prints the container's last log lines. The container and volume are removed
-afterwards.
+afterwards. Finally it checks `/usr/share/asterism/components.json`, the image's
+record of what it copies in rather than installs as packages (the unpacked
+`libgbm1`, the Node binary and Playwright's Chromium), against the versions the
+image actually runs (US-114.3).
 
 ```bash
 pnpm check:image                                   # asterism:local, the 4.25 GB budget

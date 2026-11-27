@@ -36,8 +36,9 @@ RUN pnpm --filter @asterism/frontend build \
 FROM python:3.13-slim-bookworm@sha256:a5a7017efc5969e00ae2b91c8eb0631049a569652aa4ffc4501769049ae45c72 AS backend-build
 # Avoid compiling llama.cpp for build-host-only CPU features (notably ARM VMs).
 ENV UV_LINK_MODE=copy UV_COMPILE_BYTECODE=1 CMAKE_ARGS="-DGGML_NATIVE=OFF"
-RUN pip install --no-cache-dir uv==0.12.13 \
-  && apt-get update && apt-get install -y --no-install-recommends build-essential \
+# uv from its own image by digest, not from PyPI at build time (US-114.3).
+COPY --from=ghcr.io/astral-sh/uv:0.12.13@sha256:b485bd65cc2cf1c9a93b3554012c9c3778cf7b1b5fd3d3096ce9e1226c97e1e6 /uv /usr/local/bin/uv
+RUN apt-get update && apt-get install -y --no-install-recommends build-essential \
   && rm -rf /var/lib/apt/lists/*
 WORKDIR /app/apps/backend
 # The CPU image (the default, and the published one) has no PyTorch: embeddings
@@ -75,12 +76,13 @@ FROM python:3.13-slim-trixie@sha256:7249d5587b78209a006dc4a3b5340678f84ea7292391
 
 # Nothing at run time uses the base image's pip (the app runs from the
 # backend's venv), so it and the packages it vendors are removed (US-95.1).
-# The build stages keep it to install uv.
 #
 # Headless Chromium's libraries, without Playwright's install-deps (a virtual
 # display, extra fonts, and LLVM and Mesa through libgbm1). libgbm.so.1 itself
 # is unpacked from its package alone: it needs only libdrm, expat and
 # wayland-server, while installing libgbm1 would pull in Mesa's drivers and LLVM.
+# Its control fields go in /var/lib/dpkg/status.d/libgbm1, where vulnerability
+# scanners and the SBOM read unpacked packages (US-114.3); dpkg itself ignores it.
 #
 # Debian packages with a fix the base image lags by more than a week (EPIC-95):
 # the runtime stage upgrades each one until the base carries it, and
@@ -96,15 +98,29 @@ RUN apt-get update \
     libx11-6 libxcb1 libxcomposite1 libxdamage1 libxext6 libxfixes3 libxrandr2 libxkbcommon0 \
     libasound2t64 libdrm2 libwayland-server0 \
   && cd /tmp && apt-get download libgbm1 && dpkg-deb -x libgbm1_*.deb gbm \
-  && cp -a gbm/usr/lib/. /usr/lib/ && ldconfig && rm -rf /tmp/gbm /tmp/libgbm1_*.deb \
+  && cp -a gbm/usr/lib/. /usr/lib/ && ldconfig \
+  && mkdir -p /var/lib/dpkg/status.d \
+  && dpkg-deb -f libgbm1_*.deb | sed '/^Package:/a Status: install ok installed' > /var/lib/dpkg/status.d/libgbm1 \
+  && rm -rf /tmp/gbm /tmp/libgbm1_*.deb \
   && rm -rf /var/lib/apt/lists/* \
   && python -m pip uninstall --yes --no-cache-dir pip \
   && useradd --uid 10001 --create-home asterism \
   && mkdir -p /storage /backups && chown asterism:asterism /storage /backups
 # Node is needed only as a runtime; copied once, without npm (US-90.8).
 COPY --from=frontend-build /usr/local/bin/node /usr/local/bin/node
-RUN python --version && node --version
 COPY --from=backend-build /opt/ms-playwright /opt/ms-playwright
+# Components copied in rather than installed as packages (US-114.3): their
+# versions are recorded here, and `pnpm check:image` checks the record against
+# the binaries, so a review can match them to advisories.
+RUN python --version && node --version \
+  && shell="$(find /opt/ms-playwright -type f \( -name headless_shell -o -name chrome-headless-shell \) | head -n 1)" \
+  && mkdir -p /usr/share/asterism \
+  && printf '{"libgbm1":"%s","node":"%s","chromium":"%s"}\n' \
+    "$(sed -n 's/^Version: //p' /var/lib/dpkg/status.d/libgbm1)" \
+    "$(node --version | sed 's/^v//')" \
+    "$("$shell" --version | grep -oE '[0-9]+(\.[0-9]+)+' | head -n 1)" \
+    > /usr/share/asterism/components.json \
+  && cat /usr/share/asterism/components.json
 WORKDIR /app
 # Preserve pnpm's workspace symlinks and native Node modules.
 COPY --from=frontend-deps /app/node_modules ./node_modules

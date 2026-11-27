@@ -13,7 +13,12 @@
  */
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { appendFileSync, mkdirSync, writeFileSync } from "node:fs";
+import {
+  appendFileSync,
+  mkdirSync,
+  mkdtempSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { parseArgs } from "node:util";
@@ -61,13 +66,21 @@ export function hashProblem(bytes, expected, name) {
     : `${name} has SHA-256 ${actual}, not the pinned ${expected}. Not installing it.`;
 }
 
+/**
+ * A new directory only this user can write, under `base` (US-114.3): a fixed
+ * name in a shared temporary directory could be created first by someone else,
+ * with their own binary in it.
+ */
+export function privateInstallDir(base) {
+  return mkdtempSync(join(base, `trivy-${TRIVY_VERSION}-`));
+}
+
 async function main() {
   const { values } = parseArgs({
     options: { dir: { type: "string" } },
   });
   const dir =
-    values.dir ??
-    join(process.env.RUNNER_TEMP ?? tmpdir(), `trivy-${TRIVY_VERSION}`);
+    values.dir ?? privateInstallDir(process.env.RUNNER_TEMP ?? tmpdir());
   const tarball = tarballFor(process.platform, process.arch);
   const response = await fetch(tarball.url);
   if (!response.ok) {

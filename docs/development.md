@@ -193,7 +193,12 @@ planned change, made by hand with its own pull request. For uv, Dependabot updat
 within `pyproject.toml`'s ranges and never raises an upper cap (such as
 `lancedb<0.30`, which guards the stored vectors): raising one is a change made by
 hand. The E2E job's
-`container:` image isn't covered by Dependabot: update its digest by hand. The
+`container:` image and the Dockerfile's `COPY --from=ghcr.io/astral-sh/uv` image
+aren't covered by Dependabot: update their digests by hand. Scanners can't
+match Node, Playwright's Chromium or the unpacked `libgbm1` to an installed
+package on their own; the image records their versions in
+`/usr/share/asterism/components.json`, which `pnpm check:image` checks, so
+compare those with advisories when reviewing a scan. The
 default backend install must not include torch, torchvision, diffusers or
 accelerate: `pnpm check:default-install` (run in CI) fails on an update that
 pulls one in and names the package that does; move it to the `local-image`
