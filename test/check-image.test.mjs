@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
   baseLagProblems,
+  componentProblems,
   DIAGRAM_ASSETS,
   developmentPackageProblems,
   diagramAssetProblems,
@@ -226,5 +227,29 @@ test("the in-image diagram draw must produce a named PNG at the policy scale", (
   );
   assert.deepEqual(drawnDiagramProblems("Traceback ...", 2), [
     "the diagram draw check printed no result",
+  ]);
+});
+
+test("the component record must match what the image runs (US-114.3)", () => {
+  const actual = {
+    libgbm1: "25.0.7-2",
+    node: "22.13.0",
+    chromium: "140.0.7339.16",
+  };
+  assert.deepEqual(componentProblems({ ...actual }, actual), []);
+  assert.deepEqual(
+    componentProblems(
+      { libgbm1: "25.0.7-1", node: "22.13.0" },
+      { ...actual, chromium: "" },
+    ),
+    [
+      "libgbm1: components.json records 25.0.7-1, but the image has 25.0.7-2",
+      "chromium: the image has no readable version",
+    ],
+  );
+  assert.deepEqual(componentProblems(null, actual), [
+    "libgbm1: components.json records nothing, but the image has 25.0.7-2",
+    "node: components.json records nothing, but the image has 22.13.0",
+    "chromium: components.json records nothing, but the image has 140.0.7339.16",
   ]);
 });

@@ -10,6 +10,7 @@
  *
  * Usage: node scripts/check-docs.mjs [repository root]
  */
+import { pathToFileURL } from "node:url";
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
 
@@ -197,7 +198,7 @@ export function checkDocs(root) {
   return problems;
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
   const root = resolve(process.argv[2] ?? ".");
   const problems = checkDocs(root);
   for (const problem of problems) console.error(problem);

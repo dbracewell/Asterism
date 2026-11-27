@@ -299,6 +299,66 @@ function checkBaseLag(image) {
   console.log(`ok: upgraded past the base: ${upgraded.join(", ")}`);
 }
 
+/** The components the image records in /usr/share/asterism/components.json. */
+export const RECORDED_COMPONENTS = ["libgbm1", "node", "chromium"];
+
+/**
+ * Problems with the record of components copied in rather than installed
+ * (US-114.3): each must be recorded, non-empty and match what the image runs.
+ */
+export function componentProblems(recorded, actual) {
+  const problems = [];
+  for (const name of RECORDED_COMPONENTS) {
+    const want = actual[name] || null;
+    const have = recorded?.[name] || null;
+    if (!want) problems.push(`${name}: the image has no readable version`);
+    else if (have !== want)
+      problems.push(
+        `${name}: components.json records ${have ?? "nothing"}, but the image has ${want}`,
+      );
+  }
+  return problems;
+}
+
+const componentScript = `
+set -e
+echo "recorded=$(cat /usr/share/asterism/components.json)"
+echo "libgbm1=$(sed -n 's/^Version: //p' /var/lib/dpkg/status.d/libgbm1)"
+echo "node=$(node --version | sed 's/^v//')"
+shell="$(find /opt/ms-playwright -type f \\( -name headless_shell -o -name chrome-headless-shell \\) | head -n 1)"
+echo "chromium=$("$shell" --version | grep -oE '[0-9]+(\\.[0-9]+)+' | head -n 1)"
+`;
+
+function checkComponents(image) {
+  const result = spawnSync(
+    "docker",
+    ["run", "--rm", "--entrypoint", "sh", image, "-c", componentScript],
+    { encoding: "utf8" },
+  );
+  if (result.status !== 0)
+    throw new Error(`Reading the component record failed: ${result.stderr}`);
+  const values = Object.fromEntries(
+    result.stdout
+      .trim()
+      .split("\n")
+      .map((line) => [
+        line.slice(0, line.indexOf("=")),
+        line.slice(line.indexOf("=") + 1),
+      ]),
+  );
+  let recorded = null;
+  try {
+    recorded = JSON.parse(values.recorded);
+  } catch {
+    throw new Error("/usr/share/asterism/components.json is not valid JSON");
+  }
+  const problems = componentProblems(recorded, values);
+  if (problems.length) throw new Error(problems.join("\n"));
+  console.log(
+    `ok: recorded ${RECORDED_COMPONENTS.map((name) => `${name} ${recorded[name]}`).join(", ")}`,
+  );
+}
+
 const importCheck = `
 import importlib.util, json, sys
 print(json.dumps({name: importlib.util.find_spec(name) is not None for name in sys.argv[1:]}))
@@ -558,6 +618,7 @@ async function main() {
   checkSize(values.image, maxGb * 1e9);
   await checkContainer(values.image, values.variant);
   checkBaseLag(values.image);
+  checkComponents(values.image);
 }
 
 if (

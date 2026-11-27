@@ -18,6 +18,7 @@
  */
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
+import { pathToFileURL } from "node:url";
 import { LineCounter, isMap, isScalar, isSeq, parseDocument } from "yaml";
 
 const DIGEST = /@sha256:[0-9a-f]{64}$/;
@@ -25,7 +26,7 @@ const COMMIT = /@[0-9a-f]{40}$/;
 const ignoredDirectories = new Set([".git", "node_modules", ".next", ".venv"]);
 const DIRECTIVE = /^\s*#\s*([a-z][a-z0-9_-]*)\s*=\s*(.*?)\s*$/i;
 
-/** Problems in one Dockerfile's `syntax` directive and `FROM` lines. */
+/** Problems in one Dockerfile's `syntax` directive, `FROM` and `COPY --from` lines. */
 export function dockerfileProblems(text, file) {
   const problems = [];
   const lines = text.replace(/^\uFEFF/, "").split("\n");
@@ -41,6 +42,18 @@ export function dockerfileProblems(text, file) {
   }
   const stages = new Set();
   lines.forEach((line, index) => {
+    // COPY --from names an earlier stage (or its index) or pulls an image, which
+    // must be pinned like a FROM (US-114.3).
+    const copy = line.match(/^\s*COPY\s.*?--from=(\S+)/i);
+    if (copy) {
+      const source = copy[1].replace(/^["']|["']$/g, "");
+      if (!/^\d+$/.test(source) && !stages.has(source.toLowerCase()) && !DIGEST.test(source)) {
+        problems.push(
+          `${file}:${index + 1}: COPY --from=${source} is not an earlier stage or pinned by digest (image:tag@sha256:…)`,
+        );
+      }
+      return;
+    }
     const from = line.match(/^\s*FROM\s+(.*)$/i);
     if (!from) return;
     const words = from[1]
@@ -189,7 +202,9 @@ export function checkPins(root) {
   return problems;
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+// pathToFileURL escapes spaces and other characters a hand-built file:// URL
+// keeps, so the check runs from any checkout path (US-114.3).
+if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
   const root = resolve(process.argv[2] ?? ".");
   const problems = checkPins(root);
   for (const problem of problems) console.error(problem);

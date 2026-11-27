@@ -36,9 +36,9 @@ As a maintainer, I want workflow credentials scoped to the steps that need them.
 As a maintainer, I want CVEs in the image's extracted libraries and binaries
 found.
 
-- [ ] `check:image` records and checks the extracted `libgbm1`, Node and
+- [x] `check:image` records and checks the extracted `libgbm1`, Node and
       Chromium versions.
-- [ ] `uv` comes from a digest-pinned image.
-- [ ] `install-trivy.mjs` uses a private temporary directory; `check-pins.mjs`
+- [x] `uv` comes from a digest-pinned image.
+- [x] `install-trivy.mjs` uses a private temporary directory; `check-pins.mjs`
       compares paths reliably.
-- [ ] Tests for the scripts; release note (Image).
+- [x] Tests for the scripts; release note (Image).

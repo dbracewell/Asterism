@@ -178,3 +178,19 @@ test("checkouts drop the token and Node comes from .node-version (US-114.2)", ()
     "ci.yml:6: checkout keeps the token; set persist-credentials: false",
   ]);
 });
+
+test("COPY --from takes an earlier stage, its index or a pinned image (US-114.3)", () => {
+  const dockerfile = [
+    `FROM node:22@${DIGEST} AS build`,
+    "COPY --from=build /app /app",
+    "COPY --from=0 /app /app",
+    `COPY --from=ghcr.io/astral-sh/uv:0.12.13@${DIGEST} /uv /usr/local/bin/uv`,
+    "COPY --from=ghcr.io/astral-sh/uv:0.12.13 /uv /usr/local/bin/uv",
+    "COPY --chown=app --from=later /x /x",
+    `FROM python:3.13@${DIGEST} AS later`,
+  ].join("\n");
+  assert.deepEqual(dockerfileProblems(dockerfile, "Dockerfile"), [
+    "Dockerfile:5: COPY --from=ghcr.io/astral-sh/uv:0.12.13 is not an earlier stage or pinned by digest (image:tag@sha256:…)",
+    "Dockerfile:6: COPY --from=later is not an earlier stage or pinned by digest (image:tag@sha256:…)",
+  ]);
+});

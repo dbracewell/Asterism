@@ -34,6 +34,11 @@ Unreleased into its version and date.
 
 ### Image
 
+- The image records the versions of what it copies in rather than installs
+  (the unpacked `libgbm1`, Node and Playwright's Chromium) in
+  `/usr/share/asterism/components.json`, and lists `libgbm1` where scanners and
+  the SBOM look for packages. `uv` comes from its digest-pinned image instead of
+  PyPI.
 - The runtime stage is on a newer `python:3.13-slim-trixie` base, which carries
   `zlib1g` 1.3.1-1+deb13u1, so the image no longer upgrades `zlib1g` itself.
 - `libzstd1` is 1.5.7+dfsg-1+deb13u1, which fixes CVE-2026-124851 (high). The

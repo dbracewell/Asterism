@@ -125,10 +125,10 @@ Source: repository review (2026-11-26), verified against the code at `40101ac7`.
   - [x] Every release job has a timeout; fork pull requests get their own concurrency group.
   - [x] The Node version comes from one place; `vuln-issue.mjs` survives a bad marker.
 - [x] US-114.3: Scans see every runtime component
-  - [ ] `check:image` records and checks the extracted `libgbm1`, Node and Chromium versions.
-  - [ ] `uv` comes from a digest-pinned image.
-  - [ ] `install-trivy.mjs` uses a private temporary directory; `check-pins.mjs` compares paths reliably.
-  - [ ] Tests for the scripts; release note (Image).
+  - [x] `check:image` records and checks the extracted `libgbm1`, Node and Chromium versions.
+  - [x] `uv` comes from a digest-pinned image.
+  - [x] `install-trivy.mjs` uses a private temporary directory; `check-pins.mjs` compares paths reliably.
+  - [x] Tests for the scripts; release note (Image).
 
 [EPIC-115](docs/epics/EPIC-115-PROXY-AND-DEPLOYMENT-HARDENING.md): Proxy and deployment hardening
 
