@@ -20,3 +20,23 @@
 **/test-results
 apps/frontend/certificates
 .DS_Store
+# Documentation and tests never reach the image; only the in-app user guide
+# does (Dockerfile: COPY docs/guide) (US-117.3).
+docs
+!docs/guide
+test
+apps/backend/tests
+apps/frontend/e2e
+**/*.test.ts
+**/*.test.tsx
+**/*.test.mjs
+# Local data and notes.
+.capacity
+.agents
+.claude
+.next-e2e
+**/.next-e2e
+*.log
+repo_review.md
+codebase_review.md
+storage

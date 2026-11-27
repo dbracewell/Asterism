@@ -107,3 +107,29 @@ def test_docx_puts_pictures_in_cells_fitted_to_the_column_with_text_around_them(
     assert formatted.text == "Bold and code and a link (https://example.com)"
     assert [run.bold for run in formatted.runs if run.text == "Bold"] == [True]
     assert all(run.bold for run in grid.cell(0, 0).paragraphs[0].runs)
+
+
+def test_a_picture_in_a_table_with_many_columns_keeps_a_positive_width():
+    """US-117.3: 44 columns used to give a negative picture width."""
+    columns = 50
+    header = "| " + " | ".join(f"C{index}" for index in range(columns)) + " |"
+    rule = "| " + " | ".join("-" for _ in range(columns)) + " |"
+    row = "| " + image("Wide sea", WIDE) + " | " + " | ".join("x" for _ in range(columns - 1)) + " |"
+    document = docx.Document(io.BytesIO(markdown_docx("Table", f"{header}\n{rule}\n{row}\n", None, IMAGES)))
+    [shape] = document.inline_shapes
+    assert shape.width.inches == pytest.approx(0.25, abs=0.01)
+
+
+def test_zip_names_keep_their_folder_when_made_unique():
+    """US-117.3."""
+    import zipfile
+
+    from asterism.domains.canvas.exports import ExportedFile, zip_exports
+
+    files = [
+        ExportedFile(filename=name, media_type="text/markdown", content=b"x")
+        for name in ("notes/a.md", "notes/A.md", "a.md", "notes/a.md")
+    ]
+    names = zipfile.ZipFile(io.BytesIO(zip_exports(files))).namelist()
+    # Names compare without case, so the second "notes/a.md" is the third of its kind.
+    assert names == ["notes/a.md", "notes/A (2).md", "a.md", "notes/a (3).md"]

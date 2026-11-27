@@ -38,10 +38,10 @@ N+1 queries. None causes problems at today's scale.
 
 ### US-117.3: Housekeeping
 
-- [ ] Word tables with many columns keep a positive picture width; ZIP names
+- [x] Word tables with many columns keep a positive picture width; ZIP names
       keep their folder when disambiguated.
-- [ ] `SECURITY.md` names the supported version.
-- [ ] The container health check doesn't follow redirects; `reset-databases`
+- [x] `SECURITY.md` names the supported version.
+- [x] The container health check doesn't follow redirects; `reset-databases`
       checks the database URL prefix; `.dockerignore` excludes docs, tests and
       local data.
-- [ ] The unused proxy-list call in `setup.mjs` is removed.
+- [x] The unused proxy-list call in `setup.mjs` is removed.

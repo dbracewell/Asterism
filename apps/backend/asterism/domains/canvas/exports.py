@@ -14,7 +14,7 @@ import zipfile
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from functools import cache
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import TYPE_CHECKING, Literal, Protocol, cast
 from urllib.parse import quote
 
@@ -36,6 +36,8 @@ IMAGE_NOT_INCLUDED = "Image not included"
 # Page widths the pictures are fitted to: DOCX's default Letter page with 1 inch
 # margins, and the PDF's A4 page with 18 mm margins.
 _DOCX_TEXT_WIDTH_INCHES = 6.5
+# The narrowest a picture in a table cell gets, however many columns.
+_DOCX_MIN_PICTURE_INCHES = 0.25
 _PDF_TEXT_WIDTH_MM = 210 - 2 * 18
 _CSS_PX_PER_INCH = 96
 # Tallest picture, so a portrait image leaves room for the text around it.
@@ -290,15 +292,16 @@ def export_version(
 
 
 def zip_exports(files: list[ExportedFile]) -> bytes:
-    """One archive; repeated names get ``(2)``, ``(3)``, … before the extension."""
+    """One archive; repeated names get ``(2)``, ``(3)``, … before the extension, in the same folder."""
     buffer = io.BytesIO()
     taken: set[str] = set()
     with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as archive:
         for file in files:
-            stem, suffix = Path(file.filename).stem, Path(file.filename).suffix
+            path = PurePosixPath(file.filename)
             name, counter = file.filename, 2
             while name.lower() in taken:
-                name = f"{stem} ({counter}){suffix}"
+                # The folder stays: "notes/a.md" becomes "notes/a (2).md" (US-117.3).
+                name = str(path.with_name(f"{path.stem} ({counter}){path.suffix}"))
                 counter += 1
             taken.add(name.lower())
             archive.writestr(name, file.content)
@@ -379,8 +382,9 @@ def markdown_docx(title: str, content: str, diagrams: Diagrams | None = None, im
             if columns:
                 grid = document.add_table(rows=len(table), cols=columns)
                 grid.style = "Table Grid"
-                # Columns share the text width; leave room for the cell margins.
-                width = _DOCX_TEXT_WIDTH_INCHES / columns - 0.15
+                # Columns share the text width; leave room for the cell margins. Many
+                # columns still leave a picture a small positive width (US-117.3).
+                width = max(_DOCX_TEXT_WIDTH_INCHES / columns - 0.15, _DOCX_MIN_PICTURE_INCHES)
                 for r, row in enumerate(table):
                     for c, cell_token in enumerate(row):
                         paragraph = grid.cell(r, c).paragraphs[0]

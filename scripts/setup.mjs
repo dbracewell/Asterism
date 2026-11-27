@@ -18,7 +18,7 @@ import { dirname, join, resolve } from "node:path";
 import { createInterface } from "node:readline/promises";
 import { fileURLToPath } from "node:url";
 
-import { parseProxyList, validateConfiguration } from "./config-contract.mjs";
+import { validateConfiguration } from "./config-contract.mjs";
 import { parsePortableEnvironment } from "./run-with-env.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -168,7 +168,6 @@ export async function configure(options, { interactive = false } = {}) {
   if (!values.TRUSTED_PROXIES) delete values.TRUSTED_PROXIES;
   if (!values.ASTERISM_VERSION)
     throw new SetupError("Pass --version: the app version wasn't found");
-  if (values.TRUSTED_PROXIES) parseProxyList(values.TRUSTED_PROXIES);
 
   const found = problems(values);
   if (found.length) {
