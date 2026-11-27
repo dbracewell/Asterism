@@ -24,6 +24,10 @@ Unreleased into its version and date.
 
 ### Configuration
 
+- `docker-compose.yml` drops all Linux capabilities, sets `no-new-privileges`
+  and a limit of 1,024 processes and threads. Its `host.docker.internal`
+  mapping is now marked optional. If you run your own compose file, copy these
+  settings.
 - pnpm installs refuse packages published less than a week ago
   (`minimumReleaseAge`), and only the packages listed under `allowBuilds` in
   `pnpm-workspace.yaml` may run install scripts, in CI as in the image.
@@ -38,6 +42,9 @@ Unreleased into its version and date.
 
 ### Image
 
+- The entrypoint reads file secrets for every command, `backup` and `verify`
+  included, and drops one trailing `\r\n` or `\n` the same way the backend and
+  frontend do, so a secret file saved on Windows gives the same key everywhere.
 - The image records the versions of what it copies in rather than installs
   (the unpacked `libgbm1`, Node and Playwright's Chromium) in
   `/usr/share/asterism/components.json`, and lists `libgbm1` where scanners and
@@ -58,6 +65,8 @@ Unreleased into its version and date.
 
 ### Behavior
 
+- The production backend no longer serves `/api/py/openapi.json` or the API docs
+  pages. `setup --force` leaves the replaced `.env` readable only by its owner.
 - Through the bundled nginx, only the chat WebSocket and `/api/stream` events
   keep one-hour timeouts and unbuffered proxying; other requests time out after
   five minutes. Public requests lose any `X-Asterism-System-Key` header, and the

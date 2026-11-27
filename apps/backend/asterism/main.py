@@ -55,11 +55,18 @@ truststore.inject_into_ssl()
 logger = get_logger("Asterism")
 
 
+def api_docs_urls(profile: str) -> dict[str, str | None]:
+    """The schema and docs pages, which production does not serve (US-115.2)."""
+    if profile == "production":
+        return {"docs_url": None, "redoc_url": None, "openapi_url": None}
+    return {"docs_url": "/api/py/docs", "redoc_url": "/redoc", "openapi_url": "/openapi.json"}
+
+
 app = FastAPI(
     lifespan=lifespan,
     title="Asterism",
     root_path="/api/py",
-    docs_url="/api/py/docs",
+    **api_docs_urls(config.config_profile),
 )
 
 

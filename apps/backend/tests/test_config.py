@@ -105,3 +105,24 @@ def test_a_lower_upload_limit_lowers_the_limits_left_at_default(tmp_path, monkey
     monkeypatch.setenv("MAX_PROCESS_FILE_SIZE_BYTES", "2097152")
     settings = Config(_env_file=None, storage_root=tmp_path)  # type: ignore
     assert settings.max_process_file_size_bytes == 2097152
+
+
+@pytest.mark.parametrize(
+    ("content", "expected"),
+    [
+        (b"key\r\n", "key"),
+        (b"key\n", "key"),
+        (b"key", "key"),
+        (b"key\n\n", "key\n"),
+        (b"key\r\n\r\n", "key\r\n"),
+        (b"key\r", "key\r"),
+    ],
+)
+def test_file_secrets_lose_exactly_one_line_ending(tmp_path, monkeypatch, content, expected):
+    """US-115.2: the same cases as test/file-secrets.test.mjs (entrypoint) and the frontend."""
+    import importlib
+
+    config_module = importlib.import_module("asterism.core.config")
+    (tmp_path / "SYSTEM_KEY").write_bytes(content)
+    monkeypatch.setattr(config_module, "secrets_dir", tmp_path)
+    assert config_module._file_secret("SYSTEM_KEY") == expected

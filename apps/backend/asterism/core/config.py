@@ -38,14 +38,18 @@ def _file_secret(name: str) -> str:
         name: Name of the secret file under ``/run/secrets``.
 
     Returns:
-        The file's contents with trailing line endings stripped, or "" when the
-        secret is not mounted (e.g., local development).
+        The file's contents without one trailing ``\r\n`` or ``\n`` (the rule
+        the entrypoint and the frontend use too), or "" when the secret is not
+        mounted (e.g., local development).
     """
     canonical = secrets_dir / name
     try:
-        return canonical.read_text().removesuffix("\n").removesuffix("\r")
+        # newline="" keeps "\r\n" as written instead of translating it.
+        with canonical.open(encoding="utf-8", newline="") as file:
+            text = file.read()
     except FileNotFoundError:
         return ""
+    return text.removesuffix("\r\n") if text.endswith("\r\n") else text.removesuffix("\n")
 
 
 def default_allowed_tools() -> list[str]:

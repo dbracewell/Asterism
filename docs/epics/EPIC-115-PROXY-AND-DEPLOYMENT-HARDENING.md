@@ -28,13 +28,13 @@ details.
 
 As an operator, I want the default deployment locked down.
 
-- [ ] `docker-compose.yml` drops capabilities, sets `no-new-privileges` and a
+- [x] `docker-compose.yml` drops capabilities, sets `no-new-privileges` and a
       process limit; the host gateway mapping is documented as optional.
-- [ ] `setup.mjs --force` leaves `.env` readable only by its owner.
-- [ ] Secret files with Windows line endings give the same key in every
+- [x] `setup.mjs --force` leaves `.env` readable only by its owner.
+- [x] Secret files with Windows line endings give the same key in every
       entrypoint command.
-- [ ] API docs are off in production.
-- [ ] Release note (Configuration, Image).
+- [x] API docs are off in production.
+- [x] Release note (Configuration, Image).
 
 ### US-115.3: Backups restore privately and refuse a missing key
 

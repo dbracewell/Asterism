@@ -9,6 +9,7 @@ import {
   getFrontendServerConfig,
   resetFrontendServerConfigForTests,
 } from "./server-config";
+import { withoutLineEnding } from "./server-config-core";
 
 const originalEnvironment = { ...process.env };
 const temporaryDirectories: string[] = [];
@@ -92,5 +93,19 @@ describe("frontend server configuration", () => {
     vi.resetModules();
     await import("./auth");
     expect(existsSync(join(root, "users.db"))).toBe(false);
+  });
+});
+
+describe("file secrets", () => {
+  // The same cases as test/file-secrets.test.mjs and the backend's test_config.
+  it.each([
+    ["key\r\n", "key"],
+    ["key\n", "key"],
+    ["key", "key"],
+    ["key\n\n", "key\n"],
+    ["key\r\n\r\n", "key\r\n"],
+    ["key\r", "key\r"],
+  ])("strip one trailing line ending from %j", (content, expected) => {
+    expect(withoutLineEnding(content)).toBe(expected);
   });
 });

@@ -13,7 +13,7 @@
 //   --output <path>         --force (replace an existing file)   --yes (no questions)
 
 import { randomBytes } from "node:crypto";
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { chmodSync, existsSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { createInterface } from "node:readline/promises";
 import { fileURLToPath } from "node:url";
@@ -182,6 +182,8 @@ export async function configure(options, { interactive = false } = {}) {
     mode: 0o600,
     flag: options.force ? "w" : "wx",
   });
+  // The mode applies only to a new file; --force replaces an existing one's.
+  chmodSync(output, 0o600);
   return { output, values };
 }
 

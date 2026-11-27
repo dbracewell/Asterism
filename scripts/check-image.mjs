@@ -448,6 +448,12 @@ async function checkEdge(base, container, systemKey) {
   console.log(
     "ok: unknown hosts get 421; the system key works only inside the container",
   );
+  for (const path of ["/api/py/openapi.json", "/api/py/docs"]) {
+    const status = await rawStatus(base, path);
+    if (status !== 404)
+      throw new Error(`${path} answered ${status}; production serves no API docs`);
+  }
+  console.log("ok: the API schema and docs are not served in production");
 }
 
 const databaseCheck = String.raw`
@@ -478,6 +484,13 @@ async function checkContainer(image, variant) {
         name,
         "--stop-timeout",
         "30",
+        // The docker-compose.yml defaults (US-115.2).
+        "--cap-drop",
+        "ALL",
+        "--security-opt",
+        "no-new-privileges:true",
+        "--pids-limit",
+        "1024",
         "-p",
         "127.0.0.1::3000",
         "-v",

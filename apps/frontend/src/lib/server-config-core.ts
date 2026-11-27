@@ -36,6 +36,11 @@ export type FrontendServerConfig = {
 
 let cachedConfig: FrontendServerConfig | undefined;
 
+/** One trailing "\r\n" or "\n" comes off, as in the entrypoint and backend (US-115.2). */
+export function withoutLineEnding(text: string): string {
+  return text.replace(/\r?\n$/, "");
+}
+
 function fileSecret(name: SecretName): string | undefined {
   const directory = "/run/secrets";
   const canonical = join(directory, name);
@@ -53,7 +58,7 @@ function fileSecret(name: SecretName): string | undefined {
     throw new Error(`${name}: legacy file secret name; rename it to uppercase`);
   }
   if (!hasCanonical) return undefined;
-  return readFileSync(canonical, "utf8").replace(/\r?\n$/, "");
+  return withoutLineEnding(readFileSync(canonical, "utf8"));
 }
 
 function secret(name: SecretName): string {

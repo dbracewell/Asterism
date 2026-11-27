@@ -73,7 +73,7 @@ and `.env.example`. The file has a [strict syntax](#env-file-syntax). The values
 names the setting.
 
 **Secrets.** Keep `.env` readable only by the account that runs Compose
-(`chmod 600 .env`). Orchestrators can mount files instead, at
+(`chmod 600 .env`; the setup command writes it that way, also with `--force`). Orchestrators can mount files instead, at
 `/run/secrets/BETTER_AUTH_SECRET`, `/run/secrets/SYSTEM_KEY` and
 `/run/secrets/ADMIN_PASSPHRASE`. Store copies of `BETTER_AUTH_SECRET` and
 `SYSTEM_KEY` somewhere safe and apart from the backups: backups do not contain them,
@@ -494,7 +494,9 @@ with validation rules, is in
 
 **Secrets as files.** When `BETTER_AUTH_SECRET`, `SYSTEM_KEY` or `ADMIN_PASSPHRASE`
 isn't set, the container reads `/run/secrets/BETTER_AUTH_SECRET` and so on. Use
-exactly those uppercase names; an explicit environment value wins.
+exactly those uppercase names; an explicit environment value wins. One trailing
+line ending (`\n` or Windows `\r\n`) is dropped, the same for every command:
+start, backup, verify and restore.
 
 **Precedence.** A variable set in the process environment wins over `.env`, even
 when it is empty, and an empty required value is then refused.
@@ -541,6 +543,13 @@ These are on without configuration
   `Referrer-Policy: same-origin`.
 - With an `https://` `PUBLIC_URL`, responses send HSTS for a year and the
   authentication cookies are `Secure`, `HttpOnly` and `SameSite=Lax`.
+- `docker-compose.yml` drops every Linux capability, sets `no-new-privileges` and
+  limits the container to 1,024 processes and threads. Its
+  `host.docker.internal` mapping is optional: it lets the app reach model servers
+  on the same host, and can be removed when every provider is elsewhere.
+- The production backend serves no API schema or docs pages
+  (`/api/py/openapi.json`, `/api/py/docs`); development and code generation keep
+  them.
 - nginx limits each client address to 60 authentication writes, 60 uploads and 120
   chat connections a minute, each with a burst of 60. Refused requests get a 429 with
   `Retry-After`.

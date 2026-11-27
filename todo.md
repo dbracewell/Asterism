@@ -125,12 +125,12 @@ Source: repository review (2026-11-26), verified against the code at `40101ac7`.
   - [x] Readiness checks reuse a result for a few seconds.
   - [x] Tests (`check:image` or edge-config) and release note.
 - [x] US-115.2: Container and setup defaults
-  - [ ] `docker-compose.yml` drops capabilities, sets `no-new-privileges` and a process limit; the host gateway mapping is documented as optional.
-  - [ ] `setup.mjs --force` leaves `.env` readable only by its owner.
-  - [ ] Secret files with Windows line endings give the same key in every entrypoint command.
-  - [ ] API docs are off in production.
-  - [ ] Release note (Configuration, Image).
-- [ ] US-115.3: Backups restore privately and refuse a missing key
+  - [x] `docker-compose.yml` drops capabilities, sets `no-new-privileges` and a process limit; the host gateway mapping is documented as optional.
+  - [x] `setup.mjs --force` leaves `.env` readable only by its owner.
+  - [x] Secret files with Windows line endings give the same key in every entrypoint command.
+  - [x] API docs are off in production.
+  - [x] Release note (Configuration, Image).
+- [x] US-115.3: Backups restore privately and refuse a missing key
   - [ ] Restored databases are readable only by their owner.
   - [ ] A restore stops when the backup recorded a system key and none is set.
   - [ ] Extraction has total size and file count limits; vector table names are checked.
