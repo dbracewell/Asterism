@@ -46,6 +46,14 @@ Unreleased into its version and date.
 
 ### Behavior
 
+- An open chat closes its connection when the sign-in token behind it expires
+  and reconnects with a fresh one; a reply that is running carries on.
+- Creating a password reset link cancels the account's earlier unused links.
+- Joining a class through an invite either fully succeeds or leaves the invite
+  unused; before, a failure partway could use up the invite.
+- A ChatGPT connection can't finish for an account suspended while it was
+  connecting, and each connection attempt can be completed only once.
+
 - Better Auth's admin routes that Asterism doesn't use (such as setting roles or
   passwords, creating users and impersonation) are closed over HTTP, so account
   changes always go through Admin → Users.

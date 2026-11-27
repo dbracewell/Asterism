@@ -94,6 +94,28 @@ async def test_concurrent_redemptions_admit_exactly_one_account(api):
         assert len(users) == 1
 
 
+async def test_a_failed_redemption_leaves_the_invite_unused(api):
+    """US-112.3: the claim, the user and the membership commit together."""
+    from asterism.domains.user.models import DeletedUserModel
+
+    client, sessions = api
+    klass = await make_class(client)
+    [invite] = await make_invites(client, klass["id"])
+    async with sessions() as session:
+        session.add(DeletedUserModel(id="gone"))
+        await session.commit()
+
+    refused = await redeem(client, invite["token"], user_id="gone")
+    assert refused.status_code == 400 and refused.json()["detail"] == INVALID_INVITE
+    async with sessions() as session:
+        stored = await session.scalar(select(ClassInviteModel))
+        assert stored is not None and stored.redeemed_at is None and stored.redeemed_by is None
+    assert (await redeem(client, invite["token"], user_id="new-1")).status_code == 200
+    async with sessions() as session:
+        stored = await session.scalar(select(ClassInviteModel))
+        assert stored is not None and stored.redeemed_by == "new-1"
+
+
 async def test_expired_revoked_and_unknown_invites_are_refused_alike(api):
     client, sessions = api
     klass = await make_class(client)

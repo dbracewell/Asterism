@@ -125,6 +125,29 @@ async def _is_user_deleted(
         return tombstone is not None
 
 
+async def add_user(user_id: str, identity: UserIdentity, session: AsyncSession) -> None:
+    """Insert a user and its main-agent configuration without committing.
+
+    For callers that create the user as part of a larger transaction; call
+    :func:`remember_created_user` after their commit.
+
+    Raises:
+        ConflictException: If the id belongs to a deleted (tombstoned) user.
+        IntegrityError: If the row already exists or another constraint fails.
+    """
+    if await _is_user_deleted(user_id, session):
+        raise ConflictException("User has been deleted and cannot be re-created")
+    await session.execute(insert(UserModel).values(id=user_id, **identity.values()))
+    await provision_main_agent(user_id, session)
+
+
+def remember_created_user(user_id: str, identity: UserIdentity) -> None:
+    """Record a committed new user in this process's caches."""
+    _user_cache[user_id] = True
+    _user_initialized_cache[user_id] = True
+    _identity_cache[user_id] = identity
+
+
 async def create_user(
     user_id: str,
     session: AsyncSession | None = None,
@@ -155,16 +178,10 @@ async def create_user(
     """
     identity = identity or UserIdentity()
     async with get_async_db_session(session) as session:
-        if await _is_user_deleted(user_id, session):
-            raise ConflictException("User has been deleted and cannot be re-created")
         try:
-            stmt = insert(UserModel).values(id=user_id, **identity.values())
-            await session.execute(stmt)
-            await provision_main_agent(user_id, session)
+            await add_user(user_id, identity, session)
             await session.commit()
-            _user_cache[user_id] = True
-            _user_initialized_cache[user_id] = True
-            _identity_cache[user_id] = identity
+            remember_created_user(user_id, identity)
             return UserCreateOutcome.CREATED
         except IntegrityError:
             # Lost an insert race (or the row pre-existed): roll back and

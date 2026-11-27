@@ -258,6 +258,29 @@ async def test_expired_unknown_and_declined_callbacks_never_exchange_a_code(chat
 
 
 @pytest.mark.asyncio
+async def test_a_suspended_account_cannot_finish_connecting(chatgpt):
+    """US-112.3: suspension between starting and the callback stops the link."""
+    from asterism.domains.user import lifecycle
+    from asterism.domains.user.models import UserModel
+
+    client, sessions, double = chatgpt
+    await enable(client)
+    params = await start(client)
+    async with sessions() as session:
+        await session.execute(update(UserModel).where(UserModel.id == "a").values(suspended_at=1))
+        await session.commit()
+    lifecycle._suspended_cache.clear()
+    try:
+        response = await client.get(
+            CALLBACK, params={"code": "code-1", "state": params["state"], "client_id": "oaiapp_1"}
+        )
+        assert redirect_result(response) == "denied"
+        assert double.requests_to("/api/accounts/oauth/token") == []
+    finally:
+        lifecycle._suspended_cache.clear()
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize("tamper", ["nonce", "audience"])
 async def test_invalid_id_token_saves_nothing(chatgpt, tamper):
     client, _, double = chatgpt

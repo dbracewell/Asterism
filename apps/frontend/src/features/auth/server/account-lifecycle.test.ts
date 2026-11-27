@@ -21,6 +21,7 @@ const mocks = vi.hoisted(() => ({
   removeUser: vi.fn(),
   findUserById: vi.fn(),
   createVerificationValue: vi.fn(),
+  deleteMany: vi.fn(),
   userSuspend: vi.fn(),
   userReactivate: vi.fn(),
   userDelete: vi.fn(),
@@ -47,7 +48,10 @@ vi.mock("@/lib/auth", () => ({
       removeUser: mocks.removeUser,
     },
     $context: Promise.resolve({
-      adapter: { findMany: async () => mocks.admins },
+      adapter: {
+        findMany: async () => mocks.admins,
+        deleteMany: mocks.deleteMany,
+      },
       internalAdapter: {
         findUserById: mocks.findUserById,
         createVerificationValue: mocks.createVerificationValue,
@@ -204,6 +208,25 @@ describe("issueResetLink", () => {
     expect(ttl).toBeGreaterThanOrEqual(RESET_LINK_TTL_SECONDS - 1);
     expect(ttl).toBeLessThanOrEqual(RESET_LINK_TTL_SECONDS + 1);
     expect(result.expiresAt).toBe(expiresAt.toISOString());
+  });
+
+  it("revokes the account's earlier reset links first", async () => {
+    mocks.findUserById.mockResolvedValue({ id: "ann" });
+    await issueResetLink("ann");
+    expect(mocks.deleteMany).toHaveBeenCalledWith({
+      model: "verification",
+      where: [
+        { field: "value", value: "ann" },
+        {
+          field: "identifier",
+          operator: "starts_with",
+          value: "reset-password:",
+        },
+      ],
+    });
+    expect(mocks.deleteMany.mock.invocationCallOrder[0]).toBeLessThan(
+      mocks.createVerificationValue.mock.invocationCallOrder[0],
+    );
   });
 
   it("issues a different token each time", async () => {

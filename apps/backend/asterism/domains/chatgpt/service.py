@@ -26,6 +26,7 @@ from asterism.common.log import get_logger
 from asterism.core.config import config
 from asterism.core.exceptions import BadDataException
 from asterism.db.database import get_async_db_session
+from asterism.domains.user.models import UserModel
 
 from . import plan_models, policy
 from .availability import PlanUnavailableReason, plan_status
@@ -228,12 +229,16 @@ class CallbackParams:
 
 
 async def _consume_attempt(state: str, session: AsyncSession) -> ChatGPTAuthorizationModel | None:
-    attempt = await session.get(ChatGPTAuthorizationModel, digest(state))
-    if attempt is None:
-        return None
-    await session.delete(attempt)
+    """Delete and return the attempt in one statement, so two callbacks can't both use it."""
+    attempt = (
+        await session.execute(
+            delete(ChatGPTAuthorizationModel)
+            .where(ChatGPTAuthorizationModel.state_digest == digest(state))
+            .returning(ChatGPTAuthorizationModel)
+        )
+    ).scalar_one_or_none()
     await session.commit()
-    if attempt.expires_at <= int(time.time()):
+    if attempt is None or attempt.expires_at <= int(time.time()):
         return None
     return attempt
 
@@ -269,6 +274,10 @@ async def complete_authorization(
     if attempt is None:
         return ChatGPTCallbackResult.EXPIRED
     user_id = attempt.user_id
+    # An account suspended since it started connecting doesn't finish (US-112.3).
+    # Read the row directly: the lifecycle module would make an import cycle.
+    if await session.scalar(select(UserModel.suspended_at).where(UserModel.id == user_id)) is not None:
+        return ChatGPTCallbackResult.DENIED
     if params.error:
         logger.info("ChatGPT authorization declined user=%s error=%s", user_id, params.error)
         return ChatGPTCallbackResult.DENIED

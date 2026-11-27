@@ -58,7 +58,9 @@ HTTP requests carry the token in the `Authorization: Bearer` header. The chat
 WebSocket carries it as a `token` query parameter, because browsers cannot set
 headers on a WebSocket. Query strings are kept out of every log for that reason:
 nginx's log format leaves them out, and the backend's logging redacts `token=`
-and `access_token=` values.
+and `access_token=` values. An open chat WebSocket closes with code 1008
+(`Token expired`) when its token expires; the browser fetches a fresh token and
+reconnects, and a reply that is still running carries on.
 
 `PUBLIC_URL` is the only identity setting. It is the token's expected issuer and
 audience, so a token issued for one instance is refused by another. The backend
@@ -321,7 +323,7 @@ credential checks.
 | Another user's resource, or one that doesn't exist | 404                                                                                                 |
 | Not an administrator on an admin route             | 403                                                                                                 |
 | Suspended account                                  | Sign-in refused with "This account is suspended. Ask your administrator."; backend requests refused |
-| Chat WebSocket refused                             | Closed with code 1008 and a reason (`Unauthorized`, `Chat not found`, `Forbidden`)                  |
+| Chat WebSocket refused                             | Closed with code 1008 and a reason (`Unauthorized`, `Chat not found`, `Forbidden`, `Token expired`) |
 | Too many requests from one address                 | 429 with `Retry-After: 60`                                                                          |
 
 **Signing out everywhere is not instant for the backend.** Sessions end at once,

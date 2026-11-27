@@ -12,12 +12,13 @@ import uuid
 
 from pydantic import SecretStr
 from sqlalchemy import select, update
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 import asterism.domains.user.service as user_service
 from asterism.common.log import get_logger
 from asterism.core import config
-from asterism.core.exceptions import BadDataException, NotFoundException, UnauthorizedException
+from asterism.core.exceptions import BadDataException, ConflictException, NotFoundException, UnauthorizedException
 from asterism.db.mixins import get_unix_timestamp
 from asterism.db.queries import paginate_select
 from asterism.domains.user.models import UserModel
@@ -175,6 +176,7 @@ async def redeem_invite(
             ClassInviteModel.id == invite.id,
             ClassInviteModel.redeemed_at.is_(None),
             ClassInviteModel.revoked_at.is_(None),
+            ClassInviteModel.expires_at > now,
         )
         .values(redeemed_at=now, redeemed_name=display_name)
         .returning(ClassInviteModel.id)
@@ -182,17 +184,21 @@ async def redeem_invite(
     if claimed.scalar_one_or_none() is None:
         await session.rollback()
         raise BadDataException(INVALID_INVITE)
-    # Commits the claim together with the new user row and main-agent config.
-    outcome = await user_service.create_user(
-        user_id=user_id,
-        session=session,
-        identity=user_service.UserIdentity.of(name=display_name, email=email),
-    )
-    if outcome is not user_service.UserCreateOutcome.CREATED:
-        # Lost a race with another creation of this id; create_user rolled the claim back.
-        raise BadDataException(INVALID_INVITE)
-    await session.execute(update(ClassInviteModel).where(ClassInviteModel.id == invite.id).values(redeemed_by=user_id))
-    session.add(ClassMemberModel(class_id=class_row.id, user_id=user_id))
-    await session.commit()
+    identity = user_service.UserIdentity.of(name=display_name, email=email)
+    # The claim, the user row, its main-agent config and the membership commit
+    # together (US-112.3): a failure leaves the invite unused and no user.
+    try:
+        await user_service.add_user(user_id, identity, session)
+        # After the user row: redeemed_by references it.
+        await session.execute(
+            update(ClassInviteModel).where(ClassInviteModel.id == invite.id).values(redeemed_by=user_id)
+        )
+        session.add(ClassMemberModel(class_id=class_row.id, user_id=user_id))
+        await session.commit()
+    except (IntegrityError, ConflictException):
+        # Lost a race with another creation of this id, or a deleted id.
+        await session.rollback()
+        raise BadDataException(INVALID_INVITE) from None
+    user_service.remember_created_user(user_id, identity)
     logger.info(f"User {user_id} signed up with invite {invite.id} and joined class {class_row.id}")
     return InvitePreview(class_name=class_row.name, educator_name=await educator_name(class_row.educator_id, session))

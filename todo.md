@@ -122,12 +122,12 @@ Source: repository review (2026-11-26), verified against the code at `40101ac7`.
   - [x] Better Auth admin HTTP routes the app doesn't use are closed.
   - [x] Suspending or deleting admins re-checks that one active admin remains in the same transaction, so two admins acting at once can't remove both.
   - [x] Tests and release note.
-- [ ] US-112.3: Access ends with the account
-  - [ ] An open chat connection closes when its token expires.
-  - [ ] Invite redemption creates the user, claims the invite and adds the class membership in one transaction.
-  - [ ] The ChatGPT connection callback checks the account is active and uses its sign-in attempt exactly once.
-  - [ ] Issuing a password reset link revokes the account's earlier unused links.
-  - [ ] Tests and release note.
+- [x] US-112.3: Access ends with the account
+  - [x] An open chat connection closes when its token expires.
+  - [x] Invite redemption creates the user, claims the invite and adds the class membership in one transaction.
+  - [x] The ChatGPT connection callback checks the account is active and uses its sign-in attempt exactly once.
+  - [x] Issuing a password reset link revokes the account's earlier unused links.
+  - [x] Tests and release note.
 
 [EPIC-113](docs/epics/EPIC-113-AGENT-AND-BUDGET-LIMITS.md): Agent and budget limits
 
