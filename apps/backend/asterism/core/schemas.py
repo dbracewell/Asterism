@@ -19,6 +19,7 @@ class AuthedUser:
         name: Display name.
         role: Coarse authorization role; only "user" and "admin" are accepted.
         timezone: IANA timezone string from the profile, if set.
+        expires_at: When the token expires (Unix seconds), if known.
     """
 
     id: str
@@ -26,6 +27,7 @@ class AuthedUser:
     name: str
     role: Literal["user", "admin"]
     timezone: str | None = None
+    expires_at: float | None = None
 
 
 class ErrorDetail(BaseModel):

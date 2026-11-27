@@ -95,6 +95,8 @@ def verify_jwks_token(token: str) -> AuthedUser:
             name=name,
             role=role_literal,
             timezone=timezone,
+            # Decoding requires exp; tolerate its absence only where decode is stubbed.
+            expires_at=float(exp) if isinstance(exp := payload.get("exp"), int | float) else None,
         )
     except (jwt.PyJWTError, ValidationError) as exc:
         raise UnauthorizedException() from exc

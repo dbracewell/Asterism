@@ -18,7 +18,7 @@ class Connection(ABC):
     async def send_json(self, data: dict) -> None: ...
 
     @abstractmethod
-    async def close(self) -> None: ...
+    async def close(self, code: int = 1000, reason: str | None = None) -> None: ...
 
     async def heartbeat_loop(self) -> None:
         try:
@@ -45,7 +45,7 @@ class WebSocketConnection(Connection):
         if self.is_connected:
             await self.ws.send_json(data)
 
-    async def close(self) -> None:
+    async def close(self, code: int = 1000, reason: str | None = None) -> None:
         if self.is_connected:
             self.is_connected = False
-            await self.ws.close()
+            await self.ws.close(code=code, reason=reason)

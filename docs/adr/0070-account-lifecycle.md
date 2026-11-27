@@ -39,7 +39,9 @@ Auth's own reset request writes (`reset-password:<token>`, valid one hour, a
 256-bit random token) and shows the link once. `/reset-password` posts the new
 password to Better Auth's `/reset-password`, which checks the expiry, deletes the
 record on use and, with `revokeSessionsOnPasswordReset`, ends every session. No
-email is sent, so there is no public "forgot password" request.
+email is sent, so there is no public "forgot password" request. Since US-112.3 a
+new link deletes the account's earlier unused reset records first, so only the
+latest link works.
 
 **Deletion.** The Better Auth account goes first, then the backend data
 (`delete_user`, which also writes the tombstone). If the second step fails the

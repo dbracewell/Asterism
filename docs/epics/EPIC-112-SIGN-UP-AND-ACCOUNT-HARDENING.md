@@ -1,6 +1,6 @@
 # EPIC-112: Sign-up and account hardening
 
-Status: in progress (2026-11-26). Source: repository review (2026-11-26),
+Status: complete (2026-11-26). Source: repository review (2026-11-26),
 verified against the code at `40101ac7`.
 
 ## Objective
@@ -45,10 +45,10 @@ the backend copy, groups and last-admin rule always hold.
 As an admin, I want a suspended or deleted account's sessions and flows to
 stop, and invites to redeem in one step.
 
-- [ ] An open chat connection closes when its token expires.
-- [ ] Invite redemption creates the user, claims the invite and adds the class
+- [x] An open chat connection closes when its token expires.
+- [x] Invite redemption creates the user, claims the invite and adds the class
       membership in one transaction.
-- [ ] The ChatGPT connection callback checks the account is active and uses
+- [x] The ChatGPT connection callback checks the account is active and uses
       its sign-in attempt exactly once.
-- [ ] Issuing a password reset link revokes the account's earlier unused links.
-- [ ] Tests and release note.
+- [x] Issuing a password reset link revokes the account's earlier unused links.
+- [x] Tests and release note.

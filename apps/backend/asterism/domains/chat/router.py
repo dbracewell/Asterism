@@ -195,6 +195,7 @@ async def chat(
             connection=WebSocketConnection(websocket=websocket),
             job=job,
             admission=admission,
+            expires_at=user.expires_at,
         )
 
         await controller.run()

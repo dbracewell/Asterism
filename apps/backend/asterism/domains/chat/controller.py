@@ -1,4 +1,5 @@
 import asyncio
+import time
 import uuid
 from logging import Logger
 from typing import cast
@@ -24,8 +25,12 @@ class ChatController:
         connection: Connection,
         job: ChatJob,
         admission: ControllerAdmission,
+        expires_at: float | None = None,
     ):
         self.chat_id: uuid.UUID = chat_id
+        # When the connecting token expires (Unix seconds); the socket closes
+        # then with 1008 and the client reconnects with a fresh token (US-112.3).
+        self.expires_at = expires_at
         self.connection: Connection = connection
         self.admission = admission
         self.job = job
@@ -69,6 +74,8 @@ class ChatController:
                 asyncio.create_task(self._accept_commands_loop()),
                 asyncio.create_task(self._process_commands_loop()),
             ]
+            if self.expires_at is not None:
+                command_tasks.append(asyncio.create_task(self._close_at_expiry(self.expires_at)))
             await asyncio.gather(*command_tasks)
         except WebSocketDisconnect:
             self.logger.info("Chat stream disconnected")
@@ -91,6 +98,14 @@ class ChatController:
             if self.outbound is not None:
                 unsubscribe(self.chat_id, self.outbound)
             await self.manager.detach(self.chat_id, self.job, self.admission)
+
+    async def _close_at_expiry(self, expires_at: float) -> None:
+        """Close the socket once its token expires; running work carries on."""
+        await asyncio.sleep(max(0.0, expires_at - time.time()))
+        self.logger.info("Chat stream token expired")
+        self._is_running = False
+        await self.connection.close(code=1008, reason="Token expired")
+        raise WebSocketDisconnect(code=1008)
 
     async def _accept_commands_loop(self) -> None:
         while self._is_running:

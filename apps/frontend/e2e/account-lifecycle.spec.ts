@@ -94,16 +94,33 @@ test("an administrator resets, suspends, reactivates and deletes an account", as
   }
 
   // A one-time reset link: works once, then refuses, and ends old sessions.
-  await actions.click();
-  await admin
-    .getByRole("menuitem", { name: "Create password reset link" })
-    .click();
-  const link = await admin
-    .getByRole("textbox", { name: "Password reset link" })
-    .inputValue();
-  await admin.getByRole("button", { name: "Done" }).click();
-  const resetPath = new URL(link);
+  // A newer link replaces an earlier unused one (US-112.3).
+  const createLink = async () => {
+    await actions.click();
+    await admin
+      .getByRole("menuitem", { name: "Create password reset link" })
+      .click();
+    const value = await admin
+      .getByRole("textbox", { name: "Password reset link" })
+      .inputValue();
+    await admin.getByRole("button", { name: "Done" }).click();
+    return new URL(value);
+  };
+  const replaced = await createLink();
+  const resetPath = await createLink();
   expect(resetPath.pathname).toBe("/reset-password");
+  {
+    const context = await fresh(browser);
+    const page = await context.newPage();
+    await page.goto(`${replaced.pathname}${replaced.search}`);
+    await page.getByLabel("New password", { exact: true }).fill(NEW_PASSWORD);
+    await page.getByLabel("Confirm new password").fill(NEW_PASSWORD);
+    await page.getByRole("button", { name: "Set password" }).click();
+    await expect(page.locator("#reset-error")).toContainText(
+      "may have been used already or expired",
+    );
+    await context.close();
+  }
 
   for (const attempt of ["first", "reuse"] as const) {
     const context = await fresh(browser);

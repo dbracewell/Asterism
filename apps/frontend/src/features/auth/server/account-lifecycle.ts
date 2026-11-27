@@ -178,6 +178,19 @@ export async function issueResetLink(userId: string): Promise<ResetLinkResult> {
   if (!(await context.internalAdapter.findUserById(userId))) {
     return { ok: false, error: "This account no longer exists." };
   }
+  // A new link replaces any earlier unused one (US-112.3), so only the link
+  // the admin just handed over works.
+  await context.adapter.deleteMany({
+    model: "verification",
+    where: [
+      { field: "value", value: userId },
+      {
+        field: "identifier",
+        operator: "starts_with",
+        value: "reset-password:",
+      },
+    ],
+  });
   const token = randomBytes(32).toString("base64url");
   const expiresAt = new Date(Date.now() + RESET_LINK_TTL_SECONDS * 1000);
   await context.internalAdapter.createVerificationValue({

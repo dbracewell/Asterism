@@ -134,6 +134,56 @@ async def test_controller_disconnect_does_not_cancel_the_chat_job():
 
 
 @pytest.mark.asyncio
+async def test_controller_closes_the_socket_when_its_token_expires():
+    """US-112.3: a socket outliving its token closes with 1008; work carries on."""
+    closed: list[tuple[int, str | None]] = []
+
+    class IdleConnection:
+        async def accept(self):
+            pass
+
+        async def receive_json(self):
+            await asyncio.Event().wait()
+
+        async def send_json(self, _data):
+            pass
+
+        async def close(self, code=1000, reason=None):
+            closed.append((code, reason))
+
+        async def heartbeat_loop(self):
+            await asyncio.Event().wait()
+
+    manager = ChatJobManager()
+    chat_id = uuid.uuid4()
+    release = asyncio.Event()
+
+    async def run_agent():
+        await release.wait()
+
+    orchestrator = SimpleNamespace(
+        run_agent=run_agent,
+        resume_pending_turn=run_agent,
+        generate_chat_title=lambda: asyncio.sleep(0),
+        is_active=False,
+    )
+    job = manager.get_or_create(chat_id, orchestrator, user_id="user-a")
+    controller = ChatController(
+        chat_id=chat_id,
+        connection=IdleConnection(),  # type: ignore[arg-type]
+        admission=manager.admit_controller("user-a"),
+        job=job,
+        expires_at=time.time() + 0.05,
+    )
+
+    await asyncio.wait_for(controller.run(), timeout=2)
+    assert closed == [(1008, "Token expired")]
+    assert job.is_active
+    release.set()
+    await job.task
+
+
+@pytest.mark.asyncio
 async def test_cancelling_persists_a_terminal_partial_response(monkeypatch):
     chat_id = uuid.uuid4()
     parent_id = uuid.uuid4()
