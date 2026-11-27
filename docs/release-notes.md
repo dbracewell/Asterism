@@ -65,6 +65,13 @@ Unreleased into its version and date.
 
 ### Behavior
 
+- The image prompt check ignores accents, full-width letters and invisible
+  characters, so they no longer slip a refused word past it.
+- `web_fetch` ignores proxy settings in the server's environment, renders only
+  HTML pages in the browser, and stops a rendered page after 100 requests.
+- Model provider clients no longer follow redirects, and saving or deleting a
+  provider drops its pooled client, so a rotated key or a removed provider is
+  not used again.
 - Uploaded and produced SVGs are cleaned before they are shown, so opening one
   in its own tab runs nothing; one with nothing drawable left shows as
   unavailable. Downloaded diagram SVGs keep no external stylesheet or `url()`.

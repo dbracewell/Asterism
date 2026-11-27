@@ -131,10 +131,10 @@ Source: repository review (2026-11-26), verified against the code at `40101ac7`.
   - [x] Downloaded diagram SVGs contain no external references.
   - [x] Tests and release note.
 - [x] US-116.3: Prompt checks and fetches resist evasion
-  - [ ] The image prompt check normalizes accents and removes invisible characters before matching.
-  - [ ] `web_fetch` ignores proxy environment variables, uses the browser only for HTML, and caps a page's subrequests.
-  - [ ] Model provider clients don't follow redirects and are dropped when a provider changes or is deleted.
-  - [ ] Tests and release note.
+  - [x] The image prompt check normalizes accents and removes invisible characters before matching.
+  - [x] `web_fetch` ignores proxy environment variables, uses the browser only for HTML, and caps a page's subrequests.
+  - [x] Model provider clients don't follow redirects and are dropped when a provider changes or is deleted.
+  - [x] Tests and release note.
 
 [EPIC-117](docs/epics/EPIC-117-CORRECTNESS-CLEANUP.md): Correctness cleanup
 

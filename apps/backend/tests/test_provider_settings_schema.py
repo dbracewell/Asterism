@@ -390,6 +390,9 @@ async def test_removing_a_provider_clears_its_draft_model(tmp_path):
         session.add(ApplicationSettingsModel(key="draft_model_id", value=str(model_id)))
         await session.commit()
 
+        from asterism.domains.llm.client import get_shared_openai_client
+
+        pooled = get_shared_openai_client("http://localhost:8080/v1", "secret")
         removal = (await get_provider_settings(session)).model_copy(
             update={"llm_providers": []},
         )
@@ -398,6 +401,9 @@ async def test_removing_a_provider_clears_its_draft_model(tmp_path):
         assert persisted.llm_providers == []
         assert persisted.draft_model_id is None
         assert persisted.draft_model is None
+        # US-116.3: the deleted provider's pooled client is dropped.
+        assert get_shared_openai_client("http://localhost:8080/v1", "secret") is not pooled
+        await pooled.close()
 
     await engine.dispose()
 

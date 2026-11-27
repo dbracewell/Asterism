@@ -270,3 +270,27 @@ async def test_the_client_reads_text_calls_only_when_it_offered_tools(monkeypatc
     events = [event async for event in client.chat(messages=[LLMMessage.user("hi")], tools=tools)]
     complete = next(event for event in events if event.type == LLMEventType.COMPLETE)
     assert len(complete.tool_calls or []) == expected
+
+
+@pytest.mark.asyncio
+async def test_provider_clients_do_not_follow_redirects():
+    """US-116.3: a redirect would carry the API key to another server."""
+    from asterism.domains.llm.client import close_openai_clients, get_shared_openai_client
+
+    client = get_shared_openai_client("http://redirect.test", "key")
+    assert client._client.follow_redirects is False  # pyright: ignore[reportPrivateUsage]
+    await close_openai_clients()
+
+
+@pytest.mark.asyncio
+async def test_saving_providers_drops_their_pooled_clients():
+    """US-116.3: a changed or deleted provider's client is not reused."""
+    from asterism.domains.llm.client import close_openai_clients, forget_openai_clients, get_shared_openai_client
+
+    old = get_shared_openai_client("http://provider.test", "old-key")
+    other = get_shared_openai_client("http://other.test", "key")
+    forget_openai_clients(["http://provider.test"])
+    assert get_shared_openai_client("http://provider.test", "old-key") is not old
+    assert get_shared_openai_client("http://other.test", "key") is other
+    await old.close()
+    await close_openai_clients()

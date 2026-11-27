@@ -36,10 +36,10 @@ safely.
 As an admin, I want the image prompt check and web fetches to hold up against
 unusual input.
 
-- [ ] The image prompt check normalizes accents and removes invisible
+- [x] The image prompt check normalizes accents and removes invisible
       characters before matching.
-- [ ] `web_fetch` ignores proxy environment variables, uses the browser only
+- [x] `web_fetch` ignores proxy environment variables, uses the browser only
       for HTML, and caps a page's subrequests.
-- [ ] Model provider clients don't follow redirects and are dropped when a
+- [x] Model provider clients don't follow redirects and are dropped when a
       provider changes or is deleted.
-- [ ] Tests and release note.
+- [x] Tests and release note.

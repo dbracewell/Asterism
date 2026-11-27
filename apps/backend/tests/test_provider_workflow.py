@@ -1,5 +1,5 @@
 import uuid
-from unittest.mock import call, patch
+from unittest.mock import ANY, call, patch
 
 # Importing knowledge.policy installs the captioning-selection guard that provider
 # saves check, as the app's routers do; without it this file fails on its own.
@@ -180,12 +180,16 @@ async def test_runtime_lookup_uses_normalized_urls_and_only_active_models(tmp_pa
                 api_key="openai-secret",
                 base_url=OPENAI_BASE_URL,
                 timeout=120.0,
+                http_client=ANY,
             ),
             call(
                 api_key="local-secret",
                 base_url="http://localhost:8080/v1",
                 timeout=120.0,
+                http_client=ANY,
             ),
         ]
+        # US-116.3: neither client follows redirects.
+        assert all(entry.kwargs["http_client"].follow_redirects is False for entry in async_openai.call_args_list)
 
     await engine.dispose()
