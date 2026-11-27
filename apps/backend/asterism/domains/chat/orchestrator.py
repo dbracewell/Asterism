@@ -135,8 +135,9 @@ class ChatOrchestrator:
         if self.chat.info.agent_id is not None:
             await self.agent.refresh_main_configuration()
 
-    async def resume_pending_turn(self) -> None:
-        await self.reload_chat()
+    async def resume_pending_turn(self, *, reload: bool = True) -> None:
+        if reload:
+            await self.reload_chat()
         columns = await chat_service.pending_comparison_columns(self.user_id, self.chat_id)
         if columns:
             await self.run_comparison(columns)

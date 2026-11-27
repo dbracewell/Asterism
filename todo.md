@@ -129,14 +129,14 @@ Source: repository review (2026-11-26), verified against the code at `40101ac7`.
   - [x] Tool settings check component parameters; the generic setting route for study chat checks groups; nested secrets are redacted.
   - [x] Tests and release note.
 - [x] US-117.2: Chat and frontend fixes
-  - [ ] The chat connection's heartbeat timeout has a margin over the server's ping; stray `console.log` calls are removed.
-  - [ ] Chat titles can be generated again later in a chat.
-  - [ ] File names containing `%` open and show correctly.
-  - [ ] Sending a message refreshes only the queries it changes.
-  - [ ] Downloads share one helper; the shared event worker drops closed tabs and closes the stream on sign-out.
-  - [ ] The query client is per request on the server; the canvas preview keeps listening until a valid message arrives.
-  - [ ] Tests and release note.
-- [ ] US-117.3: Housekeeping
+  - [x] The chat connection's heartbeat timeout has a margin over the server's ping; stray `console.log` calls are removed.
+  - [x] Chat titles can be generated again later in a chat.
+  - [x] File names containing `%` open and show correctly.
+  - [x] Sending a message refreshes only the queries it changes.
+  - [x] Downloads share one helper; the shared event worker drops closed tabs and closes the stream on sign-out.
+  - [x] The query client is per request on the server; the canvas preview keeps listening until a valid message arrives.
+  - [x] Tests and release note.
+- [x] US-117.3: Housekeeping
   - [ ] Word tables with many columns keep a positive picture width; ZIP names keep their folder when disambiguated.
   - [ ] `SECURITY.md` names the supported version.
   - [ ] The container health check doesn't follow redirects; `reset-databases` checks the database URL prefix; `.dockerignore` excludes docs, tests and local data.

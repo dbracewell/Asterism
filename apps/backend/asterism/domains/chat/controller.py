@@ -133,7 +133,7 @@ class ChatController:
                     case "resume":
                         if self.job.is_active:
                             continue
-                        current_job = self.job.start(self.orchestrator.resume_pending_turn())
+                        current_job = self.job.start(self._resume_with_title())
                     case "regenerate":
                         # One run at a time per chat, whichever tab asks (US-113.3).
                         if self.job.is_active:
@@ -167,6 +167,15 @@ class ChatController:
                 await self.connection.send_json(error.packet())
             finally:
                 self.inbound_commands.task_done()
+
+    async def _resume_with_title(self) -> None:
+        """Run the accepted turn; a chat opened before its first message gets its title now (US-117.2)."""
+        await self.orchestrator.reload_chat()
+        try:
+            self.job.start_title_generation()
+        except ChatCapacityError:
+            pass  # A title is best effort; the turn itself was already admitted.
+        await self.orchestrator.resume_pending_turn(reload=False)
 
     async def _admit_new_run(self) -> None:
         """Refuse a regenerate over budget before it starts (ADR-0073); resumes finish admitted work."""

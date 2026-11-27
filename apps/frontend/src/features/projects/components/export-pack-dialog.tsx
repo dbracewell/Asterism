@@ -1,5 +1,6 @@
 "use client";
 
+import { saveBlob } from "@/lib/save-blob";
 import { ListSkeleton } from "@/components/loading-skeletons";
 import { QueryError } from "@/components/query-error";
 import { Button } from "@/components/ui/button";
@@ -39,14 +40,10 @@ const MAX_RUBRICS = 16;
 type Selection = Set<string>;
 
 function downloadPack(pack: PackManifest) {
-  const url = URL.createObjectURL(
+  saveBlob(
     new Blob([JSON.stringify(pack, null, 2)], { type: "application/json" }),
+    `${pack.pack.id}-${pack.pack.version}.team-pack.json`,
   );
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = `${pack.pack.id}-${pack.pack.version}.team-pack.json`;
-  link.click();
-  URL.revokeObjectURL(url);
 }
 
 /**

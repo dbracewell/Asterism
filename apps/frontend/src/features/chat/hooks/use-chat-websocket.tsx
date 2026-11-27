@@ -13,6 +13,11 @@ import { ComparisonTag, parseComparisonTag } from "../lib/comparison";
 import React, { useMemo } from "react";
 import useWebSocket from "react-use-websocket";
 
+/** How often the backend sends `{"type": "pong"}` (chat/connection.py). */
+export const SERVER_PONG_INTERVAL_MS = 10_000;
+/** Any message resets this; 2.5 server intervals leave room for a slow pong. */
+export const HEARTBEAT_TIMEOUT_MS = SERVER_PONG_INTERVAL_MS * 2.5;
+
 type UseChatWebSocketProps = {
   /** No connection is opened while this is null. */
   chatId: string | null;
@@ -178,11 +183,13 @@ export const useChatWebSocket = ({
     },
     reconnectAttempts: 10,
     reconnectInterval: 3000,
+    // The server sends a pong every SERVER_PONG_INTERVAL_MS; the connection is
+    // dropped only after missing more than two (US-117.2).
     heartbeat: {
-      message: JSON.stringify({ type: "ping" }), // Message sent to the server
-      interval: 30000, // Send every 30 seconds
-      timeout: 10000, // Wait 10 seconds for a response
-      returnMessage: "pong", // What the server returns to verify it's alive
+      message: JSON.stringify({ type: "ping" }),
+      interval: 30000,
+      timeout: HEARTBEAT_TIMEOUT_MS,
+      returnMessage: "pong",
     },
     onMessage: (event) => {
       let raw_object;
@@ -208,10 +215,8 @@ export const useChatWebSocket = ({
 
       const result = AgentEventSchema.safeParse(raw_object);
 
-      if (!result.success) {
-        console.log(result.error.message);
-        return;
-      }
+      // An event this client doesn't know is ignored; its text may quote the chat.
+      if (!result.success) return;
 
       const msgContent = result.data;
       // Comparison runs tag every packet with their column.

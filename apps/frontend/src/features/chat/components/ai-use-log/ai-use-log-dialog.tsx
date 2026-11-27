@@ -1,5 +1,6 @@
 "use client";
 
+import { saveBlob } from "@/lib/save-blob";
 import MarkdownViewer from "@/components/markdown-viewer";
 import { ListSkeleton } from "@/components/loading-skeletons";
 import { QueryError } from "@/components/query-error";
@@ -221,16 +222,11 @@ function ChooseTurns({
     else next.add(id);
     onChange(next);
   };
-  const download = () => {
-    const url = URL.createObjectURL(
+  const download = () =>
+    saveBlob(
       new Blob([markdown], { type: "text/markdown;charset=utf-8" }),
+      `ai-use-log-${new Date(log.generated_at * 1000).toISOString().slice(0, 10)}.md`,
     );
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `ai-use-log-${new Date(log.generated_at * 1000).toISOString().slice(0, 10)}.md`;
-    link.click();
-    URL.revokeObjectURL(url);
-  };
   const print = () => {
     setPrinting(true);
     document.body.classList.add("print-ai-use-log");

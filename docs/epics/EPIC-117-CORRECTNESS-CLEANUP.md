@@ -25,16 +25,16 @@ N+1 queries. None causes problems at today's scale.
 
 ### US-117.2: Chat and frontend fixes
 
-- [ ] The chat connection's heartbeat timeout has a margin over the server's
+- [x] The chat connection's heartbeat timeout has a margin over the server's
       ping; stray `console.log` calls are removed.
-- [ ] Chat titles can be generated again later in a chat.
-- [ ] File names containing `%` open and show correctly.
-- [ ] Sending a message refreshes only the queries it changes.
-- [ ] Downloads share one helper; the shared event worker drops closed tabs and
+- [x] Chat titles can be generated again later in a chat.
+- [x] File names containing `%` open and show correctly.
+- [x] Sending a message refreshes only the queries it changes.
+- [x] Downloads share one helper; the shared event worker drops closed tabs and
       closes the stream on sign-out.
-- [ ] The query client is per request on the server; the canvas preview keeps
+- [x] The query client is per request on the server; the canvas preview keeps
       listening until a valid message arrives.
-- [ ] Tests and release note.
+- [x] Tests and release note.
 
 ### US-117.3: Housekeeping
 

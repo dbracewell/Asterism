@@ -106,7 +106,9 @@ class ChatJob:
     def start_title_generation(self) -> asyncio.Task[None]:
         if self.retired:
             raise RuntimeError("This chat job has been retired")
-        if self.title_task is None:
+        # A finished attempt that found no first message yet can run again (US-117.2);
+        # it returns at once when the chat already has a title.
+        if self.title_task is None or self.title_task.done():
             if self.manager:
                 self.manager.acquire_work(self)
             self.title_task = self._watch(asyncio.create_task(self.orchestrator.generate_chat_title()))

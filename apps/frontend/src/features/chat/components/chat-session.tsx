@@ -1,4 +1,5 @@
 "use client";
+import { MESSAGE_SEND_INVALIDATES } from "@/features/chat/lib/send-invalidation";
 import { EmptyState } from "@/components/empty-state";
 import { QueryError } from "@/components/query-error";
 import { Button } from "@/components/ui/button";
@@ -204,7 +205,10 @@ export const ChatSession = ({
     },
   });
 
-  const sendMessage = useMutation(chatMessageSendMutation({ client }));
+  const sendMessage = useMutation({
+    ...chatMessageSendMutation({ client }),
+    meta: { invalidates: MESSAGE_SEND_INVALIDATES },
+  });
   const pendingSend = React.useRef<{
     requestId: string;
     parentId: string | null;

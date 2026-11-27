@@ -107,3 +107,42 @@ it("stops when the only tab's port is dead, and restarts for a new tab", () => {
   vi.advanceTimersByTime(10_000);
   expect(FakeEventSource.instances).toHaveLength(2);
 });
+
+const alive = (port: Port) => port.onmessage?.({ data: "alive" });
+
+it("drops a tab that stopped saying it is alive, and takes it back when it does", () => {
+  const quiet = connect();
+  const talking = connect();
+  for (let elapsed = 0; elapsed < 200_000; elapsed += 15_000) {
+    vi.advanceTimersByTime(15_000);
+    alive(talking);
+  }
+  FakeEventSource.instances[0].onmessage?.({ data: "after" });
+  expect(talking.postMessage).toHaveBeenCalledWith({
+    type: "message",
+    data: "after",
+  });
+  expect(quiet.postMessage).not.toHaveBeenCalledWith({
+    type: "message",
+    data: "after",
+  });
+
+  unload(talking);
+  expect(open()).toHaveLength(0);
+  // A background tab whose timers were slowed comes back on its next "alive".
+  alive(quiet);
+  expect(open()).toHaveLength(1);
+});
+
+it("closes the stream for every tab on sign-out until a page loads again", () => {
+  const first = connect();
+  connect();
+  first.onmessage?.({ data: "signout" });
+  expect(open()).toHaveLength(0);
+  alive(first);
+  vi.advanceTimersByTime(10_000);
+  expect(open()).toHaveLength(0);
+
+  connect();
+  expect(open()).toHaveLength(1);
+});
