@@ -69,6 +69,8 @@ resets. When a budget is used up:
 
 - new messages, regenerated answers and study tools wait until it resets, and the
   message says when that is;
+- a quiz you submit is still saved, with multiple-choice answers marked and
+  short answers left ungraded, saying why;
 - an answer that's already being written still finishes.
 
 Days start at midnight and months on the 1st, in the time zone your administrator

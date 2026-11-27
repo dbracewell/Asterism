@@ -46,6 +46,9 @@ Unreleased into its version and date.
 
 ### Behavior
 
+- Grading a quiz counts against the token budget like other study tools. Over
+  budget, the attempt is still saved, with short answers left ungraded and a note
+  saying why; before, grading ignored the budget.
 - An open chat closes its connection when the sign-in token behind it expires
   and reconnects with a fresh one; a reply that is running carries on.
 - Creating a password reset link cancels the account's earlier unused links.
@@ -53,20 +56,17 @@ Unreleased into its version and date.
   unused; before, a failure partway could use up the invite.
 - A ChatGPT connection can't finish for an account suspended while it was
   connecting, and each connection attempt can be completed only once.
-
 - Better Auth's admin routes that Asterism doesn't use (such as setting roles or
   passwords, creating users and impersonation) are closed over HTTP, so account
   changes always go through Admin → Users.
 - A suspended or deleted administrator's remaining token can no longer create
   users through `POST /users/`, and two administrators suspending or deleting
   each other at the same moment can't leave no active administrator.
-
 - Invite sign-up allows 60 attempts per address and 5 per invite link every 15
   minutes, so a class of 30 behind one school network can join together; before,
   10 per address blocked most of the class. First-run setup keeps 10 per address.
   The sign-up limiters count IPv6 clients by /64 network and, when full, forget
   the oldest address instead of refusing everyone.
-
 - Chats have a **Reflect** button at the top once they have an answer, so
   reflections are easier to find. In a project, it and the **Reflect on this
   session** menu item appear only while the project's Reflections area is on;

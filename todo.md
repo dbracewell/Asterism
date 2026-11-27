@@ -131,10 +131,10 @@ Source: repository review (2026-11-26), verified against the code at `40101ac7`.
 
 [EPIC-113](docs/epics/EPIC-113-AGENT-AND-BUDGET-LIMITS.md): Agent and budget limits
 
-- [ ] US-113.1: Quiz grading within the token budget
-  - [ ] Submitting an attempt checks the budget before grading short answers.
-  - [ ] Over budget, the attempt is still saved, with short answers marked ungraded and a message saying why.
-  - [ ] ADR-0073 note, tests and release note.
+- [x] US-113.1: Quiz grading within the token budget
+  - [x] Submitting an attempt checks the budget before grading short answers.
+  - [x] Over budget, the attempt is still saved, with short answers marked ungraded and a message saying why.
+  - [x] ADR-0073 note, tests and release note.
 - [ ] US-113.2: Text tool calls only when tools were offered
   - [ ] Tool calls written as text are read only when that request offered tools.
   - [ ] Tool-call tags inside fenced or inline code are left as text.

@@ -1,6 +1,6 @@
 # EPIC-113: Agent and budget limits
 
-Status: proposed (2026-11-26). Source: repository review (2026-11-26),
+Status: in progress (2026-11-26). Source: repository review (2026-11-26),
 verified against the code at `40101ac7`.
 
 ## Objective
@@ -16,10 +16,10 @@ retried or reported twice.
 As an admin, I want quiz grading to count against a person's budget like
 other work they start.
 
-- [ ] Submitting an attempt checks the budget before grading short answers.
-- [ ] Over budget, the attempt is still saved, with short answers marked
+- [x] Submitting an attempt checks the budget before grading short answers.
+- [x] Over budget, the attempt is still saved, with short answers marked
       ungraded and a message saying why.
-- [ ] ADR-0073 note, tests and release note.
+- [x] ADR-0073 note, tests and release note.
 
 ### US-113.2: Text tool calls only when tools were offered
 

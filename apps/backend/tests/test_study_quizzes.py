@@ -328,6 +328,33 @@ async def test_grading_failures_leave_only_that_answer_ungraded(drafts_api):
 
 
 @pytest.mark.asyncio
+async def test_over_budget_saves_the_attempt_with_short_answers_ungraded(drafts_api, monkeypatch):
+    """US-113.1: grading is new work, so it is refused over budget; the attempt is still saved."""
+    from asterism.domains.usage.service import UsageLimitExceeded
+
+    api = drafts_api
+    project_id, _, quiz = await setup_quiz(api)
+
+    async def over_budget(user_id, session):
+        raise UsageLimitExceeded("You've used your daily budget of 10 tokens.", resets_at=1_800_000_000)
+
+    monkeypatch.setattr("asterism.domains.llm.selection.require_within_budget", over_budget)
+    prompts_before = len(api.model.prompts)
+    answers = [
+        answer_for(quiz, "What does ATP do?", text="learner says energy"),
+        answer_for(quiz, "Cell membrane is made of?", choice=option_index(quiz, "Cell membrane is made of?", "Lipids")),
+    ]
+    response = await submit(api, project_id, quiz["id"], answers)
+    assert response.status_code == 201, response.text
+    attempt = response.json()
+    assert attempt["score"] == 1 and attempt["ungraded_count"] == 1 and attempt["grader_model_id"] is None
+    [ungraded] = [r for r in attempt["results"] if r["verdict"] == "ungraded"]
+    assert ungraded["text"] == "learner says energy"
+    assert ungraded["feedback"] == "Not graded: You've used your daily budget of 10 tokens."
+    assert len(api.model.prompts) == prompts_before
+
+
+@pytest.mark.asyncio
 async def test_slow_grading_hits_the_deadline_and_is_ungraded(drafts_api, monkeypatch):
     import asyncio
 

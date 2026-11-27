@@ -71,8 +71,14 @@ last turn.
 
 **Background work is counted but never refused (decided 2026-11-18).** Chat
 titles, image captions and compaction always run, so files keep being processed
-and chats keep working. Quiz grading finishes a submitted attempt, so it is
-counted with `admit=False`.
+and chats keep working.
+
+**Quiz grading is admitted like other work (US-113.1, 2026-11-26).** Grading was
+first counted with `admit=False`, as finishing a submitted attempt. But each
+submission is new work the person starts and can repeat, so it is now checked
+against the budget. Over budget the attempt is still saved: multiple-choice
+answers are marked, and short answers are `ungraded` with the budget message as
+their feedback.
 
 **No backfill (decided 2026-11-18).** The ledger starts empty at the migration.
 Usage before the upgrade stays visible per run but is not in the usage view or
