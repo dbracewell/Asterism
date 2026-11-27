@@ -59,3 +59,26 @@ EPIC-111 is complete: every story was confirmed and merged on 2026-11-26 through
   - [x] Project Overview shows the newest reflection or a prompt
   - [x] Help topics and guide name every way in
   - [x] Tests, guide and release note
+
+## Sign-up and account hardening
+
+EPIC-112 is complete: every story was confirmed and merged on 2026-11-26 through pull requests #148 to #150. After setup the admin passphrase needs the system key; invite sign-up fits a class on one network; admin changes go only through the app, from active admins, with a race-safe last-admin guard; and chat connections, invites, the ChatGPT callback and reset links end or stay single-use with the account.
+
+### [EPIC-112: Sign-up and account hardening](../epics/EPIC-112-SIGN-UP-AND-ACCOUNT-HARDENING.md)
+
+- [x] US-112.1: Sign-up limits that match the docs and fit a classroom
+  - [x] The passphrase alone works only before any account exists; afterwards it also needs the system key
+  - [x] Invite sign-up limited per invite as well as per address (a class of 30 on one network)
+  - [x] A full rate-limit store drops its oldest entries; IPv6 grouped by /64
+  - [x] Tests, auth-and-security doc and release note
+- [x] US-112.2: Admin changes only from active admins, through the app
+  - [x] `POST /users/` from a signed-in admin checks the caller is still active and not deleted; user ids are bounded and system keys are secret fields.
+  - [x] Better Auth admin HTTP routes the app doesn't use are closed.
+  - [x] Suspending or deleting admins re-checks that one active admin remains in the same transaction, so two admins acting at once can't remove both.
+  - [x] Tests and release note.
+- [x] US-112.3: Access ends with the account
+  - [x] An open chat connection closes when its token expires.
+  - [x] Invite redemption creates the user, claims the invite and adds the class membership in one transaction.
+  - [x] The ChatGPT connection callback checks the account is active and uses its sign-in attempt exactly once.
+  - [x] Issuing a password reset link revokes the account's earlier unused links.
+  - [x] Tests and release note.

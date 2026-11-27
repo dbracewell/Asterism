@@ -110,24 +110,7 @@ EPIC-96 through EPIC-101 (live policy availability, hiding what the admin turned
 
 Source: repository review (2026-11-26), verified against the code at `40101ac7`. Suggested order: EPIC-112 → 113 → 114 → 115 → 116 → 117. Work one story at a time.
 
-[EPIC-112](docs/epics/EPIC-112-SIGN-UP-AND-ACCOUNT-HARDENING.md): Sign-up and account hardening
-
-- [x] US-112.1: Sign-up limits that match the docs and fit a classroom
-  - [x] The passphrase alone works only before any account exists; afterwards it also needs the system key
-  - [x] Invite sign-up limited per invite as well as per address (a class of 30 on one network)
-  - [x] A full rate-limit store drops its oldest entries; IPv6 grouped by /64
-  - [x] Tests, auth-and-security doc and release note
-- [x] US-112.2: Admin changes only from active admins, through the app
-  - [x] `POST /users/` from a signed-in admin checks the caller is still active and not deleted; user ids are bounded and system keys are secret fields.
-  - [x] Better Auth admin HTTP routes the app doesn't use are closed.
-  - [x] Suspending or deleting admins re-checks that one active admin remains in the same transaction, so two admins acting at once can't remove both.
-  - [x] Tests and release note.
-- [x] US-112.3: Access ends with the account
-  - [x] An open chat connection closes when its token expires.
-  - [x] Invite redemption creates the user, claims the invite and adds the class membership in one transaction.
-  - [x] The ChatGPT connection callback checks the account is active and uses its sign-in attempt exactly once.
-  - [x] Issuing a password reset link revokes the account's earlier unused links.
-  - [x] Tests and release note.
+[EPIC-112](docs/epics/EPIC-112-SIGN-UP-AND-ACCOUNT-HARDENING.md) (US-112.1 through US-112.3) is complete and archived in the [2026-11-26 checklist](docs/archive/todo-completed-2026-11-26.md).
 
 [EPIC-113](docs/epics/EPIC-113-AGENT-AND-BUDGET-LIMITS.md): Agent and budget limits
 
