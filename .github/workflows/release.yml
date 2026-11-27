@@ -94,8 +94,8 @@ jobs:
 
       - name: Install dependencies for the theme storage check
         run: |
-          pnpm install --frozen-lockfile --config.strictDepBuilds=false --config.ignore-scripts=true
-          pnpm --filter @asterism/frontend install --frozen-lockfile --config.strictDepBuilds=false --config.ignore-scripts=true
+          pnpm install --frozen-lockfile --config.ignore-scripts=true
+          pnpm --filter @asterism/frontend install --frozen-lockfile --config.ignore-scripts=true
 
       - name: Set up Docker Buildx
         id: buildx

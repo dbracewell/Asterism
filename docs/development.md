@@ -199,6 +199,15 @@ accelerate: `pnpm check:default-install` (run in CI) fails on an update that
 pulls one in and names the package that does; move it to the `local-image`
 extra or leave the update out.
 
+pnpm enforces the same week: `minimumReleaseAge` in
+[`pnpm-workspace.yaml`](../pnpm-workspace.yaml) refuses a lockfile entry
+published less than seven days ago, even on a frozen install. A security update
+that needs a newer release adds that package to `minimumReleaseAgeExclude` in the
+same pull request, and the next routine update removes it. Only the packages under
+`allowBuilds` run install scripts; `strictDepBuilds` fails the install when any
+other dependency has one. Approve a new one there, by name, after reading its
+script.
+
 To review one:
 
 1. Read what changed: Dependabot links each package's release notes. For a major

@@ -23,11 +23,6 @@
     "format:check": "prettier . --check",
     "generate:icons": "node scripts/generate-icons.mjs"
   },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "better-sqlite3"
-    ]
-  },
   "prettier": {
     "plugins": [
       "prettier-plugin-tailwindcss"

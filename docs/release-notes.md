@@ -24,6 +24,9 @@ Unreleased into its version and date.
 
 ### Configuration
 
+- pnpm installs refuse packages published less than a week ago
+  (`minimumReleaseAge`), and only the packages listed under `allowBuilds` in
+  `pnpm-workspace.yaml` may run install scripts, in CI as in the image.
 - After first-run setup, creating an account with `ADMIN_PASSPHRASE` over
   Better Auth's sign-up route also needs `SYSTEM_KEY` (`systemKey` in the query).
   Scripts that create accounts this way must send both; the bundled browser

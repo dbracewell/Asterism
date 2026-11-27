@@ -15,9 +15,9 @@ and SBOM cover every runtime component.
 
 As a maintainer, I want only approved packages to run install scripts in CI.
 
-- [ ] CI and `ci:local:*` drop `approve-builds --all` and the flags that turn
+- [x] CI and `ci:local:*` drop `approve-builds --all` and the flags that turn
       the allowlist off; `strictDepBuilds` is on.
-- [ ] `minimumReleaseAge` is set to the week Dependabot already assumes.
+- [x] `minimumReleaseAge` is set to the week Dependabot already assumes.
 - [ ] CI passes (better-sqlite3 and Playwright still build); release note.
 
 ### US-114.2: Workflow tokens and timeouts
