@@ -1,6 +1,6 @@
 # EPIC-114: CI and image supply chain
 
-Status: in progress (2026-11-26). Source: repository review (2026-11-26),
+Status: complete (2026-11-27). Source: repository review (2026-11-26),
 verified against the code at `40101ac7`.
 
 ## Objective

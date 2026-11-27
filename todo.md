@@ -114,21 +114,7 @@ Source: repository review (2026-11-26), verified against the code at `40101ac7`.
 
 [EPIC-113](docs/epics/EPIC-113-AGENT-AND-BUDGET-LIMITS.md) (US-113.1 through US-113.3) is complete and archived in the [2026-11-26 checklist](docs/archive/todo-completed-2026-11-26.md).
 
-[EPIC-114](docs/epics/EPIC-114-CI-AND-IMAGE-SUPPLY-CHAIN.md): CI and image supply chain
-
-- [x] US-114.1: Dependency build scripts follow the allowlist
-  - [x] CI and `ci:local:*` drop `approve-builds --all` and the flags that turn the allowlist off; `strictDepBuilds` is on.
-  - [x] `minimumReleaseAge` is set to the week Dependabot already assumes.
-  - [x] CI passes (better-sqlite3 and Playwright still build); release note.
-- [x] US-114.2: Workflow tokens and timeouts
-  - [x] Every checkout sets `persist-credentials: false` unless a later step pushes.
-  - [x] Every release job has a timeout; fork pull requests get their own concurrency group.
-  - [x] The Node version comes from one place; `vuln-issue.mjs` survives a bad marker.
-- [x] US-114.3: Scans see every runtime component
-  - [x] `check:image` records and checks the extracted `libgbm1`, Node and Chromium versions.
-  - [x] `uv` comes from a digest-pinned image.
-  - [x] `install-trivy.mjs` uses a private temporary directory; `check-pins.mjs` compares paths reliably.
-  - [x] Tests for the scripts; release note (Image).
+[EPIC-114](docs/epics/EPIC-114-CI-AND-IMAGE-SUPPLY-CHAIN.md) (US-114.1 through US-114.3) is complete and archived in the [2026-11-26 checklist](docs/archive/todo-completed-2026-11-26.md).
 
 [EPIC-115](docs/epics/EPIC-115-PROXY-AND-DEPLOYMENT-HARDENING.md): Proxy and deployment hardening
 
