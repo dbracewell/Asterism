@@ -112,24 +112,7 @@ Source: repository review (2026-11-26), verified against the code at `40101ac7`.
 
 [EPIC-112](docs/epics/EPIC-112-SIGN-UP-AND-ACCOUNT-HARDENING.md) (US-112.1 through US-112.3) is complete and archived in the [2026-11-26 checklist](docs/archive/todo-completed-2026-11-26.md).
 
-[EPIC-113](docs/epics/EPIC-113-AGENT-AND-BUDGET-LIMITS.md): Agent and budget limits
-
-- [x] US-113.1: Quiz grading within the token budget
-  - [x] Submitting an attempt checks the budget before grading short answers.
-  - [x] Over budget, the attempt is still saved, with short answers marked ungraded and a message saying why.
-  - [x] ADR-0073 note, tests and release note.
-- [x] US-113.2: Text tool calls only when tools were offered
-  - [x] Tool calls written as text are read only when that request offered tools.
-  - [x] Tool-call tags inside fenced or inline code are left as text.
-  - [x] The final loop step, which offers no tools, never runs a tool call.
-  - [x] Tests and release note.
-- [x] US-113.3: Tool and stream errors end cleanly
-  - [x] Tool errors that would repeat (bad input, coded errors) are not retried.
-  - [x] A structured-output error ends the stream without a completion event.
-  - [x] Duplicate tool call ids are made unique before approval.
-  - [x] Regenerate is refused while a reply is running and reaches every open tab.
-  - [x] Tool approvals accept only true or false; unexpected tool errors return a generic message.
-  - [x] Tests and release note.
+[EPIC-113](docs/epics/EPIC-113-AGENT-AND-BUDGET-LIMITS.md) (US-113.1 through US-113.3) is complete and archived in the [2026-11-26 checklist](docs/archive/todo-completed-2026-11-26.md).
 
 [EPIC-114](docs/epics/EPIC-114-CI-AND-IMAGE-SUPPLY-CHAIN.md): CI and image supply chain
 

@@ -1,6 +1,6 @@
 # EPIC-113: Agent and budget limits
 
-Status: in progress (2026-11-26). Source: repository review (2026-11-26),
+Status: complete (2026-11-26). Source: repository review (2026-11-26),
 verified against the code at `40101ac7`.
 
 ## Objective
