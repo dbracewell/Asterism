@@ -3,12 +3,12 @@
 import asyncio
 import functools
 from collections.abc import AsyncGenerator
-from typing import Callable, Type
+from typing import Callable
 
 
 def async_retry[T](
     on_exceed_attempts: Callable[[BaseException], T],
-    no_retry: tuple[Type[Exception]] | None = None,
+    no_retry: tuple[type[Exception], ...] | None = None,
     max_retries=3,
     delay_base=2,
 ):

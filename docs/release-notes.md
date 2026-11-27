@@ -46,6 +46,11 @@ Unreleased into its version and date.
 
 ### Behavior
 
+- A tool error that would happen again, such as bad input, is no longer retried,
+  and an unexpected tool error shows the model only its type, not its details.
+  Repeated tool call ids are made unique before approval, a regenerate sent
+  while a reply is running is ignored and its notice reaches every open tab,
+  and a tool approval counts only a true or false answer.
 - Grading a quiz counts against the token budget like other study tools. Over
   budget, the attempt is still saved, with short answers left ungraded and a note
   saying why; before, grading ignored the budget.

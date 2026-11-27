@@ -302,6 +302,8 @@ class StreamHandler[T: BaseModel]:
                     generation_duration_ms=int((time.monotonic() - self.started_at) * 1000),
                     type=LLMEventType.ERROR,
                 )
+                # Terminal: no COMPLETE follows an ERROR (US-113.3).
+                return
 
         # Assemble provider-native tool calls from the per-index fragments. If
         # the model produced none, fall back to recovering calls that were

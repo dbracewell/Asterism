@@ -115,8 +115,10 @@ class ChatController:
                 continue
 
             if cmd.get("type") == "tool_approval":
-                tool_id = str(cmd.get("tool_id"))
-                is_approved = cmd.get("approved", False)
+                tool_id, is_approved = cmd.get("tool_id"), cmd.get("approved")
+                # Only a real true approves; "false" or 1 would be truthy (US-113.3).
+                if not isinstance(tool_id, str) or not tool_id or not isinstance(is_approved, bool):
+                    continue
                 self.orchestrator.resolve_tool_approval(tool_id, is_approved)
                 await self.queue.put({"type": "tool_update", "id": tool_id})
                 continue  # Skip putting this in the sequential queue
@@ -133,6 +135,9 @@ class ChatController:
                             continue
                         current_job = self.job.start(self.orchestrator.resume_pending_turn())
                     case "regenerate":
+                        # One run at a time per chat, whichever tab asks (US-113.3).
+                        if self.job.is_active:
+                            continue
                         await self._admit_new_run()
                         current_job = self.job.start(self._regenerate(cmd.get("parent_message_id", "")))
                     case "compact":
@@ -171,12 +176,8 @@ class ChatController:
     async def _regenerate(self, parent_message_id: str) -> None:
         await self.orchestrator.reload_chat()
         parent_message_index, parent_message = self.orchestrator.find_message(parent_message_id)
-        await self.connection.send_json(
-            {
-                "type": "regenerate",
-                "parent_id": str(parent_message.id),
-            },
-        )
+        # Every open tab replaces the same reply, not only the one that asked.
+        await self.queue.put({"type": "regenerate", "parent_id": str(parent_message.id)})
         await self.orchestrator.handle_regenerate_message(parent_message_index)
 
     async def _message_queue_processing_loop(self) -> None:

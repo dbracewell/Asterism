@@ -114,7 +114,8 @@ content/thinking deltas, and applies bounded transient retries. Tagged textual
 tool calls (`<tool_call>{...}</tool_call>`) from compatible endpoints are read
 only when that request offered tools, never from inside Markdown code, and still
 enter normal authorization (US-113.2). A step that offered no tools, such as the
-final one, never runs a call. Approved
+final one, never runs a call. Repeated or blank call ids are made unique before
+approval, since decisions and results are matched by id (US-113.3). Approved
 tools may execute concurrently; approval never grants capabilities outside the
 current effective allowlist. See [tool authorization](tool-authorization.md).
 
@@ -123,6 +124,13 @@ runs at the start of the run and of each loop step, when the provider stream
 starts, and on each completed step before it is recorded or its tools run. It
 does not run per text or thinking delta, since each check reads the database;
 a revocation mid-stream stops the turn at that step's completion.
+
+A tool that raises a `ValueError` (validation errors included) or a coded
+application error runs once: its message goes to the model as the tool result.
+Any other exception is retried with backoff, and once retries run out the model
+sees only `Tool failed unexpectedly (<type>)`; the details stay in the server log
+(US-113.3). A structured-output parse failure ends the stream with an `ERROR` and
+no `COMPLETE`.
 
 Agent events include `START`, `DELTA`, `TOOL_CALL`, `COMPLETE`, `ERROR`, and
 `SUB_AGENT`. The chat layer maps them to socket packets and persists actual model,
