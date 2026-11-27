@@ -144,10 +144,4 @@ Source: repository review (2026-11-26), verified against the code at `40101ac7`.
 
 ## Release pages (proposed 2026-11-27)
 
-[EPIC-118](docs/epics/EPIC-118-RELEASE-PAGES.md): Release pages
-
-- [ ] US-118.1: The release workflow creates the Release page
-  - [x] After the image is published and verified, a job creates the tag's Release from its section of the release notes, marked latest only when it is the newest tag, and updates it on a re-run.
-  - [x] Only that job can write to the repository.
-  - [ ] Pages for v0.2.2 through v0.5.0 are created from the release notes.
-  - [x] Tests, release guide and release note.
+[EPIC-118](docs/epics/EPIC-118-RELEASE-PAGES.md) (US-118.1) is complete and archived in the [2026-11-26 checklist](docs/archive/todo-completed-2026-11-26.md).
