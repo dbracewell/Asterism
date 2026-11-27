@@ -40,6 +40,7 @@ def main():
                 "apps/backend/asterism/serve.py",
                 "apps/backend/asterism/__init__.py",
                 "docker/entrypoint.sh",
+                "docker/secrets.sh",
             ):
                 shutil.copyfile(ROOT / source, context / Path(source).name)
             # serve.py configures logging from asterism.common.log (standard library only).
@@ -52,7 +53,7 @@ def main():
                 f"/app/apps/backend/.venv/bin/pip install --no-cache-dir uvicorn=={version}\n"
                 "COPY serve.py __init__.py /app/apps/backend/asterism/\n"
                 "COPY common /app/apps/backend/asterism/common\n"
-                "COPY entrypoint.sh /app/docker/entrypoint.sh\n"
+                "COPY entrypoint.sh secrets.sh /app/docker/\n"
                 "WORKDIR /app/apps/backend\n"
                 'ENTRYPOINT ["/bin/bash", "/app/docker/entrypoint.sh"]\n'
             )
