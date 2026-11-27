@@ -2,7 +2,7 @@
 import { useUser } from "@/features/auth/components/user-context";
 import { useTheme } from "@/features/theme/components/theme-context";
 import {
-  DEFAULT_FONT_SIZE,
+  allowedFontSize,
   DEFAULT_THEME_NAME,
 } from "@/features/theme/constants";
 import { useRouter } from "next/navigation";
@@ -18,7 +18,7 @@ export const ThemeCheck = () => {
   )
     ? user.settings.theme!
     : DEFAULT_THEME_NAME;
-  const desiredFontSize = user.settings.font_size ?? DEFAULT_FONT_SIZE;
+  const desiredFontSize = allowedFontSize(user.settings.font_size);
   const router = useRouter();
 
   useEffect(() => {

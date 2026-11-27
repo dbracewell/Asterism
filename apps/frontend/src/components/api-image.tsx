@@ -1,5 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 
+import { displayableImage } from "@/lib/displayable-image";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import {
@@ -117,12 +118,20 @@ function useFullImageUrl({
   });
   const { data, isFetching } = isChatFile ? chatQuery : libraryQuery;
   const [url, setUrl] = useState<string | null>(null);
+  // SVGs are cleaned before they get an object URL (US-116.2).
   useEffect(() => {
     if (!data) return;
-    const objectUrl = URL.createObjectURL(data);
-    setUrl(objectUrl);
+    let active = true;
+    let objectUrl: string | null = null;
+    const blob = data instanceof Blob ? data : new Blob([data as BlobPart]);
+    void displayableImage(blob, blob.type).then((image) => {
+      if (!active || !image) return;
+      objectUrl = URL.createObjectURL(image);
+      setUrl(objectUrl);
+    });
     return () => {
-      URL.revokeObjectURL(objectUrl);
+      active = false;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
       setUrl(null);
     };
   }, [data]);

@@ -279,6 +279,13 @@ server that published ports cannot reach.
 one-hour timeouts and unbuffered proxying; every other request times out after
 five minutes.
 
+**Shown files and preferences are checked.** Uploaded and produced SVGs are
+cleaned before they get an object URL, and diagram SVGs (shown and downloaded)
+keep no `@import` or external `url(...)`. File names lose control, format and
+text-direction characters such as U+202E. The font size rendered into the page
+is one of the sizes Settings offers, and preference cookies (theme, font size,
+sidebar) are `SameSite=Lax`, `Secure` over HTTPS and hold nothing secret.
+
 **Only port 3000 is published.** FastAPI (8000) and Next.js (3001) listen on
 loopback inside the container.
 

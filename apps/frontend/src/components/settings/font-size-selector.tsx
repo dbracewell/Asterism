@@ -9,6 +9,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useTheme } from "@/features/theme/components/theme-context";
+import { allowedFontSize, FONT_SIZES } from "@/features/theme/constants";
 
 interface FontSizeSelectorProps {
   id?: string;
@@ -25,7 +26,7 @@ export const FontSizeSelector = ({
 }: FontSizeSelectorProps) => {
   const { setFontSize } = useTheme();
 
-  const value = currentSize ?? "16px";
+  const value = allowedFontSize(currentSize);
 
   return (
     <Select
@@ -41,9 +42,9 @@ export const FontSizeSelector = ({
       </SelectTrigger>
       <SelectContent>
         <SelectGroup>
-          {[12, 14, 16, 18, 20].map((fs) => (
-            <SelectItem value={`${fs}px`} key={fs}>
-              {fs}
+          {FONT_SIZES.map((size) => (
+            <SelectItem value={size} key={size}>
+              {size.replace("px", "")}
             </SelectItem>
           ))}
         </SelectGroup>

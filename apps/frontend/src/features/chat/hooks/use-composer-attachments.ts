@@ -52,9 +52,11 @@ export function useComposerAttachments({
         name: file.name,
         file,
         state: "queued" as const,
-        preview: file.type.startsWith("image/")
-          ? URL.createObjectURL(file)
-          : undefined,
+        // No thumbnail for SVG: its markup is not cleaned until it is uploaded.
+        preview:
+          file.type.startsWith("image/") && file.type !== "image/svg+xml"
+            ? URL.createObjectURL(file)
+            : undefined,
       }));
       additions.forEach((file) => {
         if (file.preview) previewUrls.current.add(file.preview);

@@ -1,3 +1,4 @@
+import { setRootTextSize } from "./support/text-size";
 import { expect, request, test } from "./support/test";
 import { randomUUID } from "node:crypto";
 import {
@@ -53,15 +54,12 @@ for (const scenario of authViewports) {
 }
 test("a long unbroken login error wraps, scrolls and leaves fields/submit reachable", async ({
   page,
-  context,
 }) => {
   test.skip(
     process.env.ASTERISM_ISOLATED_E2E !== "true",
     "Use the isolated auth/storage runner",
   );
-  await context.addCookies([
-    { name: "asterism-font-size", value: "32px", url: "http://localhost:3100" },
-  ]);
+  await setRootTextSize(page, 32);
   await page.setViewportSize({ width: 320, height: 300 });
   await page.route("**/api/auth/sign-in/email", (route) =>
     route.fulfill({
@@ -120,9 +118,7 @@ test("successful login remains reachable at 320x300 with 200% text", async ({
     process.env.ASTERISM_ISOLATED_E2E !== "true",
     "Use the isolated auth/storage runner",
   );
-  await context.addCookies([
-    { name: "asterism-font-size", value: "32px", url: "http://localhost:3100" },
-  ]);
+  await setRootTextSize(page, 32);
   await page.setViewportSize({ width: 320, height: 300 });
   await page.goto("/sign-in?redirect=%2Fe2e%2Fthemes");
   const form = page.getByRole("form", { name: "Sign in", exact: true });

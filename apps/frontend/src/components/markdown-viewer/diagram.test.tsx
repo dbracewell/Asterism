@@ -76,6 +76,20 @@ describe("isClosedFence", () => {
 });
 
 describe("sanitizeDiagramSvg", () => {
+  it("leaves no stylesheet or url() reference outside the diagram (US-116.2)", () => {
+    const result = sanitizeDiagramSvg(
+      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10">' +
+        "<style>@import url('https://tracker.example/a.css');" +
+        "@font-face{src:url(https://tracker.example/f.woff)}" +
+        ".node{fill:url(#gradient)}</style>" +
+        '<rect class="node" style="fill:url(https://tracker.example/p)" width="10" height="10"/></svg>',
+    );
+    expect(result?.svg).toBeTruthy();
+    expect(result!.svg).not.toMatch(/tracker\.example|@import/);
+    // References within the diagram itself still work.
+    expect(result!.svg).toContain("url(#gradient)");
+  });
+
   it("removes scripts, handlers, foreign HTML, images and outside links", () => {
     const result = sanitizeDiagramSvg(
       svg(
