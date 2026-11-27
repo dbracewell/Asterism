@@ -446,3 +446,24 @@ async def test_exported_pack_imports_for_another_user(export_setup, monkeypatch)
         rows = await session.scalars(select(AgentProfileModel).where(AgentProfileModel.user_id == "b"))
         assert project.user_id == "b"
         assert {row.name for row in rows if row.sub_agent} == {agent["name"] for agent in pack["sub_agents"]}
+
+
+async def test_review_and_import_offer_only_the_tools_the_persons_group_allows(api):
+    """US-117.1: admin policy allows web_search, but this person's group doesn't."""
+    from asterism.domains.groups.models import GroupModel
+    from asterism.domains.user.models import UserModel
+
+    client, sessions = api
+    async with sessions() as session:
+        user = await session.get(UserModel, "a")
+        group = await session.get(GroupModel, user.group_id)
+        group.tool_access = []
+        await session.commit()
+    review = (await client.post("/team-packs/review", headers=auth(), json={"source": source()})).json()
+    assert review["sub_agents"][0]["requested_tools"] == [{"name": "web_search", "available": False}]
+
+    choices = decisions(manifest())
+    choices["sub_agents"][0]["approved_tools"] = ["web_search"]
+    before = await counts(sessions)
+    assert "not available here" in (await post_import(client, choices)).json()["detail"]
+    assert await counts(sessions) == before

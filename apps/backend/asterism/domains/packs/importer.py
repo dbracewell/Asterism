@@ -172,7 +172,7 @@ async def import_pack(*, user_id: str, payload: PackImportRequest, session: Asyn
     template_choices = _decisions((item.key for item in manifest.templates), payload.templates, "template")
     rubric_choices = _decisions((item.key for item in manifest.rubrics), payload.rubrics, "rubric")
     names = await existing_names(user_id, session)
-    tools = await available_tools(session)
+    tools = await available_tools(user_id, session)
 
     taken = set(names.sub_agents)
     agents = {

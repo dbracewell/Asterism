@@ -1,6 +1,6 @@
 # EPIC-117: Correctness cleanup
 
-Status: proposed (2026-11-26). Source: repository review (2026-11-26),
+Status: in progress (2026-11-27). Source: repository review (2026-11-26),
 verified against the code at `40101ac7`.
 
 ## Objective
@@ -15,13 +15,13 @@ N+1 queries. None causes problems at today's scale.
 
 ### US-117.1: Settings and admin consistency
 
-- [ ] A settings import that fails partway leaves nothing applied, and never
+- [x] A settings import that fails partway leaves nothing applied, and never
       gives the admin group a budget.
-- [ ] Model discovery keeps the draft model.
-- [ ] Pack review and course apply offer only tools the person's group allows.
-- [ ] Tool settings check component parameters; the generic setting route for
+- [x] Model discovery keeps the draft model.
+- [x] Pack review and course apply offer only tools the person's group allows.
+- [x] Tool settings check component parameters; the generic setting route for
       study chat checks groups; nested secrets are redacted.
-- [ ] Tests and release note.
+- [x] Tests and release note.
 
 ### US-117.2: Chat and frontend fixes
 

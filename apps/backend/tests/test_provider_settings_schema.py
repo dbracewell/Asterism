@@ -331,8 +331,8 @@ async def test_focused_settings_writes_return_the_persisted_resources(tmp_path):
     tool_settings = ToolSettings(
         active_tools=["web_search"],
         web_search_provider=ComponentProviderParameters(
-            name="SearXNG",
-            parameters={"base_url": "http://search"},
+            name="SearchXNGWebSearch",
+            parameters={"host": "http://search", "safe_search": "MODERATE"},
         ),
     )
 
@@ -533,8 +533,8 @@ async def test_provider_and_tool_api_keys_are_encrypted_at_rest_and_redacted_in_
     tool_settings = ToolSettings(
         active_tools=["web_search"],
         web_search_provider=ComponentProviderParameters(
-            name="Brave",
-            parameters={"api_key": "super-secret-brave-key", "safe_search": "moderate"},
+            name="BraveWebSearch",
+            parameters={"api_key": "super-secret-brave-key"},
         ),
     )
 
@@ -548,7 +548,6 @@ async def test_provider_and_tool_api_keys_are_encrypted_at_rest_and_redacted_in_
         assert persisted_tools.web_search_provider.parameters["api_key"] == "super-secret-brave-key"
         json_payload = persisted_tools.model_dump(mode="json")
         assert json_payload["web_search_provider"]["parameters"]["api_key"] == "**********"
-        assert json_payload["web_search_provider"]["parameters"]["safe_search"] == "moderate"
 
         # Submitting the redacted placeholder back preserves the existing stored secret.
         redacted_tools = ToolSettings.model_validate(json_payload)
@@ -645,3 +644,53 @@ async def test_generic_app_setting_mutations_validate_schema_and_captioning_poli
         assert len(settings.llm_providers) == 1
 
     await engine.dispose()
+
+
+@pytest.mark.asyncio
+async def test_tool_settings_check_component_parameters(tmp_path):
+    """US-117.1: the tool settings route checks parameters like the single-setting route."""
+    from asterism.core.exceptions import BadDataException
+
+    engine = create_async_engine(f"sqlite+aiosqlite:///{tmp_path / 'tools.db'}")
+    async with engine.begin() as connection:
+        await connection.run_sync(Base.metadata.create_all)
+    sessions = async_sessionmaker(engine, expire_on_commit=False)
+    async with sessions() as session:
+        for provider in (
+            ComponentProviderParameters(name="NoSuchSearch", parameters={}),
+            ComponentProviderParameters(name="SearchXNGWebSearch", parameters={"safe_search": "VERY"}),
+        ):
+            with pytest.raises(BadDataException):
+                await update_tool_settings(ToolSettings(active_tools=[], web_search_provider=provider), session)
+        saved = await update_tool_settings(
+            ToolSettings(
+                active_tools=[],
+                web_search_provider=ComponentProviderParameters(name="SearchXNGWebSearch", parameters={}),
+            ),
+            session,
+        )
+        # Stored normalized: the component's defaults are filled in.
+        assert saved.web_search_provider is not None
+        assert saved.web_search_provider.parameters == {"host": "http://localhost:8080", "safe_search": "MODERATE"}
+    await engine.dispose()
+
+
+def test_nested_secrets_are_redacted_and_kept_on_save():
+    """US-117.1: a secret inside a nested parameter is redacted and survives a round trip."""
+    from asterism.domains.settings.secrets import (
+        REDACTED_SECRET,
+        encrypt_component_provider_dict,
+        redact_component_parameters,
+    )
+
+    parameters = {"host": "h", "headers": {"x_api_key": "deep", "accept": "json"}, "auth": [{"token": "t"}]}
+    redacted = redact_component_parameters(parameters)
+    assert redacted == {
+        "host": "h",
+        "headers": {"x_api_key": REDACTED_SECRET, "accept": "json"},
+        "auth": [{"token": REDACTED_SECRET}],
+    }
+    stored = encrypt_component_provider_dict({"name": "C", "parameters": parameters})
+    saved = encrypt_component_provider_dict({"name": "C", "parameters": redacted}, stored)
+    assert saved["parameters"]["headers"]["x_api_key"] == "deep"
+    assert saved["parameters"]["auth"] == [{"token": "t"}]

@@ -86,9 +86,41 @@ def is_secret_parameter_key(key: str) -> bool:
     return normalized in _SECRET_KEY_NAMES or normalized.endswith(_SECRET_KEY_SUFFIXES)
 
 
+def _redacted(value: Any) -> Any:
+    if isinstance(value, dict):
+        return redact_component_parameters(value)
+    if isinstance(value, list):
+        return [_redacted(item) for item in value]
+    return value
+
+
 def redact_component_parameters(parameters: dict[str, Any]) -> dict[str, Any]:
-    """Replace the values of secret-looking keys with :data:`REDACTED_SECRET` (empty values stay empty)."""
-    return {k: (REDACTED_SECRET if is_secret_parameter_key(k) and v else v) for k, v in parameters.items()}
+    """Replace the values of secret-looking keys with :data:`REDACTED_SECRET`, at any depth (US-117.1).
+
+    Empty values stay empty, and a secret-named key holding an object or list
+    is redacted whole.
+    """
+    return {k: (REDACTED_SECRET if is_secret_parameter_key(k) and v else _redacted(v)) for k, v in parameters.items()}
+
+
+def _restore_nested_redactions(value: Any, existing: Any) -> Any:
+    """Put stored values back where a nested secret came back as the redaction marker."""
+    if isinstance(value, dict):
+        stored = existing if isinstance(existing, dict) else {}
+        restored: dict[str, Any] = {}
+        for k, v in value.items():
+            if is_secret_parameter_key(k) and v == REDACTED_SECRET and k in stored:
+                restored[k] = stored[k]
+            else:
+                restored[k] = _restore_nested_redactions(v, stored.get(k))
+        return restored
+    if isinstance(value, list):
+        stored_list = existing if isinstance(existing, list) else []
+        return [
+            _restore_nested_redactions(item, stored_list[index] if index < len(stored_list) else None)
+            for index, item in enumerate(value)
+        ]
+    return value
 
 
 def encrypt_component_provider_dict(
@@ -126,8 +158,9 @@ def encrypt_component_provider_dict(
             else:
                 encrypted_params[k] = encrypt_secret(str_val)
         else:
-            # Other parameters keep their JSON type (numbers, switches, workflows).
-            encrypted_params[k] = v
+            # Other parameters keep their JSON type (numbers, switches, workflows);
+            # a nested secret sent back redacted keeps its stored value.
+            encrypted_params[k] = _restore_nested_redactions(v, existing_params.get(k))
 
     return {
         **provider_dict,

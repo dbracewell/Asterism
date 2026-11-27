@@ -18,7 +18,7 @@ from asterism.domains.prompt_templates.models import PromptTemplateModel
 from asterism.domains.prompt_templates.queries import select_owned_rubrics, select_owned_templates
 from asterism.domains.settings.models import LLMModel
 from asterism.domains.settings.queries import select_visible_models
-from asterism.domains.settings.tool_settings import get_tool_settings
+from asterism.domains.settings.tool_settings import user_active_tools
 from asterism.domains.skills.documents import parse_document as parse_skill
 from asterism.domains.skills.models import SkillModel
 from asterism.domains.skills.policy import read_policy
@@ -72,10 +72,9 @@ async def existing_names(user_id: str, session: AsyncSession) -> ExistingNames:
     )
 
 
-async def available_tools(session: AsyncSession) -> frozenset[str]:
-    """Tools admin policy allows here; the same rule a saved sub-agent must meet."""
-    settings = await get_tool_settings(session=session)
-    return frozenset(settings.active_tools) & frozenset(tool_registry.registry)
+async def available_tools(user_id: str, session: AsyncSession) -> frozenset[str]:
+    """Tools admin policy and the person's group allow; the rule a saved sub-agent must meet (US-117.1)."""
+    return frozenset(await user_active_tools(user_id, session)) & frozenset(tool_registry.registry)
 
 
 def unmet_requirements(requirements: ModelRequirements, model: LLMModel) -> list:
@@ -100,7 +99,7 @@ async def _available_models(user_id: str, session: AsyncSession) -> list[LLMMode
 async def review_pack(*, user_id: str, source: str, session: AsyncSession) -> PackReview:
     manifest = parse_pack_text(source)
     names = await existing_names(user_id, session)
-    tools = await available_tools(session)
+    tools = await available_tools(user_id, session)
     models = await _available_models(user_id, session)
     skills_enabled = (await read_policy(session)).enabled
     sub_agents = [

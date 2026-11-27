@@ -25,7 +25,7 @@ from asterism.common.log import get_logger
 from asterism.core import config
 from asterism.core.events import EventType, NoArgEvent, event_bus
 from asterism.core.exceptions import BadDataException, ConflictException
-from asterism.domains.groups.models import GroupModel
+from asterism.domains.groups.models import ADMIN_GROUP, GroupModel
 from asterism.domains.knowledge.processing import update_captioning_configuration
 from asterism.domains.knowledge.processing_schemas import KnowledgeCaptionConfigurationUpdate
 from asterism.domains.settings.captioning_guard import get_captioning_selection_guard
@@ -279,7 +279,8 @@ async def _apply_groups(bundle: SettingsBundle, session: AsyncSession) -> None:
             found = [await _find_model(reference, session) for reference in group.models]
             row.model_access = sorted({str(model.id) for model in found if model is not None})
         row.tool_access = None if group.tools is None else sorted(set(group.tools))
-        if group.budget is not None:
+        # Admins are never limited, so the admin group never gets a budget (US-117.1).
+        if group.budget is not None and row.id != ADMIN_GROUP:
             row.daily_token_budget = group.budget.daily_token_budget
             row.monthly_token_budget = group.budget.monthly_token_budget
 
@@ -418,8 +419,10 @@ async def import_settings(
         await _put_component("image_search_provider", bundle.image_search_provider, session)
         await _apply_draft(bundle.draft_model, session)
         await _apply_usage_timezone(bundle, session)
-        await _apply_captioning(bundle, session)
         await _apply_compaction(bundle, session)
+        # Last: its transition commits the session (US-117.1). Anything after it
+        # would be applied, or fail, outside the import's one transaction.
+        await _apply_captioning(bundle, session)
         await session.commit()
     except IntegrityError as exc:
         await session.rollback()

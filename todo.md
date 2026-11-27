@@ -123,12 +123,12 @@ Source: repository review (2026-11-26), verified against the code at `40101ac7`.
 [EPIC-117](docs/epics/EPIC-117-CORRECTNESS-CLEANUP.md): Correctness cleanup
 
 - [ ] US-117.1: Settings and admin consistency
-  - [ ] A settings import that fails partway leaves nothing applied, and never gives the admin group a budget.
-  - [ ] Model discovery keeps the draft model.
-  - [ ] Pack review and course apply offer only tools the person's group allows.
-  - [ ] Tool settings check component parameters; the generic setting route for study chat checks groups; nested secrets are redacted.
-  - [ ] Tests and release note.
-- [ ] US-117.2: Chat and frontend fixes
+  - [x] A settings import that fails partway leaves nothing applied, and never gives the admin group a budget.
+  - [x] Model discovery keeps the draft model.
+  - [x] Pack review and course apply offer only tools the person's group allows.
+  - [x] Tool settings check component parameters; the generic setting route for study chat checks groups; nested secrets are redacted.
+  - [x] Tests and release note.
+- [x] US-117.2: Chat and frontend fixes
   - [ ] The chat connection's heartbeat timeout has a margin over the server's ping; stray `console.log` calls are removed.
   - [ ] Chat titles can be generated again later in a chat.
   - [ ] File names containing `%` open and show correctly.
