@@ -67,11 +67,30 @@ export const SUSPENDED_MESSAGE =
 /** How long an admin-issued password reset link works. */
 export const RESET_LINK_TTL_SECONDS = 60 * 60;
 
-/** Better Auth routes that stay callable from the server but not over HTTP. */
-export const LIFECYCLE_PATHS_WITHOUT_HTTP = [
+/**
+ * Better Auth routes that stay callable from the server but not over HTTP.
+ *
+ * Account lifecycle runs through the admin server actions, which also update
+ * the backend and keep the last-admin and self guards (US-86.2). The admin
+ * plugin's other routes have no caller, so they are closed too (US-112.2):
+ * over HTTP they would change accounts without the backend or those guards.
+ */
+export const PATHS_WITHOUT_HTTP = [
   "/admin/ban-user",
-  "/admin/unban-user",
+  "/admin/create-user",
+  "/admin/get-user",
+  "/admin/has-permission",
+  "/admin/impersonate-user",
+  "/admin/list-user-sessions",
+  "/admin/list-users",
   "/admin/remove-user",
+  "/admin/revoke-user-session",
+  "/admin/revoke-user-sessions",
+  "/admin/set-role",
+  "/admin/set-user-password",
+  "/admin/stop-impersonating",
+  "/admin/unban-user",
+  "/admin/update-user",
   "/request-password-reset",
 ];
 
@@ -95,7 +114,7 @@ function createAuth() {
     // Account lifecycle runs only through the admin server actions, which also
     // update the backend (US-86.2). Password resets use admin-issued links, so
     // there is no public "email me a link" request.
-    disabledPaths: LIFECYCLE_PATHS_WITHOUT_HTTP,
+    disabledPaths: PATHS_WITHOUT_HTTP,
     emailAndPassword: {
       enabled: true,
       autoSignIn: true,

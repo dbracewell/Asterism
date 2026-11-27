@@ -165,9 +165,10 @@ Identity lives in Better Auth and data lives in the backend, so every change to
 an account has to update both. Admin server actions in
 [`account-lifecycle.ts`](../../apps/frontend/src/features/auth/server/account-lifecycle.ts)
 do this, using the administrator's own session; Better Auth checks the admin
-permission, and the backend checks it again. Better Auth's own HTTP routes for
-banning, unbanning, removing users and requesting a password reset are disabled,
-so no one can do half of a change from outside
+permission, and the backend checks it again. Every route of Better Auth's admin
+plugin (banning, removing and creating users, setting roles and passwords,
+impersonation and the rest) and its password reset request are disabled over
+HTTP, so no one can do half of a change, or skip the guards below, from outside
 ([ADR-0070](../adr/0070-account-lifecycle.md)).
 
 | Action                  | What happens                                                                                                                                                | Order                           |
@@ -181,7 +182,9 @@ so no one can do half of a change from outside
 
 Admins cannot suspend or delete themselves, or the last active administrator.
 This is checked from Better Auth's roles in the action and from the admin group
-in the backend.
+in the backend. The backend checks again after the change, in the same
+transaction, so two admins suspending or deleting each other at once can't leave
+no active administrator.
 
 Reset links exist because Asterism sends no email. The admin copies the link and
 delivers it however they like; there is no public "forgot password" request.
@@ -195,7 +198,8 @@ Two internal paths use `SYSTEM_KEY`:
   route accepts the post only if the key matches, then delivers each event to that
   user's open tabs over server-sent events, never to anyone else's.
 - **Provisioning.** `POST /users/` and invite sign-ups accept the system key in
-  place of an admin token.
+  place of an admin token. An admin token counts only while that account is
+  active: a suspended or deleted admin's unexpired token is refused.
 
 The system key is not a signing key and is unrelated to tokens. It is also the
 key that encrypts stored provider API keys, which is why a restore checks that it

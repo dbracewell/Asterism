@@ -33,12 +33,12 @@ an admin, I want sign-up to go only through the app's own pages.
 As an admin, I want account changes to go through Asterism's own actions, so
 the backend copy, groups and last-admin rule always hold.
 
-- [ ] `POST /users/` from a signed-in admin checks the caller is still active
+- [x] `POST /users/` from a signed-in admin checks the caller is still active
       and not deleted; user ids are bounded and system keys are secret fields.
-- [ ] Better Auth admin HTTP routes the app doesn't use are closed.
-- [ ] Suspending or deleting admins re-checks that one active admin remains in
+- [x] Better Auth admin HTTP routes the app doesn't use are closed.
+- [x] Suspending or deleting admins re-checks that one active admin remains in
       the same transaction, so two admins acting at once can't remove both.
-- [ ] Tests and release note.
+- [x] Tests and release note.
 
 ### US-112.3: Access ends with the account
 

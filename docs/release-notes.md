@@ -46,6 +46,13 @@ Unreleased into its version and date.
 
 ### Behavior
 
+- Better Auth's admin routes that Asterism doesn't use (such as setting roles or
+  passwords, creating users and impersonation) are closed over HTTP, so account
+  changes always go through Admin → Users.
+- A suspended or deleted administrator's remaining token can no longer create
+  users through `POST /users/`, and two administrators suspending or deleting
+  each other at the same moment can't leave no active administrator.
+
 - Invite sign-up allows 60 attempts per address and 5 per invite link every 15
   minutes, so a class of 30 behind one school network can join together; before,
   10 per address blocked most of the class. First-run setup keeps 10 per address.

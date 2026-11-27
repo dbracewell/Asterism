@@ -77,8 +77,16 @@ test("an administrator resets, suspends, reactivates and deletes an account", as
     name: `Account actions for ${studentName}`,
   });
 
-  // Raw lifecycle routes are closed over HTTP; the admin UI is the way in.
-  for (const path of ["ban-user", "unban-user", "remove-user"]) {
+  // Raw admin routes are closed over HTTP; the admin UI is the way in.
+  for (const path of [
+    "ban-user",
+    "unban-user",
+    "remove-user",
+    "set-role",
+    "create-user",
+    "set-user-password",
+    "impersonate-user",
+  ]) {
     const raw = await admin.request.post(`/api/auth/admin/${path}`, {
       data: { userId: student.id },
     });

@@ -76,3 +76,23 @@ it("takes the passphrase alone only before anyone has an account", async () => {
     }),
   ).toEqual({ status: 200, role: "user" });
 });
+
+it("closes every admin plugin route over HTTP", async () => {
+  const { PATHS_WITHOUT_HTTP } = await import("./auth-core");
+  const adminPaths = Object.values(auth.api)
+    .map((endpoint) => (endpoint as { path?: string }).path)
+    .filter((path): path is string => !!path?.startsWith("/admin/"));
+  expect(adminPaths.length).toBeGreaterThan(10);
+  expect(PATHS_WITHOUT_HTTP).toEqual(expect.arrayContaining(adminPaths));
+  const response = await auth.handler(
+    new Request("https://asterism.example/api/auth/admin/set-role", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        origin: "https://asterism.example",
+      },
+      body: JSON.stringify({ userId: "someone", role: "admin" }),
+    }),
+  );
+  expect(response.status).toBe(404);
+});

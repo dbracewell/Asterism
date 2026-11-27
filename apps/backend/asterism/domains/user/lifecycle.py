@@ -18,7 +18,7 @@ the only writer (ADR-0019), and suspend/reactivate update the cache directly.
 """
 
 from cachetools import TTLCache
-from sqlalchemy import delete, func, select, update
+from sqlalchemy import delete, select, update
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -28,7 +28,8 @@ from asterism.db.mixins import get_unix_timestamp
 from asterism.domains.groups.models import ADMIN_GROUP
 
 from .models import AccountDeletionRequestModel, UserModel
-from .service import find_user_work, stop_user_work
+from .queries import select_active_admin_count
+from .service import LAST_ADMIN_MESSAGE, find_user_work, stop_user_work
 
 logger = get_logger("USER-LIFECYCLE")
 
@@ -86,13 +87,8 @@ async def check_admin_action(actor_id: str, target: UserModel, action: str, sess
         raise ForbiddenException(f"You can't {action} your own account")
     if target.group_id != ADMIN_GROUP:
         return
-    others = await session.scalar(
-        select(func.count())
-        .select_from(UserModel)
-        .where(UserModel.group_id == ADMIN_GROUP, UserModel.suspended_at.is_(None), UserModel.id != target.id)
-    )
-    if not others:
-        raise ConflictException(f"You can't {action} the last administrator")
+    if not await session.scalar(select_active_admin_count(excluding=target.id)):
+        raise ConflictException(LAST_ADMIN_MESSAGE.format(action=action))
 
 
 async def suspend_user(*, actor_id: str, user_id: str, session: AsyncSession) -> None:
@@ -108,6 +104,11 @@ async def suspend_user(*, actor_id: str, user_id: str, session: AsyncSession) ->
         .where(UserModel.id == user_id, UserModel.suspended_at.is_(None))
         .values(suspended_at=get_unix_timestamp())
     )
+    # Re-check after the write, in the same transaction: two admins
+    # suspending each other at once must not leave no active administrator.
+    if target.group_id == ADMIN_GROUP and not await session.scalar(select_active_admin_count()):
+        await session.rollback()
+        raise ConflictException(LAST_ADMIN_MESSAGE.format(action="suspend"))
     work = await find_user_work(user_id, session)
     await session.commit()
     _suspended_cache[user_id] = True

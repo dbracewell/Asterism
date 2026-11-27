@@ -2,7 +2,7 @@
 
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, Field, StringConstraints
+from pydantic import BaseModel, Field, SecretStr, StringConstraints
 
 from asterism.domains.groups.schemas import GroupRef
 
@@ -20,10 +20,10 @@ class CreateUserRequest(BaseModel):
             be an authenticated admin.
     """
 
-    user_id: str
+    user_id: Annotated[str, StringConstraints(min_length=1, max_length=255)]
     name: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=255)] | None = None
     email: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=320)] | None = None
-    system_key: str | None = Field(
+    system_key: SecretStr | None = Field(
         default=None,
         description="Optional system key for user creation.",
     )

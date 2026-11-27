@@ -845,10 +845,10 @@ export const zCoverageExclusion = z.object({
  * be an authenticated admin.
  */
 export const zCreateUserRequest = z.object({
-  user_id: z.string(),
+  user_id: z.string().min(1).max(255),
   name: z.string().min(1).max(255).nullish(),
   email: z.string().min(1).max(320).nullish(),
-  system_key: z.string().nullish(),
+  system_key: z.null().optional(),
 });
 
 /**
@@ -1685,7 +1685,6 @@ export const zForkProvenance = z.object({
  */
 export const zInviteCheckRequest = z.object({
   token: z.string().min(1).max(128),
-  system_key: z.string(),
 });
 
 /**
@@ -1706,7 +1705,6 @@ export const zInviteRedeemRequest = z.object({
   user_id: z.string().min(1).max(255),
   display_name: z.string().min(1).max(255),
   email: z.string().min(1).max(320),
-  system_key: z.string(),
 });
 
 /**
@@ -5729,6 +5727,50 @@ export const zVerifyRequest = z.object({
 });
 
 /**
+ * CreateUserRequest
+ *
+ * Request model for creating a new user.
+ *
+ * Attributes:
+ * user_id: The stable identifier to provision. Must match the id claim
+ * of the BetterAuth token this user will present.
+ * name: The account's current display name, copied for display.
+ * email: The account's current email, copied for administrators.
+ * system_key: Optional shared secret (``SYSTEM_KEY``) that lets an
+ * unauthenticated caller create users. When omitted, the caller must
+ * be an authenticated admin.
+ */
+export const zCreateUserRequestWritable = z.object({
+  user_id: z.string().min(1).max(255),
+  name: z.string().min(1).max(255).nullish(),
+  email: z.string().min(1).max(320).nullish(),
+  system_key: z.string().nullish(),
+});
+
+/**
+ * InviteCheckRequest
+ *
+ * Server-to-server: the signup page asks whether an invite can be used.
+ */
+export const zInviteCheckRequestWritable = z.object({
+  token: z.string().min(1).max(128),
+  system_key: z.string(),
+});
+
+/**
+ * InviteRedeemRequest
+ *
+ * Server-to-server: provision a just-created account through an invite.
+ */
+export const zInviteRedeemRequestWritable = z.object({
+  token: z.string().min(1).max(128),
+  user_id: z.string().min(1).max(255),
+  display_name: z.string().min(1).max(255),
+  email: z.string().min(1).max(320),
+  system_key: z.string(),
+});
+
+/**
  * Provider
  *
  * Full provider configuration including its models.
@@ -6758,14 +6800,14 @@ export const zClassInviteRevokePath = z.object({
  */
 export const zClassInviteRevokeResponse = z.void();
 
-export const zClassInviteCheckBody = zInviteCheckRequest;
+export const zClassInviteCheckBody = zInviteCheckRequestWritable;
 
 /**
  * Successful Response
  */
 export const zClassInviteCheckResponse = zInvitePreview;
 
-export const zClassInviteRedeemBody = zInviteRedeemRequest;
+export const zClassInviteRedeemBody = zInviteRedeemRequestWritable;
 
 /**
  * Successful Response
@@ -8185,7 +8227,7 @@ export const zUserGetManyQuery = z.object({
  */
 export const zUserGetManyResponse = zUserSummaryPage;
 
-export const zUserCreateUserBody = zCreateUserRequest;
+export const zUserCreateUserBody = zCreateUserRequestWritable;
 
 /**
  * Response Usercreateuser

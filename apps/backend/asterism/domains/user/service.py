@@ -46,7 +46,9 @@ from asterism.common.log import get_logger
 from asterism.core.exceptions import ConflictException, NotFoundException, UnauthorizedException
 from asterism.db.database import get_async_db_session
 from asterism.domains.agent.service import provision_main_agent
+from asterism.domains.groups.models import ADMIN_GROUP
 from asterism.domains.user.models import DeletedUserModel, UserModel
+from asterism.domains.user.queries import select_active_admin_count
 
 logger = get_logger("USER-SERVICE")
 
@@ -362,6 +364,9 @@ async def stop_user_work(user_id: str, work: _UserWork) -> None:
         logger.exception("Failed to stop background work for deleted user %s", user_id)
 
 
+LAST_ADMIN_MESSAGE = "You can't {action} the last administrator"
+
+
 async def delete_user(
     user_id: str,
     session: AsyncSession | None = None,
@@ -387,13 +392,20 @@ async def delete_user(
         NotFoundException: If no such user exists.
     """
     async with get_async_db_session(session) as session:
-        if await session.get(UserModel, user_id) is None:
+        target = await session.get(UserModel, user_id)
+        if target is None:
             raise NotFoundException("User not found")
+        was_admin = target.group_id == ADMIN_GROUP
         await stop_user_work(user_id, await find_user_work(user_id, session))
         # Ids read inside the delete transaction catch work started meanwhile.
         work = await find_user_work(user_id, session)
         try:
             await session.execute(delete(UserModel).where(UserModel.id == user_id))
+            # Re-check in the delete transaction: two admins deleting each
+            # other at once must not leave no active administrator.
+            if was_admin and not await session.scalar(select_active_admin_count()):
+                await session.rollback()
+                raise ConflictException(LAST_ADMIN_MESSAGE.format(action="delete"))
             await session.execute(insert(DeletedUserModel).values(id=user_id))
             await session.commit()
         except IntegrityError:
