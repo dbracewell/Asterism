@@ -349,7 +349,8 @@ and agent traces. A new table is not exported until it is added to the allowlist
 
 Builds run one at a time for the whole instance, in the background, and each user
 has at most one archive. The archive is written to `exports/` as `.partial`, renamed
-when complete and kept for 7 days. It is downloaded through a link valid for five
+when complete and kept for 7 days. A failed or cancelled build deletes its
+`.partial` file. It is downloaded through a link valid for five
 minutes, signed with `SYSTEM_KEY`, so the browser can stream it straight to disk.
 
 ## Rules

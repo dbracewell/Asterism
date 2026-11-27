@@ -65,6 +65,10 @@ Unreleased into its version and date.
 
 ### Behavior
 
+- Restore refuses a backup that recorded a `SYSTEM_KEY` fingerprint when no
+  `SYSTEM_KEY` is set, stops at 1,000,000 entries or the storage disk's free
+  space, checks vector table names, and leaves both restored databases readable
+  only by their owner. A cancelled data export leaves no partial file.
 - The production backend no longer serves `/api/py/openapi.json` or the API docs
   pages. `setup --force` leaves the replaced `.env` readable only by its owner.
 - Through the bundled nginx, only the chat WebSocket and `/api/stream` events

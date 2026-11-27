@@ -2,9 +2,11 @@
 
 The archive is extracted into a staging directory inside the storage root and
 checked before anything is moved into place: every member against the
-manifest's size and SHA-256, the schema revision against this code's migration
-history, the ``SYSTEM_KEY`` fingerprint, SQLite integrity, and the vector row
-counts. A refused restore leaves no data behind. After the move the normal
+manifest's size and SHA-256 (within a member count and the disk's free space),
+the schema revision against this code's migration history, the ``SYSTEM_KEY``
+fingerprint (a recorded one needs a key to compare), SQLite integrity, and the
+vector table names and row counts. A refused restore leaves no data behind, and
+restored databases are readable only by their owner. After the move the normal
 startup path runs (``init_db``), which applies pending migrations.
 """
 
@@ -26,7 +28,9 @@ from .archive import (
     BACKEND_DB,
     MANIFEST,
     MAX_MANIFEST_BYTES,
+    MAX_RESTORE_MEMBERS,
     TREES,
+    VECTOR_TABLE_NAME,
     VECTORS,
     BackupError,
     HashingReader,
@@ -37,6 +41,8 @@ from .archive import (
 )
 
 _CHUNK = 1024 * 1024
+# Restored databases hold accounts and chats: readable only by the app's user.
+_DATABASE_MODE = 0o600
 
 
 def _require_empty_target(layout: StorageLayout) -> None:
@@ -48,13 +54,30 @@ def _require_empty_target(layout: StorageLayout) -> None:
             raise BackupError(f"Restore will not overwrite {database}; move it away first")
 
 
-def _extract(archive: Path, staging: Path) -> tuple[dict[str, tuple[int, str]], bytes]:
-    """Extract regular-file members into ``staging``, hashing each; returns them and the manifest."""
+def _extract(
+    archive: Path, staging: Path, *, max_bytes: int, max_members: int
+) -> tuple[dict[str, tuple[int, str]], bytes]:
+    """Extract regular-file members into ``staging``, hashing each; returns them and the manifest.
+
+    Stops before the members' total size passes ``max_bytes`` or their count
+    passes ``max_members``, so an archive cannot fill the disk.
+    """
     found: dict[str, tuple[int, str]] = {}
     manifest: bytes | None = None
+    members = 0
+    total = 0
     try:
         with tarfile.open(archive, mode="r|gz") as tar:
             for member in tar:
+                members += 1
+                if members > max_members:
+                    raise BackupError(f"The archive has more than {max_members} entries; it is not a backup")
+                total += max(member.size, 0)
+                if total > max_bytes:
+                    raise BackupError(
+                        "The archive's contents are larger than the free space in the storage root; "
+                        "free some space or restore onto a larger disk"
+                    )
                 name = member.name
                 if not member.isfile() or not member_name_allowed(name):
                     raise BackupError(f"The archive contains an unexpected entry {name!r}; it is not a backup")
@@ -127,6 +150,14 @@ def _verify_vectors(manifest: dict[str, Any], vectors: Path) -> None:
     expected = manifest.get("vector_tables") or {}
     if not expected:
         return
+    if not isinstance(expected, dict) or not all(
+        isinstance(name, str)
+        and VECTOR_TABLE_NAME.fullmatch(name)
+        and isinstance(rows, int)
+        and not isinstance(rows, bool)
+        for name, rows in expected.items()
+    ):
+        raise BackupError("The archive's manifest lists an invalid vector table; the archive is damaged")
     database = lancedb.connect(str(vectors))
     for name, rows in expected.items():
         try:
@@ -141,6 +172,7 @@ def _move_into_place(staging: Path, layout: StorageLayout) -> None:
     for name, target in ((BACKEND_DB, layout.backend_db), (AUTH_DB, layout.auth_db)):
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.move(staging / name, target)
+        target.chmod(_DATABASE_MODE)
     for tree in (*TREES, VECTORS.split("/")[0]):
         if (staging / tree).exists():
             (staging / tree).rename(layout.storage_root / tree)
@@ -153,14 +185,24 @@ def restore_backup(archive: Path, layout: StorageLayout, *, system_key: str = ""
     _require_empty_target(layout)
     layout.storage_root.mkdir(parents=True, exist_ok=True)
     staging = layout.storage_root / f".restore-{uuid.uuid4().hex}"
-    staging.mkdir()
+    staging.mkdir(mode=0o700)
     try:
-        found, raw_manifest = _extract(archive, staging)
+        found, raw_manifest = _extract(
+            archive,
+            staging,
+            max_bytes=shutil.disk_usage(layout.storage_root).free,
+            max_members=MAX_RESTORE_MEMBERS,
+        )
         manifest = decode_manifest(raw_manifest)
         _verify_entries(manifest, found)
         _verify_revision(manifest, staging / BACKEND_DB)
         recorded = manifest.get("system_key_check")
         current = system_key_check(system_key)
+        if recorded and not current:
+            raise BackupError(
+                "This backup was taken with a SYSTEM_KEY, and none is set, so the restore cannot check it. "
+                "Set the SYSTEM_KEY the backed-up instance used and run the restore again."
+            )
         if recorded and current and recorded != current:
             raise BackupError(
                 "This backup was taken with a different SYSTEM_KEY, so stored provider keys could not be read. "

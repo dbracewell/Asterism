@@ -98,6 +98,10 @@ async def run_export(user_id: str, export_id: uuid.UUID) -> None:
             error="The archive could not be built. Try again; if it fails again, ask your administrator.",
         )
         return
+    except BaseException:
+        # Cancelled (shutdown): no partial archive is left; startup marks the export failed.
+        partial.unlink(missing_ok=True)
+        raise
     now = int(time.time())
     finished = await _finish(
         export_id,

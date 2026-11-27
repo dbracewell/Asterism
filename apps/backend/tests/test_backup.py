@@ -182,6 +182,9 @@ async def test_backup_during_an_active_chat_restores_to_a_working_instance(insta
     bundle = target.storage_root / "models" / "knowledge-clip" / "weights.bin"
     assert not bundle.exists(), "model bundles are fetched again, not backed up"
     assert not list(target.storage_root.glob(".restore-*"))
+    # US-115.3: the restored databases are private to the app's user.
+    for database in (target.backend_db, target.auth_db):
+        assert stat.S_IMODE(database.stat().st_mode) == 0o600, database
 
     restored_vectors = _vectors(target.storage_root)
     await restored_vectors.initialize()
@@ -327,6 +330,52 @@ async def test_restore_refuses_a_different_system_key_and_a_non_empty_root(archi
     with pytest.raises(BackupError, match="empty storage root"):
         restore_backup(archive, target, system_key=KEY)
     assert [path.name for path in target.storage_root.iterdir()] == ["keep.txt"]
+
+
+@pytest.mark.asyncio
+async def test_restore_refuses_a_missing_key_when_the_backup_recorded_one(archive, tmp_path, monkeypatch):
+    """US-115.3: without a SYSTEM_KEY the fingerprint cannot be compared, so the restore stops."""
+    target = _restore_target(tmp_path, monkeypatch)
+    with pytest.raises(BackupError, match="none is set"):
+        restore_backup(archive, target, system_key="")
+    _assert_nothing_restored(target)
+
+
+@pytest.mark.asyncio
+async def test_extraction_stops_at_the_member_and_free_space_limits(archive, tmp_path, monkeypatch):
+    import asterism.backup.restore as restore_module
+
+    target = _restore_target(tmp_path, monkeypatch)
+    with tarfile.open(archive, "r:gz") as tar:
+        members = tar.getmembers()
+    monkeypatch.setattr(restore_module, "MAX_RESTORE_MEMBERS", len(members) - 1)
+    with pytest.raises(BackupError, match=f"more than {len(members) - 1} entries"):
+        restore_backup(archive, target, system_key=KEY)
+    _assert_nothing_restored(target)
+
+    monkeypatch.setattr(restore_module, "MAX_RESTORE_MEMBERS", len(members))
+    Usage = type("Usage", (), {"free": sum(member.size for member in members) - 1})
+    monkeypatch.setattr(restore_module.shutil, "disk_usage", lambda _: Usage())
+    with pytest.raises(BackupError, match="larger than the free space"):
+        restore_backup(archive, target, system_key=KEY)
+    _assert_nothing_restored(target)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("tables", [{"../escape": 1}, {".hidden": 1}, {"a/b": 1}, {"ok": "1"}, {"ok": True}, ["ok"]])
+async def test_invalid_vector_table_names_are_refused(archive, tmp_path, monkeypatch, tables):
+    def change(name, data):
+        if name != MANIFEST:
+            return data
+        manifest = json.loads(data)
+        manifest["vector_tables"] = tables
+        return json.dumps(manifest).encode()
+
+    edited = _rewrite(archive, tmp_path / "tables.tar.gz", change)
+    target = _restore_target(tmp_path, monkeypatch)
+    with pytest.raises(BackupError, match="invalid vector table"):
+        restore_backup(edited, target, system_key=KEY)
+    _assert_nothing_restored(target)
 
 
 def test_restore_applies_pending_migrations(tmp_path, monkeypatch):

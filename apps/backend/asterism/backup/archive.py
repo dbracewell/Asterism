@@ -31,6 +31,11 @@ TREES = ("files", "themes")
 ALLOWED_PREFIXES = ("files/", "themes/", f"{VECTORS}/")
 ARCHIVE_PATTERN = re.compile(r"asterism-backup-\d{8}T\d{6}Z\.tar\.gz")
 MAX_MANIFEST_BYTES = 256 * 1024 * 1024
+# Restore refuses an archive with more members than this (US-115.3); its bytes
+# are limited by the storage disk's free space.
+MAX_RESTORE_MEMBERS = 1_000_000
+# LanceDB table names a restore will open: no separators, no leading dot.
+VECTOR_TABLE_NAME = re.compile(r"[A-Za-z0-9_][A-Za-z0-9_-]{0,127}")
 _KEY_CHECK_CONTEXT = b"asterism-backup/system-key-check/v1"
 
 

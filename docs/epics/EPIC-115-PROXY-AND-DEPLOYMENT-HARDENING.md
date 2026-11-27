@@ -41,9 +41,9 @@ As an operator, I want the default deployment locked down.
 As an operator, I want a restore to keep data private and to stop when it
 can't check the key.
 
-- [ ] Restored databases are readable only by their owner.
-- [ ] A restore stops when the backup recorded a system key and none is set.
-- [ ] Extraction has total size and file count limits; vector table names are
+- [x] Restored databases are readable only by their owner.
+- [x] A restore stops when the backup recorded a system key and none is set.
+- [x] Extraction has total size and file count limits; vector table names are
       checked.
-- [ ] A cancelled data export leaves no partial file.
-- [ ] Tests, backup guide and release note.
+- [x] A cancelled data export leaves no partial file.
+- [x] Tests, backup guide and release note.
