@@ -250,6 +250,33 @@ async def test_a_restart_fails_interrupted_builds_and_a_failure_is_reported(expo
 
 
 @pytest.mark.asyncio
+async def test_a_cancelled_export_leaves_no_partial_file(exports, monkeypatch):
+    """US-115.3: cancellation (shutdown) is not an Exception, and still cleans up."""
+    import asyncio
+
+    _client, sessions, tmp_path = exports
+    started = asyncio.Event()
+
+    async def slow(_user_id, partial, *_args, **_kwargs):
+        partial.write_bytes(b"half")
+        started.set()
+        await asyncio.sleep(60)
+
+    monkeypatch.setattr(service, "build_archive", slow)
+    async with sessions() as session:
+        export = DataExportModel(user_id="a", status="pending")
+        session.add(export)
+        await session.commit()
+        export_id = export.id
+    task = asyncio.create_task(service.run_export("a", export_id))
+    await asyncio.wait_for(started.wait(), 5)
+    task.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await task
+    assert not list((tmp_path / "exports").glob("*/*.partial"))
+
+
+@pytest.mark.asyncio
 async def test_deleting_the_account_removes_its_archive(exports, monkeypatch):
     client, sessions, _ = exports
     await client.post("/data-export", headers=auth())

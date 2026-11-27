@@ -23,7 +23,8 @@ and so does the local captioning model when local captioning is on; images wait
 for it to be captioned. **Secrets are not in the backup.** Keep
 `SYSTEM_KEY` and `BETTER_AUTH_SECRET` separately; a restore needs the same values.
 Restore refuses a different `SYSTEM_KEY`, because stored provider keys could not
-be decrypted with it. A different `BETTER_AUTH_SECRET` cannot be checked and
+be decrypted with it, and refuses to run with no `SYSTEM_KEY` when the backup
+recorded one, because it could not check it. A different `BETTER_AUTH_SECRET` cannot be checked and
 makes the auth signing keys unreadable.
 
 The archive holds every user's chats and files, password hashes and sessions.
@@ -59,10 +60,13 @@ for compression, so schedule it outside lessons when you can.
 - **verify** runs every restore check by unpacking into a temporary directory,
   then deletes it. It changes nothing.
 - **restore** runs with the app stopped, into an empty storage root, and does
-  not overwrite either database file. It checks every member against the manifest,
-  the schema revision (a backup from a newer Asterism is refused, naming both
-  revisions), the `SYSTEM_KEY` fingerprint, SQLite integrity and vector row
-  counts. Only then does it move the data into place. After that it runs the
+  not overwrite either database file. It unpacks at most 1,000,000 entries and no
+  more bytes than the storage disk has free, into a staging directory only the
+  app's user can open. It checks every member against the manifest, the schema
+  revision (a backup from a newer Asterism is refused, naming both revisions),
+  the `SYSTEM_KEY` fingerprint, SQLite integrity, and the vector table names and
+  row counts. Only then does it move the data into place, with both databases
+  readable only by their owner (`0600`). After that it runs the
   normal startup path: pending backend migrations are applied, and Better Auth
   migrates its tables. A refused restore leaves the storage root empty.
 
