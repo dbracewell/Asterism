@@ -21,7 +21,9 @@ from openai.types.chat import (
 from openai.types.shared_params import FunctionDefinition
 from pydantic import BaseModel
 
+from asterism.common.log import get_logger
 from asterism.common.retries import async_retry
+from asterism.core.exceptions import AsterismException
 from asterism.core.schemas import AuthedUser
 from asterism.domains.agent.delegation_scope import DelegationScope
 from asterism.domains.agent.execution_scope import ExecutionScope
@@ -198,6 +200,13 @@ async def _group_allows_tool(user_id: str, name: str) -> bool:
         return (await read_access(user_id, session)).allows_tool(name)
 
 
+logger = get_logger("ToolRegistry")
+
+#: Errors a tool raises on purpose: their message is meant for the model and a
+#: retry would fail the same way (US-113.3). ``ValidationError`` is a ValueError.
+EXPECTED_TOOL_ERRORS: tuple[type[Exception], ...] = (AsterismException, ValueError)
+
+
 class ToolRegistry:
     """Holds registered tools and mediates their invocation.
 
@@ -285,7 +294,13 @@ class ToolRegistry:
         """
         # Tool results are persisted in JSON columns. Never retain an exception
         # instance here: SQLAlchemy/Pydantic exceptions are not JSON serializable.
-        error = f"Tool failed with exception: {ex}"
+        if isinstance(ex, EXPECTED_TOOL_ERRORS):
+            error = f"Tool failed with exception: {ex}"
+        else:
+            # Unexpected errors can carry internals (SQL, paths, upstream
+            # responses), so the model sees only the type (US-113.3).
+            logger.warning(f"Tool {tool_call.function.name} failed unexpectedly: {type(ex).__name__}")
+            error = f"Tool failed unexpectedly ({type(ex).__name__})"
         return ToolResult(
             content=json.dumps({"error": error}),
             raw_result={"error": error},
@@ -321,9 +336,9 @@ class ToolRegistry:
         cheapest check, so disabled tools skip all further work), parse and
         validate arguments, reauthorize internal tools via
         ``authorize_internal``, build the ToolContext, then execute.
-        Exceptions raised by the tool function itself are retried with backoff;
-        validation and authorization failures are returned immediately without
-        retry.
+        Unexpected exceptions raised by the tool function itself are retried
+        with backoff; validation and authorization failures, ``ValueError`` and
+        coded errors are returned immediately without retry.
 
         Args:
             tool_call: The model's tool call to execute.
@@ -382,6 +397,8 @@ class ToolRegistry:
         # ToolResult above and therefore never trigger a retry.
         @async_retry(
             max_retries=max_retries,
+            # Bad input and coded refusals fail the same way every time.
+            no_retry=EXPECTED_TOOL_ERRORS,
             on_exceed_attempts=lambda ex: ToolRegistry._exception_to_tool_result(ex, tool_call),
         )
         async def call_tool() -> ToolResult:

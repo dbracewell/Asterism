@@ -236,8 +236,8 @@ All paths are under `/api/py`.
 | Command         | Fields                | Effect                                              |
 | --------------- | --------------------- | --------------------------------------------------- |
 | `resume`        |                       | Start the pending turn, if nothing is running       |
-| `regenerate`    | `parent_message_id`   | Write a new reply to that message                   |
-| `tool_approval` | `tool_id`, `approved` | Answer a tool approval request                      |
+| `regenerate`    | `parent_message_id`   | Write a new reply; ignored while work is running    |
+| `tool_approval` | `tool_id`, `approved` | Answer an approval; `approved` must be a boolean    |
 | `cancel`        |                       | Stop the running work                               |
 | `compact`       |                       | Compact the chat now; refused while work is running |
 | `ping`          |                       | Ask for a `pong`                                    |
@@ -255,7 +255,7 @@ All paths are under `/api/py`.
 | `sub_agent`               | An event from a sub-agent, wrapped with its execution ID, name, model and depth ([agent runtime](agent-runtime.md#delegation-projects-and-the-general-chat-set)) |
 | `compaction`              | `started`, then `completed` with the new summary record, or `failed` with a reason                                                                               |
 | `status`                  | `is_processing`: whether work is running, every 0.5 seconds                                                                                                      |
-| `regenerate`              | A regeneration was accepted; `parent_id` names the message being answered again                                                                                  |
+| `regenerate`              | A regeneration was accepted, sent to every open tab; `parent_id` names the message being answered again                                                          |
 | `complete`                | The run ended; carries the stored messages                                                                                                                       |
 | `error`                   | Something failed: `content`, `code`, and for special cases `error_code` (`chat_capacity`, `usage_limit`), `retryable` and `resets_at`                            |
 | `pong`                    | The reply to `ping`                                                                                                                                              |

@@ -165,6 +165,26 @@ class ArgDesc:
     description: str
 
 
+def unique_tool_call_ids(calls: list[ToolCall]) -> list[ToolCall]:
+    """Give repeated or blank call ids a unique suffix (US-113.3).
+
+    Approval and results are matched by id, so two calls sharing one would
+    share a decision and a result. First occurrences keep their id.
+    """
+    seen: set[str] = set()
+    unique: list[ToolCall] = []
+    for index, call in enumerate(calls):
+        call_id = call.id or f"call_{index}"
+        if call_id in seen:
+            suffix = 2
+            while f"{call_id}_{suffix}" in seen:
+                suffix += 1
+            call_id = f"{call_id}_{suffix}"
+        seen.add(call_id)
+        unique.append(call if call_id == call.id else call.model_copy(update={"id": call_id}))
+    return unique
+
+
 @dataclass
 class ToolResult:
     """Outcome of executing one tool call, fed back to the model as a ``tool`` message.

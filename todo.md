@@ -123,87 +123,87 @@ Source: repository review (2026-11-26), verified against the code at `40101ac7`.
   - [x] Tool-call tags inside fenced or inline code are left as text.
   - [x] The final loop step, which offers no tools, never runs a tool call.
   - [x] Tests and release note.
-- [ ] US-113.3: Tool and stream errors end cleanly
-  - [ ] Tool errors that would repeat (bad input, coded errors) are not retried.
-  - [ ] A structured-output error ends the stream without a completion event.
-  - [ ] Duplicate tool call ids are made unique before approval.
-  - [ ] Regenerate is refused while a reply is running and reaches every open tab.
-  - [ ] Tool approvals accept only true or false; unexpected tool errors return a generic message.
-  - [ ] Tests and release note.
+- [x] US-113.3: Tool and stream errors end cleanly
+  - [x] Tool errors that would repeat (bad input, coded errors) are not retried.
+  - [x] A structured-output error ends the stream without a completion event.
+  - [x] Duplicate tool call ids are made unique before approval.
+  - [x] Regenerate is refused while a reply is running and reaches every open tab.
+  - [x] Tool approvals accept only true or false; unexpected tool errors return a generic message.
+  - [x] Tests and release note.
 
 [EPIC-114](docs/epics/EPIC-114-CI-AND-IMAGE-SUPPLY-CHAIN.md): CI and image supply chain
 
-- [ ] US-114.1: Dependency build scripts follow the allowlist
-  - [ ] CI and `ci:local:*` drop `approve-builds --all` and the flags that turn the allowlist off; `strictDepBuilds` is on.
-  - [ ] `minimumReleaseAge` is set to the week Dependabot already assumes.
-  - [ ] CI passes (better-sqlite3 and Playwright still build); release note.
-- [ ] US-114.2: Workflow tokens and timeouts
-  - [ ] Every checkout sets `persist-credentials: false` unless a later step pushes.
-  - [ ] Every release job has a timeout; fork pull requests get their own concurrency group.
-  - [ ] The Node version comes from one place; `vuln-issue.mjs` survives a bad marker.
-- [ ] US-114.3: Scans see every runtime component
-  - [ ] `check:image` records and checks the extracted `libgbm1`, Node and Chromium versions.
-  - [ ] `uv` comes from a digest-pinned image.
-  - [ ] `install-trivy.mjs` uses a private temporary directory; `check-pins.mjs` compares paths reliably.
-  - [ ] Tests for the scripts; release note (Image).
+- [x] US-114.1: Dependency build scripts follow the allowlist
+  - [x] CI and `ci:local:*` drop `approve-builds --all` and the flags that turn the allowlist off; `strictDepBuilds` is on.
+  - [x] `minimumReleaseAge` is set to the week Dependabot already assumes.
+  - [x] CI passes (better-sqlite3 and Playwright still build); release note.
+- [x] US-114.2: Workflow tokens and timeouts
+  - [x] Every checkout sets `persist-credentials: false` unless a later step pushes.
+  - [x] Every release job has a timeout; fork pull requests get their own concurrency group.
+  - [x] The Node version comes from one place; `vuln-issue.mjs` survives a bad marker.
+- [x] US-114.3: Scans see every runtime component
+  - [x] `check:image` records and checks the extracted `libgbm1`, Node and Chromium versions.
+  - [x] `uv` comes from a digest-pinned image.
+  - [x] `install-trivy.mjs` uses a private temporary directory; `check-pins.mjs` compares paths reliably.
+  - [x] Tests for the scripts; release note (Image).
 
 [EPIC-115](docs/epics/EPIC-115-PROXY-AND-DEPLOYMENT-HARDENING.md): Proxy and deployment hardening
 
-- [ ] US-115.1: The proxy trusts only what it should
-  - [ ] The forwarded scheme is honoured only from trusted proxies; requests for unknown hosts are refused.
-  - [ ] The internal system-key header is removed from public requests.
-  - [ ] The one-hour timeouts and unbuffered proxying apply only to chat, events and other streaming routes.
-  - [ ] Readiness checks reuse a result for a few seconds.
-  - [ ] Tests (`check:image` or edge-config) and release note.
-- [ ] US-115.2: Container and setup defaults
-  - [ ] `docker-compose.yml` drops capabilities, sets `no-new-privileges` and a process limit; the host gateway mapping is documented as optional.
-  - [ ] `setup.mjs --force` leaves `.env` readable only by its owner.
-  - [ ] Secret files with Windows line endings give the same key in every entrypoint command.
-  - [ ] API docs are off in production.
-  - [ ] Release note (Configuration, Image).
-- [ ] US-115.3: Backups restore privately and refuse a missing key
-  - [ ] Restored databases are readable only by their owner.
-  - [ ] A restore stops when the backup recorded a system key and none is set.
-  - [ ] Extraction has total size and file count limits; vector table names are checked.
-  - [ ] A cancelled data export leaves no partial file.
-  - [ ] Tests, backup guide and release note.
+- [x] US-115.1: The proxy trusts only what it should
+  - [x] The forwarded scheme is honoured only from trusted proxies; requests for unknown hosts are refused.
+  - [x] The internal system-key header is removed from public requests.
+  - [x] The one-hour timeouts and unbuffered proxying apply only to chat, events and other streaming routes.
+  - [x] Readiness checks reuse a result for a few seconds.
+  - [x] Tests (`check:image` or edge-config) and release note.
+- [x] US-115.2: Container and setup defaults
+  - [x] `docker-compose.yml` drops capabilities, sets `no-new-privileges` and a process limit; the host gateway mapping is documented as optional.
+  - [x] `setup.mjs --force` leaves `.env` readable only by its owner.
+  - [x] Secret files with Windows line endings give the same key in every entrypoint command.
+  - [x] API docs are off in production.
+  - [x] Release note (Configuration, Image).
+- [x] US-115.3: Backups restore privately and refuse a missing key
+  - [x] Restored databases are readable only by their owner.
+  - [x] A restore stops when the backup recorded a system key and none is set.
+  - [x] Extraction has total size and file count limits; vector table names are checked.
+  - [x] A cancelled data export leaves no partial file.
+  - [x] Tests, backup guide and release note.
 
 [EPIC-116](docs/epics/EPIC-116-UNTRUSTED-FILES-AND-INPUT.md): Untrusted files and input
 
-- [ ] US-116.1: Office files checked before conversion
-  - [ ] DOCX, XLSX, PPTX and EPUB uploads get the same member-count and uncompressed-size checks as previews before conversion.
-  - [ ] A conversion that times out stops using memory and threads.
-  - [ ] Tests and release note.
-- [ ] US-116.2: Shown files and preferences are sanitized
-  - [ ] Uploaded SVGs are sanitized before they are shown or opened.
-  - [ ] The font-size preference is checked against the allowed sizes; preference cookies are `SameSite=Lax` and secure over HTTPS.
-  - [ ] File names lose control and text-direction characters.
-  - [ ] Downloaded diagram SVGs contain no external references.
-  - [ ] Tests and release note.
-- [ ] US-116.3: Prompt checks and fetches resist evasion
-  - [ ] The image prompt check normalizes accents and removes invisible characters before matching.
-  - [ ] `web_fetch` ignores proxy environment variables, uses the browser only for HTML, and caps a page's subrequests.
-  - [ ] Model provider clients don't follow redirects and are dropped when a provider changes or is deleted.
-  - [ ] Tests and release note.
+- [x] US-116.1: Office files checked before conversion
+  - [x] DOCX, XLSX, PPTX and EPUB uploads get the same member-count and uncompressed-size checks as previews before conversion.
+  - [x] A conversion that times out stops using memory and threads.
+  - [x] Tests and release note.
+- [x] US-116.2: Shown files and preferences are sanitized
+  - [x] Uploaded SVGs are sanitized before they are shown or opened.
+  - [x] The font-size preference is checked against the allowed sizes; preference cookies are `SameSite=Lax` and secure over HTTPS.
+  - [x] File names lose control and text-direction characters.
+  - [x] Downloaded diagram SVGs contain no external references.
+  - [x] Tests and release note.
+- [x] US-116.3: Prompt checks and fetches resist evasion
+  - [x] The image prompt check normalizes accents and removes invisible characters before matching.
+  - [x] `web_fetch` ignores proxy environment variables, uses the browser only for HTML, and caps a page's subrequests.
+  - [x] Model provider clients don't follow redirects and are dropped when a provider changes or is deleted.
+  - [x] Tests and release note.
 
 [EPIC-117](docs/epics/EPIC-117-CORRECTNESS-CLEANUP.md): Correctness cleanup
 
-- [ ] US-117.1: Settings and admin consistency
-  - [ ] A settings import that fails partway leaves nothing applied, and never gives the admin group a budget.
-  - [ ] Model discovery keeps the draft model.
-  - [ ] Pack review and course apply offer only tools the person's group allows.
-  - [ ] Tool settings check component parameters; the generic setting route for study chat checks groups; nested secrets are redacted.
-  - [ ] Tests and release note.
-- [ ] US-117.2: Chat and frontend fixes
-  - [ ] The chat connection's heartbeat timeout has a margin over the server's ping; stray `console.log` calls are removed.
-  - [ ] Chat titles can be generated again later in a chat.
-  - [ ] File names containing `%` open and show correctly.
-  - [ ] Sending a message refreshes only the queries it changes.
-  - [ ] Downloads share one helper; the shared event worker drops closed tabs and closes the stream on sign-out.
-  - [ ] The query client is per request on the server; the canvas preview keeps listening until a valid message arrives.
-  - [ ] Tests and release note.
-- [ ] US-117.3: Housekeeping
-  - [ ] Word tables with many columns keep a positive picture width; ZIP names keep their folder when disambiguated.
-  - [ ] `SECURITY.md` names the supported version.
-  - [ ] The container health check doesn't follow redirects; `reset-databases` checks the database URL prefix; `.dockerignore` excludes docs, tests and local data.
-  - [ ] The unused proxy-list call in `setup.mjs` is removed.
+- [x] US-117.1: Settings and admin consistency
+  - [x] A settings import that fails partway leaves nothing applied, and never gives the admin group a budget.
+  - [x] Model discovery keeps the draft model.
+  - [x] Pack review and course apply offer only tools the person's group allows.
+  - [x] Tool settings check component parameters; the generic setting route for study chat checks groups; nested secrets are redacted.
+  - [x] Tests and release note.
+- [x] US-117.2: Chat and frontend fixes
+  - [x] The chat connection's heartbeat timeout has a margin over the server's ping; stray `console.log` calls are removed.
+  - [x] Chat titles can be generated again later in a chat.
+  - [x] File names containing `%` open and show correctly.
+  - [x] Sending a message refreshes only the queries it changes.
+  - [x] Downloads share one helper; the shared event worker drops closed tabs and closes the stream on sign-out.
+  - [x] The query client is per request on the server; the canvas preview keeps listening until a valid message arrives.
+  - [x] Tests and release note.
+- [x] US-117.3: Housekeeping
+  - [x] Word tables with many columns keep a positive picture width; ZIP names keep their folder when disambiguated.
+  - [x] `SECURITY.md` names the supported version.
+  - [x] The container health check doesn't follow redirects; `reset-databases` checks the database URL prefix; `.dockerignore` excludes docs, tests and local data.
+  - [x] The unused proxy-list call in `setup.mjs` is removed.

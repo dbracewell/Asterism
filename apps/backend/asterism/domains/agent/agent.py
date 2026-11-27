@@ -29,6 +29,7 @@ from asterism.domains.llm.schemas import (
     LLMMessage,
     ToolCall,
     ToolResult,
+    unique_tool_call_ids,
 )
 from asterism.domains.retrieval.service import RetrievalService
 from asterism.domains.settings.schemas import LlmWithProvider
@@ -816,18 +817,20 @@ class Agent:
                     case LLMEventType.COMPLETE:
                         if self.authorization_check:
                             await self.authorization_check()
+                        # Unique before approval: decisions and results match by id.
+                        step_calls = unique_tool_call_ids(event.tool_calls or [])
                         messages.append(
                             LLMMessage.assistant(
                                 content=event.content,
-                                tool_calls=event.tool_calls,
+                                tool_calls=step_calls,
                             ),
                         )
-                        self.logger.debug("event type=%s tool_count=%d", event.type, len(event.tool_calls or []))
+                        self.logger.debug("event type=%s tool_count=%d", event.type, len(step_calls))
 
                         tool_results: list[ToolResult] = []
                         # A step that offered no tools (the final one) never runs a call (US-113.2).
-                        if event.tool_calls and tools:
-                            async for tool_event in self._step_tools(event.tool_calls, last_user_message, tool_results):
+                        if step_calls and tools:
+                            async for tool_event in self._step_tools(step_calls, last_user_message, tool_results):
                                 yield tool_event
                             for response in tool_results:
                                 messages.append(LLMMessage.tool_call_result(response))
@@ -837,7 +840,7 @@ class Agent:
                             content=event.content,
                             thinking=event.thinking,
                             tool_results=tool_results,
-                            tool_calls=event.tool_calls or [],
+                            tool_calls=step_calls,
                             input_tokens=event.input_tokens,
                             output_tokens=event.output_tokens,
                             total_tokens=event.total_tokens,
@@ -847,7 +850,7 @@ class Agent:
                         # A turn without tool calls is final. Do not rely on the
                         # provider's finish_reason: local servers often send None,
                         # and "length"/"content_filter" must not re-prompt the model.
-                        if not event.tool_calls:
+                        if not step_calls:
                             return
 
 

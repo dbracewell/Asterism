@@ -12,7 +12,8 @@ def test_tool_failures_are_json_serializable_for_message_persistence():
         tool_call,
     )
 
-    assert json.loads(result.content)["error"].startswith("Tool failed with exception:")
+    # A database error is unexpected: the model sees its type, never the SQL (US-113.3).
+    assert json.loads(result.content)["error"] == "Tool failed unexpectedly (StatementError)"
     assert result.raw_result == json.loads(result.content)
     # This mirrors serialization into the messages JSON column.
     assert json.dumps(result.to_dict())

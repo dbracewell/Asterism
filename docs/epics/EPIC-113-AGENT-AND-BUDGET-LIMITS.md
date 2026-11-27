@@ -35,10 +35,10 @@ read only where they are meant to be.
 
 As a person chatting, I want a failed tool or answer to fail once, clearly.
 
-- [ ] Tool errors that would repeat (bad input, coded errors) are not retried.
-- [ ] A structured-output error ends the stream without a completion event.
-- [ ] Duplicate tool call ids are made unique before approval.
-- [ ] Regenerate is refused while a reply is running and reaches every open tab.
-- [ ] Tool approvals accept only true or false; unexpected tool errors return a
+- [x] Tool errors that would repeat (bad input, coded errors) are not retried.
+- [x] A structured-output error ends the stream without a completion event.
+- [x] Duplicate tool call ids are made unique before approval.
+- [x] Regenerate is refused while a reply is running and reaches every open tab.
+- [x] Tool approvals accept only true or false; unexpected tool errors return a
       generic message.
-- [ ] Tests and release note.
+- [x] Tests and release note.
