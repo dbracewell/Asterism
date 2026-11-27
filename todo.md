@@ -122,7 +122,7 @@ Source: repository review (2026-11-26), verified against the code at `40101ac7`.
 
 [EPIC-117](docs/epics/EPIC-117-CORRECTNESS-CLEANUP.md): Correctness cleanup
 
-- [ ] US-117.1: Settings and admin consistency
+- [x] US-117.1: Settings and admin consistency
   - [x] A settings import that fails partway leaves nothing applied, and never gives the admin group a budget.
   - [x] Model discovery keeps the draft model.
   - [x] Pack review and course apply offer only tools the person's group allows.
@@ -137,7 +137,7 @@ Source: repository review (2026-11-26), verified against the code at `40101ac7`.
   - [x] The query client is per request on the server; the canvas preview keeps listening until a valid message arrives.
   - [x] Tests and release note.
 - [x] US-117.3: Housekeeping
-  - [ ] Word tables with many columns keep a positive picture width; ZIP names keep their folder when disambiguated.
-  - [ ] `SECURITY.md` names the supported version.
-  - [ ] The container health check doesn't follow redirects; `reset-databases` checks the database URL prefix; `.dockerignore` excludes docs, tests and local data.
-  - [ ] The unused proxy-list call in `setup.mjs` is removed.
+  - [x] Word tables with many columns keep a positive picture width; ZIP names keep their folder when disambiguated.
+  - [x] `SECURITY.md` names the supported version.
+  - [x] The container health check doesn't follow redirects; `reset-databases` checks the database URL prefix; `.dockerignore` excludes docs, tests and local data.
+  - [x] The unused proxy-list call in `setup.mjs` is removed.

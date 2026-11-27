@@ -17,8 +17,18 @@ if (!storageRoot) {
 const authPath = resolve(
   process.env.BETTER_AUTH_DB_PATH ?? join(storageRoot, "users.db"),
 );
-const backendPath = process.env.DB_URL
-  ? resolve(process.env.DB_URL.slice("sqlite+aiosqlite:///".length))
+// Only a SQLite URL names a file here; anything else would be cut into a
+// wrong path and deleted (US-117.3).
+const SQLITE_URL_PREFIX = "sqlite+aiosqlite:///";
+const databaseUrl = process.env.DB_URL;
+if (databaseUrl && !databaseUrl.startsWith(SQLITE_URL_PREFIX)) {
+  console.error(
+    `DB_URL must start with ${SQLITE_URL_PREFIX} to be reset here; nothing was deleted.`,
+  );
+  process.exit(1);
+}
+const backendPath = databaseUrl
+  ? resolve(databaseUrl.slice(SQLITE_URL_PREFIX.length))
   : resolve(join(storageRoot, "database.db"));
 
 async function confirmed() {

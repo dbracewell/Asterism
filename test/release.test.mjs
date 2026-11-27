@@ -214,6 +214,7 @@ test("pnpm release commits and tags, and refuses what it should", () => {
     }
     mkdirSync(join(work, "docs"));
     writeFileSync(join(work, "docs/release-notes.md"), NOTES);
+    cpSync("SECURITY.md", join(work, "SECURITY.md"));
     const current = appVersion(work);
     // Forced: a global gitignore may ignore .env* files, which the repository's
     // own .gitignore re-includes.

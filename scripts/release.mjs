@@ -16,6 +16,7 @@ import { parseArgs } from "node:util";
 import { appVersion, setVersion, VERSION_PATTERN } from "./app-version.mjs";
 
 export const RELEASE_NOTES = "docs/release-notes.md";
+export const SECURITY_POLICY = "SECURITY.md";
 // The status checks AGENTS.md expects; each must have passed on the commit.
 export const REQUIRED_CHECKS = [
   "Lint, Typecheck, Test",
@@ -97,6 +98,22 @@ export function cutReleaseNotes(text, version, date) {
 }
 
 /** Today in the local time zone, as YYYY-MM-DD. */
+/**
+ * SECURITY.md with `version`'s minor as the one that gets fixes (US-117.3).
+ * A patch release leaves it as it is.
+ */
+export function updateSecurityPolicy(text, version) {
+  const [major, minor] = parts(version);
+  const current = `${major}.${minor}`;
+  const older = minor > 0 ? `${major}.${minor - 1}.x and older` : "Older versions";
+  return text
+    .replace(/today that is \d+\.\d+\./, `today that is ${current}.`)
+    .replace(
+      /\| \d+\.\d+\.x \(latest\) +\| Yes +\|\n\| [^|]+\| No +\|/,
+      `| ${`${current}.x (latest)`.padEnd(15)} | Yes   |\n| ${older.padEnd(15)} | No    |`,
+    );
+}
+
 export function today(now = new Date()) {
   const pad = (value) => String(value).padStart(2, "0");
   return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
@@ -165,7 +182,11 @@ function main() {
   }
   const written = setVersion(version);
   writeFileSync(RELEASE_NOTES, notes);
-  run("git", ["add", RELEASE_NOTES, ...written]);
+  writeFileSync(
+    SECURITY_POLICY,
+    updateSecurityPolicy(readFileSync(SECURITY_POLICY, "utf8"), version),
+  );
+  run("git", ["add", RELEASE_NOTES, SECURITY_POLICY, ...written]);
   run("git", ["commit", "--quiet", "-m", `release: v${version}`]);
   run("git", ["tag", "-a", `v${version}`, "-m", `Asterism ${version}`]);
   console.log(

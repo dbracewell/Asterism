@@ -132,7 +132,7 @@ EPIC-115 is complete: every story was confirmed and merged on 2026-11-27 through
 
 ### [EPIC-115: Proxy and deployment hardening](../epics/EPIC-115-PROXY-AND-DEPLOYMENT-HARDENING.md)
 
-- [ ] US-115.1: The proxy trusts only what it should
+- [x] US-115.1: The proxy trusts only what it should
   - [x] The forwarded scheme is honoured only from trusted proxies; requests for unknown hosts are refused.
   - [x] The internal system-key header is removed from public requests.
   - [x] The one-hour timeouts and unbuffered proxying apply only to chat, events and other streaming routes.
@@ -157,7 +157,7 @@ EPIC-116 is complete: every story was confirmed and merged on 2026-11-27 through
 
 ### [EPIC-116: Untrusted files and input](../epics/EPIC-116-UNTRUSTED-FILES-AND-INPUT.md)
 
-- [ ] US-116.1: Office files checked before conversion
+- [x] US-116.1: Office files checked before conversion
   - [x] DOCX, XLSX, PPTX and EPUB uploads get the same member-count and uncompressed-size checks as previews before conversion.
   - [x] A conversion that times out stops using memory and threads.
   - [x] Tests and release note.

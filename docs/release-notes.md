@@ -42,6 +42,9 @@ Unreleased into its version and date.
 
 ### Image
 
+- The container health check no longer follows redirects: each path must
+  answer 200 itself. The build context leaves out documentation (except the
+  in-app guide), tests and local data.
 - The entrypoint reads file secrets for every command, `backup` and `verify`
   included, and drops one trailing `\r\n` or `\n` the same way the backend and
   frontend do, so a secret file saved on Windows gives the same key everywhere.
@@ -65,6 +68,10 @@ Unreleased into its version and date.
 
 ### Behavior
 
+- A Word download of a table with many columns keeps its pictures visible, and
+  a ZIP of downloads keeps a file's folder when it renames a repeated name.
+  `pnpm reset:db` refuses a `DB_URL` that isn't SQLite, and `pnpm release`
+  updates the supported version in `SECURITY.md`.
 - The chat connection waits 25 seconds, not 10, without a message from the
   server before reconnecting. A chat opened before its first message still
   gets a title, and a malformed `/files/` address shows "not found" instead of
