@@ -597,6 +597,18 @@ async function checkContainer(image, variant) {
       `ok: the diagram renderer can read its policy and mermaid ${pinned}`,
     );
 
+    // Uploads are converted in a child process (US-116.1).
+    const converted = docker([
+      "exec",
+      name,
+      "sh",
+      "-c",
+      "printf '<h1>Converted heading</h1>' > /tmp/asterism-convert.html && /app/apps/backend/.venv/bin/python -I /app/apps/backend/asterism/domains/files/convert_worker.py /tmp/asterism-convert.html 100",
+    ]);
+    if (!converted.includes("Converted heading"))
+      throw new Error("The file converter did not run in the image");
+    console.log("ok: the file converter runs as a child process");
+
     const scale = JSON.parse(
       readFileSync("packages/diagram-policy/policy.json", "utf8"),
     ).png.scale;

@@ -1,6 +1,6 @@
 # EPIC-116: Untrusted files and input
 
-Status: proposed (2026-11-26). Source: repository review (2026-11-26),
+Status: in progress (2026-11-27). Source: repository review (2026-11-26),
 verified against the code at `40101ac7`.
 
 ## Objective
@@ -14,10 +14,10 @@ before they are processed or shown.
 
 As an admin, I want uploaded documents bounded before they are converted.
 
-- [ ] DOCX, XLSX, PPTX and EPUB uploads get the same member-count and
+- [x] DOCX, XLSX, PPTX and EPUB uploads get the same member-count and
       uncompressed-size checks as previews before conversion.
-- [ ] A conversion that times out stops using memory and threads.
-- [ ] Tests and release note.
+- [x] A conversion that times out stops using memory and threads.
+- [x] Tests and release note.
 
 ### US-116.2: Shown files and preferences are sanitized
 

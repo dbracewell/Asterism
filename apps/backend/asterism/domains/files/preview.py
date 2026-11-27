@@ -18,6 +18,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from asterism.core.exceptions import NotFoundException
 
+from .conversion import ArchiveTooLarge, check_archive
 from .models import FileKind, UserFileModel
 from .processor import ensure_file_processed
 from .queries import select_owned_files
@@ -27,7 +28,6 @@ from .store import get_file_store
 MAX_PREVIEW_CHARS = 4_000
 """Longest excerpt returned; cards show less."""
 
-_MAX_ZIP_MEMBERS = 10_000
 _MAX_APP_XML_BYTES = 64 * 1024
 
 DOCX = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
@@ -49,10 +49,9 @@ def document_counts(path: Path, mime_type: str) -> dict[str, int | None]:
             finally:
                 document.close()
         if mime_type in (DOCX, PPTX, XLSX):
+            check_archive(path)
             with zipfile.ZipFile(path) as archive:
                 names = archive.namelist()
-                if len(names) > _MAX_ZIP_MEMBERS:
-                    return {}
                 if mime_type == PPTX:
                     return {"slide_count": sum(bool(re.fullmatch(r"ppt/slides/slide\d+\.xml", n)) for n in names)}
                 if mime_type == XLSX:
@@ -62,7 +61,7 @@ def document_counts(path: Path, mime_type: str) -> dict[str, int | None]:
                 with archive.open("docProps/app.xml") as source:
                     pages = re.search(rb"<(?:\w+:)?Pages>(\d{1,6})</", source.read(_MAX_APP_XML_BYTES))
                 return {"page_count": int(pages.group(1))} if pages else {}
-    except (OSError, ValueError, KeyError, zipfile.BadZipFile, pypdfium2.PdfiumError):
+    except (OSError, ValueError, KeyError, zipfile.BadZipFile, ArchiveTooLarge, pypdfium2.PdfiumError):
         return {}
     return {}
 

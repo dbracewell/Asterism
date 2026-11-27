@@ -65,6 +65,10 @@ Unreleased into its version and date.
 
 ### Behavior
 
+- Uploaded DOCX, XLSX, PPTX, EPUB and zip files with more than 10,000 members or
+  more than 512 MiB uncompressed are not converted ("File expands beyond the
+  processing limit"). Conversion runs in a child process that is stopped when
+  `FILE_CONVERSION_TIMEOUT_S` passes.
 - Restore refuses a backup that recorded a `SYSTEM_KEY` fingerprint when no
   `SYSTEM_KEY` is set, stops at 1,000,000 entries or the storage disk's free
   space, checks vector table names, and leaves both restored databases readable

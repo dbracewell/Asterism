@@ -8,7 +8,7 @@ real converters, not doubles.
 from pathlib import Path
 
 import pytest
-from asterism.domains.files.processor import MarkItDownFileProcessor
+from asterism.domains.files.convert_worker import convert
 from fpdf import FPDF
 from fpdf.enums import EncryptionMethod
 
@@ -29,7 +29,7 @@ def _pdf(path: Path, text: str, encryption: EncryptionMethod | None = None) -> P
 def test_extracts_text_from_a_pdf(tmp_path: Path) -> None:
     path = _pdf(tmp_path / "plain.pdf", "Quarterly revenue grew")
 
-    assert "Quarterly revenue grew" in MarkItDownFileProcessor._convert(path)
+    assert "Quarterly revenue grew" in convert(path)
 
 
 @pytest.mark.parametrize("method", [EncryptionMethod.AES_128, EncryptionMethod.AES_256])
@@ -37,7 +37,7 @@ def test_extracts_text_from_an_aes_encrypted_pdf(tmp_path: Path, method: Encrypt
     path = _pdf(tmp_path / f"{method.name.lower()}.pdf", "Encrypted findings", method)
     assert b"Encrypted findings" not in path.read_bytes()
 
-    assert "Encrypted findings" in MarkItDownFileProcessor._convert(path)
+    assert "Encrypted findings" in convert(path)
 
 
 def test_converts_html_to_markdown(tmp_path: Path) -> None:
@@ -50,7 +50,7 @@ def test_converts_html_to_markdown(tmp_path: Path) -> None:
         encoding="utf-8",
     )
 
-    markdown = MarkItDownFileProcessor._convert(path)
+    markdown = convert(path)
 
     assert "# Release notes" in markdown
     assert "[guide](https://example.com/guide)" in markdown

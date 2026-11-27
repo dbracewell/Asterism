@@ -82,7 +82,14 @@ The file manager shows each output's status and offers retry and cancel.
 ### Converting documents
 
 `MarkItDownFileProcessor` reads plain text directly and converts other supported
-documents (PDF, Word and so on) in a worker thread. Each step is bounded:
+documents (PDF, Word and so on) in a child process
+([`conversion.py`](../../apps/backend/asterism/domains/files/conversion.py)). The
+child gets no secrets or settings in its environment and is killed when it runs
+out of time, so a stuck converter stops using memory and threads. Before
+converting a zip-based file (DOCX, XLSX, PPTX, EPUB or a zip), Asterism reads its
+member list: more than 10,000 members or more than 512 MiB uncompressed fails the
+file with "File expands beyond the processing limit". Previews use the same
+check. Each step is bounded:
 
 | Limit                  | Setting                                                       | Default                               |
 | ---------------------- | ------------------------------------------------------------- | ------------------------------------- |
