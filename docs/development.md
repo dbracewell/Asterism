@@ -69,7 +69,8 @@ launcher, not just of one pane.
 
 Open <http://localhost:3000>, never the backend port. Next.js forwards `/api/py/…`
 (WebSockets included) to FastAPI on port 8000, as nginx does in the container. The
-API schema is at <http://localhost:3000/api/py/openapi.json>. The backend never
+API schema is at <http://localhost:3000/api/py/openapi.json> (not served in
+production). The backend never
 receives Better Auth's secret or the admin passphrase.
 
 To run without mprocs, start each app in its own terminal:

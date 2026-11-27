@@ -4,8 +4,19 @@ services:
     # .env is the release you run; upgrading means changing it after reading the
     # release notes. To build from source instead, see docker-compose.build.yml.
     image: ghcr.io/dbracewell/asterism:${ASTERISM_VERSION:?Set ASTERISM_VERSION in .env to the release to run, for example 0.2.0}
+    # Optional: lets the app reach model servers on this host (for example
+    # Ollama at http://host.docker.internal:11434). Remove it if every provider
+    # is elsewhere.
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    # Locked down by default (US-115.2): the app runs as UID 10001 on port 3000
+    # and needs no Linux capabilities, never gains privileges, and has a
+    # process and thread limit.
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 1024
     environment:
       PUBLIC_URL: ${PUBLIC_URL:-http://localhost:3000}
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?Set BETTER_AUTH_SECRET}

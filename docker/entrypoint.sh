@@ -5,21 +5,11 @@ set -Eeuo pipefail
 cd /app/apps/backend
 .venv/bin/python -m asterism.serve --check
 
-load_secret() {
-    local name="$1" canonical="/run/secrets/$1" legacy="/run/secrets/${1,,}"
-    if [[ -f "$canonical" && -f "$legacy" ]]; then
-        echo "$name has ambiguous file-secret names; keep only the uppercase file" >&2
-        exit 1
-    fi
-    if [[ -f "$legacy" ]]; then
-        echo "$name uses a legacy file-secret name; rename it to uppercase" >&2
-        exit 1
-    fi
-    if [[ -z "${!name:-}" && -f "$canonical" ]]; then
-        printf -v "$name" '%s' "$(<"$canonical")"
-        export "$name"
-    fi
-}
+source /app/docker/secrets.sh
+# Every command, backup and verify included, sees the same secrets.
+load_secret BETTER_AUTH_SECRET
+load_secret SYSTEM_KEY
+load_secret ADMIN_PASSPHRASE
 
 backend_python() {
     (cd /app/apps/backend && env -u BETTER_AUTH_SECRET -u ADMIN_PASSPHRASE \
@@ -58,9 +48,6 @@ case "$command" in
         ;;
 esac
 
-load_secret BETTER_AUTH_SECRET
-load_secret SYSTEM_KEY
-load_secret ADMIN_PASSPHRASE
 : "${BETTER_AUTH_SECRET:?Set a persistent BETTER_AUTH_SECRET}"
 : "${SYSTEM_KEY:?Set a persistent SYSTEM_KEY}"
 : "${ADMIN_PASSPHRASE:?Set ADMIN_PASSPHRASE}"

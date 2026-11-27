@@ -71,11 +71,13 @@ test("writes a file that passes the production contract", async () => {
 
 test("never replaces an existing file without --force", async () => {
   const output = join(scratch(), ".env");
-  writeFileSync(output, "SYSTEM_KEY=keep\n");
+  writeFileSync(output, "SYSTEM_KEY=keep\n", { mode: 0o644 });
   await assert.rejects(configure({ output, version: "1.0.0" }), SetupError);
   assert.equal(readFileSync(output, "utf8"), "SYSTEM_KEY=keep\n");
   await configure({ output, version: "1.0.0", force: true });
   assert.notEqual(readFileSync(output, "utf8"), "SYSTEM_KEY=keep\n");
+  // A replaced file is made owner-only too (US-115.2).
+  assert.equal(statSync(output).mode & 0o777, 0o600);
 });
 
 test("refuses values the container would refuse, writing nothing", async () => {

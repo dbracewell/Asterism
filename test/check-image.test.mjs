@@ -1,5 +1,6 @@
 // The image check's own parts (US-91.2): the size budget and the runtime user.
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { test } from "node:test";
 import {
   baseLagProblems,
@@ -252,4 +253,17 @@ test("the component record must match what the image runs (US-114.3)", () => {
     "node: components.json records nothing, but the image has 22.13.0",
     "chromium: components.json records nothing, but the image has 140.0.7339.16",
   ]);
+});
+
+test("compose locks the container down and check:image runs it the same way", () => {
+  const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
+  const compose = read("docker-compose.yml");
+  assert.match(compose, /cap_drop:\n\s+- ALL\n/);
+  assert.match(compose, /security_opt:\n\s+- no-new-privileges:true\n/);
+  const pids = /pids_limit: (\d+)/.exec(compose)?.[1];
+  assert.ok(pids);
+  const check = read("scripts/check-image.mjs");
+  assert.match(check, /"--cap-drop",\s+"ALL"/);
+  assert.match(check, /"--security-opt",\s+"no-new-privileges:true"/);
+  assert.match(check, new RegExp(`"--pids-limit",\\s+"${pids}"`));
 });
