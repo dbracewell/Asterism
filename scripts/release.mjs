@@ -97,6 +97,22 @@ export function cutReleaseNotes(text, version, date) {
   return `${text.slice(0, heading.index)}## Unreleased\n\n## ${version} (${date})${text.slice(start)}`;
 }
 
+/**
+ * The body of `version`'s release notes, without its heading: what its GitHub
+ * Release page shows (US-118.1).
+ */
+export function releaseNotesFor(text, version) {
+  const escaped = version.replaceAll(".", "\\.");
+  const heading = new RegExp(`^## ${escaped} \\(\\d{4}-\\d{2}-\\d{2}\\)[ \\t]*$`, "m").exec(text);
+  if (!heading)
+    throw new Error(`${RELEASE_NOTES} has no section for ${version}`);
+  const start = heading.index + heading[0].length;
+  const next = text.slice(start).search(/^## /m);
+  const body = (next === -1 ? text.slice(start) : text.slice(start, start + next)).trim();
+  if (!body) throw new Error(`The ${version} section of ${RELEASE_NOTES} is empty`);
+  return `${body}\n`;
+}
+
 /** Today in the local time zone, as YYYY-MM-DD. */
 /**
  * SECURITY.md with `version`'s minor as the one that gets fixes (US-117.3).

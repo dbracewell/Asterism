@@ -343,6 +343,16 @@ configuration, and the patch version for fixes only.
    back. Watch it under Actions; if it fails, nothing is tagged. Re-run it once
    the cause is fixed outside the image, or release a new patch version, since
    the tag stays.
+5. Once the image is published, signed and verified, the workflow creates the
+   tag's GitHub Release (US-118.1): titled `Asterism <version>`, with that
+   version's section of the release notes (`scripts/release-page.mjs`), and
+   marked latest only when it is the newest `v*` tag. A re-run updates the page
+   instead of failing. To make a page by hand, for example for an older tag:
+
+   ```bash
+   node scripts/release-page.mjs 0.2.0 > notes.md
+   gh release create v0.2.0 --verify-tag --title "Asterism 0.2.0" --notes-file notes.md --latest=false
+   ```
 
    Each architecture is built with an SPDX SBOM and full provenance
    (`provenance: mode=max`), stored as an attestation manifest beside the image
@@ -367,7 +377,7 @@ configuration, and the patch version for fixes only.
    the package's settings on GitHub, so administrators can pull it without
    signing in.
 
-5. Check the published image as an administrator would, with the commands in
+6. Check the published image as an administrator would, with the commands in
    [Verify the image](deployment.md#verify-the-image).
 
 ## Repository settings

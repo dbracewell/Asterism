@@ -439,6 +439,16 @@ pnpm release 0.2.0 --dry-run    # every check, no changes
 pnpm release 0.2.0
 ```
 
+### `release-page.mjs`
+
+Prints one version's section of the release notes, without its heading: the
+body of its GitHub Release page (US-118.1). The release workflow runs it after
+publishing the image.
+
+```bash
+node scripts/release-page.mjs 0.2.0 > notes.md
+```
+
 ### `check-theme-storage-container.mjs`
 
 Verifies the actual theme repository in a disposable test layer on the locally
