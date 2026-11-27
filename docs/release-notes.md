@@ -65,6 +65,16 @@ Unreleased into its version and date.
 
 ### Behavior
 
+- The chat connection waits 25 seconds, not 10, without a message from the
+  server before reconnecting. A chat opened before its first message still
+  gets a title, and a malformed `/files/` address shows "not found" instead of
+  an error page.
+- Sending a message refreshes only the chat, chat list, search, draft, context,
+  comparison, file scope and usage queries, not every query. Downloads share
+  one helper. The event stream closes on sign-out, and the shared worker drops
+  a tab that stops answering for 3 minutes.
+- Each server render gets its own query cache, and the canvas preview waits for
+  the app's page instead of giving up on the first stray message.
 - A settings import that fails at any step changes nothing, and never gives the
   admin group a token budget. Refreshing a provider's models keeps the draft
   model when the provider leaves it out of its list.

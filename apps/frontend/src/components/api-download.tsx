@@ -1,3 +1,4 @@
+import { saveBlob } from "@/lib/save-blob";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -27,7 +28,6 @@ export const APIDownload = ({
     if (loading || error) return;
 
     setLoading(true);
-    let objectUrl: string | null = null;
     try {
       const { data } =
         chatId && fileId
@@ -36,20 +36,11 @@ export const APIDownload = ({
             })
           : await api.fileGetOne({ path: { filename } });
       if (!data) throw new Error("File is unavailable");
-      const blob = data instanceof Blob ? data : new Blob([data]);
-      objectUrl = URL.createObjectURL(blob);
-
-      const link = document.createElement("a");
-      link.href = objectUrl;
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
+      saveBlob(data instanceof Blob ? data : new Blob([data]), filename);
     } catch (fetchError) {
       console.error("Failed to fetch file", fetchError);
       setError(true);
     } finally {
-      if (objectUrl) URL.revokeObjectURL(objectUrl);
       setLoading(false);
     }
   };

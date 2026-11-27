@@ -174,7 +174,8 @@ async def test_saturated_command_can_retry_on_same_controller():
     running = occupied.start(asyncio.sleep(30))
     await asyncio.sleep(0)
     resume = AsyncMock()
-    candidate = job(jobs, resume_pending_turn=resume)
+    # A resume reloads the chat, then starts its title and the turn (US-117.2).
+    candidate = job(jobs, resume_pending_turn=resume, reload_chat=AsyncMock())
     token = jobs.admit_controller("a")
     jobs.attach(candidate.chat_id, candidate, token)
     connection = SimpleNamespace(send_json=AsyncMock())

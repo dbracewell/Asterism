@@ -3,6 +3,23 @@
 import { eventRouter } from "@/features/sse/lib/event-router";
 import { useEffect, useRef } from "react";
 
+/** How often this tab tells the shared worker it is still open (sse-worker.js). */
+const ALIVE_INTERVAL_MS = 15_000;
+
+// The connection this tab holds, so sign-out can close it (US-117.2).
+let activePort: MessagePort | null = null;
+let activeSource: EventSource | null = null;
+
+/**
+ * Closes the event stream for every tab. Call before signing out: the stream
+ * was opened with that session and would otherwise keep delivering its events.
+ */
+export function closeEventStream() {
+  activePort?.postMessage("signout");
+  activeSource?.close();
+  activeSource = null;
+}
+
 export default function WorkerProvider({
   children,
 }: {
@@ -15,6 +32,7 @@ export default function WorkerProvider({
 
     if (typeof SharedWorker === "undefined") {
       const eventSource = new EventSource("/api/stream");
+      activeSource = eventSource;
       eventSource.onmessage = (event) => {
         try {
           const parsed = JSON.parse(event.data);
@@ -32,12 +50,18 @@ export default function WorkerProvider({
       };
       return () => {
         eventSource.close();
+        if (activeSource === eventSource) activeSource = null;
       };
     }
 
     const worker = new SharedWorker("/sse-worker.js");
     workerRef.current = worker;
     worker.port.start();
+    activePort = worker.port;
+    const alive = setInterval(
+      () => worker.port.postMessage("alive"),
+      ALIVE_INTERVAL_MS,
+    );
 
     worker.port.onmessage = (event) => {
       const { type, data } = event.data;
@@ -62,6 +86,8 @@ export default function WorkerProvider({
     window.addEventListener("beforeunload", handleUnload);
 
     return () => {
+      clearInterval(alive);
+      if (activePort === worker.port) activePort = null;
       worker.port.postMessage("unload");
       worker.port.onmessage = null;
       worker.port.close();

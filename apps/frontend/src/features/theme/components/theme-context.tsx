@@ -80,12 +80,8 @@ export const ThemeProvider = ({
 
   const setFontSize = useCallback(
     (fontSize: string) => {
-      try {
-        setPreferenceCookie(FONT_SIZE_COOKIE, allowedFontSize(fontSize), 365);
-        router.refresh();
-      } catch (error) {
-        console.log(error);
-      }
+      setPreferenceCookie(FONT_SIZE_COOKIE, allowedFontSize(fontSize), 365);
+      router.refresh();
     },
     [router],
   );

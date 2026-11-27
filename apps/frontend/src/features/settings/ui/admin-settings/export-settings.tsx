@@ -1,5 +1,6 @@
 "use client";
 
+import { saveBlob } from "@/lib/save-blob";
 import { Button } from "@/components/ui/button";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
@@ -18,14 +19,10 @@ import { HelpHeading } from "@/features/help/components/help-heading";
 const MIN_PASSPHRASE_LENGTH = 12;
 
 function downloadSettings(file: SettingsEnvelope) {
-  const url = URL.createObjectURL(
+  saveBlob(
     new Blob([JSON.stringify(file, null, 2)], { type: "application/json" }),
+    `asterism-settings-${new Date().toISOString().slice(0, 10)}.json`,
   );
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = `asterism-settings-${new Date().toISOString().slice(0, 10)}.json`;
-  link.click();
-  URL.revokeObjectURL(url);
 }
 
 /** What a file includes and leaves out, from the server's coverage registry (EPIC-100). */

@@ -1,5 +1,6 @@
 "use client";
 
+import { safeDecodeURIComponent } from "@/lib/safe-decode";
 import { Badge } from "@/components/ui/badge";
 import {
   Breadcrumb,
@@ -61,7 +62,7 @@ export function headerRoute(
       kind: "page",
       trail: [
         { label: "Files", href: "/files" },
-        { label: decodeURIComponent(file[1]) },
+        { label: safeDecodeURIComponent(file[1]) ?? file[1] },
       ],
     };
   if (pathname.startsWith("/classes/"))

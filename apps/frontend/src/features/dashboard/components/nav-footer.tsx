@@ -1,5 +1,6 @@
 "use client";
 
+import { closeEventStream } from "@/features/sse/components/worker-provider";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,6 +28,8 @@ export const NavFooter = () => {
   const user = useUser();
 
   const onSignOut = async () => {
+    // The event stream belongs to this session (US-117.2).
+    closeEventStream();
     await authClient.signOut();
     window.location.href = "/sign-in";
   };

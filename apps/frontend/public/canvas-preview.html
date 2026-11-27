@@ -8,16 +8,16 @@
   src/lib/content-security-policy.ts.
 -->
 <script>
-  addEventListener(
-    "message",
-    (event) => {
-      if (event.source !== parent) return;
-      const html = event.data && event.data.asterismCanvasPreview;
-      if (typeof html !== "string") return;
-      document.open();
-      document.write(html);
-      document.close();
-    },
-    { once: true },
-  );
+  // Stops listening only once the app's page arrives (US-117.2): a message from
+  // anything else, or one without a page, is ignored rather than ending it.
+  function showPreview(event) {
+    if (event.source !== parent) return;
+    const html = event.data && event.data.asterismCanvasPreview;
+    if (typeof html !== "string") return;
+    removeEventListener("message", showPreview);
+    document.open();
+    document.write(html);
+    document.close();
+  }
+  addEventListener("message", showPreview);
 </script>

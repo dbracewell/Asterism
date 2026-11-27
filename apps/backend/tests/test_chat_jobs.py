@@ -85,6 +85,22 @@ async def test_title_generation_is_owned_once_by_the_chat_job():
 
 
 @pytest.mark.asyncio
+async def test_a_finished_title_attempt_can_run_again_later():
+    """US-117.2: a chat opened before its first message still gets a title."""
+    manager = ChatJobManager()
+    generated = 0
+
+    async def generate_chat_title():
+        nonlocal generated
+        generated += 1
+
+    job = manager.get_or_create(uuid.uuid4(), SimpleNamespace(generate_chat_title=generate_chat_title), user_id="a")
+    await job.start_title_generation()
+    await job.start_title_generation()
+    assert generated == 2
+
+
+@pytest.mark.asyncio
 async def test_controller_disconnect_does_not_cancel_the_chat_job():
     class DisconnectingConnection:
         async def accept(self):

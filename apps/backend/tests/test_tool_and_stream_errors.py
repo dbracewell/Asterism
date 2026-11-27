@@ -209,3 +209,27 @@ async def test_the_regenerate_notice_reaches_every_open_tab():
         unsubscribe(built.chat_id, tab)
     await manager.shutdown()
     discard_message_queue(built.chat_id)
+
+
+@pytest.mark.asyncio
+async def test_a_resumed_turn_starts_the_title_after_reloading_the_chat():
+    """US-117.2: a chat opened before its first message still gets a title."""
+    order: list[str] = []
+    reload_chat = AsyncMock(side_effect=lambda: order.append("reload"))
+    resume = AsyncMock(side_effect=lambda **kwargs: order.append(f"resume reload={kwargs.get('reload')}"))
+    built, manager = controller([], reload_chat=reload_chat, resume_pending_turn=resume)
+    title = built.job.orchestrator.generate_chat_title
+    title.side_effect = lambda: order.append("title")
+    built.job.controllers += 1  # This controller is attached, so the idle job stays.
+    await built.job.start_title_generation()  # The first attempt, when the chat opened empty.
+    processing = asyncio.create_task(built._process_commands_loop())
+    await built.inbound_commands.put({"type": "resume"})
+    await built.inbound_commands.join()
+    # Reloaded once, then the title (its own task) and the turn run side by side.
+    assert order[:2] == ["title", "reload"]
+    assert sorted(order[2:]) == ["resume reload=False", "title"]
+    built.job.controllers -= 1
+    processing.cancel()
+    await asyncio.gather(processing, return_exceptions=True)
+    await manager.shutdown()
+    discard_message_queue(built.chat_id)
