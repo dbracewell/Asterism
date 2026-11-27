@@ -17,9 +17,9 @@ through v0.5.0, but never created Release pages: the two that exist (0.2.0 and
 
 As a maintainer, I want each tag's GitHub Release made for me.
 
-- [ ] After the image is published and verified, a job creates the tag's
+- [x] After the image is published and verified, a job creates the tag's
       Release from its section of the release notes, marked latest only when
       it is the newest tag, and updates it on a re-run.
-- [ ] Only that job can write to the repository.
+- [x] Only that job can write to the repository.
 - [ ] Pages for v0.2.2 through v0.5.0 are created from the release notes.
-- [ ] Tests, release guide and release note.
+- [x] Tests, release guide and release note.
