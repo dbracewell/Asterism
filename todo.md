@@ -133,12 +133,12 @@ Source: repository review (2026-11-26), verified against the code at `40101ac7`.
 [EPIC-115](docs/epics/EPIC-115-PROXY-AND-DEPLOYMENT-HARDENING.md): Proxy and deployment hardening
 
 - [ ] US-115.1: The proxy trusts only what it should
-  - [ ] The forwarded scheme is honoured only from trusted proxies; requests for unknown hosts are refused.
-  - [ ] The internal system-key header is removed from public requests.
-  - [ ] The one-hour timeouts and unbuffered proxying apply only to chat, events and other streaming routes.
-  - [ ] Readiness checks reuse a result for a few seconds.
-  - [ ] Tests (`check:image` or edge-config) and release note.
-- [ ] US-115.2: Container and setup defaults
+  - [x] The forwarded scheme is honoured only from trusted proxies; requests for unknown hosts are refused.
+  - [x] The internal system-key header is removed from public requests.
+  - [x] The one-hour timeouts and unbuffered proxying apply only to chat, events and other streaming routes.
+  - [x] Readiness checks reuse a result for a few seconds.
+  - [x] Tests (`check:image` or edge-config) and release note.
+- [x] US-115.2: Container and setup defaults
   - [ ] `docker-compose.yml` drops capabilities, sets `no-new-privileges` and a process limit; the host gateway mapping is documented as optional.
   - [ ] `setup.mjs --force` leaves `.env` readable only by its owner.
   - [ ] Secret files with Windows line endings give the same key in every entrypoint command.

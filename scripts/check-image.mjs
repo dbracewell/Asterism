@@ -16,6 +16,7 @@
 import { spawnSync } from "node:child_process";
 import { randomBytes } from "node:crypto";
 import { readFileSync } from "node:fs";
+import { request as httpRequest } from "node:http";
 import { pathToFileURL } from "node:url";
 import { parseArgs } from "node:util";
 import { parseDockerSize } from "./capacity/stats.mjs";
@@ -389,6 +390,66 @@ async function get(base, path) {
   return response;
 }
 
+/** A raw request, so the probe can send its own Host header. */
+function rawStatus(base, path, { method = "GET", headers = {}, body } = {}) {
+  return new Promise((resolve, reject) => {
+    const outgoing = httpRequest(
+      `${base}${path}`,
+      { method, headers },
+      (response) => {
+        response.resume();
+        resolve(response.statusCode);
+      },
+    );
+    outgoing.on("error", reject);
+    outgoing.end(body);
+  });
+}
+
+// From inside the container: the backend's event webhook keeps its key.
+const internalEventCheck = String.raw`
+import os, urllib.request, urllib.error
+request = urllib.request.Request(
+    "http://127.0.0.1:3000/api/stream", data=b"{}", method="POST",
+    headers={"x-asterism-system-key": os.environ["SYSTEM_KEY"], "content-type": "application/json"})
+try:
+    print(urllib.request.urlopen(request, timeout=10).status)
+except urllib.error.HTTPError as error:
+    print(error.code)
+`;
+
+async function checkEdge(base, container, systemKey) {
+  const unknownHost = await rawStatus(base, "/sign-in", {
+    headers: { host: "unknown.example" },
+  });
+  if (unknownHost !== 421)
+    throw new Error(`A request for an unknown host answered ${unknownHost}`);
+  const publicEvent = await rawStatus(base, "/api/stream", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "x-asterism-system-key": systemKey,
+    },
+    body: "{}",
+  });
+  if (publicEvent !== 401)
+    throw new Error(
+      `A public request carrying the system key answered ${publicEvent}`,
+    );
+  const internal = docker([
+    "exec",
+    container,
+    "/app/apps/backend/.venv/bin/python",
+    "-c",
+    internalEventCheck,
+  ]).trim();
+  if (internal === "401")
+    throw new Error("The backend's own event request was refused");
+  console.log(
+    "ok: unknown hosts get 421; the system key works only inside the container",
+  );
+}
+
 const databaseCheck = String.raw`
 import json, sqlite3
 def tables(path):
@@ -462,6 +523,7 @@ async function checkContainer(image, variant) {
     console.log(
       "ok: /sign-in, /api/py/health/ready and /api/health answer 200",
     );
+    await checkEdge(base, name, secrets.SYSTEM_KEY);
 
     const uids = docker([
       "exec",

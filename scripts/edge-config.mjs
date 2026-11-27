@@ -47,10 +47,24 @@ export function trustedProxies(environment) {
   return proxies;
 }
 
+function publicUrl(environment) {
+  return new URL(environment.PUBLIC_URL ?? CATALOG.PUBLIC_URL.defaultValue);
+}
+
 export function isHttps(environment) {
-  const publicUrl =
-    environment.PUBLIC_URL ?? CATALOG.PUBLIC_URL.defaultValue;
-  return new URL(publicUrl).protocol === "https:";
+  return publicUrl(environment).protocol === "https:";
+}
+
+/** Names the container itself uses (health checks), always accepted. */
+export const LOOPBACK_HOSTS = ["localhost", "127.0.0.1", "[::1]"];
+
+/** Host names the public server answers; nginx refuses every other Host. */
+export function servedHosts(environment) {
+  const host = publicUrl(environment).hostname.toLowerCase();
+  if (!/^(\[[0-9a-f:.]+\]|[a-z0-9.-]+)$/.test(host)) {
+    throw new Error("PUBLIC_URL must name a host nginx can match");
+  }
+  return [...new Set([host, ...LOOPBACK_HOSTS])];
 }
 
 function megabytes(bytes) {
@@ -71,15 +85,23 @@ export function renderEdgeConfig(environment) {
         ...proxies.map((proxy) => `set_real_ip_from ${proxy};`),
         "real_ip_header X-Forwarded-For;",
         "real_ip_recursive on;",
-        "",
-      ].join("\n")
-    : "";
+      ]
+    : [];
+  // The connecting peer, before X-Forwarded-For is applied, decides whether
+  // the forwarded scheme is believed.
+  const trusted = [
+    "geo $realip_remote_addr $from_trusted_proxy {",
+    "    default 0;",
+    ...proxies.map((proxy) => `    ${proxy} 1;`),
+    "}",
+  ];
   const tooLarge = JSON.stringify({
     detail: `The upload is larger than the ${megabytes(limit)} MB limit.`,
   });
   return {
-    "http.conf": realIp,
+    "http.conf": [...realIp, ...trusted, ""].join("\n"),
     "server.conf": [
+      `server_name ${servedHosts(environment).join(" ")};`,
       `client_max_body_size ${uploadRequestLimitBytes(environment)};`,
       hsts.trimEnd(),
       "location @upload_too_large {",

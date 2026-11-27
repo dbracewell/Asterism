@@ -27,8 +27,14 @@ vi.mock("@/lib/server-config-core", () => ({
 import { GET } from "./route";
 
 describe("GET /api/health", () => {
+  let now = Date.now();
+
   beforeEach(() => {
+    // Each test starts past the previous test's cached result.
+    now += 60_000;
+    vi.spyOn(Date, "now").mockImplementation(() => now);
     vi.clearAllMocks();
+    mocks.exec.mockReset();
     mocks.signJWT.mockResolvedValue({ token: "header.payload.signature" });
   });
 
@@ -64,5 +70,20 @@ describe("GET /api/health", () => {
       false,
     ]);
     expect(JSON.stringify(body)).not.toMatch(/storage|secret|SQLITE/);
+  });
+
+  it("reuses one result for a few seconds, including for concurrent callers", async () => {
+    const responses = await Promise.all([GET(), GET(), GET()]);
+    expect(responses.map((response) => response.status)).toEqual([
+      200, 200, 200,
+    ]);
+    expect(mocks.signJWT).toHaveBeenCalledTimes(1);
+    now += 4000;
+    await GET();
+    expect(mocks.signJWT).toHaveBeenCalledTimes(1);
+    now += 2000;
+    await GET();
+    expect(mocks.signJWT).toHaveBeenCalledTimes(2);
+    expect(mocks.open).toHaveBeenCalledTimes(2);
   });
 });

@@ -26,6 +26,9 @@ async def instance(tmp_path, monkeypatch):
     await initialize_database()
     monkeypatch.setattr("asterism.core.security.jwks_client.get_signing_keys", lambda: ["key"])
     monkeypatch.setattr(config, "min_free_storage_bytes", 1024)
+    # Each test sees fresh checks; caching has its own test.
+    monkeypatch.setattr(service, "READINESS_TTL_SECONDS", 0)
+    monkeypatch.setattr(service, "_readiness", None)
     return tmp_path
 
 
@@ -59,6 +62,32 @@ async def test_each_failure_is_named_without_internal_detail(instance, monkeypat
 
     (instance / "database.db").unlink()
     assert checks(await service.readiness())["database"] == (False, "The backend database is missing")
+
+
+@pytest.mark.asyncio
+async def test_readiness_is_reused_for_a_few_seconds_and_shared(instance, monkeypatch):
+    """US-115.1: a public flood of readiness checks runs the checks once per window."""
+    import asyncio
+
+    runs = 0
+    real = service._check_database
+
+    async def counted():
+        nonlocal runs
+        runs += 1
+        await asyncio.sleep(0.01)
+        return await real()
+
+    monkeypatch.setattr(service, "_check_database", counted)
+    monkeypatch.setattr(service, "READINESS_TTL_SECONDS", 60)
+    results = await asyncio.gather(*(service.readiness() for _ in range(20)))
+    assert runs == 1 and all(result.ready for result in results)
+    await service.readiness()
+    assert runs == 1
+
+    monkeypatch.setattr(service, "READINESS_TTL_SECONDS", 0)
+    await service.readiness()
+    assert runs == 2
 
 
 @pytest.mark.asyncio
