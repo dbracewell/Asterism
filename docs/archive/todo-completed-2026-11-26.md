@@ -82,3 +82,26 @@ EPIC-112 is complete: every story was confirmed and merged on 2026-11-26 through
   - [x] The ChatGPT connection callback checks the account is active and uses its sign-in attempt exactly once.
   - [x] Issuing a password reset link revokes the account's earlier unused links.
   - [x] Tests and release note.
+
+## Agent and budget limits
+
+EPIC-113 is complete: every story was confirmed and merged on 2026-11-26 through pull requests #151, #153 and #154. Quiz grading counts against the token budget; tool calls written as text run only when tools were offered and never from code; and tool and stream errors fail once, clearly, with unique call ids, strict approvals and a regenerate that waits for the running reply.
+
+### [EPIC-113: Agent and budget limits](../epics/EPIC-113-AGENT-AND-BUDGET-LIMITS.md)
+
+- [x] US-113.1: Quiz grading within the token budget
+  - [x] Submitting an attempt checks the budget before grading short answers.
+  - [x] Over budget, the attempt is still saved, with short answers marked ungraded and a message saying why.
+  - [x] ADR-0073 note, tests and release note.
+- [x] US-113.2: Text tool calls only when tools were offered
+  - [x] Tool calls written as text are read only when that request offered tools.
+  - [x] Tool-call tags inside fenced or inline code are left as text.
+  - [x] The final loop step, which offers no tools, never runs a tool call.
+  - [x] Tests and release note.
+- [x] US-113.3: Tool and stream errors end cleanly
+  - [x] Tool errors that would repeat (bad input, coded errors) are not retried.
+  - [x] A structured-output error ends the stream without a completion event.
+  - [x] Duplicate tool call ids are made unique before approval.
+  - [x] Regenerate is refused while a reply is running and reaches every open tab.
+  - [x] Tool approvals accept only true or false; unexpected tool errors return a generic message.
+  - [x] Tests and release note.
