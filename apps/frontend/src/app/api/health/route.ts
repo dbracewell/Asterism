@@ -44,13 +44,36 @@ async function checkSigningKey(): Promise<Check> {
   }
 }
 
+type Readiness = { ready: boolean; checks: Check[] };
+
+/** Readiness is public: callers within this window share one result (US-115.1). */
+const READINESS_TTL_MS = 5000;
+let cached: { at: number; result: Readiness } | undefined;
+let checking: Promise<Readiness> | undefined;
+
+async function runChecks(): Promise<Readiness> {
+  const checks = [checkAuthDatabase(), await checkSigningKey()];
+  const result = { ready: checks.every((check) => check.ok), checks };
+  cached = { at: Date.now(), result };
+  return result;
+}
+
+function readiness(): Promise<Readiness> {
+  if (cached && Date.now() - cached.at < READINESS_TTL_MS) {
+    return Promise.resolve(cached.result);
+  }
+  checking ??= runChecks().finally(() => {
+    checking = undefined;
+  });
+  return checking;
+}
+
 /**
  * Frontend readiness (US-86.6): public, pass/fail only. The backend's
  * `/api/py/health/ready` checks its own database, storage and the keys it loads.
  */
 export async function GET() {
-  const checks = [checkAuthDatabase(), await checkSigningKey()];
-  const ready = checks.every((check) => check.ok);
+  const { ready, checks } = await readiness();
   return NextResponse.json(
     { ready, checks },
     {

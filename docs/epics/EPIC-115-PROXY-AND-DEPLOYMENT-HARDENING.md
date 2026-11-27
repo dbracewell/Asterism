@@ -1,6 +1,6 @@
 # EPIC-115: Proxy and deployment hardening
 
-Status: proposed (2026-11-26). Source: repository review (2026-11-26),
+Status: in progress (2026-11-27). Source: repository review (2026-11-26),
 verified against the code at `40101ac7`.
 
 ## Objective
@@ -16,13 +16,13 @@ and backups keep their files private.
 As an operator, I want the bundled nginx to pass on only trusted request
 details.
 
-- [ ] The forwarded scheme is honoured only from trusted proxies; requests for
+- [x] The forwarded scheme is honoured only from trusted proxies; requests for
       unknown hosts are refused.
-- [ ] The internal system-key header is removed from public requests.
-- [ ] The one-hour timeouts and unbuffered proxying apply only to chat, events
+- [x] The internal system-key header is removed from public requests.
+- [x] The one-hour timeouts and unbuffered proxying apply only to chat, events
       and other streaming routes.
-- [ ] Readiness checks reuse a result for a few seconds.
-- [ ] Tests (`check:image` or edge-config) and release note.
+- [x] Readiness checks reuse a result for a few seconds.
+- [x] Tests (`check:image` or edge-config) and release note.
 
 ### US-115.2: Container and setup defaults
 

@@ -226,10 +226,13 @@ queues in memory ([ADR-0019](adr/0019-single-process-runtime-and-storage-seams.m
 
 ## 4. TLS proxy
 
-The proxy must forward `Host`, set `X-Forwarded-Proto` and `X-Forwarded-For`, pass
+The proxy must forward `Host` (nginx answers 421 for any host other than
+`PUBLIC_URL`'s or `localhost`), set `X-Forwarded-Proto` and `X-Forwarded-For`, pass
 WebSocket upgrades (`/api/py/chat/stream/`), allow long-lived connections (replies
 stream for minutes) and accept uploads up to `MAX_UPLOAD_FILE_SIZE_BYTES` (100 MiB
-by default). Don't buffer responses. Never expose internal ports 3001 or 8000.
+by default). Don't buffer responses. Never expose internal ports 3001 or 8000. Set
+`TRUSTED_PROXIES` to the proxy's address: nginx believes `X-Forwarded-For` and
+`X-Forwarded-Proto` only from those addresses.
 
 **Caddy** (gets certificates automatically):
 
@@ -478,7 +481,7 @@ with validation rules, is in
 | `ADMIN_PASSPHRASE`                                      | none, required                        | Creates the first administrator                                                                                                                                            |
 | `STORAGE_ROOT`                                          | `/storage` in the container           | Where all data lives; for local development, an absolute writable directory                                                                                                |
 | `PORT`                                                  | `3000`                                | The host port Compose publishes                                                                                                                                            |
-| `TRUSTED_PROXIES`                                       | none                                  | Addresses or CIDR networks, comma-separated, whose `X-Forwarded-For` nginx trusts                                                                                          |
+| `TRUSTED_PROXIES`                                       | none                                  | Addresses or CIDR networks, comma-separated, whose `X-Forwarded-For` and `X-Forwarded-Proto` nginx trusts                                                                  |
 | `MAX_UPLOAD_FILE_SIZE_BYTES`                            | 104857600 (100 MiB), also the maximum | The largest upload request. A lower value also lowers the file processing and vision image limits unless they are set                                                      |
 | `LOG_LEVEL`                                             | `INFO`                                | `DEBUG`, `INFO`, `WARNING` or `ERROR`. `DEBUG` is for development                                                                                                          |
 | `LOG_FORMAT`                                            | `text`                                | `text`, or `json` for one object per line                                                                                                                                  |

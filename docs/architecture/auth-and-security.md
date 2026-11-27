@@ -260,10 +260,24 @@ open chats together. Refused requests get a JSON 429 with `Retry-After: 60`.
 Better Auth applies its own limit of 60 sign-ins per minute per address
 ([`auth-rate-limit.ts`](../../apps/frontend/src/lib/auth-rate-limit.ts)).
 
-**Trusted proxies decide the client address.** nginx takes the client address
-from `X-Forwarded-For` only when the connection comes from an address in
-`TRUSTED_PROXIES`. Without it, every request seems to come from the TLS proxy,
-and the limits above apply to everyone at once.
+**Trusted proxies decide the client address and scheme.** nginx takes the client
+address from `X-Forwarded-For`, and the scheme from `X-Forwarded-Proto`, only when
+the connection comes from an address in `TRUSTED_PROXIES`. Without it, every
+request seems to come from the TLS proxy, and the limits above apply to everyone
+at once.
+
+**Only the public host is served.** The public server answers `PUBLIC_URL`'s host
+and the loopback names; any other `Host` gets 421, so DNS rebinding and spoofed
+hosts never reach the app.
+
+**The system key stays inside the container.** nginx clears
+`X-Asterism-System-Key` on every public request. The backend's events to the
+frontend and the health check connect to `127.0.0.1:3000`, a separate nginx
+server that published ports cannot reach.
+
+**Only streams stay open.** The chat WebSocket and the `/api/stream` events get
+one-hour timeouts and unbuffered proxying; every other request times out after
+five minutes.
 
 **Only port 3000 is published.** FastAPI (8000) and Next.js (3001) listen on
 loopback inside the container.

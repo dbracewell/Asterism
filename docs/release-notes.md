@@ -31,6 +31,10 @@ Unreleased into its version and date.
   Better Auth's sign-up route also needs `SYSTEM_KEY` (`systemKey` in the query).
   Scripts that create accounts this way must send both; the bundled browser
   tests, screenshot seed, capacity check and upgrade check already do.
+- The bundled nginx believes `X-Forwarded-Proto`, like `X-Forwarded-For`, only
+  from `TRUSTED_PROXIES`, and answers 421 for any `Host` other than
+  `PUBLIC_URL`'s or loopback. A TLS proxy in front must pass `Host` through and
+  be listed in `TRUSTED_PROXIES`.
 
 ### Image
 
@@ -54,6 +58,10 @@ Unreleased into its version and date.
 
 ### Behavior
 
+- Through the bundled nginx, only the chat WebSocket and `/api/stream` events
+  keep one-hour timeouts and unbuffered proxying; other requests time out after
+  five minutes. Public requests lose any `X-Asterism-System-Key` header, and the
+  public readiness checks reuse their result for 5 seconds.
 - A tool error that would happen again, such as bad input, is no longer retried,
   and an unexpected tool error shows the model only its type, not its details.
   Repeated tool call ids are made unique before approval, a regenerate sent

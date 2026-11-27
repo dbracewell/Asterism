@@ -34,9 +34,13 @@ from .schemas import (
 STARTED_AT = int(time.time())
 LAST_BACKUP = ".last-backup.json"
 STORAGE_SIZE_TTL_SECONDS = 300
+# Readiness is public: callers within this window share one result (US-115.1).
+READINESS_TTL_SECONDS = 5.0
 
 _storage_size: tuple[float, int] | None = None
 _measuring: asyncio.Task[int] | None = None
+_readiness: tuple[float, Readiness] | None = None
+_checking: asyncio.Task[Readiness] | None = None
 
 
 def _database_writable(path: Path) -> None:
@@ -86,10 +90,23 @@ async def _check_auth_keys() -> ReadinessCheck:
 
 
 async def readiness() -> Readiness:
+    """The checks' result, reused for a few seconds and shared by concurrent callers."""
+    global _checking
+    if _readiness is not None and time.monotonic() - _readiness[0] < READINESS_TTL_SECONDS:
+        return _readiness[1]
+    if _checking is None or _checking.done():
+        _checking = asyncio.create_task(_run_readiness())
+    return await asyncio.shield(_checking)
+
+
+async def _run_readiness() -> Readiness:
+    global _readiness
     # Concurrent, so the container health check (3 s per request) is not the sum of the waits.
     database, auth_keys = await asyncio.gather(_check_database(), _check_auth_keys())
     checks = [database, _check_storage(), auth_keys]
-    return Readiness(ready=all(check.ok for check in checks), checks=checks)
+    result = Readiness(ready=all(check.ok for check in checks), checks=checks)
+    _readiness = (time.monotonic(), result)
+    return result
 
 
 def _directory_size(root: Path) -> int:

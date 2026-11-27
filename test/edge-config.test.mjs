@@ -72,8 +72,16 @@ test("HSTS is sent only for an HTTPS public URL", () => {
   assert.doesNotMatch(http["server.conf"], /Strict-Transport-Security/);
 });
 
-test("X-Forwarded-For is trusted only from listed proxies", () => {
-  assert.equal(renderEdgeConfig({})["http.conf"], "");
+test("X-Forwarded-For and the scheme are trusted only from listed proxies", () => {
+  assert.equal(
+    renderEdgeConfig({})["http.conf"],
+    [
+      "geo $realip_remote_addr $from_trusted_proxy {",
+      "    default 0;",
+      "}",
+      "",
+    ].join("\n"),
+  );
   assert.equal(
     renderEdgeConfig({ TRUSTED_PROXIES: "10.0.0.0/8,::1" })["http.conf"],
     [
@@ -81,6 +89,11 @@ test("X-Forwarded-For is trusted only from listed proxies", () => {
       "set_real_ip_from ::1;",
       "real_ip_header X-Forwarded-For;",
       "real_ip_recursive on;",
+      "geo $realip_remote_addr $from_trusted_proxy {",
+      "    default 0;",
+      "    10.0.0.0/8 1;",
+      "    ::1 1;",
+      "}",
       "",
     ].join("\n"),
   );
@@ -88,6 +101,45 @@ test("X-Forwarded-For is trusted only from listed proxies", () => {
     () => renderEdgeConfig({ TRUSTED_PROXIES: "0.0.0.0/0; allow all" }),
     /TRUSTED_PROXIES/,
   );
+});
+
+test("the public server answers only PUBLIC_URL's host and loopback", () => {
+  const serverName = (environment) =>
+    /^server_name (.+);$/m.exec(renderEdgeConfig(environment)["server.conf"])[1];
+  assert.equal(serverName({}), "localhost 127.0.0.1 [::1]");
+  assert.equal(
+    serverName({ PUBLIC_URL: "https://Asterism.Example:8443/app" }),
+    "asterism.example localhost 127.0.0.1 [::1]",
+  );
+  assert.equal(
+    serverName({ PUBLIC_URL: "http://[fd00::5]:3000" }),
+    "[fd00::5] localhost 127.0.0.1 [::1]",
+  );
+});
+
+test("nginx removes the system key from public requests and scopes long timeouts", () => {
+  const nginx = readFileSync(
+    new URL("../docker/nginx.conf", import.meta.url),
+    "utf8",
+  );
+  const servers = nginx.split(/\n    server \{/).slice(1);
+  const [refusal, internal, external] = servers;
+  assert.match(refusal, /listen 3000 default_server;\s+return 421;/);
+  assert.match(internal, /listen 127\.0\.0\.1:3000;/);
+  assert.doesNotMatch(internal, /System-Key/i);
+  assert.match(external, /proxy_set_header X-Asterism-System-Key "";/);
+  assert.doesNotMatch(nginx, /default \$http_x_forwarded_proto/);
+  // Only the stream locations get an hour and unbuffered proxying.
+  const locations = external.split(/\n        location /).slice(1);
+  assert.ok(locations.length >= 6);
+  for (const location of locations) {
+    const path = location.split(" {")[0];
+    const streaming = /^(\/api\/py\/chat\/stream\/|= \/api\/stream)$/.test(path);
+    assert.equal(/proxy_read_timeout 3600s/.test(location), streaming, path);
+    assert.equal(/proxy_buffering off/.test(location), streaming, path);
+  }
+  const head = external.split(/\n        location /)[0];
+  assert.doesNotMatch(head, /3600s|proxy_buffering/);
 });
 
 test("writes every snippet nginx includes, even empty ones", () => {

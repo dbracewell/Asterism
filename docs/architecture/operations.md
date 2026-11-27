@@ -61,7 +61,9 @@ nginx's log format leaves out query strings, and the backend redacts `token=` an
 
 Two public endpoints answer "can you serve?". Each returns `ready` and a list of
 checks, each passed or failed with a short reason, and answers 503 when any check
-fails. They never include a path or error text.
+fails. They never include a path or error text. Because they are public, each reuses its
+last result for 5 seconds and concurrent requests share one run of the checks, so
+a flood of health requests cannot keep the databases locked.
 
 | Endpoint                   | Owner    | Checks                                                                                                                                                                                                          |
 | -------------------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -70,7 +72,7 @@ fails. They never include a path or error text.
 
 The container's health check
 ([`docker/healthcheck.py`](../../docker/healthcheck.py)) runs every 30 seconds.
-It fetches `/sign-in` and both endpoints through nginx, and writes the failing
+It fetches `/sign-in` and both endpoints through nginx's loopback server, and writes the failing
 response to Docker's health log. It allows three failures before marking the
 container unhealthy, because a long write can briefly hold the database lock.
 
