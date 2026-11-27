@@ -141,3 +141,13 @@ Source: repository review (2026-11-26), verified against the code at `40101ac7`.
   - [x] `SECURITY.md` names the supported version.
   - [x] The container health check doesn't follow redirects; `reset-databases` checks the database URL prefix; `.dockerignore` excludes docs, tests and local data.
   - [x] The unused proxy-list call in `setup.mjs` is removed.
+
+## Release pages (proposed 2026-11-27)
+
+[EPIC-118](docs/epics/EPIC-118-RELEASE-PAGES.md): Release pages
+
+- [ ] US-118.1: The release workflow creates the Release page
+  - [ ] After the image is published and verified, a job creates the tag's Release from its section of the release notes, marked latest only when it is the newest tag, and updates it on a re-run.
+  - [ ] Only that job can write to the repository.
+  - [ ] Pages for v0.2.2 through v0.5.0 are created from the release notes.
+  - [ ] Tests, release guide and release note.

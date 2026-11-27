@@ -16,6 +16,10 @@ name: Release
 # unless `cosign verify` accepts it for this workflow and tag. A rehearsal never
 # reaches the publish job, so it signs nothing.
 #
+# US-118.1: once the image is published, signed and verified, the release-page
+# job creates the tag's GitHub Release from its section of the release notes,
+# marked latest only when it is the newest release.
+#
 # Run it by hand (Actions → Release → Run workflow) to rehearse a release: it
 # builds, pushes by digest and checks both architectures, but tags nothing.
 
@@ -345,3 +349,46 @@ jobs:
             --certificate-github-workflow-ref "$GITHUB_REF" \
             > /dev/null
           echo "Signature verified for $IMAGE@$DIGEST ($GITHUB_REF)."
+
+  release-page:
+    name: Create the GitHub Release
+    needs: [version, publish]
+    if: github.event_name == 'push' && github.ref_type == 'tag'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      # Creating a release; nothing else in this run can write to the repository.
+      contents: write
+    steps:
+      - name: Checkout, with every release tag
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .node-version
+
+      - name: Create or update the release page
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.version.outputs.version }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          node scripts/release-page.mjs "$VERSION" > "$RUNNER_TEMP/notes.md"
+          newest="$(git tag --list 'v*' | node --input-type=module -e '
+            import { latestRelease } from "./scripts/release.mjs";
+            let input = "";
+            for await (const chunk of process.stdin) input += chunk;
+            console.log(latestRelease(input.split("\n").filter(Boolean)) ?? "");
+          ')"
+          latest=false
+          if [ "$newest" = "$VERSION" ]; then latest=true; fi
+          # A re-run updates the page it made instead of failing.
+          if gh release view "$TAG" > /dev/null 2>&1; then
+            gh release edit "$TAG" --title "Asterism $VERSION" --notes-file "$RUNNER_TEMP/notes.md" --latest="$latest"
+          else
+            gh release create "$TAG" --verify-tag --title "Asterism $VERSION" --notes-file "$RUNNER_TEMP/notes.md" --latest="$latest"
+          fi

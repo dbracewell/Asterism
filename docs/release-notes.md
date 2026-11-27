@@ -68,6 +68,8 @@ Unreleased into its version and date.
 
 ### Behavior
 
+- Each release now gets its GitHub Release page, with that version's release
+  notes, once its image is published and verified.
 - A Word download of a table with many columns keeps its pictures visible, and
   a ZIP of downloads keeps a file's folder when it renames a repeated name.
   `pnpm reset:db` refuses a `DB_URL` that isn't SQLite, and `pnpm release`
