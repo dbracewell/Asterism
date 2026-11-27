@@ -20,6 +20,7 @@ from asterism.db.queries import paginate_select
 from asterism.domains.llm.schemas import LLMMessage
 from asterism.domains.llm.selection import ModelCall, SelectedModel, resolve_usable_model
 from asterism.domains.usage.schemas import UsageSource
+from asterism.domains.usage.service import UsageLimitExceeded
 
 from . import clock
 from .citations import resolve_citations
@@ -147,10 +148,19 @@ async def _grading_model(
         return None
     if model_id is None:
         raise BadDataException("Choose a model to grade short answers")
-    # Grading finishes a submitted attempt, so it is counted but never refused.
+    # Grading is new work the person starts, so it is refused over budget
+    # (US-113.1); submit_attempt then saves the attempt with short answers ungraded.
     return await resolve_usable_model(
-        user_id=user_id, model_id=model_id, session=session, source=UsageSource.STUDY, admit=False
+        user_id=user_id, model_id=model_id, session=session, source=UsageSource.STUDY, admit=True
     )
+
+
+def _over_budget(grades: list[_Grade], error: UsageLimitExceeded) -> None:
+    """Mark short answers ungraded, saying why, when grading would exceed the budget."""
+    for grade in grades:
+        if grade.text is not None:
+            grade.grader, grade.verdict = "model", "ungraded"
+            grade.feedback = f"Not graded: {error}"[:MAX_FEEDBACK_CHARS]
 
 
 # --- Results ---------------------------------------------------------------
@@ -220,7 +230,11 @@ async def submit_attempt(
     await require_quiz(user_id=user_id, project_id=project_id, quiz_id=quiz_id, session=session)
     questions = await quiz_questions(user_id=user_id, quiz_id=quiz_id, session=session)
     grades = _match_answers(questions, payload.answers)
-    model = await _grading_model(user_id=user_id, grades=grades, model_id=payload.model_id, session=session)
+    try:
+        model = await _grading_model(user_id=user_id, grades=grades, model_id=payload.model_id, session=session)
+    except UsageLimitExceeded as error:
+        model = None
+        _over_budget(grades, error)
     # Release the request session's connection before the long-running work.
     await session.commit()
 

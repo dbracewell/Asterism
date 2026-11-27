@@ -47,7 +47,8 @@ A budget limits how many tokens each member of the group may use.
 
 When a member has used their budget, new messages, regenerated answers, study
 tools and images are refused until it resets, and the message tells them when.
-An answer that's already being written finishes. Administrators never have a
+A submitted quiz is still saved, but its short answers are left ungraded. An
+answer that's already being written finishes. Administrators never have a
 budget.
 
 As a guide, a short chat answer uses a few thousand tokens; a reply that reads
