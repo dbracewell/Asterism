@@ -29,6 +29,7 @@ from asterism.core.events import EventType, NoArgEvent, event_bus
 from asterism.core.exceptions import BadDataException, ConflictException, NotFoundException
 from asterism.db.database import get_async_db_session
 from asterism.domains.agent.models import AgentProfileModel
+from asterism.domains.llm.client import forget_openai_clients
 
 from .captioning_guard import get_captioning_selection_guard
 from .models import (
@@ -420,6 +421,8 @@ async def update_provider_settings(
             ).all()
         }
         _reject_owned_provider_types(settings.llm_providers)
+        # Pooled clients for these providers are rebuilt from the saved settings (US-116.3).
+        forget_openai_clients(provider.base_url for provider in existing_providers.values())
         incoming_ids = {provider.id for provider in settings.llm_providers}
         draft_model_id = settings.draft_model_id
         if draft_model_id is not None:
@@ -1177,6 +1180,8 @@ async def bulk_upsert_providers(
     current_providers = await get_all_providers(session=session)
     processed_providers = set()
     existing_providers = {p.id: p for p in current_providers}
+    # Pooled clients for these providers are rebuilt from the saved settings (US-116.3).
+    forget_openai_clients(provider.base_url for provider in current_providers)
 
     for provider in update:
         existing_provider = existing_providers.get(provider.id, None)

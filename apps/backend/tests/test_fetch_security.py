@@ -375,7 +375,7 @@ async def test_browser_route_denies_private_requests_without_fetching() -> None:
         raise AssertionError("private request must not be fetched")
 
     async with _mock_client(handler) as client:
-        await fetch_module._serve_browser_request(client, 5.0, cast(Route, route))
+        await fetch_module._serve_browser_request(client, 5.0, fetch_module._RequestBudget(100), cast(Route, route))
 
     route.abort.assert_awaited_once_with("accessdenied")
     route.fulfill.assert_not_awaited()
@@ -389,7 +389,7 @@ async def test_browser_route_skips_images_without_fetching() -> None:
         raise AssertionError("images must not be fetched")
 
     async with _mock_client(handler) as client:
-        await fetch_module._serve_browser_request(client, 5.0, cast(Route, route))
+        await fetch_module._serve_browser_request(client, 5.0, fetch_module._RequestBudget(100), cast(Route, route))
 
     route.abort.assert_awaited_once_with("blockedbyclient")
 
@@ -417,7 +417,7 @@ async def test_browser_route_fulfills_through_pinned_client(
         body=b'{"q": 1}',
     )
     async with _mock_client(handler) as client:
-        await fetch_module._serve_browser_request(client, 5.0, cast(Route, route))
+        await fetch_module._serve_browser_request(client, 5.0, fetch_module._RequestBudget(100), cast(Route, route))
 
     request = seen[0]
     assert request.method == "POST"
@@ -454,7 +454,7 @@ async def test_browser_route_follows_redirects_itself_and_drops_cross_origin_cre
         body=b"payload",
     )
     async with _mock_client(handler) as client:
-        await fetch_module._serve_browser_request(client, 5.0, cast(Route, route))
+        await fetch_module._serve_browser_request(client, 5.0, fetch_module._RequestBudget(100), cast(Route, route))
 
     assert [(r.method, r.url.host) for r in seen] == [("POST", "93.184.216.34"), ("GET", "93.184.216.35")]
     assert "cookie" not in seen[1].headers
@@ -473,7 +473,7 @@ async def test_browser_route_denies_redirect_to_private_host(
     route = _browser_route("https://example.com/start", resource_type="script")
 
     async with _mock_client(lambda request: httpx.Response(302, headers={"Location": "http://10.0.0.1/x"})) as client:
-        await fetch_module._serve_browser_request(client, 5.0, cast(Route, route))
+        await fetch_module._serve_browser_request(client, 5.0, fetch_module._RequestBudget(100), cast(Route, route))
 
     route.abort.assert_awaited_once_with("accessdenied")
     route.fulfill.assert_not_awaited()
@@ -487,7 +487,7 @@ async def test_browser_route_aborts_oversized_body(
     route = _browser_route("https://93.184.216.34/bundle.js", resource_type="script")
 
     async with _mock_client(lambda request: httpx.Response(200, content=b"x" * 5000)) as client:
-        await fetch_module._serve_browser_request(client, 5.0, cast(Route, route))
+        await fetch_module._serve_browser_request(client, 5.0, fetch_module._RequestBudget(100), cast(Route, route))
 
     route.abort.assert_awaited_once_with("failed")
     route.fulfill.assert_not_awaited()
@@ -649,3 +649,52 @@ async def test_web_search_parses_pages_without_blocking_the_event_loop(
     assert loop_thread not in parse_threads
     assert all(f"https://example.com/{i}" in output for i in range(10))
     assert max(gaps) < 0.15
+
+
+@pytest.mark.asyncio
+async def test_a_rendered_page_gets_a_capped_number_of_requests() -> None:
+    """US-116.3: past the budget, the browser's requests are aborted without fetching."""
+    fetched = 0
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        nonlocal fetched
+        fetched += 1
+        return httpx.Response(200, text="ok", headers={"content-type": "text/plain"})
+
+    budget = fetch_module._RequestBudget(2)
+    routes = [_browser_route("https://93.184.216.34/a.js", resource_type="script") for _ in range(3)]
+    async with _mock_client(handler) as client:
+        for route in routes:
+            await fetch_module._serve_browser_request(client, 5.0, budget, cast(Route, route))
+    assert fetched == 2
+    routes[2].abort.assert_awaited_once_with("blockedbyclient")
+    routes[2].fulfill.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_short_non_html_text_is_never_rendered_in_the_browser(monkeypatch: pytest.MonkeyPatch) -> None:
+    """US-116.3: only HTML goes to the browser; a short text or JSON body is used as fetched."""
+    for mime in ("text/plain", "application/json", "text/csv"):
+        _serve(monkeypatch, lambda request, mime=mime: httpx.Response(200, text="{}", headers={"content-type": mime}))
+        page = await fetch_module.fetch_page("https://example.com/data")
+        assert page.mime_type == mime and page.content == "{}"
+
+
+@pytest.mark.asyncio
+async def test_fetch_clients_ignore_proxy_environment_variables(monkeypatch: pytest.MonkeyPatch) -> None:
+    """US-116.3: HTTP(S)_PROXY in the server's environment never routes a fetch."""
+    seen: list[dict[str, Any]] = []
+    monkeypatch.setattr(fetch_module, "_resolve_host_ips", lambda host, port: ["93.184.216.34"])
+
+    def client_factory(*args: object, **kwargs: Any) -> httpx.AsyncClient:
+        seen.append(kwargs)
+        return _REAL_ASYNC_CLIENT(
+            *args,
+            transport=httpx.MockTransport(lambda request: httpx.Response(200, text="x" * 2000)),
+            **kwargs,
+        )
+
+    monkeypatch.setattr(fetch_module.httpx, "AsyncClient", client_factory)
+    monkeypatch.setenv("HTTPS_PROXY", "http://proxy.invalid:3128")
+    await fetch_module.fetch_page("https://example.com/")
+    assert seen and all(kwargs.get("trust_env") is False for kwargs in seen)

@@ -18,6 +18,7 @@ import re
 import threading
 import time
 import uuid
+from collections.abc import Iterable
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
 from typing import (
@@ -31,6 +32,7 @@ from typing import (
 from openai import (
     APIError,
     AsyncOpenAI,
+    DefaultAsyncHttpxClient,
 )
 from openai.types import CompletionUsage
 from openai.types.chat import (
@@ -401,8 +403,8 @@ class StreamHandler[T: BaseModel]:
 
 # Process-wide pool of AsyncOpenAI clients keyed by (base_url, api_key) so that
 # repeated LLMClient construction for the same provider reuses one HTTP
-# connection pool. Entries are only removed at shutdown; a rotated API key or
-# deleted provider leaves its entry until then.
+# connection pool. Saving providers drops the entries for their URLs
+# (``forget_openai_clients``), so a rotated key or deleted provider is not kept.
 _shared_openai_clients: dict[tuple[str, str], AsyncOpenAI] = {}
 _shared_openai_clients_lock = threading.Lock()
 
@@ -424,9 +426,24 @@ def get_shared_openai_client(base_url: str, api_key: str) -> AsyncOpenAI:
                 api_key=api_key,
                 base_url=base_url,
                 timeout=120.0,
+                # A redirect would carry the API key to another server (US-116.3).
+                http_client=DefaultAsyncHttpxClient(follow_redirects=False),
             )
             _shared_openai_clients[key] = client
         return client
+
+
+def forget_openai_clients(base_urls: Iterable[str]) -> None:
+    """Drop the pooled clients for these provider URLs (US-116.3).
+
+    Called when providers are saved or deleted, so the next request builds a
+    client from the current settings. A dropped client is not closed: a reply
+    already streaming through it finishes, and its connections go with it.
+    """
+    urls = set(base_urls)
+    with _shared_openai_clients_lock:
+        for key in [key for key in _shared_openai_clients if key[0] in urls]:
+            del _shared_openai_clients[key]
 
 
 async def close_openai_clients() -> None:

@@ -6,6 +6,7 @@ logged. It is a word-level baseline, not a classifier; it errs toward refusing.
 """
 
 import re
+import unicodedata
 
 _MINOR = re.compile(
     r"\b(child|children|kids?|minors?|underage|under-age|preteens?|pre-teens?|teens?|teenagers?|teenage|"
@@ -21,7 +22,20 @@ _ALWAYS = re.compile(r"\b(loli(?:con)?|shota(?:con)?|cp|csam)\b")
 
 
 def _normalize(text: str) -> str:
-    return " ".join(re.sub(r"[^a-z0-9\s-]", " ", text.lower()).split())
+    """Plain lowercase words (US-116.3).
+
+    Compatibility forms fold to their base letters (full-width and styled
+    letters, ligatures), accents come off, and invisible format characters
+    (zero-width spaces and joiners, soft hyphens, direction marks) are removed
+    before anything else, so they cannot split a word in two.
+    """
+    decomposed = unicodedata.normalize("NFKD", text)
+    letters = "".join(
+        character
+        for character in decomposed
+        if not unicodedata.combining(character) and unicodedata.category(character) != "Cf"
+    )
+    return " ".join(re.sub(r"[^a-z0-9\s-]", " ", letters.casefold()).split())
 
 
 def refusal_reason(*texts: str) -> str | None:

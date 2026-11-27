@@ -164,6 +164,20 @@ async def test_prompts_pairing_minors_with_sexual_content_are_refused():
     assert refusal_reason("little girl", "naked")
 
 
+def test_the_prompt_check_sees_through_accents_and_invisible_characters():
+    """US-116.3: spellings that look the same to a person match the same words."""
+    for disguised in (
+        "a ch\u00efld, n\u00fcde",  # accents
+        "a chi\u200bld, nu\u200dde",  # zero-width space and joiner inside the words
+        "a chi\u00adld, nu\u2060de",  # soft hyphen and word joiner
+        "a \uff43\uff48\uff49\uff4c\uff44, \uff4e\uff55\uff44\uff45",  # full-width letters
+        "a CHILD, NUDE",
+        "a child\u202e, nude",  # a direction mark
+    ):
+        assert refusal_reason(disguised), ascii(disguised)
+    assert refusal_reason("a caf\u00e9 with a child reading") is None
+
+
 async def test_policy_endpoints_and_availability(images):
     client, sessions, provider = images
     assert (await client.get("/settings/app/image-generation", headers=auth("a"))).status_code == 403

@@ -87,7 +87,10 @@ bundle.
 1. The **prompt check** (`safety.py`) refuses a prompt that pairs a minor with
    sexual content, prompt and negative prompt together. It is fixed, not
    configurable, a word-level baseline that errs toward refusing, and runs
-   before availability so every refusal is recorded.
+   before availability so every refusal is recorded. Before matching, text is
+   folded to plain letters (NFKD: accents, full-width and styled letters) and
+   invisible format characters such as zero-width spaces and soft hyphens are
+   removed, so they cannot disguise or split a word.
 2. Availability is rechecked.
 3. One job at a time per provider (an in-process semaphore; a local GPU runs
    one pipeline), with a timeout (10 minutes) and cancellation.

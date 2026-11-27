@@ -28,7 +28,9 @@ that IP and keeps the original name in:
 httpx is never given a hostname, so it never resolves one. `_send_pinned`
 follows redirects itself: every hop is re-validated, re-resolved once and
 pinned. 307/308 keep the method and body; other redirects become a bodiless
-GET. Cookies and `Authorization` are dropped when a hop changes origin.
+GET. Cookies and `Authorization` are dropped when a hop changes origin. The
+clients are built with `trust_env=False`, so `HTTP(S)_PROXY` and other proxy
+settings in the server's environment never route a fetch (US-116.3).
 
 We chose this over a custom transport or httpcore network backend: httpx has
 no public hook for the resolver, and a request-level rewrite needs no private
@@ -53,7 +55,11 @@ Instead:
   body, follows redirects with `_send_pinned`, and caps bodies at
   `_MAX_RESPONSE_BYTES` (an oversized response is aborted rather than
   truncated). Images, media and fonts are aborted unfetched. URLs that fail
-  validation are aborted with `accessdenied`.
+  validation are aborted with `accessdenied`. A page may make at most
+  `_MAX_BROWSER_REQUESTS` (100) requests, its own included; later ones are
+  aborted unfetched.
+- Only HTML (`text/html`, `application/xhtml+xml`) is rendered. A short text,
+  JSON or CSV response is used as fetched, never loaded into the browser.
 
 A probe confirmed that Chromium does not route the follow-up request after a
 fulfilled 3xx, so redirects must be resolved in the handler.

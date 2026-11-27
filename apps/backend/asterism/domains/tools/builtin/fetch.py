@@ -29,6 +29,10 @@ _MAX_REDIRECTS = 5
 # Upper bound on response bytes read from a fetched page; reading stops here and
 # the page is truncated, so a huge response cannot buffer into memory.
 _MAX_RESPONSE_BYTES = 2 * 1024 * 1024
+# A rendered page may make at most this many requests, its own included (US-116.3).
+_MAX_BROWSER_REQUESTS = 100
+# Only HTML is rendered in the browser; other text is used as fetched.
+_HTML_TYPES = frozenset({"text/html", "application/xhtml+xml"})
 # Content types worth converting to Markdown; anything else (images, archives,
 # PDFs, octet streams) is rejected before its body is read.
 _TEXTUAL_MIME_TYPES = {"application/xhtml+xml", "application/xml", "application/json"}
@@ -348,17 +352,34 @@ def _fulfilled_headers(headers: httpx.Headers) -> dict[str, str]:
     return merged
 
 
-async def _serve_browser_request(client: httpx.AsyncClient, timeout: float, route: Route) -> None:
+class _RequestBudget:
+    """How many more requests one rendered page may make."""
+
+    def __init__(self, limit: int) -> None:
+        self.left = limit
+
+    def take(self) -> bool:
+        self.left -= 1
+        return self.left >= 0
+
+
+async def _serve_browser_request(
+    client: httpx.AsyncClient, timeout: float, budget: _RequestBudget, route: Route
+) -> None:
     """Answer one Chromium request through the pinned client.
 
     Chromium cannot reach the network itself (see ``headless_browser.BROWSER_LAUNCH_ARGS``), so
     every request comes here: skipped resource types are aborted, URLs failing
     SSRF validation are denied, and everything else (with each redirect hop) is
     fetched over its validated address with a capped body and fulfilled back.
-    A body over the cap is aborted rather than truncated.
+    A body over the cap is aborted rather than truncated, and requests past
+    the page's budget are aborted.
     """
     request = route.request
     if request.resource_type in _BROWSER_SKIPPED_RESOURCE_TYPES:
+        await route.abort("blockedbyclient")
+        return
+    if not budget.take():
         await route.abort("blockedbyclient")
         return
     try:
@@ -393,11 +414,12 @@ async def _js_site_fetch(url: str, timeout: float) -> tuple[str, str]:
     pinned httpx client. Rendered HTML is truncated to ``_MAX_RESPONSE_BYTES``.
     """
     validated_url = await validate_public_http_url(url)
-    async with BROWSER_SEMAPHORE, httpx.AsyncClient(timeout=timeout, follow_redirects=False) as client:
+    async with BROWSER_SEMAPHORE, httpx.AsyncClient(timeout=timeout, follow_redirects=False, trust_env=False) as client:
         browser = await acquire_browser()
         context = await browser.new_context(service_workers="block")
         try:
-            await context.route("**/*", functools.partial(_serve_browser_request, client, timeout))
+            budget = _RequestBudget(_MAX_BROWSER_REQUESTS)
+            await context.route("**/*", functools.partial(_serve_browser_request, client, timeout, budget))
             page = await context.new_page()
             response = await page.goto(
                 url=validated_url,
@@ -490,7 +512,8 @@ async def _http_fetch(target: PublicUrl, timeout: float) -> tuple[str, str, str]
     Returns:
         The decoded (possibly truncated) body, its media type, and the final URL.
     """
-    async with httpx.AsyncClient(timeout=timeout, follow_redirects=False) as client:
+    # trust_env=False: proxy settings in the environment never route fetches (US-116.3).
+    async with httpx.AsyncClient(timeout=timeout, follow_redirects=False, trust_env=False) as client:
         response, target = await _send_pinned(client, target, timeout)
         try:
             response.raise_for_status()
@@ -516,9 +539,10 @@ async def fetch_page(
     """
     target = await resolve_public_http_url(url)
     html_page, mime_type, current_url = await _http_fetch(target, timeout)
-    # Short bodies (often JS shells) and known JS-framework markers are
-    # refetched in a headless browser to capture rendered content.
-    if len(html_page) < threshold_for_playwright or possible_js_page(html_page):
+    # Short HTML bodies (often JS shells) and known JS-framework markers are
+    # refetched in a headless browser to capture rendered content; other text
+    # is never rendered.
+    if mime_type in _HTML_TYPES and (len(html_page) < threshold_for_playwright or possible_js_page(html_page)):
         html_page, mime_type = await _js_site_fetch(current_url, timeout)
 
     return Document(
