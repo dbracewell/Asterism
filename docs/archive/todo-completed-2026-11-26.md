@@ -172,3 +172,29 @@ EPIC-116 is complete: every story was confirmed and merged on 2026-11-27 through
   - [x] `web_fetch` ignores proxy environment variables, uses the browser only for HTML, and caps a page's subrequests.
   - [x] Model provider clients don't follow redirects and are dropped when a provider changes or is deleted.
   - [x] Tests and release note.
+
+## Correctness cleanup
+
+EPIC-117 is complete: every story was confirmed and merged on 2026-11-27 through pull requests #168, #169 and #170. Settings imports and admin checks are consistent, the chat connection, titles, downloads, event stream and query cache behave correctly, and housekeeping fixes cover exports, the health check, the build context and the security policy.
+
+### [EPIC-117: Correctness cleanup](../epics/EPIC-117-CORRECTNESS-CLEANUP.md)
+
+- [x] US-117.1: Settings and admin consistency
+  - [x] A settings import that fails partway leaves nothing applied, and never gives the admin group a budget.
+  - [x] Model discovery keeps the draft model.
+  - [x] Pack review and course apply offer only tools the person's group allows.
+  - [x] Tool settings check component parameters; the generic setting route for study chat checks groups; nested secrets are redacted.
+  - [x] Tests and release note.
+- [x] US-117.2: Chat and frontend fixes
+  - [x] The chat connection's heartbeat timeout has a margin over the server's ping; stray `console.log` calls are removed.
+  - [x] Chat titles can be generated again later in a chat.
+  - [x] File names containing `%` open and show correctly.
+  - [x] Sending a message refreshes only the queries it changes.
+  - [x] Downloads share one helper; the shared event worker drops closed tabs and closes the stream on sign-out.
+  - [x] The query client is per request on the server; the canvas preview keeps listening until a valid message arrives.
+  - [x] Tests and release note.
+- [x] US-117.3: Housekeeping
+  - [x] Word tables with many columns keep a positive picture width; ZIP names keep their folder when disambiguated.
+  - [x] `SECURITY.md` names the supported version.
+  - [x] The container health check doesn't follow redirects; `reset-databases` checks the database URL prefix; `.dockerignore` excludes docs, tests and local data.
+  - [x] The unused proxy-list call in `setup.mjs` is removed.
