@@ -93,6 +93,21 @@ _TEXT_TOOL_CALL_PATTERN = re.compile(
     flags=re.DOTALL | re.IGNORECASE,
 )
 
+# Markdown code: fenced blocks (``` or ~~~, to the closing fence or the end)
+# and inline spans. A tool-call tag shown as code is an example, not a call.
+_FENCED_CODE_PATTERN = re.compile(r"^[ \t]*(`{3,}|~{3,})[^\n]*\n.*?(?:^[ \t]*\1[ \t]*$|\Z)", re.DOTALL | re.MULTILINE)
+_INLINE_CODE_PATTERN = re.compile(r"(`+)(?!`).+?(?<!`)\1(?!`)", re.DOTALL)
+
+
+def _code_spans(content: str) -> list[tuple[int, int]]:
+    fenced = [match.span() for match in _FENCED_CODE_PATTERN.finditer(content)]
+    inline = [
+        match.span()
+        for match in _INLINE_CODE_PATTERN.finditer(content)
+        if not any(start <= match.start() < end for start, end in fenced)
+    ]
+    return fenced + inline
+
 
 def extract_text_tool_calls(content: str) -> tuple[str, list[ToolCall]]:
     """Convert OpenAI-compatible providers' textual tool-call fallback.
@@ -107,13 +122,17 @@ def extract_text_tool_calls(content: str) -> tuple[str, list[ToolCall]]:
     Returns:
         ``(clean_content, calls)``. Every successfully parsed tag is removed
         from the text; malformed tags (bad JSON, missing/blank name, non-dict
-        payload, or unparseable string arguments) are left in place and ignored.
-        When nothing parses, returns the input unchanged with an empty list.
+        payload, or unparseable string arguments) are left in place and ignored,
+        and so are tags inside Markdown code (US-113.2). When nothing parses,
+        returns the input unchanged with an empty list.
     """
     calls: list[ToolCall] = []
     parsed_spans: list[tuple[int, int]] = []
+    code = _code_spans(content)
 
     for match in _TEXT_TOOL_CALL_PATTERN.finditer(content):
+        if any(start <= match.start() < end for start, end in code):
+            continue
         try:
             payload = json.loads(match.group(1))
         except json.JSONDecodeError:
@@ -214,6 +233,8 @@ class StreamHandler[T: BaseModel]:
             argument fragments are concatenated across chunks.
         response_model: When set, the final text is validated into this model
             (after stripping markdown fences) and attached as ``parsed``.
+        text_tool_calls: Whether to recover tool calls written as text; only
+            when the request offered tools (US-113.2).
     """
 
     thinking: str = ""
@@ -223,6 +244,7 @@ class StreamHandler[T: BaseModel]:
     started_at: float = field(default_factory=time.monotonic)
     tool_calls_dict: dict[int, dict[str, Any]] = field(default_factory=dict)
     response_model: Type[T] | None = None
+    text_tool_calls: bool = False
 
     async def process(
         self,
@@ -295,7 +317,7 @@ class StreamHandler[T: BaseModel]:
             )
             for tc_dict in self.tool_calls_dict.values()
         ]
-        if not tool_calls:
+        if not tool_calls and self.text_tool_calls:
             self.content, tool_calls = extract_text_tool_calls(self.content)
             if tool_calls:
                 self.final_finish_reason = "tool_calls"
@@ -593,6 +615,7 @@ class LLMClient(LLMClientProtocol):
                 async for chunk in response:
                     yield chunk
 
-        handler = StreamHandler(response_model=response_model)
+        # Only a request that actually offered tools may have its text read as calls.
+        handler = StreamHandler(response_model=response_model, text_tool_calls="tools" in completion_args)
         async for event in handler.process(async_chat_impl(**completion_args)):
             yield event

@@ -116,3 +116,28 @@ async def test_sub_agent_deltas_are_not_checked_one_by_one(monkeypatch):
     with pytest.raises(ForbiddenException):
         async for _ in sub_agent._authorized_events(child(), revoked):
             pass
+
+
+@pytest.mark.asyncio
+async def test_a_step_that_offered_no_tools_never_runs_a_call():
+    """US-113.2: the final step sends no tools, so a call it returns anyway is not run."""
+
+    class AlwaysCalls(StreamingClient):
+        async def chat(self, messages, tools, **kwargs):
+            self.offered = tools
+            yield LLMEvent(type=LLMEventType.START)
+            yield LLMEvent(
+                type=LLMEventType.COMPLETE,
+                content="",
+                tool_calls=[ToolCall(id="c1", function=Function(name="web_search", arguments="{}"))],
+            )
+
+    client = AlwaysCalls(deltas=0)
+    built = agent(AsyncMock(), client)
+    built.max_steps = 1
+    ran = AsyncMock()
+    built._step_tools = ran  # type: ignore[method-assign]
+    events = [event async for event in built.run([LLMMessage.user("Hi")])]
+    assert client.offered == []
+    ran.assert_not_called()
+    assert any(event.type == AgentEventType.COMPLETE for event in events)

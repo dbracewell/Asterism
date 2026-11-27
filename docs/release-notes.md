@@ -49,6 +49,9 @@ Unreleased into its version and date.
 - Grading a quiz counts against the token budget like other study tools. Over
   budget, the attempt is still saved, with short answers left ungraded and a note
   saying why; before, grading ignored the budget.
+- Tool calls that a model writes as text are run only when that request offered
+  tools, and a call shown inside a code block or inline code stays text. The last
+  step of a run, which offers no tools, never runs a call.
 - An open chat closes its connection when the sign-in token behind it expires
   and reconnects with a fresh one; a reply that is running carries on.
 - Creating a password reset link cancels the account's earlier unused links.
