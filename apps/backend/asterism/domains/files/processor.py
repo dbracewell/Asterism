@@ -9,12 +9,12 @@ import asyncio
 from pathlib import Path
 from typing import Protocol
 
-from markitdown import MarkItDown
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from asterism.common.hashing import sha256_file
 from asterism.core import config
 
+from .conversion import ArchiveTooLarge, check_archive, convert_file
 from .models import FileContentStatus, FileKind, UserFileModel
 from .store import FileStore, get_file_store
 
@@ -80,34 +80,22 @@ class MarkItDownFileProcessor:
             return content
         return content[: config.max_converted_chars] + _TRUNCATION_MARKER
 
-    @staticmethod
-    def _convert(path: Path) -> str:
-        """Convert a file to plain text with MarkItDown.
-
-        Args:
-            path: Path of the stored source.
-
-        Returns:
-            The converted text.
-        """
-        return MarkItDown().convert(str(path)).text_content
-
     async def _convert_with_timeout(self, path: Path) -> str:
-        """Run the (blocking) conversion off the event loop with a time limit.
+        """Check a zip-based source's size, then convert it in a child process with a time limit.
 
         Args:
             path: Path of the stored source.
 
         Returns:
-            The converted text.
+            The converted text (at most one character past the cache limit).
 
         Raises:
-            TimeoutError: If the conversion exceeds ``config.file_conversion_timeout_s``.
+            ArchiveTooLarge: If a zip-based source has too many members or expands too far.
+            TimeoutError: If the conversion exceeds ``config.file_conversion_timeout_s``;
+                the converter is stopped.
         """
-        return await asyncio.wait_for(
-            asyncio.to_thread(self._convert, path),
-            timeout=config.file_conversion_timeout_s,
-        )
+        await asyncio.to_thread(check_archive, path)
+        return await convert_file(path, timeout=config.file_conversion_timeout_s, max_chars=config.max_converted_chars)
 
     async def ensure_processed(
         self,
@@ -207,7 +195,11 @@ class MarkItDownFileProcessor:
         except TimeoutError:
             file.content_status = FileContentStatus.FAILED
             file.content_error = "File conversion timed out"
-        except Exception:
+        except ArchiveTooLarge:
+            # Not "too large to process": that one is retried when the limit is raised.
+            file.content_status = FileContentStatus.FAILED
+            file.content_error = "File expands beyond the processing limit"
+        except Exception:  # ConversionFailed, or a text read that failed
             # Converter errors often contain document content; never surface or log them.
             file.content_status = FileContentStatus.FAILED
             file.content_error = "File could not be processed"

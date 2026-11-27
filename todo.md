@@ -140,10 +140,10 @@ Source: repository review (2026-11-26), verified against the code at `40101ac7`.
 [EPIC-116](docs/epics/EPIC-116-UNTRUSTED-FILES-AND-INPUT.md): Untrusted files and input
 
 - [ ] US-116.1: Office files checked before conversion
-  - [ ] DOCX, XLSX, PPTX and EPUB uploads get the same member-count and uncompressed-size checks as previews before conversion.
-  - [ ] A conversion that times out stops using memory and threads.
-  - [ ] Tests and release note.
-- [ ] US-116.2: Shown files and preferences are sanitized
+  - [x] DOCX, XLSX, PPTX and EPUB uploads get the same member-count and uncompressed-size checks as previews before conversion.
+  - [x] A conversion that times out stops using memory and threads.
+  - [x] Tests and release note.
+- [x] US-116.2: Shown files and preferences are sanitized
   - [ ] Uploaded SVGs are sanitized before they are shown or opened.
   - [ ] The font-size preference is checked against the allowed sizes; preference cookies are `SameSite=Lax` and secure over HTTPS.
   - [ ] File names lose control and text-direction characters.
