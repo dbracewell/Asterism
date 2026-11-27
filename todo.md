@@ -120,11 +120,11 @@ Source: repository review (2026-11-26), verified against the code at `40101ac7`.
   - [x] CI and `ci:local:*` drop `approve-builds --all` and the flags that turn the allowlist off; `strictDepBuilds` is on.
   - [x] `minimumReleaseAge` is set to the week Dependabot already assumes.
   - [x] CI passes (better-sqlite3 and Playwright still build); release note.
-- [ ] US-114.2: Workflow tokens and timeouts
-  - [ ] Every checkout sets `persist-credentials: false` unless a later step pushes.
-  - [ ] Every release job has a timeout; fork pull requests get their own concurrency group.
-  - [ ] The Node version comes from one place; `vuln-issue.mjs` survives a bad marker.
-- [ ] US-114.3: Scans see every runtime component
+- [x] US-114.2: Workflow tokens and timeouts
+  - [x] Every checkout sets `persist-credentials: false` unless a later step pushes.
+  - [x] Every release job has a timeout; fork pull requests get their own concurrency group.
+  - [x] The Node version comes from one place; `vuln-issue.mjs` survives a bad marker.
+- [x] US-114.3: Scans see every runtime component
   - [ ] `check:image` records and checks the extracted `libgbm1`, Node and Chromium versions.
   - [ ] `uv` comes from a digest-pinned image.
   - [ ] `install-trivy.mjs` uses a private temporary directory; `check-pins.mjs` compares paths reliably.

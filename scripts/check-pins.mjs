@@ -61,8 +61,13 @@ export function dockerfileProblems(text, file) {
   return problems;
 }
 
-/** Problems in one workflow's `uses:`, `container:` and service `image:` values. */
-export function workflowProblems(text, file) {
+/**
+ * Problems in one workflow's `uses:`, `container:` and service `image:` values.
+ * With `nodeVersion` (from `.node-version`), a `node:<x.y.z>` image must be
+ * that version and setup-node must read the file. Every checkout must set
+ * `persist-credentials: false` (US-114.2).
+ */
+export function workflowProblems(text, file, { nodeVersion } = {}) {
   const lineCounter = new LineCounter();
   const document = parseDocument(text, { lineCounter });
   if (document.errors.length > 0) {
@@ -103,6 +108,23 @@ export function workflowProblems(text, file) {
     if (!DIGEST.test(image)) {
       problems.push(`${where(node)}: image ${image} is not pinned by digest (image:tag@sha256:…)`);
     }
+    const tagged = image.match(/^node:(\d+\.\d+\.\d+)\b/);
+    if (nodeVersion && tagged && tagged[1] !== nodeVersion) {
+      problems.push(`${where(node)}: image ${image} is not Node ${nodeVersion} from .node-version`);
+    }
+  };
+  const checkStep = (step) => {
+    // checkUses has already reported a uses it can't read.
+    const raw = step.get("uses");
+    const action = typeof raw === "string" ? raw.trim() : "";
+    const inputs = step.get("with");
+    const input = (name) => (isMap(inputs) ? inputs.get(name) : undefined);
+    if (action.startsWith("actions/checkout@") && input("persist-credentials") !== false) {
+      problems.push(`${where(step)}: checkout keeps the token; set persist-credentials: false`);
+    }
+    if (nodeVersion && action.startsWith("actions/setup-node@") && input("node-version-file") !== ".node-version") {
+      problems.push(`${where(step)}: setup-node does not read node-version-file: .node-version`);
+    }
   };
 
   const jobs = mapping(document.get("jobs", true), "jobs");
@@ -126,7 +148,10 @@ export function workflowProblems(text, file) {
     }
     for (const step of steps.items) {
       const definition = mapping(step, "step");
-      if (definition) checkUses(definition.get("uses", true));
+      if (definition) {
+        checkUses(definition.get("uses", true));
+        checkStep(definition);
+      }
     }
   }
   const line = (problem) => Number(problem.slice(file.length + 1).split(":")[0]);
@@ -152,11 +177,13 @@ export function checkPins(root) {
     problems.push(...dockerfileProblems(readFileSync(path, "utf8"), relative(root, path)));
   }
   const workflows = join(root, ".github", "workflows");
+  const versionFile = join(root, ".node-version");
+  const nodeVersion = existsSync(versionFile) ? readFileSync(versionFile, "utf8").trim() : undefined;
   if (existsSync(workflows)) {
     for (const name of readdirSync(workflows).sort()) {
       if (!/\.ya?ml$/.test(name)) continue;
       const path = join(workflows, name);
-      problems.push(...workflowProblems(readFileSync(path, "utf8"), relative(root, path)));
+      problems.push(...workflowProblems(readFileSync(path, "utf8"), relative(root, path), { nodeVersion }));
     }
   }
   return problems;

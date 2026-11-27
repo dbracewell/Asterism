@@ -24,11 +24,11 @@ As a maintainer, I want only approved packages to run install scripts in CI.
 
 As a maintainer, I want workflow credentials scoped to the steps that need them.
 
-- [ ] Every checkout sets `persist-credentials: false` unless a later step
+- [x] Every checkout sets `persist-credentials: false` unless a later step
       pushes.
-- [ ] Every release job has a timeout; fork pull requests get their own
+- [x] Every release job has a timeout; fork pull requests get their own
       concurrency group.
-- [ ] The Node version comes from one place; `vuln-issue.mjs` survives a bad
+- [x] The Node version comes from one place; `vuln-issue.mjs` survives a bad
       marker.
 
 ### US-114.3: Scans see every runtime component

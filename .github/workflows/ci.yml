@@ -9,9 +9,10 @@ permissions:
   contents: read
 
 # A newer push to the same pull request cancels the run it replaces; runs on
-# main always finish.
+# main always finish. Keyed by pull request number, so a fork's branch can't
+# share a group with (and cancel) another pull request of the same name.
 concurrency:
-  group: ci-${{ github.event_name == 'pull_request' && github.head_ref || github.sha }}
+  group: ci-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || github.sha }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 # The jobs run in parallel. "Lint, Typecheck, Test" and "Frontend E2E
@@ -27,6 +28,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
+          persist-credentials: false
           # The release notes check compares against the base branch.
           fetch-depth: 0
 
@@ -39,7 +41,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: "22.13.0"
+          node-version-file: .node-version
           cache: pnpm
 
       - name: Setup uv
@@ -95,6 +97,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
 
       - name: Verify checkout has no runtime dotenv files
         run: node scripts/check-no-dotenv.mjs
@@ -106,7 +110,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: "22.13.0"
+          node-version-file: .node-version
 
       - name: Setup Python
         uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
@@ -148,6 +152,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
 
       - name: Verify checkout has no runtime dotenv files
         run: node scripts/check-no-dotenv.mjs
@@ -158,7 +164,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: "22.13.0"
+          node-version-file: .node-version
           cache: pnpm
 
       - name: Install dependencies
@@ -221,6 +227,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
+          persist-credentials: false
           # The upgrade check finds the previous release among the tags.
           fetch-depth: 0
 
@@ -237,7 +244,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: "22.13.0"
+          node-version-file: .node-version
           cache: pnpm
 
       - name: Install dependencies for the theme storage check
@@ -319,6 +326,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
 
       - name: Verify checkout has no runtime dotenv files
         run: node scripts/check-no-dotenv.mjs

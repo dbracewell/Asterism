@@ -110,7 +110,10 @@ and comments read as GitHub reads them: every job's and step's `uses:` names an
 action or reusable workflow by full commit SHA, a local one (`./…`) or a
 `docker://` image by digest, and every job `container:` and service `image:`
 names an image by digest (expressions are skipped). Aliases where a step or
-value belongs, and invalid YAML, fail rather than pass unchecked. Problems name
+value belongs, and invalid YAML, fail rather than pass unchecked. Every checkout
+sets `persist-credentials: false`, so no later step holds the token, and Node
+comes from [`.node-version`](../.node-version): setup-node reads that file, and a
+`node:<x.y.z>` container image must be the same version (US-114.2). Problems name
 the file and line. CI runs it in the quality job.
 
 ### `install-trivy.mjs`
@@ -141,8 +144,9 @@ Opens or updates the one `vulnerability-scan` issue from a `check-vulns.mjs
 --report` file, for the weekly **Vulnerability scan** workflow (US-92.2). It
 changes the issue only when the scan found a critical with a fix that the issue
 doesn't list yet: it opens the issue, or rewrites its list and comments on what is
-new. `--run-url <url>` links the scan run; `--dry-run` prints the plan without
-calling `gh`.
+new. An issue whose hidden marker was edited or broken counts as listing nothing,
+so the next scan rewrites it rather than failing (US-114.2). `--run-url <url>`
+links the scan run; `--dry-run` prints the plan without calling `gh`.
 
 ### `check-client-secret-leaks.mjs`
 
