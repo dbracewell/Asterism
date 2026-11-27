@@ -105,3 +105,23 @@ EPIC-113 is complete: every story was confirmed and merged on 2026-11-26 through
   - [x] Regenerate is refused while a reply is running and reaches every open tab.
   - [x] Tool approvals accept only true or false; unexpected tool errors return a generic message.
   - [x] Tests and release note.
+
+## CI and image supply chain
+
+EPIC-114 is complete: every story was confirmed and merged on 2026-11-27 through pull requests #155, #157 and #158. CI installs dependencies with the same build-script allowlist as the image, workflow checkouts keep no credentials and every job has a timeout, and the image records its extracted libgbm1, Node and Chromium versions so scans and `check:image` cover them.
+
+### [EPIC-114: CI and image supply chain](../epics/EPIC-114-CI-AND-IMAGE-SUPPLY-CHAIN.md)
+
+- [x] US-114.1: Dependency build scripts follow the allowlist
+  - [x] CI and `ci:local:*` drop `approve-builds --all` and the flags that turn the allowlist off; `strictDepBuilds` is on.
+  - [x] `minimumReleaseAge` is set to the week Dependabot already assumes.
+  - [x] CI passes (better-sqlite3 and Playwright still build); release note.
+- [x] US-114.2: Workflow tokens and timeouts
+  - [x] Every checkout sets `persist-credentials: false` unless a later step pushes.
+  - [x] Every release job has a timeout; fork pull requests get their own concurrency group.
+  - [x] The Node version comes from one place; `vuln-issue.mjs` survives a bad marker.
+- [x] US-114.3: Scans see every runtime component
+  - [x] `check:image` records and checks the extracted `libgbm1`, Node and Chromium versions.
+  - [x] `uv` comes from a digest-pinned image.
+  - [x] `install-trivy.mjs` uses a private temporary directory; `check-pins.mjs` compares paths reliably.
+  - [x] Tests for the scripts; release note (Image).
