@@ -825,7 +825,8 @@ class Agent:
                         self.logger.debug("event type=%s tool_count=%d", event.type, len(event.tool_calls or []))
 
                         tool_results: list[ToolResult] = []
-                        if event.tool_calls:
+                        # A step that offered no tools (the final one) never runs a call (US-113.2).
+                        if event.tool_calls and tools:
                             async for tool_event in self._step_tools(event.tool_calls, last_user_message, tool_results):
                                 yield tool_event
                             for response in tool_results:

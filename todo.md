@@ -118,11 +118,11 @@ Source: repository review (2026-11-26), verified against the code at `40101ac7`.
   - [x] Submitting an attempt checks the budget before grading short answers.
   - [x] Over budget, the attempt is still saved, with short answers marked ungraded and a message saying why.
   - [x] ADR-0073 note, tests and release note.
-- [ ] US-113.2: Text tool calls only when tools were offered
-  - [ ] Tool calls written as text are read only when that request offered tools.
-  - [ ] Tool-call tags inside fenced or inline code are left as text.
-  - [ ] The final loop step, which offers no tools, never runs a tool call.
-  - [ ] Tests and release note.
+- [x] US-113.2: Text tool calls only when tools were offered
+  - [x] Tool calls written as text are read only when that request offered tools.
+  - [x] Tool-call tags inside fenced or inline code are left as text.
+  - [x] The final loop step, which offers no tools, never runs a tool call.
+  - [x] Tests and release note.
 - [ ] US-113.3: Tool and stream errors end cleanly
   - [ ] Tool errors that would repeat (bad input, coded errors) are not retried.
   - [ ] A structured-output error ends the stream without a completion event.

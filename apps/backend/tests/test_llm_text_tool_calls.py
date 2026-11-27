@@ -109,7 +109,7 @@ def test_preserves_surrounding_text_and_string_arguments():
 
 @pytest.mark.asyncio
 async def test_stream_handler_converts_text_calls_and_continues_agent_loop():
-    handler = StreamHandler()
+    handler = StreamHandler(text_tool_calls=True)
     handler.content = '<tool_call>{"tool_name":"web_search","arguments":{"query":"Dallas weather"}}</tool_call>'
 
     async def empty_stream():
@@ -201,3 +201,72 @@ async def test_llm_client_chat_acquires_request_limiter(monkeypatch):
     events = [event async for event in client.chat(messages=[LLMMessage.user("hi")])]
     assert acquired is True
     assert any(e.type == LLMEventType.COMPLETE for e in events)
+
+
+CALL = '<tool_call>{"tool_name":"web_search","arguments":{"query":"Dallas weather"}}</tool_call>'
+
+
+async def _complete(handler: StreamHandler) -> object:
+    async def empty_stream():
+        if False:
+            yield None
+
+    [event] = [event async for event in handler.process(empty_stream())]
+    return event
+
+
+@pytest.mark.asyncio
+async def test_text_calls_are_left_as_text_when_no_tools_were_offered():
+    """US-113.2: without offered tools (including the loop's final step), text is text."""
+    handler = StreamHandler()
+    handler.content = CALL
+    event = await _complete(handler)
+    assert event.tool_calls == [] and event.content == CALL  # pyright: ignore[reportAttributeAccessIssue]
+
+
+@pytest.mark.parametrize(
+    "content",
+    [
+        f"Here is the format:\n\n```\n{CALL}\n```\n",
+        f"Here is the format:\n\n~~~json\n{CALL}\n~~~",
+        f"An unclosed example:\n```\n{CALL}",
+        f"Write it like `{CALL}` in your reply.",
+        f"Write it like ``{CALL}`` in your reply.",
+    ],
+)
+def test_tags_inside_markdown_code_are_not_calls(content):
+    assert extract_text_tool_calls(content) == (content, [])
+
+
+def test_a_tag_outside_code_is_still_a_call_next_to_a_code_example():
+    content = f"Example: `{CALL}`\n\n{CALL}"
+    clean, calls = extract_text_tool_calls(content)
+    assert len(calls) == 1 and clean == f"Example: `{CALL}`"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(("tools", "expected"), [(None, 0), (["web_search"], 1)])
+async def test_the_client_reads_text_calls_only_when_it_offered_tools(monkeypatch, tools, expected):
+    from asterism.domains.tools.registry import tool_registry
+
+    client = LLMClient(model_name="model", api_key="key", base_url="http://example.test")
+    monkeypatch.setattr(tool_registry, "schemas", lambda names: [{"type": "function"}] if names else [])
+    monkeypatch.setattr(type(client.capabilities), "supported_tools", lambda self, schemas: schemas)
+
+    async def fake_chunks():
+        yield SimpleNamespace(
+            choices=[SimpleNamespace(delta=SimpleNamespace(content=CALL, tool_calls=None), finish_reason="stop")],
+            usage=None,
+        )
+
+    class FakeCompletions:
+        async def create(self, **kwargs):
+            return fake_chunks()
+
+    class FakeChat:
+        completions = FakeCompletions()
+
+    monkeypatch.setattr(client._client, "chat", FakeChat())
+    events = [event async for event in client.chat(messages=[LLMMessage.user("hi")], tools=tools)]
+    complete = next(event for event in events if event.type == LLMEventType.COMPLETE)
+    assert len(complete.tool_calls or []) == expected

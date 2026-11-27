@@ -26,10 +26,10 @@ other work they start.
 As a person using a model without native tool calls, I want text tool calls
 read only where they are meant to be.
 
-- [ ] Tool calls written as text are read only when that request offered tools.
-- [ ] Tool-call tags inside fenced or inline code are left as text.
-- [ ] The final loop step, which offers no tools, never runs a tool call.
-- [ ] Tests and release note.
+- [x] Tool calls written as text are read only when that request offered tools.
+- [x] Tool-call tags inside fenced or inline code are left as text.
+- [x] The final loop step, which offers no tools, never runs a tool call.
+- [x] Tests and release note.
 
 ### US-113.3: Tool and stream errors end cleanly
 

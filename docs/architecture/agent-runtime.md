@@ -111,7 +111,10 @@ tools only with explicit `supports_tools=True`. Vision bytes similarly require
 
 The OpenAI-compatible LLM adapter accumulates streamed tool-call fragments, emits
 content/thinking deltas, and applies bounded transient retries. Tagged textual
-tool calls from compatible endpoints still enter normal authorization. Approved
+tool calls (`<tool_call>{...}</tool_call>`) from compatible endpoints are read
+only when that request offered tools, never from inside Markdown code, and still
+enter normal authorization (US-113.2). A step that offered no tools, such as the
+final one, never runs a call. Approved
 tools may execute concurrently; approval never grants capabilities outside the
 current effective allowlist. See [tool authorization](tool-authorization.md).
 
