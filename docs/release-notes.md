@@ -65,6 +65,14 @@ Unreleased into its version and date.
 
 ### Behavior
 
+- A settings import that fails at any step changes nothing, and never gives the
+  admin group a token budget. Refreshing a provider's models keeps the draft
+  model when the provider leaves it out of its list.
+- Pack review and import, and applying a course, offer only tools the person's
+  group allows. Tool settings check search provider parameters as the
+  single-setting route does; that route checks the groups a study chat or image
+  generation policy names; and secrets nested inside provider parameters are
+  redacted.
 - The image prompt check ignores accents, full-width letters and invisible
   characters, so they no longer slip a refused word past it.
 - `web_fetch` ignores proxy settings in the server's environment, renders only

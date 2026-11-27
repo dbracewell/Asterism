@@ -400,6 +400,17 @@ async def get_provider_settings(
         )
 
 
+async def stored_draft_model_id(session: AsyncSession) -> uuid.UUID | None:
+    """The selected draft model's id, or None when unset or not a UUID."""
+    value = await session.scalar(
+        select(ApplicationSettingsModel.value).where(ApplicationSettingsModel.key == "draft_model_id"),
+    )
+    try:
+        return uuid.UUID(str(value)) if value else None
+    except (TypeError, ValueError):
+        return None
+
+
 async def update_provider_settings(
     settings: ProviderSettings,
     session: AsyncSession | None = None,
@@ -693,7 +704,17 @@ async def update_tool_settings(
     settings: ToolSettings,
     session: AsyncSession | None = None,
 ) -> ToolSettings:
-    """Replace tool settings, encrypting component provider parameters at rest."""
+    """Replace tool settings, encrypting component provider parameters at rest.
+
+    Component parameters are checked against the selected component's own
+    model, as the single-setting route checks them (US-117.1).
+    """
+    web_search = settings.web_search_provider and _check_component_parameters(
+        "web_search_provider", settings.web_search_provider
+    )
+    image_search = settings.image_search_provider and _check_component_parameters(
+        "image_search_provider", settings.image_search_provider
+    )
     async with get_async_db_session(session) as session:
         existing_rows = {
             row.key: row.value
@@ -708,11 +729,11 @@ async def update_tool_settings(
         values = {
             "active_tools": settings.active_tools,
             "web_search_provider": encrypt_component_provider_dict(
-                settings.web_search_provider.model_dump() if settings.web_search_provider else None,
+                web_search.model_dump() if web_search else None,
                 cast(dict[str, Any] | None, existing_rows.get("web_search_provider")),
             ),
             "image_search_provider": encrypt_component_provider_dict(
-                settings.image_search_provider.model_dump() if settings.image_search_provider else None,
+                image_search.model_dump() if image_search else None,
                 cast(dict[str, Any] | None, existing_rows.get("image_search_provider")),
             ),
         }
@@ -802,6 +823,23 @@ def _check_component_parameters(key: str, value: ComponentProviderParameters) ->
     except ValidationError as exc:
         raise BadDataException(f"Invalid {value.name} settings: {validation_message(exc)}") from exc
     return ComponentProviderParameters(name=component.name, parameters=parameters.model_dump(mode="json"))
+
+
+_GROUP_LIMITED_POLICIES = frozenset({"memory", "image_generation", "study_chat"})
+
+
+async def _check_policy_groups(key: str, value: JsonValue, session: AsyncSession) -> None:
+    """A policy limited to groups names only groups that exist, whichever route sets it (US-117.1)."""
+    if key not in _GROUP_LIMITED_POLICIES or not isinstance(value, dict):
+        return
+    group_ids = value.get("group_ids")
+    if not isinstance(group_ids, list):
+        return
+    from asterism.domains.groups.service import list_groups
+
+    known = {group.id for group in await list_groups(session)}
+    if unknown := {str(group_id) for group_id in group_ids} - known:
+        raise BadDataException(f"Unknown groups: {', '.join(sorted(unknown))}")
 
 
 def _validate_non_provider_app_setting(
@@ -946,6 +984,7 @@ async def upsert_app_setting(
             return Setting(key=key, value=redacted)
 
         normalized_value, validated_component = _validate_non_provider_app_setting(key, value)
+        await _check_policy_groups(key, normalized_value, session)
         if key == "draft_model_id":
             draft_model_updated = True
 

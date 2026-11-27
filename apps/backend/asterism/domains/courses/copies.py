@@ -156,7 +156,9 @@ async def read_offer(user_id: str, class_id: uuid.UUID, session: AsyncSession) -
         return None
     manifest = _manifest(latest)
     files = await version_files(latest.id, session)
-    offered = await _offered_agents(user_id, manifest, _models(latest), await available_tools(session), session)
+    offered = await _offered_agents(
+        user_id, manifest, _models(latest), await available_tools(user_id, session), session
+    )
     copy = await _live_copy(user_id, class_id, session)
     current = None
     changes: list[CourseChange] = []
@@ -377,7 +379,7 @@ async def apply_course(user_id: str, class_id: uuid.UUID, version_number: int, s
     store = get_file_store()
     try:
         project = await sync.project(copy)
-        await sync.sub_agents(project, await available_tools(session))
+        await sync.sub_agents(project, await available_tools(user_id, session))
         await sync.files(project, klass.educator_id)
         await session.execute(
             delete(CourseCopyItemModel).where(

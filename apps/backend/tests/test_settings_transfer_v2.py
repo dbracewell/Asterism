@@ -166,3 +166,45 @@ async def test_admins_see_what_a_file_includes_and_leaves_out(api):
     excluded = {item["section"] for item in body["excluded"]}
     assert {"Users", "Educators"} <= excluded
     assert all(item["reason"] for item in body["excluded"])
+
+
+async def test_a_failure_late_in_the_import_leaves_nothing_applied(api, themes_root, monkeypatch):
+    """US-117.1: captioning commits, so it runs last; a later step can't fail after it."""
+    from asterism.core.exceptions import BadDataException
+    from asterism.domains.settings.provider_types import ModelCapabilitySource
+    from asterism.domains.settings_transfer import importer
+    from asterism.domains.settings_transfer.documents import ExportedCaptioning, ModelReference
+    from test_settings_import import model, provider
+
+    client, sessions = api
+    before = await setting(sessions, "active_tools")
+
+    async def fails(*_args, **_kwargs):
+        raise BadDataException("compaction refused")
+
+    monkeypatch.setattr(importer, "_apply_compaction", fails)
+    # A captioning model, so the captioning step really commits its session.
+    vision = model("see", supports_vision=True, vision_source=ModelCapabilitySource.MANUAL)
+    item = bundle(
+        providers=(provider(models=(vision,)),),
+        captioning=ExportedCaptioning(mode="provider", model=ModelReference(provider="Imported", model="see")),
+        active_tools=("web_search",),
+        usage_timezone="Asia/Tokyo",
+    )
+    refused = await post(client, IMPORT, request(item))
+    assert refused.status_code == 400
+    assert await setting(sessions, "active_tools") == before
+    assert await setting(sessions, "usage_timezone") is None
+
+
+async def test_an_import_never_gives_the_admin_group_a_budget(api, themes_root):
+    """US-117.1: admins are never limited."""
+    client, sessions = api
+    admin = ExportedGroup(
+        name="Admin", built_in="admin", budget=GroupBudget(daily_token_budget=1, monthly_token_budget=2)
+    )
+    imported = await post(client, IMPORT, request(bundle(groups=(admin,))))
+    assert imported.status_code == 200, imported.text
+    async with sessions() as session:
+        row = await session.get(GroupModel, "admin")
+        assert (row.daily_token_budget, row.monthly_token_budget) == (None, None)

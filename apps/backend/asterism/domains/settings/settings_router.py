@@ -320,6 +320,8 @@ async def discover_and_sync_provider_models(
                 api_key=provider.api_key,
                 provider_id=provider.id,
                 existing_models=provider.models,
+                # A provider that omits the draft model this time keeps it (US-117.1).
+                draft_model_id=await settings_service.stored_draft_model_id(session),
             ),
         )
     except ProviderDiscoveryError as exc:
