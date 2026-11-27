@@ -51,8 +51,8 @@ jobs:
       - name: Install dependencies
         # Formatting and the repository checks need no native modules.
         run: |
-          pnpm install --frozen-lockfile --config.strictDepBuilds=false --config.ignore-scripts=true
-          pnpm --filter @asterism/frontend install --frozen-lockfile --config.strictDepBuilds=false --config.ignore-scripts=true
+          pnpm install --frozen-lockfile --config.ignore-scripts=true
+          pnpm --filter @asterism/frontend install --frozen-lockfile --config.ignore-scripts=true
 
       - name: Verify workspace task configuration
         run: pnpm check:workspace-tasks
@@ -163,10 +163,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pnpm install --frozen-lockfile --config.strictDepBuilds=false --config.ignore-scripts=false
-          pnpm approve-builds --all
-          pnpm --filter @asterism/frontend install --frozen-lockfile --config.strictDepBuilds=false --config.ignore-scripts=false
-          pnpm approve-builds --all
+          pnpm install --frozen-lockfile
+          pnpm --filter @asterism/frontend install --frozen-lockfile
 
       - name: Verify better-sqlite3 loads with a temporary database
         run: |
@@ -245,8 +243,8 @@ jobs:
       - name: Install dependencies for the theme storage check
         # TypeScript and zod only; the checks need no native modules.
         run: |
-          pnpm install --frozen-lockfile --config.strictDepBuilds=false --config.ignore-scripts=true
-          pnpm --filter @asterism/frontend install --frozen-lockfile --config.strictDepBuilds=false --config.ignore-scripts=true
+          pnpm install --frozen-lockfile --config.ignore-scripts=true
+          pnpm --filter @asterism/frontend install --frozen-lockfile --config.ignore-scripts=true
 
       - name: Read the app version
         id: version
@@ -348,10 +346,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pnpm install --frozen-lockfile --config.strictDepBuilds=false --config.ignore-scripts=false
-          pnpm approve-builds --all
-          pnpm --filter @asterism/frontend install --frozen-lockfile --config.strictDepBuilds=false --config.ignore-scripts=false
-          pnpm approve-builds --all
+          pnpm install --frozen-lockfile
+          pnpm --filter @asterism/frontend install --frozen-lockfile
 
       - name: Verify better-sqlite3 loads with a temporary database
         run: |
