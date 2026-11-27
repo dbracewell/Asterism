@@ -22,6 +22,8 @@ Unreleased into its version and date.
 
 ## Unreleased
 
+## 0.6.0 (2026-11-27)
+
 ### Configuration
 
 - `docker-compose.yml` drops all Linux capabilities, sets `no-new-privileges`

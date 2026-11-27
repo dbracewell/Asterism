@@ -3,14 +3,14 @@
 ## Supported versions
 
 Asterism is in 0.x. Security fixes go into the latest minor release only, as a
-new patch release: today that is 0.5. Older minors get no fixes, so upgrade to
+new patch release: today that is 0.6. Older minors get no fixes, so upgrade to
 the newest patch of the latest minor to receive them. Read the
 [release notes](docs/release-notes.md) for every release since the one you run.
 
 | Version         | Fixes |
 | --------------- | ----- |
-| 0.5.x (latest)  | Yes   |
-| 0.4.x and older | No    |
+| 0.6.x (latest)  | Yes   |
+| 0.5.x and older | No    |
 
 ## Reporting a vulnerability
 
