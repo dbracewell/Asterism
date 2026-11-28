@@ -22,6 +22,15 @@ Unreleased into its version and date.
 
 ## Unreleased
 
+### Data
+
+- A migration rebuilds the chat search index with one row per message and one
+  per chat title, instead of one row holding a whole chat
+  ([ADR-0085](adr/0085-per-message-search-rows.md)). Adding a message to a long
+  chat no longer rewrites the chat's whole index entry. The rebuild reads every
+  chat and message once, so the first start after upgrading takes longer on a
+  large database. Search finds the same chats.
+
 ### Behavior
 
 - Searching files filters LanceDB by at most 500 files at a time and keeps the

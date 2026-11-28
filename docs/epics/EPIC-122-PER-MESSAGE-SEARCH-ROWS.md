@@ -20,14 +20,14 @@ several hundred messages, or ones with large pasted documents.
 As a user, I want long chats to stay quick to write to and still be found by
 search.
 
-- [ ] An ADR records the change: one index row per message plus one per chat
+- [x] An ADR records the change: one index row per message plus one per chat
       title, and how results are grouped into one hit per chat.
-- [ ] A versioned migration replaces the triggers and table, and rebuilds the
+- [x] A versioned migration replaces the triggers and table, and rebuilds the
       index from existing chats and messages.
-- [ ] Adding, editing and deleting a message touch only that message's row;
+- [x] Adding, editing and deleting a message touch only that message's row;
       renaming a chat touches only its title row.
-- [ ] Search returns the same chats as before, one result per chat, still
+- [x] Search returns the same chats as before, one result per chat, still
       limited to the owner.
-- [ ] Tests: the upgrade from the previous revision, search results, and the
+- [x] Tests: the upgrade from the previous revision, search results, and the
       work done per message write.
-- [ ] Release note (Data).
+- [x] Release note (Data).
