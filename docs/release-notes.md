@@ -24,6 +24,11 @@ Unreleased into its version and date.
 
 ### Behavior
 
+- Searching files filters LanceDB by at most 500 files at a time and keeps the
+  nearest passages across all batches, so a search over thousands of files no
+  longer builds one very long filter. Deleting many memories splits the same
+  way. Several tool calls in one turn now share one model lookup instead of
+  one each.
 - Admin Settings → Usage shows users 50 at a time, most tokens first, with a
   search and a group filter. Group and overall totals still cover everyone. The
   report is summed and paged in the database, so it takes four queries for 20

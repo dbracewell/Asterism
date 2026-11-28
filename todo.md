@@ -146,10 +146,10 @@ Source: repository review (2026-11-26), work deferred from EPIC-117. Suggested o
   - [x] Long ID lists are split into bounded batches.
   - [x] A budget is read once per request, not twice.
   - [x] Tests with a large number of users, and release note.
-- [ ] US-121.3: Bounded reads elsewhere
-  - [ ] Vector lookups by file split long file lists into bounded batches.
-  - [ ] Parallel tool calls in one turn share one model client lookup.
-  - [ ] Tests and release note.
+- [x] US-121.3: Bounded reads elsewhere
+  - [x] Vector lookups by file split long file lists into bounded batches.
+  - [x] Parallel tool calls in one turn share one model client lookup.
+  - [x] Tests and release note.
 
 [EPIC-122](docs/epics/EPIC-122-PER-MESSAGE-SEARCH-ROWS.md): Per-message search rows
 
