@@ -1,5 +1,6 @@
 """US-94.4: the ONNX image generator: schedulers, pipeline, provider and admin endpoints (ADR-0077)."""
 
+import asyncio
 from dataclasses import dataclass, replace
 from pathlib import Path
 from unittest.mock import AsyncMock
@@ -301,7 +302,7 @@ def onnx_api(images_api, monkeypatch, tmp_path):
     for module in (provider, router):
         monkeypatch.setattr(module, "server_ram_gb", lambda: 16.0)
     ready = {"value": True}
-    monkeypatch.setattr(ModelDownloadService, "is_ready", lambda self: ready["value"])
+    monkeypatch.setattr(ModelDownloadService, "ready", lambda self: asyncio.sleep(0, ready["value"]))
     started = AsyncMock()
     monkeypatch.setattr(ModelDownloadService, "start_download", started)
     generate = AsyncMock(return_value=[(b"png", 11)])

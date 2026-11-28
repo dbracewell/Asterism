@@ -10,8 +10,6 @@ specific captioning and profile paths are matched before the generic
 ``/settings/app/{key}`` routes.
 """
 
-import asyncio
-
 from fastapi import APIRouter, HTTPException
 
 from asterism.core.schemas import ErrorDetail
@@ -112,7 +110,7 @@ async def get_image_search_status(user: AdminUserDep, session: DBSessionDep) -> 
 )
 async def get_knowledge_embedding_status(user: AdminUserDep) -> DownloadProgress:
     """Return the readiness/download progress of the knowledge embedding bundle."""
-    return await asyncio.to_thread(embedding_download_service.progress)
+    return await embedding_download_service.current_progress()
 
 
 @knowledge_router.get(
@@ -125,7 +123,7 @@ async def get_caption_model_status(
     user: AdminUserDep,
 ) -> DownloadProgress:
     """Return the download/readiness progress of the local caption model."""
-    return await asyncio.to_thread(captioning_download_service.progress)
+    return await captioning_download_service.current_progress()
 
 
 @knowledge_router.post(

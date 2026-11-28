@@ -80,8 +80,9 @@ async def test_download_success_promotes_then_resumes_pending_work(tmp_path: Pat
 
     with patch.object(service, "_download_sync", side_effect=write_stage):
         assert (await service.start_download()).status == "downloading"
-        while service.progress().status == "downloading":
-            await asyncio.sleep(0)
+        # The new bundle is hashed in a worker thread, while the status says so.
+        while service.progress().status in {"downloading", "verifying"}:
+            await asyncio.sleep(0.01)
     assert service.progress().status == "ready"
     ready.assert_awaited_once()
 

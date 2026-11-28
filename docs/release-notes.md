@@ -31,6 +31,9 @@ Unreleased into its version and date.
 - Downloading a canvas no longer holds a database connection while diagrams
   are drawn or the file is built, and a chat's canvas ZIP is built in the
   background without re-encoding its images.
+- Checking a downloaded model (search, captioning or image generation) no
+  longer pauses the server: the check runs in the background, and the model's
+  status reads **verifying** until it finishes.
 
 ## 0.6.0 (2026-11-27)
 

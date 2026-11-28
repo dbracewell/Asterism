@@ -250,9 +250,7 @@ async def caption(
             if captioning.status not in {KnowledgeExtractionStatus.PENDING, KnowledgeExtractionStatus.FAILED}:
                 return
             configuration = await get_captioning_configuration(session=session)
-            if configuration.mode == CaptionMode.LOCAL and not await asyncio.to_thread(
-                captioning_download_service.is_ready,
-            ):
+            if configuration.mode == CaptionMode.LOCAL and not await captioning_download_service.ready():
                 # Stays pending: the startup resume and the bundle-ready callback requeue it.
                 logger.info(f"Local caption model is not ready; captioning of {artifact.id} waits for it")
                 return

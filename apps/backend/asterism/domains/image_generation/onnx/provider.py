@@ -49,7 +49,7 @@ class Onnx(ImageGeneratorComponent[OnnxParameters]):
         model = _chosen(await _settings())
         if model is None:
             return ImageProviderStatus(provider=self.name, ready=False, detail="Choose an ONNX model")
-        if not downloads.service(model).is_ready():
+        if not await downloads.service(model).ready():
             return ImageProviderStatus(provider=self.name, ready=False, detail=f"Download {model.name} first")
         fit = plan(model, server_ram_gb())
         if not fit.fits:
@@ -58,7 +58,7 @@ class Onnx(ImageGeneratorComponent[OnnxParameters]):
 
     async def __call__(self, request: ImageRequest, progress: ProgressCallback) -> ProviderResult:
         model = _chosen(await _settings())
-        if model is None or not downloads.service(model).is_ready():
+        if model is None or not await downloads.service(model).ready():
             raise ImageGenerationError("The ONNX model isn't ready")
         fit = plan(model, server_ram_gb())
         if not fit.fits:
