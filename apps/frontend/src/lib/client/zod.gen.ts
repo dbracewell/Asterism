@@ -5988,17 +5988,6 @@ export const zChatModePolicyGetQuery = z.object({
  */
 export const zChatModePolicyGetResponse = zModePolicy;
 
-export const zChatDraftModelUpdateBody = zChatDraftModelUpdate;
-
-export const zChatDraftModelUpdatePath = z.object({
-  draft_id: z.uuid(),
-});
-
-/**
- * Successful Response
- */
-export const zChatDraftModelUpdateResponse = zChatDraft;
-
 export const zChatLearningModeUpdateBody = zChatLearningModeUpdate;
 
 export const zChatLearningModeUpdatePath = z.object({
@@ -6084,17 +6073,16 @@ export const zChatSearchQuery = z.object({
  */
 export const zChatSearchResponse = zSearchResultList;
 
-export const zMessageUpdateBody = zUpdateMessageRequest;
+export const zChatSessionMoveBody = zChatMoveRequest;
 
-export const zMessageUpdatePath = z.object({
+export const zChatSessionMovePath = z.object({
   chat_id: z.uuid(),
-  message_id: z.uuid(),
 });
 
 /**
  * Successful Response
  */
-export const zMessageUpdateResponse = zMessage;
+export const zChatSessionMoveResponse = zChatInfo;
 
 export const zChatFileGetScopePath = z.object({
   chat_id: z.uuid(),
@@ -6156,16 +6144,16 @@ export const zChatFileDownloadPath = z.object({
  */
 export const zChatFileDownloadResponse = z.string();
 
-export const zChatSessionMoveBody = zChatMoveRequest;
+export const zChatDraftModelUpdateBody = zChatDraftModelUpdate;
 
-export const zChatSessionMovePath = z.object({
-  chat_id: z.uuid(),
+export const zChatDraftModelUpdatePath = z.object({
+  draft_id: z.uuid(),
 });
 
 /**
  * Successful Response
  */
-export const zChatSessionMoveResponse = zChatInfo;
+export const zChatDraftModelUpdateResponse = zChatDraft;
 
 export const zChatDraftCreateBody = zChatDraftCreate;
 
@@ -6225,6 +6213,18 @@ export const zChatDraftUploadPath = z.object({
  */
 export const zChatDraftUploadResponse = zUserFileList;
 
+export const zMessageUpdateBody = zUpdateMessageRequest;
+
+export const zMessageUpdatePath = z.object({
+  chat_id: z.uuid(),
+  message_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zMessageUpdateResponse = zMessage;
+
 export const zChatMessageSendBody = zChatSendRequest;
 
 export const zChatMessageSendPath = z.object({
@@ -6247,16 +6247,6 @@ export const zChatMessageComparePath = z.object({
  * Successful Response
  */
 export const zChatMessageCompareResponse = zChatComparison;
-
-export const zChatComparisonGetOnePath = z.object({
-  chat_id: z.uuid(),
-  comparison_id: z.uuid(),
-});
-
-/**
- * Successful Response
- */
-export const zChatComparisonGetOneResponse = zChatComparison;
 
 export const zChatContextLayersGetPath = z.object({
   chat_id: z.uuid(),
@@ -6323,18 +6313,6 @@ export const zChatDraftReviewCommentUpdatePath = z.object({
  */
 export const zChatDraftReviewCommentUpdateResponse = zDraftCommentSummary;
 
-export const zChatComparisonDisagreementsFindBody = zDisagreementRequest;
-
-export const zChatComparisonDisagreementsFindPath = z.object({
-  chat_id: z.uuid(),
-  comparison_id: z.uuid(),
-});
-
-/**
- * Successful Response
- */
-export const zChatComparisonDisagreementsFindResponse = zDisagreementSummary;
-
 export const zChatDelegationDisagreementsFindBody = zDisagreementRequest;
 
 export const zChatDelegationDisagreementsFindPath = z.object({
@@ -6384,6 +6362,28 @@ export const zChatMessageForkPath = z.object({
  * Successful Response
  */
 export const zChatMessageForkResponse = zMessage;
+
+export const zChatComparisonGetOnePath = z.object({
+  chat_id: z.uuid(),
+  comparison_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zChatComparisonGetOneResponse = zChatComparison;
+
+export const zChatComparisonDisagreementsFindBody = zDisagreementRequest;
+
+export const zChatComparisonDisagreementsFindPath = z.object({
+  chat_id: z.uuid(),
+  comparison_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zChatComparisonDisagreementsFindResponse = zDisagreementSummary;
 
 export const zChatComparisonActivateBody = zComparisonActivate;
 

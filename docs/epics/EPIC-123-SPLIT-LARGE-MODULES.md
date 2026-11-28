@@ -31,10 +31,10 @@ As a maintainer, I want each settings area in its own module.
 As a maintainer, I want streaming, persistence and routing apart in the chat
 domain.
 
-- [ ] `chat/orchestrator.py` is split into turn flow, stream handling and
+- [x] `chat/orchestrator.py` is split into turn flow, stream handling and
       saving the reply.
-- [ ] `chat/router.py` is split by resource; the OpenAPI schema is unchanged.
-- [ ] All tests pass unchanged; the architecture docs name the new modules.
+- [x] `chat/router.py` is split by resource; the OpenAPI schema is unchanged.
+- [x] All tests pass unchanged; the architecture docs name the new modules.
 
 ### US-123.3: Exports, agent and files
 
