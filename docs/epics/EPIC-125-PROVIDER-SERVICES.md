@@ -54,16 +54,16 @@ As an administrator, I want each provider to know which service it is.
 
 As an administrator, I want to pick the service and have its URL filled in.
 
-- [ ] Admin Settings → Providers and the setup step use one service dropdown,
+- [x] Admin Settings → Providers and the setup step use one service dropdown,
       grouped as OpenAI, hosted, aggregators, local servers and Custom.
-- [ ] Choosing a service fills in its name and base URL; switching services
+- [x] Choosing a service fills in its name and base URL; switching services
       replaces only a name or URL that is empty or still the previous
       service's default, so the administrator's edits are kept.
-- [ ] A saved provider reopens on its service; the provider list shows the
+- [x] A saved provider reopens on its service; the provider list shows the
       service's name.
-- [ ] Local servers explain that, when Asterism runs in Docker, `localhost` is
+- [x] Local servers explain that, when Asterism runs in Docker, `localhost` is
       the container, and suggest `host.docker.internal`.
-- [ ] Unit and E2E tests, and release note (Behavior).
+- [x] Unit and E2E tests, and release note (Behavior).
 
 ### US-125.3: Local servers without an API key
 

@@ -5,6 +5,7 @@ import {
 } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { ReactNode, useState } from "react";
+import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ProviderSettings } from "@/lib/client";
@@ -47,6 +48,11 @@ const settings: ProviderSettings = {
 };
 
 vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
+  appProviderServicesListOptions: () => ({
+    queryKey: ["appProviderServicesList"],
+    queryFn: async () =>
+      (await import("@/test/provider-services")).PROVIDER_SERVICES,
+  }),
   appProviderModelsDiscoverAndSyncMutation: () => ({ mutationFn: vi.fn() }),
   appProviderModelsListOptions: ({
     query,
@@ -450,6 +456,44 @@ describe("provider model browser", () => {
         mocks.updateProviderSettings.mock.calls[0]?.[0].body.llm_providers,
       ).toEqual([
         expect.objectContaining({ name: "Desk Ollama", service: "ollama" }),
+      ]),
+    );
+  });
+
+  it("names a provider's service and switching to OpenAI clears it", async () => {
+    const user = userEvent.setup();
+    const provider = {
+      ...settings.llm_providers![0],
+      name: "Router",
+      base_url: "https://openrouter.ai/api/v1",
+      api_key: "secret",
+      service: "openrouter" as const,
+    };
+    mocks.updateProviderSettings.mockResolvedValue({});
+    render(
+      <ProvidersTab
+        appSettings={{ draft_model_id: null, llm_providers: [provider] }}
+      />,
+      { wrapper: Wrapper },
+    );
+    const service = screen.getByRole("combobox", {
+      name: "Service for provider 1",
+    });
+    await waitFor(() => expect(service).toHaveTextContent("OpenRouter"));
+    expect(screen.getAllByText("OpenRouter").length).toBeGreaterThan(1);
+
+    await user.click(service);
+    await user.click(await screen.findByRole("option", { name: "OpenAI" }));
+    expect(screen.getByLabelText("Base URL")).toHaveValue(
+      "https://api.openai.com/v1",
+    );
+    expect(screen.getByLabelText("Provider Name")).toHaveValue("Router");
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    await waitFor(() =>
+      expect(
+        mocks.updateProviderSettings.mock.calls[0]?.[0].body.llm_providers,
+      ).toEqual([
+        expect.objectContaining({ provider_type: "openai", service: null }),
       ]),
     );
   });

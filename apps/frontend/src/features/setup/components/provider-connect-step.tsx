@@ -1,40 +1,39 @@
 "use client";
 
-import {
-  PROVIDER_TYPES,
-  ProviderIcon,
-} from "@/components/settings/model-identity";
 import { Button } from "@/components/ui/button";
 import {
   Field,
-  FieldContent,
   FieldDescription,
   FieldError,
   FieldGroup,
   FieldLabel,
-  FieldLegend,
-  FieldSet,
-  FieldTitle,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   OPENAI_BASE_URL,
   type ProviderFormValues,
 } from "@/features/settings/provider-schema";
+import {
+  applyChoice,
+  choiceOf,
+  OPENAI_LABEL,
+  serviceEntry,
+  type ServiceChoice,
+} from "@/features/settings/provider-services";
+import {
+  LocalServerNote,
+  ServiceSelect,
+} from "@/features/settings/ui/provider-service-select";
 import { client } from "@/lib/api";
-import type {
-  ProviderSettings,
-  ProviderSummary,
-  ProviderType,
-} from "@/lib/client";
+import type { ProviderSettings, ProviderSummary } from "@/lib/client";
 import {
   appProviderModelsDiscoverAndSyncMutation,
+  appProviderServicesListOptions,
   appProviderSettingsUpdateMutation,
 } from "@/lib/client/@tanstack/react-query.gen";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
-import { Controller, type UseFormReturn, useWatch } from "react-hook-form";
+import { type UseFormReturn, useWatch } from "react-hook-form";
 import {
   actionClassName,
   errorSuffix,
@@ -43,17 +42,9 @@ import {
   SkipLink,
 } from "./provider-setup-shared";
 
-const PROVIDER_CHOICES: { type: ProviderType; detail: string }[] = [
-  { type: "openai", detail: "Uses the OpenAI API at api.openai.com." },
-  {
-    type: "generic_openai",
-    detail: "Any OpenAI-compatible endpoint, hosted or local.",
-  },
-];
-
 export const newProvider = (): ProviderFormValues => ({
   id: self.crypto.randomUUID(),
-  name: PROVIDER_TYPES.openai.label,
+  name: OPENAI_LABEL,
   base_url: OPENAI_BASE_URL,
   api_key: "",
   provider_type: "openai",
@@ -94,34 +85,29 @@ export function ConnectStep({
   const discover = useMutation(
     appProviderModelsDiscoverAndSyncMutation({ client }),
   );
+  const services = useQuery(appProviderServicesListOptions({ client }));
   const pending = saveProviders.isPending || discover.isPending;
   const failed = error != null;
 
-  const changeType = (type: ProviderType) => {
+  const choice = choiceOf({
+    provider_type: useWatch({ control, name: "provider_type" }),
+    service: useWatch({ control, name: "service" }),
+  });
+  const changeChoice = (next: ServiceChoice) => {
     const options = {
       shouldDirty: true,
       shouldValidate: formState.isSubmitted,
     };
-    const name = getValues("name").trim();
-    const baseUrl = getValues("base_url");
-    setValue("provider_type", type, options);
-    if (type !== "generic_openai") setValue("service", null, options);
-    if (!name || name === PROVIDER_TYPES.openai.label) {
-      setValue(
-        "name",
-        type === "openai" ? PROVIDER_TYPES.openai.label : "",
-        options,
-      );
-    }
-    setValue(
-      "base_url",
-      type === "openai"
-        ? OPENAI_BASE_URL
-        : baseUrl === OPENAI_BASE_URL
-          ? ""
-          : baseUrl,
-      options,
+    const values = applyChoice(
+      { name: getValues("name"), base_url: getValues("base_url") },
+      choice,
+      next,
+      services.data,
     );
+    setValue("provider_type", values.provider_type, options);
+    setValue("service", values.service, options);
+    setValue("name", values.name, options);
+    setValue("base_url", values.base_url, options);
   };
 
   const connect = async (values: ProviderFormValues) => {
@@ -171,52 +157,23 @@ export function ConnectStep({
           ref={errorRef}
           message={error}
         />
-        <Controller
-          control={control}
-          name="provider_type"
-          render={({ field }) => (
-            <FieldSet>
-              <FieldLegend variant="label">Provider type</FieldLegend>
-              <RadioGroup
-                value={field.value}
-                onValueChange={(value) => changeType(value as ProviderType)}
-                className="grid-cols-1 sm:grid-cols-2"
-                disabled={pending}
-              >
-                {PROVIDER_CHOICES.map(({ type, detail }) => (
-                  <FieldLabel
-                    key={type}
-                    htmlFor={`setup-provider-type-${type}`}
-                    className="min-w-0"
-                  >
-                    <Field orientation="horizontal">
-                      <RadioGroupItem
-                        value={type}
-                        id={`setup-provider-type-${type}`}
-                        aria-labelledby={`setup-provider-type-${type}-label`}
-                        aria-describedby={`setup-provider-type-${type}-detail`}
-                      />
-                      <FieldContent className="min-w-0">
-                        <FieldTitle id={`setup-provider-type-${type}-label`}>
-                          <ProviderIcon type={type} />
-                          {PROVIDER_TYPES[type].label}
-                        </FieldTitle>
-                        <FieldDescription
-                          id={`setup-provider-type-${type}-detail`}
-                          className="wrap-anywhere"
-                        >
-                          {detail}
-                        </FieldDescription>
-                      </FieldContent>
-                    </Field>
-                  </FieldLabel>
-                ))}
-              </RadioGroup>
-            </FieldSet>
-          )}
-        />
+        <Field>
+          <FieldLabel htmlFor="setup-provider-service">Service</FieldLabel>
+          <ServiceSelect
+            id="setup-provider-service"
+            value={choice}
+            onChange={changeChoice}
+            catalog={services.data}
+            disabled={pending}
+          />
+          <FieldDescription>
+            Pick the service to fill in its URL, or Custom for any other
+            OpenAI-compatible endpoint.
+          </FieldDescription>
+        </Field>
         <ProviderFields
           form={form}
+          local={serviceEntry(choice, services.data)?.group === "local"}
           disabled={pending}
           errors={{
             name: errors.name?.message,
@@ -250,15 +207,18 @@ export function ConnectStep({
 
 function ProviderFields({
   form,
+  local,
   disabled,
   errors,
 }: {
   form: UseFormReturn<ProviderFormValues>;
+  local: boolean;
   disabled: boolean;
   errors: Partial<Record<"name" | "base_url" | "api_key", string>>;
 }) {
   const { control, register } = form;
   const type = useWatch({ control, name: "provider_type" });
+  const baseUrl = useWatch({ control, name: "base_url" });
   const field = (
     name: "name" | "base_url" | "api_key",
     label: string,
@@ -298,9 +258,12 @@ function ProviderFields({
             "OpenAI always uses this URL.",
           )
         : field("base_url", "Base URL", {
-            placeholder: "http://localhost:11434/v1",
+            placeholder: "https://api.example.com/v1",
             inputMode: "url",
           })}
+      {local && (
+        <LocalServerNote id="setup-provider-local-note" baseUrl={baseUrl} />
+      )}
       {field(
         "api_key",
         "API key",

@@ -30,6 +30,11 @@ vi.mock("next/navigation", () => ({
   useSearchParams: () => new URLSearchParams(mocks.search),
 }));
 vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
+  appProviderServicesListOptions: () => ({
+    queryKey: ["appProviderServicesList"],
+    queryFn: async () =>
+      (await import("@/test/provider-services")).PROVIDER_SERVICES,
+  }),
   setupProgressGetOptions: () => ({
     queryKey: [{ _id: "setupProgressGet" }],
     queryFn: () => mocks.get(),

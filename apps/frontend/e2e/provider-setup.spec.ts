@@ -52,6 +52,9 @@ async function routeSetupApi(page: Page, failures = 0) {
   await page.route("**/api/auth/**", (route) =>
     route.fulfill({ status: 200, json: { token: "e2e-token" } }),
   );
+  await page.route("**/api/py/settings/app/providers/services", (route) =>
+    route.fulfill({ json: SERVICES }),
+  );
   await page.route("**/api/py/settings/app/providers", async (route) => {
     if (route.request().method() === "PUT") {
       const body = route.request().postDataJSON();
@@ -136,6 +139,32 @@ async function routeSetupApi(page: Page, failures = 0) {
   return state;
 }
 
+// A slice of the backend's service catalog (ADR-0086).
+const SERVICES = [
+  {
+    service: "openrouter",
+    label: "OpenRouter",
+    group: "aggregator",
+    base_url: "https://openrouter.ai/api/v1",
+    key_required: true,
+    docs_url: "https://openrouter.ai/docs/quickstart",
+  },
+  {
+    service: "ollama",
+    label: "Ollama",
+    group: "local",
+    base_url: "http://localhost:11434/v1",
+    key_required: false,
+    docs_url: "https://docs.ollama.com/api/openai-compatibility",
+  },
+];
+const CUSTOM = "Custom OpenAI-compatible URL";
+
+async function chooseService(page: Page, name: string) {
+  await connectForm(page).getByRole("combobox", { name: "Service" }).click();
+  await page.getByRole("option", { name }).click();
+}
+
 const connectForm = (page: Page) =>
   page.getByRole("form", { name: "Add a model provider" });
 const modelsForm = (page: Page) =>
@@ -143,7 +172,7 @@ const modelsForm = (page: Page) =>
 
 async function connectGeneric(page: Page) {
   const form = connectForm(page);
-  await form.getByRole("radio", { name: "OpenAI-compatible" }).click();
+  await chooseService(page, CUSTOM);
   await form.getByLabel("Provider name").fill("Local models");
   await form.getByLabel("Base URL").fill("http://localhost:11434/v1");
   await form.getByLabel("API key").fill("local-key");
@@ -151,6 +180,39 @@ async function connectGeneric(page: Page) {
     .getByRole("button", { name: "Connect and discover models" })
     .click();
 }
+
+test("choosing a service fills in its URL and a local one explains Docker", async ({
+  page,
+}) => {
+  const state = await routeSetupApi(page);
+  await page.goto("/e2e/provider-setup");
+  const form = connectForm(page);
+  await chooseService(page, "Ollama");
+  await expect(form.getByLabel("Provider name")).toHaveValue("Ollama");
+  await expect(form.getByLabel("Base URL")).toHaveValue(
+    "http://localhost:11434/v1",
+  );
+  await expect(form.getByText(/is the container itself/)).toContainText(
+    "http://host.docker.internal:11434/v1",
+  );
+  await chooseService(page, "OpenRouter");
+  await expect(form.getByLabel("Base URL")).toHaveValue(
+    "https://openrouter.ai/api/v1",
+  );
+  await expect(form.getByText(/is the container itself/)).toHaveCount(0);
+  await form.getByLabel("API key").fill("sk-or");
+  await form
+    .getByRole("button", { name: "Connect and discover models" })
+    .click();
+  await expect(modelsForm(page)).toBeVisible();
+  expect(state.saves[0]).toEqual([
+    expect.objectContaining({
+      name: "OpenRouter",
+      provider_type: "generic_openai",
+      service: "openrouter",
+    }),
+  ]);
+});
 
 test("the provider step is the current setup step in the setup card", async ({
   page,
@@ -164,8 +226,8 @@ test("the provider step is the current setup step in the setup card", async ({
     "Add a model provider",
   );
   await expect(
-    connectForm(page).getByRole("radio", { name: "OpenAI", exact: true }),
-  ).toBeChecked();
+    connectForm(page).getByRole("combobox", { name: "Service" }),
+  ).toHaveText("OpenAI");
   await expect(connectForm(page).getByLabel("Base URL")).toHaveValue(
     "https://api.openai.com/v1",
   );
@@ -305,7 +367,7 @@ for (const scenario of authViewports) {
     await expect(form).toBeVisible();
     await expectAuthFits(page);
     const connectControls = [
-      form.getByRole("radio", { name: "OpenAI", exact: true }),
+      form.getByRole("combobox", { name: "Service" }),
       form.getByLabel("Provider name"),
       form.getByLabel("Base URL"),
       form.getByLabel("API key"),
@@ -318,14 +380,22 @@ for (const scenario of authViewports) {
       await expect(control).toBeFocused();
       await expectReachable(control, true);
     }
-    // Arrow keys move between provider types, as in any radio group.
+    // The service dropdown opens and chooses from the keyboard.
     await connectControls[0].focus();
-    // Radix moves focus after a task and selects only while the key is held.
-    await page.keyboard.down("ArrowRight");
+    await page.keyboard.press("Enter");
+    // Focus starts on the chosen option, and each arrow key moves (and
+    // scrolls) to the next, across the catalog's groups to Custom. Radix moves
+    // focus after a task, so wait for each step before the next key.
     await expect(
-      form.getByRole("radio", { name: "OpenAI-compatible" }),
-    ).toBeChecked();
-    await page.keyboard.up("ArrowRight");
+      page.getByRole("option", { name: "OpenAI", exact: true }),
+    ).toBeFocused();
+    for (const name of [...SERVICES.map((entry) => entry.label), CUSTOM]) {
+      await page.keyboard.press("ArrowDown");
+      await expect(page.getByRole("option", { name })).toBeFocused();
+    }
+    await page.keyboard.press("Enter");
+    await expect(connectControls[0]).toHaveText(CUSTOM);
+    await expect(connectControls[0]).toBeFocused();
     await form.getByLabel("Provider name").fill("Local models");
     await form.getByLabel("Base URL").fill("http://localhost:11434/v1");
     await form.getByLabel("API key").fill("local-key");
@@ -339,9 +409,7 @@ for (const scenario of authViewports) {
     ).toBeGreaterThanOrEqual(4);
     await expectAuthFits(page);
     await page.keyboard.press("Tab");
-    await expect(
-      form.getByRole("radio", { name: "OpenAI-compatible" }),
-    ).toBeFocused();
+    await expect(form.getByRole("combobox", { name: "Service" })).toBeFocused();
     for (let index = 0; index < 4; index += 1) await page.keyboard.press("Tab");
     const retry = form.getByRole("button", { name: "Retry" });
     await expect(retry).toBeFocused();

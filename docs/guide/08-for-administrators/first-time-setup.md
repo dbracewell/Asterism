@@ -33,17 +33,22 @@ running and you open its address for the first time.
 
 ## Step 2: Connect a model provider
 
-1. Choose the **Provider type**:
+1. Choose the **Service**:
    - **OpenAI** uses the OpenAI API.
-   - **OpenAI-compatible** is any other server that works the same way, hosted
-     or on your own network.
-2. Give the provider a **Provider name** that people will recognize.
-3. For OpenAI-compatible, type its **Base URL**.
-4. Type the **API key**. A local server that doesn't check keys accepts any value.
+   - A hosted API (such as Google Gemini or Mistral), an aggregator (such as
+     OpenRouter or Groq) or a local server (such as Ollama or LM Studio) fills
+     in that service's name and **Base URL** for you.
+   - **Custom OpenAI-compatible URL** is any other server that works the same
+     way, hosted or on your own network.
+2. Check the **Provider name**, which people will see, and the **Base URL**.
+   For a local server, if Asterism runs in Docker, `localhost` means the
+   container itself: the form suggests the same address with
+   `host.docker.internal`, which reaches the computer it runs on.
+3. Type the **API key**. A local server that doesn't check keys accepts any value.
 
-   ![The setup card for connecting a model provider, with OpenAI-compatible selected and a base URL filled in](../images/setup-connect-provider.png)
+   ![The setup card for connecting a model provider, with Custom OpenAI-compatible URL chosen as the service and a base URL filled in](../images/setup-connect-provider.png)
 
-5. Select **Connect and discover models**. Asterism asks the provider which
+4. Select **Connect and discover models**. Asterism asks the provider which
    models it has.
 
 Moving from another Asterism? Select **Import a settings file instead** and

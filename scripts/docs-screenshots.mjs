@@ -133,7 +133,10 @@ async function firstRun(browser, instance, stubUrl) {
   await account.getByRole("button", { name: "Sign up" }).click();
 
   const connect = page.getByRole("form", { name: "Add a model provider" });
-  await connect.getByRole("radio", { name: "OpenAI-compatible" }).click();
+  await connect.getByRole("combobox", { name: "Service" }).click();
+  await page
+    .getByRole("option", { name: "Custom OpenAI-compatible URL" })
+    .click();
   await connect.getByLabel("Provider name").fill("Demo models");
   await connect.getByLabel("Base URL").fill(stubUrl);
   await connect.getByLabel("API key").fill("demo-key");

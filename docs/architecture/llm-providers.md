@@ -46,8 +46,9 @@ shown only to an administrator while no model is active, and can be skipped.
 Everything else follows the workflow below.
 
 1. Open **Settings → Admin Settings → Providers** and add a provider.
-2. Select the provider type, enter its name and API key, and supply a base URL
-   for Generic OpenAI.
+2. Choose the service: OpenAI, a catalog service (which fills in its name and
+   base URL), or Custom. Changing the service replaces only a name or URL that
+   is empty or still the previous choice's default. Enter the API key.
 3. Select **Load models**. Discovery is performed by the admin-only FastAPI
    endpoint; the browser never contacts the provider directly.
 4. Review unknown capabilities, complete or correct them manually, activate the

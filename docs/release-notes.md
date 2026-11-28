@@ -44,6 +44,11 @@ Unreleased into its version and date.
 
 ### Behavior
 
+- Admin Settings → Providers and the setup step choose a provider by **Service**:
+  OpenAI, a hosted API, an aggregator, a local server or a custom URL. Choosing
+  one fills in its name and current base URL, and the provider list names the
+  service. Local servers explain `host.docker.internal` for Asterism in Docker.
+  "Generic OpenAI" is now **Custom OpenAI-compatible URL**.
 - Saving admin providers with two of the same name, or swapping two
   providers' names in one save, returns a 409 that says what to change instead
   of a server error, and saves nothing.

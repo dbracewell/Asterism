@@ -35,7 +35,7 @@ export const shots = [
   {
     stage: "first-run",
     name: "setup-connect-provider",
-    alt: "The setup card for connecting a model provider, with OpenAI-compatible selected and a base URL filled in",
+    alt: "The setup card for connecting a model provider, with Custom OpenAI-compatible URL chosen as the service and a base URL filled in",
   },
   {
     stage: "first-run",
@@ -1193,7 +1193,7 @@ export const shots = [
   },
   {
     name: "admin-providers",
-    alt: "Admin Settings, Providers: the Demo models provider with its type, name, base URL and key, and its models listed with context window, input and output prices, vision input, tool calls and Set draft",
+    alt: "Admin Settings, Providers: the Demo models provider with its service, name, base URL and key, and its models listed with context window, input and output prices, vision input, tool calls and Set draft",
     as: "admin",
     path: () => "/settings?t=admin&setting=providers",
     ready: ["Demo models", "Browse 2 models"],
