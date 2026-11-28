@@ -125,6 +125,8 @@ canvas tools store references as written; the guidance grants nothing.
   outside code blocks.
 - **The chat's ZIP** adds each loaded image once, as its stored file, under
   `images/` with a distinct name. Its documents link to them relatively, and
-  the rest become notes.
+  the rest become notes. Its images are checked to be whole and within the
+  pixel limit, not decoded and re-encoded, since the ZIP carries the stored
+  file (US-119.2).
 - **Save to Files** uses the single-version path. **Download my data** passes
   no images, so it keeps the stored text exactly.

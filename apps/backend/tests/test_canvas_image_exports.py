@@ -252,3 +252,59 @@ async def test_downloads_carry_the_chats_images(produced, monkeypatch):
 
     # Another user gets nothing, as before.
     assert (await p.client.get(base + "docx", headers=auth("b"))).status_code == 404
+
+
+@pytestmark_db
+async def test_zip_images_are_checked_not_reencoded(produced, monkeypatch):
+    p = produced
+    chat_id, _, _, ids = await chat_with_images(p)
+    content = "\n\n".join(f"![{name}]({token(file_id)})" for name, file_id in ids.items())
+
+    def no_decoding(*_):
+        raise AssertionError("the ZIP carries images as stored")
+
+    monkeypatch.setattr(downloads, "_decode", no_decoding)
+    async with p.sessions() as session:
+        images = await downloads.load_zip_images("a", chat_id, [content], session)
+    # A cut-off PNG is still left out; the GIF stays a GIF.
+    assert set(images) == {ids["sea"], ids["gif"]}
+    assert images[ids["gif"]].original[:3] == b"GIF" and images[ids["sea"]].original == png()
+
+
+@pytestmark_db
+async def test_exports_render_after_the_database_reads_end(produced, monkeypatch):
+    import threading
+
+    p = produced
+    chat_id, request_id, execution, ids = await chat_with_images(p)
+    item_id = await canvas_document(p, chat_id, request_id, execution, f"# Sea\n\n![The sea]({token(ids['sea'])})\n")
+    loop_thread, seen = threading.get_ident(), []
+    session_box = {}
+    real_export, real_zip, real_draw = downloads.export_version, downloads.zip_exports, downloads.draw_export_diagrams
+
+    def export_version(**kwargs):
+        seen.append(("render", session_box["s"].in_transaction(), threading.get_ident() != loop_thread))
+        return real_export(**kwargs)
+
+    def zip_exports(files):
+        seen.append(("zip", session_box["s"].in_transaction(), threading.get_ident() != loop_thread))
+        return real_zip(files)
+
+    async def draw(content):
+        seen.append(("draw", session_box["s"].in_transaction(), True))
+        return await real_draw(content)
+
+    monkeypatch.setattr(downloads, "export_version", export_version)
+    monkeypatch.setattr(downloads, "zip_exports", zip_exports)
+    monkeypatch.setattr(downloads, "draw_export_diagrams", draw)
+    async with p.sessions() as session:
+        session_box["s"] = session
+        word = await downloads.export_item_version("a", chat_id, item_id, 1, "docx", session)
+        archive = await downloads.export_chat("a", chat_id, session)
+
+    assert len(docx.Document(io.BytesIO(word.content)).inline_shapes) == 1
+    assert sorted(zipfile.ZipFile(io.BytesIO(archive.content)).namelist()) == ["Weather.md", "images/sea.png"]
+    # No open read transaction while drawing, rendering or zipping, and the
+    # CPU work runs outside the event loop.
+    assert seen and all(not in_transaction and off_loop for _, in_transaction, off_loop in seen)
+    assert {step for step, _, _ in seen} == {"draw", "render", "zip"}

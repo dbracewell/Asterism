@@ -3,6 +3,7 @@
 import asyncio
 import io
 import uuid
+from dataclasses import dataclass
 from pathlib import Path
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -88,13 +89,37 @@ def _decode(data: bytes, name: str, extension: str) -> ExportImage | None:
         return None
 
 
-async def load_export_images(user_id: str, chat_id: uuid.UUID, contents: list[str], session: AsyncSession) -> Images:
-    """The chat images the documents reference, keyed by file id (ADR-0083).
+@dataclass(frozen=True)
+class StoredImage:
+    """A chat image as stored, for the ZIP: its name, extension and bytes."""
+
+    name: str
+    extension: str
+    original: bytes
+
+
+def _is_whole_image(data: bytes) -> bool:
+    """Whether the bytes are a complete image within the pixel limit, without decoding the pixels."""
+    from PIL import Image
+
+    try:
+        with Image.open(io.BytesIO(data)) as opened:
+            if opened.width * opened.height > MAX_EXPORT_IMAGE_PIXELS:
+                return False
+            opened.verify()
+        return True
+    except Exception:
+        return False
+
+
+async def _read_export_images(
+    user_id: str, chat_id: uuid.UUID, contents: list[str], session: AsyncSession
+) -> list[tuple[uuid.UUID, StoredImage]]:
+    """The stored bytes of the chat images the documents reference, in order (ADR-0083).
 
     Only ``![…](asterism-file:<id>)`` images in the chat's live file scope are
     read, through the owner's file records and the file store, up to the
-    export's limits. Anything else, including an image that can't be decoded,
-    is left out and exported as a note. Logs name file ids, never content.
+    export's limits. Logs name file ids, never content.
     """
     from asterism.domains.chat.inline_files import read_live_file_ids
     from asterism.domains.files.models import UserFileModel
@@ -103,17 +128,17 @@ async def load_export_images(user_id: str, chat_id: uuid.UUID, contents: list[st
 
     ids = list(dict.fromkeys(file_id for content in contents for file_id in image_references(content)))
     if not ids:
-        return {}
+        return []
     live = await read_live_file_ids(user_id=user_id, chat_id=chat_id, session=session)
     wanted = [file_id for file_id in ids if file_id in live][:MAX_EXPORT_IMAGES]
     if not wanted:
-        return {}
+        return []
     files = {
         file.id: file
         for file in await session.scalars(select_owned_files(user_id=user_id).where(UserFileModel.id.in_(wanted)))
     }
     store = get_file_store()
-    images: dict[uuid.UUID, ExportImage] = {}
+    read: list[tuple[uuid.UUID, StoredImage]] = []
     for file_id in wanted:
         file = files.get(file_id)
         extension = EXPORT_IMAGE_TYPES.get(file.mime_type or "") if file else None
@@ -124,13 +149,49 @@ async def load_export_images(user_id: str, chat_id: uuid.UUID, contents: list[st
         except Exception as exc:
             logger.warning(f"Canvas export left out image {file_id} ({type(exc).__name__})")
             continue
-        if len(data) > MAX_EXPORT_IMAGE_BYTES:
-            continue
-        image = await asyncio.to_thread(_decode, data, file.original_name or "image", extension)
-        if image is not None:
-            images[file_id] = image
-    logger.info(f"Canvas export included {len(images)} of {len(ids)} referenced images")
+        if len(data) <= MAX_EXPORT_IMAGE_BYTES:
+            read.append((file_id, StoredImage(name=file.original_name or "image", extension=extension, original=data)))
+    return read
+
+
+async def load_export_images(user_id: str, chat_id: uuid.UUID, contents: list[str], session: AsyncSession) -> Images:
+    """The referenced chat images decoded for DOCX and PDF, keyed by file id (ADR-0083).
+
+    An image that can't be decoded, or anything outside the export's limits,
+    is left out and exported as a note.
+    """
+    images: dict[uuid.UUID, ExportImage] = {}
+    stored = await _read_export_images(user_id, chat_id, contents, session)
+    for file_id, image in stored:
+        decoded = await asyncio.to_thread(_decode, image.original, image.name, image.extension)
+        if decoded is not None:
+            images[file_id] = decoded
+    logger.info(f"Canvas export included {len(images)} of {len(stored)} readable images")
     return images
+
+
+async def load_zip_images(
+    user_id: str, chat_id: uuid.UUID, contents: list[str], session: AsyncSession
+) -> dict[uuid.UUID, StoredImage]:
+    """The referenced chat images as stored, for the ZIP, keyed by file id.
+
+    The ZIP carries each file as it is, so images are checked, not re-encoded.
+    """
+    images: dict[uuid.UUID, StoredImage] = {}
+    stored = await _read_export_images(user_id, chat_id, contents, session)
+    for file_id, image in stored:
+        if await asyncio.to_thread(_is_whole_image, image.original):
+            images[file_id] = image
+    logger.info(f"Canvas ZIP included {len(images)} of {len(stored)} readable images")
+    return images
+
+
+async def _end_reads(session: AsyncSession) -> None:
+    """End the read transaction, so the connection is free while the export renders.
+
+    Sessions don't expire objects on commit, so what was read stays readable.
+    """
+    await session.commit()
 
 
 async def export_item_version(
@@ -144,15 +205,16 @@ async def export_item_version(
     """One version visible on the chat's active branch, as ``export``."""
     branch = await active_branch(user_id, chat_id, session)
     version = service.full_version(await service.visible_item(user_id, chat_id, item_id, branch, session), number)
-    # DOCX and PDF show mermaid fences as drawn diagrams; other formats keep
-    # the source.
-    diagrams = await draw_export_diagrams(version.content) if export in ("docx", "pdf") else None
     # DOCX and PDF embed the document's chat images; Markdown and text write
     # each image's description instead (ADR-0083).
     images = None
     if version.kind == "document":
         documents = [version.content] if export in ("docx", "pdf") else []
         images = await load_export_images(user_id, chat_id, documents, session)
+    await _end_reads(session)
+    # DOCX and PDF show mermaid fences as drawn diagrams; other formats keep
+    # the source.
+    diagrams = await draw_export_diagrams(version.content) if export in ("docx", "pdf") else None
     # DOCX and PDF layout is CPU work; keep it off the event loop.
     return await asyncio.to_thread(
         export_version,
@@ -166,7 +228,7 @@ async def export_item_version(
     )
 
 
-def _zip_image_names(images: Images) -> dict[uuid.UUID, str]:
+def _zip_image_names(images: dict[uuid.UUID, StoredImage]) -> dict[uuid.UUID, str]:
     """A distinct ``images/<name>.<ext>`` path for each image."""
     names: dict[uuid.UUID, str] = {}
     taken: set[str] = set()
@@ -205,29 +267,32 @@ async def export_chat(user_id: str, chat_id: uuid.UUID, session: AsyncSession) -
     if not entries:
         raise NotFoundException("This conversation has no canvas items")
     documents = [entry.current.content for entry in entries if entry.item.kind == "document"]
-    images = await load_export_images(user_id, chat_id, documents, session)
+    images = await load_zip_images(user_id, chat_id, documents, session)
+    items = [(entry.item.kind, entry.item.language, entry.current.title, entry.current.content) for entry in entries]
+    await _end_reads(session)
+    # Rendering each file and compressing the archive is CPU work.
+    content = await asyncio.to_thread(_build_zip, items, images)
+    return ExportedFile(filename=f"{file_stem(title or 'Canvas')}.zip", media_type=MEDIA_TYPES["zip"], content=content)
+
+
+def _build_zip(items: list[tuple[str, str | None, str, str]], images: dict[uuid.UUID, StoredImage]) -> bytes:
+    """The archive: each item in its natural file type, plus the images its documents show."""
     names = _zip_image_names(images)
     files = [
         export_version(
-            kind=entry.item.kind,
-            language=entry.item.language,
-            title=entry.current.title,
-            content=(
-                _zip_document(entry.current.content, names) if entry.item.kind == "document" else entry.current.content
-            ),
-            export=FORMATS[entry.item.kind][0],
+            kind=kind,
+            language=language,
+            title=title,
+            content=_zip_document(content, names) if kind == "document" else content,
+            export=FORMATS[kind][0],
         )
-        for entry in entries
+        for kind, language, title, content in items
     ]
     pictures = [
         ExportedFile(filename=names[file_id], media_type="application/octet-stream", content=image.original)
         for file_id, image in images.items()
     ]
-    return ExportedFile(
-        filename=f"{file_stem(title or 'Canvas')}.zip",
-        media_type=MEDIA_TYPES["zip"],
-        content=zip_exports(files + pictures),
-    )
+    return zip_exports(files + pictures)
 
 
 async def save_to_library(

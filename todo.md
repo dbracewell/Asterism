@@ -138,11 +138,11 @@ Source: repository review (2026-11-26), work deferred from EPIC-117. Suggested o
   - [x] A file that is already ready isn't hashed again each time it is checked.
   - [x] Tests show the hashing, writing and image cleaning run outside the event loop.
   - [x] Tests and release note.
-- [ ] US-119.2: Exports don't hold the database
-  - [ ] A canvas export reads what it needs, closes its database session, then renders.
-  - [ ] Building the ZIP runs off the event loop.
-  - [ ] Pictures already stored as PNG go into the ZIP without being re-encoded.
-  - [ ] Tests and release note.
+- [x] US-119.2: Exports don't hold the database
+  - [x] A canvas export reads what it needs, closes its database session, then renders.
+  - [x] Building the ZIP runs off the event loop.
+  - [x] Pictures already stored as PNG go into the ZIP without being re-encoded.
+  - [x] Tests and release note.
 - [ ] US-119.3: Model checks don't block
   - [ ] Checking a model bundle against its manifest runs off the event loop.
   - [ ] The health check answers while a bundle is being verified.
