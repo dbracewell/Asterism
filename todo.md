@@ -130,23 +130,7 @@ Source: repository review (2026-11-26), verified against the code at `40101ac7`.
 
 Source: repository review (2026-11-26), work deferred from EPIC-117. Suggested order: EPIC-119 → 120 → 121 → 122 → 123. Work one story at a time.
 
-[EPIC-119](docs/epics/EPIC-119-NON-BLOCKING-SERVER-WORK.md): Non-blocking server work
-
-- [x] US-119.1: Uploads and generated images don't block
-  - [x] Hashing and writing an upload run off the event loop.
-  - [x] Cleaning a generated PNG runs off the event loop.
-  - [x] A file that is already ready isn't hashed again each time it is checked.
-  - [x] Tests show the hashing, writing and image cleaning run outside the event loop.
-  - [x] Tests and release note.
-- [x] US-119.2: Exports don't hold the database
-  - [x] A canvas export reads what it needs, closes its database session, then renders.
-  - [x] Building the ZIP runs off the event loop.
-  - [x] Pictures already stored as PNG go into the ZIP without being re-encoded.
-  - [x] Tests and release note.
-- [x] US-119.3: Model checks don't block
-  - [x] Checking a model bundle against its manifest runs off the event loop.
-  - [x] The health check answers while a bundle is being verified.
-  - [x] Tests and release note.
+[EPIC-119](docs/epics/EPIC-119-NON-BLOCKING-SERVER-WORK.md) (US-119.1 through US-119.3) is complete and archived in the [2026-11-26 checklist](docs/archive/todo-completed-2026-11-26.md).
 
 [EPIC-120](docs/epics/EPIC-120-INCREMENTAL-STREAMING.md): Incremental streaming
 

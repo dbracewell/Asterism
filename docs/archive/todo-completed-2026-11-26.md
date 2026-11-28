@@ -210,3 +210,25 @@ EPIC-118 is complete: US-118.1 was confirmed and merged on 2026-11-27 through pu
   - [x] Only that job can write to the repository.
   - [x] Pages for v0.2.2 through v0.5.0 are created from the release notes.
   - [x] Tests, release guide and release note.
+
+## Non-blocking server work
+
+EPIC-119 is complete: every story was confirmed and merged on 2026-11-28 through pull requests #175, #176 and #177. Uploads, generated images, canvas exports and model bundle checks no longer block the server's event loop, and exports no longer hold a database connection while they render.
+
+### [EPIC-119: Non-blocking server work](../epics/EPIC-119-NON-BLOCKING-SERVER-WORK.md)
+
+- [x] US-119.1: Uploads and generated images don't block
+  - [x] Hashing and writing an upload run off the event loop.
+  - [x] Cleaning a generated PNG runs off the event loop.
+  - [x] A file that is already ready isn't hashed again each time it is checked.
+  - [x] Tests show the hashing, writing and image cleaning run outside the event loop.
+  - [x] Tests and release note.
+- [x] US-119.2: Exports don't hold the database
+  - [x] A canvas export reads what it needs, closes its database session, then renders.
+  - [x] Building the ZIP runs off the event loop.
+  - [x] Pictures already stored as PNG go into the ZIP without being re-encoded.
+  - [x] Tests and release note.
+- [x] US-119.3: Model checks don't block
+  - [x] Checking a model bundle against its manifest runs off the event loop.
+  - [x] The health check answers while a bundle is being verified.
+  - [x] Tests and release note.
