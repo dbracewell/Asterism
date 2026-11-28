@@ -530,3 +530,24 @@ async def test_images_are_counted_as_usage_and_refused_over_budget(images, monke
         await db.commit()
     with pytest.raises(UsageLimitExceeded):
         await generate_images(user_id="a", chat_id=chat_id, request=ImageRequest(prompt="Another harbour"))
+
+
+async def test_generated_images_are_cleaned_outside_the_event_loop(images, monkeypatch):
+    import threading
+
+    from asterism.domains.image_generation import service
+
+    client, sessions, _ = images
+    await set_policy(sessions)
+    loop_thread, cleaned_on = threading.get_ident(), []
+    real = service._clean_png
+
+    def clean(image):
+        cleaned_on.append(threading.get_ident())
+        return real(image)
+
+    monkeypatch.setattr(service, "_clean_png", clean)
+    made = await client.post("/settings/app/image-generation/test", headers=auth("admin"), json={"prompt": "A heron"})
+
+    assert made.status_code == 200, made.text
+    assert cleaned_on and loop_thread not in cleaned_on

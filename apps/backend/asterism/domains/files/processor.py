@@ -6,6 +6,8 @@ an already-processed file short-circuits unless its bytes changed on disk.
 """
 
 import asyncio
+import os
+from collections import OrderedDict
 from pathlib import Path
 from typing import Protocol
 
@@ -19,6 +21,26 @@ from .models import FileContentStatus, FileKind, UserFileModel
 from .store import FileStore, get_file_store
 
 _TRUNCATION_MARKER = "\n… [content truncated]"
+
+# Files whose bytes last matched a digest, with what they looked like on disk
+# then, so an unchanged file isn't hashed again on every use. Per process and
+# bounded; a miss only costs a re-hash.
+_VERIFIED_LIMIT = 4096
+_verified: OrderedDict[tuple[str, str], tuple[tuple[int, int, int, int], str]] = OrderedDict()
+
+
+def _disk_signature(stat: os.stat_result) -> tuple[int, int, int, int]:
+    """Size, inode, and modification and change times: any rewrite changes one."""
+    return (stat.st_size, stat.st_ino, stat.st_mtime_ns, stat.st_ctime_ns)
+
+
+def _remember_verified(key: tuple[str, str], signature: tuple[int, int, int, int], digest: str) -> None:
+    _verified[key] = (signature, digest)
+    _verified.move_to_end(key)
+    while len(_verified) > _VERIFIED_LIMIT:
+        _verified.popitem(last=False)
+
+
 """Appended to a converted cache that was cut off at the configured limit."""
 
 
@@ -104,9 +126,10 @@ class MarkItDownFileProcessor:
     ) -> UserFileModel:
         """Bring the file's converted-content cache up to date.
 
-        The stored bytes are re-hashed when their size changed, which
-        invalidates a stale cache. Otherwise an already-satisfied file
-        returns immediately without touching the converter.
+        The stored bytes are re-hashed unless they are unchanged on disk since
+        they last matched the recorded digest; a change invalidates the cache.
+        Otherwise an already-satisfied file returns immediately without
+        touching the converter.
 
         Args:
             file: The file row to process. It is mutated in place.
@@ -131,8 +154,17 @@ class MarkItDownFileProcessor:
         # served to the model while the download ETag still advertised the
         # old content. Verifying the digest is bounded, streams off the event
         # loop, and is the only check that catches a replaced source whose
-        # length did not change.
-        digest = await asyncio.to_thread(sha256_file, path)
+        # length did not change. It is skipped while the file is unchanged on
+        # disk since it last matched: a rewrite changes its change time, which
+        # can't be set back.
+        verified_as = (file.user_id, file.storage_key)
+        signature = _disk_signature(stat)
+        if _verified.get(verified_as) == (signature, file.sha256):
+            _verified.move_to_end(verified_as)
+            digest = file.sha256
+        else:
+            digest = await asyncio.to_thread(sha256_file, path)
+            _remember_verified(verified_as, signature, digest)
         if digest != file.sha256:
             file.sha256 = digest
             file.size = stat.st_size

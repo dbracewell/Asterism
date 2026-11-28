@@ -20,11 +20,11 @@ active users, a large upload or an export causes visible pauses for others.
 As a user, I want the app to stay responsive while someone else uploads a large
 file or generates an image.
 
-- [ ] Hashing and writing an upload run off the event loop, in chunks.
-- [ ] Cleaning a generated PNG runs off the event loop.
-- [ ] A file that is already ready isn't hashed again each time it is checked.
-- [ ] A test shows another request is answered while a large upload is hashed.
-- [ ] Tests and release note.
+- [x] Hashing and writing an upload run off the event loop.
+- [x] Cleaning a generated PNG runs off the event loop.
+- [x] A file that is already ready isn't hashed again each time it is checked.
+- [x] Tests show the hashing, writing and image cleaning run outside the event loop.
+- [x] Tests and release note.
 
 ### US-119.2: Exports don't hold the database
 

@@ -17,7 +17,6 @@ Rules (ADR-0039 §6):
 """
 
 import asyncio
-import hashlib
 import mimetypes
 import re
 import uuid
@@ -29,6 +28,7 @@ import filetype
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from asterism.common.hashing import sha256_bytes
 from asterism.common.images import generate_thumbnail
 from asterism.core import config
 from asterism.core.exceptions import BadDataException
@@ -38,7 +38,7 @@ from asterism.domains.knowledge.artifacts import ensure_artifact, start_ingestio
 
 from .models import FileContentStatus, FileKind, FileOrigin, UserFileModel
 from .service import _deduplicated_filename, classify_file, sanitize_filename
-from .store import get_file_store
+from .store import get_file_store, save_off_loop
 
 FILE_REFERENCE_SCHEME = "asterism-file:"
 """Destination prefix of an inline file reference (ADR-0039 §1)."""
@@ -248,7 +248,7 @@ async def _insert(
     try:
         await _check_run_limits(session, user_id=user_id, execution_id=execution_id, size=len(content))
         file_id = uuid.uuid4()
-        storage_key = store.save(user_id, file_id, Path(name).suffix, content)
+        storage_key = await save_off_loop(store, user_id, file_id, Path(name).suffix, content)
         file = UserFileModel(
             id=file_id,
             user_id=user_id,
@@ -258,7 +258,7 @@ async def _insert(
             size=len(content),
             mime_type=mime_type,
             kind=kind,
-            sha256=hashlib.sha256(content).hexdigest(),
+            sha256=await sha256_bytes(content),
             content_status=FileContentStatus.PENDING,
             thumbnail=thumbnail,
             origin=FileOrigin.AGENT,

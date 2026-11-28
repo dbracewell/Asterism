@@ -22,6 +22,13 @@ Unreleased into its version and date.
 
 ## Unreleased
 
+### Behavior
+
+- Uploading a large file, publishing a course or generating an image no longer
+  pauses the server for other people: hashing, writing and cleaning images run
+  in the background. A file that is already processed isn't re-read in full
+  each time it is used, unless it changed on disk.
+
 ## 0.6.0 (2026-11-27)
 
 ### Configuration

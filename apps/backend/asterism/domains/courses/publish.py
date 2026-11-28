@@ -7,7 +7,6 @@ students get until the next version.
 """
 
 import asyncio
-import hashlib
 import json
 import uuid
 from pathlib import Path
@@ -16,6 +15,7 @@ from sqlalchemy import select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from asterism.common.hashing import sha256_bytes
 from asterism.common.log import get_logger
 from asterism.core.exceptions import BadDataException, ConflictException
 from asterism.db.queries import paginate_select
@@ -24,6 +24,7 @@ from asterism.domains.agent.queries import select_owned_agent_profiles
 from asterism.domains.classes.service import owned_class
 from asterism.domains.files.models import UserFileModel
 from asterism.domains.files.service import get_file_store
+from asterism.domains.files.store import save_off_loop
 from asterism.domains.packs.documents import MAX_SUB_AGENTS, PackManifest, parse_pack
 from asterism.domains.packs.export import export_pack
 from asterism.domains.packs.schemas import PackExportRequest
@@ -178,14 +179,14 @@ async def publish(user_id: str, class_id: uuid.UUID, payload: CoursePublish, ses
                 content = await store.read_bytes(user_id, source.storage_key)
             except OSError as exc:
                 raise BadDataException(f'File "{source.filename}" is missing; upload it again') from exc
-            sha256 = hashlib.sha256(content).hexdigest()
+            sha256 = await sha256_bytes(content)
             earlier = reusable.get((source.filename, sha256))
             if earlier is not None and earlier.storage_key:
                 # Unchanged since the last version: move the bytes, don't copy them.
                 key, earlier.storage_key = earlier.storage_key, None
                 kept.add(earlier.id)
             else:
-                key = store.save(user_id, uuid.uuid4(), Path(source.filename).suffix, content)
+                key = await save_off_loop(store, user_id, uuid.uuid4(), Path(source.filename).suffix, content)
                 saved.append(key)
             session.add(
                 CourseFileModel(
