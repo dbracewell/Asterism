@@ -44,6 +44,10 @@ Unreleased into its version and date.
 
 ### Behavior
 
+- A provider's refusal now shows its reason, not only "Error code: 400". Some
+  providers, such as Google Gemini, send their error in a shape the OpenAI SDK
+  doesn't read; Asterism now reads it from either shape, for chats and for the
+  ChatGPT plan's Responses API.
 - The API key is optional for a local server (Ollama, LM Studio and others) or a
   custom URL: leave it empty and Asterism sends no `Authorization` header, for
   chats, model discovery and image captioning. OpenAI, hosted APIs and
