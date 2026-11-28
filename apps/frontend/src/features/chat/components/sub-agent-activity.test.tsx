@@ -124,6 +124,9 @@ describe("sub-agent activity", () => {
       activities,
       packet("two", "Reviewer", 2, {
         type: "delta",
+        stream: "s",
+        seq: 1,
+        mode: "replace",
         content: "Reviewing evidence",
         thinking: "Cross-checking",
       }),

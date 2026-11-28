@@ -140,6 +140,9 @@ async function mockDrafting(page: Page) {
         { type: "start" },
         {
           type: "delta",
+          stream: "s",
+          seq: 1,
+          mode: "replace",
           content: "Checking how teachers mark essays…",
           thinking: "",
         },

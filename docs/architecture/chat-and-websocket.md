@@ -91,6 +91,12 @@ sub-agent) and sends only the new text as an `append`, or the whole text as a
 `replace` when the text didn't just grow, such as an exercise run trimming its
 held-back marker.
 
+The browser ([`text-stream.ts`](../../apps/frontend/src/features/chat/lib/text-stream.ts))
+rebuilds each stream from those packets: an `append` applies only as the next
+number, a `replace` at or after the last one, and a duplicate is ignored. A gap
+holds the text as it is and sends one `resync`. Sub-agent activity gets each
+child's rebuilt text.
+
 ### Several tabs, closed tabs and reconnecting
 
 Each chat's stream keeps a queue of up to 256 packets for every attached
@@ -289,7 +295,9 @@ All paths are under `/api/py`.
 6. [`chat/orchestrator.py`](../../apps/backend/asterism/domains/chat/orchestrator.py):
    runs a turn and turns agent events into packets.
 7. [`use-chat-websocket.tsx`](../../apps/frontend/src/features/chat/hooks/use-chat-websocket.tsx):
-   the browser side.
+   the browser side, with
+   [`text-stream.ts`](../../apps/frontend/src/features/chat/lib/text-stream.ts)
+   rebuilding streamed text.
 
 ## Related
 

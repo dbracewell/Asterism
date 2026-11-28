@@ -204,6 +204,9 @@ async function mockChat(page: Page) {
       socket.send(
         JSON.stringify({
           type: "delta",
+          stream: "s",
+          seq: 1,
+          mode: "replace",
           content: "Beta adds the sun",
           thinking: "",
           ...tag,

@@ -44,6 +44,9 @@ test("shows delegated progress and the final parent response", async ({
     subAgentPacket("execution-success", { type: "start" }),
     subAgentPacket("execution-success", {
       type: "delta",
+      stream: "s",
+      seq: 1,
+      mode: "replace",
       content: "Found two relevant sources",
       thinking: "Comparing source dates",
     }),

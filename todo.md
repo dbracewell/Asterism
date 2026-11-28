@@ -143,11 +143,11 @@ Source: repository review (2026-11-26), work deferred from EPIC-117. Suggested o
   - [x] Cancelling or failing a reply still saves the full text written so far.
   - [x] Exercise runs keep hiding their text.
   - [x] Tests (including bytes sent for a long reply) and release note.
-- [ ] US-120.3: The browser builds the reply from new text
-  - [ ] The chat page appends new text in order and asks for a snapshot when a number is missing.
-  - [ ] Every open tab of the same chat shows the same text.
-  - [ ] The finished message replaces the streamed text.
-  - [ ] Unit and E2E tests, including reconnecting mid-reply, and release note.
+- [x] US-120.3: The browser builds the reply from new text
+  - [x] The chat page appends new text in order and asks for a snapshot when a number is missing.
+  - [x] Every open tab of the same chat shows the same text.
+  - [x] The finished message replaces the streamed text.
+  - [x] Unit and E2E tests, including reconnecting mid-reply, and release note.
 
 [EPIC-121](docs/epics/EPIC-121-FEWER-DATABASE-QUERIES.md): Fewer database queries
 

@@ -1,6 +1,6 @@
 # EPIC-120: Incremental streaming
 
-Status: proposed (2026-11-27). Source: repository review (2026-11-26), work
+Status: complete (2026-11-28). Source: repository review (2026-11-26), work
 deferred from EPIC-117.
 
 ## Objective
@@ -42,8 +42,8 @@ As a user, I want a long reply to cost no more to stream than its own length.
 As a user, I want the reply on screen to match what was saved, even after a
 dropped connection.
 
-- [ ] The chat page appends new text in order and asks for a snapshot when a
+- [x] The chat page appends new text in order and asks for a snapshot when a
       number is missing.
-- [ ] Every open tab of the same chat shows the same text.
-- [ ] The finished message replaces the streamed text.
-- [ ] Unit and E2E tests, including reconnecting mid-reply, and release note.
+- [x] Every open tab of the same chat shows the same text.
+- [x] The finished message replaces the streamed text.
+- [x] Unit and E2E tests, including reconnecting mid-reply, and release note.

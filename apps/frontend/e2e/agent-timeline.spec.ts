@@ -188,6 +188,9 @@ test("streams reasoning and a running tool, then settles with its duration", asy
   socket.send(
     JSON.stringify({
       type: "delta",
+      stream: "s",
+      seq: 1,
+      mode: "replace",
       thinking: "Live reasoning marker",
       content: "",
     }),

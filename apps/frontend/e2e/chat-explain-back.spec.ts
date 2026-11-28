@@ -144,6 +144,9 @@ test("renders Explain-back feedback as sections while streaming and after comple
       socket.send(
         JSON.stringify({
           type: "delta",
+          stream: "s",
+          seq: 1,
+          mode: "replace",
           content: feedback.slice(0, feedback.indexOf("### What was")),
           thinking: "",
         }),

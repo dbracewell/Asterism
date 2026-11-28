@@ -408,6 +408,9 @@ test("streaming preserves manual history position and jump/stop stay reachable b
   socket.send(
     JSON.stringify({
       type: "delta",
+      stream: "s",
+      seq: 1,
+      mode: "replace",
       thinking: "",
       content: "Streaming first marker",
     }),
@@ -444,6 +447,9 @@ test("streaming preserves manual history position and jump/stop stay reachable b
   socket.send(
     JSON.stringify({
       type: "delta",
+      stream: "s",
+      seq: 1,
+      mode: "replace",
       thinking: token,
       content: "Streaming first marker\n\nStreaming tail marker",
     }),

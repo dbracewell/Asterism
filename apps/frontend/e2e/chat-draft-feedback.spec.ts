@@ -179,7 +179,14 @@ test("sends the chosen rubric and renders feedback by criterion", async ({
         JSON.stringify({ type: "start", execution: execution(turn.id) }),
       );
       socket.send(
-        JSON.stringify({ type: "delta", content: feedback, thinking: "" }),
+        JSON.stringify({
+          type: "delta",
+          stream: "s",
+          seq: 1,
+          mode: "replace",
+          content: feedback,
+          thinking: "",
+        }),
       );
       const reply: Message = {
         id: "bbbbbbbb-bbbb-4bbb-8bbb-000000000001",

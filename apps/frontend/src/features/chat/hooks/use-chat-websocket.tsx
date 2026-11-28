@@ -5,6 +5,11 @@ import {
   CompactionPacket,
 } from "@/features/chat/schemas";
 import { ToolTimings } from "@/features/chat/lib/agent-timeline";
+import {
+  applyDelta,
+  DeltaPacket,
+  TextStreamState,
+} from "@/features/chat/lib/text-stream";
 import { StreamingMessage } from "@/features/chat/types";
 import { backendToken, forgetBackendToken } from "@/lib/backend-token";
 import { chatWebSocketUrl } from "@/lib/backend-url";
@@ -80,6 +85,10 @@ export const useChatWebSocket = ({
   const didUnmount = React.useRef(false);
   const flushTimerRef = React.useRef<NodeJS.Timeout | null>(null);
   const streamingMessageRef = React.useRef<StreamingMessage | null>(null);
+  // ADR-0084: the reply's open text stream and each running sub-agent's.
+  const mainStreamRef = React.useRef<TextStreamState | null>(null);
+  const childStreamsRef = React.useRef(new Map<string, TextStreamState>());
+  const sendRef = React.useRef<((message: unknown) => void) | null>(null);
   const onStreamStartRef = React.useRef(onStreamStart);
   const onStreamUpdateRef = React.useRef(onStreamUpdate);
   const onStreamCompleteRef = React.useRef(onStreamComplete);
@@ -151,6 +160,21 @@ export const useChatWebSocket = ({
     }, 50);
   }, []);
 
+  const resetTextStreams = () => {
+    mainStreamRef.current = null;
+    childStreamsRef.current.clear();
+  };
+
+  /** Apply one numbered packet; asks for the text so far after a gap. */
+  const applyStreamDelta = (
+    state: TextStreamState | null,
+    packet: DeltaPacket,
+  ) => {
+    const result = applyDelta(state, packet);
+    if (result.resync) sendRef.current?.({ type: "resync" });
+    return result;
+  };
+
   const { sendJsonMessage, readyState } = useWebSocket(wsEndpoint, {
     shouldReconnect: () => {
       return !didUnmount.current;
@@ -166,6 +190,7 @@ export const useChatWebSocket = ({
         onStatusChangeRef.current?.(false);
       }
       streamingMessageRef.current = null;
+      resetTextStreams();
       if (!didUnmount.current) {
         void refreshToken(event.code === 1008);
       }
@@ -180,6 +205,7 @@ export const useChatWebSocket = ({
         onStatusChangeRef.current?.(false);
       }
       streamingMessageRef.current = null;
+      resetTextStreams();
     },
     reconnectAttempts: 10,
     reconnectInterval: 3000,
@@ -233,6 +259,29 @@ export const useChatWebSocket = ({
         };
 
       if (msgContent.type === "sub_agent") {
+        const child = msgContent.event;
+        if (child.type === "delta") {
+          const streams = childStreamsRef.current;
+          const result = applyStreamDelta(
+            streams.get(msgContent.execution_id) ?? null,
+            child,
+          );
+          streams.set(msgContent.execution_id, result.state);
+          if (!result.changed) return;
+          // Activities show the child's whole text, as a `replace` carries it.
+          onSubAgentEventRef.current?.({
+            ...msgContent,
+            event: {
+              ...child,
+              mode: "replace",
+              content: result.state.content,
+              thinking: result.state.thinking,
+            },
+          });
+          return;
+        }
+        if (child.type === "complete" || child.type === "error")
+          childStreamsRef.current.delete(msgContent.execution_id);
         onSubAgentEventRef.current?.(msgContent);
         return;
       }
@@ -264,6 +313,7 @@ export const useChatWebSocket = ({
           onStatusChangeRef.current?.(false);
         }
         streamingMessageRef.current = null;
+        resetTextStreams();
         onStreamErrorRef.current?.(
           msgContent.content,
           msgContent.error_code,
@@ -355,10 +405,13 @@ export const useChatWebSocket = ({
             createPendingAssistantMessage(comparison);
         }
 
+        const result = applyStreamDelta(mainStreamRef.current, msgContent);
+        mainStreamRef.current = result.state;
+        if (!result.changed) return;
         streamingMessageRef.current = {
           ...streamingMessageRef.current!,
-          thinking: msgContent.thinking,
-          content: msgContent.content,
+          thinking: result.state.thinking,
+          content: result.state.content,
         };
         scheduleFlush();
       }
@@ -389,9 +442,15 @@ export const useChatWebSocket = ({
           comparison ?? streamingMessageRef.current?.comparison,
         );
         streamingMessageRef.current = null;
+        // The step's text is saved; the next step streams on a new stream.
+        mainStreamRef.current = null;
       }
     },
   });
+
+  React.useEffect(() => {
+    sendRef.current = sendJsonMessage;
+  }, [sendJsonMessage]);
 
   return useMemo(
     () => ({

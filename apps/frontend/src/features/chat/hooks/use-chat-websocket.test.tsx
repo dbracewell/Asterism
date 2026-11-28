@@ -4,9 +4,10 @@ import { act, renderHook } from "@testing-library/react";
 import { beforeEach, expect, it, vi } from "vitest";
 import { useChatWebSocket } from "./use-chat-websocket";
 
-const { socket, getTokenMock } = vi.hoisted(() => ({
+const { socket, getTokenMock, sendMock } = vi.hoisted(() => ({
   socket: vi.fn(),
   getTokenMock: vi.fn(),
+  sendMock: vi.fn(),
 }));
 
 vi.mock("@/lib/auth-client", () => ({
@@ -18,12 +19,13 @@ vi.mock("@/lib/auth-client", () => ({
 vi.mock("react-use-websocket", () => ({
   default: (...args: unknown[]) => {
     socket(...args);
-    return { sendJsonMessage: vi.fn(), readyState: 0 };
+    return { sendJsonMessage: sendMock, readyState: 0 };
   },
 }));
 
 beforeEach(() => {
   socket.mockClear();
+  sendMock.mockClear();
   getTokenMock.mockReset();
 });
 
@@ -94,6 +96,9 @@ it("forwards typed sub-agent packets without replacing the parent stream", () =>
     depth: 1,
     event: {
       type: "delta",
+      stream: "s",
+      seq: 1,
+      mode: "replace",
       content: "Found a useful source",
       thinking: "Checking references",
     },
@@ -160,6 +165,9 @@ it("batches rapid delta events using the 50ms flush throttle", () => {
     options.onMessage({
       data: JSON.stringify({
         type: "delta",
+        stream: "s",
+        seq: 1,
+        mode: "replace",
         content: "Hello",
         thinking: "",
       }),
@@ -167,6 +175,9 @@ it("batches rapid delta events using the 50ms flush throttle", () => {
     options.onMessage({
       data: JSON.stringify({
         type: "delta",
+        stream: "s",
+        seq: 1,
+        mode: "replace",
         content: "Hello world",
         thinking: "",
       }),
@@ -345,7 +356,14 @@ it("tags a comparison column's run from start to completion", () => {
 
     send({ type: "start" });
     expect(onStreamStart.mock.calls[0][0].comparison).toEqual(comparison);
-    send({ type: "delta", content: "Tides follow", thinking: "" });
+    send({
+      type: "delta",
+      stream: "s",
+      seq: 1,
+      mode: "replace",
+      content: "Tides follow",
+      thinking: "",
+    });
     act(() => vi.advanceTimersByTime(60));
     expect(onStreamUpdate.mock.calls.at(-1)?.[0]).toMatchObject({
       content: "Tides follow",
@@ -383,6 +401,9 @@ it("lets tagged packets claim a run that began with an untagged start", () => {
     options.onMessage({
       data: JSON.stringify({
         type: "delta",
+        stream: "s",
+        seq: 1,
+        mode: "replace",
         content: "Beta",
         thinking: "",
         comparison,
@@ -464,9 +485,141 @@ it("reports tool progress and clears it when the turn moves on", () => {
   expect(result.current.toolProgress).toEqual(progress);
   // Progress is not part of the message stream.
   expect(onStreamUpdate).not.toHaveBeenCalled();
-  send({ type: "delta", content: "Here it is", thinking: "" });
+  send({
+    type: "delta",
+    stream: "s",
+    seq: 1,
+    mode: "replace",
+    content: "Here it is",
+    thinking: "",
+  });
   expect(result.current.toolProgress).toBeNull();
   send(progress);
   send({ type: "status", is_processing: false });
   expect(result.current.toolProgress).toBeNull();
+});
+
+function streamingHook(
+  callbacks: Parameters<typeof useChatWebSocket>[0] = {
+    chatId: "chat-1",
+    jwtToken: "test-token",
+  },
+) {
+  renderHook(() => useChatWebSocket(callbacks));
+  const options = socket.mock.calls.at(-1)?.[1] as {
+    onMessage: (event: { data: string }) => void;
+  };
+  return (packet: object) =>
+    act(() => options.onMessage({ data: JSON.stringify(packet) }));
+}
+
+function delta(seq: number, mode: "append" | "replace", content: string) {
+  return { type: "delta", stream: "step-1", seq, mode, content, thinking: "" };
+}
+
+it("rebuilds the reply from appended text in order (ADR-0084)", () => {
+  vi.useFakeTimers();
+  try {
+    const onStreamUpdate = vi.fn();
+    const send = streamingHook({
+      chatId: "chat-1",
+      jwtToken: "test-token",
+      onStreamUpdate,
+    });
+    send(delta(1, "append", "Tides "));
+    send(delta(2, "append", "follow "));
+    // A duplicate is ignored.
+    send(delta(2, "append", "follow "));
+    send(delta(3, "append", "the moon."));
+    act(() => vi.advanceTimersByTime(60));
+
+    expect(onStreamUpdate.mock.calls.at(-1)?.[0].content).toBe(
+      "Tides follow the moon.",
+    );
+    expect(sendMock).not.toHaveBeenCalled();
+  } finally {
+    vi.useRealTimers();
+  }
+});
+
+it("asks once for the text so far after a gap, then takes the replacement", () => {
+  vi.useFakeTimers();
+  try {
+    const onStreamUpdate = vi.fn();
+    const send = streamingHook({
+      chatId: "chat-1",
+      jwtToken: "test-token",
+      onStreamUpdate,
+    });
+    send(delta(1, "append", "Tides "));
+    // Packets 2 and 3 were dropped from the tab's queue.
+    send(delta(4, "append", "moon"));
+    send(delta(5, "append", "."));
+    act(() => vi.advanceTimersByTime(60));
+    expect(sendMock.mock.calls).toEqual([[{ type: "resync" }]]);
+    expect(onStreamUpdate.mock.calls.at(-1)?.[0].content).toBe("Tides ");
+
+    send(delta(5, "replace", "Tides follow the moon."));
+    send(delta(6, "append", " Mostly."));
+    act(() => vi.advanceTimersByTime(60));
+    expect(onStreamUpdate.mock.calls.at(-1)?.[0].content).toBe(
+      "Tides follow the moon. Mostly.",
+    );
+    expect(sendMock).toHaveBeenCalledTimes(1);
+  } finally {
+    vi.useRealTimers();
+  }
+});
+
+it("joins mid-reply from the server's replacement and starts each step afresh", () => {
+  vi.useFakeTimers();
+  try {
+    const onStreamUpdate = vi.fn();
+    const send = streamingHook({
+      chatId: "chat-1",
+      jwtToken: "test-token",
+      onStreamUpdate,
+    });
+    send(delta(7, "replace", "Already written"));
+    send(delta(8, "append", ", and more"));
+    act(() => vi.advanceTimersByTime(60));
+    expect(onStreamUpdate.mock.calls.at(-1)?.[0].content).toBe(
+      "Already written, and more",
+    );
+
+    send({ type: "complete", last_messages: [] });
+    send({ ...delta(1, "append", "Next step"), stream: "step-2" });
+    act(() => vi.advanceTimersByTime(60));
+    expect(onStreamUpdate.mock.calls.at(-1)?.[0].content).toBe("Next step");
+    expect(sendMock).not.toHaveBeenCalled();
+  } finally {
+    vi.useRealTimers();
+  }
+});
+
+it("hands sub-agent activity each child's whole text", () => {
+  const onSubAgentEvent = vi.fn();
+  const send = streamingHook({
+    chatId: "chat-1",
+    jwtToken: "test-token",
+    onSubAgentEvent,
+  });
+  const child = (executionId: string, event: object) => ({
+    type: "sub_agent",
+    execution_id: executionId,
+    sub_agent_id: "agent-1",
+    sub_agent_name: "Researcher",
+    depth: 1,
+    event,
+  });
+  send(child("one", { ...delta(1, "append", "Reading"), stream: "c1" }));
+  send(child("two", { ...delta(1, "append", "Writing"), stream: "c2" }));
+  send(child("one", { ...delta(2, "append", " notes"), stream: "c1" }));
+  send(child("one", { ...delta(4, "append", "!"), stream: "c1" }));
+
+  const texts = onSubAgentEvent.mock.calls.map(
+    ([packet]) => `${packet.execution_id}:${packet.event.content}`,
+  );
+  expect(texts).toEqual(["one:Reading", "two:Writing", "one:Reading notes"]);
+  expect(sendMock.mock.calls).toEqual([[{ type: "resync" }]]);
 });
