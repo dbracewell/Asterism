@@ -1,6 +1,6 @@
 # EPIC-124: Vitest 5 and its test libraries
 
-Status: proposed (2026-11-28). Source: Dependabot review (2026-11-28).
+Status: complete (2026-11-28). Source: Dependabot review (2026-11-28).
 
 ## Objective
 
@@ -38,4 +38,4 @@ As a maintainer, I want the unit tests on supported versions of their tools.
       file.
 - [x] Every unit test passes unchanged, or with a change the migration guide
       calls for.
-- [ ] Dependabot pull requests #41 and #190 are closed in favor of this one.
+- [x] Dependabot pull requests #41 and #190 are closed in favor of this one.
