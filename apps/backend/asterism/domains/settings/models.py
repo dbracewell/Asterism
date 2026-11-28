@@ -59,6 +59,11 @@ class ProviderModel(Base, UuidPrimaryKeyMixin, TimestampMixin):
             name="ck_providers_chatgpt_owned",
         ),
         UniqueConstraint("owner_user_id", name="uq_providers_owner"),
+        # Only an OpenAI-compatible provider records its service (ADR-0086).
+        CheckConstraint(
+            "service IS NULL OR provider_type = 'generic_openai'",
+            name="ck_providers_service_generic",
+        ),
         Index(
             "uq_providers_global_name",
             "name",
@@ -81,6 +86,9 @@ class ProviderModel(Base, UuidPrimaryKeyMixin, TimestampMixin):
         default=ProviderType.GENERIC_OPENAI,
         server_default=ProviderType.GENERIC_OPENAI.value,
     )
+    # The OpenAI-compatible service it was set up from (provider_services);
+    # NULL is Custom. Text, not an enum, so a new service needs no migration.
+    service: Mapped[str | None] = mapped_column(String(32), nullable=True)
     # Display name; unique across global (admin) providers.
     name: Mapped[str] = mapped_column(
         Text,

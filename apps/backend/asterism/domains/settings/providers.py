@@ -177,6 +177,7 @@ async def get_provider_settings(
                     base_url=provider.base_url,
                     api_key=provider.api_key,
                     provider_type=provider.provider_type,
+                    service=provider.service,
                     model_count=count,
                     active_model_count=active_count,
                 )
@@ -239,6 +240,7 @@ async def update_provider_settings(
                     ProviderModel(
                         id=provider.id,
                         provider_type=provider.provider_type,
+                        service=provider.service,
                         name=provider.name,
                         base_url=provider.base_url,
                         api_key=_provider_api_key(provider),
@@ -246,6 +248,7 @@ async def update_provider_settings(
                 )
             else:
                 existing.provider_type = provider.provider_type
+                existing.service = provider.service
                 existing.name = provider.name
                 existing.base_url = provider.base_url
                 existing.api_key = _provider_api_key(provider, existing.api_key)
@@ -628,6 +631,7 @@ async def _sync_providers(update: list[Provider], session: AsyncSession) -> None
         if existing_provider:
             processed_providers.add(provider.id)
             existing_provider.provider_type = provider.provider_type
+            existing_provider.service = provider.service
             existing_provider.base_url = provider.base_url
             existing_provider.api_key = _provider_api_key(
                 provider,
@@ -644,6 +648,7 @@ async def _sync_providers(update: list[Provider], session: AsyncSession) -> None
             new_provider = ProviderModel(
                 id=provider.id,
                 provider_type=provider.provider_type,
+                service=provider.service,
                 name=provider.name,
                 base_url=provider.base_url,
                 api_key=_provider_api_key(provider),

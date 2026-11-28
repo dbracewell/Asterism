@@ -12,6 +12,7 @@ domain's own router at the same URLs; see
 """
 
 import uuid
+from dataclasses import asdict
 
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import JsonValue
@@ -40,6 +41,7 @@ from .discovery import (
     ProviderDiscoveryRequest,
     ProviderDiscoveryResponse,
 )
+from .provider_services import CATALOG
 from .schemas import (
     ApplicationSettings,
     BulkUpdateSettingRequest,
@@ -48,6 +50,7 @@ from .schemas import (
     LlmDisplayInfo,
     ProviderModelsPage,
     ProviderModelUpdate,
+    ProviderServiceInfo,
     ProviderSettings,
     ProviderSummary,
     Setting,
@@ -215,6 +218,17 @@ async def discover_provider_models(
         return await provider_discovery.discover(request)
     except ProviderDiscoveryError as exc:
         raise _discovery_http_error(exc) from exc
+
+
+@settings_router.get(
+    "/app/providers/services",
+    response_model=list[ProviderServiceInfo],
+    operation_id="appProviderServicesList",
+    summary="List the services a provider can be set up from",
+)
+async def list_provider_services(user: AdminUserDep) -> list[ProviderServiceInfo]:
+    """The OpenAI-compatible service catalog, in display order, with each default base URL (ADR-0086)."""
+    return [ProviderServiceInfo(**asdict(entry)) for entry in CATALOG]
 
 
 @settings_router.get(

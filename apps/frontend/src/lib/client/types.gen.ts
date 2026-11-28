@@ -7018,6 +7018,10 @@ export type Provider = {
   id: string;
   provider_type?: ProviderType;
   /**
+   * The OpenAI-compatible service it was set up from; None is Custom (ADR-0086)
+   */
+  service?: ProviderService | null;
+  /**
    * Models
    */
   models: Array<Llm>;
@@ -7143,6 +7147,63 @@ export type ProviderModelsPage = {
 };
 
 /**
+ * ProviderService
+ *
+ * The known OpenAI-compatible services. Stored as text, so adding one needs no migration.
+ */
+export type ProviderService =
+  | "gemini"
+  | "mistral"
+  | "xai"
+  | "deepseek"
+  | "anthropic"
+  | "openrouter"
+  | "groq"
+  | "together"
+  | "fireworks"
+  | "deepinfra"
+  | "cerebras"
+  | "ollama"
+  | "lm_studio"
+  | "llama_cpp"
+  | "vllm"
+  | "localai"
+  | "jan";
+
+/**
+ * ProviderServiceInfo
+ *
+ * One entry of the service catalog the provider form offers (ADR-0086).
+ */
+export type ProviderServiceInfo = {
+  service: ProviderService;
+  /**
+   * Label
+   */
+  label: string;
+  /**
+   * Group
+   *
+   * hosted, aggregator or local
+   */
+  group: "hosted" | "aggregator" | "local";
+  /**
+   * Base Url
+   *
+   * The service's default base URL; the administrator can change it
+   */
+  base_url: string;
+  /**
+   * Key Required
+   */
+  key_required: boolean;
+  /**
+   * Docs Url
+   */
+  docs_url: string;
+};
+
+/**
  * ProviderSettings
  *
  * Provider landing-page payload: provider summaries plus the selected draft model.
@@ -7178,6 +7239,10 @@ export type ProviderSummary = {
    */
   id: string;
   provider_type?: ProviderType;
+  /**
+   * The OpenAI-compatible service it was set up from; None is Custom (ADR-0086)
+   */
+  service?: ProviderService | null;
   /**
    * Model Count
    */
@@ -7786,7 +7851,7 @@ export type SettingsEnvelope = {
   /**
    * Format Version
    */
-  format_version?: 1 | 2;
+  format_version?: 1 | 2 | 3;
   /**
    * Salt
    */
@@ -11390,6 +11455,10 @@ export type ProviderWritable = {
   id: string;
   provider_type?: ProviderType;
   /**
+   * The OpenAI-compatible service it was set up from; None is Custom (ADR-0086)
+   */
+  service?: ProviderService | null;
+  /**
    * Models
    */
   models: Array<Llm>;
@@ -11468,6 +11537,10 @@ export type ProviderSummaryWritable = {
    */
   id: string;
   provider_type?: ProviderType;
+  /**
+   * The OpenAI-compatible service it was set up from; None is Custom (ADR-0086)
+   */
+  service?: ProviderService | null;
   /**
    * Model Count
    */
@@ -22226,6 +22299,35 @@ export type AppProviderModelsDiscoverResponses = {
 
 export type AppProviderModelsDiscoverResponse =
   AppProviderModelsDiscoverResponses[keyof AppProviderModelsDiscoverResponses];
+
+export type AppProviderServicesListData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/settings/app/providers/services";
+};
+
+export type AppProviderServicesListErrors = {
+  /**
+   * Not found
+   */
+  404: ErrorDetail;
+};
+
+export type AppProviderServicesListError =
+  AppProviderServicesListErrors[keyof AppProviderServicesListErrors];
+
+export type AppProviderServicesListResponses = {
+  /**
+   * Response Appproviderserviceslist
+   *
+   * Successful Response
+   */
+  200: Array<ProviderServiceInfo>;
+};
+
+export type AppProviderServicesListResponse =
+  AppProviderServicesListResponses[keyof AppProviderServicesListResponses];
 
 export type AppProviderSettingsGetData = {
   body?: never;

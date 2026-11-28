@@ -57,6 +57,7 @@ export const newProvider = (): ProviderFormValues => ({
   base_url: OPENAI_BASE_URL,
   api_key: "",
   provider_type: "openai",
+  service: null,
 });
 
 /** Saved providers echo a redacted key, which the backend reads as "keep". */
@@ -71,6 +72,7 @@ export const savedProvider = (
   base_url: provider.base_url,
   api_key: savedApiKey(provider),
   provider_type: provider.provider_type ?? "generic_openai",
+  service: provider.service ?? null,
 });
 
 export function ConnectStep({
@@ -103,6 +105,7 @@ export function ConnectStep({
     const name = getValues("name").trim();
     const baseUrl = getValues("base_url");
     setValue("provider_type", type, options);
+    if (type !== "generic_openai") setValue("service", null, options);
     if (!name || name === PROVIDER_TYPES.openai.label) {
       setValue(
         "name",

@@ -90,6 +90,7 @@ const emptyProvider = (): FormProvider => ({
   base_url: "",
   api_key: "",
   provider_type: "generic_openai",
+  service: null,
 });
 
 type ModelDraft = {
@@ -758,6 +759,13 @@ function ProvidersForm({ appSettings }: { appSettings: ProviderSettings }) {
                               value === "openai" ? OPENAI_BASE_URL : "",
                               { shouldDirty: true, shouldValidate: true },
                             );
+                            if (value !== "generic_openai") {
+                              form.setValue(
+                                `llm_providers.${index}.service`,
+                                null,
+                                { shouldDirty: true },
+                              );
+                            }
                           }}
                         >
                           <SelectTrigger

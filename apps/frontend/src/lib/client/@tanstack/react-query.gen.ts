@@ -58,6 +58,9 @@ import type {
   AppProviderModelUpdateData,
   AppProviderModelUpdateError,
   AppProviderModelUpdateResponse,
+  AppProviderServicesListData,
+  AppProviderServicesListError,
+  AppProviderServicesListResponse,
   AppProviderSettingsGetData,
   AppProviderSettingsGetError,
   AppProviderSettingsGetResponse,
@@ -9119,6 +9122,38 @@ export const appProviderModelsDiscoverMutation = (
   };
   return mutationOptions;
 };
+
+export const appProviderServicesListQueryKey = (
+  options?: Options<AppProviderServicesListData>,
+) => createQueryKey("appProviderServicesList", options);
+
+/**
+ * List the services a provider can be set up from
+ *
+ * The OpenAI-compatible service catalog, in display order, with each default base URL (ADR-0086).
+ */
+export const appProviderServicesListOptions = (
+  options?: Options<AppProviderServicesListData>,
+) =>
+  queryOptions<
+    AppProviderServicesListResponse,
+    AppProviderServicesListError,
+    AppProviderServicesListResponse,
+    ReturnType<typeof appProviderServicesListQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry
+        .get()
+        .appProviderServicesList({
+          ...options,
+          ...queryKey[0],
+          signal,
+          throwOnError: true,
+        });
+      return data;
+    },
+    queryKey: appProviderServicesListQueryKey(options),
+  });
 
 export const appProviderSettingsGetQueryKey = (
   options?: Options<AppProviderSettingsGetData>,

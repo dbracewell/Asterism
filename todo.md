@@ -152,13 +152,13 @@ Source: user request (2026-11-28). Suggested order: US-125.1 → 125.2 → 125.3
 
 [EPIC-125](docs/epics/EPIC-125-PROVIDER-SERVICES.md): Choose a provider by service
 
-- [ ] US-125.1: A service catalog, recorded on each provider
-  - [ ] An ADR records the decisions: the column, the catalog and its fields, and which services need a key.
-  - [ ] The catalog lists each service with its base URL, each checked against the service's current documentation (with the date checked).
-  - [ ] A versioned migration adds `providers.service`, with a test that upgrades a database seeded at the previous revision; existing providers read as Custom.
-  - [ ] Provider reads and writes carry `service`; an unknown service, or one on a non-`generic_openai` provider, is refused with a clear message.
-  - [ ] An endpoint returns the catalog; the settings export and import carry `service`.
-  - [ ] Tests, regenerated client, and release note (Data).
+- [x] US-125.1: A service catalog, recorded on each provider
+  - [x] An ADR records the decisions: the column, the catalog and its fields, and which services need a key.
+  - [x] The catalog lists each service with its base URL, each checked against the service's current documentation (with the date checked).
+  - [x] A versioned migration adds `providers.service`, with a test that upgrades a database seeded at the previous revision; existing providers read as Custom.
+  - [x] Provider reads and writes carry `service`; an unknown service, or one on a non-`generic_openai` provider, is refused with a clear message.
+  - [x] An endpoint returns the catalog; the settings export and import carry `service`.
+  - [x] Tests, regenerated client, and release note (Data).
 - [ ] US-125.2: The service dropdown
   - [ ] Admin Settings → Providers and the setup step use one service dropdown, grouped as OpenAI, hosted, aggregators, local servers and Custom.
   - [ ] Choosing a service fills in its name and base URL; switching services replaces only a name or URL that is empty or still the previous service's default.

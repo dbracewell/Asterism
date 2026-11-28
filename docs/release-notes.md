@@ -24,6 +24,11 @@ Unreleased into its version and date.
 
 ### Data
 
+- A migration adds `providers.service`, the OpenAI-compatible service a provider
+  was set up from ([ADR-0086](adr/0086-provider-services.md)). Existing providers
+  read as Custom. Settings files are now format version 3 and carry it; older
+  files still import and leave each provider's service as it is. A version 3
+  file doesn't open in an older Asterism.
 - A migration rebuilds the chat search index with one row per message and one
   per chat title, instead of one row holding a whole chat
   ([ADR-0085](adr/0085-per-message-search-rows.md)). Adding a message to a long

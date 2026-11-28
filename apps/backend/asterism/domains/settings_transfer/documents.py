@@ -20,12 +20,13 @@ from pydantic import BaseModel, ConfigDict, Field, JsonValue, PositiveInt, Valid
 
 from asterism.core.exceptions import BadDataException
 from asterism.domains.settings.pricing import ModelPricing
+from asterism.domains.settings.provider_services import ProviderService
 from asterism.domains.settings.provider_types import ModelCapabilitySource, ProviderType
 
 SETTINGS_FORMAT = "asterism.settings-export"
 # 2 (US-100.2) adds the group limits, budgets, usage time zone, licenses and
 # themes. Version 1 files still open: what they lack is left as it is.
-SETTINGS_FORMAT_VERSION = 2
+SETTINGS_FORMAT_VERSION = 3
 MIN_PASSPHRASE_LENGTH = 12
 MAX_PASSPHRASE_LENGTH = 1024
 MAX_SETTINGS_FILE_BYTES = 8 * 1024 * 1024
@@ -63,6 +64,8 @@ class ExportedModel(_Document):
 class ExportedProvider(_Document):
     name: str
     provider_type: ProviderType
+    # Since version 3 (ADR-0086). Absent (an older file) leaves this installation's own.
+    service: ProviderService | None = None
     base_url: str
     api_key: str = Field(repr=False)
     models: tuple[ExportedModel, ...] = ()
@@ -207,7 +210,7 @@ class SettingsEnvelope(_Document):
     """The file itself. It holds nothing readable beyond the format marker."""
 
     format: Literal["asterism.settings-export"] = SETTINGS_FORMAT
-    format_version: Literal[1, 2] = SETTINGS_FORMAT_VERSION
+    format_version: Literal[1, 2, 3] = SETTINGS_FORMAT_VERSION
     salt: str
     ciphertext: str
 

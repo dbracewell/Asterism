@@ -37,18 +37,18 @@ key even for servers that ignore it.
 
 As an administrator, I want each provider to know which service it is.
 
-- [ ] An ADR records the decisions above: the column, the catalog and its
+- [x] An ADR records the decisions above: the column, the catalog and its
       fields, and which services need a key.
-- [ ] The catalog lists each service with its base URL, each checked against
+- [x] The catalog lists each service with its base URL, each checked against
       the service's current documentation (with the date checked).
-- [ ] A versioned migration adds `providers.service`, with a test that upgrades
+- [x] A versioned migration adds `providers.service`, with a test that upgrades
       a database seeded at the previous revision; existing providers read as
       Custom.
-- [ ] Provider reads and writes carry `service`; an unknown service, or one on
+- [x] Provider reads and writes carry `service`; an unknown service, or one on
       a non-`generic_openai` provider, is refused with a clear message.
-- [ ] An endpoint returns the catalog; the settings export and import carry
+- [x] An endpoint returns the catalog; the settings export and import carry
       `service`.
-- [ ] Tests, regenerated client, and release note (Data).
+- [x] Tests, regenerated client, and release note (Data).
 
 ### US-125.2: The service dropdown
 

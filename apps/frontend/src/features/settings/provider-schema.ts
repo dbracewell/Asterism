@@ -1,4 +1,4 @@
-import { zProviderType } from "@/lib/client/zod.gen";
+import { zProviderService, zProviderType } from "@/lib/client/zod.gen";
 import { z } from "zod";
 
 export const OPENAI_BASE_URL = "https://api.openai.com/v1";
@@ -14,6 +14,8 @@ export const providerSchema = z
     base_url: z.url("Base URL must be an absolute HTTP(S) URL."),
     api_key: z.string().trim().min(1, "API key is required."),
     provider_type: zProviderType,
+    // The OpenAI-compatible service it was set up from; null is Custom (ADR-0086).
+    service: zProviderService.nullish(),
   })
   .superRefine((provider, context) => {
     if (
