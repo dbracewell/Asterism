@@ -33,21 +33,24 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useReadWriteSearchParams } from "@/hooks/use-read-write-search-params";
-import {
-  OPENAI_BASE_URL,
-  providerSchema,
-} from "@/features/settings/provider-schema";
+import { providerSchema } from "@/features/settings/provider-schema";
 import {
   SettingsPane,
   SettingsSaveBar,
 } from "@/features/settings/ui/settings-section";
 import { useSetupDraft } from "@/features/setup/setup-draft";
 import { client } from "@/lib/api";
-import { Llm, ProviderSettings, ProviderSummary } from "@/lib/client";
+import {
+  Llm,
+  ProviderServiceInfo,
+  ProviderSettings,
+  ProviderSummary,
+} from "@/lib/client";
 import {
   appProviderModelsDiscoverAndSyncMutation,
   appProviderModelsListOptions,
   appProviderModelUpdateMutation,
+  appProviderServicesListOptions,
   appProviderSettingsGetOptions,
   appProviderSettingsUpdateMutation,
 } from "@/lib/client/@tanstack/react-query.gen";
@@ -68,10 +71,21 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import {
   type Control,
+  type UseFormReturn,
   useFieldArray,
   useForm,
   useWatch,
 } from "react-hook-form";
+import {
+  applyChoice,
+  choiceOf,
+  serviceEntry,
+  type ServiceChoice,
+} from "@/features/settings/provider-services";
+import {
+  LocalServerNote,
+  ServiceSelect,
+} from "@/features/settings/ui/provider-service-select";
 import { toast } from "sonner";
 import { z } from "zod";
 
@@ -292,15 +306,106 @@ function ModelRow({
 function ProviderHeaderType({
   control,
   index,
+  catalog,
 }: {
   control: Control<Values>;
   index: number;
+  catalog: readonly ProviderServiceInfo[] | undefined;
 }) {
   const type = useWatch({
     control,
     name: `llm_providers.${index}.provider_type`,
   });
-  return <ProviderTypeLabel type={type} />;
+  const service = useWatch({ control, name: `llm_providers.${index}.service` });
+  const entry = serviceEntry(
+    choiceOf({ provider_type: type, service }),
+    catalog,
+  );
+  return (
+    <>
+      <ProviderTypeLabel type={type} />
+      {entry && (
+        <span className="text-muted-foreground text-xs">{entry.label}</span>
+      )}
+    </>
+  );
+}
+
+/** The service dropdown for one provider (ADR-0086); it sets the type, service, name and URL together. */
+function ProviderServiceField({
+  form,
+  index,
+  catalog,
+}: {
+  form: UseFormReturn<Values>;
+  index: number;
+  catalog: readonly ProviderServiceInfo[] | undefined;
+}) {
+  const path = `llm_providers.${index}` as const;
+  const type = useWatch({
+    control: form.control,
+    name: `${path}.provider_type`,
+  });
+  const service = useWatch({ control: form.control, name: `${path}.service` });
+  const current = choiceOf({ provider_type: type, service });
+  const change = (next: ServiceChoice) => {
+    const values = applyChoice(
+      {
+        name: form.getValues(`${path}.name`),
+        base_url: form.getValues(`${path}.base_url`),
+      },
+      current,
+      next,
+      catalog,
+    );
+    const options = { shouldDirty: true, shouldValidate: true };
+    form.setValue(`${path}.provider_type`, values.provider_type, options);
+    form.setValue(`${path}.service`, values.service, options);
+    form.setValue(`${path}.name`, values.name, options);
+    form.setValue(`${path}.base_url`, values.base_url, options);
+  };
+  return (
+    <Field>
+      <FieldLabel htmlFor={`provider-service-${index}`}>Service</FieldLabel>
+      <FieldContent>
+        <ServiceSelect
+          id={`provider-service-${index}`}
+          value={current}
+          onChange={change}
+          catalog={catalog}
+          ariaLabel={`Service for provider ${index + 1}`}
+        />
+      </FieldContent>
+    </Field>
+  );
+}
+
+function ProviderLocalNote({
+  control,
+  index,
+  catalog,
+}: {
+  control: Control<Values>;
+  index: number;
+  catalog: readonly ProviderServiceInfo[] | undefined;
+}) {
+  const type = useWatch({
+    control,
+    name: `llm_providers.${index}.provider_type`,
+  });
+  const service = useWatch({ control, name: `llm_providers.${index}.service` });
+  const baseUrl = useWatch({
+    control,
+    name: `llm_providers.${index}.base_url`,
+  });
+  const entry = serviceEntry(
+    choiceOf({ provider_type: type, service }),
+    catalog,
+  );
+  if (entry?.group !== "local") return null;
+  return (
+    <LocalServerNote id={`provider-local-note-${index}`} baseUrl={baseUrl} />
+  );
 }
 
 function ModelCatalog({
@@ -506,6 +611,7 @@ function ProvidersForm({ appSettings }: { appSettings: ProviderSettings }) {
   const router = useRouter();
   const [drafts, setDrafts] = useState<ModelDrafts>({});
   const [isSaving, setIsSaving] = useState(false);
+  const services = useQuery(appProviderServicesListOptions({ client }));
   const form = useForm<Values>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -722,7 +828,11 @@ function ProvidersForm({ appSettings }: { appSettings: ProviderSettings }) {
                       <FieldTitle className="text-base! font-medium!">
                         {field.name.trim() || `Provider ${index + 1}`}
                       </FieldTitle>
-                      <ProviderHeaderType control={control} index={index} />
+                      <ProviderHeaderType
+                        control={control}
+                        index={index}
+                        catalog={services.data}
+                      />
                     </div>
                     <Button
                       type="button"
@@ -739,50 +849,11 @@ function ProvidersForm({ appSettings }: { appSettings: ProviderSettings }) {
                       type="hidden"
                       {...register(`llm_providers.${index}.id`)}
                     />
-                    <Field>
-                      <FieldLabel htmlFor={`provider-type-${index}`}>
-                        Provider Type
-                      </FieldLabel>
-                      <FieldContent>
-                        <Select
-                          value={form.getValues(
-                            `llm_providers.${index}.provider_type`,
-                          )}
-                          onValueChange={(value) => {
-                            form.setValue(
-                              `llm_providers.${index}.provider_type`,
-                              value as FormProvider["provider_type"],
-                              { shouldDirty: true, shouldValidate: true },
-                            );
-                            form.setValue(
-                              `llm_providers.${index}.base_url`,
-                              value === "openai" ? OPENAI_BASE_URL : "",
-                              { shouldDirty: true, shouldValidate: true },
-                            );
-                            if (value !== "generic_openai") {
-                              form.setValue(
-                                `llm_providers.${index}.service`,
-                                null,
-                                { shouldDirty: true },
-                              );
-                            }
-                          }}
-                        >
-                          <SelectTrigger
-                            id={`provider-type-${index}`}
-                            aria-label={`Provider type for provider ${index + 1}`}
-                          >
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="openai">OpenAI</SelectItem>
-                            <SelectItem value="generic_openai">
-                              Generic OpenAI
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </FieldContent>
-                    </Field>
+                    <ProviderServiceField
+                      form={form}
+                      index={index}
+                      catalog={services.data}
+                    />
                     <Field>
                       <FieldLabel htmlFor={`provider-name-${index}`}>
                         Provider Name
@@ -808,6 +879,11 @@ function ProvidersForm({ appSettings }: { appSettings: ProviderSettings }) {
                           {...register(`llm_providers.${index}.base_url`)}
                         />
                         <FieldError errors={[errors?.base_url]} />
+                        <ProviderLocalNote
+                          control={control}
+                          index={index}
+                          catalog={services.data}
+                        />
                       </FieldContent>
                     </Field>
                     <Field>

@@ -10,14 +10,16 @@ estimated.
 Open **Admin Settings** › **Providers**: select your name, then **Settings**, then
 the **Admin Settings** tab.
 
-![Admin Settings, Providers: the Demo models provider with its type, name, base URL and key, and its models listed with context window, input and output prices, vision input, tool calls and Set draft](../images/admin-providers.png)
+![Admin Settings, Providers: the Demo models provider with its service, name, base URL and key, and its models listed with context window, input and output prices, vision input, tool calls and Set draft](../images/admin-providers.png)
 
 ## Add a provider
 
 1. Select **Add provider**.
-2. Choose the **Provider Type** (**OpenAI**, or **Generic OpenAI** for any
-   OpenAI-compatible server), and fill in the **Provider Name**, **Base URL** and
-   **API Key**.
+2. Choose the **Service**: **OpenAI**; a hosted API, aggregator or local server,
+   which fills in its **Provider Name** and **Base URL**; or **Custom
+   OpenAI-compatible URL** for any other server. Check the name and URL, and
+   fill in the **API Key**. Changing the service later keeps a name or URL you
+   typed yourself.
 3. Select **Save** at the bottom of the page.
 
 Edits on this page only apply when you select **Save**.

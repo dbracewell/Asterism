@@ -30,6 +30,11 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
 vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
+  appProviderServicesListOptions: () => ({
+    queryKey: ["appProviderServicesList"],
+    queryFn: async () =>
+      (await import("@/test/provider-services")).PROVIDER_SERVICES,
+  }),
   appProviderSettingsGetOptions: () => ({
     queryKey: ["appProviderSettingsGet"],
     queryFn: () => mocks.settings(),
@@ -126,14 +131,23 @@ const readyButton = () =>
 
 const steps = () => screen.getByRole("list", { name: "First-run setup" });
 
+const CUSTOM = "Custom OpenAI-compatible URL";
+
+async function chooseService(
+  user: ReturnType<typeof userEvent.setup>,
+  form: HTMLElement,
+  name: string,
+) {
+  await user.click(within(form).getByRole("combobox", { name: "Service" }));
+  await user.click(await screen.findByRole("option", { name }));
+}
+
 async function fillGenericProvider(baseUrl = "http://localhost:11434/v1") {
   const user = userEvent.setup();
   const form = await screen.findByRole("form", {
     name: "Add a model provider",
   });
-  await user.click(
-    within(form).getByRole("radio", { name: "OpenAI-compatible" }),
-  );
+  await chooseService(user, form, CUSTOM);
   await user.type(within(form).getByLabelText("Provider name"), "Local");
   await user.type(within(form).getByLabelText("Base URL"), baseUrl);
   await user.type(within(form).getByLabelText("API key"), "local-key");
@@ -171,13 +185,57 @@ describe("first-run provider step", () => {
     );
   });
 
+  it("fills in a service's name and URL and keeps what was typed (ADR-0086)", async () => {
+    const user = userEvent.setup();
+    renderStep();
+    const form = await screen.findByRole("form", {
+      name: "Add a model provider",
+    });
+    await chooseService(user, form, "Ollama");
+    expect(within(form).getByLabelText("Provider name")).toHaveValue("Ollama");
+    expect(within(form).getByLabelText("Base URL")).toHaveValue(
+      "http://localhost:11434/v1",
+    );
+    expect(form.querySelector("#setup-provider-local-note")).toHaveTextContent(
+      "http://host.docker.internal:11434/v1",
+    );
+
+    // An edited name stays; the untouched URL follows the new service.
+    await user.clear(within(form).getByLabelText("Provider name"));
+    await user.type(within(form).getByLabelText("Provider name"), "Shared box");
+    await chooseService(user, form, "OpenRouter");
+    expect(within(form).getByLabelText("Provider name")).toHaveValue(
+      "Shared box",
+    );
+    expect(within(form).getByLabelText("Base URL")).toHaveValue(
+      "https://openrouter.ai/api/v1",
+    );
+    expect(within(form).queryByText(/host.docker.internal/)).toBeNull();
+
+    await user.type(within(form).getByLabelText("API key"), "sk-or");
+    await user.click(
+      within(form).getByRole("button", { name: "Connect and discover models" }),
+    );
+    await waitFor(() => expect(mocks.saveProviders).toHaveBeenCalled());
+    expect(mocks.saveProviders.mock.calls[0][0].body.llm_providers).toEqual([
+      expect.objectContaining({
+        name: "Shared box",
+        provider_type: "generic_openai",
+        service: "openrouter",
+        base_url: "https://openrouter.ai/api/v1",
+      }),
+    ]);
+  });
+
   it("fixes the OpenAI base URL and validates like provider settings", async () => {
     const user = userEvent.setup();
     renderStep();
     const form = await screen.findByRole("form", {
       name: "Add a model provider",
     });
-    expect(within(form).getByRole("radio", { name: "OpenAI" })).toBeChecked();
+    expect(
+      within(form).getByRole("combobox", { name: "Service" }),
+    ).toHaveTextContent("OpenAI");
     expect(within(form).getByLabelText("Base URL")).toHaveValue(
       OPENAI_BASE_URL,
     );
@@ -186,9 +244,7 @@ describe("first-run provider step", () => {
       within(form).getByRole("button", { name: "Connect and discover models" }),
     );
     expect(await within(form).findByText("API key is required.")).toBeVisible();
-    await user.click(
-      within(form).getByRole("radio", { name: "OpenAI-compatible" }),
-    );
+    await chooseService(user, form, CUSTOM);
     expect(within(form).getByLabelText("Provider name")).toHaveValue("");
     expect(within(form).getByLabelText("Base URL")).toHaveValue("");
     await user.type(within(form).getByLabelText("Base URL"), "not a url");
@@ -541,8 +597,8 @@ describe("first-run provider step", () => {
     });
     expect(within(form).getByLabelText("Provider name")).toHaveValue("Local");
     expect(
-      within(form).getByRole("radio", { name: "OpenAI-compatible" }),
-    ).toBeChecked();
+      within(form).getByRole("combobox", { name: "Service" }),
+    ).toHaveTextContent(CUSTOM);
     await userEvent.click(
       within(form).getByRole("button", { name: /Connect/ }),
     );

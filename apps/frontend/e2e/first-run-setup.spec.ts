@@ -146,7 +146,10 @@ test("the administrator connects a provider right after creating the account", a
 
   // With still no active models, the step remains available.
   await page.goto("/setup");
-  await connect.getByRole("radio", { name: "OpenAI-compatible" }).click();
+  await connect.getByRole("combobox", { name: "Service" }).click();
+  await page
+    .getByRole("option", { name: "Custom OpenAI-compatible URL" })
+    .click();
   await connect.getByLabel("Provider name").fill("First-run provider");
   await connect.getByLabel("Base URL").fill("http://127.0.0.1:1/v1");
   await connect.getByLabel("API key").fill("synthetic-provider-key");
