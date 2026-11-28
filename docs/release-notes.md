@@ -24,6 +24,10 @@ Unreleased into its version and date.
 
 ### Behavior
 
+- Replies stream only their new text, so a long reply sends about its own
+  length instead of resending everything written so far with each word. A tab
+  opened while a reply is being written shows the text so far straight away
+  ([ADR-0084](adr/0084-incremental-streaming.md)).
 - Uploading a large file, publishing a course or generating an image no longer
   pauses the server for other people: hashing, writing and cleaning images run
   in the background. A file that is already processed isn't re-read in full

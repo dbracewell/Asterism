@@ -137,12 +137,12 @@ Source: repository review (2026-11-26), work deferred from EPIC-117. Suggested o
 - [x] US-120.1: Decide the streaming format
   - [x] An ADR covers the format: appended text for `content` and `thinking`, numbered in order; a snapshot of the text so far when a tab connects mid-reply or misses a number; and the final message as the source of truth.
   - [x] The ADR covers exercise runs, whose text is never streamed (ADR-0043).
-- [ ] US-120.2: The server sends only new text
-  - [ ] Stream events carry only the text added since the last event, with a sequence number.
-  - [ ] A tab that connects mid-reply first gets the text so far.
-  - [ ] Cancelling or failing a reply still saves the full text written so far.
-  - [ ] Exercise runs keep hiding their text.
-  - [ ] Tests (including bytes sent for a long reply) and release note.
+- [x] US-120.2: The server sends only new text
+  - [x] Stream events carry only the text added since the last event, with a sequence number.
+  - [x] A tab that connects mid-reply first gets the text so far.
+  - [x] Cancelling or failing a reply still saves the full text written so far.
+  - [x] Exercise runs keep hiding their text.
+  - [x] Tests (including bytes sent for a long reply) and release note.
 - [ ] US-120.3: The browser builds the reply from new text
   - [ ] The chat page appends new text in order and asks for a snapshot when a number is missing.
   - [ ] Every open tab of the same chat shows the same text.

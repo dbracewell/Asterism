@@ -64,15 +64,16 @@ streams are separate from the parent's.
   packet is `append` with only the rest. Otherwise it is `replace` with the
   whole text. That covers a shrinking exercise text and any future change that
   isn't a pure extension. An event that adds nothing sends no packet.
-- A step that ends (the `tool_call` packet carrying the saved messages) closes
-  its stream. The next step that streams text starts a new stream ID. So do
+- A step that ends (the step's `complete` packet, carrying the saved messages)
+  closes its stream. The next step that streams text starts a new stream ID. So do
   each comparison column and a regeneration.
 - Each sub-agent stream is keyed by its delegation's `execution_id`, with its
-  own numbers, and closes with that child's `tool_call` or `complete` event.
+  own numbers, and closes with that child's `complete` or `error` event.
 - **Joining.** When a controller subscribes while a stream is open, the first
-  packets in its queue are a `replace` packet for each open stream (the main
-  reply and any running sub-agents), numbered with that stream's current
-  number. They are added as part of subscribing, so no packet can come between.
+  packets in its queue are a `replace` packet for each open stream that has
+  sent text (the main reply and any running sub-agents), numbered with that
+  stream's current number. They are queued right after subscribing, with
+  nothing awaited in between, so no packet can come before them.
 - **Catching up.** A new browser command, `resync`, asks for the same `replace`
   packets, sent to that tab only. It is answered only while a stream is open.
 
@@ -89,8 +90,8 @@ streams are separate from the parent's.
   dropped. The browser stops applying that stream's appends and sends one
   `resync`. The next `replace` repairs the stream; until it arrives, the text on
   screen stays as it was. If no `replace` comes (the stream closed meanwhile),
-  the `tool_call` or `complete` packet brings the saved text.
-- As today, the saved messages in `tool_call` and `complete` replace the
+  the step's `complete` packet brings the saved text.
+- As today, the saved messages in each step's `complete` packet replace the
   streamed text, so the saved reply is always what remains on screen.
 
 ### What stays the same

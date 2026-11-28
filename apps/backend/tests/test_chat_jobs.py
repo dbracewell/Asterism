@@ -130,6 +130,7 @@ async def test_controller_disconnect_does_not_cancel_the_chat_job():
         run_agent=run_agent,
         resume_pending_turn=run_agent,
         generate_chat_title=lambda: asyncio.sleep(0),
+        stream_snapshots=lambda: [],
         is_active=False,
     )
     job = manager.get_or_create(chat_id, orchestrator, user_id="user-a")
@@ -181,6 +182,7 @@ async def test_controller_closes_the_socket_when_its_token_expires():
         run_agent=run_agent,
         resume_pending_turn=run_agent,
         generate_chat_title=lambda: asyncio.sleep(0),
+        stream_snapshots=lambda: [],
         is_active=False,
     )
     job = manager.get_or_create(chat_id, orchestrator, user_id="user-a")

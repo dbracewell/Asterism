@@ -14,7 +14,7 @@ from asterism.core.exceptions import BadDataException
 from asterism.domains.agent.agent import Agent
 from asterism.domains.agent.approval import InteractiveApprovalPolicy
 from asterism.domains.agent.context_manifest import ContextFile, ContextManifest
-from asterism.domains.agent.schemas import AgentEvent, AgentEventType
+from asterism.domains.agent.schemas import AgentEvent, AgentEventType, SubAgentEventEnvelope
 from asterism.domains.chat.compaction import (
     AppliedCompaction,
     ContextTooLarge,
@@ -41,6 +41,7 @@ from asterism.domains.chat.schemas import (
     NewMessageRequest,
     UpdateMessageRequest,
 )
+from asterism.domains.chat.text_streams import TextStreams
 from asterism.domains.chat.title_model import resolve_title_model
 from asterism.domains.files.produced import file_reference_token
 from asterism.domains.llm.metering import with_source
@@ -84,6 +85,9 @@ class ChatOrchestrator:
         self._step_parent_id: uuid.UUID | None = None
         self._streaming_content: str = ""
         self._streaming_thinking: str = ""
+        # What each open text stream has sent, for increments and for tabs
+        # that join or fall behind (ADR-0084).
+        self._text_streams = TextStreams()
         self._execution: MessageExecution | None = None
         self._delegations = DelegationCollector()
         # US-54.3: what the current run was given, shared by its steps.
@@ -117,11 +121,31 @@ class ChatOrchestrator:
     def is_active(self) -> bool:
         return self.queue.qsize() > 0 or self.is_processing_messages
 
+    async def _emit_sub_agent(self, envelope: SubAgentEventEnvelope) -> None:
+        """A sub-agent's event; its text deltas become increments of the child's stream (ADR-0084)."""
+        outer = {"type": "sub_agent", **envelope.model_dump(mode="json", exclude={"event"})}
+        child = envelope.event
+        if child.type is AgentEventType.DELTA:
+            packet = self._text_streams.child_delta(outer, child.content, child.thinking)
+            if packet is not None:
+                await self._emit(packet)
+            return
+        await self._emit({**outer, "event": child.model_dump(mode="json")})
+        if child.type in (AgentEventType.COMPLETE, AgentEventType.ERROR):
+            self._text_streams.end_child(envelope.execution_id)
+
     async def _emit(self, packet: dict) -> None:
         """Queue a client packet; comparison runs are tagged with their column."""
         if self._comparison is not None:
             packet = {**packet, "comparison": self._comparison}
         await self.queue.put(packet)
+
+    def stream_snapshots(self) -> list[dict]:
+        """``replace`` packets for the open text streams, tagged like the run's other packets (ADR-0084)."""
+        packets = self._text_streams.snapshots()
+        if self._comparison is not None:
+            packets = [{**packet, "comparison": self._comparison} for packet in packets]
+        return packets
 
     def _column_of_current_turn(self) -> dict[str, str] | None:
         column = next((message for message in reversed(self.chat.messages) if message.role == "user"), None)
@@ -774,6 +798,7 @@ class ChatOrchestrator:
             self._step_parent_id = parent_message.id
             self._streaming_content = ""
             self._streaming_thinking = ""
+            self._text_streams = TextStreams()
             self._delegations = DelegationCollector()
             self._context = None
             self._fork_step = None
@@ -857,6 +882,7 @@ class ChatOrchestrator:
                         # A later step streams from scratch; never keep this step's text as partial output.
                         self._streaming_content = ""
                         self._streaming_thinking = ""
+                        self._text_streams.end_main()
 
                         await self._emit(
                             {
@@ -870,13 +896,7 @@ class ChatOrchestrator:
                     case AgentEvent(type=AgentEventType.SUB_AGENT):
                         if event.sub_agent:
                             self._delegations.observe(event.sub_agent)
-                            await self._emit(
-                                {
-                                    "type": "sub_agent",
-                                    **event.sub_agent.model_dump(mode="json", exclude={"event"}),
-                                    "event": (event.sub_agent.event.model_dump(mode="json")),
-                                },
-                            )
+                            await self._emit_sub_agent(event.sub_agent)
 
                     case AgentEvent(type=AgentEventType.TOOL_PROGRESS):
                         if event.tool_progress:
@@ -893,10 +913,11 @@ class ChatOrchestrator:
                     case AgentEvent(type=AgentEventType.DELTA):
                         self._streaming_content = event.content
                         self._streaming_thinking = event.thinking
-                        if is_exercise_run(self._execution):
-                            # The exercise record is never streamed (ADR-0043).
-                            event = event.model_copy(update={"content": streamed_text(event.content)})
-                        await self._emit(event.model_dump())
+                        # The exercise record is never streamed (ADR-0043).
+                        shown = streamed_text(event.content) if is_exercise_run(self._execution) else event.content
+                        packet = self._text_streams.main_delta(shown, event.thinking)
+                        if packet is not None:
+                            await self._emit(packet)
 
                     case _:
                         await self._emit(event.model_dump())
@@ -911,6 +932,7 @@ class ChatOrchestrator:
             self.logger.exception("Error processing messages: %s", e)
             await self.fail_active_generation(str(e))
         finally:
+            self._text_streams = TextStreams()
             self._active_parent_id = None
             self._step_parent_id = None
             self._comparison = None

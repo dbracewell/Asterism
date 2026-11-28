@@ -231,9 +231,14 @@ async def test_the_stream_hides_the_record_and_history_marks_the_answer(project_
     await orchestrator.resume_pending_turn()
 
     packets = drain(orchestrator)
-    deltas = [packet["content"] for packet in packets if packet["type"] == "delta"]
-    assert len(deltas) == 3
-    assert all(MARKER[:3] not in delta and "correction" not in delta for delta in deltas)
+    # Rebuild what the browser shows after each packet (ADR-0084): at no point
+    # does it hold the record, or even the start of its marker.
+    shown, seen = "", []
+    for packet in (packet for packet in packets if packet["type"] == "delta"):
+        shown = shown + packet["content"] if packet["mode"] == "append" else packet["content"]
+        seen.append(shown)
+    assert seen and seen[-1] == ANSWER
+    assert all(MARKER[:3] not in text and "correction" not in text for text in seen)
     complete = next(packet for packet in packets if packet["type"] == "complete")
     answer = complete["last_messages"][-1]
     assert answer["content"] == ANSWER and answer["exercise"]["revealed"] is False

@@ -67,6 +67,7 @@ def runtime(chat_id, gate: asyncio.Event, packets: list[dict]):
     return SimpleNamespace(
         resume_pending_turn=resume_pending_turn,
         generate_chat_title=lambda: asyncio.sleep(0),
+        stream_snapshots=lambda: [],
         is_active=False,
         pending_approvals={},
     )

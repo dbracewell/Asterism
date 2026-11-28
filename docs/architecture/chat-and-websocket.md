@@ -84,6 +84,13 @@ calls and their results, progress from sub-agents. The final `complete` packet
 carries the stored messages, so the browser replaces its streamed copy with the
 saved version.
 
+Text streams as numbered increments ([ADR-0084](../adr/0084-incremental-streaming.md)).
+The agent hands the orchestrator the whole text so far; the orchestrator keeps
+what it last sent on each stream (each step of the reply, and each running
+sub-agent) and sends only the new text as an `append`, or the whole text as a
+`replace` when the text didn't just grow, such as an exercise run trimming its
+held-back marker.
+
 ### Several tabs, closed tabs and reconnecting
 
 Each chat's stream keeps a queue of up to 256 packets for every attached
@@ -94,6 +101,11 @@ and replays them to the next tab that connects.
 Closing a tab stops that controller's tasks and nothing else; the reply keeps
 running. Reopening the chat attaches a new controller, which receives the
 buffered packets and the rest of the stream.
+
+A tab that attaches while text is streaming first gets a `replace` packet with
+the text so far for each open stream. A tab that finds a gap in a stream's
+numbers (a packet dropped from its queue) sends `resync` and gets the same
+packets.
 
 ### Cancelling, regenerating and failing
 
@@ -241,13 +253,14 @@ All paths are under `/api/py`.
 | `cancel`        |                       | Stop the running work                               |
 | `compact`       |                       | Compact the chat now; refused while work is running |
 | `ping`          |                       | Ask for a `pong`                                    |
+| `resync`        |                       | Ask for the open streams' text so far (`replace`)   |
 
 ### Packets from the server
 
 | Packet                    | When                                                                                                                                                             |
 | ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `start`                   | A run begins; carries the recorded execution details when available                                                                                              |
-| `delta`                   | A piece of answer text or reasoning                                                                                                                              |
+| `delta`                   | New answer text or reasoning: `stream`, `seq`, `mode` (`append` or `replace`), `content`, `thinking`                                                             |
 | `tool_call`               | The model asked for tools                                                                                                                                        |
 | `tool_permission_request` | A tool call waits for approval: its ID, name and arguments                                                                                                       |
 | `tool_update`             | An approval was answered; the prompt can close                                                                                                                   |

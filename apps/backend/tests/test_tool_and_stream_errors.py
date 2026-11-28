@@ -141,7 +141,13 @@ def controller(commands: list[dict], **runtime) -> tuple[ChatController, ChatJob
     manager = ChatJobManager()
     job = manager.get_or_create(
         uuid.uuid4(),
-        SimpleNamespace(pending_approvals={}, generate_chat_title=AsyncMock(), is_active=False, **runtime),
+        SimpleNamespace(
+            pending_approvals={},
+            generate_chat_title=AsyncMock(),
+            is_active=False,
+            stream_snapshots=lambda: [],
+            **runtime,
+        ),
         user_id="a",
     )
     built = ChatController(job.chat_id, Socket(commands), job, manager.admit_controller("a"))  # type: ignore[arg-type]

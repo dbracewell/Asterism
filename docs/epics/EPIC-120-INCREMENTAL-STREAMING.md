@@ -30,12 +30,12 @@ built.
 
 As a user, I want a long reply to cost no more to stream than its own length.
 
-- [ ] Stream events carry only the text added since the last event, with a
+- [x] Stream events carry only the text added since the last event, with a
       sequence number.
-- [ ] A tab that connects mid-reply first gets the text so far.
-- [ ] Cancelling or failing a reply still saves the full text written so far.
-- [ ] Exercise runs keep hiding their text.
-- [ ] Tests (including bytes sent for a long reply) and release note.
+- [x] A tab that connects mid-reply first gets the text so far.
+- [x] Cancelling or failing a reply still saves the full text written so far.
+- [x] Exercise runs keep hiding their text.
+- [x] Tests (including bytes sent for a long reply) and release note.
 
 ### US-120.3: The browser builds the reply from new text
 
