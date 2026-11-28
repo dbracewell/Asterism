@@ -24,10 +24,10 @@ jsdom 31 also needs a newer Node 22 (`^22.22.2`), and CI runs Node 22.13.0 from
 As a maintainer, I want CI and local development on a Node 22 release that
 current test libraries support.
 
-- [ ] `.node-version` moves to the newest Node 22 release at least a week old,
+- [x] `.node-version` moves to the newest Node 22 release at least a week old,
       and the Dockerfile's Node 22 base image is refreshed to match.
 - [ ] CI, the image check and the E2E suite pass on it.
-- [ ] Release note (Image), and the development guide names the version.
+- [x] Release note (Image), and the development guide names the version.
 
 ### US-124.2: Vitest 5, jsdom 31 and jest-dom 8
 

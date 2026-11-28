@@ -6,7 +6,7 @@ for how the system is built, see the [architecture guides](architecture/README.m
 
 ## Prerequisites
 
-- **Node.js** 22.13 or later (CI uses the version in `.node-version`) and **pnpm** 11 or later
+- **Node.js** 22.23 or later (CI uses the version in `.node-version`, 22.23.5) and **pnpm** 11 or later
 - **Python** 3.13 or later, linked against **SQLite 3.45** or later (the backend uses
   SQLite's binary JSON functions), and **uv**
 - **mprocs** 0.9.6 or later, to run both apps side by side (`brew install mprocs`,
