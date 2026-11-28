@@ -139,3 +139,18 @@ Source: repository review (2026-11-26), work deferred from EPIC-117. Suggested o
 [EPIC-122](docs/epics/EPIC-122-PER-MESSAGE-SEARCH-ROWS.md) (US-122.1) is complete and archived in the [2026-11-26 checklist](docs/archive/todo-completed-2026-11-26.md).
 
 [EPIC-123](docs/epics/EPIC-123-SPLIT-LARGE-MODULES.md) (US-123.1 through US-123.3) is complete and archived in the [2026-11-26 checklist](docs/archive/todo-completed-2026-11-26.md).
+
+## Test tooling (proposed 2026-11-28)
+
+Source: Dependabot review (2026-11-28). Work one story at a time.
+
+[EPIC-124](docs/epics/EPIC-124-VITEST-5.md): Vitest 5 and its test libraries
+
+- [ ] US-124.1: Node 22.22 for development and CI
+  - [ ] `.node-version` moves to the newest Node 22 release at least a week old, and the Dockerfile's Node 22 base image is refreshed to match.
+  - [ ] CI, the image check and the E2E suite pass on it.
+  - [ ] Release note (Image), and the development guide names the version.
+- [ ] US-124.2: Vitest 5, jsdom 31 and jest-dom 8
+  - [ ] Vitest 5, jsdom 31, jest-dom 8 and `@testing-library/dom` are updated together, following Vitest 5's migration guide for the config and setup file.
+  - [ ] Every unit test passes unchanged, or with a change the migration guide calls for.
+  - [ ] Dependabot pull requests #41 and #190 are closed in favor of this one.
