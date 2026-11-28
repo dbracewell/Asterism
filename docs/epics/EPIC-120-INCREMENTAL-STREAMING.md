@@ -21,10 +21,10 @@ once.
 As a maintainer, I want the new chat stream format written down before it is
 built.
 
-- [ ] An ADR covers the format: appended text for `content` and `thinking`,
+- [x] An ADR covers the format: appended text for `content` and `thinking`,
       numbered in order; a snapshot of the text so far when a tab connects
       mid-reply or misses a number; and the final message as the source of truth.
-- [ ] The ADR covers exercise runs, whose text is never streamed (ADR-0043).
+- [x] The ADR covers exercise runs, whose text is never streamed (ADR-0043).
 
 ### US-120.2: The server sends only new text
 
