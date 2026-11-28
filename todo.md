@@ -168,10 +168,10 @@ Source: repository review (2026-11-26), work deferred from EPIC-117. Suggested o
   - [x] Unused cache comments are removed, and the database conflicts it doesn't handle return a clear error.
   - [x] All tests pass unchanged; the architecture docs name the new modules.
 - [x] US-123.2: Chat orchestrator and router
-  - [ ] `chat/orchestrator.py` is split into turn flow, stream handling and saving the reply.
-  - [ ] `chat/router.py` is split by resource; the OpenAPI schema is unchanged.
-  - [ ] All tests pass unchanged; the architecture docs name the new modules.
-- [ ] US-123.3: Exports, agent and files
+  - [x] `chat/orchestrator.py` is split into turn flow, stream handling and saving the reply.
+  - [x] `chat/router.py` is split by resource; the OpenAPI schema is unchanged.
+  - [x] All tests pass unchanged; the architecture docs name the new modules.
+- [x] US-123.3: Exports, agent and files
   - [ ] `canvas/exports.py` is split by export format.
   - [ ] `agent/agent.py` separates the loop from tool dispatch.
   - [ ] `files/service.py` separates storage, processing and listing.

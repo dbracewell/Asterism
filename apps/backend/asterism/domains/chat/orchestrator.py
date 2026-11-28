@@ -3,18 +3,16 @@ from __future__ import annotations
 import asyncio
 import json
 import uuid
-from logging import Logger
 from typing import TYPE_CHECKING
 
 import asterism.domains.chat.service as chat_service
 from asterism.common.collection_utils import index_of
-from asterism.common.log import get_logger
 from asterism.core.events import ChatUpdateEvent, Event, EventType, event_bus
 from asterism.core.exceptions import BadDataException
 from asterism.domains.agent.agent import Agent
 from asterism.domains.agent.approval import InteractiveApprovalPolicy
-from asterism.domains.agent.context_manifest import ContextFile, ContextManifest
-from asterism.domains.agent.schemas import AgentEvent, AgentEventType, SubAgentEventEnvelope
+from asterism.domains.agent.context_manifest import ContextFile
+from asterism.domains.agent.schemas import AgentEvent, AgentEventType
 from asterism.domains.chat.compaction import (
     AppliedCompaction,
     ContextTooLarge,
@@ -24,21 +22,18 @@ from asterism.domains.chat.compaction import (
     read_compaction_settings,
 )
 from asterism.domains.chat.compaction_models import CompactionTrigger
-from asterism.domains.chat.context_manifest import file_context, step_context, turn_context
+from asterism.domains.chat.context_manifest import file_context, turn_context
 from asterism.domains.chat.delegations import DelegationCollector
 from asterism.domains.chat.exercises import HISTORY_NOTE, is_exercise_run, streamed_text
-from asterism.domains.chat.forks import replayed_step, write_fork_step
-from asterism.domains.chat.message_queue import MessageQueue, get_message_queue
+from asterism.domains.chat.forks import replayed_step
 from asterism.domains.chat.prompts import create_title_generation_prompt
+from asterism.domains.chat.reply_recording import ReplyRecorder
 from asterism.domains.chat.schemas import (
-    Chat,
     ChatCompactionView,
     ChatContextUsage,
     ChatUpdateRequest,
     Message,
-    MessageExecution,
     MessageStatus,
-    NewMessageRequest,
     UpdateMessageRequest,
 )
 from asterism.domains.chat.text_streams import TextStreams
@@ -50,8 +45,6 @@ from asterism.domains.llm.schemas import (
     ImageUrlContentPart,
     LLMMessage,
     TextContentPart,
-    ToolCall,
-    ToolResult,
 )
 from asterism.domains.llm.selection import SelectedModel, resolve_usable_model, visible_model_name
 from asterism.domains.llm.token_counting import estimate_text_tokens
@@ -64,38 +57,22 @@ from asterism.domains.tools.registry import tool_registry
 from asterism.domains.usage.schemas import UsageSource
 
 if TYPE_CHECKING:
-    from asterism.domains.agent.user_response_queue import UserResponseQueue
+    pass
 
 
-class ChatOrchestrator:
-    """Manages the state of a single chat session, including the agent, message queue, and WebSocket connection."""
+class ChatOrchestrator(ReplyRecorder):
+    """Runs a chat's turns: picks the pending request, assembles context, runs the agent and routes its events.
+
+    Streaming to tabs is :class:`TurnStream` and saving the reply is
+    :class:`ReplyRecorder`; this class is the turn flow between them.
+    """
 
     def __init__(
         self,
         agent: Agent,
     ):
-        self.chat: Chat = agent.session
-        self.agent: Agent = agent
-        self.logger: Logger = get_logger("ChatSession")
+        super().__init__(agent)
         self.is_processing_messages: bool = False
-        self.pending_approvals: dict[str, asyncio.Future] = {}
-        self._active_parent_id: uuid.UUID | None = None
-        # The message the next step of the active turn answers: the request,
-        # then each recorded tool step in turn.
-        self._step_parent_id: uuid.UUID | None = None
-        self._streaming_content: str = ""
-        self._streaming_thinking: str = ""
-        # What each open text stream has sent, for increments and for tabs
-        # that join or fall behind (ADR-0084).
-        self._text_streams = TextStreams()
-        self._execution: MessageExecution | None = None
-        self._delegations = DelegationCollector()
-        # US-54.3: what the current run was given, shared by its steps.
-        self._context: ContextManifest | None = None
-        # US-54.4: identifies the comparison column the current run answers.
-        self._comparison: dict[str, str] | None = None
-        # US-54.5: the pending fork step being replayed, until it is recorded.
-        self._fork_step: Message | None = None
         # ADR-0060: the summary that replaced the start of the branch, if any.
         self._compaction: AppliedCompaction | None = None
 
@@ -106,52 +83,8 @@ class ChatOrchestrator:
         )
 
     @property
-    def queue(self) -> MessageQueue:
-        return get_message_queue(self.chat.info.id)
-
-    @property
-    def chat_id(self) -> uuid.UUID:
-        return self.chat.info.id
-
-    @property
-    def user_id(self) -> str:
-        return self.chat.info.user_id
-
-    @property
     def is_active(self) -> bool:
         return self.queue.qsize() > 0 or self.is_processing_messages
-
-    async def _emit_sub_agent(self, envelope: SubAgentEventEnvelope) -> None:
-        """A sub-agent's event; its text deltas become increments of the child's stream (ADR-0084)."""
-        outer = {"type": "sub_agent", **envelope.model_dump(mode="json", exclude={"event"})}
-        child = envelope.event
-        if child.type is AgentEventType.DELTA:
-            packet = self._text_streams.child_delta(outer, child.content, child.thinking)
-            if packet is not None:
-                await self._emit(packet)
-            return
-        await self._emit({**outer, "event": child.model_dump(mode="json")})
-        if child.type in (AgentEventType.COMPLETE, AgentEventType.ERROR):
-            self._text_streams.end_child(envelope.execution_id)
-
-    async def _emit(self, packet: dict) -> None:
-        """Queue a client packet; comparison runs are tagged with their column."""
-        if self._comparison is not None:
-            packet = {**packet, "comparison": self._comparison}
-        await self.queue.put(packet)
-
-    def stream_snapshots(self) -> list[dict]:
-        """``replace`` packets for the open text streams, tagged like the run's other packets (ADR-0084)."""
-        packets = self._text_streams.snapshots()
-        if self._comparison is not None:
-            packets = [{**packet, "comparison": self._comparison} for packet in packets]
-        return packets
-
-    def _column_of_current_turn(self) -> dict[str, str] | None:
-        column = next((message for message in reversed(self.chat.messages) if message.role == "user"), None)
-        if column is None or column.comparison_id is None:
-            return None
-        return {"id": str(column.comparison_id), "column_id": str(column.id)}
 
     async def reload_chat(self) -> None:
         self.chat = await chat_service.get_one(chat_id=self.chat_id, user_id=self.user_id)
@@ -188,164 +121,6 @@ class ChatOrchestrator:
             raise
         finally:
             await self.reload_chat()
-
-    async def cancel_active_generation(self) -> None:
-        """Finalize the active user turn so reconnecting never re-runs it."""
-        parent_id = self._active_parent_id
-        if parent_id is None:
-            return
-
-        if self._fork_step is not None:
-            await self._finish_fork_step(MessageStatus.CANCELLED)
-            self._active_parent_id = None
-            return
-
-        parent_index = index_of(self.chat.messages, lambda message: message.id == parent_id)
-
-        # Retain useful streamed output and delegation work rather than
-        # silently discarding it.
-        delegations = self._delegations.drain(unfinished="cancelled")
-        if self._streaming_content or self._streaming_thinking or delegations:
-            partial = await chat_service.add_message(
-                user_id=self.user_id,
-                chat_id=self.chat_id,
-                message=NewMessageRequest(
-                    role="assistant",
-                    content=self._streaming_content,
-                    thinking=self._streaming_thinking,
-                    status=MessageStatus.CANCELLED,
-                    delegations=delegations or None,
-                    context=self._context,
-                    parent_message_id=self._step_parent_id or parent_id,
-                    execution=self._execution,
-                    model_id=self.agent.model_id,  # type: ignore
-                ),
-            )
-            self.chat.messages.append(partial)
-
-        # add_message marks its parent complete when it attaches a child, so
-        # write the terminal user-visible cancellation state last.
-        parent = await chat_service.write_message_update(
-            user_id=self.user_id,
-            chat_id=self.chat_id,
-            message_id=parent_id,
-            payload=UpdateMessageRequest(status=MessageStatus.CANCELLED),
-        )
-        if parent_index >= 0:
-            self.chat.messages[parent_index] = parent
-
-        await self._emit(
-            {
-                "type": AgentEventType.COMPLETE.value,
-                "last_messages": [message.model_dump(mode="json") for message in self.chat.messages[parent_index:]],
-            },
-        )
-        self._active_parent_id = None
-
-    async def fail_active_generation(self, error: str, error_code: str | None = None) -> None:
-        """Finalize a turn that ended in an error so reconnecting never re-runs it (US-77.2).
-
-        Like cancellation, the streamed output so far is kept, here on a failed
-        step that carries the error, and the request is marked failed. The
-        error packet is sent even if recording fails.
-        """
-        parent_id = self._active_parent_id
-        self._active_parent_id = None
-        try:
-            if parent_id is None:
-                pass
-            elif self._fork_step is not None:
-                await self._finish_fork_step(MessageStatus.FAILED, error=error)
-            else:
-                await self._record_failed_turn(parent_id, error)
-        except Exception:
-            self.logger.exception("Could not record the failed turn for chat %s", self.chat_id)
-        await self._emit({"type": AgentEventType.ERROR.value, "content": error, "error_code": error_code})
-
-    async def _record_failed_turn(self, parent_id: uuid.UUID, error: str) -> None:
-        request_index = index_of(self.chat.messages, lambda message: message.id == parent_id)
-        failed = await chat_service.add_message(
-            user_id=self.user_id,
-            chat_id=self.chat_id,
-            message=NewMessageRequest(
-                role="assistant",
-                content=self._streaming_content,
-                thinking=self._streaming_thinking,
-                status=MessageStatus.FAILED,
-                error=error,
-                delegations=self._delegations.drain(unfinished="error") or None,
-                context=self._context,
-                parent_message_id=self._step_parent_id or parent_id,
-                execution=self._execution,
-                model_id=self.agent.model_id,  # type: ignore
-            ),
-        )
-        self.chat.messages.append(failed)
-        # add_message marks its parent complete, so write the request's state last.
-        request = await chat_service.write_message_update(
-            user_id=self.user_id,
-            chat_id=self.chat_id,
-            message_id=parent_id,
-            payload=UpdateMessageRequest(status=MessageStatus.FAILED),
-        )
-        if request_index >= 0:
-            self.chat.messages[request_index] = request
-        await self._emit(
-            {
-                "type": AgentEventType.COMPLETE.value,
-                "last_messages": [
-                    message.model_dump(mode="json") for message in self.chat.messages[max(request_index, 0) :]
-                ],
-            },
-        )
-
-    async def _finish_fork_step(self, status: MessageStatus, *, error: str | None = None) -> None:
-        """Record a cancelled or failed fork step with the work it finished (ADR-0038).
-
-        Calls that did not finish get a cancelled result so the branch stays a
-        valid conversation if the user continues from it.
-        """
-        step = self._fork_step
-        assert step is not None
-        self._fork_step = None
-        recorded = {result.tool_call.id: result for result in step.tool_call_results or [] if result}
-        results = [
-            recorded.get(call.id)
-            or ToolResult(content="Cancelled before it finished.", raw_result=None, is_empty=True, tool_call=call)
-            for call in step.tool_calls or []
-        ]
-        cancelled = await write_fork_step(
-            user_id=self.user_id,
-            chat_id=self.chat_id,
-            message_id=step.id,
-            status=status,
-            tool_call_results=results or None,
-            delegations=[*(step.delegations or []), *self._delegations.drain(unfinished="cancelled")] or None,
-            context=self._context,
-            error=error,
-        )
-        self.chat.messages.append(cancelled)
-        await self._emit(
-            {
-                "type": AgentEventType.COMPLETE.value,
-                "last_messages": [cancelled.model_dump(mode="json")],
-            },
-        )
-
-    async def _complete_fork_step(self, event: AgentEvent) -> Message:
-        """Record the replayed fork step: reused work plus what ran again."""
-        step = self._fork_step
-        assert step is not None
-        self._fork_step = None
-        return await write_fork_step(
-            user_id=self.user_id,
-            chat_id=self.chat_id,
-            message_id=step.id,
-            status=MessageStatus.COMPLETED,
-            tool_call_results=event.tool_results or None,
-            delegations=[*(step.delegations or []), *self._delegations.drain()] or None,
-            context=step_context(self._context, event.tool_results) if self._context else None,
-        )
 
     def find_message(self, message_id: str) -> tuple[int, Message]:
         message_index: int = index_of(
@@ -443,53 +218,6 @@ class ChatOrchestrator:
         if not title:
             title = " ".join(str(user_message.content).split())[:80] or "New chat"
         await self._save_chat_title(title)
-
-    async def _handle_tool_approval(
-        self,
-        pending_tools: list[ToolCall],
-        queue: UserResponseQueue,
-    ) -> None:
-        """
-        Callback for InteractiveApprovalPolicy. Emits WebSocket
-        permission-request messages and waits for user decisions.
-        """
-        tasks = []
-        for tool in pending_tools:
-            await self._emit(
-                {
-                    "type": "tool_permission_request",
-                    "id": tool.id,
-                    "name": tool.function.name,
-                    "arguments": tool.function.arguments,
-                },
-            )
-            tasks.append(self._wait_for_ui_approval(tool, queue))
-
-        await asyncio.gather(*tasks)
-
-    async def _wait_for_ui_approval(
-        self,
-        tool: ToolCall,
-        queue: UserResponseQueue,
-    ) -> None:
-        loop = asyncio.get_running_loop()
-        future = loop.create_future()
-        try:
-            async with asyncio.timeout(60):
-                self.pending_approvals[tool.id] = future
-                is_approved = await future
-                queue.respond(tool, is_approved)
-        except asyncio.TimeoutError:
-            self.logger.info(f"Tool {tool.id} timed out waiting for user approval.")
-            queue.respond(tool, False)
-            await self._emit({"type": "tool_update", "id": tool.id})
-        finally:
-            self.pending_approvals.pop(tool.id, None)
-
-    def resolve_tool_approval(self, tool_id: str, approved: bool) -> None:
-        future = self.pending_approvals.get(tool_id)
-        if future and not future.done():
-            future.set_result(approved)
 
     async def _build_agent_messages(self) -> list[LLMMessage]:
         messages, _ = await self._assemble_agent_messages()
@@ -848,32 +576,7 @@ class ChatOrchestrator:
                             await self.fail_active_generation("The model returned an empty response. Please try again.")
                             return
 
-                        if self._fork_step is not None:
-                            new_message = await self._complete_fork_step(event)
-                        else:
-                            new_message = await chat_service.add_message(
-                                user_id=self.user_id,
-                                chat_id=self.chat_id,
-                                message=NewMessageRequest(
-                                    role="assistant",
-                                    content=event.content,
-                                    thinking=event.thinking,
-                                    status=MessageStatus.COMPLETED,
-                                    input_tokens=event.input_tokens,
-                                    output_tokens=event.output_tokens,
-                                    total_tokens=event.total_tokens,
-                                    generation_duration_ms=event.generation_duration_ms,
-                                    parent_message_id=parent_message.id,
-                                    tool_calls=event.tool_calls if event.has_tool_calls() else None,
-                                    tool_call_results=event.tool_results if event.has_tool_results() else None,
-                                    delegations=self._delegations.drain() or None,
-                                    context=step_context(self._context, event.tool_results) if self._context else None,
-                                    execution=self._execution,
-                                    model_id=self.agent.model_id,  # type:ignore
-                                ),
-                            )
-                            parent_message.active_child_id = new_message.id
-                            parent_message.status = MessageStatus.COMPLETED
+                        new_message = await self._record_step(event, parent_message)
                         self.chat.messages.append(new_message)
 
                         parent_message = new_message

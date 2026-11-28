@@ -1486,33 +1486,6 @@ export const chatModePolicyGetOptions = (
   });
 
 /**
- * Select Draft Model
- */
-export const chatDraftModelUpdateMutation = (
-  options?: Partial<Options<ChatDraftModelUpdateData>>,
-): UseMutationOptions<
-  ChatDraftModelUpdateResponse,
-  ChatDraftModelUpdateError,
-  Options<ChatDraftModelUpdateData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    ChatDraftModelUpdateResponse,
-    ChatDraftModelUpdateError,
-    Options<ChatDraftModelUpdateData>
-  > = {
-    mutationFn: async (fnOptions) => {
-      const { data } = await ApiClient.__registry.get().chatDraftModelUpdate({
-        ...options,
-        ...fnOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
-/**
  * Select Chat Learning Mode
  */
 export const chatLearningModeUpdateMutation = (
@@ -1860,22 +1833,22 @@ export const chatSearchInfiniteOptions = (options: Options<ChatSearchData>) => {
 };
 
 /**
- * Update Message
+ * Move Session
  */
-export const messageUpdateMutation = (
-  options?: Partial<Options<MessageUpdateData>>,
+export const chatSessionMoveMutation = (
+  options?: Partial<Options<ChatSessionMoveData>>,
 ): UseMutationOptions<
-  MessageUpdateResponse,
-  MessageUpdateError,
-  Options<MessageUpdateData>
+  ChatSessionMoveResponse,
+  ChatSessionMoveError,
+  Options<ChatSessionMoveData>
 > => {
   const mutationOptions: UseMutationOptions<
-    MessageUpdateResponse,
-    MessageUpdateError,
-    Options<MessageUpdateData>
+    ChatSessionMoveResponse,
+    ChatSessionMoveError,
+    Options<ChatSessionMoveData>
   > = {
     mutationFn: async (fnOptions) => {
-      const { data } = await ApiClient.__registry.get().messageUpdate({
+      const { data } = await ApiClient.__registry.get().chatSessionMove({
         ...options,
         ...fnOptions,
         throwOnError: true,
@@ -2056,22 +2029,22 @@ export const chatFileDownloadOptions = (
   });
 
 /**
- * Move Session
+ * Select Draft Model
  */
-export const chatSessionMoveMutation = (
-  options?: Partial<Options<ChatSessionMoveData>>,
+export const chatDraftModelUpdateMutation = (
+  options?: Partial<Options<ChatDraftModelUpdateData>>,
 ): UseMutationOptions<
-  ChatSessionMoveResponse,
-  ChatSessionMoveError,
-  Options<ChatSessionMoveData>
+  ChatDraftModelUpdateResponse,
+  ChatDraftModelUpdateError,
+  Options<ChatDraftModelUpdateData>
 > => {
   const mutationOptions: UseMutationOptions<
-    ChatSessionMoveResponse,
-    ChatSessionMoveError,
-    Options<ChatSessionMoveData>
+    ChatDraftModelUpdateResponse,
+    ChatDraftModelUpdateError,
+    Options<ChatDraftModelUpdateData>
   > = {
     mutationFn: async (fnOptions) => {
-      const { data } = await ApiClient.__registry.get().chatSessionMove({
+      const { data } = await ApiClient.__registry.get().chatDraftModelUpdate({
         ...options,
         ...fnOptions,
         throwOnError: true,
@@ -2244,6 +2217,33 @@ export const chatDraftUploadMutation = (
 };
 
 /**
+ * Update Message
+ */
+export const messageUpdateMutation = (
+  options?: Partial<Options<MessageUpdateData>>,
+): UseMutationOptions<
+  MessageUpdateResponse,
+  MessageUpdateError,
+  Options<MessageUpdateData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    MessageUpdateResponse,
+    MessageUpdateError,
+    Options<MessageUpdateData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().messageUpdate({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
  * Send Message
  */
 export const chatMessageSendMutation = (
@@ -2298,34 +2298,6 @@ export const chatMessageCompareMutation = (
   };
   return mutationOptions;
 };
-
-export const chatComparisonGetOneQueryKey = (
-  options: Options<ChatComparisonGetOneData>,
-) => createQueryKey("chatComparisonGetOne", options);
-
-/**
- * Get Comparison
- */
-export const chatComparisonGetOneOptions = (
-  options: Options<ChatComparisonGetOneData>,
-) =>
-  queryOptions<
-    ChatComparisonGetOneResponse,
-    ChatComparisonGetOneError,
-    ChatComparisonGetOneResponse,
-    ReturnType<typeof chatComparisonGetOneQueryKey>
-  >({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await ApiClient.__registry.get().chatComparisonGetOne({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: chatComparisonGetOneQueryKey(options),
-  });
 
 export const chatContextLayersGetQueryKey = (
   options: Options<ChatContextLayersGetData>,
@@ -2504,37 +2476,6 @@ export const chatDraftReviewCommentUpdateMutation = (
 };
 
 /**
- * Find Comparison Disagreements
- *
- * List where a comparison's answered columns disagree; owner only (US-55.3).
- */
-export const chatComparisonDisagreementsFindMutation = (
-  options?: Partial<Options<ChatComparisonDisagreementsFindData>>,
-): UseMutationOptions<
-  ChatComparisonDisagreementsFindResponse,
-  ChatComparisonDisagreementsFindError,
-  Options<ChatComparisonDisagreementsFindData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    ChatComparisonDisagreementsFindResponse,
-    ChatComparisonDisagreementsFindError,
-    Options<ChatComparisonDisagreementsFindData>
-  > = {
-    mutationFn: async (fnOptions) => {
-      const { data } = await ApiClient.__registry
-        .get()
-        .chatComparisonDisagreementsFind({
-          ...options,
-          ...fnOptions,
-          throwOnError: true,
-        });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
-/**
  * Find Delegation Disagreements
  *
  * List where a step's sub-agent results disagree; owner only (US-55.3).
@@ -2649,6 +2590,65 @@ export const chatMessageForkMutation = (
         ...fnOptions,
         throwOnError: true,
       });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const chatComparisonGetOneQueryKey = (
+  options: Options<ChatComparisonGetOneData>,
+) => createQueryKey("chatComparisonGetOne", options);
+
+/**
+ * Get Comparison
+ */
+export const chatComparisonGetOneOptions = (
+  options: Options<ChatComparisonGetOneData>,
+) =>
+  queryOptions<
+    ChatComparisonGetOneResponse,
+    ChatComparisonGetOneError,
+    ChatComparisonGetOneResponse,
+    ReturnType<typeof chatComparisonGetOneQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry.get().chatComparisonGetOne({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: chatComparisonGetOneQueryKey(options),
+  });
+
+/**
+ * Find Comparison Disagreements
+ *
+ * List where a comparison's answered columns disagree; owner only (US-55.3).
+ */
+export const chatComparisonDisagreementsFindMutation = (
+  options?: Partial<Options<ChatComparisonDisagreementsFindData>>,
+): UseMutationOptions<
+  ChatComparisonDisagreementsFindResponse,
+  ChatComparisonDisagreementsFindError,
+  Options<ChatComparisonDisagreementsFindData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ChatComparisonDisagreementsFindResponse,
+    ChatComparisonDisagreementsFindError,
+    Options<ChatComparisonDisagreementsFindData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry
+        .get()
+        .chatComparisonDisagreementsFind({
+          ...options,
+          ...fnOptions,
+          throwOnError: true,
+        });
       return data;
     },
   };
@@ -10268,7 +10268,7 @@ export const usageGetReportQueryKey = (options?: Options<UsageGetReportData>) =>
 /**
  * Usage Report
  *
- * Tokens and estimated cost per group and in total over a period of days, and one page of users and their models.
+ * Tokens and estimated cost per group and in total over a period of days, and one page of users.
  */
 export const usageGetReportOptions = (options?: Options<UsageGetReportData>) =>
   queryOptions<
@@ -10297,7 +10297,7 @@ export const usageGetReportInfiniteQueryKey = (
 /**
  * Usage Report
  *
- * Tokens and estimated cost per group and in total over a period of days, and one page of users and their models.
+ * Tokens and estimated cost per group and in total over a period of days, and one page of users.
  */
 export const usageGetReportInfiniteOptions = (
   options?: Options<UsageGetReportData>,

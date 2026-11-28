@@ -284,7 +284,9 @@ All paths are under `/api/py`.
 1. [`chat/sending.py`](../../apps/backend/asterism/domains/chat/sending.py):
    accepting a message, receipts and drafts.
 2. [`chat/router.py`](../../apps/backend/asterism/domains/chat/router.py): the
-   routes and the socket's checks before it is accepted.
+   socket's checks before it is accepted, and the `/chat` router that combines
+   the resource routes in [`chat/routes/`](../../apps/backend/asterism/domains/chat/routes/):
+   `chats.py`, `files.py`, `drafts.py`, `messages.py` and `comparisons.py`.
 3. [`chat/controller.py`](../../apps/backend/asterism/domains/chat/controller.py):
    one connection's command and packet loops.
 4. [`chat/jobs.py`](../../apps/backend/asterism/domains/chat/jobs.py) and
@@ -293,7 +295,12 @@ All paths are under `/api/py`.
 5. [`chat/message_queue.py`](../../apps/backend/asterism/domains/chat/message_queue.py):
    the per-chat stream and its buffers.
 6. [`chat/orchestrator.py`](../../apps/backend/asterism/domains/chat/orchestrator.py):
-   runs a turn and turns agent events into packets.
+   the turn flow: picks the pending request, assembles context, compacts, runs
+   the agent and routes its events. It builds on
+   [`chat/reply_recording.py`](../../apps/backend/asterism/domains/chat/reply_recording.py),
+   which saves completed, cancelled and failed steps and fork steps, and
+   [`chat/turn_stream.py`](../../apps/backend/asterism/domains/chat/turn_stream.py),
+   which sends packets, text increments and approval prompts to open tabs.
 7. [`use-chat-websocket.tsx`](../../apps/frontend/src/features/chat/hooks/use-chat-websocket.tsx):
    the browser side, with
    [`text-stream.ts`](../../apps/frontend/src/features/chat/lib/text-stream.ts)

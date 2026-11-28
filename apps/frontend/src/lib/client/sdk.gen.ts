@@ -1325,31 +1325,6 @@ export class ApiClient extends HeyApiClient {
   }
 
   /**
-   * Select Draft Model
-   */
-  public chatDraftModelUpdate<ThrowOnError extends boolean = false>(
-    options: Options<ChatDraftModelUpdateData, ThrowOnError>,
-  ): RequestResult<
-    ChatDraftModelUpdateResponses,
-    ChatDraftModelUpdateErrors,
-    ThrowOnError
-  > {
-    return (options.client ?? this.client).put<
-      ChatDraftModelUpdateResponses,
-      ChatDraftModelUpdateErrors,
-      ThrowOnError
-    >({
-      security: [{ scheme: "bearer", type: "http" }],
-      url: "/chat/drafts/{draft_id}/model",
-      ...options,
-      headers: {
-        "Content-Type": "application/json",
-        ...options.headers,
-      },
-    });
-  }
-
-  /**
    * Select Chat Learning Mode
    */
   public chatLearningModeUpdate<ThrowOnError extends boolean = false>(
@@ -1557,18 +1532,22 @@ export class ApiClient extends HeyApiClient {
   }
 
   /**
-   * Update Message
+   * Move Session
    */
-  public messageUpdate<ThrowOnError extends boolean = false>(
-    options: Options<MessageUpdateData, ThrowOnError>,
-  ): RequestResult<MessageUpdateResponses, MessageUpdateErrors, ThrowOnError> {
+  public chatSessionMove<ThrowOnError extends boolean = false>(
+    options: Options<ChatSessionMoveData, ThrowOnError>,
+  ): RequestResult<
+    ChatSessionMoveResponses,
+    ChatSessionMoveErrors,
+    ThrowOnError
+  > {
     return (options.client ?? this.client).patch<
-      MessageUpdateResponses,
-      MessageUpdateErrors,
+      ChatSessionMoveResponses,
+      ChatSessionMoveErrors,
       ThrowOnError
     >({
       security: [{ scheme: "bearer", type: "http" }],
-      url: "/chat/{chat_id}/message/{message_id}",
+      url: "/chat/{chat_id}/project",
       ...options,
       headers: {
         "Content-Type": "application/json",
@@ -1708,22 +1687,22 @@ export class ApiClient extends HeyApiClient {
   }
 
   /**
-   * Move Session
+   * Select Draft Model
    */
-  public chatSessionMove<ThrowOnError extends boolean = false>(
-    options: Options<ChatSessionMoveData, ThrowOnError>,
+  public chatDraftModelUpdate<ThrowOnError extends boolean = false>(
+    options: Options<ChatDraftModelUpdateData, ThrowOnError>,
   ): RequestResult<
-    ChatSessionMoveResponses,
-    ChatSessionMoveErrors,
+    ChatDraftModelUpdateResponses,
+    ChatDraftModelUpdateErrors,
     ThrowOnError
   > {
-    return (options.client ?? this.client).patch<
-      ChatSessionMoveResponses,
-      ChatSessionMoveErrors,
+    return (options.client ?? this.client).put<
+      ChatDraftModelUpdateResponses,
+      ChatDraftModelUpdateErrors,
       ThrowOnError
     >({
       security: [{ scheme: "bearer", type: "http" }],
-      url: "/chat/{chat_id}/project",
+      url: "/chat/drafts/{draft_id}/model",
       ...options,
       headers: {
         "Content-Type": "application/json",
@@ -1876,6 +1855,27 @@ export class ApiClient extends HeyApiClient {
   }
 
   /**
+   * Update Message
+   */
+  public messageUpdate<ThrowOnError extends boolean = false>(
+    options: Options<MessageUpdateData, ThrowOnError>,
+  ): RequestResult<MessageUpdateResponses, MessageUpdateErrors, ThrowOnError> {
+    return (options.client ?? this.client).patch<
+      MessageUpdateResponses,
+      MessageUpdateErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/chat/{chat_id}/message/{message_id}",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+  }
+
+  /**
    * Send Message
    */
   public chatMessageSend<ThrowOnError extends boolean = false>(
@@ -1924,27 +1924,6 @@ export class ApiClient extends HeyApiClient {
         "Content-Type": "application/json",
         ...options.headers,
       },
-    });
-  }
-
-  /**
-   * Get Comparison
-   */
-  public chatComparisonGetOne<ThrowOnError extends boolean = false>(
-    options: Options<ChatComparisonGetOneData, ThrowOnError>,
-  ): RequestResult<
-    ChatComparisonGetOneResponses,
-    ChatComparisonGetOneErrors,
-    ThrowOnError
-  > {
-    return (options.client ?? this.client).get<
-      ChatComparisonGetOneResponses,
-      ChatComparisonGetOneErrors,
-      ThrowOnError
-    >({
-      security: [{ scheme: "bearer", type: "http" }],
-      url: "/chat/{chat_id}/comparisons/{comparison_id}",
-      ...options,
     });
   }
 
@@ -2091,33 +2070,6 @@ export class ApiClient extends HeyApiClient {
   }
 
   /**
-   * Find Comparison Disagreements
-   *
-   * List where a comparison's answered columns disagree; owner only (US-55.3).
-   */
-  public chatComparisonDisagreementsFind<ThrowOnError extends boolean = false>(
-    options: Options<ChatComparisonDisagreementsFindData, ThrowOnError>,
-  ): RequestResult<
-    ChatComparisonDisagreementsFindResponses,
-    ChatComparisonDisagreementsFindErrors,
-    ThrowOnError
-  > {
-    return (options.client ?? this.client).post<
-      ChatComparisonDisagreementsFindResponses,
-      ChatComparisonDisagreementsFindErrors,
-      ThrowOnError
-    >({
-      security: [{ scheme: "bearer", type: "http" }],
-      url: "/chat/{chat_id}/comparisons/{comparison_id}/disagreements",
-      ...options,
-      headers: {
-        "Content-Type": "application/json",
-        ...options.headers,
-      },
-    });
-  }
-
-  /**
    * Find Delegation Disagreements
    *
    * List where a step's sub-agent results disagree; owner only (US-55.3).
@@ -2213,6 +2165,54 @@ export class ApiClient extends HeyApiClient {
     >({
       security: [{ scheme: "bearer", type: "http" }],
       url: "/chat/{chat_id}/messages/{message_id}/fork",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+  }
+
+  /**
+   * Get Comparison
+   */
+  public chatComparisonGetOne<ThrowOnError extends boolean = false>(
+    options: Options<ChatComparisonGetOneData, ThrowOnError>,
+  ): RequestResult<
+    ChatComparisonGetOneResponses,
+    ChatComparisonGetOneErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).get<
+      ChatComparisonGetOneResponses,
+      ChatComparisonGetOneErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/chat/{chat_id}/comparisons/{comparison_id}",
+      ...options,
+    });
+  }
+
+  /**
+   * Find Comparison Disagreements
+   *
+   * List where a comparison's answered columns disagree; owner only (US-55.3).
+   */
+  public chatComparisonDisagreementsFind<ThrowOnError extends boolean = false>(
+    options: Options<ChatComparisonDisagreementsFindData, ThrowOnError>,
+  ): RequestResult<
+    ChatComparisonDisagreementsFindResponses,
+    ChatComparisonDisagreementsFindErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).post<
+      ChatComparisonDisagreementsFindResponses,
+      ChatComparisonDisagreementsFindErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/chat/{chat_id}/comparisons/{comparison_id}/disagreements",
       ...options,
       headers: {
         "Content-Type": "application/json",
@@ -7407,7 +7407,7 @@ export class ApiClient extends HeyApiClient {
   /**
    * Usage Report
    *
-   * Tokens and estimated cost per group and in total over a period of days, and one page of users and their models.
+   * Tokens and estimated cost per group and in total over a period of days, and one page of users.
    */
   public usageGetReport<ThrowOnError extends boolean = false>(
     options?: Options<UsageGetReportData, ThrowOnError>,

@@ -12084,42 +12084,6 @@ export type ChatModePolicyGetResponses = {
 export type ChatModePolicyGetResponse =
   ChatModePolicyGetResponses[keyof ChatModePolicyGetResponses];
 
-export type ChatDraftModelUpdateData = {
-  body: ChatDraftModelUpdate;
-  path: {
-    /**
-     * Draft Id
-     */
-    draft_id: string;
-  };
-  query?: never;
-  url: "/chat/drafts/{draft_id}/model";
-};
-
-export type ChatDraftModelUpdateErrors = {
-  /**
-   * Not found
-   */
-  404: ErrorDetail;
-  /**
-   * Validation Error
-   */
-  422: ErrorDetail;
-};
-
-export type ChatDraftModelUpdateError =
-  ChatDraftModelUpdateErrors[keyof ChatDraftModelUpdateErrors];
-
-export type ChatDraftModelUpdateResponses = {
-  /**
-   * Successful Response
-   */
-  200: ChatDraft;
-};
-
-export type ChatDraftModelUpdateResponse =
-  ChatDraftModelUpdateResponses[keyof ChatDraftModelUpdateResponses];
-
 export type ChatLearningModeUpdateData = {
   body: ChatLearningModeUpdate;
   path: {
@@ -12459,44 +12423,45 @@ export type ChatSearchResponses = {
 
 export type ChatSearchResponse = ChatSearchResponses[keyof ChatSearchResponses];
 
-export type MessageUpdateData = {
-  body: UpdateMessageRequest;
+export type ChatSessionMoveData = {
+  body: ChatMoveRequest;
   path: {
     /**
      * Chat Id
      */
     chat_id: string;
-    /**
-     * Message Id
-     */
-    message_id: string;
   };
   query?: never;
-  url: "/chat/{chat_id}/message/{message_id}";
+  url: "/chat/{chat_id}/project";
 };
 
-export type MessageUpdateErrors = {
+export type ChatSessionMoveErrors = {
   /**
    * Not found
    */
   404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
   /**
    * Validation Error
    */
   422: ErrorDetail;
 };
 
-export type MessageUpdateError = MessageUpdateErrors[keyof MessageUpdateErrors];
+export type ChatSessionMoveError =
+  ChatSessionMoveErrors[keyof ChatSessionMoveErrors];
 
-export type MessageUpdateResponses = {
+export type ChatSessionMoveResponses = {
   /**
    * Successful Response
    */
-  200: Message;
+  200: ChatInfo;
 };
 
-export type MessageUpdateResponse =
-  MessageUpdateResponses[keyof MessageUpdateResponses];
+export type ChatSessionMoveResponse =
+  ChatSessionMoveResponses[keyof ChatSessionMoveResponses];
 
 export type ChatFileGetScopeData = {
   body?: never;
@@ -12742,45 +12707,41 @@ export type ChatFileDownloadResponses = {
 export type ChatFileDownloadResponse =
   ChatFileDownloadResponses[keyof ChatFileDownloadResponses];
 
-export type ChatSessionMoveData = {
-  body: ChatMoveRequest;
+export type ChatDraftModelUpdateData = {
+  body: ChatDraftModelUpdate;
   path: {
     /**
-     * Chat Id
+     * Draft Id
      */
-    chat_id: string;
+    draft_id: string;
   };
   query?: never;
-  url: "/chat/{chat_id}/project";
+  url: "/chat/drafts/{draft_id}/model";
 };
 
-export type ChatSessionMoveErrors = {
+export type ChatDraftModelUpdateErrors = {
   /**
    * Not found
    */
   404: ErrorDetail;
-  /**
-   * Conflict
-   */
-  409: ErrorDetail;
   /**
    * Validation Error
    */
   422: ErrorDetail;
 };
 
-export type ChatSessionMoveError =
-  ChatSessionMoveErrors[keyof ChatSessionMoveErrors];
+export type ChatDraftModelUpdateError =
+  ChatDraftModelUpdateErrors[keyof ChatDraftModelUpdateErrors];
 
-export type ChatSessionMoveResponses = {
+export type ChatDraftModelUpdateResponses = {
   /**
    * Successful Response
    */
-  200: ChatInfo;
+  200: ChatDraft;
 };
 
-export type ChatSessionMoveResponse =
-  ChatSessionMoveResponses[keyof ChatSessionMoveResponses];
+export type ChatDraftModelUpdateResponse =
+  ChatDraftModelUpdateResponses[keyof ChatDraftModelUpdateResponses];
 
 export type ChatDraftCreateData = {
   body: ChatDraftCreate;
@@ -12993,6 +12954,45 @@ export type ChatDraftUploadResponses = {
 export type ChatDraftUploadResponse =
   ChatDraftUploadResponses[keyof ChatDraftUploadResponses];
 
+export type MessageUpdateData = {
+  body: UpdateMessageRequest;
+  path: {
+    /**
+     * Chat Id
+     */
+    chat_id: string;
+    /**
+     * Message Id
+     */
+    message_id: string;
+  };
+  query?: never;
+  url: "/chat/{chat_id}/message/{message_id}";
+};
+
+export type MessageUpdateErrors = {
+  /**
+   * Not found
+   */
+  404: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type MessageUpdateError = MessageUpdateErrors[keyof MessageUpdateErrors];
+
+export type MessageUpdateResponses = {
+  /**
+   * Successful Response
+   */
+  200: Message;
+};
+
+export type MessageUpdateResponse =
+  MessageUpdateResponses[keyof MessageUpdateResponses];
+
 export type ChatMessageSendData = {
   body: ChatSendRequest;
   path: {
@@ -13080,46 +13080,6 @@ export type ChatMessageCompareResponses = {
 
 export type ChatMessageCompareResponse =
   ChatMessageCompareResponses[keyof ChatMessageCompareResponses];
-
-export type ChatComparisonGetOneData = {
-  body?: never;
-  path: {
-    /**
-     * Chat Id
-     */
-    chat_id: string;
-    /**
-     * Comparison Id
-     */
-    comparison_id: string;
-  };
-  query?: never;
-  url: "/chat/{chat_id}/comparisons/{comparison_id}";
-};
-
-export type ChatComparisonGetOneErrors = {
-  /**
-   * Not found
-   */
-  404: ErrorDetail;
-  /**
-   * Validation Error
-   */
-  422: ErrorDetail;
-};
-
-export type ChatComparisonGetOneError =
-  ChatComparisonGetOneErrors[keyof ChatComparisonGetOneErrors];
-
-export type ChatComparisonGetOneResponses = {
-  /**
-   * Successful Response
-   */
-  200: ChatComparison;
-};
-
-export type ChatComparisonGetOneResponse =
-  ChatComparisonGetOneResponses[keyof ChatComparisonGetOneResponses];
 
 export type ChatContextLayersGetData = {
   body?: never;
@@ -13363,46 +13323,6 @@ export type ChatDraftReviewCommentUpdateResponses = {
 export type ChatDraftReviewCommentUpdateResponse =
   ChatDraftReviewCommentUpdateResponses[keyof ChatDraftReviewCommentUpdateResponses];
 
-export type ChatComparisonDisagreementsFindData = {
-  body: DisagreementRequest;
-  path: {
-    /**
-     * Chat Id
-     */
-    chat_id: string;
-    /**
-     * Comparison Id
-     */
-    comparison_id: string;
-  };
-  query?: never;
-  url: "/chat/{chat_id}/comparisons/{comparison_id}/disagreements";
-};
-
-export type ChatComparisonDisagreementsFindErrors = {
-  /**
-   * Not found
-   */
-  404: ErrorDetail;
-  /**
-   * Validation Error
-   */
-  422: ErrorDetail;
-};
-
-export type ChatComparisonDisagreementsFindError =
-  ChatComparisonDisagreementsFindErrors[keyof ChatComparisonDisagreementsFindErrors];
-
-export type ChatComparisonDisagreementsFindResponses = {
-  /**
-   * Successful Response
-   */
-  200: DisagreementSummary;
-};
-
-export type ChatComparisonDisagreementsFindResponse =
-  ChatComparisonDisagreementsFindResponses[keyof ChatComparisonDisagreementsFindResponses];
-
 export type ChatDelegationDisagreementsFindData = {
   body: DisagreementRequest;
   path: {
@@ -13571,6 +13491,86 @@ export type ChatMessageForkResponses = {
 
 export type ChatMessageForkResponse =
   ChatMessageForkResponses[keyof ChatMessageForkResponses];
+
+export type ChatComparisonGetOneData = {
+  body?: never;
+  path: {
+    /**
+     * Chat Id
+     */
+    chat_id: string;
+    /**
+     * Comparison Id
+     */
+    comparison_id: string;
+  };
+  query?: never;
+  url: "/chat/{chat_id}/comparisons/{comparison_id}";
+};
+
+export type ChatComparisonGetOneErrors = {
+  /**
+   * Not found
+   */
+  404: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type ChatComparisonGetOneError =
+  ChatComparisonGetOneErrors[keyof ChatComparisonGetOneErrors];
+
+export type ChatComparisonGetOneResponses = {
+  /**
+   * Successful Response
+   */
+  200: ChatComparison;
+};
+
+export type ChatComparisonGetOneResponse =
+  ChatComparisonGetOneResponses[keyof ChatComparisonGetOneResponses];
+
+export type ChatComparisonDisagreementsFindData = {
+  body: DisagreementRequest;
+  path: {
+    /**
+     * Chat Id
+     */
+    chat_id: string;
+    /**
+     * Comparison Id
+     */
+    comparison_id: string;
+  };
+  query?: never;
+  url: "/chat/{chat_id}/comparisons/{comparison_id}/disagreements";
+};
+
+export type ChatComparisonDisagreementsFindErrors = {
+  /**
+   * Not found
+   */
+  404: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type ChatComparisonDisagreementsFindError =
+  ChatComparisonDisagreementsFindErrors[keyof ChatComparisonDisagreementsFindErrors];
+
+export type ChatComparisonDisagreementsFindResponses = {
+  /**
+   * Successful Response
+   */
+  200: DisagreementSummary;
+};
+
+export type ChatComparisonDisagreementsFindResponse =
+  ChatComparisonDisagreementsFindResponses[keyof ChatComparisonDisagreementsFindResponses];
 
 export type ChatComparisonActivateData = {
   body: ComparisonActivate;

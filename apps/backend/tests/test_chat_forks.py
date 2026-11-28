@@ -401,7 +401,7 @@ async def test_cancelling_a_fork_step_records_finished_work_and_closes_open_call
     orchestrator._active_parent_id = pending.id
     orchestrator._fork_step = pending
     written = AsyncMock(return_value=pending)
-    with patch("asterism.domains.chat.orchestrator.write_fork_step", new=written):
+    with patch("asterism.domains.chat.reply_recording.write_fork_step", new=written):
         await orchestrator.cancel_active_generation()
     kwargs = written.await_args.kwargs
     assert kwargs["message_id"] == uuid.UUID(forked["id"])
