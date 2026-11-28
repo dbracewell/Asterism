@@ -28,6 +28,9 @@ Unreleased into its version and date.
   pauses the server for other people: hashing, writing and cleaning images run
   in the background. A file that is already processed isn't re-read in full
   each time it is used, unless it changed on disk.
+- Downloading a canvas no longer holds a database connection while diagrams
+  are drawn or the file is built, and a chat's canvas ZIP is built in the
+  background without re-encoding its images.
 
 ## 0.6.0 (2026-11-27)
 

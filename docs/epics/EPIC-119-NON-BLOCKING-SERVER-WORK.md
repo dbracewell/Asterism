@@ -31,11 +31,11 @@ file or generates an image.
 As a user, I want exports to leave the database free for others while they
 render.
 
-- [ ] A canvas export reads what it needs, closes its database session, then
+- [x] A canvas export reads what it needs, closes its database session, then
       renders.
-- [ ] Building the ZIP runs off the event loop.
-- [ ] Pictures already stored as PNG go into the ZIP without being re-encoded.
-- [ ] Tests and release note.
+- [x] Building the ZIP runs off the event loop.
+- [x] Pictures already stored as PNG go into the ZIP without being re-encoded.
+- [x] Tests and release note.
 
 ### US-119.3: Model checks don't block
 
