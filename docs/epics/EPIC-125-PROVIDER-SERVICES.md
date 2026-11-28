@@ -1,6 +1,6 @@
 # EPIC-125: Choose a provider by service
 
-Status: proposed (2026-11-28). Source: user request (2026-11-28).
+Status: complete (2026-11-28). Source: user request (2026-11-28).
 
 ## Objective
 
