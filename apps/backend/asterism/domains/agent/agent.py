@@ -442,30 +442,38 @@ class Agent:
             check_active=self.authorization_check,
         )
         app_settings = await settings_service.get_app_settings()
-        tasks = [
-            tool_registry.invoke_tool(
-                tool_call=auth.tool,
-                user=self.user,
-                session=self.session,
-                client=await self._get_client(),
-                app_settings=app_settings,
-                user_message=user_message or "",
-                user_files=self.user_files,
-                call_stack=self.call_stack,
-                caller_execution_id=self.delegation_execution_id,
-                event_sink=event_sink,
-                parent_message_id=self.parent_message_id,
-                delegation_scope=self.delegation_scope,
-                tool_scope=self.tool_scope,
-                execution_scope=self.execution_scope,
-                authorize_internal=authorize_internal,
-                retrieval_service=retrieval,
-                file_reader=create_runtime_file_reader(ceiling=self.tool_scope, check_active=self.authorization_check),
-                progress_sink=progress_sink,
-            )
-            for auth in auths
-            if auth.accept
-        ]
+        accepted = [auth for auth in auths if auth.accept]
+        # One model lookup for the whole batch of parallel calls, not one per call.
+        client = await self._get_client() if accepted else None
+        tasks = (
+            []
+            if client is None
+            else [
+                tool_registry.invoke_tool(
+                    tool_call=auth.tool,
+                    user=self.user,
+                    session=self.session,
+                    client=client,
+                    app_settings=app_settings,
+                    user_message=user_message or "",
+                    user_files=self.user_files,
+                    call_stack=self.call_stack,
+                    caller_execution_id=self.delegation_execution_id,
+                    event_sink=event_sink,
+                    parent_message_id=self.parent_message_id,
+                    delegation_scope=self.delegation_scope,
+                    tool_scope=self.tool_scope,
+                    execution_scope=self.execution_scope,
+                    authorize_internal=authorize_internal,
+                    retrieval_service=retrieval,
+                    file_reader=create_runtime_file_reader(
+                        ceiling=self.tool_scope, check_active=self.authorization_check
+                    ),
+                    progress_sink=progress_sink,
+                )
+                for auth in accepted
+            ]
+        )
         responses: list[ToolResult] = list(await asyncio.gather(*tasks))
         for response in responses:
             yield response

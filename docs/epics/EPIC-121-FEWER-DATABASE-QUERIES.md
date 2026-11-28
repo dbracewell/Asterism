@@ -40,6 +40,6 @@ months of history.
 
 As a user, I want searches and tool calls to stay quick as my library grows.
 
-- [ ] Vector lookups by file split long file lists into bounded batches.
-- [ ] Parallel tool calls in one turn share one model client lookup.
-- [ ] Tests and release note.
+- [x] Vector lookups by file split long file lists into bounded batches.
+- [x] Parallel tool calls in one turn share one model client lookup.
+- [x] Tests and release note.

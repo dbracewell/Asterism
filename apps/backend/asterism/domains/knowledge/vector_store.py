@@ -3,6 +3,7 @@
 import asyncio
 from collections.abc import Sequence
 from dataclasses import asdict, dataclass
+from itertools import batched
 from pathlib import Path
 from typing import Literal, Protocol
 
@@ -11,6 +12,9 @@ import pyarrow as pa
 
 from asterism.core import config
 from asterism.domains.knowledge.embedding import EMBEDDING_MODEL_KEY, embedding_provider
+
+# At most this many file ids in one LanceDB filter.
+FILE_BATCH = 500
 
 
 class VectorStoreError(RuntimeError):
@@ -246,19 +250,21 @@ class LanceDbVectorStore:
         await self.initialize()
         table = self._require_table()
         owner_filter = f"user_id = {self._quote(user_id)}"
-        file_filter = "file_id IN (" + ", ".join(self._quote(file_id) for file_id in allowed_file_ids) + ")"
-        try:
-            async with self._semaphore:
-                rows = await asyncio.to_thread(
-                    lambda: (
-                        table.search(list(query))
-                        .where(f"{owner_filter} AND {file_filter}", prefilter=True)
-                        .limit(limit)
-                        .to_list()
-                    ),
-                )
-        except Exception as error:
-            raise VectorStoreError("Knowledge vector search failed") from error
+        rows: list[dict] = []
+        # Bounded IN lists: each batch returns its own nearest ``limit`` rows,
+        # and the overall nearest are among them, so merging keeps the result exact.
+        for batch in batched(dict.fromkeys(allowed_file_ids), FILE_BATCH):
+            file_filter = "file_id IN (" + ", ".join(self._quote(file_id) for file_id in batch) + ")"
+            try:
+                async with self._semaphore:
+                    rows += await asyncio.to_thread(
+                        lambda predicate=f"{owner_filter} AND {file_filter}": (
+                            table.search(list(query)).where(predicate, prefilter=True).limit(limit).to_list()
+                        ),
+                    )
+            except Exception as error:
+                raise VectorStoreError("Knowledge vector search failed") from error
+        rows.sort(key=lambda row: float(row["_distance"]))
         return [
             VectorSearchResult(
                 id=str(row["id"]),
@@ -270,7 +276,7 @@ class LanceDbVectorStore:
                 content=str(row["content"]),
                 score=float(row["_distance"]),
             )
-            for row in rows
+            for row in rows[:limit]
         ]
 
     async def _delete(self, predicate: str) -> None:

@@ -9,6 +9,7 @@ import asyncio
 import uuid
 from collections.abc import Sequence
 from dataclasses import asdict, dataclass
+from itertools import batched
 from pathlib import Path
 from typing import Protocol
 
@@ -17,6 +18,9 @@ import pyarrow as pa
 
 from asterism.core import config
 from asterism.domains.knowledge.embedding import EMBEDDING_MODEL_KEY, embedding_provider
+
+# At most this many memory ids in one LanceDB filter.
+MEMORY_BATCH = 500
 
 
 class MemoryVectorError(RuntimeError):
@@ -129,9 +133,10 @@ class LanceDbMemoryVectorStore:
     async def delete_memories(self, *, user_id: str, memory_ids: Sequence[uuid.UUID | str]) -> None:
         if not memory_ids:
             return
-        ids = ", ".join(self._quote(str(memory_id)) for memory_id in memory_ids)
-        predicate = f"user_id = {self._quote(user_id)} AND memory_id IN ({ids})"
-        await self._run(lambda table: table.delete(predicate), "Memory vectors could not be deleted")
+        for batch in batched(memory_ids, MEMORY_BATCH):
+            ids = ", ".join(self._quote(str(memory_id)) for memory_id in batch)
+            predicate = f"user_id = {self._quote(user_id)} AND memory_id IN ({ids})"
+            await self._run(lambda table, where=predicate: table.delete(where), "Memory vectors could not be deleted")
 
     async def delete_project(self, *, user_id: str, project_id: uuid.UUID) -> None:
         predicate = f"user_id = {self._quote(user_id)} AND project_id = {self._quote(str(project_id))}"
