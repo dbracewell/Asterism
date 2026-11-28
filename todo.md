@@ -145,3 +145,28 @@ Source: repository review (2026-11-26), work deferred from EPIC-117. Suggested o
 Source: Dependabot review (2026-11-28). Work one story at a time.
 
 [EPIC-124](docs/epics/EPIC-124-VITEST-5.md) (US-124.1 and US-124.2) is complete and archived in the [2026-11-28 checklist](docs/archive/todo-completed-2026-11-28.md).
+
+## Provider services (proposed 2026-11-28)
+
+Source: user request (2026-11-28). Suggested order: US-125.1 → 125.2 → 125.3. Work one story at a time.
+
+[EPIC-125](docs/epics/EPIC-125-PROVIDER-SERVICES.md): Choose a provider by service
+
+- [ ] US-125.1: A service catalog, recorded on each provider
+  - [ ] An ADR records the decisions: the column, the catalog and its fields, and which services need a key.
+  - [ ] The catalog lists each service with its base URL, each checked against the service's current documentation (with the date checked).
+  - [ ] A versioned migration adds `providers.service`, with a test that upgrades a database seeded at the previous revision; existing providers read as Custom.
+  - [ ] Provider reads and writes carry `service`; an unknown service, or one on a non-`generic_openai` provider, is refused with a clear message.
+  - [ ] An endpoint returns the catalog; the settings export and import carry `service`.
+  - [ ] Tests, regenerated client, and release note (Data).
+- [ ] US-125.2: The service dropdown
+  - [ ] Admin Settings → Providers and the setup step use one service dropdown, grouped as OpenAI, hosted, aggregators, local servers and Custom.
+  - [ ] Choosing a service fills in its name and base URL; switching services replaces only a name or URL that is empty or still the previous service's default.
+  - [ ] A saved provider reopens on its service; the provider list shows the service's name.
+  - [ ] Local servers explain that, when Asterism runs in Docker, `localhost` is the container, and suggest `host.docker.internal`.
+  - [ ] Unit and E2E tests, and release note (Behavior).
+- [ ] US-125.3: Local servers without an API key
+  - [ ] The API key is optional for local servers and Custom, and required for hosted services and aggregators, in the form and on the server.
+  - [ ] A provider without a key sends no `Authorization` header, for chats and for model discovery.
+  - [ ] A saved key stays redacted; clearing it is distinct from keeping it.
+  - [ ] Tests, and release note (Behavior).
