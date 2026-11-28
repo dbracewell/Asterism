@@ -30,7 +30,7 @@ from asterism.domains.knowledge.processing import update_captioning_configuratio
 from asterism.domains.knowledge.processing_schemas import KnowledgeCaptionConfigurationUpdate
 from asterism.domains.settings.captioning_guard import get_captioning_selection_guard
 from asterism.domains.settings.models import ApplicationSettingsModel, LLMModel, ProviderModel
-from asterism.domains.settings.provider_services import check_service
+from asterism.domains.settings.provider_services import check_service, needs_key
 from asterism.domains.settings.provider_types import ProviderType, normalize_provider_base_url
 from asterism.domains.settings.queries import is_global_provider
 from asterism.domains.settings.schemas import CompactionSettings
@@ -93,6 +93,8 @@ def _check_bundle(bundle: SettingsBundle) -> None:
             check_service(provider.provider_type, provider.service)
         except PydanticCustomError as exc:
             raise BadDataException("Settings file names a service on a provider that can't have one") from exc
+        if not provider.api_key and needs_key(provider.provider_type, provider.service):
+            raise BadDataException(f"Settings file has no key for a provider that needs one ({provider.name})")
     _check_references(bundle)
     _check_groups(bundle)
 

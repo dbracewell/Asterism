@@ -44,7 +44,9 @@ running and you open its address for the first time.
    For a local server, if Asterism runs in Docker, `localhost` means the
    container itself: the form suggests the same address with
    `host.docker.internal`, which reaches the computer it runs on.
-3. Type the **API key**. A local server that doesn't check keys accepts any value.
+3. Type the **API key**. OpenAI, hosted APIs and aggregators need one; for a
+   local server or a custom URL it's optional, so leave it empty if the server
+   doesn't check keys.
 
    ![The setup card for connecting a model provider, with Custom OpenAI-compatible URL chosen as the service and a base URL filled in](../images/setup-connect-provider.png)
 

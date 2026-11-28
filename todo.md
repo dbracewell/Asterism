@@ -165,8 +165,8 @@ Source: user request (2026-11-28). Suggested order: US-125.1 → 125.2 → 125.3
   - [x] A saved provider reopens on its service; the provider list shows the service's name.
   - [x] Local servers explain that, when Asterism runs in Docker, `localhost` is the container, and suggest `host.docker.internal`.
   - [x] Unit and E2E tests, and release note (Behavior).
-- [ ] US-125.3: Local servers without an API key
-  - [ ] The API key is optional for local servers and Custom, and required for hosted services and aggregators, in the form and on the server.
-  - [ ] A provider without a key sends no `Authorization` header, for chats and for model discovery.
-  - [ ] A saved key stays redacted; clearing it is distinct from keeping it.
-  - [ ] Tests, and release note (Behavior).
+- [x] US-125.3: Local servers without an API key
+  - [x] The API key is optional for local servers and Custom, and required for hosted services and aggregators, in the form and on the server.
+  - [x] A provider without a key sends no `Authorization` header, for chats and for model discovery.
+  - [x] A saved key stays redacted; clearing it is distinct from keeping it.
+  - [x] Tests, and release note (Behavior).

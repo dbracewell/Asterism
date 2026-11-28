@@ -29,6 +29,7 @@ from typing import (
     Unpack,
 )
 
+import httpx2
 from openai import (
     APIError,
     AsyncOpenAI,
@@ -409,6 +410,24 @@ _shared_openai_clients: dict[tuple[str, str], AsyncOpenAI] = {}
 _shared_openai_clients_lock = threading.Lock()
 
 
+# The SDK needs a key to construct a client, and sends it as a bearer token. A
+# provider without one (a local server, ADR-0086) gets this placeholder, and
+# ``drop_placeholder_auth`` removes the header before the request leaves.
+NO_KEY_PLACEHOLDER = "asterism-no-key"
+_PLACEHOLDER_AUTHORIZATION = f"Bearer {NO_KEY_PLACEHOLDER}"
+
+
+def keyless_auth(api_key: str) -> dict[str, str]:
+    """``AsyncOpenAI`` auth arguments: the key, or the placeholder for a provider without one."""
+    return {"api_key": api_key or NO_KEY_PLACEHOLDER}
+
+
+async def drop_placeholder_auth(request: httpx2.Request) -> None:
+    """httpx request hook: a provider without a key sends no ``Authorization`` header (US-125.3)."""
+    if request.headers.get("authorization") == _PLACEHOLDER_AUTHORIZATION:
+        del request.headers["authorization"]
+
+
 def get_shared_openai_client(base_url: str, api_key: str) -> AsyncOpenAI:
     """Return the shared ``AsyncOpenAI`` client for an endpoint + key pair.
 
@@ -423,11 +442,13 @@ def get_shared_openai_client(base_url: str, api_key: str) -> AsyncOpenAI:
         client = _shared_openai_clients.get(key)
         if client is None:
             client = AsyncOpenAI(
-                api_key=api_key,
+                **keyless_auth(api_key),
                 base_url=base_url,
                 timeout=120.0,
                 # A redirect would carry the API key to another server (US-116.3).
-                http_client=DefaultAsyncHttpxClient(follow_redirects=False),
+                http_client=DefaultAsyncHttpxClient(
+                    follow_redirects=False, event_hooks={"request": [drop_placeholder_auth]}
+                ),
             )
             _shared_openai_clients[key] = client
         return client

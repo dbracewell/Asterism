@@ -167,3 +167,19 @@ def check_service(provider_type: ProviderType, service: ProviderService | None) 
             "provider_service",
             "Only an OpenAI-compatible provider can name a service",
         )
+
+
+def needs_key(provider_type: ProviderType, service: ProviderService | None) -> bool:
+    """OpenAI, hosted services and aggregators need an API key; local servers and Custom don't (US-125.3)."""
+    if provider_type == ProviderType.OPENAI:
+        return True
+    if provider_type != ProviderType.GENERIC_OPENAI or service is None:
+        return False
+    return CATALOG_BY_SERVICE[service].key_required
+
+
+def key_missing_message(provider_type: ProviderType, service: ProviderService | None) -> str:
+    """The refusal for a provider saved without the key it needs."""
+    if provider_type == ProviderType.GENERIC_OPENAI and service is not None:
+        return f"{CATALOG_BY_SERVICE[service].label} needs an API key"
+    return "OpenAI needs an API key"

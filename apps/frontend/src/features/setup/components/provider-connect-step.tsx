@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import {
+  apiKeyRequired,
   OPENAI_BASE_URL,
   type ProviderFormValues,
 } from "@/features/settings/provider-schema";
@@ -89,10 +90,9 @@ export function ConnectStep({
   const pending = saveProviders.isPending || discover.isPending;
   const failed = error != null;
 
-  const choice = choiceOf({
-    provider_type: useWatch({ control, name: "provider_type" }),
-    service: useWatch({ control, name: "service" }),
-  });
+  const providerType = useWatch({ control, name: "provider_type" });
+  const service = useWatch({ control, name: "service" });
+  const choice = choiceOf({ provider_type: providerType, service });
   const changeChoice = (next: ServiceChoice) => {
     const options = {
       shouldDirty: true,
@@ -174,6 +174,12 @@ export function ConnectStep({
         <ProviderFields
           form={form}
           local={serviceEntry(choice, services.data)?.group === "local"}
+          keyOptional={
+            !apiKeyRequired(
+              { provider_type: providerType, service },
+              services.data,
+            )
+          }
           disabled={pending}
           errors={{
             name: errors.name?.message,
@@ -208,11 +214,13 @@ export function ConnectStep({
 function ProviderFields({
   form,
   local,
+  keyOptional,
   disabled,
   errors,
 }: {
   form: UseFormReturn<ProviderFormValues>;
   local: boolean;
+  keyOptional: boolean;
   disabled: boolean;
   errors: Partial<Record<"name" | "base_url" | "api_key", string>>;
 }) {
@@ -268,9 +276,9 @@ function ProviderFields({
         "api_key",
         "API key",
         { type: "password", autoComplete: "off" },
-        type === "openai"
-          ? undefined
-          : "Local servers that don't check keys accept any value.",
+        keyOptional
+          ? "Optional: leave it empty for a server that doesn't check keys."
+          : undefined,
       )}
     </>
   );

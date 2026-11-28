@@ -183,9 +183,6 @@ async def _provider_model_caption(
     configuration: KnowledgeCaptionConfiguration,
 ) -> CaptionResult:
     model = await get_model_and_provider(configuration.provider_model_id)
-    if not model.provider.api_key:
-        raise CaptioningError(CaptionErrorCode.INVALID_SELECTION, "The selected caption provider has no API key")
-
     CaptioningConfiguration(mode=CaptionMode.PROVIDER, provider_model_id=model.id).validate([model])
     # Background work for the file's owner: counted, never refused (ADR-0073).
     client = create_llm_client(
