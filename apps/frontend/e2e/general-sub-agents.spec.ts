@@ -237,7 +237,15 @@ async function openGeneralChat(page: Page, set: GeneralSubAgents) {
       socket.send(JSON.stringify({ type: "status", is_processing: true }));
       socket.send(JSON.stringify({ type: "start" }));
       socket.send(packet({ type: "start" }));
-      socket.send(packet({ type: "delta", content: "Checking catalogues" }));
+      socket.send(
+        packet({
+          type: "delta",
+          stream: "s",
+          seq: 1,
+          mode: "replace",
+          content: "Checking catalogues",
+        }),
+      );
       socket.send(packet({ type: "complete", content: "Hipparcos and Gaia" }));
       chat.messages = [{ ...user, status: "completed" }, answer];
       setTimeout(() => {

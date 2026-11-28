@@ -56,6 +56,9 @@ class ChatController:
             await self.connection.accept()
             self.manager.attach(self.chat_id, self.job, self.admission)
             self.outbound, replayed = subscribe(self.chat_id)
+            # A tab that joins mid-reply starts from the text so far (ADR-0084);
+            # queued before any later packet, since nothing awaits in between.
+            self._queue_stream_snapshots()
             self._is_running = True
             self.tasks.spawn(self.connection.heartbeat_loop())
             self.tasks.spawn(self._status_loop())
@@ -107,11 +110,23 @@ class ChatController:
         await self.connection.close(code=1008, reason="Token expired")
         raise WebSocketDisconnect(code=1008)
 
+    def _queue_stream_snapshots(self) -> None:
+        """Queue the open streams' whole text for this tab only (ADR-0084)."""
+        if self.outbound is None:
+            return
+        for packet in self.orchestrator.stream_snapshots():
+            self.outbound.put_nowait(packet)
+
     async def _accept_commands_loop(self) -> None:
         while self._is_running:
             cmd = await self.connection.receive_json()
             if cmd.get("type") == "cancel":
                 self.job.cancel()
+                continue
+
+            if cmd.get("type") == "resync":
+                # This tab missed packets; answered here, not behind a running job.
+                self._queue_stream_snapshots()
                 continue
 
             if cmd.get("type") == "tool_approval":

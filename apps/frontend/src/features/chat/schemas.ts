@@ -73,10 +73,18 @@ const AgentErrorEvent = z.object({
   error_code: z.string().nullish(),
 });
 
+// ADR-0084: numbered increments of one stream; `replace` carries the whole text.
+const DeltaFields = {
+  stream: z.string(),
+  seq: z.number().int(),
+  mode: z.enum(["append", "replace"]),
+  content: z.string().default(""),
+  thinking: z.string().default(""),
+};
+
 const AgentDeltaEvent = z.object({
   type: z.literal("delta"),
-  content: z.string(),
-  thinking: z.string(),
+  ...DeltaFields,
 });
 
 const SubAgentStartEvent = z.object({
@@ -85,8 +93,7 @@ const SubAgentStartEvent = z.object({
 
 const SubAgentDeltaEvent = z.object({
   type: z.literal("delta"),
-  content: z.string().default(""),
-  thinking: z.string().default(""),
+  ...DeltaFields,
 });
 
 const SubAgentToolCallEvent = z.object({

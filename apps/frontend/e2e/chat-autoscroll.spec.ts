@@ -114,6 +114,9 @@ test("follows each sent turn and its finished reply to the bottom", async ({
       socket.send(
         JSON.stringify({
           type: "delta",
+          stream: "s",
+          seq: 1,
+          mode: "replace",
           thinking: "",
           content: reply.slice(0, length),
         }),
@@ -152,6 +155,9 @@ test("scrolling up during a reply stays put until the next send", async ({
   socket.send(
     JSON.stringify({
       type: "delta",
+      stream: "s",
+      seq: 1,
+      mode: "replace",
       thinking: "",
       content: paragraphs("Reply", 5),
     }),
@@ -166,6 +172,9 @@ test("scrolling up during a reply stays put until the next send", async ({
   socket.send(
     JSON.stringify({
       type: "delta",
+      stream: "s",
+      seq: 1,
+      mode: "replace",
       thinking: "",
       content: paragraphs("Reply", 25),
     }),

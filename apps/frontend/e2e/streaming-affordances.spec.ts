@@ -102,7 +102,14 @@ test("shows twinkling stars while the agent works, then hands over to the reply"
 
   socket.send(JSON.stringify({ type: "start" }));
   socket.send(
-    JSON.stringify({ type: "delta", thinking: "", content: "First words" }),
+    JSON.stringify({
+      type: "delta",
+      stream: "s",
+      seq: 1,
+      mode: "replace",
+      thinking: "",
+      content: "First words",
+    }),
   );
   await expect(history(page).getByText("First words")).toBeVisible();
   // The live reply trails a single inline indicator instead.
@@ -126,7 +133,16 @@ test("offers jump to latest once the user scrolls up during streaming", async ({
   socket.send(JSON.stringify({ type: "status", is_processing: true }));
   socket.send(JSON.stringify({ type: "start" }));
   let content = "Live start";
-  socket.send(JSON.stringify({ type: "delta", thinking: "", content }));
+  socket.send(
+    JSON.stringify({
+      type: "delta",
+      stream: "s",
+      seq: 1,
+      mode: "replace",
+      thinking: "",
+      content,
+    }),
+  );
   await expect(history(page).getByText("Live start")).toBeInViewport();
   await expect.poll(() => distanceFromBottom(page)).toBeLessThan(16);
   // Following the bottom: nothing to jump to.
@@ -142,7 +158,16 @@ test("offers jump to latest once the user scrolls up during streaming", async ({
 
   for (let index = 0; index < 6; index++) {
     content += `\n\nStreamed paragraph ${index}. ${"More text. ".repeat(20)}`;
-    socket.send(JSON.stringify({ type: "delta", thinking: "", content }));
+    socket.send(
+      JSON.stringify({
+        type: "delta",
+        stream: "s",
+        seq: 1,
+        mode: "replace",
+        thinking: "",
+        content,
+      }),
+    );
   }
   await expect(history(page).getByText("Streamed paragraph 5")).toBeAttached();
   // The reader keeps their place while the reply grows below.
@@ -168,7 +193,16 @@ test("offers jump to latest once the user scrolls up during streaming", async ({
 
   // Following resumes for later deltas.
   content += "\n\nTail marker";
-  socket.send(JSON.stringify({ type: "delta", thinking: "", content }));
+  socket.send(
+    JSON.stringify({
+      type: "delta",
+      stream: "s",
+      seq: 1,
+      mode: "replace",
+      thinking: "",
+      content,
+    }),
+  );
   await expect(history(page).getByText("Tail marker")).toBeInViewport();
   await expect(jump(page)).toHaveCount(0);
 });

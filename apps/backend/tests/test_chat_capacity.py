@@ -24,6 +24,7 @@ def job(manager, owner="a", **runtime):
             pending_approvals={},
             cancel_active_generation=AsyncMock(),
             generate_chat_title=AsyncMock(),
+            stream_snapshots=lambda: [],
             **runtime,
         ),
         user_id=owner,

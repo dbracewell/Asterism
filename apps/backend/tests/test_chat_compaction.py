@@ -547,6 +547,7 @@ async def test_compact_command_runs_in_the_work_slot_and_never_overlaps_a_turn()
         pending_approvals={},
         cancel_active_generation=AsyncMock(),
         generate_chat_title=AsyncMock(),
+        stream_snapshots=lambda: [],
         compact_now=compact,
     )
     candidate = jobs.get_or_create(uuid.uuid4(), runtime, user_id="a")  # type: ignore[arg-type]
