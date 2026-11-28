@@ -1,6 +1,6 @@
 # EPIC-123: Split the largest modules
 
-Status: proposed (2026-11-27). Source: repository review (2026-11-26), work
+Status: complete (2026-11-28). Source: repository review (2026-11-26), work
 deferred from EPIC-117.
 
 ## Objective

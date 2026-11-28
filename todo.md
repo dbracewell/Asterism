@@ -134,45 +134,8 @@ Source: repository review (2026-11-26), work deferred from EPIC-117. Suggested o
 
 [EPIC-120](docs/epics/EPIC-120-INCREMENTAL-STREAMING.md) (US-120.1 through US-120.3) is complete and archived in the [2026-11-26 checklist](docs/archive/todo-completed-2026-11-26.md).
 
-[EPIC-121](docs/epics/EPIC-121-FEWER-DATABASE-QUERIES.md): Fewer database queries
+[EPIC-121](docs/epics/EPIC-121-FEWER-DATABASE-QUERIES.md) (US-121.1 through US-121.3) is complete and archived in the [2026-11-26 checklist](docs/archive/todo-completed-2026-11-26.md).
 
-- [x] US-121.1: Classes and course insights load in a few queries
-  - [x] The class roster and class list load members and counts in a fixed number of queries.
-  - [x] Course insights load per-student data in a fixed number of queries.
-  - [x] Tests count the queries for a class of a few hundred students.
-  - [x] Release note.
-- [x] US-121.2: Usage reports are paged and bounded
-  - [x] Usage reports are paginated and filtered in the database.
-  - [x] Long ID lists are split into bounded batches.
-  - [x] A budget is read once per request, not twice.
-  - [x] Tests with a large number of users, and release note.
-- [x] US-121.3: Bounded reads elsewhere
-  - [x] Vector lookups by file split long file lists into bounded batches.
-  - [x] Parallel tool calls in one turn share one model client lookup.
-  - [x] Tests and release note.
+[EPIC-122](docs/epics/EPIC-122-PER-MESSAGE-SEARCH-ROWS.md) (US-122.1) is complete and archived in the [2026-11-26 checklist](docs/archive/todo-completed-2026-11-26.md).
 
-[EPIC-122](docs/epics/EPIC-122-PER-MESSAGE-SEARCH-ROWS.md): Per-message search rows
-
-- [x] US-122.1: Index each message separately
-  - [x] An ADR records the change: one index row per message plus one per chat title, and how results are grouped into one hit per chat.
-  - [x] A versioned migration replaces the triggers and table, and rebuilds the index from existing chats and messages.
-  - [x] Adding, editing and deleting a message touch only that message's row; renaming a chat touches only its title row.
-  - [x] Search returns the same chats as before, one result per chat, still limited to the owner.
-  - [x] Tests: the upgrade from the previous revision, search results, and the work done per message write.
-  - [x] Release note (Data).
-
-[EPIC-123](docs/epics/EPIC-123-SPLIT-LARGE-MODULES.md): Split the largest modules
-
-- [x] US-123.1: Settings service
-  - [x] `settings/service.py` is split by settings area, with the public functions it exposes kept stable.
-  - [x] Unused cache comments are removed, and the database conflicts it doesn't handle return a clear error.
-  - [x] All tests pass unchanged; the architecture docs name the new modules.
-- [x] US-123.2: Chat orchestrator and router
-  - [x] `chat/orchestrator.py` is split into turn flow, stream handling and saving the reply.
-  - [x] `chat/router.py` is split by resource; the OpenAPI schema is unchanged.
-  - [x] All tests pass unchanged; the architecture docs name the new modules.
-- [x] US-123.3: Exports, agent and files
-  - [x] `canvas/exports.py` is split by export format.
-  - [x] `agent/agent.py` separates the loop from tool dispatch.
-  - [x] `files/service.py` separates storage, processing and listing.
-  - [x] All tests pass unchanged; the architecture docs name the new modules.
+[EPIC-123](docs/epics/EPIC-123-SPLIT-LARGE-MODULES.md) (US-123.1 through US-123.3) is complete and archived in the [2026-11-26 checklist](docs/archive/todo-completed-2026-11-26.md).

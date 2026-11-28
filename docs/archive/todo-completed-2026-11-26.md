@@ -253,3 +253,58 @@ EPIC-120 is complete: every story was confirmed and merged on 2026-11-28 through
   - [x] Every open tab of the same chat shows the same text.
   - [x] The finished message replaces the streamed text.
   - [x] Unit and E2E tests, including reconnecting mid-reply, and release note.
+
+## Fewer database queries
+
+EPIC-121 is complete: every story was confirmed and merged on 2026-11-28 through pull requests #182 (US-121.1), #183 (US-121.2) and #193 (US-121.3). Class lists and course insights load in a fixed number of queries; the admin usage report is paged and filtered in the database; vector filters split long file lists into batches of 500; parallel tool calls share one model lookup.
+
+### [EPIC-121: Fewer database queries](../epics/EPIC-121-FEWER-DATABASE-QUERIES.md)
+
+- [x] US-121.1: Classes and course insights load in a few queries
+  - [x] The class roster and class list load members and counts in a fixed number of queries.
+  - [x] Course insights load per-student data in a fixed number of queries.
+  - [x] Tests count the queries for a class of a few hundred students.
+  - [x] Release note.
+- [x] US-121.2: Usage reports are paged and bounded
+  - [x] Usage reports are paginated and filtered in the database.
+  - [x] Long ID lists are split into bounded batches.
+  - [x] A budget is read once per request, not twice.
+  - [x] Tests with a large number of users, and release note.
+- [x] US-121.3: Bounded reads elsewhere
+  - [x] Vector lookups by file split long file lists into bounded batches.
+  - [x] Parallel tool calls in one turn share one model client lookup.
+  - [x] Tests and release note.
+
+## Per-message search rows
+
+EPIC-122 is complete: every story was confirmed and merged on 2026-11-28 through pull requests #194 (US-122.1). Chat search keeps one row per message and one per title, keyed through `chat_search_keys`, so a message write touches only its own row (ADR-0085).
+
+### [EPIC-122: Per-message search rows](../epics/EPIC-122-PER-MESSAGE-SEARCH-ROWS.md)
+
+- [x] US-122.1: Index each message separately
+  - [x] An ADR records the change: one index row per message plus one per chat title, and how results are grouped into one hit per chat.
+  - [x] A versioned migration replaces the triggers and table, and rebuilds the index from existing chats and messages.
+  - [x] Adding, editing and deleting a message touch only that message's row; renaming a chat touches only its title row.
+  - [x] Search returns the same chats as before, one result per chat, still limited to the owner.
+  - [x] Tests: the upgrade from the previous revision, search results, and the work done per message write.
+  - [x] Release note (Data).
+
+## Split the largest modules
+
+EPIC-123 is complete: every story was confirmed and merged on 2026-11-28 through pull requests #195 (US-123.1), #196 (US-123.2) and #197 (US-123.3). The settings service, chat orchestrator and router, canvas exports, agent tool dispatch and file service are split by job, with their public functions kept. Tests changed only where they patch or import a name that moved, and the architecture boundary test names `agent.tool_dispatch` as part of the Agent assembly.
+
+### [EPIC-123: Split the largest modules](../epics/EPIC-123-SPLIT-LARGE-MODULES.md)
+
+- [x] US-123.1: Settings service
+  - [x] `settings/service.py` is split by settings area, with the public functions it exposes kept stable.
+  - [x] Unused cache comments are removed, and the database conflicts it doesn't handle return a clear error.
+  - [x] All tests pass unchanged; the architecture docs name the new modules.
+- [x] US-123.2: Chat orchestrator and router
+  - [x] `chat/orchestrator.py` is split into turn flow, stream handling and saving the reply.
+  - [x] `chat/router.py` is split by resource; the OpenAPI schema is unchanged.
+  - [x] All tests pass unchanged; the architecture docs name the new modules.
+- [x] US-123.3: Exports, agent and files
+  - [x] `canvas/exports.py` is split by export format.
+  - [x] `agent/agent.py` separates the loop from tool dispatch.
+  - [x] `files/service.py` separates storage, processing and listing.
+  - [x] All tests pass unchanged; the architecture docs name the new modules.
