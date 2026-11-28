@@ -170,7 +170,10 @@ reading and downloading keep working.
    the agent tools.
 5. [`canvas/exports.py`](../../apps/backend/asterism/domains/canvas/exports.py) and
    [`canvas/downloads.py`](../../apps/backend/asterism/domains/canvas/downloads.py):
-   downloads.
+   downloads. Each format has its own module:
+   [`export_docx.py`](../../apps/backend/asterism/domains/canvas/export_docx.py) and
+   [`export_pdf.py`](../../apps/backend/asterism/domains/canvas/export_pdf.py), sharing
+   [`export_markdown.py`](../../apps/backend/asterism/domains/canvas/export_markdown.py).
 6. [`features/canvas/`](../../apps/frontend/src/features/canvas/): the panel and the
    preview frame.
 

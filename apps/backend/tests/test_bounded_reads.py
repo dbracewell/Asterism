@@ -92,7 +92,7 @@ async def test_parallel_tool_calls_share_one_model_lookup(main_agent_session, mo
     monkeypatch.setattr(agent, "_get_client", lookup)
     monkeypatch.setattr(agent, "resolve_tools", AsyncMock(return_value=["web_fetch"]))
     invoke = AsyncMock(return_value=SimpleNamespace(content="ok"))
-    monkeypatch.setattr("asterism.domains.agent.agent.tool_registry.invoke_tool", invoke)
+    monkeypatch.setattr("asterism.domains.tools.registry.tool_registry.invoke_tool", invoke)
     monkeypatch.setattr(
         "asterism.domains.settings.service.get_app_settings",
         AsyncMock(return_value=SimpleNamespace(active_tools=["web_fetch"])),

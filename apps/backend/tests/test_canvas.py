@@ -656,7 +656,7 @@ async def test_each_kind_downloads_as_its_file_types(canvas_api, monkeypatch):
     text = pdfplumber.open(io.BytesIO(pdf.content)).pages[0].extract_text()
     assert "Plan" in text and "Ship" in text
     # Without a Unicode font, the PDF still renders, replacing what Latin-1 lacks.
-    monkeypatch.setattr("asterism.domains.canvas.exports.FONT_DIRS", ())
+    monkeypatch.setattr("asterism.domains.canvas.export_pdf.FONT_DIRS", ())
     fallback = await client.get(url("document", "pdf"), headers=auth())
     assert (
         fallback.status_code == 200 and "Ship" in pdfplumber.open(io.BytesIO(fallback.content)).pages[0].extract_text()

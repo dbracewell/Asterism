@@ -172,7 +172,7 @@ Source: repository review (2026-11-26), work deferred from EPIC-117. Suggested o
   - [x] `chat/router.py` is split by resource; the OpenAPI schema is unchanged.
   - [x] All tests pass unchanged; the architecture docs name the new modules.
 - [x] US-123.3: Exports, agent and files
-  - [ ] `canvas/exports.py` is split by export format.
-  - [ ] `agent/agent.py` separates the loop from tool dispatch.
-  - [ ] `files/service.py` separates storage, processing and listing.
-  - [ ] All tests pass unchanged; the architecture docs name the new modules.
+  - [x] `canvas/exports.py` is split by export format.
+  - [x] `agent/agent.py` separates the loop from tool dispatch.
+  - [x] `files/service.py` separates storage, processing and listing.
+  - [x] All tests pass unchanged; the architecture docs name the new modules.

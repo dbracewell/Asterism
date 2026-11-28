@@ -5,7 +5,7 @@ import io
 
 import pdfplumber
 import pytest
-from asterism.domains.canvas import exports
+from asterism.domains.canvas import export_pdf as exports
 from asterism.domains.canvas.exports import markdown_pdf
 
 
