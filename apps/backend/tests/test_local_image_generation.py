@@ -243,7 +243,7 @@ def local(images_api, monkeypatch, tmp_path):
     monkeypatch.setitem(catalog.BY_ID, "stub", stub)
     monkeypatch.setattr(provider, "cached_detect", lambda device="auto": hardware("cuda", 48))
     ready = {"value": True}
-    monkeypatch.setattr(ModelDownloadService, "is_ready", lambda self: ready["value"])
+    monkeypatch.setattr(ModelDownloadService, "ready", lambda self: asyncio.sleep(0, ready["value"]))
     started = AsyncMock()
     monkeypatch.setattr(ModelDownloadService, "start_download", started)
     runtime = LocalRuntime(idle_seconds=60)

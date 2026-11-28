@@ -84,8 +84,8 @@ def _known(model_id: str) -> CatalogEntry:
     return found
 
 
-def _download(model: CatalogEntry) -> LocalDownload:
-    progress = downloads.service(model).progress()
+async def _download(model: CatalogEntry) -> LocalDownload:
+    progress = await downloads.service(model).current_progress()
     return LocalDownload(
         status=progress.status,
         bytes_downloaded=progress.bytes_downloaded,
@@ -103,6 +103,7 @@ async def _overview(session) -> LocalOverview:
     clear_cache()
     hardware = detect(settings.device)
     best = recommend(hardware)
+    progress = {model.id: await _download(model) for model in CATALOG}
     return LocalOverview(
         installed=True,
         hardware=hardware,
@@ -121,7 +122,7 @@ async def _overview(session) -> LocalOverview:
                 disk_gb=model.disk_gb,
                 memory_gb=model.memory_gb,
                 plan=plan(model, hardware),
-                download=_download(model),
+                download=progress[model.id],
                 license_accepted=model.commercial_use or model.id in settings.accepted_licenses,
             )
             for model in CATALOG

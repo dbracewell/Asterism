@@ -143,10 +143,10 @@ Source: repository review (2026-11-26), work deferred from EPIC-117. Suggested o
   - [x] Building the ZIP runs off the event loop.
   - [x] Pictures already stored as PNG go into the ZIP without being re-encoded.
   - [x] Tests and release note.
-- [ ] US-119.3: Model checks don't block
-  - [ ] Checking a model bundle against its manifest runs off the event loop.
-  - [ ] The health check answers while a bundle is being verified.
-  - [ ] Tests and release note.
+- [x] US-119.3: Model checks don't block
+  - [x] Checking a model bundle against its manifest runs off the event loop.
+  - [x] The health check answers while a bundle is being verified.
+  - [x] Tests and release note.
 
 [EPIC-120](docs/epics/EPIC-120-INCREMENTAL-STREAMING.md): Incremental streaming
 

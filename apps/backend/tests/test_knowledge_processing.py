@@ -635,15 +635,12 @@ async def test_resume_leaves_captioning_alone_when_disabled(processing_session, 
 
 class FakeCaptionDownload:
     def __init__(self, *, ready: bool) -> None:
-        self.ready = ready
+        self.bundle_ready = ready
         self.started = 0
         self.on_bundle_ready = None
 
-    def _ensure_checked(self) -> None:
-        return None
-
-    def is_ready(self) -> bool:
-        return self.ready
+    async def ready(self) -> bool:
+        return self.bundle_ready
 
     async def start_download(self) -> None:
         self.started += 1

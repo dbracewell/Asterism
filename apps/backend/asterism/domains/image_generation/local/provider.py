@@ -57,7 +57,7 @@ class Diffusers(ImageGeneratorComponent[DiffusersParameters]):
         model = self._chosen(settings)
         if model is None:
             return ImageProviderStatus(provider=self.name, ready=False, detail="Choose a local model")
-        if not downloads.service(model).is_ready():
+        if not await downloads.service(model).ready():
             return ImageProviderStatus(provider=self.name, ready=False, detail=f"Download {model.name} first")
         fit = plan(model, cached_detect(settings.device))
         if not fit.fits:
@@ -67,7 +67,7 @@ class Diffusers(ImageGeneratorComponent[DiffusersParameters]):
     async def __call__(self, request: ImageRequest, progress: ProgressCallback) -> ProviderResult:
         settings = await _local_settings()
         model = self._chosen(settings)
-        if model is None or not downloads.service(model).is_ready():
+        if model is None or not await downloads.service(model).ready():
             raise ImageGenerationError("The local model isn't ready")
         hardware = cached_detect(settings.device)
         fit = plan(model, hardware)

@@ -1,6 +1,5 @@
 """Lifecycle-owned knowledge storage services."""
 
-import asyncio
 import uuid
 
 from sqlalchemy import select, update
@@ -145,8 +144,7 @@ async def initialize_knowledge_runtime(source: SourceReader) -> None:
         return
 
     embedding_download_service.on_bundle_ready = _embedding_bundle_ready
-    await asyncio.to_thread(embedding_download_service._ensure_checked)
-    if embedding_download_service.is_ready():
+    if await embedding_download_service.ready():
         await resume_ingestion_jobs()
     else:
         await embedding_download_service.start_download()
@@ -169,8 +167,7 @@ async def _provision_local_caption_model() -> None:
         mode = (await get_captioning_configuration(session=session)).mode
     if mode != KnowledgeCaptionMode.LOCAL.value:
         return
-    await asyncio.to_thread(captioning_download_service._ensure_checked)
-    if not captioning_download_service.is_ready():
+    if not await captioning_download_service.ready():
         logger.info("Local captioning is on and its model bundle is not ready; downloading it")
         await captioning_download_service.start_download()
 

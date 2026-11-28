@@ -1,6 +1,6 @@
 # EPIC-119: Non-blocking server work
 
-Status: proposed (2026-11-27). Source: repository review (2026-11-26), work
+Status: complete (2026-11-27). Source: repository review (2026-11-26), work
 deferred from EPIC-117.
 
 ## Objective
@@ -42,6 +42,6 @@ render.
 As an administrator, I want the server to keep answering health checks while it
 verifies downloaded models.
 
-- [ ] Checking a model bundle against its manifest runs off the event loop.
-- [ ] The health check answers while a bundle is being verified.
-- [ ] Tests and release note.
+- [x] Checking a model bundle against its manifest runs off the event loop.
+- [x] The health check answers while a bundle is being verified.
+- [x] Tests and release note.

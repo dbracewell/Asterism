@@ -422,7 +422,7 @@ class TestCaptionModelEndpoints:
         from asterism.domains.knowledge.router import get_caption_model_status
 
         with patch("asterism.domains.knowledge.router.captioning_download_service") as mock_service:
-            mock_service.progress.return_value = DownloadProgress(status="idle")
+            mock_service.current_progress = AsyncMock(return_value=DownloadProgress(status="idle"))
             result = await get_caption_model_status(user=admin_user)
             assert result.status == "idle"
 

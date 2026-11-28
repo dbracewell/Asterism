@@ -229,6 +229,26 @@ class ModelDownloadService:
 
     def __post_init__(self) -> None:
         self.model_root = self.model_root.resolve()
+        self._check_lock = asyncio.Lock()
+
+    async def check(self) -> None:
+        """Verify an existing bundle in a worker thread, so hashing never blocks the event loop.
+
+        One check runs at a time; callers that arrive meanwhile wait for it and
+        then reuse its cached result.
+        """
+        async with self._check_lock:
+            await asyncio.to_thread(self._ensure_checked)
+
+    async def ready(self) -> bool:
+        """Whether the bundle is verified and ready, checked off the event loop."""
+        await self.check()
+        return self.state.status == "ready"
+
+    async def current_progress(self) -> DownloadProgress:
+        """The download state, with any bundle check done off the event loop."""
+        await self.check()
+        return await asyncio.to_thread(self.progress)
 
     def _migrate_previous_if_needed(self) -> None:
         previous_root = self.model_root.with_name(f"{self.model_root.name}.previous")
@@ -273,7 +293,7 @@ class ModelDownloadService:
         if self.state.status in {"downloading", "verifying"}:
             self.state = DownloadState(status="idle")
 
-        return self.progress()
+        return await self.current_progress()
 
     async def start_download(self) -> DownloadProgress:
         if self.state.status == "ready" or self.state.status in {"downloading", "verifying"}:
@@ -393,7 +413,8 @@ class ModelDownloadService:
 
             bundle_sha256 = await asyncio.to_thread(self._download_sync, cancel_requested)
             self.state.status = "verifying"
-            self._check_existing_bundle()
+            # A new bundle isn't in the verification cache: hashing it takes a while.
+            await asyncio.to_thread(self._check_existing_bundle)
             if not self.is_ready():
                 raise ValueError("Downloaded bundle did not pass verification")
 

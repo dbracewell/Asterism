@@ -76,8 +76,8 @@ def _known(model_id: str) -> OnnxCatalogEntry:
     return found
 
 
-def _download(model: OnnxCatalogEntry) -> OnnxDownload:
-    progress = downloads.service(model).progress()
+async def _download(model: OnnxCatalogEntry) -> OnnxDownload:
+    progress = await downloads.service(model).current_progress()
     return OnnxDownload(
         status=progress.status,
         bytes_downloaded=progress.bytes_downloaded,
@@ -90,6 +90,7 @@ async def _overview(session) -> OnnxOverview:
     settings = await read_settings(session)
     ram = server_ram_gb()
     best = recommend(ram)
+    progress = {model.id: await _download(model) for model in CATALOG}
     return OnnxOverview(
         memory_gb=ram,
         recommended_id=best.id if best else None,
@@ -110,7 +111,7 @@ async def _overview(session) -> OnnxOverview:
                 memory_gb=model.memory_gb,
                 steps=model.steps,
                 plan=plan(model, ram),
-                download=_download(model),
+                download=progress[model.id],
                 license_accepted=model.commercial_use or model.id in settings.accepted_licenses,
             )
             for model in CATALOG
