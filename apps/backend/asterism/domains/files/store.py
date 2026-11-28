@@ -285,6 +285,35 @@ class LocalFileStore:
         shutil.rmtree(owner_dir, ignore_errors=True)
 
 
+async def save_off_loop(store: FileStore, user_id: str, file_id: uuid.UUID, extension: str, content: bytes) -> str:
+    """Run :meth:`FileStore.save` in a worker thread, so a large write doesn't block other requests.
+
+    A thread can't be stopped, so when the caller is cancelled mid-write this
+    waits for the write to finish and deletes it: the caller never learned
+    the key, so the bytes would otherwise be left behind.
+
+    Args:
+        store: Store to write to.
+        user_id: Owner of the file.
+        file_id: Identifier of the file row the bytes belong to.
+        extension: Extension including the dot, or an empty string.
+        content: Raw bytes to store.
+
+    Returns:
+        The opaque storage key of the written file.
+    """
+    write = asyncio.ensure_future(asyncio.to_thread(store.save, user_id, file_id, extension, content))
+    try:
+        return await asyncio.shield(write)
+    except asyncio.CancelledError:
+        try:
+            key = await write
+        except BaseException:
+            raise asyncio.CancelledError from None
+        store.delete(user_id, key)
+        raise
+
+
 def get_file_store() -> FileStore:
     """Build the file store configured for this deployment.
 

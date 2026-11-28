@@ -12,7 +12,6 @@ rules shape the code here:
 """
 
 import asyncio
-import hashlib
 import mimetypes
 import re
 import unicodedata
@@ -26,6 +25,7 @@ from fastapi import UploadFile
 from fastapi.responses import FileResponse, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from asterism.common.hashing import sha256_bytes
 from asterism.common.images import generate_thumbnail
 from asterism.common.log import get_logger
 from asterism.core import config
@@ -57,6 +57,7 @@ from .queries import (
 )
 from .schemas import SimilarFile, SimilarFileList, UserFile, UserFileList
 from .store import get_file_store as get_file_store
+from .store import save_off_loop
 
 logger = get_logger("FilesService")
 
@@ -345,7 +346,7 @@ async def new_library_file(
     file_kind = classify_file(filename, mime_type)
     thumbnail = await asyncio.to_thread(generate_thumbnail, content) if file_kind is FileKind.IMAGE else None
     file_id = uuid.uuid4()
-    storage_key = get_file_store().save(user_id, file_id, Path(original_name).suffix, content)
+    storage_key = await save_off_loop(get_file_store(), user_id, file_id, Path(original_name).suffix, content)
     model = UserFileModel(
         id=file_id,
         storage_key=storage_key,
@@ -355,7 +356,7 @@ async def new_library_file(
         size=len(content),
         mime_type=mime_type,
         kind=file_kind,
-        sha256=hashlib.sha256(content).hexdigest(),
+        sha256=await sha256_bytes(content),
         content_status=FileContentStatus.PENDING,
         thumbnail=thumbnail,
     )
@@ -415,7 +416,7 @@ async def upload_files(
                     else f"These files together exceed the {config.max_upload_file_size_bytes} byte upload limit",
                 )
             remaining -= len(content)
-            sha256 = hashlib.sha256(content).hexdigest()
+            sha256 = await sha256_bytes(content)
             existing = await session.scalar(
                 select_file_by_content(user_id=user_id, original_name=original_name, sha256=sha256)
             )
@@ -433,7 +434,7 @@ async def upload_files(
             thumbnail = await asyncio.to_thread(generate_thumbnail, content) if file_kind is FileKind.IMAGE else None
 
             file_id = uuid.uuid4()
-            storage_key = store.save(user_id, file_id, Path(original_name).suffix, content)
+            storage_key = await save_off_loop(store, user_id, file_id, Path(original_name).suffix, content)
             saved.append(storage_key)
             model = UserFileModel(
                 id=file_id,

@@ -199,7 +199,7 @@ async def _run(
             if not result.images:
                 raise ImageGenerationError("The image provider returned no images")
             await progress(ImageProgress(stage="saving"))
-            pngs = [(_clean_png(image), image) for image in result.images[: request.count]]
+            pngs = [(await asyncio.to_thread(_clean_png, image), image) for image in result.images[: request.count]]
     except asyncio.CancelledError:
         await asyncio.shield(
             _record(

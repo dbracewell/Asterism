@@ -1,5 +1,6 @@
 """Streaming hash helpers for filesystem-backed artifacts."""
 
+import asyncio
 import hashlib
 from collections.abc import Callable
 from pathlib import Path
@@ -22,6 +23,21 @@ def sha256_file(path: Path) -> str:
         for chunk in iter(lambda: source.read(SHA256_BLOCK_SIZE), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+async def sha256_bytes(content: bytes) -> str:
+    """Return the SHA-256 digest of in-memory bytes, computed off the event loop.
+
+    ``hashlib`` releases the GIL for large inputs, so other requests keep
+    running while a large upload is hashed.
+
+    Args:
+        content: Bytes to hash.
+
+    Returns:
+        The lowercase hexadecimal SHA-256 digest.
+    """
+    return await asyncio.to_thread(lambda: hashlib.sha256(content).hexdigest())
 
 
 def verify_file(

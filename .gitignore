@@ -7,3 +7,7 @@ node_modules
 # Capacity check results (scripts/capacity-check.mjs)
 .capacity/
 repo_review.md
+
+# Python bytecode
+__pycache__/
+*.pyc
