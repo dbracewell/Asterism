@@ -88,7 +88,7 @@ class ProviderInfo(BaseModel):
 
     ``api_key`` is a :class:`SecretStr`, so JSON serialization redacts it to
     ``**********`` automatically; the service layer treats that exact string as
-    "keep the existing stored key" on updates (see ``service._provider_api_key``).
+    "keep the existing stored key" on updates (see ``providers._provider_api_key``).
     """
 
     model_config = ConfigDict(from_attributes=True)

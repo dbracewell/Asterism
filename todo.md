@@ -163,11 +163,11 @@ Source: repository review (2026-11-26), work deferred from EPIC-117. Suggested o
 
 [EPIC-123](docs/epics/EPIC-123-SPLIT-LARGE-MODULES.md): Split the largest modules
 
-- [ ] US-123.1: Settings service
-  - [ ] `settings/service.py` is split by settings area, with the public functions it exposes kept stable.
-  - [ ] Unused cache comments are removed, and the database conflicts it doesn't handle return a clear error.
-  - [ ] All tests pass unchanged; the architecture docs name the new modules.
-- [ ] US-123.2: Chat orchestrator and router
+- [x] US-123.1: Settings service
+  - [x] `settings/service.py` is split by settings area, with the public functions it exposes kept stable.
+  - [x] Unused cache comments are removed, and the database conflicts it doesn't handle return a clear error.
+  - [x] All tests pass unchanged; the architecture docs name the new modules.
+- [x] US-123.2: Chat orchestrator and router
   - [ ] `chat/orchestrator.py` is split into turn flow, stream handling and saving the reply.
   - [ ] `chat/router.py` is split by resource; the OpenAPI schema is unchanged.
   - [ ] All tests pass unchanged; the architecture docs name the new modules.

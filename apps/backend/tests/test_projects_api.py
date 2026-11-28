@@ -62,7 +62,9 @@ async def project_api(tmp_path, monkeypatch):
         "chat.service",
         "chat.compaction",
         "agent.service",
-        "settings.service",
+        "settings.user_settings",
+        "settings.app_settings",
+        "settings.providers",
     ]:
         monkeypatch.setattr(f"asterism.domains.{module}.get_async_db_session", session_context)
 

@@ -23,7 +23,7 @@ logger = get_logger("SettingsSecrets")
 
 # Coupling note: this value must equal Pydantic ``SecretStr``'s JSON redaction
 # output ("**********"). The service layer compares incoming API keys against
-# it to detect a client echoing back a redacted key (see ``service._provider_api_key``).
+# it to detect a client echoing back a redacted key (see ``providers._provider_api_key``).
 REDACTED_SECRET = "**********"
 _ENCRYPTED_PREFIX = "enc:v1:"
 _SECRET_KEY_SUFFIXES = ("_api_key", "_secret", "_token", "_password")

@@ -233,7 +233,7 @@ class UserSettingModel(Base, TimestampMixin):
     """One row per (user, setting key) in ``user_settings``.
 
     ``value`` is untyped JSON; the whitelist of keys and their shapes is
-    enforced in :func:`service._validate_user_setting`, not by the schema.
+    enforced in :func:`user_settings._validate_user_setting`, not by the schema.
     Composite primary key ``(user_id, key)``.
     """
 

@@ -224,7 +224,8 @@ async def test_runtime_refreshes_main_behavior_separate_from_model_and_rechecks_
         yield session
 
     monkeypatch.setattr("asterism.domains.agent.service.get_async_db_session", db)
-    monkeypatch.setattr("asterism.domains.settings.service.get_async_db_session", db)
+    for module in ("user_settings", "providers"):
+        monkeypatch.setattr(f"asterism.domains.settings.{module}.get_async_db_session", db)
     await update_main_agent("user-a", MainAgentUpdate(system_prompt="Updated", max_steps=9), session)
     await upsert_user_setting("user-a", "default_model_id", str(model.id), session)
     await runtime.refresh_main_configuration()
