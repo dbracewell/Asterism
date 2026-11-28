@@ -31,6 +31,12 @@ Unreleased into its version and date.
   chat and message once, so the first start after upgrading takes longer on a
   large database. Search finds the same chats.
 
+### Image
+
+- The image's Node.js moves to 22.23.5, a security release, and CI and
+  development use it too (`.node-version`). Local development needs Node 22.23
+  or later.
+
 ### Behavior
 
 - Saving admin providers with two of the same name, or swapping two

@@ -73,7 +73,7 @@ To run Asterism for real users, behind HTTPS with backups, follow the
 
 ## Local development
 
-You need Node.js 22.13+, pnpm 11+, Python 3.13+ (with SQLite 3.45+), uv and
+You need Node.js 22.23+, pnpm 11+, Python 3.13+ (with SQLite 3.45+), uv and
 mprocs 0.9.6+.
 
 ```bash
