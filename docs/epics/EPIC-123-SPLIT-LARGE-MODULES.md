@@ -40,7 +40,7 @@ domain.
 
 As a maintainer, I want the remaining large modules split the same way.
 
-- [ ] `canvas/exports.py` is split by export format.
-- [ ] `agent/agent.py` separates the loop from tool dispatch.
-- [ ] `files/service.py` separates storage, processing and listing.
-- [ ] All tests pass unchanged; the architecture docs name the new modules.
+- [x] `canvas/exports.py` is split by export format.
+- [x] `agent/agent.py` separates the loop from tool dispatch.
+- [x] `files/service.py` separates storage, processing and listing.
+- [x] All tests pass unchanged; the architecture docs name the new modules.

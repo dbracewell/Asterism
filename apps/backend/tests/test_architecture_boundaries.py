@@ -41,6 +41,8 @@ DB_COMPOSITION_ROOTS = {
         "asterism.domains.user.models",
     },
 }
+# The Agent's assembly: the loop and its tool dispatch (US-123.3).
+AGENT_ASSEMBLY = {"asterism.domains.agent.agent", "asterism.domains.agent.tool_dispatch"}
 AGENT_CHAT_READERS = {
     "asterism.domains.chat.schemas.Chat",
     "asterism.domains.chat.schemas.MessageExecution",
@@ -90,7 +92,7 @@ def violations(root):
                 ):
                     reason = "Agent consumes injected skill snapshots rather than skill storage or policy"
                 if within(target, "asterism.domains.chat"):
-                    if source != "asterism.domains.agent.agent" or target not in AGENT_CHAT_READERS:
+                    if source not in AGENT_ASSEMBLY or target not in AGENT_CHAT_READERS:
                         reason = "only the named Agent assembly module may wire published chat readers"
                 if within(target, "asterism.domains.files"):
                     reason = "Agent consumes the injected file reader rather than the files domain"

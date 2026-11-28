@@ -1,8 +1,10 @@
-"""Use-case orchestration for the file domain.
+"""File storage use cases: uploads, reading and downloading bytes, and deletes.
 
 This module is the transactional boundary: it coordinates the database, the
-file store, the content processor and the knowledge-ingestion runtime. Two
-rules shape the code here:
+file store, the content processor and the knowledge-ingestion runtime. Reads
+and listings live in :mod:`.listing` and a file's knowledge processing in
+:mod:`.knowledge_processing`; their public functions are re-exported here.
+Two rules shape the code here:
 
 - The database is authoritative. Bytes are written only after the row exists
   (or removed only after the row is gone), and the two are reconciled on
@@ -18,7 +20,6 @@ import unicodedata
 import uuid
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Literal
 
 import filetype
 from fastapi import UploadFile
@@ -34,28 +35,35 @@ from asterism.db.database import get_async_db_session
 from asterism.domains.courses.locks import require_not_course_managed
 from asterism.domains.knowledge.artifacts import (
     ArtifactSummary,
-    cancel_processing,
     delete_file_vectors,
     ensure_artifact,
     remove_artifacts,
-    reset_for_reprocessing,
-    similar_files,
     start_ingestion,
 )
 
-from .listing import describe_files, file_knowledge_summaries, list_file_page
+from .knowledge_processing import (
+    cancel_file_knowledge_processing,
+    get_file_knowledge_status,
+    get_similar_files,
+    regenerate_file_knowledge,
+)
+from .listing import (
+    _owned_file,
+    describe_files,
+    get_file_info_by_id,
+    get_user_file_info,
+    list_user_files,
+    validate_owned_file_ids,
+)
 from .models import FileContentStatus, FileKind, UserFileModel
 from .processor import ensure_file_processed as ensure_file_processed
 from .queries import (
     select_file_by_content,
-    select_file_by_name,
     select_file_id_by_name,
     select_files_by_ids,
     select_files_by_names,
-    select_owned_file_ids,
-    select_owned_files,
 )
-from .schemas import SimilarFile, SimilarFileList, UserFile, UserFileList
+from .schemas import UserFile, UserFileList
 from .store import get_file_store as get_file_store
 from .store import save_off_loop
 
@@ -191,33 +199,6 @@ async def get_user_file(
             media_type=file.mime_type,
             headers=headers,
         )
-
-
-async def get_user_file_info(
-    user_id: str,
-    filename: str,
-    session: AsyncSession | None = None,
-) -> UserFile:
-    """Get metadata for one of the caller's files.
-
-    Args:
-        user_id: Owner of the file.
-        filename: Display name of the file.
-        session: Optional existing session to reuse; a new one is opened when
-            omitted.
-
-    Returns:
-        The file's metadata, including project and knowledge context.
-
-    Raises:
-        NotFoundException: If the file does not exist.
-    """
-    async with get_async_db_session(session) as session:
-        file = await session.scalar(select_file_by_name(user_id=user_id, filename=filename))
-        if file is None:
-            raise NotFoundException("File does not exist")
-
-        return (await describe_files(user_id=user_id, files=[file], session=session))[0]
 
 
 def sanitize_filename(name: str) -> str:
@@ -474,199 +455,9 @@ async def upload_files(
     return UserFileList(files=await describe_files(user_id=user_id, files=created, session=session))
 
 
-async def list_user_files(
-    *,
-    user_id: str,
-    session: AsyncSession,
-    page: int = 1,
-    page_size: int = 50,
-    sort_by: Literal["name", "kind", "date", "size"] = "name",
-    query: str | None = None,
-) -> UserFileList:
-    """List the caller's files.
-
-    Args:
-        user_id: Owner whose files are listed.
-        session: Active async session; no commit happens here.
-        page: 1-based page number.
-        page_size: Rows per page (1..100).
-        sort_by: Primary ordering key.
-        query: Optional case-insensitive substring filter on the file name.
-
-    Returns:
-        One page of the caller's files with project and knowledge context.
-    """
-    statement = select_owned_files(user_id=user_id, query=query, sort_by=sort_by)
-    return await list_file_page(
-        user_id=user_id,
-        statement=statement,
-        session=session,
-        page=page,
-        page_size=page_size,
-    )
-
-
-async def get_file_knowledge_status(
-    *,
-    user_id: str,
-    filename: str,
-    session: AsyncSession,
-):
-    """Get the knowledge-artifact status for one of the caller's files.
-
-    The reported artifact is the one that represents the file's knowledge: the
-    current generation when one exists (the generation retrieval serves), and
-    otherwise the newest generation (the one still being built).
-
-    Args:
-        user_id: Owner of the file.
-        filename: Display name of the file.
-        session: Active async session; no commit happens here.
-
-    Returns:
-        The file's representative knowledge artifact.
-
-    Raises:
-        NotFoundException: If the file or its artifact does not exist.
-    """
-    file = await _owned_file(user_id=user_id, filename=filename, session=session)
-    summaries = await file_knowledge_summaries(file_ids=[file.id], session=session)
-    artifact = summaries.get(file.id)
-    if artifact is None:
-        raise NotFoundException("Knowledge processing record not found")
-    return artifact
-
-
-async def regenerate_file_knowledge(*, user_id: str, filename: str, session: AsyncSession):
-    """Re-run knowledge processing for one of the caller's files.
-
-    The newest generation is reset to ``pending`` and re-queued — that is the
-    generation representing the latest processing attempt, so a failed
-    replacement is retried rather than the serving generation being
-    disturbed. Any in-flight job for that artifact is canceled first so the
-    retry cannot race the previous run.
-
-    Args:
-        user_id: Owner of the file.
-        filename: Display name of the file.
-        session: Active async session; the reset is committed here.
-
-    Returns:
-        The artifact in its reset ``pending`` state.
-
-    Raises:
-        NotFoundException: If the file or its artifact does not exist.
-    """
-    file = await _owned_file(user_id=user_id, filename=filename, session=session)
-    artifact = await reset_for_reprocessing(file_id=file.id, session=session)
-    if artifact is None:
-        raise NotFoundException("Knowledge processing record not found")
-    return artifact
-
-
-async def cancel_file_knowledge_processing(*, user_id: str, filename: str, session: AsyncSession):
-    """Cancel in-flight knowledge processing for one of the caller's files.
-
-    The newest generation is targeted, so cancelling a pending replacement
-    leaves the current (serving) generation untouched and the file stays
-    searchable.
-
-    Args:
-        user_id: Owner of the file.
-        filename: Display name of the file.
-        session: Active async session; the cancellation is committed here.
-
-    Returns:
-        The artifact in its current state. Artifacts that are not pending or
-        processing are returned unchanged.
-
-    Raises:
-        NotFoundException: If the file or its artifact does not exist.
-    """
-    file = await _owned_file(user_id=user_id, filename=filename, session=session)
-    artifact = await cancel_processing(file_id=file.id, session=session)
-    if artifact is None:
-        raise NotFoundException("Knowledge processing record not found")
-    return artifact
-
-
-_SIMILARITY_MAX_SOURCE_VECTORS = 256
 """Upper bound on the source chunks used to build a file's centroid direction."""
 
-_SIMILARITY_CHUNKS_PER_RESULT = 20
 """How many candidate chunks to pull per requested similar file."""
-
-
-async def get_similar_files(*, user_id: str, filename: str, session: AsyncSession, limit: int = 5) -> SimilarFileList:
-    """Find the caller's files most similar to one of their files.
-
-    The query file's centroid direction is computed from its own chunk
-    embeddings, searched against the caller's ready current artifacts, and the
-    best-matching chunk per candidate file becomes its score.
-
-    Args:
-        user_id: Owner the search is scoped to.
-        filename: Display name of the query file.
-        session: Active async session; no commit happens here.
-        limit: Maximum number of similar files to return.
-
-    Returns:
-        Ranked similar files with their cosine similarity score. The list is
-        empty when the query file has no ready current artifact.
-
-    Raises:
-        NotFoundException: If the query file does not exist.
-    """
-    file = await _owned_file(user_id=user_id, filename=filename, session=session)
-    ranked = await similar_files(
-        user_id=user_id,
-        file_id=file.id,
-        limit=limit,
-        session=session,
-    )
-    if not ranked:
-        return SimilarFileList(files=[])
-    models = {
-        str(model.id): model
-        for model in await session.scalars(
-            select_files_by_ids(user_id=user_id, file_ids=[candidate for candidate, _ in ranked])
-        )
-    }
-    summaries = {
-        str(file.id): file
-        for file in await describe_files(
-            user_id=user_id,
-            files=list(models.values()),
-            session=session,
-        )
-    }
-    return SimilarFileList(
-        files=[
-            SimilarFile(file=summaries[str(candidate)], score=score)
-            for candidate, score in ranked
-            if str(candidate) in models
-        ],
-    )
-
-
-async def _owned_file(*, user_id: str, filename: str, session: AsyncSession) -> UserFileModel:
-    """Load one of the caller's files by its display name.
-
-    Args:
-        user_id: Owner of the file.
-        filename: Display name of the file.
-        session: Active async session; no commit happens here.
-
-    Returns:
-        The matching file row.
-
-    Raises:
-        NotFoundException: If the caller owns no file with that name.
-    """
-    file = await session.scalar(select_file_by_name(user_id=user_id, filename=filename))
-    if file is None:
-        raise NotFoundException("File not found")
-    return file
 
 
 async def delete_user_file(*, user_id: str, filename: str, session: AsyncSession) -> UserFile:
@@ -787,44 +578,6 @@ async def delete_user_files(
     return UserFileList(files=deleted_files)
 
 
-async def validate_owned_file_ids(*, user_id: str, file_ids: list[uuid.UUID], session: AsyncSession) -> None:
-    """Assert that every given file id belongs to the caller.
-
-    Args:
-        user_id: Owner the files must belong to.
-        file_ids: File ids to validate.
-        session: Active async session; no commit happens here.
-
-    Raises:
-        NotFoundException: If any id is not owned by the caller.
-    """
-    owned = set(
-        await session.scalars(select_owned_file_ids(user_id=user_id, file_ids=file_ids)),
-    )
-    if owned != set(file_ids):
-        raise NotFoundException("File not found")
-
-
-async def get_file_info_by_id(*, user_id: str, file_id: uuid.UUID, session: AsyncSession) -> UserFile:
-    """Get metadata for one of the caller's files by its id.
-
-    Args:
-        user_id: Owner of the file.
-        file_id: Identifier of the file.
-        session: Active async session; no commit happens here.
-
-    Returns:
-        The file's metadata, including project and knowledge context.
-
-    Raises:
-        NotFoundException: If the caller owns no file with that id.
-    """
-    file = await session.scalar(select_files_by_ids(user_id=user_id, file_ids=[file_id]))
-    if file is None:
-        raise NotFoundException("File not found")
-    return (await describe_files(user_id=user_id, files=[file], session=session))[0]
-
-
 async def download_file_by_id(*, user_id: str, file_id: uuid.UUID, session: AsyncSession) -> FileResponse:
     """Download the original bytes of one of the caller's files by its id.
 
@@ -851,3 +604,28 @@ async def download_file_by_id(*, user_id: str, file_id: uuid.UUID, session: Asyn
         media_type=file.mime_type,
         headers={"Cache-Control": "private, no-store", **SOURCE_RESPONSE_HEADERS},
     )
+
+
+__all__ = [
+    "NewLibraryFile",
+    "SOURCE_RESPONSE_HEADERS",
+    "cancel_file_knowledge_processing",
+    "classify_file",
+    "delete_user_file",
+    "delete_user_files",
+    "detect_mime_type",
+    "download_file_by_id",
+    "get_file_info_by_id",
+    "get_file_knowledge_status",
+    "get_similar_files",
+    "get_user_file",
+    "get_user_file_info",
+    "list_user_files",
+    "logger",
+    "new_library_file",
+    "regenerate_file_knowledge",
+    "sanitize_filename",
+    "start_file_ingestion",
+    "upload_files",
+    "validate_owned_file_ids",
+]

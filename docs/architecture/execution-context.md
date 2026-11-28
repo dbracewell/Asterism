@@ -150,7 +150,9 @@ To follow this in the code, read these in order:
    the effective tools and the delegation set.
 5. [`agent/agent.py`](../../apps/backend/asterism/domains/agent/agent.py): the loop,
    which receives `ExecutionScope`, a `RuntimeFileReader` and a `RetrievalService`
-   rather than querying projects or chats itself.
+   rather than querying projects or chats itself. Its tool dispatch (authorizing
+   and running a step's tool calls) is in
+   [`agent/tool_dispatch.py`](../../apps/backend/asterism/domains/agent/tool_dispatch.py).
 6. [`chat/retrieval.py`](../../apps/backend/asterism/domains/chat/retrieval.py) and
    [`chat/runtime_files.py`](../../apps/backend/asterism/domains/chat/runtime_files.py):
    wire live file checks into

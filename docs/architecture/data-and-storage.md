@@ -379,7 +379,8 @@ minutes, signed with `SYSTEM_KEY`, so the browser can stream it straight to disk
    messages and execution records.
 5. [`files/store.py`](../../apps/backend/asterism/domains/files/store.py) and
    [`files/service.py`](../../apps/backend/asterism/domains/files/service.py): file
-   storage and the library.
+   storage and the library, with reads and listings in
+   [`files/listing.py`](../../apps/backend/asterism/domains/files/listing.py).
 6. [`chat/search.py`](../../apps/backend/asterism/domains/chat/search.py) and
    [`chat/search_index.py`](../../apps/backend/asterism/domains/chat/search_index.py):
    search.

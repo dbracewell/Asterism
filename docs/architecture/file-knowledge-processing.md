@@ -275,7 +275,9 @@ neither imports the other.
 ## Where the code lives
 
 1. [`files/service.py`](../../apps/backend/asterism/domains/files/service.py):
-   upload, regenerate, cancel, delete and similar files.
+   upload and delete;
+   [`files/knowledge_processing.py`](../../apps/backend/asterism/domains/files/knowledge_processing.py):
+   status, regenerate, cancel and similar files.
 2. [`knowledge/artifacts.py`](../../apps/backend/asterism/domains/knowledge/artifacts.py):
    the published artifact service.
 3. [`knowledge/runtime.py`](../../apps/backend/asterism/domains/knowledge/runtime.py):
