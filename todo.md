@@ -120,28 +120,90 @@ Source: repository review (2026-11-26), verified against the code at `40101ac7`.
 
 [EPIC-116](docs/epics/EPIC-116-UNTRUSTED-FILES-AND-INPUT.md) (US-116.1 through US-116.3) is complete and archived in the [2026-11-26 checklist](docs/archive/todo-completed-2026-11-26.md).
 
-[EPIC-117](docs/epics/EPIC-117-CORRECTNESS-CLEANUP.md): Correctness cleanup
-
-- [x] US-117.1: Settings and admin consistency
-  - [x] A settings import that fails partway leaves nothing applied, and never gives the admin group a budget.
-  - [x] Model discovery keeps the draft model.
-  - [x] Pack review and course apply offer only tools the person's group allows.
-  - [x] Tool settings check component parameters; the generic setting route for study chat checks groups; nested secrets are redacted.
-  - [x] Tests and release note.
-- [x] US-117.2: Chat and frontend fixes
-  - [x] The chat connection's heartbeat timeout has a margin over the server's ping; stray `console.log` calls are removed.
-  - [x] Chat titles can be generated again later in a chat.
-  - [x] File names containing `%` open and show correctly.
-  - [x] Sending a message refreshes only the queries it changes.
-  - [x] Downloads share one helper; the shared event worker drops closed tabs and closes the stream on sign-out.
-  - [x] The query client is per request on the server; the canvas preview keeps listening until a valid message arrives.
-  - [x] Tests and release note.
-- [x] US-117.3: Housekeeping
-  - [x] Word tables with many columns keep a positive picture width; ZIP names keep their folder when disambiguated.
-  - [x] `SECURITY.md` names the supported version.
-  - [x] The container health check doesn't follow redirects; `reset-databases` checks the database URL prefix; `.dockerignore` excludes docs, tests and local data.
-  - [x] The unused proxy-list call in `setup.mjs` is removed.
+[EPIC-117](docs/epics/EPIC-117-CORRECTNESS-CLEANUP.md) (US-117.1 through US-117.3) is complete and archived in the [2026-11-26 checklist](docs/archive/todo-completed-2026-11-26.md).
 
 ## Release pages (proposed 2026-11-27)
 
 [EPIC-118](docs/epics/EPIC-118-RELEASE-PAGES.md) (US-118.1) is complete and archived in the [2026-11-26 checklist](docs/archive/todo-completed-2026-11-26.md).
+
+## Scale follow-ups (proposed 2026-11-27)
+
+Source: repository review (2026-11-26), work deferred from EPIC-117. Suggested order: EPIC-119 → 120 → 121 → 122 → 123. Work one story at a time.
+
+[EPIC-119](docs/epics/EPIC-119-NON-BLOCKING-SERVER-WORK.md): Non-blocking server work
+
+- [ ] US-119.1: Uploads and generated images don't block
+  - [ ] Hashing and writing an upload run off the event loop, in chunks.
+  - [ ] Cleaning a generated PNG runs off the event loop.
+  - [ ] A file that is already ready isn't hashed again each time it is checked.
+  - [ ] A test shows another request is answered while a large upload is hashed.
+  - [ ] Tests and release note.
+- [ ] US-119.2: Exports don't hold the database
+  - [ ] A canvas export reads what it needs, closes its database session, then renders.
+  - [ ] Building the ZIP runs off the event loop.
+  - [ ] Pictures already stored as PNG go into the ZIP without being re-encoded.
+  - [ ] Tests and release note.
+- [ ] US-119.3: Model checks don't block
+  - [ ] Checking a model bundle against its manifest runs off the event loop.
+  - [ ] The health check answers while a bundle is being verified.
+  - [ ] Tests and release note.
+
+[EPIC-120](docs/epics/EPIC-120-INCREMENTAL-STREAMING.md): Incremental streaming
+
+- [ ] US-120.1: Decide the streaming format
+  - [ ] An ADR covers the format: appended text for `content` and `thinking`, numbered in order; a snapshot of the text so far when a tab connects mid-reply or misses a number; and the final message as the source of truth.
+  - [ ] The ADR covers exercise runs, whose text is never streamed (ADR-0043).
+- [ ] US-120.2: The server sends only new text
+  - [ ] Stream events carry only the text added since the last event, with a sequence number.
+  - [ ] A tab that connects mid-reply first gets the text so far.
+  - [ ] Cancelling or failing a reply still saves the full text written so far.
+  - [ ] Exercise runs keep hiding their text.
+  - [ ] Tests (including bytes sent for a long reply) and release note.
+- [ ] US-120.3: The browser builds the reply from new text
+  - [ ] The chat page appends new text in order and asks for a snapshot when a number is missing.
+  - [ ] Every open tab of the same chat shows the same text.
+  - [ ] The finished message replaces the streamed text.
+  - [ ] Unit and E2E tests, including reconnecting mid-reply, and release note.
+
+[EPIC-121](docs/epics/EPIC-121-FEWER-DATABASE-QUERIES.md): Fewer database queries
+
+- [ ] US-121.1: Classes and course insights load in a few queries
+  - [ ] The class roster and class list load members and counts in a fixed number of queries.
+  - [ ] Course insights load per-student data in a fixed number of queries.
+  - [ ] Tests count the queries for a class of a few hundred students.
+  - [ ] Release note.
+- [ ] US-121.2: Usage reports are paged and bounded
+  - [ ] Usage reports are paginated and filtered in the database.
+  - [ ] Long ID lists are split into bounded batches.
+  - [ ] A budget is read once per request, not twice.
+  - [ ] Tests with a large number of users, and release note.
+- [ ] US-121.3: Bounded reads elsewhere
+  - [ ] Vector lookups by file split long file lists into bounded batches.
+  - [ ] Parallel tool calls in one turn share one model client lookup.
+  - [ ] Tests and release note.
+
+[EPIC-122](docs/epics/EPIC-122-PER-MESSAGE-SEARCH-ROWS.md): Per-message search rows
+
+- [ ] US-122.1: Index each message separately
+  - [ ] An ADR records the change: one index row per message plus one per chat title, and how results are grouped into one hit per chat.
+  - [ ] A versioned migration replaces the triggers and table, and rebuilds the index from existing chats and messages.
+  - [ ] Adding, editing and deleting a message touch only that message's row; renaming a chat touches only its title row.
+  - [ ] Search returns the same chats as before, one result per chat, still limited to the owner.
+  - [ ] Tests: the upgrade from the previous revision, search results, and the work done per message write.
+  - [ ] Release note (Data).
+
+[EPIC-123](docs/epics/EPIC-123-SPLIT-LARGE-MODULES.md): Split the largest modules
+
+- [ ] US-123.1: Settings service
+  - [ ] `settings/service.py` is split by settings area, with the public functions it exposes kept stable.
+  - [ ] Unused cache comments are removed, and the database conflicts it doesn't handle return a clear error.
+  - [ ] All tests pass unchanged; the architecture docs name the new modules.
+- [ ] US-123.2: Chat orchestrator and router
+  - [ ] `chat/orchestrator.py` is split into turn flow, stream handling and saving the reply.
+  - [ ] `chat/router.py` is split by resource; the OpenAPI schema is unchanged.
+  - [ ] All tests pass unchanged; the architecture docs name the new modules.
+- [ ] US-123.3: Exports, agent and files
+  - [ ] `canvas/exports.py` is split by export format.
+  - [ ] `agent/agent.py` separates the loop from tool dispatch.
+  - [ ] `files/service.py` separates storage, processing and listing.
+  - [ ] All tests pass unchanged; the architecture docs name the new modules.
