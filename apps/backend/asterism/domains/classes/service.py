@@ -8,8 +8,9 @@ gives one error, so it cannot be used to probe classes.
 import secrets
 import time
 import uuid
+from collections.abc import Sequence
 
-from sqlalchemy import delete, func, select
+from sqlalchemy import delete, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -23,8 +24,8 @@ from asterism.domains.user.models import UserModel
 
 from .educators import require_educator
 from .models import ClassMemberModel, ClassModel
-from .names import STUDENT_FALLBACK, educator_name, live_names
-from .queries import select_joined_classes, select_taught_classes
+from .names import EDUCATOR_FALLBACK, STUDENT_FALLBACK, live_names
+from .queries import select_insights_consent, select_joined_classes, select_member_counts, select_taught_classes
 from .schemas import (
     ClassCreate,
     ClassMember,
@@ -78,19 +79,21 @@ def normalize_join_code(code: str) -> str:
     return "".join(character for character in code.upper() if character.isalnum())
 
 
-async def _member_count(class_id: uuid.UUID, session: AsyncSession) -> int:
-    count = await session.scalar(
-        select(func.count())
-        .select_from(ClassMemberModel)
-        .where(ClassMemberModel.class_id == class_id, ClassMemberModel.removed_at.is_(None))
+async def _taught_views(rows: Sequence[ClassModel], session: AsyncSession) -> list[TaughtClass]:
+    """The classes as their educator sees them, with member counts from one query."""
+    counts = (
+        dict((await session.execute(select_member_counts([row.id for row in rows]))).tuples().all()) if rows else {}
     )
-    return count or 0
+    views = []
+    for row in rows:
+        view = TaughtClass.model_validate(row)
+        view.member_count = counts.get(row.id, 0)
+        views.append(view)
+    return views
 
 
 async def _taught(row: ClassModel, session: AsyncSession) -> TaughtClass:
-    view = TaughtClass.model_validate(row)
-    view.member_count = await _member_count(row.id, session)
-    return view
+    return (await _taught_views([row], session))[0]
 
 
 async def owned_class(user_id: str, class_id: uuid.UUID, session: AsyncSession) -> ClassModel:
@@ -132,7 +135,7 @@ async def list_taught(user_id: str, session: AsyncSession, *, page: int, page_si
         page_size=page_size,
     )
     return TaughtClassPage(
-        items=[await _taught(row, session) for row in result.records],
+        items=await _taught_views(result.records, session),
         total=result.total,
         page=page,
         page_size=page_size,
@@ -259,15 +262,26 @@ async def join_class(user: AuthedUser, code: str, session: AsyncSession) -> Join
     return await _joined(row, user.id, session)
 
 
+async def _joined_views(rows: Sequence[ClassModel], user_id: str, session: AsyncSession) -> list[JoinedClass]:
+    """The classes as the student sees them: memberships and educator names in one query each."""
+    if not rows:
+        return []
+    consent = dict((await session.execute(select_insights_consent(user_id, [row.id for row in rows]))).tuples().all())
+    names = await live_names({row.educator_id for row in rows}, session)
+    return [
+        JoinedClass(
+            id=row.id,
+            name=row.name,
+            description=row.description,
+            educator_name=names.get(row.educator_id, EDUCATOR_FALLBACK),
+            insights_consent=bool(consent.get(row.id)),
+        )
+        for row in rows
+    ]
+
+
 async def _joined(row: ClassModel, user_id: str, session: AsyncSession) -> JoinedClass:
-    member = await session.get(ClassMemberModel, (row.id, user_id))
-    return JoinedClass(
-        id=row.id,
-        name=row.name,
-        description=row.description,
-        educator_name=await educator_name(row.educator_id, session),
-        insights_consent=bool(member and member.insights_consent),
-    )
+    return (await _joined_views([row], user_id, session))[0]
 
 
 async def list_joined(user_id: str, session: AsyncSession, *, page: int, page_size: int) -> JoinedClassPage:
@@ -278,7 +292,7 @@ async def list_joined(user_id: str, session: AsyncSession, *, page: int, page_si
         page_size=page_size,
     )
     return JoinedClassPage(
-        items=[await _joined(row, user_id, session) for row in result.records],
+        items=await _joined_views(result.records, user_id, session),
         total=result.total,
         page=page,
         page_size=page_size,

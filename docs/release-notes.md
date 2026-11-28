@@ -24,6 +24,9 @@ Unreleased into its version and date.
 
 ### Behavior
 
+- Class insights, an educator's class list and a student's joined classes load
+  in a fixed number of database queries, however many students or classes there
+  are. Insights for a class of 30 took over 120 queries; now they take 28.
 - Replies stream only their new text, so a long reply sends about its own
   length instead of resending everything written so far with each word. A tab
   opened while a reply is being written shows the text so far straight away
