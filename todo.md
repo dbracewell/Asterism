@@ -134,9 +134,9 @@ Source: repository review (2026-11-26), work deferred from EPIC-117. Suggested o
 
 [EPIC-120](docs/epics/EPIC-120-INCREMENTAL-STREAMING.md): Incremental streaming
 
-- [ ] US-120.1: Decide the streaming format
-  - [ ] An ADR covers the format: appended text for `content` and `thinking`, numbered in order; a snapshot of the text so far when a tab connects mid-reply or misses a number; and the final message as the source of truth.
-  - [ ] The ADR covers exercise runs, whose text is never streamed (ADR-0043).
+- [x] US-120.1: Decide the streaming format
+  - [x] An ADR covers the format: appended text for `content` and `thinking`, numbered in order; a snapshot of the text so far when a tab connects mid-reply or misses a number; and the final message as the source of truth.
+  - [x] The ADR covers exercise runs, whose text is never streamed (ADR-0043).
 - [ ] US-120.2: The server sends only new text
   - [ ] Stream events carry only the text added since the last event, with a sequence number.
   - [ ] A tab that connects mid-reply first gets the text so far.
