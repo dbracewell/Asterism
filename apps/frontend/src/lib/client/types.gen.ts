@@ -10730,7 +10730,7 @@ export type UsageModelTotal = {
 /**
  * UsageReport
  *
- * Usage over ``[start, end)`` in the instance timezone, per user and model and per group.
+ * Usage over ``[start, end)`` in the instance timezone: per group and in total, and one page of users.
  */
 export type UsageReport = {
   /**
@@ -10747,14 +10747,34 @@ export type UsageReport = {
   end: number;
   /**
    * Users
+   *
+   * One page of users matching the filters, most tokens first
    */
   users: Array<UsageUserRow>;
   /**
+   * Total Users
+   *
+   * Users matching the filters across all pages
+   */
+  total_users: number;
+  /**
+   * Page
+   */
+  page: number;
+  /**
+   * Page Size
+   */
+  page_size: number;
+  /**
    * Groups
+   *
+   * Every group with usage in the period; filters don't apply
    */
   groups: Array<UsageGroupRow>;
   /**
    * Total Tokens
+   *
+   * Everyone in the period; filters don't apply
    */
   total_tokens: number;
   /**
@@ -23468,6 +23488,26 @@ export type UsageGetReportData = {
      * Last day, included; default: today
      */
     end?: string | null;
+    /**
+     * Group Id
+     *
+     * Only this group's users
+     */
+    group_id?: string | null;
+    /**
+     * Search
+     *
+     * Users whose name, email or id contains this
+     */
+    search?: string | null;
+    /**
+     * Page
+     */
+    page?: number;
+    /**
+     * Page Size
+     */
+    page_size?: number;
   };
   url: "/usage/report";
 };

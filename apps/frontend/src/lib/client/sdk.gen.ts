@@ -7407,7 +7407,7 @@ export class ApiClient extends HeyApiClient {
   /**
    * Usage Report
    *
-   * Tokens and estimated cost per user and model, and per group, over a period of days.
+   * Tokens and estimated cost per group and in total over a period of days, and one page of users and their models.
    */
   public usageGetReport<ThrowOnError extends boolean = false>(
     options?: Options<UsageGetReportData, ThrowOnError>,

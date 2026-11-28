@@ -93,18 +93,24 @@ never left half-graded.
 
 ### Reading usage
 
-| Route                        | Who      | Returns                                                                                                                                                                 |
-| ---------------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `GET /usage/me`              | Any user | Today's and this month's usage, budget, what's left and when each resets, plus this month by model. Shown in Settings → Your Asterism.                                  |
-| `GET /usage/report`          | Admins   | Tokens and estimated cost per user and model, per group, and in total, over a range of days (this month by default, at most 366 days). Shown in Admin Settings → Usage. |
-| `GET`, `PUT /usage/settings` | Admins   | The usage time zone                                                                                                                                                     |
+| Route                        | Who      | Returns                                                                                                                                                                                                                                                                  |
+| ---------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `GET /usage/me`              | Any user | Today's and this month's usage, budget, what's left and when each resets, plus this month by model. Shown in Settings → Your Asterism.                                                                                                                                   |
+| `GET /usage/report`          | Admins   | Tokens and estimated cost per group and in total over a range of days (this month by default, at most 366 days), and one page of users (at most 100, most tokens first) with their models, optionally one group's or matching a search. Shown in Admin Settings → Usage. |
+| `GET`, `PUT /usage/settings` | Admins   | The usage time zone                                                                                                                                                                                                                                                      |
 
 **Cost counts only priced calls.** A model with no price contributes tokens but no
 dollars, and a total with nothing priced is `null`, so "unknown" never reads as
 "free". Calls on a ChatGPT plan count toward budgets but have no dollar cost.
 
-Each check is one indexed sum per window, over `(user_id, created_at)`, so it adds
-two small queries to each admitted send.
+Each check reads the user's group budget and the usage time zone once, then runs
+one indexed sum per window over `(user_id, created_at)`, so it adds a few small
+queries to each admitted send.
+
+**The report is aggregated and paged in the database.** Group and overall totals
+are one grouped query; users are filtered, counted, ordered and paged in SQL, and
+per-model rows load only for the page's users. A report takes four ledger queries
+however many people used Asterism, and no query lists more than one page of ids.
 
 ## Rules
 

@@ -3,19 +3,23 @@
 from collections import defaultdict
 from datetime import UTC, date, datetime, timedelta
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from asterism.core.exceptions import BadDataException
-from asterism.domains.groups.models import GroupModel
-from asterism.domains.user.models import UserModel
 
 from .models import UsageRecordModel
-from .queries import select_usage_totals
+from .queries import select_group_usage, select_usage_totals, select_user_usage
 from .schemas import MyUsage, UsageGroupRow, UsageModelTotal, UsageReport, UsageUserRow
 from .service import budget_windows, read_usage_settings, zone_for
 
 MAX_REPORT_DAYS = 366
+MAX_PAGE_SIZE = 100
+
+
+def _cost(row) -> float | None:
+    """A summed cost, or None when no call in it was priced (unknown rather than free)."""
+    return round(float(row.cost), 6) if row.priced else None
 
 
 def _model_total(row) -> UsageModelTotal:
@@ -25,14 +29,9 @@ def _model_total(row) -> UsageModelTotal:
         input_tokens=int(row.input_tokens or 0),
         output_tokens=int(row.output_tokens or 0),
         images=int(row.images or 0),
-        cost_usd=round(float(row.cost), 6) if row.priced else None,
+        cost_usd=_cost(row),
         unpriced_tokens=int(row.unpriced_tokens or 0),
     )
-
-
-def _sum_cost(costs: list[float | None]) -> float | None:
-    known = [cost for cost in costs if cost is not None]
-    return round(sum(known), 6) if known else None
 
 
 async def my_usage(user_id: str, session: AsyncSession, now: datetime | None = None) -> MyUsage:
@@ -62,60 +61,73 @@ def report_bounds(start: date, end: date, timezone: str) -> tuple[int, int]:
     return int(first.timestamp()), int(last.timestamp())
 
 
-async def usage_report(start: date | None, end: date | None, session: AsyncSession) -> UsageReport:
-    """Usage per user and model and per group; defaults to the current month so far."""
+async def _models_by_user(user_ids: list[str], begin: int, finish: int, session: AsyncSession):
+    """Per-model totals for one page of users; the page bounds the id list."""
+    by_user: dict[str, list[UsageModelTotal]] = defaultdict(list)
+    if user_ids:
+        rows = await session.execute(select_usage_totals(begin, finish).where(UsageRecordModel.user_id.in_(user_ids)))
+        for row in rows:
+            by_user[row.user_id].append(_model_total(row))
+    return by_user
+
+
+async def usage_report(
+    session: AsyncSession,
+    *,
+    start: date | None = None,
+    end: date | None = None,
+    group_id: str | None = None,
+    search: str | None = None,
+    page: int = 1,
+    page_size: int = 50,
+) -> UsageReport:
+    """Usage per group and in total, and one page of users with their models; defaults to this month so far.
+
+    Totals and groups cover everyone in the period. ``group_id`` and ``search``
+    narrow only the users, which are counted, filtered and paged in the database.
+    """
+    if page < 1 or not 1 <= page_size <= MAX_PAGE_SIZE:
+        raise BadDataException("Invalid pagination")
     timezone = (await read_usage_settings(session)).timezone
     today = datetime.now(UTC).astimezone(zone_for(timezone)).date()
     begin, finish = report_bounds(start or today.replace(day=1), end or today, timezone)
-    rows = list(await session.execute(select_usage_totals(begin, finish)))
-    by_user: dict[str, list[UsageModelTotal]] = defaultdict(list)
-    for row in rows:
-        by_user[row.user_id].append(_model_total(row))
-    people = {
-        person.id: person
-        for person in await session.execute(
-            select(UserModel.id, UserModel.name, UserModel.email, UserModel.group_id, GroupModel.name.label("group"))
-            .outerjoin(GroupModel, GroupModel.id == UserModel.group_id)
-            .where(UserModel.id.in_(list(by_user)))
-        )
-    }
-    users: list[UsageUserRow] = []
-    for user_id, models in by_user.items():
-        person = people.get(user_id)
-        users.append(
-            UsageUserRow(
-                user_id=user_id,
-                name=(person.name if person else None) or "",
-                email=(person.email if person else None) or "",
-                group_id=person.group_id if person else None,
-                group_name=person.group if person else None,
-                models=models,
-                total_tokens=sum(model.input_tokens + model.output_tokens for model in models),
-                cost_usd=_sum_cost([model.cost_usd for model in models]),
-            )
-        )
-    users.sort(key=lambda row: (-row.total_tokens, row.name.lower(), row.user_id))
-    groups: dict[str | None, list[UsageUserRow]] = defaultdict(list)
-    for row in users:
-        groups[row.group_id].append(row)
-    group_rows = [
-        UsageGroupRow(
-            group_id=group_id,
-            group_name=members[0].group_name,
-            users=len(members),
-            total_tokens=sum(member.total_tokens for member in members),
-            images=sum(model.images for member in members for model in member.models),
-            cost_usd=_sum_cost([member.cost_usd for member in members]),
-        )
-        for group_id, members in groups.items()
-    ]
-    group_rows.sort(key=lambda row: (-row.total_tokens, (row.group_name or "").lower()))
+    groups = list(await session.execute(select_group_usage(begin, finish)))
+    people = select_user_usage(begin, finish, group_id=group_id, search=search)
+    total_users = int(await session.scalar(select(func.count()).select_from(people.order_by(None).subquery())) or 0)
+    page_rows = list(await session.execute(people.offset((page - 1) * page_size).limit(page_size)))
+    models = await _models_by_user([row.user_id for row in page_rows], begin, finish, session)
+    priced = [row for row in groups if row.priced]
     return UsageReport(
         timezone=timezone,
         start=begin,
         end=finish,
-        users=users,
-        groups=group_rows,
-        total_tokens=sum(row.total_tokens for row in users),
-        cost_usd=_sum_cost([row.cost_usd for row in users]),
+        users=[
+            UsageUserRow(
+                user_id=row.user_id,
+                name=row.name or "",
+                email=row.email or "",
+                group_id=row.group_id,
+                group_name=row.group_name,
+                models=models[row.user_id],
+                total_tokens=int(row.total_tokens or 0),
+                cost_usd=_cost(row),
+            )
+            for row in page_rows
+        ],
+        total_users=total_users,
+        page=page,
+        page_size=page_size,
+        groups=[
+            UsageGroupRow(
+                group_id=row.group_id,
+                group_name=row.group_name,
+                users=int(row.users),
+                total_tokens=int(row.total_tokens or 0),
+                images=int(row.images or 0),
+                cost_usd=_cost(row),
+            )
+            for row in groups
+        ],
+        total_tokens=sum(int(row.total_tokens or 0) for row in groups),
+        cost_usd=round(sum(float(row.cost) for row in priced), 6) if priced else None,
     )

@@ -32,9 +32,15 @@ async def usage_report(
         default=None, description="First day, in the usage timezone; default: 1st of this month"
     ),
     end: date | None = Query(default=None, description="Last day, included; default: today"),
+    group_id: str | None = Query(default=None, max_length=32, description="Only this group's users"),
+    search: str | None = Query(default=None, max_length=320, description="Users whose name, email or id contains this"),
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=50, ge=1, le=reports.MAX_PAGE_SIZE),
 ) -> UsageReport:
-    """Tokens and estimated cost per user and model, and per group, over a period of days."""
-    return await reports.usage_report(start, end, db)
+    """Tokens and estimated cost per group and in total over a period of days, and one page of users."""
+    return await reports.usage_report(
+        db, start=start, end=end, group_id=group_id, search=search, page=page, page_size=page_size
+    )
 
 
 @usage_router.get("/settings", response_model=UsageSettings, operation_id="usageSettingsGet")

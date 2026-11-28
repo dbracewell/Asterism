@@ -168,19 +168,26 @@ def _window(used: int, budget: int | None, bounds: tuple[int, int]) -> UsageWind
     )
 
 
-async def budget_windows(
-    user_id: str, session: AsyncSession, now: datetime | None = None
-) -> tuple[str, bool, UsageWindow, UsageWindow]:
-    """The instance timezone, exemption, and today's and this month's windows for one user."""
-    settings = await read_usage_settings(session)
-    zone = zone_for(settings.timezone)
+async def _windows(
+    user_id: str, timezone: str, daily: int | None, monthly: int | None, session: AsyncSession, now: datetime | None
+) -> tuple[UsageWindow, UsageWindow]:
+    zone = zone_for(timezone)
     moment = now or datetime.now(UTC)
-    exempt, daily, monthly = await read_budget(user_id, session)
     day, month = day_bounds(moment, zone), month_bounds(moment, zone)
     month_used = await used_tokens(user_id, month[0], session)
     # Usage is only recorded up to now, so the open day needs no upper bound.
     day_used = await used_tokens(user_id, day[0], session)
-    return settings.timezone, exempt, _window(day_used, daily, day), _window(month_used, monthly, month)
+    return _window(day_used, daily, day), _window(month_used, monthly, month)
+
+
+async def budget_windows(
+    user_id: str, session: AsyncSession, now: datetime | None = None
+) -> tuple[str, bool, UsageWindow, UsageWindow]:
+    """The instance timezone, exemption, and today's and this month's windows for one user."""
+    timezone = (await read_usage_settings(session)).timezone
+    exempt, daily, monthly = await read_budget(user_id, session)
+    day, month = await _windows(user_id, timezone, daily, monthly, session, now)
+    return timezone, exempt, day, month
 
 
 def _when(timestamp: int, timezone: str) -> str:
@@ -193,7 +200,8 @@ async def require_within_budget(user_id: str, session: AsyncSession, now: dateti
     exempt, daily, monthly = await read_budget(user_id, session)
     if exempt or (daily is None and monthly is None):
         return
-    timezone, _, day, month = await budget_windows(user_id, session, now)
+    timezone = (await read_usage_settings(session)).timezone
+    day, month = await _windows(user_id, timezone, daily, monthly, session, now)
     for label, window in (("monthly", month), ("daily", day)):
         if window.budget_tokens is not None and window.used_tokens >= window.budget_tokens:
             raise UsageLimitExceeded(

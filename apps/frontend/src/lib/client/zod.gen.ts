@@ -5400,13 +5400,16 @@ export const zUsageUserRow = z.object({
 /**
  * UsageReport
  *
- * Usage over ``[start, end)`` in the instance timezone, per user and model and per group.
+ * Usage over ``[start, end)`` in the instance timezone: per group and in total, and one page of users.
  */
 export const zUsageReport = z.object({
   timezone: z.string(),
   start: z.int(),
   end: z.int(),
   users: z.array(zUsageUserRow),
+  total_users: z.int().gte(0),
+  page: z.int().gte(1),
+  page_size: z.int().gte(1),
   groups: z.array(zUsageGroupRow),
   total_tokens: z.int(),
   cost_usd: z.number().nullable(),
@@ -8387,6 +8390,10 @@ export const zUsageGetMineResponse = zMyUsage;
 export const zUsageGetReportQuery = z.object({
   start: z.iso.date().nullish(),
   end: z.iso.date().nullish(),
+  group_id: z.string().max(32).nullish(),
+  search: z.string().max(320).nullish(),
+  page: z.int().gte(1).optional().default(1),
+  page_size: z.int().gte(1).lte(100).optional().default(50),
 });
 
 /**
