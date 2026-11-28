@@ -159,6 +159,17 @@ finally the database.
 | Sharing              | `packs`, `settings_transfer`, `data_export`         | Team packs, the admin settings export and import, users' "Download my data" archives                                           |
 | Running the instance | `settings`, `usage`, `status`                       | Providers and admin policies, the usage ledger and budgets, the admin status view                                              |
 
+The `settings` domain keeps one service module per area:
+[`user_settings.py`](../../apps/backend/asterism/domains/settings/user_settings.py)
+(each person's settings),
+[`app_settings.py`](../../apps/backend/asterism/domains/settings/app_settings.py)
+(instance settings and tool settings) and
+[`providers.py`](../../apps/backend/asterism/domains/settings/providers.py)
+(providers, models, the draft model and model lookup). `settings/service.py`
+re-exports their public functions, so callers import from one place. A provider
+write that breaks a database constraint, such as two providers with one name,
+returns a 409 that says what to change.
+
 Shared code sits outside `domains/`: `core/` (configuration, security, startup,
 events), `db/` (the session manager, migrations and generic query helpers),
 `common/` (logging and small utilities) and `backup/`.

@@ -33,6 +33,9 @@ Unreleased into its version and date.
 
 ### Behavior
 
+- Saving admin providers with two of the same name, or swapping two
+  providers' names in one save, returns a 409 that says what to change instead
+  of a server error, and saves nothing.
 - Searching files filters LanceDB by at most 500 files at a time and keeps the
   nearest passages across all batches, so a search over thousands of files no
   longer builds one very long filter. Deleting many memories splits the same
