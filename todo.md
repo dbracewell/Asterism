@@ -144,13 +144,4 @@ Source: repository review (2026-11-26), work deferred from EPIC-117. Suggested o
 
 Source: Dependabot review (2026-11-28). Work one story at a time.
 
-[EPIC-124](docs/epics/EPIC-124-VITEST-5.md): Vitest 5 and its test libraries
-
-- [x] US-124.1: Node 22.23 for development and CI
-  - [x] `.node-version` moves to the newest Node 22 release at least a week old, and the Dockerfile's Node 22 base image is refreshed to match.
-  - [x] CI, the image check and the E2E suite pass on it.
-  - [x] Release note (Image), and the development guide names the version.
-- [ ] US-124.2: Vitest 5, jsdom 31 and jest-dom 8
-  - [x] Vitest 5, jsdom 31, jest-dom 8 and `@testing-library/dom` are updated together, following Vitest 5's migration guide for the config and setup file.
-  - [x] Every unit test passes unchanged, or with a change the migration guide calls for.
-  - [ ] Dependabot pull requests #41 and #190 are closed in favor of this one.
+[EPIC-124](docs/epics/EPIC-124-VITEST-5.md) (US-124.1 and US-124.2) is complete and archived in the [2026-11-28 checklist](docs/archive/todo-completed-2026-11-28.md).
