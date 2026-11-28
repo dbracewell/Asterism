@@ -11,6 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import {
   Field,
   FieldContent,
+  FieldDescription,
   FieldError,
   FieldGroup,
   FieldLabel,
@@ -33,7 +34,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useReadWriteSearchParams } from "@/hooks/use-read-write-search-params";
-import { providerSchema } from "@/features/settings/provider-schema";
+import {
+  apiKeyRequired,
+  providerSchemaFor,
+} from "@/features/settings/provider-schema";
 import {
   SettingsPane,
   SettingsSaveBar,
@@ -68,7 +72,7 @@ import {
   XIcon,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   type Control,
   type UseFormReturn,
@@ -89,12 +93,13 @@ import {
 import { toast } from "sonner";
 import { z } from "zod";
 
-const formSchema = z.object({
-  llm_providers: z.array(providerSchema),
-  draft_model_id: z.string().nullable().optional(),
-});
+const formSchemaFor = (catalog: readonly ProviderServiceInfo[] | undefined) =>
+  z.object({
+    llm_providers: z.array(providerSchemaFor(catalog)),
+    draft_model_id: z.string().nullable().optional(),
+  });
 
-type Values = z.infer<typeof formSchema>;
+type Values = z.infer<ReturnType<typeof formSchemaFor>>;
 
 type FormProvider = Values["llm_providers"][number];
 
@@ -380,6 +385,29 @@ function ProviderServiceField({
   );
 }
 
+/** Says when the API key may be left empty (US-125.3). */
+function ProviderKeyHint({
+  control,
+  index,
+  catalog,
+}: {
+  control: Control<Values>;
+  index: number;
+  catalog: readonly ProviderServiceInfo[] | undefined;
+}) {
+  const type = useWatch({
+    control,
+    name: `llm_providers.${index}.provider_type`,
+  });
+  const service = useWatch({ control, name: `llm_providers.${index}.service` });
+  if (apiKeyRequired({ provider_type: type, service }, catalog)) return null;
+  return (
+    <FieldDescription>
+      Optional: leave it empty for a server that doesn&apos;t check keys.
+    </FieldDescription>
+  );
+}
+
 function ProviderLocalNote({
   control,
   index,
@@ -612,8 +640,9 @@ function ProvidersForm({ appSettings }: { appSettings: ProviderSettings }) {
   const [drafts, setDrafts] = useState<ModelDrafts>({});
   const [isSaving, setIsSaving] = useState(false);
   const services = useQuery(appProviderServicesListOptions({ client }));
+  const schema = useMemo(() => formSchemaFor(services.data), [services.data]);
   const form = useForm<Values>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(schema),
     defaultValues: {
       llm_providers: appSettings.llm_providers ?? [],
       draft_model_id: appSettings.draft_model_id ?? null,
@@ -896,6 +925,11 @@ function ProvidersForm({ appSettings }: { appSettings: ProviderSettings }) {
                           id={`provider-api-key-${index}`}
                           type="password"
                           {...register(`llm_providers.${index}.api_key`)}
+                        />
+                        <ProviderKeyHint
+                          control={control}
+                          index={index}
+                          catalog={services.data}
                         />
                         <FieldError errors={[errors?.api_key]} />
                       </FieldContent>

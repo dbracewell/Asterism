@@ -69,9 +69,9 @@ As an administrator, I want to pick the service and have its URL filled in.
 
 As an administrator, I want to connect a local server without inventing a key.
 
-- [ ] The API key is optional for local servers and Custom, and required for
+- [x] The API key is optional for local servers and Custom, and required for
       hosted services and aggregators, in the form and on the server.
-- [ ] A provider without a key sends no `Authorization` header, for chats and
+- [x] A provider without a key sends no `Authorization` header, for chats and
       for model discovery.
-- [ ] A saved key stays redacted; clearing it is distinct from keeping it.
-- [ ] Tests, and release note (Behavior).
+- [x] A saved key stays redacted; clearing it is distinct from keeping it.
+- [x] Tests, and release note (Behavior).

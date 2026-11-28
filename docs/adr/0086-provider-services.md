@@ -55,9 +55,15 @@ on 2026-11-28 (`CATALOG_CHECKED`):
 | Local      | LocalAI          | `http://localhost:8080/v1`                                |
 | Local      | Jan              | `http://127.0.0.1:1337/v1`                                |
 
-**Keys.** Hosted services and aggregators need an API key; local servers usually
-don't, unless one is configured on the server (US-125.3 makes it optional for
-local servers and Custom).
+**Keys (US-125.3).** OpenAI, hosted services and aggregators need an API key;
+local servers and Custom don't (`needs_key`), so an empty key is allowed for them
+and refused for the others when a provider is saved or imported. An empty key is
+stored as empty and reads back empty; a saved key reads back redacted, and
+sending the redaction back keeps it, so clearing a key differs from keeping it.
+A provider without a key sends no `Authorization` header: the OpenAI SDK needs a
+key to build a client, so it gets a placeholder, and an `httpx` request hook
+(`drop_placeholder_auth`) removes that header before chats, discovery and
+captioning requests leave.
 
 **Settings files** carry the service from format version 3 (see
 [ADR-0052](0052-settings-export-format.md#addendum-format-version-3-us-1251)).

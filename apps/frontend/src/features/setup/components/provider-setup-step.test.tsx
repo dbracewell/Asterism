@@ -227,6 +227,32 @@ describe("first-run provider step", () => {
     ]);
   });
 
+  it("connects a local server without a key but not a hosted one (US-125.3)", async () => {
+    const user = userEvent.setup();
+    renderStep();
+    const form = await screen.findByRole("form", {
+      name: "Add a model provider",
+    });
+    const connect = () =>
+      user.click(
+        within(form).getByRole("button", {
+          name: "Connect and discover models",
+        }),
+      );
+    await chooseService(user, form, "OpenRouter");
+    await connect();
+    expect(await within(form).findByText("API key is required.")).toBeVisible();
+    expect(mocks.saveProviders).not.toHaveBeenCalled();
+
+    await chooseService(user, form, "Ollama");
+    expect(within(form).getByText(/leave it empty for a server/)).toBeVisible();
+    await connect();
+    await waitFor(() => expect(mocks.saveProviders).toHaveBeenCalled());
+    expect(mocks.saveProviders.mock.calls[0][0].body.llm_providers).toEqual([
+      expect.objectContaining({ service: "ollama", api_key: "" }),
+    ]);
+  });
+
   it("fixes the OpenAI base URL and validates like provider settings", async () => {
     const user = userEvent.setup();
     renderStep();

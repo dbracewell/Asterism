@@ -24,6 +24,7 @@ from openai import (
 from pydantic import BaseModel, Field, SecretStr, model_validator
 
 from asterism.common.log import get_logger
+from asterism.domains.llm.client import drop_placeholder_auth, keyless_auth
 
 from .model_catalog import OPENAI_MODEL_CATALOG_VERSION, get_openai_capabilities
 from .provider_types import (
@@ -51,8 +52,9 @@ class ProviderDiscoveryRequest(BaseModel):
 
     provider_type: ProviderType
     base_url: str = ""
+    # Empty for a server that takes no key: no Authorization header is sent (US-125.3).
     api_key: SecretStr = Field(
-        min_length=1,
+        default=SecretStr(""),
         json_schema_extra={"writeOnly": True},
     )
     provider_id: uuid.UUID
@@ -139,7 +141,7 @@ class OpenAIProviderDiscovery:
             transport=self._transport,
             timeout=DISCOVERY_TIMEOUT,
             follow_redirects=False,
-            event_hooks={"response": [_limit_response_size]},
+            event_hooks={"request": [drop_placeholder_auth], "response": [_limit_response_size]},
         )
 
     async def discover(
@@ -274,7 +276,7 @@ class OpenAIProviderDiscovery:
         """Fetch the raw ``/models`` list, mapping SDK errors to :class:`ProviderDiscoveryError`."""
         http_client = self._http_client()
         client = AsyncOpenAI(
-            api_key=api_key.get_secret_value(),
+            **keyless_auth(api_key.get_secret_value()),
             base_url=base_url,
             timeout=DISCOVERY_TIMEOUT,
             max_retries=0,

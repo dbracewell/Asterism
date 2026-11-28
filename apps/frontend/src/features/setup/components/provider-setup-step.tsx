@@ -10,19 +10,20 @@ import {
 } from "@/features/auth/components/setup-steps";
 import {
   type ProviderFormValues,
-  providerSchema,
+  providerSchemaFor,
 } from "@/features/settings/provider-schema";
 import { client } from "@/lib/api";
 import type { ProviderSettings } from "@/lib/client";
 import {
   appProviderSettingsGetOptions,
   setupStepUpdateMutation,
+  appProviderServicesListOptions,
 } from "@/lib/client/@tanstack/react-query.gen";
 import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import {
   ConnectStep,
@@ -125,8 +126,13 @@ function ProviderSetupFlow({
 }) {
   // Resume a provider saved before a reload rather than adding a second one.
   const saved = settings.llm_providers?.[0];
+  const services = useQuery(appProviderServicesListOptions({ client }));
+  const schema = useMemo(
+    () => providerSchemaFor(services.data),
+    [services.data],
+  );
   const form = useForm<ProviderFormValues>({
-    resolver: zodResolver(providerSchema),
+    resolver: zodResolver(schema),
     defaultValues: saved ? savedProvider(saved) : newProvider(),
     mode: "onBlur",
   });

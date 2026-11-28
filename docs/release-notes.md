@@ -44,6 +44,11 @@ Unreleased into its version and date.
 
 ### Behavior
 
+- The API key is optional for a local server (Ollama, LM Studio and others) or a
+  custom URL: leave it empty and Asterism sends no `Authorization` header, for
+  chats, model discovery and image captioning. OpenAI, hosted APIs and
+  aggregators still need one, and saving or importing one without a key is
+  refused. Clearing a saved key and saving removes it.
 - Admin Settings → Providers and the setup step choose a provider by **Service**:
   OpenAI, a hosted API, an aggregator, a local server or a custom URL. Choosing
   one fills in its name and current base URL, and the provider list names the

@@ -31,6 +31,7 @@ from .models import (
     LLMModel,
     ProviderModel,
 )
+from .provider_services import key_missing_message, needs_key
 from .provider_types import ProviderType
 from .queries import is_global_model, is_global_provider, select_visible_models
 from .schemas import (
@@ -85,13 +86,17 @@ def _provider_api_key(provider: ProviderInfo, existing_api_key: str | None = Non
     Raises:
         BadDataException: When a brand-new provider echoes the redaction
             sentinel — there is no stored key to keep, so persisting the
-            sentinel would store it as a literal credential.
+            sentinel would store it as a literal credential — or when the
+            resulting key is empty for a provider that needs one.
     """
     api_key = provider.api_key.get_secret_value()
     if api_key == _REDACTED_API_KEY:
         if existing_api_key is None:
             raise BadDataException("A real API key is required for a new provider")
-        return existing_api_key
+        api_key = existing_api_key
+    # An empty key is no key: allowed for local servers and Custom (US-125.3).
+    if not api_key and needs_key(provider.provider_type, provider.service):
+        raise BadDataException(key_missing_message(provider.provider_type, provider.service))
     return api_key
 
 

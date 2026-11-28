@@ -29,7 +29,8 @@ hosted APIs (Gemini, Mistral, xAI, DeepSeek, Anthropic), aggregators (OpenRouter
 Groq, Together AI, Fireworks AI, DeepInfra, Cerebras) and local servers (Ollama,
 LM Studio, llama.cpp, vLLM, LocalAI, Jan). The service supplies the default base
 URL; requests are the same for all of them
-([ADR-0086](../adr/0086-provider-services.md)).
+([ADR-0086](../adr/0086-provider-services.md)). A local server or Custom
+provider may have no API key; it then sends no `Authorization` header.
 
 ## Configuration workflow
 

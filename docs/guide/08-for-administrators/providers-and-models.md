@@ -18,7 +18,9 @@ the **Admin Settings** tab.
 2. Choose the **Service**: **OpenAI**; a hosted API, aggregator or local server,
    which fills in its **Provider Name** and **Base URL**; or **Custom
    OpenAI-compatible URL** for any other server. Check the name and URL, and
-   fill in the **API Key**. Changing the service later keeps a name or URL you
+   fill in the **API Key**: required for OpenAI, hosted APIs and aggregators,
+   optional for a local server or custom URL. To remove a saved key, clear the
+   field and save; leaving the hidden key as it is keeps it. Changing the service later keeps a name or URL you
    typed yourself.
 3. Select **Save** at the bottom of the page.
 
