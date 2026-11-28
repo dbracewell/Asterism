@@ -92,14 +92,17 @@ class UsageGroupRow(BaseModel):
 
 
 class UsageReport(BaseModel):
-    """Usage over ``[start, end)`` in the instance timezone, per user and model and per group."""
+    """Usage over ``[start, end)`` in the instance timezone: per group and in total, and one page of users."""
 
     timezone: str
     start: int
     end: int
-    users: list[UsageUserRow]
-    groups: list[UsageGroupRow]
-    total_tokens: int
+    users: list[UsageUserRow] = Field(description="One page of users matching the filters, most tokens first")
+    total_users: int = Field(ge=0, description="Users matching the filters across all pages")
+    page: int = Field(ge=1)
+    page_size: int = Field(ge=1)
+    groups: list[UsageGroupRow] = Field(description="Every group with usage in the period; filters don't apply")
+    total_tokens: int = Field(description="Everyone in the period; filters don't apply")
     cost_usd: float | None
 
 

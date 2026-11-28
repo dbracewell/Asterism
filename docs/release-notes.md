@@ -24,6 +24,12 @@ Unreleased into its version and date.
 
 ### Behavior
 
+- Admin Settings → Usage shows users 50 at a time, most tokens first, with a
+  search and a group filter. Group and overall totals still cover everyone. The
+  report is summed and paged in the database, so it takes four queries for 20
+  people or 2,000, and `GET /usage/report` takes `page`, `page_size` (at most
+  100), `group_id` and `search` and returns `total_users`. A budget check reads
+  the group's budget once instead of twice.
 - Class insights, an educator's class list and a student's joined classes load
   in a fixed number of database queries, however many students or classes there
   are. Insights for a class of 30 took over 120 queries; now they take 28.

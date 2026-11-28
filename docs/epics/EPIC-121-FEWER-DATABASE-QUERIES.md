@@ -31,10 +31,10 @@ a small one.
 As an administrator, I want usage reports to work for thousands of users and
 months of history.
 
-- [ ] Usage reports are paginated and filtered in the database.
-- [ ] Long ID lists are split into bounded batches.
-- [ ] A budget is read once per request, not twice.
-- [ ] Tests with a large number of users, and release note.
+- [x] Usage reports are paginated and filtered in the database.
+- [x] Long ID lists are split into bounded batches.
+- [x] A budget is read once per request, not twice.
+- [x] Tests with a large number of users, and release note.
 
 ### US-121.3: Bounded reads elsewhere
 

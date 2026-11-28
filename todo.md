@@ -141,11 +141,11 @@ Source: repository review (2026-11-26), work deferred from EPIC-117. Suggested o
   - [x] Course insights load per-student data in a fixed number of queries.
   - [x] Tests count the queries for a class of a few hundred students.
   - [x] Release note.
-- [ ] US-121.2: Usage reports are paged and bounded
-  - [ ] Usage reports are paginated and filtered in the database.
-  - [ ] Long ID lists are split into bounded batches.
-  - [ ] A budget is read once per request, not twice.
-  - [ ] Tests with a large number of users, and release note.
+- [x] US-121.2: Usage reports are paged and bounded
+  - [x] Usage reports are paginated and filtered in the database.
+  - [x] Long ID lists are split into bounded batches.
+  - [x] A budget is read once per request, not twice.
+  - [x] Tests with a large number of users, and release note.
 - [ ] US-121.3: Bounded reads elsewhere
   - [ ] Vector lookups by file split long file lists into bounded batches.
   - [ ] Parallel tool calls in one turn share one model client lookup.

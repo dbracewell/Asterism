@@ -1,12 +1,19 @@
 "use client";
 
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { useId, useState } from "react";
+import { keepPreviousData, useMutation, useQuery } from "@tanstack/react-query";
+import { type ReactNode, useDeferredValue, useId, useState } from "react";
 import { ListSkeleton } from "@/components/loading-skeletons";
 import { QueryError } from "@/components/query-error";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -58,6 +65,9 @@ export function UsageSettings() {
   );
 }
 
+const PAGE_SIZE = 50;
+const ALL_GROUPS = "all";
+
 function firstOfMonth(day: string) {
   return `${day.slice(0, 8)}01`;
 }
@@ -67,10 +77,25 @@ function UsageReportSection({ timeZone }: { timeZone: string }) {
   const today = dayInZone(new Date(), timeZone);
   const [start, setStart] = useState(firstOfMonth(today));
   const [end, setEnd] = useState(today);
+  const [group, setGroup] = useState(ALL_GROUPS);
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const term = useDeferredValue(search.trim());
   const valid = Boolean(start && end && start <= end);
   const report = useQuery({
-    ...usageGetReportOptions({ client, query: { start, end } }),
+    ...usageGetReportOptions({
+      client,
+      query: {
+        start,
+        end,
+        group_id: group === ALL_GROUPS ? undefined : group,
+        search: term || undefined,
+        page,
+        page_size: PAGE_SIZE,
+      },
+    }),
     enabled: valid,
+    placeholderData: keepPreviousData,
   });
   return (
     <SettingsSection
@@ -89,7 +114,10 @@ function UsageReportSection({ timeZone }: { timeZone: string }) {
             className="w-44"
             value={start}
             max={end || undefined}
-            onChange={(event) => setStart(event.target.value)}
+            onChange={(event) => {
+              setStart(event.target.value);
+              setPage(1);
+            }}
           />
         </div>
         <div className="grid gap-1">
@@ -100,7 +128,10 @@ function UsageReportSection({ timeZone }: { timeZone: string }) {
             className="w-44"
             value={end}
             min={start || undefined}
-            onChange={(event) => setEnd(event.target.value)}
+            onChange={(event) => {
+              setEnd(event.target.value);
+              setPage(1);
+            }}
           />
         </div>
         <Button
@@ -109,6 +140,7 @@ function UsageReportSection({ timeZone }: { timeZone: string }) {
           onClick={() => {
             setStart(firstOfMonth(today));
             setEnd(today);
+            setPage(1);
           }}
         >
           This month
@@ -128,17 +160,96 @@ function UsageReportSection({ timeZone }: { timeZone: string }) {
           isRetrying={report.isFetching}
         />
       )}
-      {valid && report.data && <ReportTables report={report.data} />}
+      {valid && report.data && (
+        <ReportTables
+          report={report.data}
+          filters={
+            <UserFilters
+              groups={report.data.groups}
+              group={group}
+              search={search}
+              onGroup={(value) => {
+                setGroup(value);
+                setPage(1);
+              }}
+              onSearch={(value) => {
+                setSearch(value);
+                setPage(1);
+              }}
+            />
+          }
+          filtered={group !== ALL_GROUPS || Boolean(term)}
+          busy={report.isFetching}
+          onPage={setPage}
+        />
+      )}
     </SettingsSection>
   );
 }
 
-function ReportTables({ report }: { report: UsageReport }) {
-  if (report.users.length === 0) {
+function UserFilters({
+  groups,
+  group,
+  search,
+  onGroup,
+  onSearch,
+}: {
+  groups: UsageReport["groups"];
+  group: string;
+  search: string;
+  onGroup: (group: string) => void;
+  onSearch: (search: string) => void;
+}) {
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <Input
+        type="search"
+        aria-label="Search users"
+        placeholder="Search names, emails or IDs"
+        className="w-64"
+        maxLength={320}
+        value={search}
+        onChange={(event) => onSearch(event.target.value)}
+      />
+      <Select value={group} onValueChange={onGroup}>
+        <SelectTrigger aria-label="Group" className="w-44">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value={ALL_GROUPS}>All groups</SelectItem>
+          {groups
+            .filter((row) => row.group_id !== null)
+            .map((row) => (
+              <SelectItem key={row.group_id} value={row.group_id as string}>
+                {row.group_name ?? row.group_id}
+              </SelectItem>
+            ))}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+}
+
+function ReportTables({
+  report,
+  filters,
+  filtered,
+  busy,
+  onPage,
+}: {
+  report: UsageReport;
+  filters: ReactNode;
+  filtered: boolean;
+  busy: boolean;
+  onPage: (page: number) => void;
+}) {
+  if (report.groups.length === 0) {
     return (
       <p className="text-muted-foreground text-sm">No usage in this period.</p>
     );
   }
+  const first = (report.page - 1) * report.page_size + 1;
+  const last = first + report.users.length - 1;
   return (
     <div className="grid gap-6">
       <p className="text-sm">
@@ -170,32 +281,62 @@ function ReportTables({ report }: { report: UsageReport }) {
             </TableRow>
           ))}
         </TableBody>
-      </Table>
-      <Table aria-label="Usage per user and model">
-        <TableHeader>
-          <TableRow>
-            <TableHead>User</TableHead>
-            <TableHead>Model</TableHead>
-            <TableHead className="text-right">Input</TableHead>
-            <TableHead className="text-right">Output</TableHead>
-            <TableHead className="text-right">Images</TableHead>
-            <TableHead className="text-right">Estimated cost</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {report.users.map((user) => (
-            <UserRows key={user.user_id} user={user} />
-          ))}
-        </TableBody>
         <TableFooter>
           <TableRow>
-            <TableCell colSpan={5}>Total</TableCell>
+            <TableCell colSpan={4}>All groups</TableCell>
             <TableCell className="text-right">
               {formatCost(report.cost_usd)}
             </TableCell>
           </TableRow>
         </TableFooter>
       </Table>
+      {filters}
+      {report.users.length === 0 ? (
+        <p className="text-muted-foreground text-sm">
+          {filtered ? "No matching users." : "No users on this page."}
+        </p>
+      ) : (
+        <Table aria-label="Usage per user and model">
+          <TableHeader>
+            <TableRow>
+              <TableHead>User</TableHead>
+              <TableHead>Model</TableHead>
+              <TableHead className="text-right">Input</TableHead>
+              <TableHead className="text-right">Output</TableHead>
+              <TableHead className="text-right">Images</TableHead>
+              <TableHead className="text-right">Estimated cost</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {report.users.map((user) => (
+              <UserRows key={user.user_id} user={user} />
+            ))}
+          </TableBody>
+        </Table>
+      )}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <Button
+          type="button"
+          variant="outline"
+          disabled={report.page === 1 || busy}
+          onClick={() => onPage(report.page - 1)}
+        >
+          Previous users
+        </Button>
+        <span className="text-muted-foreground text-sm">
+          {report.users.length > 0
+            ? `Users ${first}–${last} of ${report.total_users}, most tokens first`
+            : `${report.total_users} ${report.total_users === 1 ? "user" : "users"}`}
+        </span>
+        <Button
+          type="button"
+          variant="outline"
+          disabled={last >= report.total_users || busy}
+          onClick={() => onPage(report.page + 1)}
+        >
+          Next users
+        </Button>
+      </div>
       <p className="text-muted-foreground text-xs">
         &ldquo;—&rdquo; means no price: the model has none set, or it ran on a
         member&apos;s ChatGPT plan. Images made with local or ComfyUI generators

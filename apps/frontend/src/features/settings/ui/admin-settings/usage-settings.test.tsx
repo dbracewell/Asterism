@@ -15,11 +15,7 @@ vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
     queryKey: ["usage-settings"],
     queryFn: async () => ({ timezone: "Europe/London" }),
   }),
-  usageGetReportOptions: ({
-    query,
-  }: {
-    query: { start: string; end: string };
-  }) => ({
+  usageGetReportOptions: ({ query }: { query: Record<string, unknown> }) => ({
     queryKey: ["usage-report", query],
     queryFn: async () => mocks.report(query),
   }),
@@ -32,6 +28,9 @@ const report: UsageReport = {
   end: 0,
   total_tokens: 1_500_000,
   cost_usd: 2.5,
+  total_users: 1,
+  page: 1,
+  page_size: 50,
   groups: [
     {
       group_id: "student",
@@ -118,8 +117,57 @@ it("shows usage per group and per user and model for the chosen days", async () 
     expect(mocks.report).toHaveBeenLastCalledWith({
       start: "2026-01-05",
       end: "2026-01-11",
+      page: 1,
+      page_size: 50,
     }),
   );
+});
+
+it("pages through users and filters them by search and group", async () => {
+  mocks.report.mockResolvedValue({
+    ...report,
+    total_users: 120,
+    groups: [
+      ...report.groups,
+      {
+        group_id: "g7",
+        group_name: "Year 7",
+        users: 119,
+        total_tokens: 10,
+        images: 0,
+        cost_usd: null,
+      },
+    ],
+  });
+  const user = setup();
+  expect(
+    await screen.findByText("Users 1–1 of 120, most tokens first"),
+  ).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Previous users" })).toBeDisabled();
+  await user.click(screen.getByRole("button", { name: "Next users" }));
+  await waitFor(() =>
+    expect(mocks.report).toHaveBeenLastCalledWith(
+      expect.objectContaining({ page: 2, page_size: 50 }),
+    ),
+  );
+
+  await user.type(screen.getByLabelText("Search users"), "ada");
+  await waitFor(() =>
+    expect(mocks.report).toHaveBeenLastCalledWith(
+      expect.objectContaining({ search: "ada", page: 1 }),
+    ),
+  );
+  await user.click(screen.getByRole("combobox", { name: "Group" }));
+  await user.click(await screen.findByRole("option", { name: "Year 7" }));
+  await waitFor(() =>
+    expect(mocks.report).toHaveBeenLastCalledWith(
+      expect.objectContaining({ group_id: "g7", search: "ada", page: 1 }),
+    ),
+  );
+
+  mocks.report.mockResolvedValue({ ...report, users: [], total_users: 0 });
+  await user.type(screen.getByLabelText("Search users"), "zz");
+  expect(await screen.findByText("No matching users.")).toBeInTheDocument();
 });
 
 it("says when a period has no usage, and saves the budget timezone", async () => {
