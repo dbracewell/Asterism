@@ -22,6 +22,15 @@ Both runtime chat and discovery use the OpenAI Python SDK. Generic OpenAI is a
 protocol compatibility mode; provider-specific APIs such as native Ollama or
 Anthropic endpoints are not supported.
 
+A Generic OpenAI provider records the service it was set up from
+(`providers.service`; `null` is Custom), chosen from the catalog in
+[`settings/provider_services.py`](../../apps/backend/asterism/domains/settings/provider_services.py):
+hosted APIs (Gemini, Mistral, xAI, DeepSeek, Anthropic), aggregators (OpenRouter,
+Groq, Together AI, Fireworks AI, DeepInfra, Cerebras) and local servers (Ollama,
+LM Studio, llama.cpp, vLLM, LocalAI, Jan). The service supplies the default base
+URL; requests are the same for all of them
+([ADR-0086](../adr/0086-provider-services.md)).
+
 ## Configuration workflow
 
 On a new instance, the first-run setup card (`/setup`, step 2) connects one

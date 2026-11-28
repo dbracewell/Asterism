@@ -49,6 +49,7 @@ def _provider(row: ProviderModel) -> ExportedProvider:
     return ExportedProvider(
         name=row.name,
         provider_type=row.provider_type,
+        service=row.service,
         base_url=row.base_url,
         api_key=row.api_key,
         models=tuple(

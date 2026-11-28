@@ -27,6 +27,7 @@ from asterism.domains.agent.schemas import MainAgentConfiguration, SubAgentDefin
 from asterism.domains.groups.schemas import GroupRef
 
 from .pricing import ModelPricing
+from .provider_services import ProviderService, ServiceGroup, check_service
 from .provider_types import (
     ModelCapabilitySource,
     ProviderType,
@@ -97,10 +98,14 @@ class ProviderInfo(BaseModel):
     api_key: SecretStr
     id: uuid.UUID
     provider_type: ProviderType = ProviderType.GENERIC_OPENAI
+    service: ProviderService | None = Field(
+        default=None, description="The OpenAI-compatible service it was set up from; None is Custom (ADR-0086)"
+    )
 
     @model_validator(mode="after")
     def normalize_base_url(self) -> "ProviderInfo":
         """Re-normalize the base URL so stored/returned values match runtime form."""
+        check_service(self.provider_type, self.service)
         self.base_url = normalize_provider_base_url(
             self.provider_type,
             self.base_url,
@@ -125,6 +130,17 @@ class Provider(ProviderInfo):
     """Full provider configuration including its models."""
 
     models: list["Llm"]
+
+
+class ProviderServiceInfo(BaseModel):
+    """One entry of the service catalog the provider form offers (ADR-0086)."""
+
+    service: ProviderService
+    label: str
+    group: ServiceGroup = Field(description="hosted, aggregator or local")
+    base_url: str = Field(description="The service's default base URL; the administrator can change it")
+    key_required: bool
+    docs_url: str
 
 
 class ProviderSummary(ProviderInfo):

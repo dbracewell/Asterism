@@ -30,6 +30,7 @@ from asterism.domains.knowledge.processing import update_captioning_configuratio
 from asterism.domains.knowledge.processing_schemas import KnowledgeCaptionConfigurationUpdate
 from asterism.domains.settings.captioning_guard import get_captioning_selection_guard
 from asterism.domains.settings.models import ApplicationSettingsModel, LLMModel, ProviderModel
+from asterism.domains.settings.provider_services import check_service
 from asterism.domains.settings.provider_types import ProviderType, normalize_provider_base_url
 from asterism.domains.settings.queries import is_global_provider
 from asterism.domains.settings.schemas import CompactionSettings
@@ -88,6 +89,10 @@ def _check_bundle(bundle: SettingsBundle) -> None:
             normalize_provider_base_url(provider.provider_type, provider.base_url)
         except PydanticCustomError as exc:
             raise BadDataException("Settings file has an invalid provider URL") from exc
+        try:
+            check_service(provider.provider_type, provider.service)
+        except PydanticCustomError as exc:
+            raise BadDataException("Settings file names a service on a provider that can't have one") from exc
     _check_references(bundle)
     _check_groups(bundle)
 
@@ -201,6 +206,8 @@ def _merge_provider(incoming: ExportedProvider, existing: ProviderModel | None, 
         existing.provider_type = incoming.provider_type
         existing.base_url = base_url
         existing.api_key = incoming.api_key
+    if "service" in incoming.model_fields_set:
+        existing.service = incoming.service
     models = {model.name: model for model in existing.models}
     for model in incoming.models:
         row = models.get(model.name)

@@ -150,3 +150,11 @@ Version 1 files still open. Every new part is optional, and a missing part leave
 this installation's own value as it is. The preview compares only what the file
 carries, so a version 1 file never shows a change it won't make. Import stays
 merge-only.
+
+## Addendum: format version 3 (US-125.1)
+
+Version 3 adds each provider's `service`: the OpenAI-compatible service it was
+set up from, or `null` for Custom ([ADR-0086](0086-provider-services.md)). A
+service on a provider that can't have one refuses the import. Version 1 and 2
+files have no `service`, and importing one leaves each provider's service as it
+is.

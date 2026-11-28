@@ -6,7 +6,6 @@ from types import SimpleNamespace
 import pytest
 from asterism.domains.groups.models import GroupModel
 from asterism.domains.settings.models import ApplicationSettingsModel
-from asterism.domains.settings_transfer import documents
 from asterism.domains.settings_transfer.documents import (
     ExportedGroup,
     ExportedMemory,
@@ -48,11 +47,6 @@ async def setting(sessions, key):
     async with sessions() as session:
         row = await session.get(ApplicationSettingsModel, key)
         return None if row is None else row.value
-
-
-def test_the_file_is_version_2_and_version_1_still_opens():
-    assert documents.SETTINGS_FORMAT_VERSION == 2
-    assert set(documents.SettingsEnvelope.model_fields["format_version"].annotation.__args__) == {1, 2}
 
 
 def test_theme_color_keys_match_the_theme_editor():

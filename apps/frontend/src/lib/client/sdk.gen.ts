@@ -58,6 +58,9 @@ import type {
   AppProviderModelUpdateData,
   AppProviderModelUpdateErrors,
   AppProviderModelUpdateResponses,
+  AppProviderServicesListData,
+  AppProviderServicesListErrors,
+  AppProviderServicesListResponses,
   AppProviderSettingsGetData,
   AppProviderSettingsGetErrors,
   AppProviderSettingsGetResponses,
@@ -6567,6 +6570,29 @@ export class ApiClient extends HeyApiClient {
         "Content-Type": "application/json",
         ...options.headers,
       },
+    });
+  }
+
+  /**
+   * List the services a provider can be set up from
+   *
+   * The OpenAI-compatible service catalog, in display order, with each default base URL (ADR-0086).
+   */
+  public appProviderServicesList<ThrowOnError extends boolean = false>(
+    options?: Options<AppProviderServicesListData, ThrowOnError>,
+  ): RequestResult<
+    AppProviderServicesListResponses,
+    AppProviderServicesListErrors,
+    ThrowOnError
+  > {
+    return (options?.client ?? this.client).get<
+      AppProviderServicesListResponses,
+      AppProviderServicesListErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/settings/app/providers/services",
+      ...options,
     });
   }
 

@@ -427,6 +427,33 @@ describe("provider model browser", () => {
     );
   });
 
+  it("keeps a provider's recorded service when saving (ADR-0086)", async () => {
+    const provider = {
+      ...settings.llm_providers![0],
+      api_key: "secret",
+      service: "ollama" as const,
+    };
+    mocks.updateProviderSettings.mockResolvedValue({});
+    render(
+      <ProvidersTab
+        appSettings={{ draft_model_id: null, llm_providers: [provider] }}
+      />,
+      { wrapper: Wrapper },
+    );
+    fireEvent.change(screen.getByLabelText("Provider Name"), {
+      target: { value: "Desk Ollama" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    await waitFor(() =>
+      expect(
+        mocks.updateProviderSettings.mock.calls[0]?.[0].body.llm_providers,
+      ).toEqual([
+        expect.objectContaining({ name: "Desk Ollama", service: "ollama" }),
+      ]),
+    );
+  });
+
   it("validates OpenAI's canonical URL", () => {
     expect(
       providerSchema.safeParse({

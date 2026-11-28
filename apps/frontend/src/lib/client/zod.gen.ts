@@ -3137,6 +3137,45 @@ export const zProviderModelsPage = z.object({
 });
 
 /**
+ * ProviderService
+ *
+ * The known OpenAI-compatible services. Stored as text, so adding one needs no migration.
+ */
+export const zProviderService = z.enum([
+  "gemini",
+  "mistral",
+  "xai",
+  "deepseek",
+  "anthropic",
+  "openrouter",
+  "groq",
+  "together",
+  "fireworks",
+  "deepinfra",
+  "cerebras",
+  "ollama",
+  "lm_studio",
+  "llama_cpp",
+  "vllm",
+  "localai",
+  "jan",
+]);
+
+/**
+ * ProviderServiceInfo
+ *
+ * One entry of the service catalog the provider form offers (ADR-0086).
+ */
+export const zProviderServiceInfo = z.object({
+  service: zProviderService,
+  label: z.string(),
+  group: z.enum(["hosted", "aggregator", "local"]),
+  base_url: z.string(),
+  key_required: z.boolean(),
+  docs_url: z.string(),
+});
+
+/**
  * ProviderType
  *
  * Supported provider flavors.
@@ -3212,6 +3251,7 @@ export const zProvider = z.object({
   base_url: z.string(),
   id: z.uuid(),
   provider_type: zProviderType.optional().default("generic_openai"),
+  service: zProviderService.nullish(),
   models: z.array(zLlm),
 });
 
@@ -3266,6 +3306,7 @@ export const zProviderSummary = z.object({
   base_url: z.string(),
   id: z.uuid(),
   provider_type: zProviderType.optional().default("generic_openai"),
+  service: zProviderService.nullish(),
   model_count: z.int().optional().default(0),
   active_model_count: z.int().optional().default(0),
 });
@@ -3642,9 +3683,9 @@ export const zSettingsEnvelope = z.object({
     .optional()
     .default("asterism.settings-export"),
   format_version: z
-    .union([z.literal(1), z.literal(2)])
+    .union([z.literal(1), z.literal(2), z.literal(3)])
     .optional()
-    .default(2),
+    .default(3),
   salt: z.string(),
   ciphertext: z.string(),
 });
@@ -5784,6 +5825,7 @@ export const zProviderWritable = z.object({
   api_key: z.string(),
   id: z.uuid(),
   provider_type: zProviderType.optional().default("generic_openai"),
+  service: zProviderService.nullish(),
   models: z.array(zLlm),
 });
 
@@ -5840,6 +5882,7 @@ export const zProviderSummaryWritable = z.object({
   api_key: z.string(),
   id: z.uuid(),
   provider_type: zProviderType.optional().default("generic_openai"),
+  service: zProviderService.nullish(),
   model_count: z.int().optional().default(0),
   active_model_count: z.int().optional().default(0),
 });
@@ -8112,6 +8155,13 @@ export const zAppProviderModelsDiscoverBody = zProviderDiscoveryRequestWritable;
  * Successful Response
  */
 export const zAppProviderModelsDiscoverResponse = zProviderDiscoveryResponse;
+
+/**
+ * Response Appproviderserviceslist
+ *
+ * Successful Response
+ */
+export const zAppProviderServicesListResponse = z.array(zProviderServiceInfo);
 
 /**
  * Successful Response

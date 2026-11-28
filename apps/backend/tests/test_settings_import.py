@@ -348,7 +348,7 @@ async def test_other_files_are_refused(api, source):
 
 async def test_newer_format_is_refused(api):
     client, _ = api
-    source = json.dumps({**json.loads(file()), "format_version": 3})
+    source = json.dumps({**json.loads(file()), "format_version": 4})
     assert (await post(client, PREVIEW, {"source": source, "passphrase": PASSPHRASE})).status_code == 400
 
 
