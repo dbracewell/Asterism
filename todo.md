@@ -132,22 +132,7 @@ Source: repository review (2026-11-26), work deferred from EPIC-117. Suggested o
 
 [EPIC-119](docs/epics/EPIC-119-NON-BLOCKING-SERVER-WORK.md) (US-119.1 through US-119.3) is complete and archived in the [2026-11-26 checklist](docs/archive/todo-completed-2026-11-26.md).
 
-[EPIC-120](docs/epics/EPIC-120-INCREMENTAL-STREAMING.md): Incremental streaming
-
-- [x] US-120.1: Decide the streaming format
-  - [x] An ADR covers the format: appended text for `content` and `thinking`, numbered in order; a snapshot of the text so far when a tab connects mid-reply or misses a number; and the final message as the source of truth.
-  - [x] The ADR covers exercise runs, whose text is never streamed (ADR-0043).
-- [x] US-120.2: The server sends only new text
-  - [x] Stream events carry only the text added since the last event, with a sequence number.
-  - [x] A tab that connects mid-reply first gets the text so far.
-  - [x] Cancelling or failing a reply still saves the full text written so far.
-  - [x] Exercise runs keep hiding their text.
-  - [x] Tests (including bytes sent for a long reply) and release note.
-- [x] US-120.3: The browser builds the reply from new text
-  - [x] The chat page appends new text in order and asks for a snapshot when a number is missing.
-  - [x] Every open tab of the same chat shows the same text.
-  - [x] The finished message replaces the streamed text.
-  - [x] Unit and E2E tests, including reconnecting mid-reply, and release note.
+[EPIC-120](docs/epics/EPIC-120-INCREMENTAL-STREAMING.md) (US-120.1 through US-120.3) is complete and archived in the [2026-11-26 checklist](docs/archive/todo-completed-2026-11-26.md).
 
 [EPIC-121](docs/epics/EPIC-121-FEWER-DATABASE-QUERIES.md): Fewer database queries
 
