@@ -32,7 +32,7 @@ def create_llm_client(
 
 
 def _create(model_name: str, provider: ProviderInfo, *, user_id: str | None) -> LLMClientProtocol:
-    capabilities = request_capabilities(provider.provider_type)
+    capabilities = request_capabilities(provider.provider_type, provider.service)
     if provider.provider_type == ProviderType.CHATGPT:
         owner = provider.owner_user_id if isinstance(provider, RuntimeProviderInfo) else None
         if owner is None or owner != user_id:

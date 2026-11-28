@@ -47,6 +47,7 @@ from pydantic import BaseModel, SecretStr
 from asterism.common.log import get_logger
 from asterism.common.retries import retry_async_gen
 from asterism.core.config import config
+from asterism.domains.llm.errors import LLMProviderError
 from asterism.domains.llm.typedefs import FinishReason
 from asterism.domains.tools.registry import tool_registry
 
@@ -270,10 +271,20 @@ class StreamHandler[T: BaseModel]:
                     )
                     return
                 if isinstance(chunk, BaseException):
+                    error: BaseException = chunk
+                    if isinstance(error, APIError):
+                        # Keep the provider's own message, whatever its error body's shape.
+                        error = LLMProviderError.from_api_error(error)
+                        logger.warning(
+                            "chat completion failed status=%s code=%s param=%s",
+                            getattr(error, "status", None),
+                            getattr(error, "code", None),
+                            getattr(error, "param", None),
+                        )
                     yield LLMEvent(
                         type=LLMEventType.ERROR,
-                        content=str(chunk),
-                        exception=chunk,
+                        content=str(error),
+                        exception=error,
                     )
                     return
                 if hasattr(chunk, "usage") and chunk.usage is not None:

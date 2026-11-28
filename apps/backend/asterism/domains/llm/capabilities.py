@@ -9,10 +9,11 @@ capabilities are chosen per provider type by :func:`request_capabilities`.
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from enum import StrEnum
 from typing import Any
 
+from asterism.domains.settings.provider_services import ProviderService
 from asterism.domains.settings.provider_types import ProviderType
 
 from .schemas import ChatCompletionParams
@@ -83,10 +84,24 @@ CHATGPT_PLAN_CAPABILITIES = RequestCapabilities(
 )
 
 
-def request_capabilities(provider_type: ProviderType) -> RequestCapabilities:
-    """Return the request capabilities for a provider type."""
+# Chat Completions parameters a recorded service refuses (ADR-0086). Gemini's
+# OpenAI compatibility rejects ``seed`` ("Unknown name "seed": Cannot find
+# field"), which Asterism otherwise adds to every request.
+UNSUPPORTED_PARAMETERS: dict[ProviderService, frozenset[str]] = {
+    ProviderService.GEMINI: frozenset({"seed"}),
+}
+
+
+def request_capabilities(provider_type: ProviderType, service: ProviderService | None = None) -> RequestCapabilities:
+    """Return the request capabilities for a provider type and, when recorded, its service."""
     match provider_type:
         case ProviderType.OPENAI | ProviderType.GENERIC_OPENAI:
-            return CHAT_COMPLETIONS_CAPABILITIES
+            refused = UNSUPPORTED_PARAMETERS.get(service) if service is not None else None
+            if not refused:
+                return CHAT_COMPLETIONS_CAPABILITIES
+            return replace(
+                CHAT_COMPLETIONS_CAPABILITIES,
+                parameters=CHAT_COMPLETIONS_CAPABILITIES.parameters - refused,
+            )
         case ProviderType.CHATGPT:
             return CHATGPT_PLAN_CAPABILITIES

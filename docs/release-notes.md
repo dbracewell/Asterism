@@ -44,6 +44,14 @@ Unreleased into its version and date.
 
 ### Behavior
 
+- Chats with a Google Gemini provider no longer fail with "Unknown name "seed"":
+  Gemini's OpenAI-compatible endpoint refuses the `seed` parameter, so Asterism
+  no longer sends it to a provider set up as Google Gemini. A Gemini provider
+  added as a custom URL should be switched to the Google Gemini service.
+- A provider's refusal now shows its reason, not only "Error code: 400". Some
+  providers, such as Google Gemini, send their error in a shape the OpenAI SDK
+  doesn't read; Asterism now reads it from either shape, for chats and for the
+  ChatGPT plan's Responses API.
 - The API key is optional for a local server (Ollama, LM Studio and others) or a
   custom URL: leave it empty and Asterism sends no `Authorization` header, for
   chats, model discovery and image captioning. OpenAI, hosted APIs and

@@ -68,10 +68,15 @@ captioning requests leave.
 **Settings files** carry the service from format version 3 (see
 [ADR-0052](0052-settings-export-format.md#addendum-format-version-3-us-1251)).
 
-**Requests don't change.** Every service is called through the same Chat
-Completions client and `/models` discovery as any `generic_openai` provider.
-Per-service request behavior is out of scope; the recorded service is where it
-would key on.
+**Requests barely change.** Every service is called through the same Chat
+Completions client and `/models` discovery as any `generic_openai` provider. The
+one difference is a parameter a service refuses: `UNSUPPORTED_PARAMETERS` in
+[`llm/capabilities.py`](../../apps/backend/asterism/domains/llm/capabilities.py),
+keyed on the recorded service, removes it from that service's request
+capabilities. Gemini refuses `seed` ("Unknown name "seed": Cannot find field"),
+which Asterism otherwise sends with every request, so Gemini providers never
+send one (2026-11-28). Other per-service behavior, such as OpenRouter's
+attribution headers, is still out of scope.
 
 ## Consequences
 
