@@ -93,7 +93,7 @@ The schema has 55 tables. Each domain owns its tables and the queries over them.
 | `data_export`      | `data_exports`                                                                                                                                         | "Download my data" archive state                                                                                     |
 
 Two FTS5 virtual tables, `chat_search` and `project_search`, back search
-([below](#search)).
+([below](#search)); `chat_search_keys` gives each `chat_search` row its key.
 
 The core of the schema, the part every turn touches, looks like this:
 
@@ -275,7 +275,11 @@ results, so a file shared by ten projects is stored and processed once.
 
 Two SQLite FTS5 tables give keyword search: `chat_search` over chat titles and
 message text, and `project_search` over project names and descriptions. Project
-instructions, attachments and file content are not indexed. Triggers keep the
+instructions, attachments and file content are not indexed. `chat_search` holds
+one row per message and one per chat title, keyed through `chat_search_keys`, so
+each message write changes only that message's row
+([ADR-0085](../adr/0085-per-message-search-rows.md)). A chat matches when every
+term is in its title or some message; results are one per chat. Triggers keep the
 indexes current; their definitions live in
 [`chat/search_index.py`](../../apps/backend/asterism/domains/chat/search_index.py),
 and changing them needs a migration.

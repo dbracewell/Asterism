@@ -153,13 +153,13 @@ Source: repository review (2026-11-26), work deferred from EPIC-117. Suggested o
 
 [EPIC-122](docs/epics/EPIC-122-PER-MESSAGE-SEARCH-ROWS.md): Per-message search rows
 
-- [ ] US-122.1: Index each message separately
-  - [ ] An ADR records the change: one index row per message plus one per chat title, and how results are grouped into one hit per chat.
-  - [ ] A versioned migration replaces the triggers and table, and rebuilds the index from existing chats and messages.
-  - [ ] Adding, editing and deleting a message touch only that message's row; renaming a chat touches only its title row.
-  - [ ] Search returns the same chats as before, one result per chat, still limited to the owner.
-  - [ ] Tests: the upgrade from the previous revision, search results, and the work done per message write.
-  - [ ] Release note (Data).
+- [x] US-122.1: Index each message separately
+  - [x] An ADR records the change: one index row per message plus one per chat title, and how results are grouped into one hit per chat.
+  - [x] A versioned migration replaces the triggers and table, and rebuilds the index from existing chats and messages.
+  - [x] Adding, editing and deleting a message touch only that message's row; renaming a chat touches only its title row.
+  - [x] Search returns the same chats as before, one result per chat, still limited to the owner.
+  - [x] Tests: the upgrade from the previous revision, search results, and the work done per message write.
+  - [x] Release note (Data).
 
 [EPIC-123](docs/epics/EPIC-123-SPLIT-LARGE-MODULES.md): Split the largest modules
 

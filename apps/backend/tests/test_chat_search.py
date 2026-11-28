@@ -449,10 +449,13 @@ async def test_search_hides_skill_drafting_chats(search_session):
     assert [item.id for item in result.results] == [chat.id]
 
 
-async def _chat_search_rowid(session, chat_id):
+async def _message_rowid(session, message_id):
     return await session.scalar(
-        text("SELECT rowid FROM chat_search WHERE chat_id = :chat_id"),
-        {"chat_id": chat_id.hex},
+        text(
+            "SELECT rowid FROM chat_search "
+            "WHERE rowid = (SELECT id FROM chat_search_keys WHERE message_id = :message_id)"
+        ),
+        {"message_id": message_id.hex},
     )
 
 
@@ -482,16 +485,14 @@ async def test_search_tracks_message_edits_and_deletes(search_session):
     assert await _chat_hits(search_session, "tundra") == {chat.id}
 
     # A write that repeats the current content (as a whole-row UPDATE does)
-    # must not rebuild the chat's index row. A newer chat keeps that row from
-    # holding the highest rowid, so a rebuild would get a new one.
-    search_session.add(ChatModel(user_id="user-a", title="Later"))
-    await search_session.commit()
-    rowid = await _chat_search_rowid(search_session, chat.id)
+    # leaves the message's index row alone.
+    rowid = await _message_rowid(search_session, second.id)
+    assert rowid is not None
     await search_session.execute(
         text("UPDATE messages SET content = content, chat_id = chat_id WHERE id = :id"), {"id": second.id.hex}
     )
     await search_session.commit()
-    assert await _chat_search_rowid(search_session, chat.id) == rowid
+    assert await _message_rowid(search_session, second.id) == rowid
 
     await search_session.delete(second)
     await search_session.commit()
@@ -544,4 +545,4 @@ async def test_initialize_search_index_replaces_existing_trigger_definitions(sea
     definition = await connection.scalar(
         text("SELECT sql FROM sqlite_master WHERE type = 'trigger' AND name = 'chat_search_messages_ad'")
     )
-    assert "WHEN EXISTS" in definition
+    assert "chat_search_keys WHERE message_id = old.id" in definition
