@@ -20,11 +20,11 @@ is large enough.
 As an educator, I want a class with hundreds of students to open as quickly as
 a small one.
 
-- [ ] The class roster and class list load members and counts in a fixed number
+- [x] The class roster and class list load members and counts in a fixed number
       of queries.
-- [ ] Course insights load per-student data in a fixed number of queries.
-- [ ] Tests count the queries for a class of a few hundred students.
-- [ ] Release note.
+- [x] Course insights load per-student data in a fixed number of queries.
+- [x] Tests count the queries for a class of a few hundred students.
+- [x] Release note.
 
 ### US-121.2: Usage reports are paged and bounded
 

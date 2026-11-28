@@ -136,11 +136,11 @@ Source: repository review (2026-11-26), work deferred from EPIC-117. Suggested o
 
 [EPIC-121](docs/epics/EPIC-121-FEWER-DATABASE-QUERIES.md): Fewer database queries
 
-- [ ] US-121.1: Classes and course insights load in a few queries
-  - [ ] The class roster and class list load members and counts in a fixed number of queries.
-  - [ ] Course insights load per-student data in a fixed number of queries.
-  - [ ] Tests count the queries for a class of a few hundred students.
-  - [ ] Release note.
+- [x] US-121.1: Classes and course insights load in a few queries
+  - [x] The class roster and class list load members and counts in a fixed number of queries.
+  - [x] Course insights load per-student data in a fixed number of queries.
+  - [x] Tests count the queries for a class of a few hundred students.
+  - [x] Release note.
 - [ ] US-121.2: Usage reports are paged and bounded
   - [ ] Usage reports are paginated and filtered in the database.
   - [ ] Long ID lists are split into bounded batches.

@@ -11,6 +11,7 @@ is read or returned.
 
 import uuid
 from collections import defaultdict
+from itertools import batched
 
 from pydantic import BaseModel, Field
 from sqlalchemy import func, select
@@ -18,7 +19,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from asterism.domains.classes.models import ClassMemberModel
 from asterism.domains.classes.service import owned_class
-from asterism.domains.study.insights import scores_by_cited_file
+from asterism.domains.study.insights import LEARNER_BATCH, learners_scores_by_cited_file
 from asterism.domains.study.mastery import NEEDS_WORK_SCORE
 
 from .models import CourseCopyItemModel, CourseCopyModel, CourseItemType
@@ -76,22 +77,29 @@ async def _consenting_copies(class_id: uuid.UUID, session: AsyncSession) -> list
     )
 
 
-async def _student_topic_scores(copy: CourseCopyModel, session: AsyncSession) -> dict[str, float]:
-    """One student's score per course file name. Stays inside this module."""
-    assert copy.project_id is not None
-    names = {
-        row.record_id: row.item_key
+async def _students_topic_scores(class_id: uuid.UUID, copies: list[CourseCopyModel], session: AsyncSession):
+    """Each consenting student's score per course file name, in a fixed number of queries. Stays inside this module."""
+    names: dict[str, dict[uuid.UUID, str]] = defaultdict(dict)
+    for students in batched(sorted({copy.user_id for copy in copies}), LEARNER_BATCH):
         for row in await session.scalars(
             select(CourseCopyItemModel).where(
-                CourseCopyItemModel.class_id == copy.class_id,
-                CourseCopyItemModel.user_id == copy.user_id,
+                CourseCopyItemModel.class_id == class_id,
+                CourseCopyItemModel.user_id.in_(students),
                 CourseCopyItemModel.item_type == CourseItemType.FILE,
             )
-        )
-    }
-    by_file = await scores_by_cited_file(user_id=copy.user_id, project_id=copy.project_id, session=session)
+        ):
+            names[row.user_id][row.record_id] = row.item_key
+    learners = [(copy.user_id, copy.project_id) for copy in copies if copy.project_id is not None]
+    scores = await learners_scores_by_cited_file(learners, session)
     # Practice citing the student's own files is not course data and is left out.
-    return {names[file_id]: score for file_id, score in by_file.items() if file_id in names}
+    return [
+        {
+            names[user_id][file_id]: score
+            for file_id, score in scores.get((user_id, project_id), {}).items()
+            if file_id in names[user_id]
+        }
+        for user_id, project_id in learners
+    ]
 
 
 async def class_insights(user_id: str, class_id: uuid.UUID, session: AsyncSession) -> ClassInsights:
@@ -101,8 +109,8 @@ async def class_insights(user_id: str, class_id: uuid.UUID, session: AsyncSessio
         return ClassInsights(min_group_size=MIN_GROUP_SIZE, consenting_students=consenting, topics=[], hidden_topics=0)
     copies = await _consenting_copies(class_id, session)
     per_topic: dict[str, list[float]] = defaultdict(list)
-    for copy in copies:
-        for name, score in (await _student_topic_scores(copy, session)).items():
+    for student in await _students_topic_scores(class_id, copies, session):
+        for name, score in student.items():
             per_topic[name].append(score)
     shown = [
         InsightTopic(

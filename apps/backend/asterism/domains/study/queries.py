@@ -1,6 +1,7 @@
 """Owner-scoped base selects for study records. Callers filter before pagination."""
 
 import uuid
+from collections.abc import Collection
 
 from sqlalchemy import String, and_, case, func, literal, select, union_all
 
@@ -289,8 +290,8 @@ VERDICT_SCORES = {"correct": 1.0, "partial": 0.5, "incorrect": 0.0}
 RATING_SCORES = {1: 0.0, 2: 0.6, 3: 0.9, 4: 1.0}
 
 
-def _scored_answer_events(*, user_id: str, project_id: uuid.UUID):
-    """Graded answers in the project with a 0–1 score, keyed by the item they practice."""
+def _scored_answer_events(*, user_ids: Collection[str], project_ids: Collection[uuid.UUID]):
+    """Graded answers in the projects with a 0–1 score, keyed by learner, project and the item they practice."""
     answer, attempt, question, quiz = (
         StudyQuizAnswerModel,
         StudyQuizAttemptModel,
@@ -299,6 +300,8 @@ def _scored_answer_events(*, user_id: str, project_id: uuid.UUID):
     )
     return (
         select(
+            answer.user_id.label("user_id"),
+            quiz.project_id.label("project_id"),
             case(
                 (question.source_card_id.is_not(None), literal("card", String)), else_=literal("question", String)
             ).label("root_kind"),
@@ -312,15 +315,17 @@ def _scored_answer_events(*, user_id: str, project_id: uuid.UUID):
         .join(attempt, and_(attempt.id == answer.attempt_id, attempt.user_id == answer.user_id))
         .join(question, and_(question.id == answer.question_id, question.user_id == answer.user_id))
         .join(quiz, and_(quiz.id == question.quiz_id, quiz.user_id == question.user_id))
-        .where(answer.user_id == user_id, quiz.project_id == project_id, answer.verdict != "ungraded")
+        .where(answer.user_id.in_(user_ids), quiz.project_id.in_(project_ids), answer.verdict != "ungraded")
     )
 
 
-def _scored_review_events(*, user_id: str, project_id: uuid.UUID):
-    """Card ratings in the project with a 0–1 score."""
+def _scored_review_events(*, user_ids: Collection[str], project_ids: Collection[uuid.UUID]):
+    """Card ratings in the projects with a 0–1 score, keyed by learner and project."""
     log, card, deck = StudyReviewLogModel, StudyCardModel, StudyDeckModel
     return (
         select(
+            log.user_id.label("user_id"),
+            deck.project_id.label("project_id"),
             literal("card", String).label("root_kind"),
             card.id.label("root_id"),
             log.reviewed_at.label("at"),
@@ -329,17 +334,32 @@ def _scored_review_events(*, user_id: str, project_id: uuid.UUID):
         .select_from(log)
         .join(card, and_(card.id == log.card_id, card.user_id == log.user_id))
         .join(deck, and_(deck.id == card.deck_id, deck.user_id == card.user_id))
-        .where(log.user_id == user_id, deck.project_id == project_id)
+        .where(log.user_id.in_(user_ids), deck.project_id.in_(project_ids))
     )
+
+
+def _scored_events(*, user_ids: Collection[str], project_ids: Collection[uuid.UUID]):
+    return union_all(
+        _scored_answer_events(user_ids=user_ids, project_ids=project_ids),
+        _scored_review_events(user_ids=user_ids, project_ids=project_ids),
+    ).subquery()
 
 
 def select_scored_events(*, user_id: str, project_id: uuid.UUID):
     """Rows ``root_kind, root_id, at, score`` for every graded practice event, oldest first."""
-    events = union_all(
-        _scored_answer_events(user_id=user_id, project_id=project_id),
-        _scored_review_events(user_id=user_id, project_id=project_id),
-    ).subquery()
+    events = _scored_events(user_ids=[user_id], project_ids=[project_id])
     return select(events.c.root_kind, events.c.root_id, events.c.at, events.c.score).order_by(events.c.at)
+
+
+def select_learners_scored_events(*, user_ids: Collection[str], project_ids: Collection[uuid.UUID]):
+    """Rows ``user_id, project_id, root_kind, root_id, at, score`` for several learners' projects, oldest first.
+
+    Rows match any of the users in any of the projects; callers keep the pairs they asked for.
+    """
+    events = _scored_events(user_ids=user_ids, project_ids=project_ids)
+    return select(
+        events.c.user_id, events.c.project_id, events.c.root_kind, events.c.root_id, events.c.at, events.c.score
+    ).order_by(events.c.at)
 
 
 def select_tagged_cards(*, user_id: str, project_id: uuid.UUID):
@@ -402,25 +422,43 @@ def select_reflection_card_items(*, user_id: str, reflection_ids: list[uuid.UUID
     )
 
 
-def select_cited_cards(*, user_id: str, project_id: uuid.UUID):
-    """``(card id, citations JSON)`` for cards of the project's decks."""
+def select_learners_cited_cards(*, user_ids: Collection[str], project_ids: Collection[uuid.UUID]):
+    """``(user id, project id, card id, citations JSON)`` for cards of the learners' project decks.
+
+    Rows match any of the users in any of the projects; callers keep the pairs they asked for.
+    """
     return (
-        select(StudyCardModel.id, StudyCardModel.citations)
-        .join(StudyDeckModel, and_(StudyDeckModel.id == StudyCardModel.deck_id, StudyDeckModel.user_id == user_id))
-        .where(StudyCardModel.user_id == user_id, StudyDeckModel.project_id == project_id)
+        select(StudyCardModel.user_id, StudyDeckModel.project_id, StudyCardModel.id, StudyCardModel.citations)
+        .join(
+            StudyDeckModel,
+            and_(StudyDeckModel.id == StudyCardModel.deck_id, StudyDeckModel.user_id == StudyCardModel.user_id),
+        )
+        .where(StudyCardModel.user_id.in_(user_ids), StudyDeckModel.project_id.in_(project_ids))
     )
 
 
-def select_cited_questions(*, user_id: str, project_id: uuid.UUID):
-    """``(question id, citations JSON)`` for original questions; copies count towards their originals."""
+def select_learners_cited_questions(*, user_ids: Collection[str], project_ids: Collection[uuid.UUID]):
+    """``(user id, project id, question id, citations JSON)`` for original questions; copies count towards them.
+
+    Rows match any of the users in any of the projects; callers keep the pairs they asked for.
+    """
     return (
-        select(StudyQuizQuestionModel.id, StudyQuizQuestionModel.citations)
+        select(
+            StudyQuizQuestionModel.user_id,
+            StudyQuizModel.project_id,
+            StudyQuizQuestionModel.id,
+            StudyQuizQuestionModel.citations,
+        )
         .join(
-            StudyQuizModel, and_(StudyQuizModel.id == StudyQuizQuestionModel.quiz_id, StudyQuizModel.user_id == user_id)
+            StudyQuizModel,
+            and_(
+                StudyQuizModel.id == StudyQuizQuestionModel.quiz_id,
+                StudyQuizModel.user_id == StudyQuizQuestionModel.user_id,
+            ),
         )
         .where(
-            StudyQuizQuestionModel.user_id == user_id,
-            StudyQuizModel.project_id == project_id,
+            StudyQuizQuestionModel.user_id.in_(user_ids),
+            StudyQuizModel.project_id.in_(project_ids),
             StudyQuizQuestionModel.source_question_id.is_(None),
             StudyQuizQuestionModel.source_card_id.is_(None),
         )
